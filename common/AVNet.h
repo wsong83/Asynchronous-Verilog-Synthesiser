@@ -40,7 +40,7 @@ class AVNetType {
     AVNT_always,
     AVNT_assign,
     AVNT_BASE,			/* base type, identify the base class for all nodes */
-    AVNT_ConstExp,		/* const numerical expression, always evaluated after elabration */
+    AVNT_Exp, 			/* const numerical expression, always evaluated after elabration */
     AVNT_function,
     AVNT_module,
     AVNT_reg,
@@ -55,7 +55,7 @@ class AVNetType {
     "always",
     "assign",
     "BASE CLASS",	/* base type */
-    "",			/* const numerical expression, no type name */
+    "",			/* expression, no type name */
     "function",
     "module",
     "reg",
@@ -97,9 +97,10 @@ std::ostream& operator<< (std::ostream& os, AVNetBase rhs) { os << rhs.type << "
 
   
 //////////////////////////////////////////////////////////////////////////
-// Const expression (calculatations using macros and parameters, appear in range, if condition, port declaration, etc)
-class AVNetConstExp : public AVNetBase {
-
+// Expression 
+class AVNetExp : public AVNetBase {
+ public:
+  
 };
 
 //////////////////////////////////////////////////////////////////////////
