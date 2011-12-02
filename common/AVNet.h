@@ -32,12 +32,15 @@
 #include<utility>
 #include<ostream>
 
+//////////////////////////////////////////////////////////////////////////
 // The type of all nodes in netlist
 class AVNetType {
  public:
-  enum en {
+  enum en {			/* type definitions */
     AVNT_always,
     AVNT_assign,
+    AVNT_BASE,			/* base type, identify the base class for all nodes */
+    AVNT_ConstExp,		/* const numerical expression, always evaluated after elabration */
     AVNT_function,
     AVNT_module,
     AVNT_reg,
@@ -51,6 +54,8 @@ class AVNetType {
     static const char* names[] = {
     "always",
     "assign",
+    "BASE CLASS",	/* base type */
+    "",			/* const numerical expression, no type name */
     "function",
     "module",
     "reg",
@@ -61,12 +66,48 @@ class AVNetType {
   }
 
   // constructors
-  AVNetType () : my_type(AVNT_unkown) {}
+  AVNetType () : my_type(AVNT_unkown) {} /* uninitialied type are set to unkown type */
+  AVNetType ( const AVNetType& tt ) : my_type(tt.my_type) {} /* copy constructor */
   AVNetType (en tt) : my_type(tt) {}
   AVNetType& operator= (const en& tt) { my_type = tt; }
+  AVNetType& operator= (const AVNetType& tt) {my_type = tt.my_type;}
 };
 
+// standard output operator
 std::ostream& operator<< (std::ostream& os, AVNetType rhs) { return os<<rhs(); }
+
+//////////////////////////////////////////////////////////////////////////
+// The base class for all AVNet nodes
+class AVNetBase {
+ public:
+  AVNetType type;		/* the actual type of this node */
+  std::string name;			/* the name of this node */
+  
+  // constructors
+  AVNetBase () : type(AVNetType::AVNT_BASE), name("unkown") {} /* AVNetBase is not suppose to be built explicitly */
+  AVNetBase ( const AVNetBase& bb ) : type(bb.type), name(bb.name) {} /* copy constructor */
+  AVNetBase& operator= ( const AVNetBase& bb ) {type = bb.type; name = bb.name;}
+  
+  // member functions
+
+};
+
+// standard output operator
+std::ostream& operator<< (std::ostream& os, AVNetBase rhs) { os << rhs.type << " " << rhs.name; return os; }
+
+  
+//////////////////////////////////////////////////////////////////////////
+// Const expression (calculatations using macros and parameters, appear in range, if condition, port declaration, etc)
+class AVNetConstExp : public AVNetBase {
+
+};
+
+//////////////////////////////////////////////////////////////////////////
+// wire
+class AVNetWire : public AVNetBase {
+ public:
+  
+};
 
 #endif
 
