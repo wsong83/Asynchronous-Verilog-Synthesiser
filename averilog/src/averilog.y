@@ -51,32 +51,53 @@
 %token <avOp>                  '-'
 %token <avOp>                  '*'
 %token <avOp>                  '/'
-%token <avOp>   avPower        "**"
+%token <avOp>   avOpPower      "**"
 %token <avOp>                  '%'
 %token <avOp>                  '>'
 %token <avOp>                  '<'
-%token <avOp>   avGe           ">="
-%token <avOp>   avLe           "<="
+%token <avOp>   avOpGe         ">="
+%token <avOp>   avOpLe         "<="
 %token <avOp>                  '!'
-%token <avOp>   avLAnd         "&&"
-%token <avOp>   avLOr          "||"
-%token <avOp>   avLEq          "=="
-%token <avOp>   avLNeq         "!="
+%token <avOp>   avOpLAnd       "&&"
+%token <avOp>   avOpLOr        "||"
+%token <avOp>   avOpEq         "=="
+%token <avOp>   avOpNeq        "!="
 %token <avOp>                  '~'
 %token <avOp>                  '&'
 %token <avOp>                  '|'
 %token <avOp>                  '^'
-%token <avOp>  avLLsh          "<<"
-%token <avOp>  avLRsh          ">>"
-%token <avOp>  avALsh          "<<<"
-%token <avOp>  avARsh          ">>>"
-%token <avOp>  avQuestion      '?'
-%token <avOp>  avColon         ':'
+%token <avOp>  avOpLLsh        "<<"
+%token <avOp>  avOpLRsh        ">>"
+%token <avOp>  avOpALsh        "<<<"
+%token <avOp>  avOpARsh        ">>>"
+%token <avOp>  avOpQuestion    '?'
+%token <avOp>  avOpColon       ':'
 %token <avOp>                  '['
 %token <avOp>                  ']'
 %token <avOp>                  '('
 %token <avOp>                  ')'
 %token <avOp>                  '@'
+%token <avOp>  avOpNColon      "-:"
+%token <avOp>  avOpPColon      "+:"
+%token <avOp>  avOpRNand       "~&"
+%token <avOp>  avOpRNor        "~|"
+%token <avOp>  avOpRXnor       "~^"
+
+
+ // predence
+%right '?' ':'
+%left  avOpLor
+%left  avOpLAnd
+%left  '|' avOpRNor
+%left  '^' avOpRXnor
+%left  '&' avOpRNand
+%left  avOpEq avOpNeq
+%left  '>' '<' avOpGe avOpLe
+%left  avOpLLsh avOpLRsh avOpALsh avOpARsh
+%left  '+' '-'
+%left  '*' '/' '%'
+%left  avOpPower
+%left  avOpPos avOpNeg avOpLNot avOpNot
 
  // keywords
 %token <avKW> avAlways         "always"
