@@ -40,11 +40,10 @@
   int                         avTOp;			/* operator, dummy value, not suppose to be used */
   int                         avTKW;			/* keyword, dummy value, not suppose to be used */
   int                         avTPri;			/* primitive gate, dummy value, not suppose to be used */
+  vector<std::string>         avTIDList;		/* a list of IDs */
   std::string                 avTID;     		/* identifier */
-  vector<AVNetParameter *>    *avTParaList;		/* parameter list */
-  AVNetParameter              *avTPara;			/* a single parameter assign */
-  vector<AVNetPort *>         *avTPortList;		/* port list */
-  AVNetPort                   *avTPort;			/* a port */
+  vector<AVNetParameter>      avTParaList;		/* parameter list */
+  AVNetParameter              avTPara;			/* a single parameter assign */
 }
 
 
@@ -157,7 +156,7 @@
 %token <avTKW> avLiblist        "liblist"      /* not supported yet */
 %token <avTKW> avLibrary        "library"      /* not supported yet */
 %token <avTKW> avLocalparam     "localparam"   /* not supported yet */
-%token <avTKW> avMacromodule    "macromodule"  /* not supported yet */
+%token <avTKW> avMacromodule    "macromodule"  
 %token <avTKW> avMedium         "medium"       /* not supported yet */
 %token <avTKW> avModule         "module"
 %token <avTKW> avNegedge        "negedge"
@@ -233,51 +232,146 @@
 
 %%
 
- // Files
+// The formal BNF synteax from Annex A, IEEE Std 1364-2001 Version C Verilog Hardware Description Language
+
+ // A.1.3 Module and primitive source text
 source_text 
-    : /* empty */                      {    }
-    | descriptionList                  {    }
+    : /* empty */ 
+    | descriptionList
     ;
 
 descriptionList 
-    : description                      {    }
-    | descriptionList description      {    }
+    : description      
+    | descriptionList description 
     ;
 
 description 
-    : module_declaration               {    }
+    : module_declaration      
       // only module is supported right now, macros (define) should be handled by Lexer already
-    | error                            {    }
+    | error        
     ;
 
-// modules
 module_declaration
-    : avModule avID module_parameter_list '(' module_port_list ')' ';'
-                                       { db->insert(new AVNetModule($2, $3, $4)); }
+    : module_keyword avID module_parameter_port_list { db->push(AVNetModule($2, $3)); /* initialise a module */}
+        '(' list_of_ports ')' ';'
+        module_items
+      avEndmodule                      { db->insert(db->current()); db->pop(); /* pop out the module */}
+    | module_keyword avID module_parameter_port_list { db->push(AVNetModule($2, $3)); /* initialise a module */}
+        '(' list_of_port_declarations ')' ';'
+        non_port_module_items
+      avEndmodule                      { db->insert(db->current()); db->pop(); /* pop out the module */}
+    | module_keyword avID module_parameter_port_list { db->push(AVNetModule($2, $3));/* initialise a module */ }
+        non_port_module_items
+      avEndmodule                      { db->insert(db->current()); db->pop(); /* pop out the module */}
     ;
 
-// the parameter list in module declaration
-module_parameter_list<avTParaList>
-    : /* empty */                      { $$ = NULL; }
-    | '#' '(' ')'                      { $$ = NULL; }
-    | '#' '(' module_parameter_assigns ')' { $$ = $3; }
+module_keyword
+    : avModule
+    | avMacromodule
     ;
 
-module_parameter_assigns<avTParaList>
-    : parameter_assign                 { $$ = new vector<AVNetParameter *>(1); $$->front() = $1; }
-    | module_parameter_assigns ',' parameter_assign { $$->push_back($3); }
+// A.1.4 Module paramters and ports
+module_parameter_port_list<avTParaList>
+    : /* empty */   
+    | '#' '(' ')'   
+    | '#' '(' parameter_declarations ')' { $$ = $3; }
     ;
 
-parameter_assign<avTPara>
-    : avID '=' expression              { $$ = new AVNetParameter($3); }
+parameter_declarations<avTParaList>
+    : parameter_declaration              { $$.push_back($1); }
+    | parameter_declarations ',' parameter_declaration { $$.push_back($3); }
     ;
 
-// module port list
-module_port_list<avPortList>
-    : avID                             { $$ = new vector<AVNetPort *>(1); $$->front() = new AVNetPort($1); }
-    | module_port_list ',' avID        { $$->push_back(new AVNetPort($3)); }
+// port list, not fully supported yet
+list_of_ports
+    : /* empty */
+    | identifier_list                  { db->current()->insert_ports($1); /* inser a list of ports */}
     ;
+
+list_of_port_declarations
+    : port_declaration
+    | list_of_port_declarations ',' port_declaration
+    ;
+
+port_declaration
+    : input_declaration
+    | output_declaration
+//    | inout_declaration
+    ;
+
+// A.1.5 Module items
+module_items
+    : module_or_generate_item
+    | port_declaration
+    | generated_instantiation
+//    | local_parameter_declaration
+    | parameter_declaration
+//    | specify_block
+//    | specparam_declaration
+    ;
+
+non_port_module_item
+    : module_or_generate_item
+    | generated_instantiation
+//    | local_parameter_declaration
+    | parameter_declaration
+//    | specify_block
+//    | specparam_declaration
+    ;
+
+module_or_generate_item
+    : module_or_generate_item_declaration
+//    | parameter_override
+    | continuous_assign
+    | gate_instantiation
+//    | udp_instantiation
+    | module_instantiation
+//    | initial_construct
+    | always_construct
+    ;
+    
+module_or_generate_item_declaration
+    : net_declaration
+    | reg_declaration
+    | integer_declaration
+//    | real_declaration
+//    | time_declaration
+//    | realtime_declaration
+//    | event_declaration
+    | genvar_declaration
+//    | task_declaration
+    | function_declaration
+    ;
+
+// A.2.1 Declaration types
+// A.2.1.1 Module parameter declarations
+
+
+
 
 // parameter declaration inside module
-module_item_parameter<avTPara>
-    : avParameter parameter_assign ';' { $$ = $2; }
+module_item_parameter
+    : avParameter parameter_assign ';' { if(!(db->current())) {db->current()->add_parameter($2); }
+                                         else {avError("Error: Unexpected parameter declaration outside a module!")}; }
+    ;
+
+// port declaration
+module_item_port
+    : avInput identifier_list ';'          { if(!(db->current())) {db->current()->add_ports(0, avRange(1), $2); }
+                                             else {avError("Error: Unexpected port declaration outside a module!")}; }
+    | avInput avRange identifier_list ';'  { if(!(db->current())) {db->current()->add_ports(0, $2, $3); }
+                                             else {avError("Error: Unexpected port declaration outside a module!")}; }
+    | avOutput identifier_list ';'         { if(!(db->current())) {db->current()->add_ports(1, avRange(1), $2); }
+                                             else {avError("Error: Unexpected port declaration outside a module!")}; }
+    | avOutput avRange identifier_list ';' { if(!(db->current())) {db->current()->add_ports(1, $2, $3); }
+                                             else {avError("Error: Unexpected port declaration outside a module!")}; }
+
+// wire declaration
+module_item_wire:
+    : avWire 
+
+
+
+identifier_list<avTIDList>
+    : avID                             { $$.push_back($1); }
+    | identifier_list ',' avID         { $$.push_back($3); }
