@@ -32,15 +32,19 @@
 #include <cstdio>
 #include <cstdlib>
 #include <vector>
+#include <stack>
 
 %}
 
 %union {
   int                         avTOp;			/* operator, dummy value, not suppose to be used */
   int                         avTKW;			/* keyword, dummy value, not suppose to be used */
-  int                         avTPri;			/* Primitive gate, dummy value, not suppose to be used */
-  std::string                 avTID;     		/* Identifier */
-  vector<AVNetParameter *>    *avTParaList;		/* Parameter list */
+  int                         avTPri;			/* primitive gate, dummy value, not suppose to be used */
+  std::string                 avTID;     		/* identifier */
+  vector<AVNetParameter *>    *avTParaList;		/* parameter list */
+  AVNetParameter              *avTPara;			/* a single parameter assign */
+  vector<AVNetPort *>         *avTPortList;		/* port list */
+  AVNetPort                   *avTPort;			/* a port */
 }
 
 
@@ -231,8 +235,8 @@
 
  // Files
 source_text 
-    :    /* empty */                   {    }
-    |    descriptionList               {    }
+    : /* empty */                      {    }
+    | descriptionList                  {    }
     ;
 
 descriptionList 
@@ -248,9 +252,32 @@ description
 
 // modules
 module_declaration
-    : avModule avID module_parameter_list module_port_list ';'
-        module_items
-      avEndmodule                      { db->insert(new AVNetModule($2, $3, $4, $6)); }
+    : avModule avID module_parameter_list '(' module_port_list ')' ';'
+                                       { db->insert(new AVNetModule($2, $3, $4)); }
+    ;
 
 // the parameter list in module declaration
 module_parameter_list<avTParaList>
+    : /* empty */                      { $$ = NULL; }
+    | '#' '(' ')'                      { $$ = NULL; }
+    | '#' '(' module_parameter_assigns ')' { $$ = $3; }
+    ;
+
+module_parameter_assigns<avTParaList>
+    : parameter_assign                 { $$ = new vector<AVNetParameter *>(1); $$->front() = $1; }
+    | module_parameter_assigns ',' parameter_assign { $$->push_back($3); }
+    ;
+
+parameter_assign<avTPara>
+    : avID '=' expression              { $$ = new AVNetParameter($3); }
+    ;
+
+// module port list
+module_port_list<avPortList>
+    : avID                             { $$ = new vector<AVNetPort *>(1); $$->front() = new AVNetPort($1); }
+    | module_port_list ',' avID        { $$->push_back(new AVNetPort($3)); }
+    ;
+
+// parameter declaration inside module
+module_item_parameter<avTPara>
+    : avParameter parameter_assign ';' { $$ = $2; }
