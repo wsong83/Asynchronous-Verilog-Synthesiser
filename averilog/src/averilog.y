@@ -63,6 +63,7 @@
 %token <avTOp>                  '<'
 %token <avTOp>   avOpGe         ">="
 %token <avTOp>   avOpLe         "<="
+%token <avTOp>   avOpNbassign
 %token <avTOp>                  '!'
 %token <avTOp>   avOpLAnd       "&&"
 %token <avTOp>   avOpLOr        "||"
@@ -305,7 +306,7 @@ module_items
     | port_declaration
     | generated_instantiation
 //    | local_parameter_declaration
-    | parameter_declaration
+    | parameter_declaration ';'
 //    | specify_block
 //    | specparam_declaration
     ;
@@ -314,7 +315,7 @@ non_port_module_item
     : module_or_generate_item
     | generated_instantiation
 //    | local_parameter_declaration
-    | parameter_declaration
+    | parameter_declaration ';'
 //    | specify_block
 //    | specparam_declaration
     ;
@@ -331,22 +332,474 @@ module_or_generate_item
     ;
     
 module_or_generate_item_declaration
-    : net_declaration
+    : net_declaration ';'
     | reg_declaration
-    | integer_declaration
+    | integer_declaration ';'
 //    | real_declaration
 //    | time_declaration
 //    | realtime_declaration
 //    | event_declaration
-    | genvar_declaration
+    | genvar_declaration ';'
 //    | task_declaration
     | function_declaration
     ;
 
 // A.2.1 Declaration types
 // A.2.1.1 Module parameter declarations
+parameter_declaration
+    : avParameter list_of_param_assignments
+    ;
+
+// A.2.1.2 Port declarations
+input_declaration 
+    : avInput list_of_port_identifiers
+    | avInput range_declaration list_of_port_identifiers
+    ;
+
+output_declaration 
+    : avOutput list_of_port_identifiers
+    | avOutput range_declaration list_of_port_identifiers
+    ;
+
+// A.2.1.3 Type declarations
+genvar_declaration 
+    : avGenvar list_of_genvar_identifiers
+    ;
+
+integer_declaration
+    : avInteger list_of_variable_identifiers
+    ;
+
+net_declaration 
+    : net_type list_of_net_identifiers
+    | net_type range list_of_net_identifiers
+    ;
+
+net_type
+    : avWire
+    ;
+
+reg_declaration 
+    : avReg list_of_variable_identifiers
+    | avReg range list_of_variable_identifiers
+    ;
+
+// A.2.3 Declaration lists
+list_of_genvar_identifiers 
+    : genvar_identifier 
+    | list_of_genvar_identifiers ',' genvar_identifier
+    ;
+
+//list_of_net_decl_assignments ::= net_decl_assignment { , net_decl_assignment }
+
+list_of_net_identifiers
+    : net_identifier 
+    | net_identifier dimensions
+    | list_of_net_identifiers ',' net_identifier
+    | list_of_net_identifiers ',' net_identifier dimentions
+    ;
+
+// prepare for multi-dimention
+dimentions
+    : dimention
+    | dimentions dimention
+    ;
+
+list_of_param_assignments 
+    : param_assignment
+    | list_of_param_assignments ',' param_assignment
+    ;
+
+list_of_port_identifiers 
+    : port_identifier 
+    | list_of_port_identifier ',' port_identifier
+    ;
+
+//list_of_real_identifiers ::= real_type { , real_type }
+//list_of_specparam_assignments ::= specparam_assignment { , specparam_assignment }
+//list_of_variable_identifiers ::= variable_type { , variable_type }
+//list_of_variable_port_identifiers ::= port_identifier [ = constant_expression ] { , port_identifier [ = constant_expression ] }
+
+// A.2.4 Declaration assignments
+//net_decl_assignment ::= net_identifier = expression
+
+param_assignment 
+    : parameter_identifier '=' constant_expression
+    ;
+
+//specparam_assignment ::= specparam_identifier = constant_mintypmax_expression | pulse_control_specparam
+//pulse_control_specparam ::= PATHPULSE$ = ( reject_limit_value [ , error_limit_value ] ) ; 
+//| PATHPULSE$specify_input_terminal_descriptor$specify_output_terminal_descriptor
+//= ( reject_limit_value [ , error_limit_value ] ) ;
+//error_limit_value ::= limit_value
+//reject_limit_value ::= limit_value
+//limit_value ::= constant_mintypmax_expression
+
+//A.2.5 Declaration ranges
+dimension 
+    : '[' dimension_constant_expression ':' dimension_constant_expression ']'
+    ;
+
+range
+    : '[' msb_constant_expression ':' lsb_constant_expression ']'
+    ;
+
+//A.2.6 Function declarations
+function_declaration
+    : avFunction function_identifier ';'
+        list_of_function_item_declaration
+        function_statement
+      avEndfunction
+    | avFunction avAutomatic function_identifier ';'
+        list_of_function_item_declaration
+        function_statement
+      avEndfunction
+    | avFunction function_identifier '(' function_port_list ')' ';'
+        list_of_function_item_declaration
+        function_statement
+      avEndfunction
+    | avFunction avAutomatic function_identifier '(' function_port_list ')' ';'
+        list_of_function_item_declaration
+        function_statement
+      avEndfunction
+    ;
+
+list_of_function_item_declaration
+    : function_item_declaration
+    | list_of_function_item_declaration function_item_declaration
+    ;
+
+function_item_declaration 
+    : block_item_declaration
+    | tf_input_declaration
+    ;
+
+function_port_list 
+    : tf_input_declaration
+    | function_port_list ',' tf_input_declaration
+    ;
+
+//A.2.8 Block item declarations
+block_item_declaration 
+    : block_reg_declaration
+//| { attribute_instance } event_declaration
+    | integer_declaration
+//| { attribute_instance } local_parameter_declaration
+    | parameter_declaration
+//| { attribute_instance } real_declaration
+//| { attribute_instance } realtime_declaration
+//| { attribute_instance } time_declaration
+    ;
+
+block_reg_declaration 
+    : avReg list_of_block_variable_identifiers
+    | avReg range list_of_block_variable_identifiers
+    ;
+
+list_of_block_variable_identifiers 
+    : block_variable_type 
+    | list_of_block_variable_identifiers ',' block_variable_type
+    ;
+
+block_variable_type 
+    : variable_identifier
+    | variable_identifier dimensions
+    ;
 
 
+//A.4.1 Module instantiation
+module_instantiation 
+    : module_identifier module_instances ';'
+    | module_identifier parameter_value_assignment module_instances ';'
+    ;
+
+module_instances
+    : module_instance
+    | module_instance ',' module_instance
+    ;
+
+parameter_value_assignment 
+    : '#' '(' list_of_parameter_assignments ')'
+    ;
+
+list_of_parameter_assignments 
+    : ordered_parameter_assignments
+    | named_parameter_assignments
+    ;
+  
+ordered_parameter_assignments
+    : ordered_parameter_assignment
+    | ordered_parameter_assignments ',' ordered_parameter_assignment
+    ;
+
+named_parameter_assignments
+    : named_parameter_assignment
+    | named_parameter_assignments ',' named_parameter_assignment
+    ;
+
+ordered_parameter_assignment 
+    : expression
+    ;
+
+named_parameter_assignment 
+    : '.' parameter_identifier '('  ')'
+    | '.' parameter_identifier '(' expression ')'
+    ;
+
+module_instance 
+    : name_of_instance '(' ')'
+    | name_of_instance '(' list_of_port_connections ')'
+    ;
+
+name_of_instance 
+    : module_instance_identifier 
+    | module_instance_identifier range
+    ;
+
+list_of_port_connections 
+    : ordered_port_connections
+    | named_port_connections
+    ;
+
+ordered_port_connections
+    : ordered_port_connection 
+    | ordered_port_connections ',' ordered_port_connection
+    ;
+
+named_port_connections
+    : named_port_connection
+    | named_port_connections ',' named_port_connection
+    ;
+
+ordered_port_connection 
+    : expression
+    ;
+
+named_port_connection 
+    : '.' port_identifier '(' ')'
+    | '.' port_identifier '(' expression ')'
+    ;
+
+//A.4.2 Generated instantiation
+generated_instantiation 
+    : avGenerate generate_item avEndgenerate
+    ;
+
+generate_item_or_null
+    : /* empty */
+    | generate_item
+    ;
+
+generate_item 
+    : generate_conditional_statement
+    | generate_case_statement
+    | generate_loop_statement
+    | generate_block
+    | module_or_generate_item
+    ;
+
+generate_conditional_statement 
+    : avIf '(' constant_expression ')' generate_item_or_null 
+    | avIf '(' constant_expression ')' generate_item_or_null avElse generate_item_or_null
+    ;
+
+generate_case_statement 
+    : avCase '(' constant_expression ')' genvar_case_items avEndcase
+    ;
+genvar_case_items
+    : genvar_case_item
+    | genvar_case_items genvar_case_item
+    ;
+
+genvar_case_item 
+    : constant_expressions ':' generate_item_or_null 
+    | avDefault : generate_item_or_null
+    | avDefault generate_item_or_null
+    ;
+
+constant_expressions
+    : constant_expression
+    | constant_expressions ',' constant_expression
+    ;
+
+generate_loop_statement 
+    : avFor '(' genvar_assignment ';' constant_expression ';' genvar_assignment ')' avBegin ':' generate_block_identifier generate_item_or_null avEnd
+    ;
+
+genvar_assignment 
+    : genvar_identifier '=' constant_expression
+    ;
+
+generate_block 
+    | avBegin generate_item_or_null avEnd
+    : avBegin ':' generate_block_identifier  generate_item_or_null avEnd
+    ;
+
+//A.6.1 Continuous assignment statements
+continuous_assign 
+    : avAssign list_of_net_assignments ';'
+    | avAssign delay3 list_of_net_assignments ';'
+    ;
+
+list_of_net_assignments 
+    : net_assignment 
+    | list_of_net_assignments ',' net_assignment
+    ;
+
+net_assignment 
+    : net_lvalue '=' expression
+    ;
+
+//A.6.2 Procedural blocks and assignments
+//initial_construct ::= initial statement
+always_construct 
+    : avAlways statement
+    ;
+
+blocking_assignment 
+    : variable_lvalue '=' expression
+    ;
+
+nonblocking_assignment 
+    : variable_lvalue avOpNbassign expression
+    | variable_lvalue avOpNbassign delay_or_event_control expression
+    ;
+
+//procedural_continuous_assignments ::=
+//assign variable_assignment
+//| deassign variable_lvalue
+//| force variable_assignment
+//| force net_assignment
+//| release variable_lvalue
+//| release net_lvalue
+//function_blocking_assignment ::= variable_lvalue = expression
+//function_statement_or_null ::=
+//function_statement
+//| { attribute_instance } ;
+
+
+//A.6.4 Statements
+statement
+    : blocking_assignment ';'
+    | case_statement
+    | conditional_statement
+//| { attribute_instance } disable_statement
+//| { attribute_instance } event_trigger
+    | loop_statement
+    | nonblocking_assignment ';'
+//| { attribute_instance } par_block
+//| { attribute_instance } procedural_continuous_assignments ;
+//| { attribute_instance } procedural_timing_control_statement
+//| { attribute_instance } seq_block
+//| { attribute_instance } system_task_enable
+//| { attribute_instance } task_enable
+//| { attribute_instance } wait_statement
+    ;
+
+statement_or_null 
+    : /* empty */
+    | statement
+    ;
+
+function_statement 
+    : function_blocking_assignment ';'
+    | function_case_statement
+    | function_conditional_statement
+    | function_loop_statement
+//| { attribute_instance } function_seq_block
+//| { attribute_instance } disable_statement
+//| { attribute_instance } system_task_enable
+    ;
+
+
+//A.6.5 Timing control statements
+delay_control 
+    : '#' delay_value
+    | '#' '(' mintypmax_expression ')'
+    ;
+
+delay_or_event_control 
+    : delay_control
+//| event_control
+//| repeat ( expression ) event_control
+    ;
+
+//disable_statement ::=
+//disable hierarchical_task_identifier ;
+//| disable hierarchical_block_identifier ;
+//event_control ::=
+//@ event_identifier
+//| @ ( event_expression )
+//| @*
+//| @ (*)
+//event_trigger ::=
+//-> hierarchical_event_identifier ;
+//event_expression ::=
+//expression
+//| hierarchical_identifier
+//| posedge expression
+//| negedge expression
+//| event_expression or event_expression
+//| event_expression , event_expression
+//procedural_timing_control_statement ::=
+//delay_or_event_control statement_or_null
+//wait_statement ::=
+//wait ( expression ) statement_or_null
+
+//A.6.6 Conditional statements
+conditional_statement 
+    : avIf '(' expression ')' statement_or_null 
+    | avIf '(' expression ')' statement_or_null avElse statement_or_null
+    | avIf '(' expression ')' statement_or_null if_else_if_statements avElse statement_or_null
+    ;
+
+if_else_if_statements 
+    : avElse avIf '(' expression ')' statement_or_null
+    | if_else_if_statements avElse avIf '(' expression ')' statement_or_null
+    ;
+
+function_conditional_statement 
+    : avIf '(' expression ')' statement_or_null 
+    | avIf '(' expression ')' statement_or_null avElse statement_or_null
+    | avIf '(' expression ')' statement_or_null function_if_else_if_statements avElse statement_or_null
+    ;
+
+function_if_else_if_statements 
+    : avElse avIf '(' expression ')' statement_or_null
+    | function_if_else_if_statements avElse avIf '(' expression ')' statement_or_null
+    ;
+
+//A.6.7 Case statements
+case_statement 
+    : avCase '(' expression ')' case_items avEndcase
+    ;
+
+case_items
+    : case_item
+    | case_items case_item
+    ;
+
+case_item 
+    : expressions ':' statement_or_null
+    | avDefault ':' statement_or_null
+    | avDefault statement_or_null
+    ;
+
+expressions
+    : expression
+    | expressions ',' expression
+    ;
+
+function_case_statement ::=
+case ( expression )
+function_case_item { function_case_item } endcase
+| casez ( expression )
+function_case_item { function_case_item } endcase
+| casex ( expression )
+function_case_item { function_case_item } endcase
+function_case_item ::=
+expression { , expression } : function_statement_or_null
+| default [ : ] function_statement_or_null
 
 
 // parameter declaration inside module
