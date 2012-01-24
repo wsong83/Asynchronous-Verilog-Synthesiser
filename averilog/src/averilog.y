@@ -37,13 +37,10 @@
 %}
 
 %union {
-  int                         avTOp;			/* operator, dummy value, not suppose to be used */
-  int                         avTKW;			/* keyword, dummy value, not suppose to be used */
-  int                         avTPri;			/* primitive gate, dummy value, not suppose to be used */
-  vector<std::string>         avTIDList;		/* a list of IDs */
-  std::string                 avTID;     		/* identifier */
-  vector<AVNetParameter>      avTParaList;		/* parameter list */
-  AVNetParameter              avTPara;			/* a single parameter assign */
+  vector<std::string>         tIDList;		/* a list of IDs */
+  std::string                 tID;     		/* identifier */
+  vector<AVNetParameter>      tParaList;	/* parameter list */
+  AVNetParameter              tPara;		/* a single parameter assign */
 }
 
 
@@ -51,183 +48,167 @@
 // token definitions
 
 // operators
-%token <avTOp>                  '{'
-%token <avTOp>                  '}'
-%token <avTOp>                  '+'
-%token <avTOp>                  '-'
-%token <avTOp>                  '*'
-%token <avTOp>                  '/'
-%token <avTOp>   avOpPower      "**"
-%token <avTOp>                  '%'
-%token <avTOp>                  '>'
-%token <avTOp>                  '<'
-%token <avTOp>   avOpGe         ">="
-%token <avTOp>   avOpLe         "<="
-%token <avTOp>   avOpNbassign
-%token <avTOp>                  '!'
-%token <avTOp>   avOpLAnd       "&&"
-%token <avTOp>   avOpLOr        "||"
-%token <avTOp>   avOpEq         "=="
-%token <avTOp>   avOpNeq        "!="
-%token <avTOp>                  '~'
-%token <avTOp>                  '&'
-%token <avTOp>                  '|'
-%token <avTOp>                  '^'
-%token <avTOp>  avOpLLsh        "<<"
-%token <avTOp>  avOpLRsh        ">>"
-%token <avTOp>  avOpALsh        "<<<"
-%token <avTOp>  avOpARsh        ">>>"
-%token <avTOp>  avOpQuestion    '?'
-%token <avTOp>  avOpColon       ':'
-%token <avTOp>                  '['
-%token <avTOp>                  ']'
-%token <avTOp>                  '('
-%token <avTOp>                  ')'
-%token <avTOp>                  '@'
-%token <avTOp>  avOpColon      "-:"
-%token <avTOp>  avOpPColon      "+:"
-%token <avTOp>  avOpRNand       "~&"
-%token <avTOp>  avOpRNor        "~|"
-%token <avTOp>  avOpRXnor       "~^"
-
+%token oPower       "**"
+%token oGe          ">="
+%token oLe          "<="   
+%token oLAnd        "&&"
+%token oLOr         "||"
+%token oEq          "=="
+%token oNeq         "!="
+%token oLLsh        "<<"
+%token oLRsh        ">>"
+%token oALsh        "<<<"
+%token oARsh        ">>>"
+%token oNColon      "-:"
+%token oPColon      "+:"
+%token oRNand       "~&"
+%token oRNor        "~|"
+%token oRXnor       "~^"
+%token oRXnor1      "^~"
+%token oPos
+%token oNeg
+%token oLNot
+%token oNot
 
  // predence
 %right '?' ':'
-%left  avTOpLor
-%left  avOpLAnd
-%left  '|' avOpRNor
-%left  '^' avOpRXnor
-%left  '&' avOpRNand
-%left  avOpEq avOpNeq
-%left  '>' '<' avOpGe avOpLe
-%left  avOpLLsh avOpLRsh avOpALsh avOpARsh
+%left  "||"
+%left  "&&"
+%left  '|' "~|"
+%left  '^' "~^" "^~"
+%left  '&' "~&"
+%left  "==" "!="
+%left  '>' '<' "<=" ">="
+%left  "<<" ">>" "<<<" ">>>"
 %left  '+' '-'
 %left  '*' '/' '%'
-%left  avOpPower
-%left  avOpPos avOpNeg avOpLNot avOpNot
+%left  "**"
+%left  oPos oNeg oLNot oNot
 
  // keywords
-%token <avTKW> avAlways         "always"
-%token <avTKW> avAssign         "assign"
-%token <avTKW> avAutomatic      "automatic"    /* not supported yet */
-%token <avTKW> avBegin          "begin"
-%token <avTKW> avCase           "case"
-%token <avTKW> avCasex          "casex"        /* not supported yet */
-%token <avTKW> avCasez          "casez"        /* not supported yet */
-%token <avTKW> avCell           "cell"         /* not supported yet */
-%token <avTKW> avConfig         "config"       /* not supported yet */
-%token <avTKW> avDeassign       "deassign"     /* not supported yet */
-%token <avTKW> avDefault        "default"      /* not supported yet */
-%token <avTKW> avDefparam       "defparam"     /* not supported yet */
-%token <avTKW> avDesign         "design"	      /* not supported yet */
-%token <avTKW> avDisable        "disable"      /* not supported yet */
-%token <avTKW> avEdge           "edge"         /* not supported yet */
-%token <avTKW> avElse           "else"
-%token <avTKW> avEnd            "end"
-%token <avTKW> avEndcase        "endcase"
-%token <avTKW> avEndconfig      "endconfig"    /* not supported yet */
-%token <avTKW> avEndfunction    "endfunction"
-%token <avTKW> avEndgenerate    "endgenerate"
-%token <avTKW> avEndmodule      "endmodule"
-%token <avTKW> avEndprimitive   "endprimitive" /* not supported yet */
-%token <avTKW> avEndspecify     "endspecify"   /* not supported yet */
-%token <avTKW> avEndtable       "endtable"     /* not supported yet */
-%token <avTKW> avEndtask        "endtask"      /* not supported yet */
-%token <avTKW> avEvent          "event"        /* not supported yet */
-%token <avTKW> avFor            "for"
-%token <avTKW> avForce          "force"        /* not supported yet */
-%token <avTKW> avForever        "forever"      /* not supported yet */
-%token <avTKW> avFork           "fork"         /* not supported yet */
-%token <avTKW> avFunction       "function"
-%token <avTKW> avGenerate       "generate"
-%token <avTKW> avGenvar         "genvar"
-%token <avTKW> avHighz0         "highz0"       /* not supported yet */
-%token <avTKW> avHighz1         "highz1"       /* not supported yet */
-%token <avTKW> avIf             "if"
-%token <avTKW> avIfnone         "ifnone"       /* not supported yet */
-%token <avTKW> avIncdir         "incdir"       /* not supported yet */
-%token <avTKW> avInclude        "include"      /* not supported yet */
-%token <avTKW> avInitial        "initial"      /* not supported yet */
-%token <avTKW> avInout          "inout"
-%token <avTKW> avInput          "input"
-%token <avTKW> avInstance       "instance"     /* not supported yet */
-%token <avTKW> avInteger        "integer"
-%token <avTKW> avJoin           "join"         /* not supported yet */
-%token <avTKW> avLarge          "large"        /* not supported yet */
-%token <avTKW> avLiblist        "liblist"      /* not supported yet */
-%token <avTKW> avLibrary        "library"      /* not supported yet */
-%token <avTKW> avLocalparam     "localparam"   /* not supported yet */
-%token <avTKW> avMacromodule    "macromodule"  
-%token <avTKW> avMedium         "medium"       /* not supported yet */
-%token <avTKW> avModule         "module"
-%token <avTKW> avNegedge        "negedge"
-%token <avTKW> avNoshowcancelled "noshowcancelled"  /* not supported yet */
-%token <avTKW> avOutput         "output"
-%token <avTKW> avParameter      "parameter"
-%token <avTKW> avPosedge        "posedge"
-%token <avTKW> avPrimitive      "primitive"    /* not supported yet */
-%token <avTKW> avPulsestyle_onevent "pulsestyle_onevent"  /* not supported yet */
-%token <avTKW> avPulsestyle_ondetect "pulsestyle_ondetect"  /* not supported yet */
-%token <avTKW> avReal           "real"         /* not supported yet */
-%token <avTKW> avRealtime       "realtime"     /* not supported yet */
-%token <avTKW> avReg            "reg"
-%token <avTKW> avRelease        "release"      /* not supported yet */
-%token <avTKW> avRepeat         "repeat"       /* not supported yet */
-%token <avTKW> avScalared       "scalared"     /* not supported yet */
-%token <avTKW> avShowcancelled  "showcancelled" /* not supported yet */
-%token <avTKW> avSigned         "signed"       /* not supported yet */
-%token <avTKW> avSmall          "small"        /* not supported yet */
-%token <avTKW> avSpecify        "specify"      /* not supported yet */
-%token <avTKW> avSpecparam      "specparam"    /* not supported yet */
-%token <avTKW> avStrong0        "strong0"      /* not supported yet */
-%token <avTKW> avStrong1        "strong1"      /* not supported yet */
-%token <avTKW> avSupply0        "supply0"      /* not supported yet */
-%token <avTKW> avSupply1        "supply1"      /* not supported yet */
-%token <avTKW> avTable          "table"        /* not supported yet */
-%token <avTKW> avTask           "task"         /* not supported yet */
-%token <avTKW> avTime           "time"         /* not supported yet */
-%token <avTKW> avTriand         "triand"       /* not supported yet */
-%token <avTKW> avTrior          "trior"        /* not supported yet */
-%token <avTKW> avTrireg         "trireg"       /* not supported yet */
-%token <avTKW> avUnsigned       "unsigned"     /* not supported yet */
-%token <avTKW> avUse            "use"          /* not supported yet */
-%token <avTKW> avVectored       "vectored"     /* not supported yet */
-%token <avTKW> avWait           "wait"         /* not supported yet */
-%token <avTKW> avWand           "wand"         /* not supported yet */
-%token <avTKW> avWeak0          "weak0"        /* not supported yet */
-%token <avTKW> avWeak1          "weak1"        /* not supported yet */
-%token <avTKW> avWhile          "while"        /* not supported yet */
-%token <avTKW> avWire           "wire"
-%token <avTKW> avWor            "wor"          /* not supported yet */
+%token kAlways         "always"
+%token kAssign         "assign"
+%token kAutomatic      "automatic"    /* not supported yet */
+%token kBegin          "begin"
+%token kCase           "case"
+%token kCasex          "casex"        /* not supported yet */
+%token kCasez          "casez"        /* not supported yet */
+%token kCell           "cell"         /* not supported yet */
+%token kConfig         "config"       /* not supported yet */
+%token kDeassign       "deassign"     /* not supported yet */
+%token kDefault        "default"      /* not supported yet */
+%token kDefparam       "defparam"     /* not supported yet */
+%token kDesign         "design"	      /* not supported yet */
+%token kDisable        "disable"      /* not supported yet */
+%token kEdge           "edge"         /* not supported yet */
+%token kElse           "else"
+%token kEnd            "end"
+%token kEndcase        "endcase"
+%token kEndconfig      "endconfig"    /* not supported yet */
+%token kEndfunction    "endfunction"
+%token kEndgenerate    "endgenerate"
+%token kEndmodule      "endmodule"
+%token kEndprimitive   "endprimitive" /* not supported yet */
+%token kEndspecify     "endspecify"   /* not supported yet */
+%token kEndtable       "endtable"     /* not supported yet */
+%token kEndtask        "endtask"      /* not supported yet */
+%token kEvent          "event"        /* not supported yet */
+%token kFor            "for"
+%token kForce          "force"        /* not supported yet */
+%token kForever        "forever"      /* not supported yet */
+%token kFork           "fork"         /* not supported yet */
+%token kFunction       "function"
+%token kGenerate       "generate"
+%token kGenvar         "genvar"
+%token kHighz0         "highz0"       /* not supported yet */
+%token kHighz1         "highz1"       /* not supported yet */
+%token kIf             "if"
+%token kIfnone         "ifnone"       /* not supported yet */
+%token kIncdir         "incdir"       /* not supported yet */
+%token kInclude        "include"      /* not supported yet */
+%token kInitial        "initial"      /* not supported yet */
+%token kInout          "inout"
+%token kInput          "input"
+%token kInstance       "instance"     /* not supported yet */
+%token kInteger        "integer"
+%token kJoin           "join"         /* not supported yet */
+%token kLarge          "large"        /* not supported yet */
+%token kLiblist        "liblist"      /* not supported yet */
+%token kLibrary        "library"      /* not supported yet */
+%token kLocalparam     "localparam"   /* not supported yet */
+%token kMacromodule    "macromodule"  
+%token kMedium         "medium"       /* not supported yet */
+%token kModule         "module"
+%token kNegedge        "negedge"
+%token kNoshowcancelled "noshowcancelled"  /* not supported yet */
+%token kOutput         "output"
+%token kParameter      "parameter"
+%token kPosedge        "posedge"
+%token kPrimitive      "primitive"    /* not supported yet */
+%token kPulsestyle_onevent "pulsestyle_onevent"  /* not supported yet */
+%token kPulsestyle_ondetect "pulsestyle_ondetect"  /* not supported yet */
+%token kReal           "real"         /* not supported yet */
+%token kRealtime       "realtime"     /* not supported yet */
+%token kReg            "reg"
+%token kRelease        "release"      /* not supported yet */
+%token kRepeat         "repeat"       /* not supported yet */
+%token kScalared       "scalared"     /* not supported yet */
+%token kShowcancelled  "showcancelled" /* not supported yet */
+%token kSigned         "signed"       /* not supported yet */
+%token kSmall          "small"        /* not supported yet */
+%token kSpecify        "specify"      /* not supported yet */
+%token kSpecparam      "specparam"    /* not supported yet */
+%token kStrong0        "strong0"      /* not supported yet */
+%token kStrong1        "strong1"      /* not supported yet */
+%token kSupply0        "supply0"      /* not supported yet */
+%token kSupply1        "supply1"      /* not supported yet */
+%token kTable          "table"        /* not supported yet */
+%token kTask           "task"         /* not supported yet */
+%token kTime           "time"         /* not supported yet */
+%token kTriand         "triand"       /* not supported yet */
+%token kTrior          "trior"        /* not supported yet */
+%token kTrireg         "trireg"       /* not supported yet */
+%token kUnsigned       "unsigned"     /* not supported yet */
+%token kUse            "use"          /* not supported yet */
+%token kVectored       "vectored"     /* not supported yet */
+%token kWait           "wait"         /* not supported yet */
+%token kWand           "wand"         /* not supported yet */
+%token kWeak0          "weak0"        /* not supported yet */
+%token kWeak1          "weak1"        /* not supported yet */
+%token kWhile          "while"        /* not supported yet */
+%token kWire           "wire"
+%token kWor            "wor"          /* not supported yet */
 
  // primitives
-%token <avTPri> avAnd           "and"
-%token <avTPri> avOr            "or"
-%token <avTPri> avNot           "not"
-%token <avTPri> avNand          "nand"
-%token <avTPri> avNor           "nor"
-%token <avTPri> avXor           "xor"
-%token <avTPri> avXnor          "xnor"
-%token <avTPri> avBuf           "buf"
-%token <avTPri> avBufif0        "bufif0"   /* not supported yet */
-%token <avTPri> avBufif1        "bufif1"   /* not supported yet */
-%token <avTPri> avNotif0        "notif0"   /* not supported yet */
-%token <avTPri> avnotif1        "notif1"   /* not supported yet */
-%token <avTPri> avPulldown      "pulldown" /* not supported yet */
-%token <avTPri> avPullup        "pullup"   /* not supported yet */
-%token <avTPri> avCmos          "cmos"     /* not supported yet */
-%token <avTPri> avNmos          "nmos"     /* not supported yet */
-%token <avTPri> avPmos          "pmos"     /* not supported yet */
-%token <avTPri> avRcmos         "rcmos"    /* not supported yet */
-%token <avTPri> avRnmos         "rnmos"    /* not supported yet */
-%token <avTPri> avRpmos         "rpmos"    /* not supported yet */
-%token <avTPri> avRtran         "rtran"    /* not supported yet */
-%token <avTPri> avRtranif0      "rtranif0" /* not supported yet */
-%token <avTPri> avRtranif1      "rtranif1" /* not supported yet */
-%token <avTPri> avTran          "tran"     /* not supported yet */
-%token <avTPri> avTranif0       "tranif0"  /* not supported yet */
-%token <avTPri> avTranif1       "tranif1"  /* not supported yet */
+%token pAnd           "and"
+%token pOr            "or"
+%token pNot           "not"
+%token pNand          "nand"
+%token pNor           "nor"
+%token pXor           "xor"
+%token pXnor          "xnor"
+%token pBuf           "buf"
+%token pBufif0        "bufif0"   /* not supported yet */
+%token pBufif1        "bufif1"   /* not supported yet */
+%token pNotif0        "notif0"   /* not supported yet */
+%token pnotif1        "notif1"   /* not supported yet */
+%token pPulldown      "pulldown" /* not supported yet */
+%token pPullup        "pullup"   /* not supported yet */
+%token pCmos          "cmos"     /* not supported yet */
+%token pNmos          "nmos"     /* not supported yet */
+%token pPmos          "pmos"     /* not supported yet */
+%token pRcmos         "rcmos"    /* not supported yet */
+%token pRnmos         "rnmos"    /* not supported yet */
+%token pRpmos         "rpmos"    /* not supported yet */
+%token pRtran         "rtran"    /* not supported yet */
+%token pRtranif0      "rtranif0" /* not supported yet */
+%token pRtranif1      "rtranif1" /* not supported yet */
+%token pTran          "tran"     /* not supported yet */
+%token pTranif0       "tranif0"  /* not supported yet */
+%token pTranif1       "tranif1"  /* not supported yet */
 
+ // other
+%token id
 
 %start source_text
 
@@ -253,40 +234,34 @@ description
     ;
 
 module_declaration
-    : module_keyword avID module_parameter_port_list { db->push(AVNetModule($2, $3)); /* initialise a module */}
+    : kModule id module_parameter_port_list
         '(' list_of_ports ')' ';'
         module_items
-      avEndmodule                      { db->insert(db->current()); db->pop(); /* pop out the module */}
-    | module_keyword avID module_parameter_port_list { db->push(AVNetModule($2, $3)); /* initialise a module */}
-        '(' list_of_port_declarations ')' ';'
-        non_port_module_items
-      avEndmodule                      { db->insert(db->current()); db->pop(); /* pop out the module */}
-    | module_keyword avID module_parameter_port_list { db->push(AVNetModule($2, $3));/* initialise a module */ }
-        non_port_module_items
-      avEndmodule                      { db->insert(db->current()); db->pop(); /* pop out the module */}
-    ;
-
-module_keyword
-    : avModule
-    | avMacromodule
+      kEndmodule
+    | kModule id module_parameter_port_list
+        module_items
+      kEndmodule                   
     ;
 
 // A.1.4 Module paramters and ports
-module_parameter_port_list<avTParaList>
+module_parameter_port_list
     : /* empty */   
     | '#' '(' ')'   
-    | '#' '(' parameter_declarations ')' { $$ = $3; }
+    | '#' '(' parameter_declarations ')' 
     ;
 
-parameter_declarations<avTParaList>
-    : parameter_declaration              { $$.push_back($1); }
-    | parameter_declarations ',' parameter_declaration { $$.push_back($3); }
+parameter_declarations
+    : parameter_declaration              
+    | parameter_declarations ',' parameter_declaration 
     ;
+
+
+////////////////////////////////////////////////////////////////////////
 
 // port list, not fully supported yet
 list_of_ports
     : /* empty */
-    | identifier_list                  { db->current()->insert_ports($1); /* inser a list of ports */}
+    | identifier_list                  
     ;
 
 list_of_port_declarations
