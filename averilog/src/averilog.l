@@ -1,3 +1,10 @@
+%option reentrant bison-bridge
+%option never-interactive
+%option noyywrap
+%option yylineno
+%option prefix="av"
+%option outfile="averilog.lex.c" header-file="averilog.lex.h"
+
 %{
 /*
  * Copyright (c) 2011 Wei Song <songw@cs.man.ac.uk> 
@@ -34,11 +41,9 @@
  
 typedef averilog::av_parser::token token;
 
-%}
+#define YYSTYPE int
 
-%option never-interactive
-%option c++
-%option noyywrap
+%}
 
 ws          [ \t\b\f\r\n]+
 dig_d       [0-9]
@@ -117,7 +122,10 @@ operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
 int main()
 {
 int tmp;
-yyFlexLexer* lexer = new yyFlexLexer;
-while((tmp = lexer->yylex()) != 0) std::cout << tmp << " ";
+int lval;
+yyscan_t scanner;
+avlex_init (&scanner);
+while((tmp = avlex(&lval, scanner)) != 0) std::cout << tmp << " ";
+avlex_destroy(scanner);
 return 0;
 }
