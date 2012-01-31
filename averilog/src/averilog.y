@@ -1,4 +1,10 @@
 // -*- Bison -*-
+%skeleton "lalr1.cc"
+%defines
+%define namespace "averilog"
+%define parser_class_name "av_parser"
+%language "c++"
+%output "averilog.cc"
 %{
 /*
  * Copyright (c) 2011 Wei Song <songw@cs.man.ac.uk> 
