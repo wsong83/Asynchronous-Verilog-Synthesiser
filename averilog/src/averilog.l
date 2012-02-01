@@ -41,7 +41,7 @@
  
 typedef averilog::av_parser::token token;
 
-#define YYSTYPE int
+//#define YYSTYPE int
 
 %}
 
