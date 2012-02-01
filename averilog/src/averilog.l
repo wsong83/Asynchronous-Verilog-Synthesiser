@@ -1,4 +1,4 @@
-%option reentrant bison-bridge
+%option reentrant bison-bridge bison-locations
 %option never-interactive
 %option noyywrap
 %option yylineno
@@ -36,12 +36,13 @@
  
 #include <cstdio>
 #include <iostream>
+#include "averilog_util.h"
 #include "averilog.hh"
- 
+
  
 typedef averilog::av_parser::token token;
-
-//#define YYSTYPE int
+typedef averilog::av_parser::semantic_type YYSTYPE;
+typedef averilog::location YYLTYPE;
 
 %}
 
@@ -115,17 +116,24 @@ operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
 "buf"       { return token::pBuf;   }
 {operator}  { return yytext[0]; }
 {number}    { return token::number; }
-{identifier}  { return token::identifier; }
+{identifier}  { 
+                yylval->tID = new averilog::avID(yytext, yyleng); 
+                return token::identifier; 
+              }
+"//"[^\r\n]*[\r\n] { /* do nothing for comment */ }
+"/*"[.\n\r]*"*/"   { /* do nothing for comment */ }
+{ws}        { /* white space, do nothing */ }
 
 %%
 
 int main()
 {
 int tmp;
-int lval;
+YYSTYPE lval;
 yyscan_t scanner;
+YYLTYPE yyloc;
 avlex_init (&scanner);
-while((tmp = avlex(&lval, scanner)) != 0) std::cout << tmp << " ";
+while((tmp = avlex(&lval, &yyloc, scanner)) != 0) std::cout << tmp << " ";
 avlex_destroy(scanner);
 return 0;
 }

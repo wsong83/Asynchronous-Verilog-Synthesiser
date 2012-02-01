@@ -5,6 +5,8 @@
 %define parser_class_name "av_parser"
 %language "c++"
 %output "averilog.cc"
+%locations
+%lex-param {yyscan_t yyscanner}
 %{
 /*
  * Copyright (c) 2011 Wei Song <songw@cs.man.ac.uk> 
@@ -34,19 +36,21 @@
  *
  */
 
-//#include <cstdio>
-//#include <cstdlib>
-//#include <vector>
-//#include <stack>
-//
+#include <cstdio>
+#include <cstdlib>
+#include <vector>
+#include <stack>
+#include "averilog_util.h"
+#include "averilog.lex.hh"
+
+  typedef avlex yylex;
+
 %}
 
-//%union {
-//  vector<std::string>         tIDList;		/* a list of IDs */
-//  std::string                 tID;     		/* identifier */
-//  vector<AVNetParameter>      tParaList;	/* parameter list */
-//  AVNetParameter              tPara;		/* a single parameter assign */
-//}
+%union {
+  netlist::Number        *tNumber;                    // all sorts of numbers
+  avID                   *tID;                        // identifier
+}
 
 
 ///////////////////////////////////////////////////
@@ -194,8 +198,8 @@
 %token pTranif1       "tranif1"  /* not supported yet */
 
  // other
-%token identifier
-%token number
+%token<tID> identifier
+%token<tNumber> number
 
  // predence
 %right '?' ':'
