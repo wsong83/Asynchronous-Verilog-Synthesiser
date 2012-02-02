@@ -35,8 +35,8 @@ namespace netlist {
 
   class Number {
   public:
-    Number(char* text, int txt_leng, int num_leng); /* convert decimal and integer to number */
-    Number(char* text, int txt_leng);	    /* convert fixed numbers */
+    Number(char *text, int txt_leng, int num_leng); /* convert decimal and integer to number */
+    Number(char *text, int txt_leng);	    /* convert fixed numbers */
 
     int get_value();
     int get_length();

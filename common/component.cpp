@@ -30,7 +30,8 @@
 #include <stdlib.h>
 #include "component.h"
 
-netlist::Number::Number(char* text, int txt_leng, int num_leng) 
+// decimal or integer
+netlist::Number::Number(char *text, int txt_leng, int num_leng) 
   : value(0), num_leng(num_leng), txt_value(num_leng,'0'), 
     valid(false), valuable(false) 
 {
@@ -51,3 +52,30 @@ netlist::Number::Number(char* text, int txt_leng, int num_leng)
   valid = true;
   valuable = true;
 }
+
+// fixed numbers
+netlist::Number::Number(char *text, int txt_leng)
+  : value(0), num_leng(0), valid(false), valuable(false)
+{
+  int index;
+
+  // get the num_leng
+  if(!isdigit(text[index]))
+    num_leng = 1;
+  else {
+    while(isdigit(text[index]) || (text[index]=='_')) {
+      if(isdigit(text[index]))
+	num_leng = num_leng * 10 + text[index] - '0';
+      index++;
+    }
+  }
+
+  if(num_leng == 0) return;	// wrong number leng, empty number
+
+  switch(text[index++]) {
+  case 'b':
+  case 'd':
+  case 'o':
+  case 'h':
+  default: return;		// wrong number format
+  }
