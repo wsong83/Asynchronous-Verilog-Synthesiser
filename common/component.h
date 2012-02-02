@@ -50,8 +50,22 @@ namespace netlist {
     bool valid;			/* true when number format is ok */
     bool valuable;		/* true when the number is const and deterministic */
 
+    //helpers
+
+    // convert the verilog fixed number field to number structure
+    bool bin2num(char *text, int txt_leng, int start);
+    bool dec2num(char *text, int txt_leng, int start);
+    bool oct2num(char *text, int txt_leng, int start);
+    bool hex2num(char *text, int txt_leng, int start);
+    void update_value();
+    void update_txt_value();
+
   };
 
+  // overload operators
+  Number& operator+ (Number& lhs, const Number& rhs);
+  Number& operator+ (Number& lhs, const string& rhs);
+  Number& operator+ (const string& lhs, Number& rhs);
 
 
 }

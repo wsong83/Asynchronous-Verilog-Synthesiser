@@ -50,7 +50,7 @@ ws          [ \t\b\f\r\n]+
 dig_d       [0-9]
 dig_h       [a-fxzA-FXZ0-9]
 dec         ({dig_d}+_?)+
-fnum        {dec}?\'[bdoh]({dig_h}+_?)+
+fnum        {dec}?\'[bdohBDOH]({dig_h}+_?)+
 number      {dec}|{fnum}
 sid         [a-zA-Z_][a-zA-Z0-9_$]*
 escid	    \\[^ \t\f\r\n]+
