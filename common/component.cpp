@@ -85,6 +85,12 @@ netlist::Number::Number(char *text, int txt_leng)
   }
 }
 
+netlist::Number::Number(const string& txt_val, int num_leng, bool valuable) 
+  : value(0), num_leng(num_leng), txt_value(txt_val), valid(true), valuable(valuable)
+{
+  update_value();
+}
+
 bool netlist::Number::bin2num(char *text, int txt_leng, int start) {
   int i = num_leng + 4;
   txt_value.resize(i, '0');

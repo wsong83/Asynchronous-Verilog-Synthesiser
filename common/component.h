@@ -37,11 +37,15 @@ namespace netlist {
   public:
     Number(char *text, int txt_leng, int num_leng); /* convert decimal and integer to number */
     Number(char *text, int txt_leng);	    /* convert fixed numbers */
+    Number(const string& txt_val, int num_leng, bool valuable); /* convert a binary string to number */    
 
     int get_value();
     int get_length();
     bool is_valuable();
     bool is_valid();
+    Number& operator+ (Number& rhs);
+    Number& operator<< (int rhs);
+    string& to_string();
 
     //private:
     unsigned int value;         /* number value, valid when valuable */
@@ -63,9 +67,6 @@ namespace netlist {
   };
 
   // overload operators
-  Number& operator+ (Number& lhs, const Number& rhs);
-  Number& operator+ (Number& lhs, const string& rhs);
-  Number& operator+ (const string& lhs, Number& rhs);
 
 
 }
