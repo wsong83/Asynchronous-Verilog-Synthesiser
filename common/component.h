@@ -30,6 +30,8 @@
 #define _H_COMPONENT_
 
 #include <string>
+#include <ostream>
+#include "defines.h"
 
 namespace netlist {
 
@@ -37,17 +39,18 @@ namespace netlist {
   public:
     Number(char *text, int txt_leng, int num_leng); /* convert decimal and integer to number */
     Number(char *text, int txt_leng);	    /* convert fixed numbers */
-    Number(const string& txt_val, int num_leng, bool valuable); /* convert a binary string to number */    
+    Number(const string& txt_val, int num_leng); /* convert a binary string to number */    
 
-    int get_value();
+    unsigned int get_value();
+    const string& get_txt_value();
     int get_length();
     bool is_valuable();
     bool is_valid();
-    Number& operator+ (Number& rhs);
+    Number& truncate (int lhs, int rhs);
+    Number& operator+ (const Number& rhs);
     Number& operator<< (int rhs);
-    string& to_string();
 
-    //private:
+  private:
     unsigned int value;         /* number value, valid when valuable */
     int num_leng;		/* the number of digits in the number */
     std::string txt_value;	/* literals of the number, useful when non-deterministic */
@@ -67,7 +70,7 @@ namespace netlist {
   };
 
   // overload operators
-
+  std::ostream& operator<< (std::ostream&, const Number&);
 
 }
 

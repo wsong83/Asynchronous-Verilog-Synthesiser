@@ -39,7 +39,7 @@ namespace averilog {
   public:
     std::string name;
     avID(char* text, int leng)
-      : name(std::string(text,leng)) {}
+      : name(text,leng) {}
   };
 
 
