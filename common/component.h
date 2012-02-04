@@ -39,16 +39,17 @@ namespace netlist {
   public:
     Number(char *text, int txt_leng, int num_leng); /* convert decimal and integer to number */
     Number(char *text, int txt_leng);	    /* convert fixed numbers */
-    Number(const string& txt_val, int num_leng); /* convert a binary string to number */    
+    Number(const std::string& txt_val, int num_leng); /* convert a binary string to number */    
 
-    unsigned int get_value();
-    const string& get_txt_value();
-    int get_length();
-    bool is_valuable();
-    bool is_valid();
+    unsigned int get_value() const;
+    const std::string& get_txt_value() const;
+    int get_length() const;
+    bool is_valuable() const;
+    bool is_valid() const;
     Number& truncate (int lhs, int rhs);
-    Number& operator+ (const Number& rhs);
-    Number& operator<< (int rhs);
+    Number& addition (const Number& rhs);
+    Number& operator+= (const Number& rhs);
+    Number& lfsh (int rhs);
 
   private:
     unsigned int value;         /* number value, valid when valuable */
@@ -70,6 +71,8 @@ namespace netlist {
   };
 
   // overload operators
+  Number operator+ (const Number& lhs, const Number& rhs);
+  Number operator<< (const Number& lhs, int rhs);
   std::ostream& operator<< (std::ostream&, const Number&);
 
 }

@@ -26,12 +26,13 @@
  *
  */
 
-#include <ctype.h>
-#include <stdlib.h>
+#include <cctype>
+#include <cassert>
+#include <cstdlib>
 #include <algorithm>
 #include "component.h"
 
-use namespace netlist;
+using namespace netlist;
 
 // decimal or integer
 netlist::Number::Number(char *text, int txt_leng, int num_leng) 
@@ -88,7 +89,7 @@ netlist::Number::Number(char *text, int txt_leng)
   }
 }
 
-netlist::Number::Number(const string& txt_val, int num_leng) 
+netlist::Number::Number(const std::string& txt_val, int num_leng) 
   : value(0), num_leng(num_leng), txt_value(txt_val), valid(true), valuable(false)
 {
   if(txt_value.length() < num_leng)
@@ -99,23 +100,23 @@ netlist::Number::Number(const string& txt_val, int num_leng)
   update_value();
 }
 
-unsigned int netlist::Number::get_value() {
+unsigned int netlist::Number::get_value() const {
   return value;
 }
 
-const string& netlist::Number::get_txt_value() {
+const std::string& netlist::Number::get_txt_value() const {
   return txt_value;
 }
 
-int netlist::Number::get_length() {
+int netlist::Number::get_length() const {
   return num_leng;
 }
 
-bool netlist::Number::is_valuable() {
+bool netlist::Number::is_valuable() const {
   return valuable;
 }
 
-bool netlist::Number::is_valid() {
+bool netlist::Number::is_valid() const {
   return valid;
 }
 
@@ -128,17 +129,17 @@ Number& netlist::Number::truncate (int lhs, int rhs) {
 
 }
 
-Number& netlist::Number::operator+ (const Number& rhs) {
+Number& netlist::Number::addition (const Number& rhs) {
   if(valuable && rhs.valuable 	// both are valuable
      && ((value/2+1)+(rhs.value/2+1) <= (1<<BIT_SIZE_OF_UINT-1)) // will not overflow
      ) {
     value = (value + rhs.value);
-    num_leng = min(BIT_SIZE_OF_UINT, max(num_leng, rhs.num_leng)+1);
+    num_leng = std::min((int)(BIT_SIZE_OF_UINT), (int)(std::max(num_leng, rhs.num_leng)+1));
     update_txt_value();
   } else {			// do text addition
     valuable = false;
     value = 0;
-    num_leng = max(num_leng, rhs.num_leng)+1;		   // calculate the new length
+    num_leng = std::max(num_leng, rhs.num_leng)+1;		   // calculate the new length
     txt_value.insert(0, num_leng-txt_value.length(), '0'); // expend the string
     unsigned int leng_diff = num_leng-rhs.num_leng;
     char c = '0';
@@ -231,11 +232,16 @@ Number& netlist::Number::operator+ (const Number& rhs) {
   return *this;
 }
 
-Number& netlist::Number::operator<< (int rhs) {
+Number& netlist::Number::operator+= (const Number& rhs) {
+  addition(rhs);
+  return *this;
+}
+
+Number& netlist::Number::lfsh (int rhs) {
   assert(rhs >= 0);
 
-  txt_value.erase(0, rhs);
   txt_value.append(rhs, '0');
+  num_leng += rhs;
   update_value();
   return *this;
 }
@@ -274,13 +280,35 @@ bool netlist::Number::dec2num(char *text, int txt_leng, int start) {
       else if(c != '_')
 	return false;		// unrecognizable character
     }
-    update_txt_value;
+    update_txt_value();
     return true;
   } else { 			// too long, must use text addition, very slow
-    Number base("0", 1, true);
+    Number base(std::string("0"), 1);
     for(int i=start+1; i==txt_leng; i++) {
       char c = text[i];
-      if(c >= '0' && c<= '9')
+      if(c >= '0' && c<= '9') {
+	base = (base<<3) + (base<<1);
+	switch(c) {
+	case '0': break;
+	case '1': base += Number(std::string("1"), 1); break;
+	case '2': base += Number(std::string("10"), 2); break;
+	case '3': base += Number(std::string("11"), 2); break;
+	case '4': base += Number(std::string("100"), 3); break;
+	case '5': base += Number(std::string("101"), 3); break;
+	case '6': base += Number(std::string("110"), 3); break;
+	case '7': base += Number(std::string("111"), 3); break;
+	case '8': base += Number(std::string("1000"), 4); break;
+	case '9': base += Number(std::string("1001"), 4); break;
+	}
+      } else if(c != '_')
+	return false;
+    }
+    base.truncate(num_leng-1, 0);
+    txt_value = base.txt_value;
+    value = base.value;
+    valuable = base.valuable;
+    return true;
+  }
 }
 
 bool netlist::Number::oct2num(char *text, int txt_leng, int start) {
@@ -355,8 +383,8 @@ void netlist::Number::update_value() {
   value = 0;
 
   if(num_leng > BIT_SIZE_OF_UINT	    // too long
-     || string::npos != txt_value.find('x') // have 'x'
-     || string::npos != txt_value.find('z') // have 'z'
+     || std::string::npos != txt_value.find('x') // have 'x'
+     || std::string::npos != txt_value.find('z') // have 'z'
      ) {
     valuable = false; return;
   } else
@@ -399,8 +427,20 @@ void netlist::Number::update_txt_value() {
   txt_value.erase(0,4);
 }
 
+Number netlist::operator+ (const Number& lhs, const Number& rhs) {
+  Number dd(lhs);
+  dd.addition(rhs);
+  return dd;
+}
+
+Number netlist::operator<< (const Number& lhs, int rhs) {
+  Number dd(lhs);
+  dd.lfsh(rhs);
+  return dd;
+}
+
 std::ostream& netlist::operator<< (std::ostream& os, const Number& hs) {
-  if(hs.valuable())		// able to be represented as a decimal
+  if(hs.is_valuable())		// able to be represented as a decimal
     os << hs.get_value();
   else
     os << hs.get_length() << "'b" << hs.get_txt_value();
