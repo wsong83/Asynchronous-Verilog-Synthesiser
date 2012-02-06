@@ -41,7 +41,7 @@
 #include <vector>
 #include <stack>
 #include "averilog_util.h"
-#include "averilog.lex.hh"
+#include "averilog.lex.h"
 
   typedef avlex yylex;
 

@@ -1,0 +1,61 @@
+# Copyright (c) 2011 Wei Song <songw@cs.man.ac.uk> 
+#    Advanced Processor Technologies Group, School of Computer Science
+#    University of Manchester, Manchester M13 9PL UK
+#
+#    This source code is free software; you can redistribute it
+#    and/or modify it in source code form under the terms of the GNU
+#    General Public License as published by the Free Software
+#    Foundation; either version 2 of the License, or (at your option)
+#    any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+#
+# Makefile
+# Due to be replace by autoconf tool suite
+# 06/02/2012   Wei Song
+#
+#
+
+# variables
+INCDIRS = -I./ -I../../
+TARGETS = averilog.o averilog.lex.o averilog_util.o
+
+# targets
+all: $(TARGETS)
+
+averilog.o: averilog.cc averilog.lex.c averilog_util.h $(wildcard ../../common/*.h)
+	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
+
+averilog.lex.o: averilog.lex.c averilog.cc averilog_util.h $(wildcard ../../common/*.h)
+	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
+
+averilog_util.o: averilog_util.cpp averilog_util.h $(wildcard ../../common/*.h)
+	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
+
+averilog.cc: averilog.y
+	$(BISON_EXE) $< 
+
+averilog.lex.c: averilog.l
+	$(FLEX_EXE) $<
+
+.PHONY: clean test
+
+clean:
+	-rm *.o
+	-rm averilog.lex.*
+	-rm averilog.cc averilog.hh stack.hh location.hh position.hh
+
+test: scanner
+
+scanner: scanner.o $(TARGETS) $(wildcard ../../common/*.h)
+	$(CXX) $< $(TARGETS) -o $@
+
+scanner.o: scanner.cpp averilog.lex.c averilog.cc averilog_util.h $(wildcard ../../common/*.h)
+	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
