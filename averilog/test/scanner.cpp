@@ -20,12 +20,25 @@
  */
 
 /* 
- * Averilog parser utilities.
- * 01/02/2011   Wei Song
+ * 
+ * 06/02/2012   Wei Song
  *
  *
  */
 
-//#include <cstdio>
-#include "averilog_util.h"
+#include "common/defines.h"
+#include "common/component.h"
+#include "averilog/src/averilog_util.h"
+#include "averilog/src/averilog.lex.h"
 
+int main()
+{
+  int tmp;
+  YYSTYPE lval;
+  yyscan_t scanner;
+  YYLTYPE yyloc;
+  avlex_init (&scanner);
+  while((tmp = avlex(&lval, &yyloc, scanner)) != 0) std::cout << tmp << " ";
+  avlex_destroy(scanner);
+  return 0;
+}

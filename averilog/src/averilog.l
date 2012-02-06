@@ -37,12 +37,6 @@
 #include <cstdio>
 #include <iostream>
 #include "averilog_util.h"
-#include "averilog.hh"
-
- 
-typedef averilog::av_parser::token token;
-typedef averilog::av_parser::semantic_type YYSTYPE;
-typedef averilog::location YYLTYPE;
 
 %}
 
@@ -124,16 +118,5 @@ operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
 "/*"[.\n\r]*"*/"   { /* do nothing for comment */ }
 {ws}        { /* white space, do nothing */ }
 
-%%
 
-int main()
-{
-int tmp;
-YYSTYPE lval;
-yyscan_t scanner;
-YYLTYPE yyloc;
-avlex_init (&scanner);
-while((tmp = avlex(&lval, &yyloc, scanner)) != 0) std::cout << tmp << " ";
-avlex_destroy(scanner);
-return 0;
-}
+%%

@@ -6,7 +6,8 @@
 %language "c++"
 %output "averilog.cc"
 %locations
-%lex-param {yyscan_t yyscanner}
+%parse-param {yyscan_t avscanner}
+%lex-param {yyscan_t avscanner}
 %{
 /*
  * Copyright (c) 2011 Wei Song <songw@cs.man.ac.uk> 
@@ -43,7 +44,7 @@
 #include "averilog_util.h"
 #include "averilog.lex.h"
 
-  typedef avlex yylex;
+#define yylex avlex
 
 %}
 

@@ -25,30 +25,25 @@
 
 # variables
 INCDIRS = -I./ -I../../
-TARGETS = averilog.o averilog.lex.o averilog_util.o
+TARGETS = scanner.o
 
 # targets
-all: $(TARGETS)
+all: scanner
 
-averilog.o: averilog.cc averilog.lex.c averilog_util.h $(wildcard ../../common/*.h)
+scanner: scanner.o
+	$(CXX) $< \
+	../../common/component.o \
+	../src/averilog.o \
+	../src/averilog.lex.o \
+	../src/averilog_util.o \
+	-o $@
+
+scanner.o: scanner.cpp
 	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
 
-averilog.lex.o: averilog.lex.c averilog.cc averilog_util.h $(wildcard ../../common/*.h)
-	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
-
-averilog_util.o: averilog_util.cpp averilog_util.h $(wildcard ../../common/*.h)
-	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
-
-averilog.cc: averilog.y
-	$(BISON_EXE) $< 
-
-averilog.lex.c: averilog.l
-	$(FLEX_EXE) $<
 
 .PHONY: clean
 
 clean:
-	-rm *.o
-	-rm averilog.lex.*
-	-rm averilog.cc averilog.hh stack.hh location.hh position.hh
+	-rm *.o scanner
 

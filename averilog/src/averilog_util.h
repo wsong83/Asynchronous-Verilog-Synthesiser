@@ -32,7 +32,6 @@
 #include <string>
 #include "common/component.h"
 
-
 namespace averilog {
 
   class avID {  // identifier without dimension decalration
@@ -45,5 +44,15 @@ namespace averilog {
 
 }
 
+// copy from averilog.lex.h
+#ifndef YY_TYPEDEF_YY_SCANNER_T
+#define YY_TYPEDEF_YY_SCANNER_T
+typedef void* yyscan_t;
+#endif
+
+#include "averilog.hh"
+typedef averilog::av_parser::token token;
+typedef averilog::av_parser::semantic_type YYSTYPE;
+typedef averilog::location YYLTYPE;
 
 #endif

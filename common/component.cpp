@@ -61,7 +61,7 @@ netlist::Number::Number(char *text, int txt_leng, int num_leng)
 netlist::Number::Number(char *text, int txt_leng)
   : value(0), num_leng(0), valid(false), valuable(false)
 {
-  int index;
+  int index = 0;
 
   // get the num_leng
   if(!isdigit(text[index]))
@@ -92,9 +92,11 @@ netlist::Number::Number(char *text, int txt_leng)
 netlist::Number::Number(const std::string& txt_val, int num_leng) 
   : value(0), num_leng(num_leng), txt_value(txt_val), valid(true), valuable(false)
 {
-  if(txt_value.length() < num_leng)
+  assert(num_leng >= 0);
+
+  if(txt_value.length() < (unsigned int)(num_leng))
     txt_value.insert(0,num_leng-txt_value.length(), '0');
-  else if(txt_value.length() > num_leng)
+  else if(txt_value.length() > (unsigned int)(num_leng))
     txt_value.erase(0,txt_value.length()-num_leng);
 
   update_value();
@@ -126,12 +128,13 @@ Number& netlist::Number::truncate (int lhs, int rhs) {
   txt_value = txt_value.substr(txt_value.length()-lhs-1, lhs-rhs+1);
   num_leng = lhs-rhs+1;
   update_value();
-
+  
+  return *this;
 }
 
 Number& netlist::Number::addition (const Number& rhs) {
   if(valuable && rhs.valuable 	// both are valuable
-     && ((value/2+1)+(rhs.value/2+1) <= (1<<BIT_SIZE_OF_UINT-1)) // will not overflow
+     && ((value/2+1)+(rhs.value/2+1) <= (unsigned int)(1<<(BIT_SIZE_OF_UINT-1)) ) // will not overflow
      ) {
     value = (value + rhs.value);
     num_leng = std::min((int)(BIT_SIZE_OF_UINT), (int)(std::max(num_leng, rhs.num_leng)+1));
@@ -269,7 +272,7 @@ bool netlist::Number::bin2num(char *text, int txt_leng, int start) {
 }
 
 bool netlist::Number::dec2num(char *text, int txt_leng, int start) {
-  if(num_leng <= BIT_SIZE_OF_UINT) { // directly calculate the value
+  if((unsigned int)(num_leng) <= BIT_SIZE_OF_UINT) { // directly calculate the value
     txt_value.resize(num_leng, '0');
     valuable = true;
     value = 0;
@@ -382,7 +385,7 @@ bool netlist::Number::hex2num(char *text, int txt_leng, int start) {
 void netlist::Number::update_value() {
   value = 0;
 
-  if(num_leng > BIT_SIZE_OF_UINT	    // too long
+  if((unsigned int)(num_leng) > BIT_SIZE_OF_UINT	    // too long
      || std::string::npos != txt_value.find('x') // have 'x'
      || std::string::npos != txt_value.find('z') // have 'z'
      ) {
