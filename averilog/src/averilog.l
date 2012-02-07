@@ -38,17 +38,22 @@
 #include <iostream>
 #include "averilog_util.h"
 
+/* handle locations */
+#define YY_USER_ACTION yylloc->step(); yylloc->columns(yyleng);
+
 %}
 
-ws          [ \t\b\f\r\n]+
+ws          [ \t\b\f\r]+
 dig_d       [0-9]
 dig_h       [a-fxzA-FXZ0-9]
-dec         ({dig_d}+_?)+
-fnum        {dec}?\'[bdohBDOH]({dig_h}+_?)+
+dec         {dig_d}({dig_d}*_?)*
+fnum        {dec}?\'[bdohBDOH]{dig_h}({dig_h}*_?)*
 sid         [a-zA-Z_][a-zA-Z0-9_$]*
 escid	    \\[^ \t\f\r\n]+
 identifier  {sid}|{escid}
 operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
+
+%x          COMMENT
 
 %%
 
@@ -110,6 +115,10 @@ operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
 {operator}  { return yytext[0]; }
 {fnum}    { 
               yylval->tNumber = new netlist::Number(yytext, yyleng);
+              if(!yylval->tNumber->is_valid()) {
+                error_report("Wrong number format.", yylloc);
+                yyterminate();
+              }
               return token::number; 
             }
 {dec}    { 
@@ -117,12 +126,16 @@ operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
               return token::number; 
             }
 {identifier}  { 
-                yylval->tID = new averilog::avID(yytext, yyleng); 
+                yylval->tID = new averilog::avID(yytext, yyleng);
                 return token::identifier; 
               }
-"//"[^\r\n]*[\r\n] { /* do nothing for comment */ }
-"/*"[.\n\r]*"*/"   { /* do nothing for comment */ }
+"//"[^\n]*[\n] { yylloc->lines();    }
+"/*"        { BEGIN(COMMENT);        }
+<COMMENT>[^\n] { /* do nothing */    }
+<COMMENT><<EOF>> { error_report("EOF in multi-line comment.", yylloc); yyterminate(); }
+<COMMENT>"\n"  { yylloc->lines();    }
+"*/"        { BEGIN(0);              } 
 {ws}        { /* white space, do nothing */ }
-
+"\n"        { yylloc->lines();       }
 
 %%

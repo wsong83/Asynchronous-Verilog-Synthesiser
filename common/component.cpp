@@ -61,7 +61,6 @@ netlist::Number::Number(char *text, int txt_leng)
   // get the num_leng
   if(!isdigit(text[index])) {
     num_leng = 1;
-    index++;
   } else {
     while(isdigit(text[index]) || (text[index]=='_')) {
       if(isdigit(text[index]))
@@ -71,6 +70,8 @@ netlist::Number::Number(char *text, int txt_leng)
   }
 
   if(num_leng == 0) return;	// wrong number leng, empty number
+
+  index++;			// bypass the ' operator
 
   switch(text[index]) {
   case 'b':
@@ -248,9 +249,9 @@ Number& netlist::Number::lfsh (int rhs) {
 
 bool netlist::Number::bin2num(char *text, int txt_leng, int start) {
   int i = num_leng + 4;
-  txt_value.resize(i, '0');
+  txt_value = std::string(i, '0');
   valuable = true;
-  for(int index=txt_leng-1; (i>4 || index==start); index--) {
+  for(int index=txt_leng-1; (i>4 && index!=start); index--) {
     switch(text[index]) {
     case '0': txt_value[--i] = '0'; break;
     case '1': txt_value[--i] = '1'; break;
@@ -270,21 +271,25 @@ bool netlist::Number::bin2num(char *text, int txt_leng, int start) {
 
 bool netlist::Number::dec2num(char *text, int txt_leng, int start) {
   if((unsigned int)(num_leng) <= BIT_SIZE_OF_UINT) { // directly calculate the value
-    txt_value.resize(num_leng, '0');
+    txt_value = std::string(num_leng, '0');
     valuable = true;
     value = 0;
-    for(int i=start+1; i==txt_leng; i++) {
+    for(int i=start+1; i!=txt_leng; i++) {
       char c = text[i];
       if(c >= '0' && c<= '9')
-	value = (value * 10 + c - '0') % (1 << num_leng);
+	value = (value * 10 + c - '0');
       else if(c != '_')
 	return false;		// unrecognizable character
     }
+
+    if((unsigned int)(num_leng) != BIT_SIZE_OF_UINT)
+      value %= (unsigned int)(1) << (unsigned int)(num_leng);
+
     update_txt_value();
     return true;
   } else { 			// too long, must use text addition, very slow
     Number base(std::string("0"), 1);
-    for(int i=start+1; i==txt_leng; i++) {
+    for(int i=start+1; i!=txt_leng; i++) {
       char c = text[i];
       if(c >= '0' && c<= '9') {
 	base = (base<<3) + (base<<1);
@@ -303,7 +308,11 @@ bool netlist::Number::dec2num(char *text, int txt_leng, int start) {
       } else if(c != '_')
 	return false;
     }
-    base.truncate(num_leng-1, 0);
+    if(base.num_leng >= num_leng)
+      base.truncate(num_leng-1, 0);
+    else {
+      base.txt_value.insert(0, num_leng-base.num_leng, '0');
+    }
     txt_value = base.txt_value;
     value = base.value;
     valuable = base.valuable;
@@ -313,9 +322,9 @@ bool netlist::Number::dec2num(char *text, int txt_leng, int start) {
 
 bool netlist::Number::oct2num(char *text, int txt_leng, int start) {
   int i = num_leng + 4;
-  txt_value.resize(i, '0');
+  txt_value = std::string(i, '0');
   valuable = true;
-  for(int index=txt_leng-1; (i>4 || index==start); index--) {
+  for(int index=txt_leng-1; (i>4 && index!=start); index--) {
     switch(text[index]) {
     case '0': txt_value.replace(i-=3, 3, "000"); break;
     case '1': txt_value.replace(i-=3, 3, "001"); break;
@@ -340,9 +349,9 @@ bool netlist::Number::oct2num(char *text, int txt_leng, int start) {
 
 bool netlist::Number::hex2num(char *text, int txt_leng, int start) {
   int i = num_leng + 4;
-  txt_value.resize(i, '0');
+  txt_value = std::string(i, '0');
   valuable = true;
-  for(int index=txt_leng-1; (i>4 || index==start); index--) {
+  for(int index=txt_leng-1; (i>4 && index!=start); index--) {
     switch(text[index]) {
     case '0': txt_value.replace(i-=4, 4, "0000"); break;
     case '1': txt_value.replace(i-=4, 4, "0001"); break;
@@ -415,7 +424,7 @@ void netlist::Number::update_txt_value() {
 
   if(!valuable) return;
 
-  txt_value.resize(i, '0');
+  txt_value = std::string(i, '0');
 
   for( ; i>4 && dd!=0; i-=4, dd>>=4) {
     txt_value[i-1] = (dd>>0)%2 + '0';

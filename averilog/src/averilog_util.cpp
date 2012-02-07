@@ -29,3 +29,6 @@
 //#include <cstdio>
 #include "averilog_util.h"
 
+void averilog::error_report(const std::string& err_msg, YYLTYPE * yyloc, std::ostream& os) {
+  os << "\n" << *yyloc << " Error: " << err_msg << std::endl;
+}

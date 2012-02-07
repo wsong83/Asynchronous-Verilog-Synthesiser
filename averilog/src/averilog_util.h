@@ -30,6 +30,7 @@
 #define _H_AVERILOG_UTIL_
 
 #include <string>
+#include <iostream>
 #include "common/component.h"
 
 namespace averilog {
@@ -54,5 +55,13 @@ typedef void* yyscan_t;
 typedef averilog::av_parser::token token;
 typedef averilog::av_parser::semantic_type YYSTYPE;
 typedef averilog::location YYLTYPE;
+
+namespace averilog {
+
+  // report errors in scanner
+  void error_report(const std::string& err_msg, YYLTYPE * yyloc, std::ostream& os = std::cerr);
+
+
+}
 
 #endif
