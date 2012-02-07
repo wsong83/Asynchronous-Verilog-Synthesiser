@@ -42,6 +42,7 @@ namespace averilog {
       : name(text,leng) {}
   };
 
+  std::ostream& operator<< (std::ostream&, const avID&);
 
 }
 

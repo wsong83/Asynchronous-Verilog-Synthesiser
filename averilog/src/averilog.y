@@ -53,6 +53,8 @@
   avID                   *tID;                        // identifier
 }
 
+%destructor { delete $$; } <*>
+
 
 ///////////////////////////////////////////////////
 // token definitions

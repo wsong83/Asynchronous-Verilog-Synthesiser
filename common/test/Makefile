@@ -24,18 +24,18 @@
 #
 
 # variables
-INCDIRS = -I./
+INCDIRS = -I./ -I../
+TARGETS = test_identifier
 
 # targets
-TARGETS = number.o identifier.o
-
-# actions
 all: $(TARGETS)
 
-$(TARGETS): %.o:%.cpp %.h
-	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
+test_identifier: test_identifier.cpp ../identifier.o
+	$(CXX) $(INCDIRS) $(CXXFLAGS) $< -o  ../identifier.o $@
+
 
 .PHONY: clean
 
 clean:
-	-rm *.o
+	-rm *.o $(TARGETS)
+

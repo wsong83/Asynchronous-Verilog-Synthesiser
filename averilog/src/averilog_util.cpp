@@ -29,6 +29,13 @@
 //#include <cstdio>
 #include "averilog_util.h"
 
+using namespace averilog;
+
 void averilog::error_report(const std::string& err_msg, YYLTYPE * yyloc, std::ostream& os) {
   os << "\n" << *yyloc << " Error: " << err_msg << std::endl;
+}
+
+std::ostream& averilog::operator<< (std::ostream& os, const avID& hs) {
+  os << hs.name;
+  return os;
 }

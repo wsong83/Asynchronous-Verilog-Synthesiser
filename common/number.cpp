@@ -31,7 +31,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <algorithm>
-#include "component.h"
+#include "number.h"
 
 using namespace netlist;
 
