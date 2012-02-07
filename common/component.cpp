@@ -29,6 +29,7 @@
 #include <cctype>
 #include <cassert>
 #include <cstdlib>
+#include <iostream>
 #include <algorithm>
 #include "component.h"
 
@@ -46,15 +47,9 @@ netlist::Number::Number(char *text, int txt_leng, int num_leng)
       return;
   }
 
-  unsigned int tmp = value;
-  int i = num_leng-1;
-  while(tmp != 0) {
-    txt_value[i--] = tmp%2;
-    tmp >>= 1;
-  }
-
   valid = true;
   valuable = true;
+  update_txt_value();
 }
 
 // fixed numbers
@@ -64,9 +59,10 @@ netlist::Number::Number(char *text, int txt_leng)
   int index = 0;
 
   // get the num_leng
-  if(!isdigit(text[index]))
+  if(!isdigit(text[index])) {
     num_leng = 1;
-  else {
+    index++;
+  } else {
     while(isdigit(text[index]) || (text[index]=='_')) {
       if(isdigit(text[index]))
 	num_leng = num_leng * 10 + text[index] - '0';
@@ -266,6 +262,7 @@ bool netlist::Number::bin2num(char *text, int txt_leng, int start) {
     default: return false;
     }
   }
+
   txt_value.erase(0,4);
   update_value();
   return true;
@@ -420,7 +417,7 @@ void netlist::Number::update_txt_value() {
 
   txt_value.resize(i, '0');
 
-  for( ; i>4; i-=4) {
+  for( ; i>4 && dd!=0; i-=4, dd>>=4) {
     txt_value[i-1] = (dd>>0)%2 + '0';
     txt_value[i-2] = (dd>>1)%2 + '0';
     txt_value[i-3] = (dd>>2)%2 + '0';

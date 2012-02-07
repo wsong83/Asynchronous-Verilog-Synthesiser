@@ -45,7 +45,6 @@ dig_d       [0-9]
 dig_h       [a-fxzA-FXZ0-9]
 dec         ({dig_d}+_?)+
 fnum        {dec}?\'[bdohBDOH]({dig_h}+_?)+
-number      {dec}|{fnum}
 sid         [a-zA-Z_][a-zA-Z0-9_$]*
 escid	    \\[^ \t\f\r\n]+
 identifier  {sid}|{escid}
@@ -109,7 +108,14 @@ operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
 "xnor"      { return token::pXnor;  }
 "buf"       { return token::pBuf;   }
 {operator}  { return yytext[0]; }
-{number}    { return token::number; }
+{fnum}    { 
+              yylval->tNumber = new netlist::Number(yytext, yyleng);
+              return token::number; 
+            }
+{dec}    { 
+              yylval->tNumber = new netlist::Number(yytext, yyleng, 32);
+              return token::number; 
+            }
 {identifier}  { 
                 yylval->tID = new averilog::avID(yytext, yyleng); 
                 return token::identifier; 

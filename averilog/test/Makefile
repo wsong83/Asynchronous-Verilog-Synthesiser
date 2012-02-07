@@ -33,7 +33,6 @@ all: scanner
 scanner: scanner.o
 	$(CXX) $< \
 	../../common/component.o \
-	../src/averilog.o \
 	../src/averilog.lex.o \
 	../src/averilog_util.o \
 	-o $@

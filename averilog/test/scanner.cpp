@@ -38,7 +38,12 @@ int main()
   yyscan_t scanner;
   YYLTYPE yyloc;
   avlex_init (&scanner);
-  while((tmp = avlex(&lval, &yyloc, scanner)) != 0) std::cout << tmp << " ";
+  while((tmp = avlex(&lval, &yyloc, scanner)) != 0) {
+    std::cout << tmp << " ";
+    if(tmp == token::number)
+      std::cout << "Number:" << lval.tNumber->get_value() << ":" << lval.tNumber->get_txt_value() << " ";
+  }
+    
   avlex_destroy(scanner);
   return 0;
 }
