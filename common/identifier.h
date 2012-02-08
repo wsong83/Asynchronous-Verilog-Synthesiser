@@ -32,7 +32,7 @@
 #include <string>
 #include <ostream>
 #include <vector>
-#include "range.h"
+#include "component.h"
 
 namespace netlist {
 
@@ -127,14 +127,14 @@ namespace netlist {
     // constructors
     VIdentifier();
     VIdentifier(const std::string&);
-    VIdentifier(const std::string&, const vector<Range>&);
+    VIdentifier(const std::string&, const std::vector<Range>&);
 
     //helpers
     VIdentifier& operator++ ();
     VIdentifier& add_prefix (const Identifier&);
     
   private:
-    vector<Range> m_range;
+    std::vector<Range> m_range;
     bool numbered;
   };
 

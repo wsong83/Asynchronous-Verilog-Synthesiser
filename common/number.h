@@ -31,7 +31,7 @@
 
 #include <string>
 #include <ostream>
-#include "defines.h"
+#include "component.h"
 
 namespace netlist {
 

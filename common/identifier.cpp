@@ -171,7 +171,7 @@ netlist::VIdentifier::VIdentifier()
 netlist::VIdentifier::VIdentifier(const std::string& nm)
   : Identifier(nm), numbered(false) {  }
 
-netlist::VIdentifier::VIdentifier(const std::string& nm, const vector<Range>& rg)
+netlist::VIdentifier::VIdentifier(const std::string& nm, const std::vector<Range>& rg)
   : Identifier(nm), m_range(rg), numbered(false) {  }
 
 VIdentifier& netlist::VIdentifier::operator++ () {

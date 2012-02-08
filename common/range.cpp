@@ -36,23 +36,25 @@ netlist::Range::Range(int sel)
   : c(sel), type(TConst) {  }
 
 netlist::Range::Range(const Expression& sel)
-  : v(sel), type(TVar) 
+  : type(TVar) 
 { 
   if(sel.is_valuable()) {	// constant expression, value it now
     c = sel.get_value();
     type = TConst;
+  } else {
+    v = new Expression(sel);
   }
  };
 
 netlist::Range::Range(const Range_Exp& sel)
-  : r(sel), type(TRange) 
+  : type(TRange) 
 {  
   if(sel.first == sel.second) {	// only one bit is selected
     if(sel.first.is_valuable()) { // constant expression, value it now
       c = sel.first.get_value();
       type = TConst;
     } else {			// variable expression
-      v = sel.first;
+      v = new Expression(sel.first);
       type = TVar;
     }
   }   
@@ -72,17 +74,25 @@ netlist::Range::Range(const Range_Exp& sel, int ctype)
     // error
     assert(1 == 0);
   }
-  r = m_sel;
 
   if(m_sel.first == m_sel.second) {	// only one bit is selected
     if(m_sel.first.is_valuable()) { // constant expression, value it now
       c = m_sel.first.get_value();
       type = TConst;
     } else {			// variable expression
-      v = m_sel.first;
+      v = new Expression(m_sel.first);
       type = TVar;
+    } else {
+      r = new Range_Exp(m_sel);
     }
   } 
+}
+
+netlist::Range::~Range() {
+  switch(type) {
+  case TVar:    delete v; break;
+  case TRange:  delete r; break;
+  }
 }
 
 bool netlist::Range::is_valuable() {

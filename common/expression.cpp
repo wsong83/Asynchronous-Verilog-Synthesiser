@@ -20,51 +20,21 @@
  */
 
 /* 
- * Range declaration and definition
+ * Expressions
  * 08/02/2011   Wei Song
  *
  *
  */
 
-#ifndef _H_RANGE_
-#define _H_RANGE_
+#include "expression.h"
 
-#include <utility>
-#include "component.h"
+using namespace netlist;
 
-namespace netlist {
-
-  typedef std::pair<Expression, Expression> Range_Exp;
-
-  class Range {
-  public:
-    // constructors
-    Range(int);			/* select by a fix number */
-    Range(const Expression&);	/* select by an expression  */
-    Range(const Range_Exp&);    /* declare or select by a range expression */
-    Range(const Range_Exp&, int); /* select by a range expression using positive or negtive colon */
-    ~Range();
-
-    // helpers
-    bool is_valuable();
-    bool is_single();
-    
-  private:
-    union {
-      int c;			/* constant */
-      Expression* v;		/* variable */
-      Range_Exp* r;		/* range expression */
-    };
-
-    enum type_t {
-      TConst, 
-      TVar, 
-      TRange} type;
-    
-
-  };
+netlist::Expression::Expression(unsigned int exp) {}
 
 
-}
+netlist::Expression::Expression(const Number exp) {}
 
-#endif
+bool netlist::Expression::is_valuable() {return false;}
+
+int netlist::Expression::get_value() { return 0; }

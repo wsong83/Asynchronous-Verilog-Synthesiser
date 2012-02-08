@@ -29,7 +29,31 @@
 #ifndef _H_COMPONENT_
 #define _H_COMPONENT_
 
+namespace netlist {
+  // number.h
+  class Number;			/* number */
+
+  // identifier.h
+  class Identifier;		/* identifier base class */
+  class BIdentifier;		/* block name */
+  class FIdentifier;		/* function name */
+  class MIdentifier;		/* module name */
+  class IIdentifier;		/* instance name */
+  class PIdentifier;		/* parameter name */
+  class VIdentifier;		/* variable name, including local variable, wire and reg */
+
+  // range.h
+  class Range;			/* range expression */
+
+  // expression.h
+  class Expression;		/* expressions */
+
+}
+
+#include "defines.h"
 #include "number.h"
 #include "identifier.h"
+#include "range.h"
+#include "expression.h"
 
 #endif
