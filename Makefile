@@ -32,7 +32,7 @@ export CXXFLAGS = -Wall -g
 
 # targets
 SUBDIRS = common averilog/src
-TESTDIRS = averilog/test
+TESTDIRS = averilog/test common/test
 
 # actions
 
@@ -56,3 +56,4 @@ clean:
 	-rm *.o
 	-for d in $(SUBDIRS); do $(MAKE) -C $$d clean; done
 	-for d in $(TESTDIRS); do $(MAKE) -C $$d clean; done
+

@@ -34,6 +34,7 @@
 
 namespace netlist {
 
+  /////////////// base class
   class Identifier {
   public:
     // constructors
@@ -41,7 +42,7 @@ namespace netlist {
 
     // helpers
     int compare(const Identifier& rhs) const; /* compare two identifiers */
-    virtual std::string to_string() const = 0; /* print the indentifier, but different for different sub-classes */
+    virtual std::string to_string() const; /* print the indentifier, but different for different sub-classes */
 
     // data
     std::string name;		/* the name of the identifier */
@@ -53,8 +54,9 @@ namespace netlist {
   bool operator> (const Identifier& lhs, const Identifier& rhs);
   bool operator== (const Identifier& lhs, const Identifier& rhs);
 
+  std::ostream& operator<< (std::ostream&, const Identifier&);
   
-  // block identifier
+  ////////////// block identifier
   class BIdentifier : public Identifier {
   public:
     // constructors
@@ -62,14 +64,23 @@ namespace netlist {
     BIdentifier();
 
     // helpers
-    virtual std::string to_string() const;
     BIdentifier& operator++ ();
+
+  private:
+    bool anonymous;
   };
 
-  std::ostream& operator<< (std::ostream&, const BIdentifier&);
+  
+  ///////////// function identifier
+  class FIdentifier : public Identifier {
+  public:
+    // constructors
+    FIdentifier(const std::string&);
+    
+    // helpers
 
-
-
+  };
+  
 
 
 

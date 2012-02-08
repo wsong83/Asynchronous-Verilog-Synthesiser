@@ -56,6 +56,10 @@ int netlist::Identifier::compare(const Identifier& rhs) const {
   return name.compare(rhs.name);
 }
 
+std::string netlist::Identifier::to_string() const {
+  return name;
+}
+
 bool netlist::operator< (const Identifier& lhs, const Identifier& rhs) {
   return lhs.compare(rhs) < 0;
 }
@@ -68,22 +72,24 @@ bool netlist::operator== (const Identifier& lhs, const Identifier& rhs) {
   return lhs.compare(rhs) == 0;
 }
 
+std::ostream& netlist::operator<< (std::ostream& os, const Identifier& rhs) {
+  os << rhs.to_string();
+  return os;
+}
 
 //////////////////////////////// Block identifier /////////////////
 netlist::BIdentifier::BIdentifier(const std::string& nm)
-  : Identifier(nm)  {  }
+  : Identifier(nm), anonymous(false)  {  }
 
 netlist::BIdentifier::BIdentifier()
-  : Identifier("B0")  {  }
-
-std::string netlist::BIdentifier::to_string() const {
-  return name;
-}
+  : Identifier("B0"), anonymous(true)  {  }
 
 BIdentifier& netlist::BIdentifier::operator++ () {
   // initialize the hasher
   boost::hash<std::string> s2i;
   
+  if(!anonymous) return *this;	// named block idenitifers cannot slef-increase
+
   // increase the block sequence by 1
   name = std::string("B") + boost::lexical_cast<std::string>(atoi(name.substr(1).c_str()) + 1);
 
@@ -93,7 +99,6 @@ BIdentifier& netlist::BIdentifier::operator++ () {
   return *this;
 }
 
-std::ostream& netlist::operator<< (std::ostream& os, const BIdentifier& rhs) {
-  os << rhs.to_string();
-  return os;
-}
+//////////////////////////////// Function identifier /////////////////
+netlist::FIdentifier::FIdentifier(const std::string& nm)
+  : Identifier(nm) {  }
