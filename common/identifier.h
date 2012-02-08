@@ -31,6 +31,8 @@
 
 #include <string>
 #include <ostream>
+#include <vector>
+#include "range.h"
 
 namespace netlist {
 
@@ -43,6 +45,7 @@ namespace netlist {
     // helpers
     int compare(const Identifier& rhs) const; /* compare two identifiers */
     virtual std::string to_string() const; /* print the indentifier, but different for different sub-classes */
+    void hash_update();			   /* update the nearly unique hash id */
 
     // data
     std::string name;		/* the name of the identifier */
@@ -80,9 +83,60 @@ namespace netlist {
     // helpers
 
   };
-  
 
+  ///////////// module identifier
+  class MIdentifier : public Identifier {
+  public:
+    // constructors
+    MIdentifier(const std::string&);
+    
+    // helpers
+    MIdentifier& operator++ ();
 
+  private:
+    bool numbered;
+
+  };
+
+  //////////// instance identifier
+  class IIdentifier : public Identifier {
+  public:
+    // constructors
+    IIdentifier(const std::string&);
+
+    // helpers
+    IIdentifier& operator++ ();
+    IIdentifier& add_prefix (const Identifier&);
+
+  private:
+    bool numbered;
+  };
+
+  /////////// parameter identifier
+  class PIdentifier : public Identifier {
+  public:
+    // constructors
+    PIdentifier(const std::string&);
+
+    // helpers
+  };
+
+  /////////// Variable identifier
+  class VIdentifier : public Identifier {
+  public:
+    // constructors
+    VIdentifier();
+    VIdentifier(const std::string&);
+    VIdentifier(const std::string&, const vector<Range>&);
+
+    //helpers
+    VIdentifier& operator++ ();
+    VIdentifier& add_prefix (const Identifier&);
+    
+  private:
+    vector<Range> m_range;
+    bool numbered;
+  };
 
 
 }

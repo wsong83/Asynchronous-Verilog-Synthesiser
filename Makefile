@@ -29,6 +29,7 @@ export FLEX_EXE = ~/tool/local/bin/flex
 export CXX = g++
 
 export CXXFLAGS = -Wall -g
+export LINKFLAGS = -lboost_regex
 
 # targets
 SUBDIRS = common averilog/src
