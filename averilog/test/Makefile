@@ -25,24 +25,19 @@
 
 # variables
 INCDIRS = -I./ -I../../
-TARGETS = scanner.o
+TARGETS = scanner parser
+OTHER_OBJS = ../../common/number.o \
+             ../../common/identifier.o \
+             ../../common/range.o \
+             ../../common/expression.o \
+	         ../src/averilog.lex.o \
+	         ../src/averilog_util.o
 
 # targets
-all: scanner
+all: $(TARGETS)
 
-scanner: scanner.o
-	$(CXX) $(LINKFLAGS) $< \
-	../../common/number.o \
-    ../../common/identifier.o \
-    ../../common/range.o \
-    ../../common/expression.o \
-	../src/averilog.lex.o \
-	../src/averilog_util.o \
-	-o $@
-
-scanner.o: scanner.cpp
-	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
-
+$(TARGETS): % : %.cpp
+	$(CXX) $(INCDIRS) $(CXXFLAGS) $(LINKFLAGS) $< $(OTHER_OBJS) -o $@
 
 .PHONY: clean
 

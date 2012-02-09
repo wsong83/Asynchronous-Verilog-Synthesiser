@@ -31,6 +31,7 @@
 
 #include <vector>
 #include "component.h"
+#include "averilog/src/averilog_util.h"
 
 namespace netlist {
 
@@ -38,7 +39,9 @@ namespace netlist {
   class Identifier : public NetComp {
   public:
     // constructors
-    Identifier(const std::string&); 
+    NETLIST_DEFAULT_CON(Identifier, NetComp, tUnkown)
+    Identifier(ctype_t tt) : NetComp(tt) {}
+    Identifier(ctype_t tt, const std::string&);
 
     // helpers
     int compare(const Identifier& rhs) const; /* compare two identifiers */
@@ -75,6 +78,7 @@ namespace netlist {
   class FIdentifier : public Identifier {
   public:
     // constructors
+    NETLIST_DEFAULT_CON(FIdentifier, Identifier, tFuncName)
     FIdentifier(const std::string&);
     
     // helpers
@@ -85,7 +89,9 @@ namespace netlist {
   class MIdentifier : public Identifier {
   public:
     // constructors
+    NETLIST_DEFAULT_CON(MIdentifier, Identifier, tModuleName)
     MIdentifier(const std::string&);
+    MIdentifier(const averilog::avID *);
     
     // helpers
     MIdentifier& operator++ ();
@@ -99,6 +105,7 @@ namespace netlist {
   class IIdentifier : public Identifier {
   public:
     // constructors
+    IIdentifier();
     IIdentifier(const std::string&);
 
     // helpers
@@ -110,10 +117,21 @@ namespace netlist {
   };
 
   /////////// parameter identifier
-  class PIdentifier : public Identifier {
+  class PaIdentifier : public Identifier {
   public:
     // constructors
-    PIdentifier(const std::string&);
+    NETLIST_DEFAULT_CON(PaIdentifier, Identifier, tParaName)
+    PaIdentifier(const std::string&);
+
+    // helpers
+  };
+
+  /////////// port identifier
+  class PoIdentifier : public Identifier {
+  public:
+    // constructors
+    NETLIST_DEFAULT_CON(PoIdentifier, Identifier, tPortName)
+    PoIdentifier(const std::string&);
 
     // helpers
   };

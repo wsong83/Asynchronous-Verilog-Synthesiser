@@ -40,13 +40,25 @@
   }
 #endif
 
+#ifndef NETLIST_DEFAULT_CON
+#define NETLIST_DEFAULT_CON(COMP, Father, CT) COMP() : Father(CT) { }
+#endif
+
 namespace netlist {
+
+#include "comp_type.h"
 
   // the base class of all netlist components
   class NetComp {
   public:
+    // no one should directly use this class
+    NetComp() : ctype(tUnkown) {}
+    NetComp(ctype_t tt) : ctype(tt) {}
+
     // force every component to implement a stream out function
     virtual std::ostream& streamout(std::ostream&) const = 0;
+
+    ctype_t ctype;
   };
   
   // number.h
@@ -58,7 +70,8 @@ namespace netlist {
   class FIdentifier;		/* function name */
   class MIdentifier;		/* module name */
   class IIdentifier;		/* instance name */
-  class PIdentifier;		/* parameter name */
+  class PaIdentifier;		/* parameter name */
+  class PoIdentifier;		/* port identifier */
   class VIdentifier;		/* variable name, including local variable, wire and reg */
 
   // range.h

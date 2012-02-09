@@ -31,6 +31,12 @@
 
 #include <string>
 #include <iostream>
+
+namespace averilog {
+  class Parser;		/* the parser class that the program will really use */
+  class avID;		/* identifier without dimension decalration */
+}
+
 #include "common/component.h"
 
 namespace averilog {
@@ -40,6 +46,9 @@ namespace averilog {
     std::string name;
     avID(char* text, int leng)
       : name(text,leng) {}
+    
+    ~avID() { std::cout << "avID destroyed" << std::endl; }
+    
   };
 
   std::ostream& operator<< (std::ostream&, const avID&);
@@ -62,6 +71,16 @@ namespace averilog {
   // report errors in scanner
   void error_report(const std::string& err_msg, YYLTYPE * yyloc, std::ostream& os = std::cerr);
 
+  class Parser {
+  public:
+    Parser(std::string);	/* constructor with a file name */
+    bool parse();		/* the parser method */
+    int lexer (YYSTYPE *, YYLTYPE *, yyscan_t); /* the lexer interface */
+
+  private:
+    yyscan_t scanner;		/* the data structure needed for reentrant flexer */
+    av_parser bison_instance;	/* the bison parser instance */
+  }; 
 
 }
 

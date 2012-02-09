@@ -32,7 +32,7 @@ TARGETS = number.o identifier.o range.o expression.o
 # actions
 all: $(TARGETS)
 
-$(TARGETS): %.o:%.cpp %.h component.h
+$(TARGETS): %.o:%.cpp %.h component.h comp_type.h
 	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
 
 .PHONY: clean

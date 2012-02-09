@@ -20,8 +20,8 @@
  */
 
 /* 
- * 
- * 06/02/2012   Wei Song
+ * Test for parser
+ * 09/02/2012   Wei Song
  *
  *
  */
@@ -30,26 +30,11 @@
 #include "averilog/src/averilog_util.h"
 #include "averilog/src/averilog.lex.h"
 
-int main(int argc, char*argv[])
+int main(int argc, char* argv[])
 {
-  int tmp;
-  YYSTYPE lval;
   yyscan_t scanner;
-  YYLTYPE yyloc;
+  averilog::av_parser AV(scanner);
   FILE * sfile;
 
   sfile = fopen(argv[1], "r");
-  std::string fn(argv[1]);
-  yyloc.initialize(&fn);
-  avlex_init (&scanner);
   avset_in(sfile, scanner);
-  while((tmp = avlex(&lval, &yyloc, scanner)) != 0) {
-    std::cout << tmp << " ";
-    if(tmp == token::number)
-      std::cout << "Number:" << lval.tNumber->get_value() << ":" << lval.tNumber->get_txt_value() << " ";
-  }
-    
-  avlex_destroy(scanner);
-  fclose(sfile);
-  return 0;
-}

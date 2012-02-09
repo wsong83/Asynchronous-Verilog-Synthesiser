@@ -49,8 +49,17 @@
 %}
 
 %union {
-  netlist::Number        *tNumber;                    // all sorts of numbers
-  avID                   *tID;                        // identifier
+  netlist::BIdentifier   *tBlockName;                 /* block name */
+  netlist::Expression    *tExp;			      /* expression */
+  netlist::FIdentifier   *tFuncName;		      /* function name */
+  avID                   *tID;                        /* identifier */
+  netlist::IIdentifier   *tInstName;		      /* instance name */
+  netlist::MIdentifier   *tModuleName;		      /* module name */
+  netlist::Number        *tNumber;                    /* all sorts of numbers */
+  netlist::PaIdentifier  *tParaName;		      /* parameter name */
+  netlist::PoIdentifier  *tPortName;		      /* port name */
+  netlist::Range         *tRange;		      /* range */
+  netlist::VIdentifier   *tVarName;		      /* variable names */
 }
 
 %destructor { delete $$; } <*>
@@ -218,6 +227,11 @@
 %left  '*' '/' '%'
 %left  "**"
 %left  oUNARY
+
+ // type definitions
+%type <tModuleName> module_identifier
+ //%type <tPortName> port_identifier
+
 
 %start source_text
 
@@ -739,8 +753,8 @@ function_identifier
     : identifier
     ;
 
-module_identifier 
-    : identifier
+module_identifier
+    :  identifier             { $$ = new netlist::MIdentifier($1); }
     ;
 
 instance_identifier 
@@ -756,7 +770,7 @@ variable_identifier
     | variable_identifier '[' range_expression ']'
     ;
 
-port_identifier 
-    : identifier
+port_identifier
+    : identifier             
     ;
 
