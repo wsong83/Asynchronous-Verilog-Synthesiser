@@ -29,22 +29,20 @@
 #ifndef _H_IDENTIFIER_
 #define _H_IDENTIFIER_
 
-#include <string>
-#include <ostream>
 #include <vector>
 #include "component.h"
 
 namespace netlist {
 
   /////////////// base class
-  class Identifier {
+  class Identifier : public NetComp {
   public:
     // constructors
     Identifier(const std::string&); 
 
     // helpers
     int compare(const Identifier& rhs) const; /* compare two identifiers */
-    virtual std::string to_string() const; /* print the indentifier, but different for different sub-classes */
+    virtual std::ostream& streamout(std::ostream&) const;
     void hash_update();			   /* update the nearly unique hash id */
 
     // data
@@ -56,8 +54,7 @@ namespace netlist {
   bool operator< (const Identifier& lhs, const Identifier& rhs);
   bool operator> (const Identifier& lhs, const Identifier& rhs);
   bool operator== (const Identifier& lhs, const Identifier& rhs);
-
-  std::ostream& operator<< (std::ostream&, const Identifier&);
+  NETLIST_STREAMOUT(Identifier)
   
   ////////////// block identifier
   class BIdentifier : public Identifier {

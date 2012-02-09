@@ -31,7 +31,12 @@ TARGETS = test_identifier
 all: $(TARGETS)
 
 test_identifier: test_identifier.cpp ../identifier.o
-	$(CXX) $(INCDIRS) $(CXXFLAGS) $(LINKFLAGS) ../identifier.o $< -o $@
+	$(CXX) $(INCDIRS) $(CXXFLAGS) $(LINKFLAGS) \
+    ../number.o \
+    ../range.o \
+    ../expression.o \
+    ../identifier.o \
+    $< -o $@
 
 
 .PHONY: clean

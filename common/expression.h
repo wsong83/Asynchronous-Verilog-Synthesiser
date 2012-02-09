@@ -33,7 +33,7 @@
 
 namespace netlist {
 
-  class Expression {
+  class Expression : public NetComp {
   public:
     // constructors
     Expression(unsigned int);	/* a const integer is an expression */

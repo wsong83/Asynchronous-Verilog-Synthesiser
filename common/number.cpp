@@ -29,7 +29,6 @@
 #include <cctype>
 #include <cassert>
 #include <cstdlib>
-#include <iostream>
 #include <algorithm>
 #include "number.h"
 
@@ -246,6 +245,13 @@ Number& netlist::Number::lfsh (int rhs) {
   return *this;
 }
 
+std::ostream& netlist::Number::streamout (std::ostream& os) const{
+  if(valuable)		// able to be represented as a decimal
+    os << value;
+  else
+    os << num_leng << "'b" << txt_value;
+  return os;
+}
 
 bool netlist::Number::bin2num(char *text, int txt_leng, int start) {
   int i = num_leng + 4;
@@ -448,10 +454,3 @@ Number netlist::operator<< (const Number& lhs, int rhs) {
   return dd;
 }
 
-std::ostream& netlist::operator<< (std::ostream& os, const Number& hs) {
-  if(hs.is_valuable())		// able to be represented as a decimal
-    os << hs.get_value();
-  else
-    os << hs.get_length() << "'b" << hs.get_txt_value();
-  return os;
-}

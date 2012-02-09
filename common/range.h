@@ -36,7 +36,7 @@ namespace netlist {
 
   typedef std::pair<Expression, Expression> Range_Exp;
 
-  class Range {
+  class Range : public NetComp {
   public:
     // constructors
     Range(int);			/* select by a fix number */
@@ -48,6 +48,7 @@ namespace netlist {
     // helpers
     bool is_valuable();
     bool is_single();
+    virtual std::ostream& streamout(std::ostream&) const;
     
   private:
     union {
@@ -64,6 +65,7 @@ namespace netlist {
 
   };
 
+  NETLIST_STREAMOUT(Range)
 
 }
 

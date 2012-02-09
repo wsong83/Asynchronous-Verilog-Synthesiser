@@ -104,4 +104,7 @@ bool netlist::Range::is_single() {
   return type != TRange;
 }
   
+std::ostream& netlist::Range::streamout(std::ostream& os) const {
+  return os;
+}
 

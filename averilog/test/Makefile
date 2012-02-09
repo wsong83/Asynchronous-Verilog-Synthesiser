@@ -31,8 +31,11 @@ TARGETS = scanner.o
 all: scanner
 
 scanner: scanner.o
-	$(CXX) $< \
+	$(CXX) $(LINKFLAGS) $< \
 	../../common/number.o \
+    ../../common/identifier.o \
+    ../../common/range.o \
+    ../../common/expression.o \
 	../src/averilog.lex.o \
 	../src/averilog_util.o \
 	-o $@

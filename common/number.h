@@ -29,18 +29,18 @@
 #ifndef _H_NUMBER_
 #define _H_NUMBER_
 
-#include <string>
-#include <ostream>
 #include "component.h"
 
 namespace netlist {
 
-  class Number {
+  class Number : public NetComp{
   public:
+    // constructors
     Number(char *text, int txt_leng, int num_leng); /* convert decimal and integer to number */
     Number(char *text, int txt_leng);	    /* convert fixed numbers */
     Number(const std::string& txt_val, int num_leng); /* convert a binary string to number */    
 
+    // helpers
     unsigned int get_value() const;
     const std::string& get_txt_value() const;
     int get_length() const;
@@ -50,6 +50,7 @@ namespace netlist {
     Number& addition (const Number& rhs);
     Number& operator+= (const Number& rhs);
     Number& lfsh (int rhs);
+    virtual std::ostream& streamout(std::ostream&) const;
 
   private:
     unsigned int value;         /* number value, valid when valuable */
@@ -73,7 +74,7 @@ namespace netlist {
   // overload operators
   Number operator+ (const Number& lhs, const Number& rhs);
   Number operator<< (const Number& lhs, int rhs);
-  std::ostream& operator<< (std::ostream&, const Number&);
+  NETLIST_STREAMOUT(Number)
 
 }
 

@@ -29,7 +29,26 @@
 #ifndef _H_COMPONENT_
 #define _H_COMPONENT_
 
+#include <iostream>
+#include <string>
+
+// function macro for stream out operator <<
+#ifndef NETLIST_STREAMOUT
+#define NETLIST_STREAMOUT(COMP)                                          \
+  inline std::ostream& operator<< ( std::ostream& os, const COMP& rhs) { \
+    return rhs.streamout(os);                                            \
+  }
+#endif
+
 namespace netlist {
+
+  // the base class of all netlist components
+  class NetComp {
+  public:
+    // force every component to implement a stream out function
+    virtual std::ostream& streamout(std::ostream&) const = 0;
+  };
+  
   // number.h
   class Number;			/* number */
 
@@ -49,14 +68,6 @@ namespace netlist {
   class Expression;		/* expressions */
 
 }
-
-// function macro for stream out operator <<
-#ifndef NETLIST_STREAMOUT
-#define NETLIST_STREAMOUT(COMP)                                   \
-  std::ostream& operator<< ( std::ostream& os, const COMP& rhs) { \
-    return rhs.streamout(os);                                     \
-  }
-#endif
 
 #include "defines.h"
 #include "number.h"

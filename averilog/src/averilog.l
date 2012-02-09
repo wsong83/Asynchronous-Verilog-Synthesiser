@@ -1,6 +1,6 @@
 %option reentrant bison-bridge bison-locations
 %option never-interactive
-%option noyywrap
+%option noyywrap nounput
 %option yylineno
 %option prefix="av"
 %option outfile="averilog.lex.c" header-file="averilog.lex.h"

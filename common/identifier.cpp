@@ -55,8 +55,9 @@ int netlist::Identifier::compare(const Identifier& rhs) const {
   return name.compare(rhs.name);
 }
 
-std::string netlist::Identifier::to_string() const {
-  return name;
+std::ostream& netlist::Identifier::streamout(std::ostream& os) const {
+  os << name;
+  return os;
 }
 
 void netlist::Identifier::hash_update() {
@@ -74,11 +75,6 @@ bool netlist::operator> (const Identifier& lhs, const Identifier& rhs) {
 
 bool netlist::operator== (const Identifier& lhs, const Identifier& rhs) {
   return lhs.compare(rhs) == 0;
-}
-
-std::ostream& netlist::operator<< (std::ostream& os, const Identifier& rhs) {
-  os << rhs.to_string();
-  return os;
 }
 
 //////////////////////////////// Block identifier /////////////////
