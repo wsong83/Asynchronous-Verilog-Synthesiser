@@ -28,7 +28,7 @@
 
 #include <cassert>
 #include "range.h"
-#include "averilog/src/averilog.hh"
+#include "averilog/src/averilog_util.h"
 
 using namespace netlist;
 
@@ -63,11 +63,11 @@ netlist::Range::Range(const Range_Exp& sel)
 netlist::Range::Range(const Range_Exp& sel, int ctype)
   : type(TRange)
 {
-  Range_Exp m_sel;
+  Range_Exp m_sel(Expression(0),Expression(0));
   if(ctype == averilog::av_parser::token::oPColon) { // positive colon
     m_sel.first = sel.first+sel.second;
     m_sel.second = sel.first;
-  } else {			// negtive colon
+  } else if(ctype == averilog::av_parser::token::oNColon){ // negtive colon
     m_sel.first = sel.first;
     m_sel.second = sel.first - sel.second;
   } else {
@@ -82,16 +82,17 @@ netlist::Range::Range(const Range_Exp& sel, int ctype)
     } else {			// variable expression
       v = new Expression(m_sel.first);
       type = TVar;
-    } else {
-      r = new Range_Exp(m_sel);
-    }
-  } 
+    } 
+  } else {
+    r = new Range_Exp(m_sel);
+  }
 }
 
 netlist::Range::~Range() {
   switch(type) {
   case TVar:    delete v; break;
   case TRange:  delete r; break;
+  default: break;
   }
 }
 

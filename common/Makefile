@@ -24,15 +24,15 @@
 #
 
 # variables
-INCDIRS = -I./
+INCDIRS = -I./ -I../
 
 # targets
-TARGETS = number.o identifier.o
+TARGETS = number.o identifier.o range.o expression.o
 
 # actions
 all: $(TARGETS)
 
-$(TARGETS): %.o:%.cpp %.h
+$(TARGETS): %.o:%.cpp %.h component.h
 	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
 
 .PHONY: clean

@@ -32,9 +32,25 @@ using namespace netlist;
 
 netlist::Expression::Expression(unsigned int exp) {}
 
+netlist::Expression::Expression(const Number& exp) {}
 
-netlist::Expression::Expression(const Number exp) {}
+bool netlist::Expression::is_valuable() const {return false;}
 
-bool netlist::Expression::is_valuable() {return false;}
+int netlist::Expression::get_value() const { return 0; }
 
-int netlist::Expression::get_value() { return 0; }
+bool netlist::Expression::operator== (const Expression& rhs) const {
+  return false;
+}
+
+Expression netlist::operator+ (const Expression& lhs, const Expression& rhs) {
+  return Expression(0);
+}
+
+Expression netlist::operator- (const Expression& lhs, const Expression& rhs) {
+  return Expression(0);
+}
+
+std::ostream& netlist::Expression::streamout(std::ostream& os) const {
+  os << "expression";
+  return os;
+}

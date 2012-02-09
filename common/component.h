@@ -50,6 +50,14 @@ namespace netlist {
 
 }
 
+// function macro for stream out operator <<
+#ifndef NETLIST_STREAMOUT
+#define NETLIST_STREAMOUT(COMP)                                   \
+  std::ostream& operator<< ( std::ostream& os, const COMP& rhs) { \
+    return rhs.streamout(os);                                     \
+  }
+#endif
+
 #include "defines.h"
 #include "number.h"
 #include "identifier.h"

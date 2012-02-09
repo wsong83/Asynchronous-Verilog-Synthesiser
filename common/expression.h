@@ -40,12 +40,18 @@ namespace netlist {
     Expression(const Number&);	/* a number is an expression */
 
     // helpers
-    bool is_valuable();
-    int get_value();
+    bool is_valuable() const;
+    int get_value() const;
+    virtual std::ostream& streamout(std::ostream&) const;
+    bool operator== (const Expression& rhs) const;
 
   private:
   };
 
+  Expression operator+ (const Expression&, const Expression&);
+  Expression operator- (const Expression&, const Expression&);
+
+  NETLIST_STREAMOUT(Expression)
 
 }
 

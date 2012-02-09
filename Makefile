@@ -32,7 +32,7 @@ export CXXFLAGS = -Wall -g
 export LINKFLAGS = -lboost_regex
 
 # targets
-SUBDIRS = common averilog/src
+SUBDIRS = averilog/src common
 TESTDIRS = averilog/test common/test
 
 # actions
