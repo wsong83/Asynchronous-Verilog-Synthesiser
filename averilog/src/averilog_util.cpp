@@ -39,3 +39,25 @@ std::ostream& averilog::operator<< (std::ostream& os, const avID& hs) {
   os << hs.name;
   return os;
 }
+
+averilog::Parser::Parser(std::string fn)
+  : sfile(NULL), fname(fn), bison_instance(fn, &sfile)
+{ }
+
+averilog::Parser::~Parser() {
+  if(sfile != NULL)
+    fclose(sfile);
+}
+
+bool averilog::Parser::initialize() {
+  sfile = fopen(fname.c_str(), "r");
+  return sfile != NULL;
+}
+
+bool averilog::Parser::parse() {
+  return 0 == bison_instance.parse();
+}
+
+  
+  
+

@@ -6,7 +6,8 @@
 %language "c++"
 %output "averilog.cc"
 %locations
-%parse-param {yyscan_t avscanner}
+%parse-param {std::string fname}
+%parse-param {FILE * *sfile}
 %lex-param {yyscan_t avscanner}
 %{
 /*
@@ -46,7 +47,16 @@
 
 #define yylex avlex
 
+yyscan_t avscanner;
+
 %}
+
+%initial-action
+{
+  @$.initialize(&fname);
+  avlex_init(&avscanner);
+  avset_in(*sfile, avscanner);
+}
 
 %union {
   netlist::BIdentifier   *tBlockName;                 /* block name */

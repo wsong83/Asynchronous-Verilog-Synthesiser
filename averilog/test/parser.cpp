@@ -32,9 +32,15 @@
 
 int main(int argc, char* argv[])
 {
-  yyscan_t scanner;
-  averilog::av_parser AV(scanner);
-  FILE * sfile;
 
-  sfile = fopen(argv[1], "r");
-  avset_in(sfile, scanner);
+  averilog::Parser dut(argv[1]);
+
+  if(!dut.initialize()) {
+    cout << "parser initialization fails!" << endl;
+    return 0;
+  }
+
+  dut.parse();
+
+  return 1;
+}

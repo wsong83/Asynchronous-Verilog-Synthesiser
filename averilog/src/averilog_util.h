@@ -31,6 +31,7 @@
 
 #include <string>
 #include <iostream>
+#include <cstdio>
 
 namespace averilog {
   class Parser;		/* the parser class that the program will really use */
@@ -74,11 +75,13 @@ namespace averilog {
   class Parser {
   public:
     Parser(std::string);	/* constructor with a file name */
-    bool parse();		/* the parser method */
-    int lexer (YYSTYPE *, YYLTYPE *, yyscan_t); /* the lexer interface */
+    ~Parser();
+    bool parse();		/* the parser for user */
+    bool initialize();		/* initialize and check all settings */
 
   private:
-    yyscan_t scanner;		/* the data structure needed for reentrant flexer */
+    FILE * sfile;		/* the file handler of the scanner */
+    std::string fname;		/* the name of the file */
     av_parser bison_instance;	/* the bison parser instance */
   }; 
 

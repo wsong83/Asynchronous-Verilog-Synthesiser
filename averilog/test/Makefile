@@ -31,6 +31,7 @@ OTHER_OBJS = ../../common/number.o \
              ../../common/range.o \
              ../../common/expression.o \
 	         ../src/averilog.lex.o \
+             ../src/averilog.o \
 	         ../src/averilog_util.o
 
 # targets
