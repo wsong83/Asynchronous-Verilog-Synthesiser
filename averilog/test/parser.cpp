@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
   averilog::Parser dut(argv[1]);
 
   if(!dut.initialize()) {
-    cout << "parser initialization fails!" << endl;
+    std::cout << "parser initialization fails!" << std::endl;
     return 0;
   }
 

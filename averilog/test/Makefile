@@ -38,10 +38,10 @@ OTHER_OBJS = ../../common/number.o \
 all: $(TARGETS)
 
 $(TARGETS): % : %.cpp
-	$(CXX) $(INCDIRS) $(CXXFLAGS) $(LINKFLAGS) $< $(OTHER_OBJS) -o $@
+	$(CXX) $(INCDIRS) $(CXXFLAGS) $< $(OTHER_OBJS) $(LINKFLAGS) -o $@
 
 .PHONY: clean
 
 clean:
-	-rm *.o scanner
+	-rm *.o $(TARGETS)
 

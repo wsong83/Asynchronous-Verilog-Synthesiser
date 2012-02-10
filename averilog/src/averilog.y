@@ -49,6 +49,10 @@
 
 yyscan_t avscanner;
 
+ void averilog::av_parser::error (const location_type& loc, const std::string& msg) {
+   std::cout << loc << " " << msg << std::endl;
+ }
+
 %}
 
 %initial-action

@@ -25,7 +25,7 @@
  *
  */
 
-#include "identifier.h"
+#include "component.h"
 #include <iostream>
 
 using namespace netlist;

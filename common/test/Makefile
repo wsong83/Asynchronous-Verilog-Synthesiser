@@ -24,19 +24,19 @@
 #
 
 # variables
-INCDIRS = -I./ -I../
+INCDIRS = -I./ -I../ -I../../
 TARGETS = test_identifier
 
 # targets
 all: $(TARGETS)
 
 test_identifier: test_identifier.cpp ../identifier.o
-	$(CXX) $(INCDIRS) $(CXXFLAGS) $(LINKFLAGS) \
+	$(CXX) $(INCDIRS) $(CXXFLAGS) $< \
     ../number.o \
     ../range.o \
     ../expression.o \
     ../identifier.o \
-    $< -o $@
+    $(LINKFLAGS) -o $@
 
 
 .PHONY: clean
