@@ -32,7 +32,7 @@
 #include "component.h"
 
 namespace netlist {
-
+  
   class Expression : public NetComp {
   public:
     // constructors
@@ -44,8 +44,9 @@ namespace netlist {
     int get_value() const;
     virtual std::ostream& streamout(std::ostream&) const;
     bool operator== (const Expression& rhs) const;
-
+    
   private:
+    
   };
 
   Expression operator+ (const Expression&, const Expression&);

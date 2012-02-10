@@ -36,12 +36,11 @@
 namespace netlist {
 
   /////////////// base class
-  class Identifier : public NetComp {
+  class Identifier {
   public:
     // constructors
-    NETLIST_DEFAULT_CON(Identifier, NetComp, tUnkown)
-    Identifier(ctype_t tt) : NetComp(tt) {}
-    Identifier(ctype_t tt, const std::string&);
+    Identifier() {}
+    Identifier(const std::string&);
 
     // helpers
     int compare(const Identifier& rhs) const; /* compare two identifiers */
@@ -57,10 +56,10 @@ namespace netlist {
   bool operator< (const Identifier& lhs, const Identifier& rhs);
   bool operator> (const Identifier& lhs, const Identifier& rhs);
   bool operator== (const Identifier& lhs, const Identifier& rhs);
-  NETLIST_STREAMOUT(Identifier)
+  NETLIST_STREAMOUT(Identifier);
   
   ////////////// block identifier
-  class BIdentifier : public Identifier {
+  class BIdentifier : public Identifier, public NetComp {
   public:
     // constructors
     BIdentifier(const std::string&);
@@ -72,26 +71,28 @@ namespace netlist {
   private:
     bool anonymous;
   };
+  NETLIST_STREAMOUT(BIdentifier);
 
   
   ///////////// function identifier
-  class FIdentifier : public Identifier {
+  class FIdentifier : public Identifier, public NetComp {
   public:
     // constructors
-    NETLIST_DEFAULT_CON(FIdentifier, Identifier, tFuncName)
+    NETLIST_DEFAULT_CON(FIdentifier, tFuncName);
     FIdentifier(const std::string&);
     
     // helpers
 
   };
+  NETLIST_STREAMOUT(FIdentifier);
 
   ///////////// module identifier
-  class MIdentifier : public Identifier {
+  class MIdentifier : public Identifier, public NetComp {
   public:
     // constructors
-    NETLIST_DEFAULT_CON(MIdentifier, Identifier, tModuleName)
+    NETLIST_DEFAULT_CON(MIdentifier, tModuleName);
     MIdentifier(const std::string&);
-    MIdentifier(const averilog::avID *);
+    MIdentifier(const averilog::avID& );
     
     // helpers
     MIdentifier& operator++ ();
@@ -100,9 +101,10 @@ namespace netlist {
     bool numbered;
 
   };
+  NETLIST_STREAMOUT(MIdentifier);
 
   //////////// instance identifier
-  class IIdentifier : public Identifier {
+  class IIdentifier : public Identifier, public NetComp {
   public:
     // constructors
     IIdentifier();
@@ -115,33 +117,37 @@ namespace netlist {
   private:
     bool numbered;
   };
+  NETLIST_STREAMOUT(IIdentifier);
 
   /////////// parameter identifier
-  class PaIdentifier : public Identifier {
+  class PaIdentifier : public Identifier, public NetComp {
   public:
     // constructors
-    NETLIST_DEFAULT_CON(PaIdentifier, Identifier, tParaName)
+    NETLIST_DEFAULT_CON(PaIdentifier, tParaName);
     PaIdentifier(const std::string&);
 
     // helpers
   };
+  NETLIST_STREAMOUT(PaIdentifier);
 
   /////////// port identifier
-  class PoIdentifier : public Identifier {
+  class PoIdentifier : public Identifier, public NetComp {
   public:
     // constructors
-    NETLIST_DEFAULT_CON(PoIdentifier, Identifier, tPortName)
+    NETLIST_DEFAULT_CON(PoIdentifier, tPortName);
     PoIdentifier(const std::string&);
 
     // helpers
   };
+  NETLIST_STREAMOUT(PoIdentifier);
 
   /////////// Variable identifier
-  class VIdentifier : public Identifier {
+  class VIdentifier : public Identifier, public NetComp {
   public:
     // constructors
     VIdentifier();
     VIdentifier(const std::string&);
+    VIdentifier(const averilog::avID&);
     VIdentifier(const std::string&, const std::vector<Range>&);
 
     //helpers
@@ -152,6 +158,7 @@ namespace netlist {
     std::vector<Range> m_range;
     bool numbered;
   };
+  NETLIST_STREAMOUT(VIdentifier);
 
 
 }

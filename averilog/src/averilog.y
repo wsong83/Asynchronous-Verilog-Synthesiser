@@ -9,6 +9,7 @@
 %parse-param {std::string fname}
 %parse-param {FILE * *sfile}
 %lex-param {yyscan_t avscanner}
+%debug
 %{
 /*
  * Copyright (c) 2011 Wei Song <songw@cs.man.ac.uk> 
@@ -245,6 +246,7 @@ yyscan_t avscanner;
  // type definitions
 %type <tModuleName> module_identifier
  //%type <tPortName> port_identifier
+%type <tVarName> variable_identifier
 
 
 %start source_text
@@ -271,9 +273,9 @@ description
     ;
 
 module_declaration
-    : "module" module_identifier ';'
+: "module" module_identifier ';'  { std::cout<<*$2<<std::endl; }
         module_items
-      "endmodule"
+      "endmodule"                      { std::cout<<*$2, delete $2; }
     | "module" module_identifier '(' list_of_ports ')' ';'
         module_items
       "endmodule"
@@ -582,11 +584,11 @@ generate_block
 
 //A.6.1 Continuous assignment statements
 continuous_assign 
-    : "assign" list_of_net_assignments ';'
+    : "assign" list_of_net_assignments ';'              { std::cout << "continueous assign" << std::endl; }
     ;
 
 list_of_net_assignments 
-    : blocking_assignment 
+    : blocking_assignment                                { std::cout << "blocking assignment" << std::endl;}
     | list_of_net_assignments ',' blocking_assignment
     ;
 
@@ -727,7 +729,6 @@ expression
     | expression '&' expression
     | expression '|' expression
     | expression '^' expression
-    | expression "^~" expression
     | expression "~^" expression
     | expression ">>" expression
     | expression "<<" expression
@@ -768,7 +769,7 @@ function_identifier
     ;
 
 module_identifier
-    :  identifier             { $$ = new netlist::MIdentifier($1); }
+:  identifier             { $$ = new netlist::MIdentifier(*$1); std::cout << *$$ << std::endl; delete $1;}
     ;
 
 instance_identifier 
@@ -780,7 +781,7 @@ parameter_identifier
     ;
 
 variable_identifier
-    : identifier
+: identifier           { $$ = new netlist::VIdentifier(*$1); std::cout << *$$ << std::endl; delete $1;}
     | variable_identifier '[' range_expression ']'
     ;
 

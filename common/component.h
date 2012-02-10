@@ -41,7 +41,7 @@
 #endif
 
 #ifndef NETLIST_DEFAULT_CON
-#define NETLIST_DEFAULT_CON(COMP, Father, CT) COMP() : Father(CT) { }
+#define NETLIST_DEFAULT_CON(COMP, CT) COMP() : NetComp(CT) { }
 #endif
 
 namespace netlist {
@@ -54,9 +54,6 @@ namespace netlist {
     // no one should directly use this class
     NetComp() : ctype(tUnkown) {}
     NetComp(ctype_t tt) : ctype(tt) {}
-
-    // force every component to implement a stream out function
-    virtual std::ostream& streamout(std::ostream&) const = 0;
 
     ctype_t ctype;
   };
