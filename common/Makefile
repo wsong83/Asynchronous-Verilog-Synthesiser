@@ -27,7 +27,7 @@
 INCDIRS = -I./ -I../
 
 # targets
-TARGETS = number.o identifier.o range.o expression.o
+TARGETS = number.o identifier.o range.o expression.o operation.o
 
 # actions
 all: $(TARGETS)

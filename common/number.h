@@ -36,6 +36,7 @@ namespace netlist {
   class Number : public NetComp{
   public:
     // constructors
+    Number() : NetComp(tNumber), valid(false), valuable(false) {}
     Number(char *text, int txt_leng, int num_leng); /* convert decimal and integer to number */
     Number(char *text, int txt_leng);	    /* convert fixed numbers */
     Number(const std::string& txt_val, int num_leng); /* convert a binary string to number */    

@@ -41,8 +41,8 @@
 using namespace netlist;
 
 ////////////////////////////// Base class /////////////////
-netlist::Identifier::Identifier(const std::string& nm)
-  : name(nm)
+netlist::Identifier::Identifier(NetComp::ctype_t ctype, const std::string& nm)
+  : NetComp(ctype), name(nm)
 {
   hash_update();
 }
@@ -79,10 +79,10 @@ bool netlist::operator== (const Identifier& lhs, const Identifier& rhs) {
 
 //////////////////////////////// Block identifier /////////////////
 netlist::BIdentifier::BIdentifier(const std::string& nm)
-  : Identifier(nm), NetComp(tBlockName), anonymous(false)  {  }
+  : Identifier(NetComp::tBlockName, nm), anonymous(false)  {  }
 
 netlist::BIdentifier::BIdentifier()
-  : Identifier("B0"), NetComp(tBlockName), anonymous(true)  {  }
+  : Identifier(NetComp::tBlockName, "B0"), anonymous(true)  {  }
 
 BIdentifier& netlist::BIdentifier::operator++ () {
   if(!anonymous) return *this;	// named block idenitifers cannot slef-increase
@@ -97,15 +97,15 @@ BIdentifier& netlist::BIdentifier::operator++ () {
 
 //////////////////////////////// Function identifier /////////////////
 netlist::FIdentifier::FIdentifier(const std::string& nm)
-  : Identifier(nm), NetComp(tFuncName) {  }
+  : Identifier(NetComp::tFuncName, nm) {  }
 
 
 //////////////////////////////// Module identifier /////////////////
 netlist::MIdentifier::MIdentifier(const std::string& nm)
-  : Identifier(nm), NetComp(tModuleName), numbered(false) {  }
+  : Identifier(NetComp::tModuleName, nm), numbered(false) {  }
 
 netlist::MIdentifier::MIdentifier(const averilog::avID &id)
-  : Identifier(id.name), NetComp(tModuleName), numbered(false) {  }
+  : Identifier(NetComp::tModuleName, id.name), numbered(false) {  }
 
 MIdentifier& netlist::MIdentifier::operator++ () {
   const boost::regex numbered_name("_(\\d+)\\z");
@@ -130,10 +130,10 @@ MIdentifier& netlist::MIdentifier::operator++ () {
     
 //////////////////////////////// Instance identifier /////////////////
 netlist::IIdentifier::IIdentifier()
-  : Identifier("u_0"), NetComp(tInstName), numbered(true) {  }
+  : Identifier(NetComp::tInstName, "u_0"), numbered(true) {  }
 
 netlist::IIdentifier::IIdentifier(const std::string& nm)
-  : Identifier(nm), NetComp(tInstName), numbered(false) {  }
+  : Identifier(NetComp::tInstName, nm), numbered(false) {  }
 
 IIdentifier& netlist::IIdentifier::operator++ () {
   const boost::regex numbered_name("_(\\d+)\\z");
@@ -164,24 +164,24 @@ IIdentifier& netlist::IIdentifier::add_prefix(const Identifier& prefix) {
 
 //////////////////////////////// parameter identifier /////////////////
 netlist::PaIdentifier::PaIdentifier(const std::string& nm)
-  : Identifier(nm), NetComp(tParaName) {  }
+  : Identifier(NetComp::tParaName, nm) {  }
 
 //////////////////////////////// port identifier /////////////////
 netlist::PoIdentifier::PoIdentifier(const std::string& nm)
-  : Identifier(nm), NetComp(tPortName) {  }
+  : Identifier(NetComp::tPortName, nm) {  }
 
 //////////////////////////////// variable identifier /////////////////
 netlist::VIdentifier::VIdentifier()
-  : Identifier("n_0"), NetComp(tVarName), numbered(true) {  }
+  : Identifier(NetComp::tVarName, "n_0"), numbered(true) {  }
 
 netlist::VIdentifier::VIdentifier(const std::string& nm)
-  : Identifier(nm), NetComp(tVarName), numbered(false) {  }
+  : Identifier(NetComp::tVarName, nm), numbered(false) {  }
 
 netlist::VIdentifier::VIdentifier(const averilog::avID& id)
-  : Identifier(id.name), NetComp(tVarName), numbered(false) { }
+  : Identifier(NetComp::tVarName, id.name), numbered(false) { }
 
 netlist::VIdentifier::VIdentifier(const std::string& nm, const std::vector<Range>& rg)
-  : Identifier(nm), NetComp(tVarName), m_range(rg), numbered(false) {  }
+  : Identifier(NetComp::tVarName, nm), m_range(rg), numbered(false) {  }
 
 VIdentifier& netlist::VIdentifier::operator++ () {
   const boost::regex numbered_name("_(\\d+)\\z");

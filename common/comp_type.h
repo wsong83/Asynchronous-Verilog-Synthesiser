@@ -28,14 +28,15 @@
 
 enum ctype_t {
   tBlockName,			/* block name */
+  tExp,                 /* expression */
   tFuncName,			/* function name */
   tInstName,			/* instance name */
   tModuleName,			/* module name */
-  tNumber,			/* number */
+  tNumber,              /* number */
   tParaName,			/* parameter name */
   tPortName,			/* port name */
-  tRang,                        /* range */
-  tVarName,			/* variable name */
-  tUnkown			/* type not initiated, indicate error!! */
+  tRang,                /* range */
+  tVarName,             /* variable name */
+  tUnkown               /* type not initiated, indicate error!! */
 };
 

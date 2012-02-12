@@ -41,20 +41,20 @@
 #endif
 
 #ifndef NETLIST_DEFAULT_CON
-#define NETLIST_DEFAULT_CON(COMP, CT) COMP() : NetComp(CT) { }
+#define NETLIST_DEFAULT_CON(COMP, CT) COMP() : NetComp(NetComp::CT) { }
 #endif
 
 namespace netlist {
 
-#include "comp_type.h"
-
   // the base class of all netlist components
   class NetComp {
   public:
+#include "comp_type.h"
     // no one should directly use this class
     NetComp() : ctype(tUnkown) {}
     NetComp(ctype_t tt) : ctype(tt) {}
-
+    
+    ctype_t get_type() const { return ctype; }
     ctype_t ctype;
   };
   
@@ -77,9 +77,12 @@ namespace netlist {
   // expression.h
   class Expression;		/* expressions */
 
+  // operation.h
+  class Operation;
 }
 
 #include "defines.h"
+#include "operation.h"
 #include "number.h"
 #include "identifier.h"
 #include "range.h"

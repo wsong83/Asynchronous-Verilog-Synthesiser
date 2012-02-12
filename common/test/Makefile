@@ -26,17 +26,15 @@
 # variables
 INCDIRS = -I./ -I../ -I../../
 TARGETS = test_identifier
+OTHER_OBJS = $(wildcard ../*.o)
+OTHER_OBJS += $(wildcard ../../averilog/src/*.o)
 
 # targets
 all: $(TARGETS)
 
 test_identifier: test_identifier.cpp ../identifier.o
 	$(CXX) $(INCDIRS) $(CXXFLAGS) $< \
-    ../number.o \
-    ../range.o \
-    ../expression.o \
-    ../identifier.o \
-    $(LINKFLAGS) -o $@
+    $(OTHER_OBJS) $(LINKFLAGS) -o $@
 
 
 .PHONY: clean

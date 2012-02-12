@@ -29,6 +29,8 @@
 #ifndef _H_EXPRESSION_
 #define _H_EXPRESSION_
 
+#include <list>
+#include <boost/shared_ptr.hpp>
 #include "component.h"
 
 namespace netlist {
@@ -36,23 +38,32 @@ namespace netlist {
   class Expression : public NetComp {
   public:
     // constructors
-    Expression(unsigned int);	/* a const integer is an expression */
+    Expression();
     Expression(const Number&);	/* a number is an expression */
 
     // helpers
-    bool is_valuable() const;
-    int get_value() const;
+    bool is_valuable() const; /* check valuable */
+    int get_value() const;    /* fetch the value if valuable */
+    void execute();           /* try to reduce the equation */
+    
+    // develope the equation
+    void append(Operation::operation_t);
+    void append(Operation::operation_t, Expression&);
+    void append(Operation::operation_t, Expression&, Expression&);
+    
     virtual std::ostream& streamout(std::ostream&) const;
     bool operator== (const Expression& rhs) const;
     
   private:
+    bool valuable;
+    std::list<Operation> eqn;
     
   };
 
   Expression operator+ (const Expression&, const Expression&);
   Expression operator- (const Expression&, const Expression&);
 
-  NETLIST_STREAMOUT(Expression)
+  NETLIST_STREAMOUT(Expression);
 
 }
 

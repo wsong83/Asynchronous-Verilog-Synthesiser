@@ -36,11 +36,12 @@
 namespace netlist {
 
   /////////////// base class
-  class Identifier {
+  class Identifier : public NetComp{
   public:
     // constructors
     Identifier() {}
-    Identifier(const std::string&);
+    Identifier(NetComp::ctype_t ctype) : NetComp(ctype) {}
+    Identifier(NetComp::ctype_t, const std::string&);
 
     // helpers
     int compare(const Identifier& rhs) const; /* compare two identifiers */
@@ -59,7 +60,7 @@ namespace netlist {
   NETLIST_STREAMOUT(Identifier);
   
   ////////////// block identifier
-  class BIdentifier : public Identifier, public NetComp {
+  class BIdentifier : public Identifier{
   public:
     // constructors
     BIdentifier(const std::string&);
@@ -75,10 +76,10 @@ namespace netlist {
 
   
   ///////////// function identifier
-  class FIdentifier : public Identifier, public NetComp {
+  class FIdentifier : public Identifier {
   public:
     // constructors
-    NETLIST_DEFAULT_CON(FIdentifier, tFuncName);
+    FIdentifier() : Identifier(NetComp::tFuncName) { }
     FIdentifier(const std::string&);
     
     // helpers
@@ -87,10 +88,10 @@ namespace netlist {
   NETLIST_STREAMOUT(FIdentifier);
 
   ///////////// module identifier
-  class MIdentifier : public Identifier, public NetComp {
+  class MIdentifier : public Identifier {
   public:
     // constructors
-    NETLIST_DEFAULT_CON(MIdentifier, tModuleName);
+    MIdentifier() : Identifier(NetComp::tModuleName) {}
     MIdentifier(const std::string&);
     MIdentifier(const averilog::avID& );
     
@@ -104,7 +105,7 @@ namespace netlist {
   NETLIST_STREAMOUT(MIdentifier);
 
   //////////// instance identifier
-  class IIdentifier : public Identifier, public NetComp {
+  class IIdentifier : public Identifier {
   public:
     // constructors
     IIdentifier();
@@ -120,10 +121,10 @@ namespace netlist {
   NETLIST_STREAMOUT(IIdentifier);
 
   /////////// parameter identifier
-  class PaIdentifier : public Identifier, public NetComp {
+  class PaIdentifier : public Identifier {
   public:
     // constructors
-    NETLIST_DEFAULT_CON(PaIdentifier, tParaName);
+    PaIdentifier() : Identifier(NetComp::tParaName) {}
     PaIdentifier(const std::string&);
 
     // helpers
@@ -131,10 +132,10 @@ namespace netlist {
   NETLIST_STREAMOUT(PaIdentifier);
 
   /////////// port identifier
-  class PoIdentifier : public Identifier, public NetComp {
+  class PoIdentifier : public Identifier {
   public:
     // constructors
-    NETLIST_DEFAULT_CON(PoIdentifier, tPortName);
+    PoIdentifier() : Identifier(NetComp::tPortName) {}
     PoIdentifier(const std::string&);
 
     // helpers
@@ -142,7 +143,7 @@ namespace netlist {
   NETLIST_STREAMOUT(PoIdentifier);
 
   /////////// Variable identifier
-  class VIdentifier : public Identifier, public NetComp {
+  class VIdentifier : public Identifier {
   public:
     // constructors
     VIdentifier();

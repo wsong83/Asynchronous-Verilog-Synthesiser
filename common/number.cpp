@@ -36,7 +36,8 @@ using namespace netlist;
 
 // decimal or integer
 netlist::Number::Number(char *text, int txt_leng, int num_leng) 
-  : value(0), num_leng(num_leng), txt_value(num_leng,'0'), 
+  : NetComp(tNumber), 
+    value(0), num_leng(num_leng), txt_value(num_leng,'0'), 
     valid(false), valuable(false) 
 {
   for(int i = 0; i < txt_leng; i++) {
@@ -53,7 +54,8 @@ netlist::Number::Number(char *text, int txt_leng, int num_leng)
 
 // fixed numbers
 netlist::Number::Number(char *text, int txt_leng)
-  : value(0), num_leng(0), valid(false), valuable(false)
+  : NetComp(tNumber), 
+    value(0), num_leng(0), valid(false), valuable(false)
 {
   int index = 0;
 
@@ -86,7 +88,8 @@ netlist::Number::Number(char *text, int txt_leng)
 }
 
 netlist::Number::Number(const std::string& txt_val, int num_leng) 
-  : value(0), num_leng(num_leng), txt_value(txt_val), valid(true), valuable(false)
+  : NetComp(tNumber), 
+    value(0), num_leng(num_leng), txt_value(txt_val), valid(true), valuable(false)
 {
   assert(num_leng >= 0);
 

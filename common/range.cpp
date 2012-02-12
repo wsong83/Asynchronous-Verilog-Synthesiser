@@ -63,7 +63,7 @@ netlist::Range::Range(const Range_Exp& sel)
 netlist::Range::Range(const Range_Exp& sel, int ctype)
   : type(TRange)
 {
-  Range_Exp m_sel(Expression(0),Expression(0));
+  Range_Exp m_sel;
   if(ctype == averilog::av_parser::token::oPColon) { // positive colon
     m_sel.first = sel.first+sel.second;
     m_sel.second = sel.first;

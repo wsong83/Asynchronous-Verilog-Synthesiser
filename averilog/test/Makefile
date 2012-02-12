@@ -26,13 +26,9 @@
 # variables
 INCDIRS = -I./ -I../../
 TARGETS = scanner parser
-OTHER_OBJS = ../../common/number.o \
-             ../../common/identifier.o \
-             ../../common/range.o \
-             ../../common/expression.o \
-	         ../src/averilog.lex.o \
-             ../src/averilog.o \
-	         ../src/averilog_util.o
+OTHER_OBJS = $(wildcard ../../common/*.o)
+OTHER_OBJS += $(wildcard ../src/*.o)
+
 
 # targets
 all: $(TARGETS)
