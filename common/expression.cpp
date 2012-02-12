@@ -70,35 +70,62 @@ void netlist::Expression::append(Operation::operation_t otype) {
 }
 
 void netlist::Expression::execute() {
-  std::list<Operation> m_eqn;   // the new equation
-  stack<Operation&> m_stack;
-  enum state_t {sInit, sOp, sD1, sD2, sD3};
+  //  std::list<Operation> m_eqn;   // the new equation
+  enum state_t {sInit, sOp, sD1, sD2, sD3, eD1, eD2, eD3};
+  struct ostate_t { Operation& o; state_t s; bool v;}
+  stack<ostate_t > m_stack;
   state_t m_state = sInit;
   Operation *pd1, *pd2, *pd3;
-  bool m_valuable = true;       // assuming reductable
   bool m_reduce_again = false;
+  std::list<Operation>::iteratior it = eqn.begin();
+  std::list<Operation>::iteratior end = eqn.end();
 
-  while(!eqn.empty) {
+  valuable = true;		// assuming reducible
+  
+  while(it != end) {
     // move an operation from old to new equation, then check the operation according to last state
-    m_eqn.splice(m_eqn.end(), eqn, eqn.begin());
+    //m_eqn.splice(m_eqn.end(), eqn, eqn.begin());
     while(!reduce_again) {
+    Operation& op = *it;
       switch(m_state) {
       case sInit:
-        if(m_eqn.back().get_type() <= Operation::oFun) { // already reduced
-          valuable = m_eqn.back().is_valuable();
-          assert(eqn.empty());    // it should be empty now
+        if(op.get_type() <= Operation::oFun) { // already reduced
+	  // final
+          valuable = op.is_valuable();
+          it++;
           m_reduce_again = false;
           break;
         } else {                  // operator
+	  // next
           m_state = sOp;
-          m_stack.push(m_eqn.back());
+          m_stack.push(ostate_t(op, m_state, true));
           m_reduce_again = false;
           break;
         }
     case sOp:
-      if(m_eqn.back().get_type() <= Operation::oFun) { // first operand is a number/variable
-        if(m_stack.top().get_type() <= Operation::oUNxor) { // unary operation
-          
+      if(op.get_type() <= Operation::oFun) { // first operand is a number/variable
+        if(m_stack.top().o.get_type() <= Operation::oUNxor) { // unary operation
+	  if(op.is_valuable()) { // reducible
+	    pd1 = &op;
+	    m_stack.top().o.execute(*pd1); // reduce the equation
+	    
+	    // next
+	    // remove the operand
+	    eqn.erase(it--);
+	    m_stack.pop();
+	    if(m_stack.empty()) { // final
+	      m_reduce_again = false;
+	      it++;
+	      break;
+	    } else { // further reduce
+	      m_state = m_stack.top().s;
+	      m_reduce_again = true;
+	      break;
+	    }
+	  } else {		// not reducible
+	    valuable = false;
+	    m_stack
+	    
     case sD1:
     case sD2:
     case sD3:
