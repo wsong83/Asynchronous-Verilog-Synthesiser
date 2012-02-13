@@ -44,7 +44,7 @@ namespace netlist {
     // helpers
     bool is_valuable() const; /* check valuable */
     int get_value() const;    /* fetch the value if valuable */
-    void execute();           /* try to reduce the equation */
+    void reduce();           /* try to reduce the equation */
     
     // develope the equation
     void append(Operation::operation_t);
@@ -64,6 +64,17 @@ namespace netlist {
   Expression operator- (const Expression&, const Expression&);
 
   NETLIST_STREAMOUT(Expression);
+
+  // helper class
+  class expression_state {
+  public:
+    Operation op;               // operator
+    int ops;                    // number of operands needed
+    int opp;                    // current number of operands
+    std::list<Operation> d[3];  // oprands
+  expression_state() : opp(0) {}
+  };
+
 
 }
 

@@ -27,6 +27,7 @@
  */
 
 #include "expression.h"
+#include<stack>
 
 using namespace netlist;
 
@@ -55,84 +56,76 @@ int netlist::Expression::get_value() const {
     return 0;
 }
 
+void netlist::Expression::reduce() {
+  // state stack
+  std::stack<boost::shared_ptr<expression_state> > m_stack;
+
+  while(!eqn.empty()) {
+    // fetch a new operation element
+    Operation& it = eqn.front();
+    eqn.pop_front();
+    
+    // check the operation
+    if(it.get_type() <= Operation::oFun) {   // a prime
+      if(m_stack.empty()) {     // only one element and it is a prime
+        assert(eqn.empty());    // eqn should be empty
+        eqn.push_back(it);
+        valuable = it.is_valuable();
+        return;
+      } else {
+        boost::shared_ptr<expression_state> m_state = m_stack.top();
+        m_state->d[(m_state->opp)++].push_back(it);
+        while(true) {
+          if(m_state->ops == m_state->opp) { // ready for execute
+            m_state->op.execute(m_state->d[0], m_state->d[3], m_state->d[2]);
+            m_stack.pop();
+            // recursive iterations
+            if(m_stack.empty()) { // final
+              assert(eqn.empty());    // eqn should be empty
+              eqn.splice(eqn.end(), m_state->d[0]);
+              valuable = eqn.front().is_valuable();
+              //delete m_state;
+              return;
+            } else {
+              boost::shared_ptr<expression_state> tmp = m_state;
+              m_state = m_stack.top();
+              m_state->d[m_state->opp].splice(m_state->d[m_state->opp].end(), tmp->d[0]);
+              //delete tmp;
+              (m_state->opp)++;
+            }
+          } else break;       // do nothing, proceed to the next element
+        }
+      }
+    } else {                  // an operator
+      boost::shared_ptr<expression_state> m_state;
+      m_state->op = it;
+      if(it.get_type() <= Operation::oUNxor) { // unary
+          m_state->ops = 1;
+      } else if(it.get_type() <= Operation::oLOr) { // two operands
+        m_state->ops = 2;
+      } else {
+        m_state->ops = 3;
+      }
+      m_stack.push(m_state);
+    }
+  }
+
+  // should not run to here
+  assert(1 == 0);
+}
+
 void netlist::Expression::append(Operation::operation_t otype) {
   assert(tExp == ctype);     // this object whould be valid
   assert(otype >= Operation::oUPos && otype < Operation::oPower);
 
   // preparing operands
-  this->execute();
+  this->reduce();
 
   // connect the equation
   this->eqn.push_front(Operation(otype));
 
   // try to reduce the final equation
-  this->execute();
-}
-
-void netlist::Expression::execute() {
-  //  std::list<Operation> m_eqn;   // the new equation
-  enum state_t {sInit, sOp, sD1, sD2, sD3, eD1, eD2, eD3};
-  struct ostate_t { Operation& o; state_t s; bool v;}
-  stack<ostate_t > m_stack;
-  state_t m_state = sInit;
-  Operation *pd1, *pd2, *pd3;
-  bool m_reduce_again = false;
-  std::list<Operation>::iteratior it = eqn.begin();
-  std::list<Operation>::iteratior end = eqn.end();
-
-  valuable = true;		// assuming reducible
-  
-  while(it != end) {
-    // move an operation from old to new equation, then check the operation according to last state
-    //m_eqn.splice(m_eqn.end(), eqn, eqn.begin());
-    while(!reduce_again) {
-    Operation& op = *it;
-      switch(m_state) {
-      case sInit:
-        if(op.get_type() <= Operation::oFun) { // already reduced
-	  // final
-          valuable = op.is_valuable();
-          it++;
-          m_reduce_again = false;
-          break;
-        } else {                  // operator
-	  // next
-          m_state = sOp;
-          m_stack.push(ostate_t(op, m_state, true));
-          m_reduce_again = false;
-          break;
-        }
-    case sOp:
-      if(op.get_type() <= Operation::oFun) { // first operand is a number/variable
-        if(m_stack.top().o.get_type() <= Operation::oUNxor) { // unary operation
-	  if(op.is_valuable()) { // reducible
-	    pd1 = &op;
-	    m_stack.top().o.execute(*pd1); // reduce the equation
-	    
-	    // next
-	    // remove the operand
-	    eqn.erase(it--);
-	    m_stack.pop();
-	    if(m_stack.empty()) { // final
-	      m_reduce_again = false;
-	      it++;
-	      break;
-	    } else { // further reduce
-	      m_state = m_stack.top().s;
-	      m_reduce_again = true;
-	      break;
-	    }
-	  } else {		// not reducible
-	    valuable = false;
-	    m_stack
-	    
-    case sD1:
-    case sD2:
-    case sD3:
-    default:
-    }
-  }
-
+  this->reduce();
 }
 
 void netlist::Expression::append(Operation::operation_t otype, Expression& d1) {
@@ -140,15 +133,15 @@ void netlist::Expression::append(Operation::operation_t otype, Expression& d1) {
   assert(otype >= Operation::oPower && otype < Operation::oQuestion);
 
   // preparing operands
-  this->execute();
-  d1.execute();
+  this->reduce();
+  d1.reduce();
 
   // connect the equation
   this->eqn.push_front(Operation(otype));
   this->eqn.splice(this->eqn.end(), d1.eqn);
   
   // try to reduce the final equation
-  this->execute();
+  this->reduce();
 
 }
 
@@ -157,16 +150,16 @@ void netlist::Expression::append(Operation::operation_t otype, Expression& d1, E
   assert(otype >= Operation::oQuestion);
 
   // preparing operands
-  this->execute();
-  d1.execute();
-  d2.execute();
+  this->reduce();
+  d1.reduce();
+  d2.reduce();
 
   this->eqn.push_front(Operation(otype));
   this->eqn.splice(this->eqn.end(), d1.eqn);
   this->eqn.splice(this->eqn.end(), d2.eqn);
   
   // try to reduce the final equation
-  this->execute();
+  this->reduce();
 }
 
 bool netlist::Expression::operator== (const Expression& rhs) const {

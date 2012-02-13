@@ -52,9 +52,9 @@ netlist::Operation::Operation(boost::shared_ptr<Identifier> id)
 
 // dummy yet
 void netlist::Operation::execute(
-                                 const Operation& d1,
-                                 const Operation& d2,
-                                 const Operation& d3
+                                 std::list<Operation>& d1,
+                                 std::list<Operation>& d2,
+                                 std::list<Operation>& d3
                                  ) {
 }
 

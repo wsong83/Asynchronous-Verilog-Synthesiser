@@ -30,6 +30,7 @@
 #define _H_OPERATION_
 
 #include <boost/shared_ptr.hpp>
+#include <list>
 #include "component.h"
 
 namespace netlist {
@@ -88,11 +89,7 @@ namespace netlist {
     // helpers
     bool is_valuable() const { return valuable; }
     operation_t get_type() const { return otype; }
-    void execute(                                        /* execute the operation */
-                 const Operation& d1 = Operation(oNULL), /* first operand */
-                 const Operation& d2 = Operation(oNULL), /* second operand */
-                 const Operation& d3 = Operation(oNULL)  /* third operand */
-                 );
+    void execute( std::list<Operation>&, std::list<Operation>&, std::list<Operation>&);
     boost::shared_ptr<Number> get_num() const ;
     boost::shared_ptr<Identifier> get_var() const;
     std::ostream& streamout(std::ostream&) const;
