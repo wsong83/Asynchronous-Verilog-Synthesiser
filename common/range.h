@@ -43,7 +43,6 @@ namespace netlist {
     Range(const Expression&);	/* select by an expression  */
     Range(const Range_Exp&);    /* declare or select by a range expression */
     Range(const Range_Exp&, int); /* select by a range expression using positive or negtive colon */
-    ~Range();
 
     // helpers
     bool is_valuable();
@@ -51,12 +50,10 @@ namespace netlist {
     virtual std::ostream& streamout(std::ostream&) const;
     
   private:
-    union {
-      int c;			/* constant */
-      Expression* v;		/* variable */
-      Range_Exp* r;		/* range expression */
-    };
-
+    Number c;                        /* constant */
+    boost::shared_ptr<Expression> v; /* variable */
+    boost::shared_ptr<Range_Exp> r;  /* range expression */
+    
     enum type_t {
       TConst, 
       TVar, 

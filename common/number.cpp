@@ -31,7 +31,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <gmpxx.h>
-#include "number.h"
+#include "component.h"
 
 using namespace netlist;
 

@@ -42,7 +42,7 @@ netlist::Range::Range(const Expression& sel)
     c = sel.get_value();
     type = TConst;
   } else {
-    v = new Expression(sel);
+    v.reset(new Expression(sel));
   }
  };
 
@@ -54,7 +54,7 @@ netlist::Range::Range(const Range_Exp& sel)
       c = sel.first.get_value();
       type = TConst;
     } else {			// variable expression
-      v = new Expression(sel.first);
+      v.reset(new Expression(sel.first));
       type = TVar;
     }
   }   
@@ -80,19 +80,11 @@ netlist::Range::Range(const Range_Exp& sel, int ctype)
       c = m_sel.first.get_value();
       type = TConst;
     } else {			// variable expression
-      v = new Expression(m_sel.first);
+      v.reset(new Expression(m_sel.first));
       type = TVar;
     } 
   } else {
-    r = new Range_Exp(m_sel);
-  }
-}
-
-netlist::Range::~Range() {
-  switch(type) {
-  case TVar:    delete v; break;
-  case TRange:  delete r; break;
-  default: break;
+    r.reset(new Range_Exp(m_sel));
   }
 }
 
