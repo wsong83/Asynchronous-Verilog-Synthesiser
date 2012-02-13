@@ -122,7 +122,7 @@ operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
               return token::number; 
             }
 {dec}    { 
-              yylval->tNumber = new netlist::Number(yytext, yyleng, 32);
+              yylval->tNumber = new netlist::Number(yytext, yyleng);
               return token::number; 
             }
 {identifier}  { 

@@ -43,7 +43,7 @@ namespace netlist {
 
     // helpers
     bool is_valuable() const; /* check valuable */
-    int get_value() const;    /* fetch the value if valuable */
+    Number get_value() const;    /* fetch the value if valuable */
     void reduce();           /* try to reduce the equation */
     
     // develope the equation

@@ -89,9 +89,9 @@ namespace netlist {
     // helpers
     bool is_valuable() const { return valuable; }
     operation_t get_type() const { return otype; }
-    void execute( std::list<Operation>&, std::list<Operation>&, std::list<Operation>&);
-    boost::shared_ptr<Number> get_num() const ;
-    boost::shared_ptr<Identifier> get_var() const;
+    Number& get_num_ref();
+    Number get_num() const;
+    Identifier get_var() const;
     std::ostream& streamout(std::ostream&) const;
 
   private:
@@ -99,6 +99,17 @@ namespace netlist {
     bool valuable;
     boost::shared_ptr<NetComp> data;
   };
+
+  void execute_operation( Operation::operation_t op,
+			  std::list<Operation>& d1,
+			  std::list<Operation>& d2,
+			  std::list<Operation>& d3
+			  );
+
+  void execute_UPos(std::list<Operation>&);
+  void execute_UNeg(std::list<Operation>&);
+  void execute_Add(std::list<Operation>&, std::list<Operation>&);
+ 
 
 }
 

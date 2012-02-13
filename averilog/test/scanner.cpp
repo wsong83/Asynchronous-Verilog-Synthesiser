@@ -46,7 +46,7 @@ int main(int argc, char*argv[])
   while((tmp = avlex(&lval, &yyloc, scanner)) != 0) {
     std::cout << tmp << " ";
     if(tmp == token::number)
-      std::cout << "Number:" << lval.tNumber->get_value() << ":" << lval.tNumber->get_txt_value() << " ";
+      std::cout << "Number:" << *(lval.tNumber) << " ";
   }
     
   avlex_destroy(scanner);

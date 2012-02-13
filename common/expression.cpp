@@ -46,12 +46,12 @@ bool netlist::Expression::is_valuable() const {
   return valuable;
 }
 
-int netlist::Expression::get_value() const { 
+Number netlist::Expression::get_value() const { 
   if(valuable &&                                   // valuable 
      1 == eqn.size() &&                            // and has only one element
      eqn.front().is_valuable() &&                  // and the element is valuable
      Operation::oNum == eqn.front().get_type())   // and it is a number
-    return eqn.front().get_num()->get_value(); 
+    return eqn.front().get_num(); 
   else
     return 0;
 }
@@ -77,7 +77,7 @@ void netlist::Expression::reduce() {
         m_state->d[(m_state->opp)++].push_back(it);
         while(true) {
           if(m_state->ops == m_state->opp) { // ready for execute
-            m_state->op.execute(m_state->d[0], m_state->d[3], m_state->d[2]);
+            execute_operation(m_state->op.get_type(), m_state->d[0], m_state->d[3], m_state->d[2]);
             m_stack.pop();
             // recursive iterations
             if(m_stack.empty()) { // final

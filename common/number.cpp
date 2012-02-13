@@ -30,212 +30,84 @@
 #include <cassert>
 #include <cstdlib>
 #include <algorithm>
+#include <gmpxx.h>
 #include "number.h"
 
 using namespace netlist;
 
 // decimal or integer
-netlist::Number::Number(char *text, int txt_leng, int num_leng) 
-  : NetComp(tNumber), 
-    value(0), num_leng(num_leng), txt_value(num_leng,'0'), 
-    valid(false), valuable(false) 
+netlist::Number::Number(char *text, int txt_leng) 
+  : NetComp(tNumber), txt_value(), valid(false), valuable(false)
 {
-  for(int i = 0; i < txt_leng; i++) {
+  std::string m;
+  int i;
+  for(i = 0; i < txt_leng; i++) {
     if(isdigit(text[i]))
-      value = value * 10 + text[i] - '0';
+      m.push_back(text[i]);
     else if(text[i] != '_')
-      return;
+      break;			// error
   }
+  
+  if(m.empty()) m.push_back('1');
 
-  valid = true;
-  valuable = true;
-  update_txt_value();
-}
-
-// fixed numbers
-netlist::Number::Number(char *text, int txt_leng)
-  : NetComp(tNumber), 
-    value(0), num_leng(0), valid(false), valuable(false)
-{
-  int index = 0;
-
-  // get the num_leng
-  if(!isdigit(text[index])) {
-    num_leng = 1;
-  } else {
-    while(isdigit(text[index]) || (text[index]=='_')) {
-      if(isdigit(text[index]))
-	num_leng = num_leng * 10 + text[index] - '0';
-      index++;
+  mpz_class dd(m, 10);
+  
+  if(i == txt_leng) { 		// simple number
+    valid = true;
+    valuable = true;
+    txt_value = dd.get_str(2);
+    num_leng = txt_value.size();
+  } else {			// fixed number
+    num_leng = dd.get_si();
+    if(text[i++] != '\'') return; // wrong format
+    switch(text[i]) {
+    case 'b':
+    case 'B': valid = bin2num(text, txt_leng, i); return;
+    case 'd':
+    case 'D': valid = dec2num(text, txt_leng, i); return;
+    case 'O':
+    case 'o': valid = oct2num(text, txt_leng, i); return;
+    case 'H':
+    case 'h': valid = hex2num(text, txt_leng, i); return;
+    default: return;		// wrong number format
     }
   }
-
-  if(num_leng == 0) return;	// wrong number leng, empty number
-
-  index++;			// bypass the ' operator
-
-  switch(text[index]) {
-  case 'b':
-  case 'B': valid = bin2num(text, txt_leng, index); return;
-  case 'd':
-  case 'D': valid = dec2num(text, txt_leng, index); return;
-  case 'O':
-  case 'o': valid = oct2num(text, txt_leng, index); return;
-  case 'H':
-  case 'h': valid = hex2num(text, txt_leng, index); return;
-  default: return;		// wrong number format
-  }
 }
 
-netlist::Number::Number(const std::string& txt_val, int num_leng) 
-  : NetComp(tNumber), 
-    value(0), num_leng(num_leng), txt_value(txt_val), valid(true), valuable(false)
+netlist::Number::Number(int d) 
+  : NetComp(tNumber), txt_value(), valid(true), valuable(true)
 {
-  assert(num_leng >= 0);
-
-  if(txt_value.length() < (unsigned int)(num_leng))
-    txt_value.insert(0,num_leng-txt_value.length(), '0');
-  else if(txt_value.length() > (unsigned int)(num_leng))
-    txt_value.erase(0,txt_value.length()-num_leng);
-
-  update_value();
+  mpz_class m(d);
+  txt_value = m.get_str(2);
+  num_leng = txt_value.size();
 }
 
-unsigned int netlist::Number::get_value() const {
-  return value;
-}
 
-const std::string& netlist::Number::get_txt_value() const {
-  return txt_value;
-}
-
-int netlist::Number::get_length() const {
-  return num_leng;
-}
-
-bool netlist::Number::is_valuable() const {
-  return valuable;
-}
-
-bool netlist::Number::is_valid() const {
-  return valid;
-}
-
-Number& netlist::Number::truncate (int lhs, int rhs) {
-  assert(lhs >= 0 && lhs <= num_leng && rhs >= 0 && rhs <= lhs);
-
+Number& netlist::Number::truncate (int lhs, int rhs) { // no sign support
+  assert(lhs >= 0 && (unsigned int)(lhs) <= num_leng && rhs >= 0 && rhs <= lhs);
   txt_value = txt_value.substr(txt_value.length()-lhs-1, lhs-rhs+1);
   num_leng = lhs-rhs+1;
-  update_value();
-  
   return *this;
 }
 
-Number& netlist::Number::addition (const Number& rhs) {
-  if(valuable && rhs.valuable 	// both are valuable
-     && ((value/2+1)+(rhs.value/2+1) <= (unsigned int)(1<<(BIT_SIZE_OF_UINT-1)) ) // will not overflow
-     ) {
-    value = (value + rhs.value);
-    num_leng = std::min((int)(BIT_SIZE_OF_UINT), (int)(std::max(num_leng, rhs.num_leng)+1));
-    update_txt_value();
-  } else {			// do text addition
-    valuable = false;
-    value = 0;
-    num_leng = std::max(num_leng, rhs.num_leng)+1;		   // calculate the new length
-    txt_value.insert(0, num_leng-txt_value.length(), '0'); // expend the string
-    unsigned int leng_diff = num_leng-rhs.num_leng;
-    char c = '0';
-    for(int i=rhs.num_leng-1; i>=0; i--){
-      switch(c+txt_value[i+leng_diff]+rhs.txt_value[i]) {
-      case '0'+'0'+'0': 
-	txt_value[i+leng_diff] = '0';
-	c = '0';
-	break;
-      case '0'+'0'+'1':
-	txt_value[i+leng_diff] = '1';
-	c = '0';
-	break;
-      case '0'+'1'+'1':
-	txt_value[i+leng_diff] = '0';
-	c = '1';
-	break;
-      case '1'+'1'+'1':
-	txt_value[i+leng_diff] = '1';
-	c = '1';
-	break;
-      case '0'+'0'+'x':
-	txt_value[i+leng_diff] = 'x';
-	c = '0';
-	break;
-      case '0'+'0'+'z':
-	if(c=='0' || c=='z') {
-	  txt_value[i+leng_diff] = 'x';
-	  c = '0';
-	  break;
-	} // else confused with "11x", which is equivalent to "11z"
-      case '1'+'1'+'z':
-	txt_value[i+leng_diff] = 'x';
-	c = '1';
-	break;
-      case '0'+'1'+'x':
-      case '0'+'1'+'z':
-      case '0'+'x'+'x':
-      case '0'+'x'+'z':
-      case '0'+'z'+'z':
-      case '1'+'x'+'x':
-      case '1'+'x'+'z':
-      case '1'+'z'+'z':
-      case 'x'+'x'+'x':
-      case 'x'+'x'+'z':
-      case 'x'+'z'+'z':
-      case 'z'+'z'+'z':
-	txt_value[i+leng_diff] = 'x';
-	c = 'x';
-	break;
-      default:			// should not come here
-	assert(1==0);
-      }
-    }
-
-    // calculate the rest
-    for(int i=leng_diff-1; i>=0; i--){
-      switch(c+txt_value[i]) {
-      case '0'+'0': 
-	txt_value[i] = '0';
-	c = '0';
-	break;
-      case '0'+'1':
-	txt_value[i] = '1';
-	c = '0';
-	break;
-      case '1'+'1':
-	txt_value[i] = '0';
-	c = '1';
-	break;
-      case '0'+'x':
-      case '0'+'z':
-	txt_value[i] = 'x';
-	c = '0';
-	break;
-      case '1'+'x':
-      case '1'+'z':
-      case 'x'+'x':
-      case 'x'+'z':
-      case 'z'+'z':
-	txt_value[i] = 'x';
-	c = 'x';
-	break;
-      default:			// should not come here
-	assert(1==0);
-      }
-    }
-  }
-
-  return *this;
+Number netlist::Number::addition(const Number& rhs) const {
+  assert(valuable && rhs.valuable);
+  Number m(0);
+  mpz_class d1(txt_value, 2);
+  mpz_class d2(rhs.txt_value, 2);
+  d1 = d1 + d2;
+  m.txt_value = d1.get_str(2);
+  m.txt_value = m.num_leng = m.txt_value.size();
+  return m;
 }
+
 
 Number& netlist::Number::operator+= (const Number& rhs) {
-  addition(rhs);
+  assert(valuable && rhs.valuable);
+  mpz_class d(txt_value, 2);
+  d = d + mpz_class(rhs.txt_value, 2);
+  txt_value = d.get_str(2);
+  num_leng = txt_value.size();
   return *this;
 }
 
@@ -244,211 +116,182 @@ Number& netlist::Number::lfsh (int rhs) {
 
   txt_value.append(rhs, '0');
   num_leng += rhs;
-  update_value();
   return *this;
 }
 
 std::ostream& netlist::Number::streamout (std::ostream& os) const{
-  if(valuable)		// able to be represented as a decimal
-    os << value;
-  else
+  if(valuable) {		// able to be represented as a decimal
+    mpz_class d(txt_value,2);
+    os << num_leng << "'h" << d.get_str(16);
+  } else
     os << num_leng << "'b" << txt_value;
   return os;
 }
 
 bool netlist::Number::bin2num(char *text, int txt_leng, int start) {
-  int i = num_leng + 4;
-  txt_value = std::string(i, '0');
-  valuable = true;
-  for(int index=txt_leng-1; (i>4 && index!=start); index--) {
-    switch(text[index]) {
-    case '0': txt_value[--i] = '0'; break;
-    case '1': txt_value[--i] = '1'; break;
-    case 'x':
-    case 'X': txt_value[--i] = 'x'; valuable = false; break;
-    case 'z':
-    case 'Z': txt_value[--i] = 'z'; valuable = false; break;
-    case '_': break;
-    default: return false;
-    }
+  std::string m;
+  bool v = true;
+
+  for(int i=start+1; i<txt_leng; i++) {
+    if(text[i] >= '0' && text[i] <= '1')
+      m.push_back(text[i]);
+    else if(text[i] == 'x' || text[i] == 'X') {
+      m.push_back('x');
+      v = false;
+    } else if(text[i] == 'z' || text[i] == 'z') {
+      m.push_back('z');
+      v = false;
+    } else if(text[i] != '_')
+      return false;		// wrong format
   }
 
-  txt_value.erase(0,4);
-  update_value();
+  valuable = v;
+  txt_value = m;
+  
   return true;
 }
 
 bool netlist::Number::dec2num(char *text, int txt_leng, int start) {
-  if((unsigned int)(num_leng) <= BIT_SIZE_OF_UINT) { // directly calculate the value
-    txt_value = std::string(num_leng, '0');
-    valuable = true;
-    value = 0;
-    for(int i=start+1; i!=txt_leng; i++) {
-      char c = text[i];
-      if(c >= '0' && c<= '9')
-	value = (value * 10 + c - '0');
-      else if(c != '_')
-	return false;		// unrecognizable character
-    }
+  std::string m;
 
-    if((unsigned int)(num_leng) != BIT_SIZE_OF_UINT)
-      value %= (unsigned int)(1) << (unsigned int)(num_leng);
-
-    update_txt_value();
-    return true;
-  } else { 			// too long, must use text addition, very slow
-    Number base(std::string("0"), 1);
-    for(int i=start+1; i!=txt_leng; i++) {
-      char c = text[i];
-      if(c >= '0' && c<= '9') {
-	base = (base<<3) + (base<<1);
-	switch(c) {
-	case '0': break;
-	case '1': base += Number(std::string("1"), 1); break;
-	case '2': base += Number(std::string("10"), 2); break;
-	case '3': base += Number(std::string("11"), 2); break;
-	case '4': base += Number(std::string("100"), 3); break;
-	case '5': base += Number(std::string("101"), 3); break;
-	case '6': base += Number(std::string("110"), 3); break;
-	case '7': base += Number(std::string("111"), 3); break;
-	case '8': base += Number(std::string("1000"), 4); break;
-	case '9': base += Number(std::string("1001"), 4); break;
-	}
-      } else if(c != '_')
-	return false;
-    }
-    if(base.num_leng >= num_leng)
-      base.truncate(num_leng-1, 0);
-    else {
-      base.txt_value.insert(0, num_leng-base.num_leng, '0');
-    }
-    txt_value = base.txt_value;
-    value = base.value;
-    valuable = base.valuable;
-    return true;
+  for(int i=start+1; i<txt_leng; i++) {
+    if(text[i] >= '0' && text[i] <= '9')
+      m.push_back(text[i]);
+    else if(text[i] != '_')
+      return false;		// wrong format
   }
+
+  mpz_class dd(m, 10);
+  txt_value  = dd.get_str(2);
+  if(txt_value.size() > num_leng) txt_value.erase(0, txt_value.size() - num_leng);
+  else if(txt_value.size() < num_leng) txt_value.insert(0, num_leng - txt_value.size(), '0');
+
+  return true;
 }
 
 bool netlist::Number::oct2num(char *text, int txt_leng, int start) {
-  int i = num_leng + 4;
-  txt_value = std::string(i, '0');
-  valuable = true;
-  for(int index=txt_leng-1; (i>4 && index!=start); index--) {
-    switch(text[index]) {
-    case '0': txt_value.replace(i-=3, 3, "000"); break;
-    case '1': txt_value.replace(i-=3, 3, "001"); break;
-    case '2': txt_value.replace(i-=3, 3, "010"); break;
-    case '3': txt_value.replace(i-=3, 3, "011"); break;
-    case '4': txt_value.replace(i-=3, 3, "100"); break;
-    case '5': txt_value.replace(i-=3, 3, "101"); break;
-    case '6': txt_value.replace(i-=3, 3, "110"); break;
-    case '7': txt_value.replace(i-=3, 3, "111"); break;
-    case 'x':
-    case 'X': txt_value.replace(i-=3, 3, "xxx"); valuable = false; break;
-    case 'z':
-    case 'Z': txt_value.replace(i-=3, 3, "zzz"); valuable = false; break;
-    case '_': break;
-    default: return false;
-    }
+  std::string m;
+  bool v = true;
+
+  for(int i=start+1; i<txt_leng; i++) {
+    if(text[i] >= '0' && text[i] <= '7')
+      m.push_back(text[i]);
+    else if(text[i] == 'x' || text[i] == 'X') {
+      m.push_back('x');
+      v = false;
+    } else if(text[i] == 'z' || text[i] == 'z') {
+      m.push_back('z');
+      v = false;
+    } else if(text[i] != '_')
+      return false;		// wrong format
   }
-  txt_value.erase(0,4);
-  update_value();
+
+  if(v) {			// valuable
+    valuable = true;
+    mpz_class dd(m, 8);
+    txt_value = dd.get_str(2);
+  } else {
+    valuable = false;
+    for(unsigned int i=0; i<m.size(); i++)
+      switch(m[i]) {
+      case '0': txt_value += "000"; break;
+      case '1': txt_value += "001"; break;
+      case '2': txt_value += "010"; break;
+      case '3': txt_value += "011"; break;
+      case '4': txt_value += "100"; break;
+      case '5': txt_value += "101"; break;
+      case '6': txt_value += "110"; break;
+      case '7': txt_value += "111"; break;
+      }
+  }
+  
+  if(txt_value.size() > num_leng) txt_value.erase(0, txt_value.size() - num_leng);
+  else if(txt_value.size() < num_leng) txt_value.insert(0, num_leng - txt_value.size(), '0');
+
   return true;
 }
 
 bool netlist::Number::hex2num(char *text, int txt_leng, int start) {
-  int i = num_leng + 4;
-  txt_value = std::string(i, '0');
-  valuable = true;
-  for(int index=txt_leng-1; (i>4 && index!=start); index--) {
-    switch(text[index]) {
-    case '0': txt_value.replace(i-=4, 4, "0000"); break;
-    case '1': txt_value.replace(i-=4, 4, "0001"); break;
-    case '2': txt_value.replace(i-=4, 4, "0010"); break;
-    case '3': txt_value.replace(i-=4, 4, "0011"); break;
-    case '4': txt_value.replace(i-=4, 4, "0100"); break;
-    case '5': txt_value.replace(i-=4, 4, "0101"); break;
-    case '6': txt_value.replace(i-=4, 4, "0110"); break;
-    case '7': txt_value.replace(i-=4, 4, "0111"); break;
-    case '8': txt_value.replace(i-=4, 4, "1000"); break;
-    case '9': txt_value.replace(i-=4, 4, "1001"); break;
-    case 'A':
-    case 'a': txt_value.replace(i-=4, 4, "1010"); break;
-    case 'B':
-    case 'b': txt_value.replace(i-=4, 4, "1011"); break;
-    case 'C':
-    case 'c': txt_value.replace(i-=4, 4, "1100"); break;
-    case 'D':
-    case 'd': txt_value.replace(i-=4, 4, "1101"); break;
-    case 'E':
-    case 'e': txt_value.replace(i-=4, 4, "1110"); break;
-    case 'F':
-    case 'f': txt_value.replace(i-=4, 4, "1111"); break;
-    case 'x':
-    case 'X': txt_value.replace(i-=4, 4, "xxxx"); valuable = false; break;
-    case 'z':
-    case 'Z': txt_value.replace(i-=4, 4, "zzzz"); valuable = false; break;
-    case '_': break;
-    default: return false;
+  std::string m;
+  bool v = true;
+
+  for(int i=start+1; i<txt_leng; i++) {
+    if(text[i] >= '0' && text[i] <= '9')
+      m.push_back(text[i]);
+    else if(text[i] == 'a' || text[i] == 'A') {
+      m.push_back('a');
     }
+    else if(text[i] == 'b' || text[i] == 'B') {
+      m.push_back('b');
+    }
+    else if(text[i] == 'c' || text[i] == 'C') {
+      m.push_back('c');
+    }
+    else if(text[i] == 'd' || text[i] == 'D') {
+      m.push_back('d');
+    }
+    else if(text[i] == 'e' || text[i] == 'E') {
+      m.push_back('e');
+    }
+    else if(text[i] == 'f' || text[i] == 'F') {
+      m.push_back('f');
+    }
+    else if(text[i] == 'x' || text[i] == 'X') {
+      m.push_back('x');
+      v = false;
+    } else if(text[i] == 'z' || text[i] == 'z') {
+      m.push_back('z');
+      v = false;
+    } else if(text[i] != '_')
+      return false;		// wrong format
   }
-  txt_value.erase(0,4);
-  update_value();
+
+  if(v) {			// valuable
+    valuable = true;
+    mpz_class dd(m, 16);
+    txt_value = dd.get_str(2);
+  } else {
+    valuable = false;
+    for(unsigned int i=0; i<m.size(); i++)
+      switch(m[i]) {
+      case '0': txt_value += "0000"; break;
+      case '1': txt_value += "0001"; break;
+      case '2': txt_value += "0010"; break;
+      case '3': txt_value += "0011"; break;
+      case '4': txt_value += "0100"; break;
+      case '5': txt_value += "0101"; break;
+      case '6': txt_value += "0110"; break;
+      case '7': txt_value += "0111"; break;
+      case '8': txt_value += "1000"; break;
+      case '9': txt_value += "1001"; break;
+      case 'A':
+      case 'a': txt_value += "1010"; break;
+      case 'B':
+      case 'b': txt_value += "1011"; break;
+      case 'C':
+      case 'c': txt_value += "1100"; break;
+      case 'D':
+      case 'd': txt_value += "1101"; break;
+      case 'E':
+      case 'e': txt_value += "1110"; break;
+      case 'F':
+      case 'f': txt_value += "1111"; break;
+      case 'x':
+      case 'X': txt_value += "xxxx"; break;
+      case 'z':
+      case 'Z': txt_value += "zzzz"; break;
+      }
+  }
+  
+  if(txt_value.size() > num_leng) txt_value.erase(0, txt_value.size() - num_leng);
+  else if(txt_value.size() < num_leng) txt_value.insert(0, num_leng - txt_value.size(), '0');
   return true;
 }
 
-void netlist::Number::update_value() {
-  value = 0;
 
-  if((unsigned int)(num_leng) > BIT_SIZE_OF_UINT	    // too long
-     || std::string::npos != txt_value.find('x') // have 'x'
-     || std::string::npos != txt_value.find('z') // have 'z'
-     ) {
-    valuable = false; return;
-  } else
-    valuable = true;
-
-  int cyc = num_leng/4;
-  int rem = num_leng%4;
-  int index = 0;
-
-  for(; index<rem; index++) {
-    value = value * 2 + txt_value[index] - '0';
-  }
-
-  for(int i=0; i<cyc; i++, index+=4) {
-    value 
-      = value * 16 
-      + (txt_value[index  ]-'0') * 8
-      + (txt_value[index+1]-'0') * 4
-      + (txt_value[index+2]-'0') * 2
-      + (txt_value[index+3]-'0') * 1
-      ;
-  }
-}
-  
-void netlist::Number::update_txt_value() {
-  unsigned int dd = value;
-  int i = num_leng+4;
-
-  if(!valuable) return;
-
-  txt_value = std::string(i, '0');
-
-  for( ; i>4 && dd!=0; i-=4, dd>>=4) {
-    txt_value[i-1] = (dd>>0)%2 + '0';
-    txt_value[i-2] = (dd>>1)%2 + '0';
-    txt_value[i-3] = (dd>>2)%2 + '0';
-    txt_value[i-4] = (dd>>3)%2 + '0';
-  }
-
-  txt_value.erase(0,4);
-}
 
 Number netlist::operator+ (const Number& lhs, const Number& rhs) {
-  Number dd(lhs);
-  dd.addition(rhs);
-  return dd;
+  return lhs.addition(rhs);
 }
 
 Number netlist::operator<< (const Number& lhs, int rhs) {

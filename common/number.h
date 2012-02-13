@@ -37,25 +37,25 @@ namespace netlist {
   public:
     // constructors
     Number() : NetComp(tNumber), valid(false), valuable(false) {}
-    Number(char *text, int txt_leng, int num_leng); /* convert decimal and integer to number */
-    Number(char *text, int txt_leng);	    /* convert fixed numbers */
-    Number(const std::string& txt_val, int num_leng); /* convert a binary string to number */    
+    Number(char *text, int txt_leng); /* constructor for scanner */
+    Number(int d);
 
     // helpers
-    unsigned int get_value() const;
-    const std::string& get_txt_value() const;
-    int get_length() const;
-    bool is_valuable() const;
-    bool is_valid() const;
+    const std::string& get_txt_value() const { return txt_value; }
+    int get_length() const { return num_leng; }
+    bool is_valuable() const { return valuable; }
+    bool is_valid() const { return valid; }
     Number& truncate (int lhs, int rhs);
-    Number& addition (const Number& rhs);
+    Number addition (const Number& rhs) const;
     Number& operator+= (const Number& rhs);
     Number& lfsh (int rhs);
     virtual std::ostream& streamout(std::ostream&) const;
 
+    // operation
+    void negate() {}
+
   private:
-    unsigned int value;         /* number value, valid when valuable */
-    int num_leng;		/* the number of digits in the number */
+    unsigned int num_leng;	/* the number of digits in the number */
     std::string txt_value;	/* literals of the number, useful when non-deterministic */
     bool valid;			/* true when number format is ok */
     bool valuable;		/* true when the number is const and deterministic */

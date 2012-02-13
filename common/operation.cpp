@@ -50,22 +50,19 @@ netlist::Operation::Operation(boost::shared_ptr<Identifier> id)
   : otype(oVar), valuable(false), data(id)
 { }
 
-// dummy yet
-void netlist::Operation::execute(
-                                 std::list<Operation>& d1,
-                                 std::list<Operation>& d2,
-                                 std::list<Operation>& d3
-                                 ) {
-}
-
-boost::shared_ptr<Number> netlist::Operation::get_num() const {
+Number& netlist::Operation::get_num_ref(){
   assert(otype == oNum);
-  return boost::static_pointer_cast<Number>(data);
+  return *(boost::static_pointer_cast<Number>(data));
 }
 
-boost::shared_ptr<Identifier> netlist::Operation::get_var() const {
+Number netlist::Operation::get_num() const{
+  assert(otype == oNum);
+  return *(boost::static_pointer_cast<Number>(data));
+}
+
+Identifier netlist::Operation::get_var() const{
   assert(otype == oVar);
-  return boost::static_pointer_cast<Identifier>(data);
+  return *(boost::static_pointer_cast<Identifier>(data));
 }
 
 std::ostream& netlist::Operation::streamout(std::ostream& os) const {
@@ -115,3 +112,88 @@ std::ostream& netlist::Operation::streamout(std::ostream& os) const {
   return os;
 }
 
+// dummy yet
+void netlist::execute_operation( Operation::operation_t op,
+                                 std::list<Operation>& d1,
+                                 std::list<Operation>& d2,
+                                 std::list<Operation>& d3
+                                 ) {
+  // check parameters
+  assert(op >= Operation::oUPos);
+  if(op <= Operation::oUNxor) assert(!d1.empty());
+  if(op <= Operation::oLOr) assert(!d2.empty());
+  if(op <= Operation::oQuestion) assert(!d3.empty());
+
+  // will use d1 as return
+  switch(op) {
+  case Operation::oUPos:     execute_UPos(d1); return;
+  case Operation::oUNeg:     execute_UNeg(d1); return;
+  case Operation::oULRev:    break;
+  case Operation::oURev:     break;
+  case Operation::oUAnd:     break;
+  case Operation::oUNand:    break;
+  case Operation::oUOr:      break;
+  case Operation::oUNor:     break;
+  case Operation::oUXor:     break;
+  case Operation::oUNxor:    break;
+  case Operation::oPower:    break;
+  case Operation::oTime:     break;
+  case Operation::oDiv:      break;
+  case Operation::oMode:     break;
+  case Operation::oAdd:      execute_Add(d1, d2); return;
+  case Operation::oMinus:    break;
+  case Operation::oRS:       break;
+  case Operation::oLS:       break;
+  case Operation::oLRS:      break;
+  case Operation::oLess:     break;
+  case Operation::oLe:       break;
+  case Operation::oGreat:    break;
+  case Operation::oGe:       break;
+  case Operation::oEq:       break;
+  case Operation::oNeq:      break;
+  case Operation::oCEq:      break;
+  case Operation::oCNeq:     break;
+  case Operation::oAnd:      break;
+  case Operation::oXor:      break;
+  case Operation::oNxor:     break;
+  case Operation::oOr:       break;
+  case Operation::oLAnd:     break;
+  case Operation::oLOr:      break;
+  case Operation::oQuestion: break;
+  default:  // should not run to here
+    assert(1 == 0);
+  }
+  assert(1 == 0);
+  return;
+}
+
+// unary +
+void netlist::execute_UPos(std::list<Operation>& d1) {
+  // for unary +, do nothing but omit the operator
+  return;
+}
+
+// unary -
+void netlist::execute_UNeg(std::list<Operation>& d1) {
+  if(d1.front().is_valuable()) {
+    assert(d1.front().get_type() == Operation::oNum);
+    d1.front().get_num().negate();
+  } else if(d1.front().get_type() == Operation::oUNeg) {
+    // continueous unary negate
+    d1.pop_front();
+  } else {
+    d1.push_front(Operation(Operation::oUNeg));
+  }
+  return;
+}
+  
+// +
+void netlist::execute_Add(std::list<Operation>& d1, std::list<Operation>& d2) {
+  if(d1.front().is_valuable() && d2.front().is_valuable()) {
+    d1.front().get_num_ref() = d1.front().get_num() + d2.front().get_num();
+  } else {
+    d1.push_front(Operation(Operation::oAdd));
+    d1.splice(d1.end(), d2);
+  }
+  return;
+}
