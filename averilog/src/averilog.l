@@ -7,7 +7,7 @@
 
 %{
 /*
- * Copyright (c) 2011 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -114,7 +114,7 @@ operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
 "buf"       { return token::pBuf;   }
 {operator}  { return yytext[0]; }
 {fnum}    { 
-              yylval->tNumber = new netlist::Number(yytext, yyleng);
+              yylval->tNumber.reset(new netlist::Number(yytext, yyleng));
               if(!yylval->tNumber->is_valid()) {
                 error_report("Wrong number format.", yylloc);
                 yyterminate();
@@ -122,11 +122,11 @@ operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
               return token::number; 
             }
 {dec}    { 
-              yylval->tNumber = new netlist::Number(yytext, yyleng);
+              yylval->tNumber.reset(new netlist::Number(yytext, yyleng));
               return token::number; 
             }
 {identifier}  { 
-                yylval->tID = new averilog::avID(yytext, yyleng);
+                yylval->tID.reset(new averilog::avID(yytext, yyleng));
                 return token::identifier; 
               }
 "//"[^\n]*[\n] { yylloc->lines();    }

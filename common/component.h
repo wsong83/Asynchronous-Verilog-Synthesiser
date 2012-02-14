@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -21,7 +21,7 @@
 
 /* 
  * Definition of netlist components.
- * 01/02/2011   Wei Song
+ * 01/02/2012   Wei Song
  *
  *
  */
@@ -57,7 +57,10 @@ namespace netlist {
     ctype_t get_type() const { return ctype; }
     ctype_t ctype;
   };
-  
+
+  // operation.h
+  class Operation;
+
   // number.h
   class Number;			/* number */
 
@@ -77,15 +80,21 @@ namespace netlist {
   // expression.h
   class Expression;		/* expressions */
 
-  // operation.h
-  class Operation;
+  // wire.h
+  class Wire;
+
+  // module.h
+  class Module;
 }
 
 #include "defines.h"
+#include "database.h"
 #include "operation.h"
 #include "number.h"
 #include "identifier.h"
 #include "range.h"
 #include "expression.h"
+#include "wire.h"
+#include "module.h"
 
 #endif

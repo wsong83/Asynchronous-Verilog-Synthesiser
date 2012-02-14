@@ -34,8 +34,19 @@ namespace netlist {
   class Module : public NetComp {
   public:
     NETLIST_DEFAULT_CON(Module, tModule);
+
+    // dummy
+    std::ostream& streamout(std::ostream& os) const {
+      return os;
+    }
+
+
+  private:
+    
+
   };
 
+  NETLIST_STREAMOUT(Module);
 
 
 }

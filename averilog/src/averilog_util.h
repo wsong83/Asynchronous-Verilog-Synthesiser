@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -21,7 +21,7 @@
 
 /* 
  * Averilog parser utilities.
- * 01/02/2011   Wei Song
+ * 01/02/2012   Wei Song
  *
  *
  */
@@ -32,6 +32,7 @@
 #include <string>
 #include <iostream>
 #include <cstdio>
+#include <boost/shared_ptr.hpp>
 
 namespace averilog {
   class Parser;		/* the parser class that the program will really use */
@@ -58,6 +59,25 @@ namespace averilog {
 #define YY_TYPEDEF_YY_SCANNER_T
 typedef void* yyscan_t;
 #endif
+
+namespace averilog {
+
+#define YYSTYPE av_token_type
+  
+  struct av_token_type {
+    boost::shared_ptr<netlist::BIdentifier>   tBlockName;
+    boost::shared_ptr<netlist::Expression>    tExp;		
+    boost::shared_ptr<netlist::FIdentifier>   tFuncName;
+    boost::shared_ptr<avID>                   tID;      
+    boost::shared_ptr<netlist::IIdentifier>   tInstName;
+    boost::shared_ptr<netlist::MIdentifier>   tModuleName;
+    boost::shared_ptr<netlist::Number>        tNumber;    
+    boost::shared_ptr<netlist::PaIdentifier>  tParaName;
+    boost::shared_ptr<netlist::PoIdentifier>  tPortName;
+    boost::shared_ptr<netlist::Range>         tRange;	
+    boost::shared_ptr<netlist::VIdentifier>   tVarName;	
+  };
+}
 
 #include "averilog.hh"
 typedef averilog::av_parser::token token;

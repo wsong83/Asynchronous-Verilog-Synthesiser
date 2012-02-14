@@ -12,7 +12,7 @@
 %debug
 %{
 /*
- * Copyright (c) 2011 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -62,22 +62,6 @@ yyscan_t avscanner;
   avlex_init(&avscanner);
   avset_in(*sfile, avscanner);
 }
-
-%union {
-  netlist::BIdentifier   *tBlockName;                 /* block name */
-  netlist::Expression    *tExp;			      /* expression */
-  netlist::FIdentifier   *tFuncName;		      /* function name */
-  avID                   *tID;                        /* identifier */
-  netlist::IIdentifier   *tInstName;		      /* instance name */
-  netlist::MIdentifier   *tModuleName;		      /* module name */
-  netlist::Number        *tNumber;                    /* all sorts of numbers */
-  netlist::PaIdentifier  *tParaName;		      /* parameter name */
-  netlist::PoIdentifier  *tPortName;		      /* port name */
-  netlist::Range         *tRange;		      /* range */
-  netlist::VIdentifier   *tVarName;		      /* variable names */
-}
-
-%destructor { delete $$; } <*>
 
 
 ///////////////////////////////////////////////////
@@ -275,7 +259,7 @@ description
 module_declaration
 : "module" module_identifier ';'  { std::cout<< "module " << *$2<<std::endl; }
         module_items
-        "endmodule"                      { std::cout<< *$2 << "endmodule", delete $2; }
+        "endmodule"                      { std::cout<< *$2 << "endmodule"; }
     | "module" module_identifier '(' list_of_ports ')' ';'
         module_items
       "endmodule"
@@ -745,7 +729,7 @@ range_expression
 
 //A.8.4 Primaries
 primary
-: number                             { delete $1;}
+: number                             
     | variable_identifier
     | concatenation
     | function_call
@@ -754,7 +738,7 @@ primary
 
 //A.8.5 Expression left-side values
 variable_lvalue
-: variable_identifier    { delete $1;}
+: variable_identifier    
     | concatenation
     ;
 
@@ -769,7 +753,7 @@ function_identifier
     ;
 
 module_identifier
-:  identifier             { $$ = new netlist::MIdentifier(*$1); delete $1;}
+:  identifier             { $$.reset(new netlist::MIdentifier(*$1)); }
     ;
 
 instance_identifier 
@@ -781,7 +765,7 @@ parameter_identifier
     ;
 
 variable_identifier
-: identifier           { $$ = new netlist::VIdentifier(*$1); delete $1;}
+: identifier           { $$.reset(new netlist::VIdentifier(*$1)); }
     | variable_identifier '[' range_expression ']'
     ;
 

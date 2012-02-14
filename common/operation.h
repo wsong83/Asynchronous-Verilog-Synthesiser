@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -21,7 +21,7 @@
 
 /* 
  * the operation in expression
- * 10/02/2011   Wei Song (29's birth day :-) )
+ * 10/02/2012   Wei Song (29's birth day :-) )
  *
  *
  */
@@ -31,7 +31,6 @@
 
 #include <boost/shared_ptr.hpp>
 #include <list>
-#include "component.h"
 
 namespace netlist {
 

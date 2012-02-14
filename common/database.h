@@ -20,7 +20,7 @@
  */
 
 /* 
- * Definition of netlist components.
+ * A general database for different network components
  * 14/02/2012   Wei Song
  *
  *
@@ -35,7 +35,7 @@
 namespace netlist {
 
   template <typename K, typename T>
-    class database {
+    class DataBase {
   public:
     typedef std::map<K, boost::shared_ptr<T> > DBT;
     typedef std::pair<K, boost::shared_ptr<T> > DTT;
@@ -49,7 +49,7 @@ namespace netlist {
     boost::shared_ptr<T> find(const K& key) const {
       typename DBT::iterator it = db.find(key);
       if(it != db.end())
-        return *it;
+        return (*it).second;
       else
         return boost::shared_ptr<T>();
     }
@@ -80,17 +80,29 @@ namespace netlist {
     boost::shared_ptr<T> fatch(const K& key) {
       typename DBT::iterator it = db.find(key);
       if(it != db.end()) {
-        boost::shared_ptr<T> rv = *it;
+        boost::shared_ptr<T> rv = (*it).second;
         db.erase(it);
         return rv;
       } else
         return boost::shared_ptr<T>();
     }      
+    
+    std::ostream& streamout(std::ostream& os) const {
+      typename DBT::iterator it;
+      typename DBT::iterator end = db.end();
+      for (it = db.begin; it < end; it++)
+        os << *((*it).second);
+      return os;
+    }
 
   private:
     DBT db;
   };
 
+  template<typename K, typename T>
+    std::ostream& operator<< ( std::ostream& os, const DataBase<K,T>& rhs) {
+    return rhs.streamout(os);
+  }
 }
 
 #endif
