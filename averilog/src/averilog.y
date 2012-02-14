@@ -273,9 +273,9 @@ description
     ;
 
 module_declaration
-: "module" module_identifier ';'  { std::cout<<*$2<<std::endl; }
+: "module" module_identifier ';'  { std::cout<< "module " << *$2<<std::endl; }
         module_items
-      "endmodule"                      { std::cout<<*$2, delete $2; }
+        "endmodule"                      { std::cout<< *$2 << "endmodule", delete $2; }
     | "module" module_identifier '(' list_of_ports ')' ';'
         module_items
       "endmodule"
@@ -599,7 +599,7 @@ always_construct
     ;
 
 blocking_assignment 
-    : variable_lvalue '=' expression
+: variable_lvalue '=' expression  
     ;
 
 nonblocking_assignment 
@@ -745,7 +745,7 @@ range_expression
 
 //A.8.4 Primaries
 primary
-    : number
+: number                             { delete $1;}
     | variable_identifier
     | concatenation
     | function_call
@@ -754,7 +754,7 @@ primary
 
 //A.8.5 Expression left-side values
 variable_lvalue
-    : variable_identifier
+: variable_identifier    { delete $1;}
     | concatenation
     ;
 
@@ -769,7 +769,7 @@ function_identifier
     ;
 
 module_identifier
-:  identifier             { $$ = new netlist::MIdentifier(*$1); std::cout << *$$ << std::endl; delete $1;}
+:  identifier             { $$ = new netlist::MIdentifier(*$1); delete $1;}
     ;
 
 instance_identifier 
@@ -781,7 +781,7 @@ parameter_identifier
     ;
 
 variable_identifier
-: identifier           { $$ = new netlist::VIdentifier(*$1); std::cout << *$$ << std::endl; delete $1;}
+: identifier           { $$ = new netlist::VIdentifier(*$1); delete $1;}
     | variable_identifier '[' range_expression ']'
     ;
 

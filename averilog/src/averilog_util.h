@@ -47,9 +47,6 @@ namespace averilog {
     std::string name;
     avID(char* text, int leng)
       : name(text,leng) {}
-    
-    ~avID() { std::cout << "avID destroyed" << std::endl; }
-    
   };
 
   std::ostream& operator<< (std::ostream&, const avID&);
