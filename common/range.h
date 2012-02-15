@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -38,18 +38,18 @@ namespace netlist {
   class Range : public NetComp {
   public:
     // constructors
-    Range(int);			/* select by a fix number */
+    Range(const mpz_class&);	/* select by a fix number */
     Range(const Expression&);	/* select by an expression  */
     Range(const Range_Exp&);    /* declare or select by a range expression */
     Range(const Range_Exp&, int); /* select by a range expression using positive or negtive colon */
 
     // helpers
-    bool is_valuable();
-    bool is_single();
+    bool is_valuable() const { return type == TConst; }
+    bool is_single() const {return type != TRange; }
     virtual std::ostream& streamout(std::ostream&) const;
     
   private:
-    Number c;                        /* constant */
+    mpz_class c;		     /* constant */
     boost::shared_ptr<Expression> v; /* variable */
     boost::shared_ptr<Range_Exp> r;  /* range expression */
     

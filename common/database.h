@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -41,12 +41,12 @@ namespace netlist {
     typedef std::pair<K, boost::shared_ptr<T> > DTT;
     
     // store a component
-    bool store(const K& key, boost::shared_ptr<T> comp) {
+    bool insert(const K& key, boost::shared_ptr<T> comp) {
       std::pair<typename DBT::iterator, bool> res = db.insert(DTT(key, comp));
       return res.second;
     }
 
-    boost::shared_ptr<T> find(const K& key) const {
+    boost::shared_ptr<T> find(const K& key) {
       typename DBT::iterator it = db.find(key);
       if(it != db.end())
         return (*it).second;
@@ -88,9 +88,9 @@ namespace netlist {
     }      
     
     std::ostream& streamout(std::ostream& os) const {
-      typename DBT::iterator it;
-      typename DBT::iterator end = db.end();
-      for (it = db.begin; it < end; it++)
+      typename DBT::const_iterator it;
+      typename DBT::const_iterator end = db.end();
+      for (it = db.begin(); it != end; it++)
         os << *((*it).second);
       return os;
     }

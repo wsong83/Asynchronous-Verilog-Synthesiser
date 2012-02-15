@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -21,7 +21,7 @@
 
 /* 
  * Wire
- * 14/02/2012   Wei Song
+ * 15/02/2012   Wei Song
  *
  *
  */
@@ -34,11 +34,13 @@ namespace netlist {
   class Wire : public NetComp {
   public:
     NETLIST_DEFAULT_CON(Wire, tWire);
+    Wire(const VIdentifier& id): NetComp(tWire), name(id) {}
 
-    // dummy
-    std::ostream& streamout(std::ostream& os) const {
-      return os;
-    }
+    std::ostream& streamout(std::ostream& os) const;
+
+    VIdentifier name;
+    std::list<boost::shared_ptr<VIdentifier> > fin; /* drivers */
+    std::list<boost::shared_ptr<VIdentifier> > fout; /* loads */
 
   };
 

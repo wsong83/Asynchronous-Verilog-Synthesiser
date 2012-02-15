@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -34,15 +34,16 @@ namespace netlist {
   class Module : public NetComp {
   public:
     NETLIST_DEFAULT_CON(Module, tModule);
+    Module(const MIdentifier& nm)
+      : NetComp(tModule), name(nm) {}
 
     // dummy
-    std::ostream& streamout(std::ostream& os) const {
-      return os;
-    }
-
-
-  private:
+    std::ostream& streamout(std::ostream& os) const;
     
+    
+    // data
+    MIdentifier name;
+    DataBase<VIdentifier, Wire> db_wire;
 
   };
 

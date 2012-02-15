@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -85,6 +85,10 @@ namespace netlist {
 
   // module.h
   class Module;
+
+  // library.h
+  class Library;
+  
 }
 
 #include "defines.h"
@@ -96,5 +100,6 @@ namespace netlist {
 #include "expression.h"
 #include "wire.h"
 #include "module.h"
+#include "library.h"
 
 #endif

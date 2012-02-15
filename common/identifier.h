@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -96,6 +96,7 @@ namespace netlist {
     
     // helpers
     MIdentifier& operator++ ();
+    std::ostream& streamout(std::ostream& os) const;
 
   private:
     bool numbered;
@@ -153,9 +154,10 @@ namespace netlist {
     //helpers
     VIdentifier& operator++ ();
     VIdentifier& add_prefix (const Identifier&);
+    std::ostream& streamout(std::ostream& os) const;
     
-  private:
     std::vector<Range> m_range;
+    std::vector<Range> m_dimension;
     bool numbered;
   };
   NETLIST_STREAMOUT(VIdentifier);

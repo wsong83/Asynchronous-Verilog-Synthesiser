@@ -20,36 +20,36 @@
  */
 
 /* 
- * 
- * 06/02/2012   Wei Song
+ * Wire
+ * 14/02/2012   Wei Song
  *
  *
  */
 
-#include "common/component.h"
-#include "averilog/src/averilog_util.h"
-#include "averilog/src/averilog.lex.h"
+#include "component.h"
 
-int main(int argc, char*argv[])
-{
-  int tmp;
-  YYSTYPE lval;
-  yyscan_t scanner;
-  YYLTYPE yyloc;
-  FILE * sfile;
+using namespace netlist;
 
-  sfile = fopen(argv[1], "r");
-  std::string fn(argv[1]);
-  yyloc.initialize(&fn);
-  avlex_init (&scanner);
-  avset_in(sfile, scanner);
-  while((tmp = avlex(&lval, &yyloc, scanner)) != 0) {
-    std::cout << tmp << " ";
-    if(tmp == token::number)
-      std::cout << "Number:" << *(lval.tNumber) << " ";
+std::ostream& netlist::Wire::streamout(std::ostream& os) const {
+  std::vector<Range>::const_iterator it, end;
+
+  os << "wire ";
+  for(it=name.m_range.begin(), end=name.m_range.end(); it != end; it++) {
+    os << "[" << *it;
+    if(it->is_single())
+      os << ":" << *it;
+    os << "]";
   }
-    
-  avlex_destroy(scanner);
-  fclose(sfile);
-  return 0;
+  os << name.name;
+  for(it=name.m_dimension.begin(), end=name.m_dimension.end(); it != end; it++) {
+    os << "[" << *it;
+    if(it->is_single())
+      os << ":" << *it;
+    os << "]";
+  }
+  os << ";" << std::endl;
+  return os;
+
 }
+  
+    

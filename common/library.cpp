@@ -20,36 +20,33 @@
  */
 
 /* 
- * 
- * 06/02/2012   Wei Song
+ * Definition of a library
+ * 15/02/2012   Wei Song
  *
  *
  */
 
-#include "common/component.h"
-#include "averilog/src/averilog_util.h"
-#include "averilog/src/averilog.lex.h"
+#include "component.h"
 
-int main(int argc, char*argv[])
-{
-  int tmp;
-  YYSTYPE lval;
-  yyscan_t scanner;
-  YYLTYPE yyloc;
-  FILE * sfile;
+using namespace netlist;
 
-  sfile = fopen(argv[1], "r");
-  std::string fn(argv[1]);
-  yyloc.initialize(&fn);
-  avlex_init (&scanner);
-  avset_in(sfile, scanner);
-  while((tmp = avlex(&lval, &yyloc, scanner)) != 0) {
-    std::cout << tmp << " ";
-    if(tmp == token::number)
-      std::cout << "Number:" << *(lval.tNumber) << " ";
-  }
-    
-  avlex_destroy(scanner);
-  fclose(sfile);
-  return 0;
+// dummy
+bool netlist::Library::pull() {
+  return true;
 }
+
+// dummy
+bool netlist::Library::pull(const std::string& fn, const std::string& ph) {
+  return true;
+}
+
+// dummy
+bool netlist::Library::push() {
+  return true;
+}
+
+// dummy
+bool netlist::Library::push(const std::string& fn, const std::string& ph) {
+  return true;
+}
+

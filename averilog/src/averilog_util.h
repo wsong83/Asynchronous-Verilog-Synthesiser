@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -70,6 +70,7 @@ namespace averilog {
     boost::shared_ptr<netlist::FIdentifier>   tFuncName;
     boost::shared_ptr<avID>                   tID;      
     boost::shared_ptr<netlist::IIdentifier>   tInstName;
+    boost::shared_ptr<std::list<boost::shared_ptr<netlist::VIdentifier> > > tListVar;
     boost::shared_ptr<netlist::MIdentifier>   tModuleName;
     boost::shared_ptr<netlist::Number>        tNumber;    
     boost::shared_ptr<netlist::PaIdentifier>  tParaName;
@@ -91,7 +92,7 @@ namespace averilog {
 
   class Parser {
   public:
-    Parser(std::string);	/* constructor with a file name */
+    Parser(std::string, netlist::Library& lib);	/* constructor with a file name and the design library */
     ~Parser();
     bool parse();		/* the parser for user */
     bool initialize();		/* initialize and check all settings */

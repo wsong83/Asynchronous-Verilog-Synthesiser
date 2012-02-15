@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -40,8 +40,8 @@ std::ostream& averilog::operator<< (std::ostream& os, const avID& hs) {
   return os;
 }
 
-averilog::Parser::Parser(std::string fn)
-  : sfile(NULL), fname(fn), bison_instance(fn, &sfile)
+averilog::Parser::Parser(std::string fn, netlist::Library& lib)
+  : sfile(NULL), fname(fn), bison_instance(fn, &sfile, lib)
 { }
 
 averilog::Parser::~Parser() {

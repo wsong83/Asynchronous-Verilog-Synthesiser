@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -31,14 +31,14 @@
 
 using namespace netlist;
 
-netlist::Range::Range(int sel)
+netlist::Range::Range(const mpz_class& sel)
   : c(sel), type(TConst) {  }
 
 netlist::Range::Range(const Expression& sel)
   : type(TVar) 
 { 
   if(sel.is_valuable()) {	// constant expression, value it now
-    c = sel.get_value();
+    c = sel.get_value().get_value();
     type = TConst;
   } else {
     v.reset(new Expression(sel));
@@ -50,7 +50,7 @@ netlist::Range::Range(const Range_Exp& sel)
 {  
   if(sel.first == sel.second) {	// only one bit is selected
     if(sel.first.is_valuable()) { // constant expression, value it now
-      c = sel.first.get_value();
+      c = sel.first.get_value().get_value();
       type = TConst;
     } else {			// variable expression
       v.reset(new Expression(sel.first));
@@ -76,7 +76,7 @@ netlist::Range::Range(const Range_Exp& sel, int ctype)
 
   if(m_sel.first == m_sel.second) {	// only one bit is selected
     if(m_sel.first.is_valuable()) { // constant expression, value it now
-      c = m_sel.first.get_value();
+      c = m_sel.first.get_value().get_value();
       type = TConst;
     } else {			// variable expression
       v.reset(new Expression(m_sel.first));
@@ -86,16 +86,15 @@ netlist::Range::Range(const Range_Exp& sel, int ctype)
     r.reset(new Range_Exp(m_sel));
   }
 }
-
-bool netlist::Range::is_valuable() {
-  return type == TConst;
-}
-
-bool netlist::Range::is_single() {
-  return type != TRange;
-}
   
 std::ostream& netlist::Range::streamout(std::ostream& os) const {
+  switch(type) {
+  case TConst: os << c; break;
+  case TVar: os << *v; break;
+  case TRange: os << r->first << ":" << r->second;
+  default: // should not go here
+    assert(1 == 0);
+  }
   return os;
 }
 

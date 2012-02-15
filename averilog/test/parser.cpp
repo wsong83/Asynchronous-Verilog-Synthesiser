@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -33,7 +33,8 @@
 int main(int argc, char* argv[])
 {
 
-  averilog::Parser dut(argv[1]);
+  netlist::Library lib("work");
+  averilog::Parser dut(argv[1], lib);
 
   if(!dut.initialize()) {
     std::cout << "parser initialization fails!" << std::endl;

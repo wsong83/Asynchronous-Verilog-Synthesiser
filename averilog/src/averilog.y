@@ -8,11 +8,12 @@
 %locations
 %parse-param {std::string fname}
 %parse-param {FILE * *sfile}
+%parse-param {netlist::Library& Lib}
 %lex-param {yyscan_t avscanner}
 %debug
 %{
 /*
- * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -231,6 +232,7 @@ yyscan_t avscanner;
 %type <tModuleName> module_identifier
  //%type <tPortName> port_identifier
 %type <tVarName> variable_identifier
+%type <tListVar> list_of_variable_identifiers
 
 
 %start source_text
@@ -257,9 +259,9 @@ description
     ;
 
 module_declaration
-: "module" module_identifier ';'  { std::cout<< "module " << *$2<<std::endl; }
+: "module" module_identifier ';'  { if(!Lib.insert(*$2)) std::cout << "new module " << *$2 << " insertion failure!" << std::endl; }
         module_items
-        "endmodule"                      { std::cout<< *$2 << "endmodule"; }
+        "endmodule"                      { std::cout<< *(boost::static_pointer_cast<netlist::Module>(Lib.get_current_comp())); Lib.pop(); }
     | "module" module_identifier '(' list_of_ports ')' ';'
         module_items
       "endmodule"
@@ -275,11 +277,11 @@ list_of_ports
     ;
 
 // A.1.5 Module items
-module_items
+module_item
     : parameter_declaration ';'
     | input_declaration ';'
     | output_declaration ';'
-    | variable_declaration ';'
+    | variable_declaration ';'         { std::cout << "variable declaration" << std::endl; }
     | function_declaration
     | continuous_assign
     | gate_instantiation
@@ -288,6 +290,9 @@ module_items
     | generated_instantiation
     ;
 
+module_items
+    : module_item
+    | module_items module_item
     
 // A.2.1 Declaration types
 // A.2.1.1 Module parameter declarations
@@ -308,7 +313,27 @@ output_declaration
 
 // A.2.1.3 Type declarations
 variable_declaration 
-    : "wire" list_of_variable_identifiers
+    : "wire" list_of_variable_identifiers 
+    {
+      boost::shared_ptr<netlist::NetComp> father = Lib.get_current_comp();
+      // check valid
+      if(father.use_count() == 0) { std::cout << "error! current block not found!" << std::endl; return -1;}
+      
+      boost::shared_ptr<netlist::Module> cm;
+      switch(father->get_type()) {
+      case netlist::NetComp::tModule: { 
+          cm = boost::static_pointer_cast<netlist::Module>(father);
+          while(!$2->empty()) {
+            boost::shared_ptr<netlist::Wire> cw(new netlist::Wire(*($2->front())));
+            $2->pop_front();
+            if(!cm->db_wire.insert(cw->name, cw)) {
+              std::cout << yylloc << " error! duplicate wire declaration " << $2->front() << std::endl; return -1;
+            }
+          }
+        } break;
+      default: ;/* doing nothing right now */
+      }
+    } 
     | "wire" '[' expression ':' expression ']' list_of_variable_identifiers
     | "reg" list_of_variable_identifiers
     | "reg" '[' expression ':' expression ']' list_of_variable_identifiers
@@ -333,9 +358,9 @@ list_of_port_identifiers
     ;
 
 list_of_variable_identifiers 
-    : variable_identifier
+    : variable_identifier                      { $$.reset(new std::list<boost::shared_ptr<netlist::VIdentifier> >()); $$->push_back($1); }
     | variable_identifier '=' expression
-    | list_of_variable_identifiers ',' variable_identifier
+    | list_of_variable_identifiers ',' variable_identifier { $$ = $1; $$->push_back($3); }
     | list_of_variable_identifiers ',' variable_identifier '=' expression
     ;
 

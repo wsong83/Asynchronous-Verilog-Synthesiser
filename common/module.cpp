@@ -20,36 +20,17 @@
  */
 
 /* 
- * 
- * 06/02/2012   Wei Song
+ * Definition of netlist components.
+ * 15/02/2012   Wei Song
  *
  *
  */
 
-#include "common/component.h"
-#include "averilog/src/averilog_util.h"
-#include "averilog/src/averilog.lex.h"
+#include "component.h"
 
-int main(int argc, char*argv[])
-{
-  int tmp;
-  YYSTYPE lval;
-  yyscan_t scanner;
-  YYLTYPE yyloc;
-  FILE * sfile;
-
-  sfile = fopen(argv[1], "r");
-  std::string fn(argv[1]);
-  yyloc.initialize(&fn);
-  avlex_init (&scanner);
-  avset_in(sfile, scanner);
-  while((tmp = avlex(&lval, &yyloc, scanner)) != 0) {
-    std::cout << tmp << " ";
-    if(tmp == token::number)
-      std::cout << "Number:" << *(lval.tNumber) << " ";
-  }
-    
-  avlex_destroy(scanner);
-  fclose(sfile);
-  return 0;
+std::ostream& netlist::Module::streamout(std::ostream& os) const {
+  os << name;
+  os << db_wire;
+  os << "endmodule" << std::endl;
+  return os;
 }

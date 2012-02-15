@@ -1,5 +1,5 @@
 module test_module;
-   //wire [4:0] o;
+   wire o;
    assign o = 3;
    
 endmodule // test

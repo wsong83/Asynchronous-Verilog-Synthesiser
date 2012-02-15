@@ -1,4 +1,4 @@
-# Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
+# Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
 #    Advanced Processor Technologies Group, School of Computer Science
 #    University of Manchester, Manchester M13 9PL UK
 #
@@ -27,7 +27,7 @@
 INCDIRS = -I./ -I../
 
 # targets
-TARGETS = number.o identifier.o range.o expression.o operation.o
+TARGETS = number.o identifier.o range.o expression.o operation.o wire.o module.o library.o
 
 # actions
 all: $(TARGETS)

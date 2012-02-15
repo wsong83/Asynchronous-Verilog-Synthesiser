@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -28,6 +28,7 @@
 
 #ifndef _H_NUMBER_
 #define _H_NUMBER_
+#include <gmpxx.h>
 
 namespace netlist {
 
@@ -40,6 +41,7 @@ namespace netlist {
 
     // helpers
     const std::string& get_txt_value() const { return txt_value; }
+    mpz_class get_value() const { return mpz_class(txt_value, 2); }
     int get_length() const { return num_leng; }
     bool is_valuable() const { return valuable; }
     bool is_valid() const { return valid; }

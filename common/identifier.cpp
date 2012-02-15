@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -127,6 +127,11 @@ MIdentifier& netlist::MIdentifier::operator++ () {
 
   return *this;
 }
+
+std::ostream& netlist::MIdentifier::streamout(std::ostream& os) const{
+  os << "module " << name << ";" << std::endl;
+  return os;
+}
     
 //////////////////////////////// Instance identifier /////////////////
 netlist::IIdentifier::IIdentifier()
@@ -209,5 +214,21 @@ VIdentifier& netlist::VIdentifier::add_prefix(const Identifier& prefix) {
   hash_update();
   return *this;
 }
+
+std::ostream& netlist::VIdentifier::streamout(std::ostream& os) const {
+  std::vector<Range>::const_iterator it, end;
+
+  os << "wire ";
+  for(it=m_range.begin(), end=m_range.end(); it != end; it++) {
+    os << "[" << *it << "]";
+  }
+  os << name;
+  for(it=m_dimension.begin(), end=m_dimension.end(); it != end; it++) {
+    os << "[" << *it << "]";
+  }
+
+  return os;
+}
+  
 
 
