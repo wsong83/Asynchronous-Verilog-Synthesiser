@@ -34,14 +34,16 @@ std::ostream& netlist::Wire::streamout(std::ostream& os) const {
   std::vector<Range>::const_iterator it, end;
 
   os << "wire ";
-  for(it=name.m_range.begin(), end=name.m_range.end(); it != end; it++) {
+  std::vector<Range> rm = name.get_range();
+  for(it=rm.begin(), end=rm.end(); it != end; it++) {
     os << "[" << *it;
     if(it->is_single())
       os << ":" << *it;
     os << "]";
   }
-  os << name.name;
-  for(it=name.m_dimension.begin(), end=name.m_dimension.end(); it != end; it++) {
+  os << " " << name.name;
+  rm = name.get_dimension();
+  for(it=rm.begin(), end=rm.end(); it != end; it++) {
     os << "[" << *it;
     if(it->is_single())
       os << ":" << *it;

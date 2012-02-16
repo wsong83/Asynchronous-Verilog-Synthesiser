@@ -155,7 +155,12 @@ namespace netlist {
     VIdentifier& operator++ ();
     VIdentifier& add_prefix (const Identifier&);
     std::ostream& streamout(std::ostream& os) const;
+    void set_range(const std::vector<Range>& nr) { m_range = nr; }
+    void set_dimension(const std::vector<Range>& nd) { m_dimension = nd; }
+    const std::vector<Range>& get_range() const {return m_range;}
+    const std::vector<Range>& get_dimension() const {return m_dimension;}
     
+  private:
     std::vector<Range> m_range;
     std::vector<Range> m_dimension;
     bool numbered;

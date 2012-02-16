@@ -56,7 +56,9 @@ netlist::Range::Range(const Range_Exp& sel)
       v.reset(new Expression(sel.first));
       type = TVar;
     }
-  }   
+  } else {
+    r.reset(new Range_Exp(sel)); 
+  }
 };
 
 netlist::Range::Range(const Range_Exp& sel, int ctype)
@@ -91,7 +93,7 @@ std::ostream& netlist::Range::streamout(std::ostream& os) const {
   switch(type) {
   case TConst: os << c; break;
   case TVar: os << *v; break;
-  case TRange: os << r->first << ":" << r->second;
+  case TRange: os << r->first << ":" << r->second; break;
   default: // should not go here
     assert(1 == 0);
   }

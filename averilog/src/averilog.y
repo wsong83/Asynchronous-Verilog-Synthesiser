@@ -229,11 +229,12 @@ yyscan_t avscanner;
 %left  oUNARY
 
  // type definitions
+%type <tExp>        expression
+%type <tListVar>    list_of_variable_identifiers
 %type <tModuleName> module_identifier
- //%type <tPortName> port_identifier
-%type <tVarName> variable_identifier
-%type <tListVar> list_of_variable_identifiers
-
+%type <tPortName>   port_identifier
+%type <tExp>        primary
+%type <tVarName>    variable_identifier
 
 %start source_text
 
@@ -333,8 +334,33 @@ variable_declaration
         } break;
       default: ;/* doing nothing right now */
       }
+      ////////////////////////////////////////
     } 
     | "wire" '[' expression ':' expression ']' list_of_variable_identifiers
+    {
+      boost::shared_ptr<netlist::NetComp> father = Lib.get_current_comp();
+      // check valid
+      if(father.use_count() == 0) { std::cout << "error! current block not found!" << std::endl; return -1;}
+      
+      boost::shared_ptr<netlist::Module> cm;
+      switch(father->get_type()) {
+      case netlist::NetComp::tModule: { 
+          cm = boost::static_pointer_cast<netlist::Module>(father);
+          while(!$7->empty()) {
+            netlist::VIdentifier& wn = *($7->front());
+            netlist::Range rm(std::pair<netlist::Expression, netlist::Expression>(*$3, *$5));
+            wn.set_range(std::vector<netlist::Range>(1, rm));
+            boost::shared_ptr<netlist::Wire> cw(new netlist::Wire(wn));
+            $7->pop_front();
+            if(!cm->db_wire.insert(cw->name, cw)) {
+              std::cout << yylloc << " error! duplicate wire declaration " << $7->front() << std::endl; return -1;
+            }
+          }
+        } break;
+      default: ;/* doing nothing right now */ 
+      }
+      /////////////////////////////////////////////
+    }
     | "reg" list_of_variable_identifiers
     | "reg" '[' expression ':' expression ']' list_of_variable_identifiers
     | "genvar" list_of_variable_identifiers
@@ -708,7 +734,7 @@ function_call
 
 //A.8.3 Expressions
 expression
-    : primary
+    : primary                       { $$ = $1; }
     | '+' primary %prec oUNARY
     | '-' primary %prec oUNARY
     | '!' primary %prec oUNARY
@@ -754,11 +780,11 @@ range_expression
 
 //A.8.4 Primaries
 primary
-: number                             
+    : number              { $$.reset(new netlist::Expression(*$1)); }             
     | variable_identifier
     | concatenation
     | function_call
-    | '(' expression ')'
+    | '(' expression ')'  { $$ = $2; }
     ;
 
 //A.8.5 Expression left-side values
