@@ -29,7 +29,7 @@
 #ifndef _H_DEFINES_
 #define _H_DEFINES_
 
-#define BIT_SIZE_OF_UINT (sizeof(unsigned int) * 8)
+#define MAX_INT_IN_STREAMOUT 32
 
 
 #endif

@@ -230,6 +230,7 @@ yyscan_t avscanner;
 
  // type definitions
 %type <tExp>        expression
+%type <tListPort>   list_of_port_identifiers
 %type <tListVar>    list_of_variable_identifiers
 %type <tModuleName> module_identifier
 %type <tPortName>   port_identifier
@@ -260,9 +261,9 @@ description
     ;
 
 module_declaration
-: "module" module_identifier ';'  { if(!Lib.insert(*$2)) std::cout << "new module " << *$2 << " insertion failure!" << std::endl; }
+    : "module" module_identifier ';'  { if(!Lib.insert(*$2)) std::cout << "new module " << *$2 << " insertion failure!" << std::endl; }
         module_items
-        "endmodule"                      { std::cout<< *(boost::static_pointer_cast<netlist::Module>(Lib.get_current_comp())); Lib.pop(); }
+        "endmodule"                   { std::cout<< *(boost::static_pointer_cast<netlist::Module>(Lib.get_current_comp())); Lib.pop(); }
     | "module" module_identifier '(' list_of_ports ')' ';'
         module_items
       "endmodule"
@@ -379,8 +380,8 @@ list_of_param_assignments
     ;
 
 list_of_port_identifiers 
-    : port_identifier 
-    | list_of_port_identifiers ',' port_identifier
+    : port_identifier                          { $$.reset(new std::list<boost::shared_ptr<netlist::PoIdentifier> >()); $$->push_back($1); }
+    | list_of_port_identifiers ',' port_identifier { $$ = $1; $$->push_back($3);  }
     ;
 
 list_of_variable_identifiers 
@@ -804,7 +805,7 @@ function_identifier
     ;
 
 module_identifier
-:  identifier             { $$.reset(new netlist::MIdentifier(*$1)); }
+    :  identifier             { $$.reset(new netlist::MIdentifier(*$1)); }
     ;
 
 instance_identifier 

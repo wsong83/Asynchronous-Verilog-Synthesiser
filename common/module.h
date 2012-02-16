@@ -43,6 +43,7 @@ namespace netlist {
     
     // data
     MIdentifier name;
+    DataBase<PoIdentifier, Port> db_port;
     DataBase<VIdentifier, Wire> db_wire;
 
   };

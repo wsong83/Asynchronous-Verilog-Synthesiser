@@ -70,6 +70,7 @@ namespace averilog {
     boost::shared_ptr<netlist::FIdentifier>   tFuncName;
     boost::shared_ptr<avID>                   tID;      
     boost::shared_ptr<netlist::IIdentifier>   tInstName;
+    boost::shared_ptr<std::list<boost::shared_ptr<netlist::PoIdentifier> > > tListPort;
     boost::shared_ptr<std::list<boost::shared_ptr<netlist::VIdentifier> > > tListVar;
     boost::shared_ptr<netlist::MIdentifier>   tModuleName;
     boost::shared_ptr<netlist::Number>        tNumber;    

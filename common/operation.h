@@ -99,6 +99,8 @@ namespace netlist {
     boost::shared_ptr<NetComp> data;
   };
 
+  NETLIST_STREAMOUT(Operation);
+
   void execute_operation( Operation::operation_t op,
 			  std::list<Operation>& d1,
 			  std::list<Operation>& d2,

@@ -121,7 +121,10 @@ Number& netlist::Number::lfsh (int rhs) {
 std::ostream& netlist::Number::streamout (std::ostream& os) const{
   if(valuable) {		// able to be represented as a decimal
     mpz_class d(txt_value,2);
-    os << num_leng << "'h" << d.get_str(16);
+    if(d > MAX_INT_IN_STREAMOUT || d < -MAX_INT_IN_STREAMOUT)
+      os << num_leng << "'h" << d.get_str(16);
+    else
+      os << d;
   } else
     os << num_leng << "'b" << txt_value;
   return os;

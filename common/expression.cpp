@@ -175,6 +175,73 @@ Expression netlist::operator- (const Expression& lhs, const Expression& rhs) {
 }
 
 std::ostream& netlist::Expression::streamout(std::ostream& os) const {
-  os << "expression";
+  std::list<Operation>::const_iterator it, end;
+  std::stack<Operation> m_stack;
+  Operation c, op;
+  int op_cnt = 0;
+
+  for(it=eqn.begin(), end=eqn.end(); it!=end; it++) {
+    c = *it;
+    if(c.get_type() <= Operation::oFun) {
+      if(op.get_type() != Operation::oNULL) {
+	if(op.get_type() <= Operation::oUNxor) { // unary operation always add parenthesis
+	  os << "(" << op << c << ")";
+	  if(!m_stack.empty()) {op = m_stack.top(); m_stack.pop();}
+	} else if(op.get_type() < Operation::oQuestion) { // two operands
+	  if(!m_stack.empty() && op.get_type() >= m_stack.top().get_type()+10) {
+	    if(op_cnt == 0) { 	// first operand
+	      os << "(" << c << op;
+	      op_cnt = 1;
+	    } else {
+	      os << c << ")";
+	      op_cnt = 0;
+	      op = m_stack.top(); m_stack.pop();
+	    }
+	  } else {
+	    if(op_cnt == 0) { 	// first operand
+	      os  << c << op;
+	      op_cnt = 1;
+	    } else {
+	      os << c;
+	      op_cnt = 0;
+	      op = m_stack.top(); m_stack.pop();
+	    }
+	  }
+	} else {		// ?
+	  if(!m_stack.empty()) {
+	    if(op_cnt == 0) { 	// first operand
+	      os << "(" << c << " ? ";
+	      op_cnt = 1;
+	    } else if(op_cnt == 1){
+	      os << c << " : ";
+	      op_cnt = 2;
+	    } else {
+	      os << c << ")";
+	      op_cnt = 0;
+	      op = m_stack.top(); m_stack.pop();
+	    }
+	  } else {
+	    if(op_cnt == 0) { 	// first operand
+	      os << c << " ? ";
+	      op_cnt = 1;
+	    } else if(op_cnt == 1){
+	      os << c << " : ";
+	      op_cnt = 2;
+	    } else {
+	      os << c;
+	      op_cnt = 0;
+	    }
+	  } 
+	}
+      } else {
+	os << c;
+      }
+    } else {			// must be an operator
+      op_cnt = 0;
+      if(Operation::oNULL != op.get_type()) m_stack.push(op);
+      op = c;
+    }
+  }
+  
   return os;
 }

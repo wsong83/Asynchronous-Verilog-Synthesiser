@@ -139,6 +139,21 @@ namespace netlist {
     PoIdentifier(const std::string&);
 
     // helpers
+    void set_input()  { input = true;  output = false; }
+    void set_output() { input = false; output = true;  }
+    void set_inout()  { input = true;  output = true;  }
+    bool is_input() const { return input&&!output; }
+    bool is_output() const { return !input&&output; }
+    bool is_inout() const { return input&&output; }
+    void set_range(const std::vector<Range>& nr) { m_range = nr; }
+    const std::vector<Range>& get_range() const {return m_range;}
+    std::ostream& streamout(std::ostream& os) const;
+
+  private:
+    bool input;
+    bool output;
+    std::vector<Range> m_range;
+
   };
   NETLIST_STREAMOUT(PoIdentifier);
 
