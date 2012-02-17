@@ -30,6 +30,21 @@
 
 std::ostream& netlist::Module::streamout(std::ostream& os) const {
   os << name;
+  if(db_port.empty()) os << ";" << std::endl;
+  else {
+    os << "(";
+    std::map<PoIdentifier, boost::shared_ptr<Port> >::const_iterator it, end;
+    it = db_port.begin();
+    end = db_port.end();
+    while(it != end){
+      os << (it->second)->name.name;
+      it++;
+      if(it != end)
+        os << ", ";
+      else
+        os << ");";
+    }
+  }
   os << db_wire;
   os << "endmodule" << std::endl;
   return os;

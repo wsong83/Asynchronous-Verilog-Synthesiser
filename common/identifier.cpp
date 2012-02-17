@@ -129,7 +129,7 @@ MIdentifier& netlist::MIdentifier::operator++ () {
 }
 
 std::ostream& netlist::MIdentifier::streamout(std::ostream& os) const{
-  os << "module " << name << ";" << std::endl;
+  os << "module " << name;
   return os;
 }
     
@@ -173,25 +173,16 @@ netlist::PaIdentifier::PaIdentifier(const std::string& nm)
 
 //////////////////////////////// port identifier /////////////////
 netlist::PoIdentifier::PoIdentifier(const std::string& nm)
-  : Identifier(NetComp::tPortName, nm), input(false), output(false) {  }
+  : Identifier(NetComp::tPortName, nm) {  }
 
 std::ostream& netlist::PoIdentifier::streamout(std::ostream& os) const {
   std::vector<Range>::const_iterator it, end;
   
-  if(is_input())
-    os << "input ";
-  else if(is_output())
-    os << "output ";
-  else if(is_inout())
-    os << "inout ";
-  else
-    os << "UNKOWN_port ";
-
   for(it=m_range.begin(), end=m_range.end(); it != end; it++) {
     os << "[" << *it << "]";
   }
 
-  os << " " << name << ";" << endl;
+  os << " " << name ;
 
   return os;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -20,26 +20,40 @@
  */
 
 /* 
- * Definition of the types of netlist components.
- * 09/02/2012   Wei Song
+ * Ports
+ * 16/02/2012   Wei Song
  *
  *
  */
 
-enum ctype_t {
-  tBlockName,			/* block name */
-  tExp,                 /* expression */
-  tFuncName,			/* function name */
-  tInstName,			/* instance name */
-  tModule,              /* Module declaration */
-  tModuleName,			/* module name */
-  tNumber,              /* number */
-  tParaName,			/* parameter name */
-  tPort,                /* port */
-  tPortName,			/* port name */
-  tRange,               /* range */
-  tVarName,             /* variable name */
-  tWire,                /* wire */
-  tUnkown               /* type not initiated, indicate error!! */
-};
+#ifndef _H_PORT_
+#define _H_PORT_
 
+namespace netlist {
+
+  class Port : public NetComp {
+  public:
+    // constructors
+    Port(const PoIdentifier&);
+
+    // helpers
+    void set_input()  { input = true;  output = false; }
+    void set_output() { input = false; output = true;  }
+    void set_inout()  { input = true;  output = true;  }
+    bool is_input() const { return input&&!output; }
+    bool is_output() const { return !input&&output; }
+    bool is_inout() const { return input&&output; }
+    std::ostream& streamout(std::ostream& os) const;
+   
+    PoIdentifier name;
+
+  private:
+    bool input;
+    bool output;
+
+  };
+  NETLIST_STREAMOUT(Port);
+
+}
+
+#endif

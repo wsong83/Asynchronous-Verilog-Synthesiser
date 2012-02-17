@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -20,26 +20,31 @@
  */
 
 /* 
- * Definition of the types of netlist components.
- * 09/02/2012   Wei Song
+ * Ports
+ * 16/02/2012   Wei Song
  *
  *
  */
 
-enum ctype_t {
-  tBlockName,			/* block name */
-  tExp,                 /* expression */
-  tFuncName,			/* function name */
-  tInstName,			/* instance name */
-  tModule,              /* Module declaration */
-  tModuleName,			/* module name */
-  tNumber,              /* number */
-  tParaName,			/* parameter name */
-  tPort,                /* port */
-  tPortName,			/* port name */
-  tRange,               /* range */
-  tVarName,             /* variable name */
-  tWire,                /* wire */
-  tUnkown               /* type not initiated, indicate error!! */
-};
+#include "component.h"
 
+using namespace netlist;
+
+netlist::Port::Port(const PoIdentifier& pid)
+  : NetComp(tPort), name(pid) {}
+
+std::ostream& netlist::Port::streamout(std::ostream& os) const {
+  if(is_input())
+    os << "input ";
+  else if(is_output())
+    os << "output ";
+  else if(is_inout())
+    os << "inout ";
+  else
+    os << "UNKOWN_port ";
+
+  os << name << ";" << std::endl;
+
+  return os;
+
+}

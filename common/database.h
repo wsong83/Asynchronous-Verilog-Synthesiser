@@ -61,6 +61,10 @@ namespace netlist {
     void clear() {
       db.clear();
     }
+    
+    bool empty() const {
+      return db.empty();
+    }
 
     bool erase(const K& key) {
       return 1 == db.erase(key);
@@ -85,7 +89,23 @@ namespace netlist {
         return rv;
       } else
         return boost::shared_ptr<T>();
-    }      
+    }
+
+    typename std::map<K, boost::shared_ptr<T> >::iterator begin() {
+      return db.begin();
+    }
+
+    typename std::map<K, boost::shared_ptr<T> >::const_iterator begin() const {
+      return db.begin();
+    }
+    
+    typename std::map<K, boost::shared_ptr<T> >::iterator end() {
+      return db.begin();
+    }
+
+    typename std::map<K, boost::shared_ptr<T> >::const_iterator end() const {
+      return db.begin();
+    }
     
     std::ostream& streamout(std::ostream& os) const {
       typename DBT::const_iterator it;

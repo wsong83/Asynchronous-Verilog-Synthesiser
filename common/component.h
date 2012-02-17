@@ -80,6 +80,9 @@ namespace netlist {
   // expression.h
   class Expression;		/* expressions */
 
+  // port.h
+  class Port;
+
   // wire.h
   class Wire;
 
@@ -98,6 +101,7 @@ namespace netlist {
 #include "identifier.h"
 #include "range.h"
 #include "expression.h"
+#include "port.h"
 #include "wire.h"
 #include "module.h"
 #include "library.h"

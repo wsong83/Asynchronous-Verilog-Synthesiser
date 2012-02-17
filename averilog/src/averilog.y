@@ -46,15 +46,22 @@
 #include <stack>
 #include "averilog_util.h"
 #include "averilog.lex.h"
-
+  
 #define yylex avlex
-
-yyscan_t avscanner;
-
- void averilog::av_parser::error (const location_type& loc, const std::string& msg) {
-   std::cout << loc << " " << msg << std::endl;
- }
-
+  
+  yyscan_t avscanner;
+  
+  void averilog::av_parser::error (const location_type& loc, const std::string& msg) {
+    std::cout << loc << " " << msg << std::endl;
+  }
+  
+  using namespace netlist;
+  using boost::shared_ptr;
+  using boost::static_pointer_cast;
+  using std::vector;
+  using std::list;
+  using std::pair;
+    
 %}
 
 %initial-action
@@ -263,20 +270,27 @@ description
 module_declaration
     : "module" module_identifier ';'  { if(!Lib.insert(*$2)) std::cout << "new module " << *$2 << " insertion failure!" << std::endl; }
         module_items
-        "endmodule"                   { std::cout<< *(boost::static_pointer_cast<netlist::Module>(Lib.get_current_comp())); Lib.pop(); }
-    | "module" module_identifier '(' list_of_ports ')' ';'
+        "endmodule"                   { std::cout<< *(static_pointer_cast<Module>(Lib.get_current_comp())); Lib.pop(); }
+    | "module" module_identifier '(' list_of_port_identifiers ')' ';'
+    {
+      if(!Lib.insert(*$2)) std::cout << "new module " << *$2 << " insertion failure!" << std::endl;
+      // get a pointer to the current module
+      shared_ptr<Module> cm = static_pointer_cast<Module>(Lib.get_current_comp());
+      // insert ports
+      list<shared_ptr<PoIdentifier> >::iterator it, end;
+      for(it = $4->begin(), end = $4->end(); it != end; it++) {
+        shared_ptr<PoIdentifier> pid(*it);
+        cm->db_port.insert(*pid, shared_ptr<Port>(new Port(*pid)));
+      }
+    }
         module_items
       "endmodule"
-    | "module" module_identifier '#' '(' parameter_declaration ')' '(' list_of_ports ')' ';'
+    | "module" module_identifier '#' '(' parameter_declaration ')' '(' list_of_port_identifiers ')' ';'
         module_items
       "endmodule"                   
     ;
 
 // A.1.4 Module paramters and ports
-list_of_ports
-    : /* empty */
-    | list_of_port_identifiers                  
-    ;
 
 // A.1.5 Module items
 module_item
@@ -305,7 +319,33 @@ parameter_declaration
 // A.2.1.2 Port declarations
 input_declaration 
     : "input" list_of_port_identifiers
+    {      
+      // get a pointer to the current module
+      shared_ptr<Module> cm = static_pointer_cast<Module>(Lib.get_current_comp());
+      // insert ports
+      list<shared_ptr<PoIdentifier> >::iterator it, end;
+      for(it = $2->begin(), end = $2->end(); it != end; it++) {
+        shared_ptr<Port> cp = cm->db_port.find(*(*it));
+        if(0 != cp.use_count()) cp->set_input();
+        else {  std::cout << yylloc << " port " << *it << " not found in the module!" << std::endl; }
+      }
+    }
     | "input" '[' expression ':' expression ']' list_of_port_identifiers
+    {      
+      // get a pointer to the current module
+      shared_ptr<Module> cm = static_pointer_cast<Module>(Lib.get_current_comp());
+      // insert ports
+      list<shared_ptr<PoIdentifier> >::iterator it, end;
+      for(it = $7->begin(), end = $7->end(); it != end; it++) {
+        shared_ptr<Port> cp = cm->db_port.find(*(*it));
+        if(0 != cp.use_count()) { 
+          cp->set_input();
+          vector<Range> rm;
+          rm.push_back(Range(pair<Expression, Expression>(*$3, *$5)));
+          cp->name.set_range(rm);
+        } else {  std::cout << yylloc << " port " << *it << " not found in the module!" << std::endl; }
+      }
+    }  
     ;
 
 output_declaration 
@@ -317,16 +357,16 @@ output_declaration
 variable_declaration 
     : "wire" list_of_variable_identifiers 
     {
-      boost::shared_ptr<netlist::NetComp> father = Lib.get_current_comp();
+      shared_ptr<NetComp> father = Lib.get_current_comp();
       // check valid
       if(father.use_count() == 0) { std::cout << "error! current block not found!" << std::endl; return -1;}
       
-      boost::shared_ptr<netlist::Module> cm;
+      shared_ptr<Module> cm;
       switch(father->get_type()) {
-      case netlist::NetComp::tModule: { 
-          cm = boost::static_pointer_cast<netlist::Module>(father);
+      case NetComp::tModule: { 
+          cm = static_pointer_cast<Module>(father);
           while(!$2->empty()) {
-            boost::shared_ptr<netlist::Wire> cw(new netlist::Wire(*($2->front())));
+            shared_ptr<Wire> cw(new Wire(*($2->front())));
             $2->pop_front();
             if(!cm->db_wire.insert(cw->name, cw)) {
               std::cout << yylloc << " error! duplicate wire declaration " << $2->front() << std::endl; return -1;
@@ -339,19 +379,19 @@ variable_declaration
     } 
     | "wire" '[' expression ':' expression ']' list_of_variable_identifiers
     {
-      boost::shared_ptr<netlist::NetComp> father = Lib.get_current_comp();
+      shared_ptr<NetComp> father = Lib.get_current_comp();
       // check valid
       if(father.use_count() == 0) { std::cout << "error! current block not found!" << std::endl; return -1;}
       
-      boost::shared_ptr<netlist::Module> cm;
+      shared_ptr<Module> cm;
       switch(father->get_type()) {
-      case netlist::NetComp::tModule: { 
-          cm = boost::static_pointer_cast<netlist::Module>(father);
+      case NetComp::tModule: { 
+          cm = static_pointer_cast<Module>(father);
           while(!$7->empty()) {
-            netlist::VIdentifier& wn = *($7->front());
-            netlist::Range rm(std::pair<netlist::Expression, netlist::Expression>(*$3, *$5));
-            wn.set_range(std::vector<netlist::Range>(1, rm));
-            boost::shared_ptr<netlist::Wire> cw(new netlist::Wire(wn));
+            VIdentifier& wn = *($7->front());
+            Range rm(pair<Expression, Expression>(*$3, *$5));
+            wn.set_range(vector<Range>(1, rm));
+            shared_ptr<Wire> cw(new Wire(wn));
             $7->pop_front();
             if(!cm->db_wire.insert(cw->name, cw)) {
               std::cout << yylloc << " error! duplicate wire declaration " << $7->front() << std::endl; return -1;
@@ -380,12 +420,12 @@ list_of_param_assignments
     ;
 
 list_of_port_identifiers 
-    : port_identifier                          { $$.reset(new std::list<boost::shared_ptr<netlist::PoIdentifier> >()); $$->push_back($1); }
+    : port_identifier                          { $$.reset(new list<shared_ptr<PoIdentifier> >()); $$->push_back($1); }
     | list_of_port_identifiers ',' port_identifier { $$ = $1; $$->push_back($3);  }
     ;
 
 list_of_variable_identifiers 
-    : variable_identifier                      { $$.reset(new std::list<boost::shared_ptr<netlist::VIdentifier> >()); $$->push_back($1); }
+    : variable_identifier                      { $$.reset(new list<shared_ptr<VIdentifier> >()); $$->push_back($1); }
     | variable_identifier '=' expression
     | list_of_variable_identifiers ',' variable_identifier { $$ = $1; $$->push_back($3); }
     | list_of_variable_identifiers ',' variable_identifier '=' expression
@@ -406,11 +446,11 @@ function_declaration
         list_of_function_item_declaration
         statement
       "endfunction"
-    | "function" function_identifier '(' list_of_ports ')' ';'
+    | "function" function_identifier '(' list_of_port_identifiers ')' ';'
         list_of_function_item_declaration
         statement
       "endfunction"
-    | "function" "automatic" function_identifier '(' list_of_ports ')' ';'
+    | "function" "automatic" function_identifier '(' list_of_port_identifiers ')' ';'
         list_of_function_item_declaration
         statement
       "endfunction"
@@ -781,7 +821,7 @@ range_expression
 
 //A.8.4 Primaries
 primary
-    : number              { $$.reset(new netlist::Expression(*$1)); }             
+    : number              { $$.reset(new Expression(*$1)); }             
     | variable_identifier
     | concatenation
     | function_call
@@ -805,7 +845,7 @@ function_identifier
     ;
 
 module_identifier
-    :  identifier             { $$.reset(new netlist::MIdentifier(*$1)); }
+    :  identifier             { $$.reset(new MIdentifier(*$1)); }
     ;
 
 instance_identifier 
@@ -817,7 +857,7 @@ parameter_identifier
     ;
 
 variable_identifier
-: identifier           { $$.reset(new netlist::VIdentifier(*$1)); }
+: identifier           { $$.reset(new VIdentifier(*$1)); }
     | variable_identifier '[' range_expression ']'
     ;
 
