@@ -31,16 +31,16 @@
 
 using namespace averilog;
 
-void averilog::error_report(const std::string& err_msg, YYLTYPE * yyloc, std::ostream& os) {
-  os << "\n" << *yyloc << " Error: " << err_msg << std::endl;
+void averilog::error_report(const string& err_msg, YYLTYPE * yyloc, ostream& os) {
+  os << "\n" << *yyloc << " Error: " << err_msg << endl;
 }
 
-std::ostream& averilog::operator<< (std::ostream& os, const avID& hs) {
+ostream& averilog::operator<< (ostream& os, const avID& hs) {
   os << hs.name;
   return os;
 }
 
-averilog::Parser::Parser(std::string fn, netlist::Library& lib)
+averilog::Parser::Parser(string fn, netlist::Library& lib)
   : sfile(NULL), fname(fn), bison_instance(fn, &sfile, lib)
 { }
 

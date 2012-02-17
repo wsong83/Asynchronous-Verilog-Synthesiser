@@ -20,33 +20,41 @@
  */
 
 /* 
- * Wire
- * 15/02/2012   Wei Song
+ * Token definitions
+ * 17/02/2012   Wei Song
  *
  *
  */
 
-#ifndef _H_WIRE_
-#define _H_WIRE_
+#ifndef _H_AV_TOKEN_
+#define _H_AV_TOKEN_
 
-namespace netlist {
+// copy from averilog.lex.h
+#ifndef YY_TYPEDEF_YY_SCANNER_T
+#define YY_TYPEDEF_YY_SCANNER_T
+typedef void* yyscan_t;
+#endif
+
+namespace averilog {
+
+#define YYSTYPE av_token_type
   
-  class Wire : public NetComp {
-  public:
-    NETLIST_DEFAULT_CON(Wire, tWire);
-    Wire(const VIdentifier& id): NetComp(tWire), name(id) {}
-
-    ostream& streamout(ostream& os) const;
-
-    VIdentifier name;
-    list<VIdentifier *> fin; /* drivers */
-    list<VIdentifier *> fout; /* loads */
-
+  struct av_token_type {
+    shared_ptr<netlist::BIdentifier>   tBlockName;
+    shared_ptr<netlist::Expression>    tExp;		
+    shared_ptr<netlist::FIdentifier>   tFuncName;
+    shared_ptr<avID>                   tID;      
+    shared_ptr<netlist::IIdentifier>   tInstName;
+    shared_ptr<list<shared_ptr<netlist::PoIdentifier> > > tListPort;
+    shared_ptr<list<shared_ptr<netlist::VIdentifier> > >  tListVar;
+    shared_ptr<netlist::MIdentifier>   tModuleName;
+    shared_ptr<netlist::Number>        tNumber;    
+    shared_ptr<netlist::PaIdentifier>  tParaName;
+    shared_ptr<netlist::PoIdentifier>  tPortName;
+    shared_ptr<netlist::Range>         tRange;	
+    shared_ptr<netlist::VIdentifier>   tVarName;	
   };
-
-  NETLIST_STREAMOUT(Wire);
-
-
 }
+
 
 #endif

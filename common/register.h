@@ -20,36 +20,33 @@
  */
 
 /* 
- * 
- * 06/02/2012   Wei Song
+ * Register
+ * 15/02/2012   Wei Song
  *
  *
  */
 
-#include "common/component.h"
-#include "averilog/src/averilog_util.h"
-#include "averilog/src/averilog.lex.h"
+#ifndef _H_VA_REGISTER_
+#define _H_VA_REGISTER_
 
-int main(int argc, char*argv[])
-{
-  int tmp;
-  YYSTYPE lval;
-  yyscan_t scanner;
-  YYLTYPE yyloc;
-  FILE * sfile;
+namespace netlist {
+  
+  class Register : public NetComp {
+  public:
+    NETLIST_DEFAULT_CON(Register, tRegister);
+    Register(const VIdentifier& id): NetComp(tRegister), name(id) {}
 
-  sfile = fopen(argv[1], "r");
-  string fn(argv[1]);
-  yyloc.initialize(&fn);
-  avlex_init (&scanner);
-  avset_in(sfile, scanner);
-  while((tmp = avlex(&lval, &yyloc, scanner)) != 0) {
-    cout << tmp << " ";
-    if(tmp == token::number)
-      cout << "Number:" << *(lval.tNumber) << " ";
-  }
-    
-  avlex_destroy(scanner);
-  fclose(sfile);
-  return 0;
+    ostream& streamout(ostream& os) const;
+
+    VIdentifier name;
+    list<VIdentifier * > fin;	/* drivers, hope to use weak_ptr but failed */
+    list<VIdentifier * > fout;	/* loads */
+
+  };
+
+  NETLIST_STREAMOUT(Register);
+
+
 }
+
+#endif

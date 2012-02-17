@@ -29,8 +29,7 @@
 #ifndef _H_IDENTIFIER_
 #define _H_IDENTIFIER_
 
-#include <vector>
-#include "averilog/src/averilog_util.h"
+#include "averilog/src/av_comp.h"
 
 namespace netlist {
 
@@ -40,15 +39,15 @@ namespace netlist {
     // constructors
     Identifier() {}
     Identifier(NetComp::ctype_t ctype) : NetComp(ctype) {}
-    Identifier(NetComp::ctype_t, const std::string&);
+    Identifier(NetComp::ctype_t, const string&);
 
     // helpers
     int compare(const Identifier& rhs) const; /* compare two identifiers */
-    virtual std::ostream& streamout(std::ostream&) const;
+    virtual ostream& streamout(ostream&) const;
     void hash_update();			   /* update the nearly unique hash id */
 
     // data
-    std::string name;		/* the name of the identifier */
+    string name;		/* the name of the identifier */
     unsigned int hashid;	/* the nearly unique heash id */
 
   };
@@ -62,7 +61,7 @@ namespace netlist {
   class BIdentifier : public Identifier{
   public:
     // constructors
-    BIdentifier(const std::string&);
+    BIdentifier(const string&);
     BIdentifier();
 
     // helpers
@@ -79,7 +78,7 @@ namespace netlist {
   public:
     // constructors
     FIdentifier() : Identifier(NetComp::tFuncName) { }
-    FIdentifier(const std::string&);
+    FIdentifier(const string&);
     
     // helpers
 
@@ -91,12 +90,12 @@ namespace netlist {
   public:
     // constructors
     MIdentifier() : Identifier(NetComp::tModuleName) {}
-    MIdentifier(const std::string&);
+    MIdentifier(const string&);
     MIdentifier(const averilog::avID& );
     
     // helpers
     MIdentifier& operator++ ();
-    std::ostream& streamout(std::ostream& os) const;
+    ostream& streamout(ostream& os) const;
 
   private:
     bool numbered;
@@ -109,7 +108,7 @@ namespace netlist {
   public:
     // constructors
     IIdentifier();
-    IIdentifier(const std::string&);
+    IIdentifier(const string&);
 
     // helpers
     IIdentifier& operator++ ();
@@ -125,7 +124,7 @@ namespace netlist {
   public:
     // constructors
     PaIdentifier() : Identifier(NetComp::tParaName) {}
-    PaIdentifier(const std::string&);
+    PaIdentifier(const string&);
 
     // helpers
   };
@@ -136,15 +135,16 @@ namespace netlist {
   public:
     // constructors
     PoIdentifier() : Identifier(NetComp::tPortName) {}
-    PoIdentifier(const std::string&);
+    PoIdentifier(const string&);
+    PoIdentifier(const averilog::avID&);
 
     // helpers
-    void set_range(const std::vector<Range>& nr) { m_range = nr; }
-    const std::vector<Range>& get_range() const {return m_range;}
-    std::ostream& streamout(std::ostream& os) const;
+    void set_range(const vector<Range>& nr) { m_range = nr; }
+    const vector<Range>& get_range() const {return m_range;}
+    ostream& streamout(ostream& os) const;
 
   private:
-    std::vector<Range> m_range;
+    vector<Range> m_range;
 
   };
   NETLIST_STREAMOUT(PoIdentifier);
@@ -154,22 +154,22 @@ namespace netlist {
   public:
     // constructors
     VIdentifier();
-    VIdentifier(const std::string&);
+    VIdentifier(const string&);
     VIdentifier(const averilog::avID&);
-    VIdentifier(const std::string&, const std::vector<Range>&);
+    VIdentifier(const string&, const vector<Range>&);
 
     //helpers
     VIdentifier& operator++ ();
     VIdentifier& add_prefix (const Identifier&);
-    std::ostream& streamout(std::ostream& os) const;
-    void set_range(const std::vector<Range>& nr) { m_range = nr; }
-    void set_dimension(const std::vector<Range>& nd) { m_dimension = nd; }
-    const std::vector<Range>& get_range() const {return m_range;}
-    const std::vector<Range>& get_dimension() const {return m_dimension;}
+    ostream& streamout(ostream& os) const;
+    void set_range(const vector<Range>& nr) { m_range = nr; }
+    void set_dimension(const vector<Range>& nd) { m_dimension = nd; }
+    const vector<Range>& get_range() const {return m_range;}
+    const vector<Range>& get_dimension() const {return m_dimension;}
     
   private:
-    std::vector<Range> m_range;
-    std::vector<Range> m_dimension;
+    vector<Range> m_range;
+    vector<Range> m_dimension;
     bool numbered;
   };
   NETLIST_STREAMOUT(VIdentifier);

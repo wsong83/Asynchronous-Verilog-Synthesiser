@@ -29,9 +29,6 @@
 #ifndef _H_OPERATION_
 #define _H_OPERATION_
 
-#include <boost/shared_ptr.hpp>
-#include <list>
-
 namespace netlist {
 
   class Operation {
@@ -80,10 +77,10 @@ namespace netlist {
 
     Operation();
     Operation(operation_t);
-    Operation(boost::shared_ptr<Number>);
-    Operation(boost::shared_ptr<Identifier>);
-    //    Operation(boost::shared_ptr<FuncCall>);
-    //    Operation(boost::shared_ptr<Concatenation>);
+    Operation(shared_ptr<Number>);
+    Operation(shared_ptr<Identifier>);
+    //    Operation(shared_ptr<FuncCall>);
+    //    Operation(shared_ptr<Concatenation>);
 
     // helpers
     bool is_valuable() const { return valuable; }
@@ -91,25 +88,25 @@ namespace netlist {
     Number& get_num_ref();
     Number get_num() const;
     Identifier get_var() const;
-    std::ostream& streamout(std::ostream&) const;
+    ostream& streamout(ostream&) const;
 
   private:
     operation_t otype;
     bool valuable;
-    boost::shared_ptr<NetComp> data;
+    shared_ptr<NetComp> data;
   };
 
   NETLIST_STREAMOUT(Operation);
 
   void execute_operation( Operation::operation_t op,
-			  std::list<Operation>& d1,
-			  std::list<Operation>& d2,
-			  std::list<Operation>& d3
+			  list<Operation>& d1,
+			  list<Operation>& d2,
+			  list<Operation>& d3
 			  );
 
-  void execute_UPos(std::list<Operation>&);
-  void execute_UNeg(std::list<Operation>&);
-  void execute_Add(std::list<Operation>&, std::list<Operation>&);
+  void execute_UPos(list<Operation>&);
+  void execute_UNeg(list<Operation>&);
+  void execute_Add(list<Operation>&, list<Operation>&);
  
 
 }

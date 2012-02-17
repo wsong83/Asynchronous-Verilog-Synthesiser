@@ -20,36 +20,30 @@
  */
 
 /* 
- * 
- * 06/02/2012   Wei Song
+ * Components needed in av_parser
+ * 17/02/2012   Wei Song
  *
  *
  */
 
-#include "common/component.h"
-#include "averilog/src/averilog_util.h"
-#include "averilog/src/averilog.lex.h"
+#ifndef _H_AV_COMPONENT_
+#define _H_AV_COMPONENT_
 
-int main(int argc, char*argv[])
-{
-  int tmp;
-  YYSTYPE lval;
-  yyscan_t scanner;
-  YYLTYPE yyloc;
-  FILE * sfile;
+#include <string>
+using std::string;
 
-  sfile = fopen(argv[1], "r");
-  string fn(argv[1]);
-  yyloc.initialize(&fn);
-  avlex_init (&scanner);
-  avset_in(sfile, scanner);
-  while((tmp = avlex(&lval, &yyloc, scanner)) != 0) {
-    cout << tmp << " ";
-    if(tmp == token::number)
-      cout << "Number:" << *(lval.tNumber) << " ";
-  }
-    
-  avlex_destroy(scanner);
-  fclose(sfile);
-  return 0;
+namespace averilog {
+
+  class avID {  // identifier without dimension decalration
+  public:
+    string name;
+    avID(char* text, int leng)
+      : name(text,leng) {}
+  };
+
+  std::ostream& operator<< (std::ostream&, const avID&);
+
 }
+
+
+#endif

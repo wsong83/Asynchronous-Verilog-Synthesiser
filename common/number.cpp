@@ -27,8 +27,6 @@
  */
 
 #include <cctype>
-#include <cassert>
-#include <cstdlib>
 #include <algorithm>
 #include "component.h"
 
@@ -38,7 +36,7 @@ using namespace netlist;
 netlist::Number::Number(char *text, int txt_leng) 
   : NetComp(tNumber), txt_value(), valid(false), valuable(false)
 {
-  std::string m;
+  string m;
   int i;
   for(i = 0; i < txt_leng; i++) {
     if(isdigit(text[i]))
@@ -118,7 +116,7 @@ Number& netlist::Number::lfsh (int rhs) {
   return *this;
 }
 
-std::ostream& netlist::Number::streamout (std::ostream& os) const{
+ostream& netlist::Number::streamout (ostream& os) const{
   if(valuable) {		// able to be represented as a decimal
     mpz_class d(txt_value,2);
     if(d > MAX_INT_IN_STREAMOUT || d < -MAX_INT_IN_STREAMOUT)
@@ -131,7 +129,7 @@ std::ostream& netlist::Number::streamout (std::ostream& os) const{
 }
 
 bool netlist::Number::bin2num(char *text, int txt_leng, int start) {
-  std::string m;
+  string m;
   bool v = true;
 
   for(int i=start+1; i<txt_leng; i++) {
@@ -154,7 +152,7 @@ bool netlist::Number::bin2num(char *text, int txt_leng, int start) {
 }
 
 bool netlist::Number::dec2num(char *text, int txt_leng, int start) {
-  std::string m;
+  string m;
 
   for(int i=start+1; i<txt_leng; i++) {
     if(text[i] >= '0' && text[i] <= '9')
@@ -167,12 +165,13 @@ bool netlist::Number::dec2num(char *text, int txt_leng, int start) {
   txt_value  = dd.get_str(2);
   if(txt_value.size() > num_leng) txt_value.erase(0, txt_value.size() - num_leng);
   else if(txt_value.size() < num_leng) txt_value.insert(0, num_leng - txt_value.size(), '0');
-
+  valuable = true;
+  
   return true;
 }
 
 bool netlist::Number::oct2num(char *text, int txt_leng, int start) {
-  std::string m;
+  string m;
   bool v = true;
 
   for(int i=start+1; i<txt_leng; i++) {
@@ -214,7 +213,7 @@ bool netlist::Number::oct2num(char *text, int txt_leng, int start) {
 }
 
 bool netlist::Number::hex2num(char *text, int txt_leng, int start) {
-  std::string m;
+  string m;
   bool v = true;
 
   for(int i=start+1; i<txt_leng; i++) {

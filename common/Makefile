@@ -27,7 +27,7 @@
 INCDIRS = -I./ -I../
 
 # targets
-TARGETS = operation.o number.o identifier.o range.o expression.o port.o wire.o module.o library.o
+TARGETS = operation.o number.o identifier.o range.o expression.o port.o register.o wire.o module.o library.o
 
 # actions
 all: $(TARGETS)

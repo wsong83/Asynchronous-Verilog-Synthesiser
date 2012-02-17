@@ -30,11 +30,11 @@
 
 using namespace netlist;
 
-std::ostream& netlist::Wire::streamout(std::ostream& os) const {
-  std::vector<Range>::const_iterator it, end;
+ostream& netlist::Wire::streamout(ostream& os) const {
+  vector<Range>::const_iterator it, end;
 
   os << "wire ";
-  std::vector<Range> rm = name.get_range();
+  vector<Range> rm = name.get_range();
   for(it=rm.begin(), end=rm.end(); it != end; it++) {
     os << "[" << *it;
     if(it->is_single())
@@ -49,7 +49,7 @@ std::ostream& netlist::Wire::streamout(std::ostream& os) const {
       os << ":" << *it;
     os << "]";
   }
-  os << ";" << std::endl;
+  os << ";" << endl;
   return os;
 
 }

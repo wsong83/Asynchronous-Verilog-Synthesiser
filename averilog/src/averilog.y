@@ -51,16 +51,11 @@
   
   yyscan_t avscanner;
   
-  void averilog::av_parser::error (const location_type& loc, const std::string& msg) {
-    std::cout << loc << " " << msg << std::endl;
+  void averilog::av_parser::error (const location_type& loc, const string& msg) {
+    cout << loc << " " << msg << endl;
   }
   
   using namespace netlist;
-  using boost::shared_ptr;
-  using boost::static_pointer_cast;
-  using std::vector;
-  using std::list;
-  using std::pair;
     
 %}
 
@@ -268,12 +263,12 @@ description
     ;
 
 module_declaration
-    : "module" module_identifier ';'  { if(!Lib.insert(*$2)) std::cout << "new module " << *$2 << " insertion failure!" << std::endl; }
+    : "module" module_identifier ';'  { if(!Lib.insert(*$2)) cout << "new module " << *$2 << " insertion failure!" << endl; }
         module_items
-        "endmodule"                   { std::cout<< *(static_pointer_cast<Module>(Lib.get_current_comp())); Lib.pop(); }
+        "endmodule"                   { cout<< *(static_pointer_cast<Module>(Lib.get_current_comp())); Lib.pop(); }
     | "module" module_identifier '(' list_of_port_identifiers ')' ';'
     {
-      if(!Lib.insert(*$2)) std::cout << "new module " << *$2 << " insertion failure!" << std::endl;
+      if(!Lib.insert(*$2)) cout << "new module " << *$2 << " insertion failure!" << endl;
       // get a pointer to the current module
       shared_ptr<Module> cm = static_pointer_cast<Module>(Lib.get_current_comp());
       // insert ports
@@ -284,7 +279,7 @@ module_declaration
       }
     }
         module_items
-      "endmodule"
+      "endmodule"                      { cout<< *(static_pointer_cast<Module>(Lib.get_current_comp())); Lib.pop(); }
     | "module" module_identifier '#' '(' parameter_declaration ')' '(' list_of_port_identifiers ')' ';'
         module_items
       "endmodule"                   
@@ -297,7 +292,7 @@ module_item
     : parameter_declaration ';'
     | input_declaration ';'
     | output_declaration ';'
-    | variable_declaration ';'         { std::cout << "variable declaration" << std::endl; }
+    | variable_declaration ';' 
     | function_declaration
     | continuous_assign
     | gate_instantiation
@@ -327,7 +322,7 @@ input_declaration
       for(it = $2->begin(), end = $2->end(); it != end; it++) {
         shared_ptr<Port> cp = cm->db_port.find(*(*it));
         if(0 != cp.use_count()) cp->set_input();
-        else {  std::cout << yylloc << " port " << *it << " not found in the module!" << std::endl; }
+        else {  cout << yylloc << " port " << *it << " not found in the module!" << endl; }
       }
     }
     | "input" '[' expression ':' expression ']' list_of_port_identifiers
@@ -343,14 +338,40 @@ input_declaration
           vector<Range> rm;
           rm.push_back(Range(pair<Expression, Expression>(*$3, *$5)));
           cp->name.set_range(rm);
-        } else {  std::cout << yylloc << " port " << *it << " not found in the module!" << std::endl; }
+        } else {  cout << yylloc << " port " << *it << " not found in the module!" << endl; }
       }
     }  
     ;
 
 output_declaration 
     : "output" list_of_port_identifiers
+    {      
+      // get a pointer to the current module
+      shared_ptr<Module> cm = static_pointer_cast<Module>(Lib.get_current_comp());
+      // insert ports
+      list<shared_ptr<PoIdentifier> >::iterator it, end;
+      for(it = $2->begin(), end = $2->end(); it != end; it++) {
+        shared_ptr<Port> cp = cm->db_port.find(*(*it));
+        if(0 != cp.use_count()) cp->set_output();
+        else {  cout << yylloc << " port " << *it << " not found in the module!" << endl; }
+      }
+    }
     | "output" '[' expression ':' expression ']' list_of_port_identifiers
+    {      
+      // get a pointer to the current module
+      shared_ptr<Module> cm = static_pointer_cast<Module>(Lib.get_current_comp());
+      // insert ports
+      list<shared_ptr<PoIdentifier> >::iterator it, end;
+      for(it = $7->begin(), end = $7->end(); it != end; it++) {
+        shared_ptr<Port> cp = cm->db_port.find(*(*it));
+        if(0 != cp.use_count()) { 
+          cp->set_output();
+          vector<Range> rm;
+          rm.push_back(Range(pair<Expression, Expression>(*$3, *$5)));
+          cp->name.set_range(rm);
+        } else {  cout << yylloc << " port " << *it << " not found in the module!" << endl; }
+      }
+    }  
     ;
 
 // A.2.1.3 Type declarations
@@ -359,7 +380,7 @@ variable_declaration
     {
       shared_ptr<NetComp> father = Lib.get_current_comp();
       // check valid
-      if(father.use_count() == 0) { std::cout << "error! current block not found!" << std::endl; return -1;}
+      if(father.use_count() == 0) { cout << "error! current block not found!" << endl; return -1;}
       
       shared_ptr<Module> cm;
       switch(father->get_type()) {
@@ -369,7 +390,7 @@ variable_declaration
             shared_ptr<Wire> cw(new Wire(*($2->front())));
             $2->pop_front();
             if(!cm->db_wire.insert(cw->name, cw)) {
-              std::cout << yylloc << " error! duplicate wire declaration " << $2->front() << std::endl; return -1;
+              cout << yylloc << " error! duplicate wire declaration " << $2->front() << endl; return -1;
             }
           }
         } break;
@@ -381,7 +402,7 @@ variable_declaration
     {
       shared_ptr<NetComp> father = Lib.get_current_comp();
       // check valid
-      if(father.use_count() == 0) { std::cout << "error! current block not found!" << std::endl; return -1;}
+      if(father.use_count() == 0) { cout << "error! current block not found!" << endl; return -1;}
       
       shared_ptr<Module> cm;
       switch(father->get_type()) {
@@ -394,7 +415,7 @@ variable_declaration
             shared_ptr<Wire> cw(new Wire(wn));
             $7->pop_front();
             if(!cm->db_wire.insert(cw->name, cw)) {
-              std::cout << yylloc << " error! duplicate wire declaration " << $7->front() << std::endl; return -1;
+              cout << yylloc << " error! duplicate wire declaration " << $7->front() << endl; return -1;
             }
           }
         } break;
@@ -402,8 +423,53 @@ variable_declaration
       }
       /////////////////////////////////////////////
     }
-    | "reg" list_of_variable_identifiers
+    | "reg" list_of_variable_identifiers 
+    {
+      shared_ptr<NetComp> father = Lib.get_current_comp();
+      // check valid
+      if(father.use_count() == 0) { cout << "error! current block not found!" << endl; return -1;}
+      
+      shared_ptr<Module> cm;
+      switch(father->get_type()) {
+      case NetComp::tModule: { 
+          cm = static_pointer_cast<Module>(father);
+          while(!$2->empty()) {
+            shared_ptr<Register> cr(new Register(*($2->front())));
+            $2->pop_front();
+            if(!cm->db_reg.insert(cr->name, cr)) {
+              cout << yylloc << " error! duplicate wire declaration " << $2->front() << endl; return -1;
+            }
+          }
+        } break;
+      default: ;/* doing nothing right now */
+      }
+      ////////////////////////////////////////
+    } 
     | "reg" '[' expression ':' expression ']' list_of_variable_identifiers
+    {
+      shared_ptr<NetComp> father = Lib.get_current_comp();
+      // check valid
+      if(father.use_count() == 0) { cout << "error! current block not found!" << endl; return -1;}
+      
+      shared_ptr<Module> cm;
+      switch(father->get_type()) {
+      case NetComp::tModule: { 
+          cm = static_pointer_cast<Module>(father);
+          while(!$7->empty()) {
+            VIdentifier& rn = *($7->front());
+            Range rm(pair<Expression, Expression>(*$3, *$5));
+            rn.set_range(vector<Range>(1, rm));
+            shared_ptr<Register> cr(new Register(rn));
+            $7->pop_front();
+            if(!cm->db_reg.insert(cr->name, cr)) {
+              cout << yylloc << " error! duplicate wire declaration " << $7->front() << endl; return -1;
+            }
+          }
+        } break;
+      default: ;/* doing nothing right now */ 
+      }
+      /////////////////////////////////////////////
+    }
     | "genvar" list_of_variable_identifiers
     | "integer" list_of_variable_identifiers
     ;
@@ -660,11 +726,11 @@ generate_block
 
 //A.6.1 Continuous assignment statements
 continuous_assign 
-    : "assign" list_of_net_assignments ';'              { std::cout << "continueous assign" << std::endl; }
+    : "assign" list_of_net_assignments ';'   
     ;
 
 list_of_net_assignments 
-    : blocking_assignment                                { std::cout << "blocking assignment" << std::endl;}
+    : blocking_assignment                                
     | list_of_net_assignments ',' blocking_assignment
     ;
 
@@ -862,6 +928,6 @@ variable_identifier
     ;
 
 port_identifier
-    : identifier             
+    : identifier       { $$.reset(new PoIdentifier(*$1)); }             
     ;
 

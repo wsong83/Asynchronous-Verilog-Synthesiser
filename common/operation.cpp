@@ -26,7 +26,6 @@
  *
  */
 
-#include <cassert>
 #include "component.h"
 
 using namespace netlist;
@@ -42,34 +41,34 @@ netlist::Operation::Operation(operation_t otype)
   assert(otype > oFun);
 }
 
-netlist::Operation::Operation(boost::shared_ptr<Number> num)
+netlist::Operation::Operation(shared_ptr<Number> num)
   : otype(oNum), valuable(num->is_valuable()), data(num)
 { }
 
-netlist::Operation::Operation(boost::shared_ptr<Identifier> id)
+netlist::Operation::Operation(shared_ptr<Identifier> id)
   : otype(oVar), valuable(false), data(id)
 { }
 
 Number& netlist::Operation::get_num_ref(){
   assert(otype == oNum);
-  return *(boost::static_pointer_cast<Number>(data));
+  return *(static_pointer_cast<Number>(data));
 }
 
 Number netlist::Operation::get_num() const{
   assert(otype == oNum);
-  return *(boost::static_pointer_cast<Number>(data));
+  return *(static_pointer_cast<Number>(data));
 }
 
 Identifier netlist::Operation::get_var() const{
   assert(otype == oVar);
-  return *(boost::static_pointer_cast<Identifier>(data));
+  return *(static_pointer_cast<Identifier>(data));
 }
 
-std::ostream& netlist::Operation::streamout(std::ostream& os) const {
+ostream& netlist::Operation::streamout(ostream& os) const {
   switch(otype) {
   case oNULL:                          return os;
-  case oNum:        os << *(boost::static_pointer_cast<Number>(data)); return os;
-  case oVar:        os << *(boost::static_pointer_cast<Identifier>(data)); return os;
+  case oNum:        os << *(static_pointer_cast<Number>(data)); return os;
+  case oVar:        os << *(static_pointer_cast<Identifier>(data)); return os;
   case oCon: // dummy
   case oFun: // dummy
   case oUPos:
@@ -114,9 +113,9 @@ std::ostream& netlist::Operation::streamout(std::ostream& os) const {
 
 // dummy yet
 void netlist::execute_operation( Operation::operation_t op,
-                                 std::list<Operation>& d1,
-                                 std::list<Operation>& d2,
-                                 std::list<Operation>& d3
+                                 list<Operation>& d1,
+                                 list<Operation>& d2,
+                                 list<Operation>& d3
                                  ) {
   // check parameters
   assert(op >= Operation::oUPos);
@@ -168,13 +167,13 @@ void netlist::execute_operation( Operation::operation_t op,
 }
 
 // unary +
-void netlist::execute_UPos(std::list<Operation>& d1) {
+void netlist::execute_UPos(list<Operation>& d1) {
   // for unary +, do nothing but omit the operator
   return;
 }
 
 // unary -
-void netlist::execute_UNeg(std::list<Operation>& d1) {
+void netlist::execute_UNeg(list<Operation>& d1) {
   if(d1.front().is_valuable()) {
     assert(d1.front().get_type() == Operation::oNum);
     d1.front().get_num().negate();
@@ -188,7 +187,7 @@ void netlist::execute_UNeg(std::list<Operation>& d1) {
 }
   
 // +
-void netlist::execute_Add(std::list<Operation>& d1, std::list<Operation>& d2) {
+void netlist::execute_Add(list<Operation>& d1, list<Operation>& d2) {
   if(d1.front().is_valuable() && d2.front().is_valuable()) {
     d1.front().get_num_ref() = d1.front().get_num() + d2.front().get_num();
   } else {

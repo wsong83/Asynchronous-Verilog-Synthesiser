@@ -34,21 +34,21 @@ int main(){
   BIdentifier empty;
   BIdentifier named("test_identifier");
   
-  std::cout << empty << " " << empty.hashid << std::endl;
-  std::cout << named << " " << named.hashid << std::endl;
-  std::cout << (++empty) << " " << empty.hashid << std::endl;
-  std::cout << (++empty) << " " << empty.hashid << std::endl;
-  std::cout << ((++empty) < named) << std::endl;
+  cout << empty << " " << empty.hashid << endl;
+  cout << named << " " << named.hashid << endl;
+  cout << (++empty) << " " << empty.hashid << endl;
+  cout << (++empty) << " " << empty.hashid << endl;
+  cout << ((++empty) < named) << endl;
 
   MIdentifier m1("module_1");
   MIdentifier m2("\\o83gr4 g01834module[]_2");
 
-   std::cout << m1 << " " << m1.hashid << std::endl;
-   std::cout << m2 << " " << m2.hashid << std::endl;
-   std::cout << ++m1 << " " << m1.hashid << std::endl;
-   std::cout << ++m2 << " " << m2.hashid << std::endl;
-   std::cout << ++m1 << " " << m1.hashid << std::endl;
-   std::cout << ++m2 << " " << m2.hashid << std::endl;
+   cout << m1 << " " << m1.hashid << endl;
+   cout << m2 << " " << m2.hashid << endl;
+   cout << ++m1 << " " << m1.hashid << endl;
+   cout << ++m2 << " " << m2.hashid << endl;
+   cout << ++m1 << " " << m1.hashid << endl;
+   cout << ++m2 << " " << m2.hashid << endl;
  
 
   

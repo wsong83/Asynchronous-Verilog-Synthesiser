@@ -35,13 +35,12 @@
 // for regular expression
 #include <boost/regex.hpp>
 
-#include <cstdlib>
 #include "component.h"
 
 using namespace netlist;
 
 ////////////////////////////// Base class /////////////////
-netlist::Identifier::Identifier(NetComp::ctype_t ctype, const std::string& nm)
+netlist::Identifier::Identifier(NetComp::ctype_t ctype, const string& nm)
   : NetComp(ctype), name(nm)
 {
   hash_update();
@@ -55,13 +54,13 @@ int netlist::Identifier::compare(const Identifier& rhs) const {
   return name.compare(rhs.name);
 }
 
-std::ostream& netlist::Identifier::streamout(std::ostream& os) const {
+ostream& netlist::Identifier::streamout(ostream& os) const {
   os << name;
   return os;
 }
 
 void netlist::Identifier::hash_update() {
-  boost::hash<std::string> s2i;
+  boost::hash<string> s2i;
   hashid = s2i(name);
 }  
 
@@ -78,7 +77,7 @@ bool netlist::operator== (const Identifier& lhs, const Identifier& rhs) {
 }
 
 //////////////////////////////// Block identifier /////////////////
-netlist::BIdentifier::BIdentifier(const std::string& nm)
+netlist::BIdentifier::BIdentifier(const string& nm)
   : Identifier(NetComp::tBlockName, nm), anonymous(false)  {  }
 
 netlist::BIdentifier::BIdentifier()
@@ -88,7 +87,7 @@ BIdentifier& netlist::BIdentifier::operator++ () {
   if(!anonymous) return *this;	// named block idenitifers cannot slef-increase
 
   // increase the block sequence by 1
-  name = std::string("B") + boost::lexical_cast<std::string>(atoi(name.substr(1).c_str()) + 1);
+  name = string("B") + boost::lexical_cast<string>(atoi(name.substr(1).c_str()) + 1);
 
   hash_update();
   
@@ -96,12 +95,12 @@ BIdentifier& netlist::BIdentifier::operator++ () {
 }
 
 //////////////////////////////// Function identifier /////////////////
-netlist::FIdentifier::FIdentifier(const std::string& nm)
+netlist::FIdentifier::FIdentifier(const string& nm)
   : Identifier(NetComp::tFuncName, nm) {  }
 
 
 //////////////////////////////// Module identifier /////////////////
-netlist::MIdentifier::MIdentifier(const std::string& nm)
+netlist::MIdentifier::MIdentifier(const string& nm)
   : Identifier(NetComp::tModuleName, nm), numbered(false) {  }
 
 netlist::MIdentifier::MIdentifier(const averilog::avID &id)
@@ -113,13 +112,13 @@ MIdentifier& netlist::MIdentifier::operator++ () {
 
   if(numbered && boost::regex_search(name, mr, numbered_name)) { // numbered already
     //the new sufix
-    std::string new_suffix = 
-      std::string("_") + boost::lexical_cast<std::string>(atoi(mr.str().substr(1).c_str()) + 1);
+    string new_suffix = 
+      string("_") + boost::lexical_cast<string>(atoi(mr.str().substr(1).c_str()) + 1);
     
     // replace the name
     name = boost::regex_replace(name, numbered_name, new_suffix);
   } else { 			// not numbered yet
-    name = name + std::string("_0"); // directly add a suffix
+    name = name + string("_0"); // directly add a suffix
   }
 
   hash_update();
@@ -128,7 +127,7 @@ MIdentifier& netlist::MIdentifier::operator++ () {
   return *this;
 }
 
-std::ostream& netlist::MIdentifier::streamout(std::ostream& os) const{
+ostream& netlist::MIdentifier::streamout(ostream& os) const{
   os << "module " << name;
   return os;
 }
@@ -137,7 +136,7 @@ std::ostream& netlist::MIdentifier::streamout(std::ostream& os) const{
 netlist::IIdentifier::IIdentifier()
   : Identifier(NetComp::tInstName, "u_0"), numbered(true) {  }
 
-netlist::IIdentifier::IIdentifier(const std::string& nm)
+netlist::IIdentifier::IIdentifier(const string& nm)
   : Identifier(NetComp::tInstName, nm), numbered(false) {  }
 
 IIdentifier& netlist::IIdentifier::operator++ () {
@@ -146,13 +145,13 @@ IIdentifier& netlist::IIdentifier::operator++ () {
 
   if(numbered && boost::regex_search(name, mr, numbered_name)) { // numbered already
     //the new sufix
-    std::string new_suffix = 
-      std::string("_") + boost::lexical_cast<std::string>(atoi(mr.str().substr(1).c_str()) + 1);
+    string new_suffix = 
+      string("_") + boost::lexical_cast<string>(atoi(mr.str().substr(1).c_str()) + 1);
     
     // replace the name
     name = boost::regex_replace(name, numbered_name, new_suffix);
   } else { 			// not numbered yet
-    name = name + std::string("_0"); // directly add a suffix
+    name = name + string("_0"); // directly add a suffix
   }
 
   hash_update();
@@ -168,15 +167,18 @@ IIdentifier& netlist::IIdentifier::add_prefix(const Identifier& prefix) {
 }
 
 //////////////////////////////// parameter identifier /////////////////
-netlist::PaIdentifier::PaIdentifier(const std::string& nm)
+netlist::PaIdentifier::PaIdentifier(const string& nm)
   : Identifier(NetComp::tParaName, nm) {  }
 
 //////////////////////////////// port identifier /////////////////
-netlist::PoIdentifier::PoIdentifier(const std::string& nm)
+netlist::PoIdentifier::PoIdentifier(const string& nm)
   : Identifier(NetComp::tPortName, nm) {  }
 
-std::ostream& netlist::PoIdentifier::streamout(std::ostream& os) const {
-  std::vector<Range>::const_iterator it, end;
+netlist::PoIdentifier::PoIdentifier(const averilog::avID& id)
+  : Identifier(NetComp::tVarName, id.name) { }
+
+ostream& netlist::PoIdentifier::streamout(ostream& os) const {
+  vector<Range>::const_iterator it, end;
   
   for(it=m_range.begin(), end=m_range.end(); it != end; it++) {
     os << "[" << *it << "]";
@@ -191,13 +193,13 @@ std::ostream& netlist::PoIdentifier::streamout(std::ostream& os) const {
 netlist::VIdentifier::VIdentifier()
   : Identifier(NetComp::tVarName, "n_0"), numbered(true) {  }
 
-netlist::VIdentifier::VIdentifier(const std::string& nm)
+netlist::VIdentifier::VIdentifier(const string& nm)
   : Identifier(NetComp::tVarName, nm), numbered(false) {  }
 
 netlist::VIdentifier::VIdentifier(const averilog::avID& id)
   : Identifier(NetComp::tVarName, id.name), numbered(false) { }
 
-netlist::VIdentifier::VIdentifier(const std::string& nm, const std::vector<Range>& rg)
+netlist::VIdentifier::VIdentifier(const string& nm, const vector<Range>& rg)
   : Identifier(NetComp::tVarName, nm), m_range(rg), numbered(false) {  }
 
 VIdentifier& netlist::VIdentifier::operator++ () {
@@ -206,13 +208,13 @@ VIdentifier& netlist::VIdentifier::operator++ () {
 
   if(numbered && boost::regex_search(name, mr, numbered_name)) { // numbered already
     //the new sufix
-    std::string new_suffix = 
-      std::string("_") + boost::lexical_cast<std::string>(atoi(mr.str().substr(1).c_str()) + 1);
+    string new_suffix = 
+      string("_") + boost::lexical_cast<string>(atoi(mr.str().substr(1).c_str()) + 1);
     
     // replace the name
     name = boost::regex_replace(name, numbered_name, new_suffix);
   } else { 			// not numbered yet
-    name = name + std::string("_0"); // directly add a suffix
+    name = name + string("_0"); // directly add a suffix
   }
 
   hash_update();
@@ -227,8 +229,8 @@ VIdentifier& netlist::VIdentifier::add_prefix(const Identifier& prefix) {
   return *this;
 }
 
-std::ostream& netlist::VIdentifier::streamout(std::ostream& os) const {
-  std::vector<Range>::const_iterator it, end;
+ostream& netlist::VIdentifier::streamout(ostream& os) const {
+  vector<Range>::const_iterator it, end;
 
   os << "wire ";
   for(it=m_range.begin(), end=m_range.end(); it != end; it++) {

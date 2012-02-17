@@ -26,7 +26,6 @@
  *
  */
 
-#include<stack>
 #include "component.h"
 
 using namespace netlist;
@@ -38,7 +37,7 @@ netlist::Expression::Expression()
 netlist::Expression::Expression(const Number& exp) 
   : NetComp(tExp), valuable(exp.is_valuable())
 {
-  boost::shared_ptr<Number> num(new Number(exp));
+  shared_ptr<Number> num(new Number(exp));
   eqn.push_back(Operation(num));
 }
 
@@ -58,7 +57,7 @@ Number netlist::Expression::get_value() const {
 
 void netlist::Expression::reduce() {
   // state stack
-  std::stack<boost::shared_ptr<expression_state> > m_stack;
+  stack<shared_ptr<expression_state> > m_stack;
 
   while(!eqn.empty()) {
     // fetch a new operation element
@@ -73,7 +72,7 @@ void netlist::Expression::reduce() {
         valuable = it.is_valuable();
         return;
       } else {
-        boost::shared_ptr<expression_state> m_state = m_stack.top();
+        shared_ptr<expression_state> m_state = m_stack.top();
         m_state->d[(m_state->opp)++].push_back(it);
         while(true) {
           if(m_state->ops == m_state->opp) { // ready for execute
@@ -87,7 +86,7 @@ void netlist::Expression::reduce() {
               //delete m_state;
               return;
             } else {
-              boost::shared_ptr<expression_state> tmp = m_state;
+              shared_ptr<expression_state> tmp = m_state;
               m_state = m_stack.top();
               m_state->d[m_state->opp].splice(m_state->d[m_state->opp].end(), tmp->d[0]);
               //delete tmp;
@@ -97,7 +96,7 @@ void netlist::Expression::reduce() {
         }
       }
     } else {                  // an operator
-      boost::shared_ptr<expression_state> m_state;
+      shared_ptr<expression_state> m_state;
       m_state->op = it;
       if(it.get_type() <= Operation::oUNxor) { // unary
           m_state->ops = 1;
@@ -174,9 +173,9 @@ Expression netlist::operator- (const Expression& lhs, const Expression& rhs) {
   return Expression();
 }
 
-std::ostream& netlist::Expression::streamout(std::ostream& os) const {
-  std::list<Operation>::const_iterator it, end;
-  std::stack<Operation> m_stack;
+ostream& netlist::Expression::streamout(ostream& os) const {
+  list<Operation>::const_iterator it, end;
+  stack<Operation> m_stack;
   Operation c, op;
   int op_cnt = 0;
 

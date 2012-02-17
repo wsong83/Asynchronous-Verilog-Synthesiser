@@ -30,12 +30,40 @@
 #define _H_COMPONENT_
 
 #include <iostream>
+using std::cout;
+using std::endl;
+using std::ostream;
+
 #include <string>
+using std::string;
+
+#include <list>
+using std::list;
+
+#include <vector>
+using std::vector;
+
+#include <stack>
+using std::stack;
+
+#include <map>
+using std::map;
+
+#include <utility>
+using std::pair;
+
+#include <boost/shared_ptr.hpp>
+using boost::shared_ptr;
+using boost::weak_ptr;
+using boost::static_pointer_cast;
+
+#include <cassert>
+
 
 // function macro for stream out operator <<
 #ifndef NETLIST_STREAMOUT
 #define NETLIST_STREAMOUT(COMP)                                          \
-  inline std::ostream& operator<< ( std::ostream& os, const COMP& rhs) { \
+  inline ostream& operator<< ( ostream& os, const COMP& rhs) { \
     return rhs.streamout(os);                                            \
   }
 #endif
@@ -86,6 +114,9 @@ namespace netlist {
   // wire.h
   class Wire;
 
+  // register.h
+  class Register;
+
   // module.h
   class Module;
 
@@ -103,6 +134,7 @@ namespace netlist {
 #include "expression.h"
 #include "port.h"
 #include "wire.h"
+#include "register.h"
 #include "module.h"
 #include "library.h"
 

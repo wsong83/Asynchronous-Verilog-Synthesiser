@@ -26,8 +26,9 @@
  *
  */
 
-#include <cassert>
-#include "averilog/src/averilog_util.h"
+#include "component.h"
+#include "averilog/src/av_token.h"
+#include "averilog/src/averilog.hh"
 
 using namespace netlist;
 
@@ -89,7 +90,7 @@ netlist::Range::Range(const Range_Exp& sel, int ctype)
   }
 }
   
-std::ostream& netlist::Range::streamout(std::ostream& os) const {
+ostream& netlist::Range::streamout(ostream& os) const {
   switch(type) {
   case TConst: os << c; break;
   case TVar: os << *v; break;

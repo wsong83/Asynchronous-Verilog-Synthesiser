@@ -29,9 +29,6 @@
 #ifndef _H_EXPRESSION_
 #define _H_EXPRESSION_
 
-#include <list>
-#include <boost/shared_ptr.hpp>
-
 namespace netlist {
   
   class Expression : public NetComp {
@@ -50,12 +47,12 @@ namespace netlist {
     void append(Operation::operation_t, Expression&);
     void append(Operation::operation_t, Expression&, Expression&);
     
-    virtual std::ostream& streamout(std::ostream&) const;
+    virtual ostream& streamout(ostream&) const;
     bool operator== (const Expression& rhs) const;
     
   private:
     bool valuable;
-    std::list<Operation> eqn;
+    list<Operation> eqn;
     
   };
 
@@ -70,7 +67,7 @@ namespace netlist {
     Operation op;               // operator
     int ops;                    // number of operands needed
     int opp;                    // current number of operands
-    std::list<Operation> d[3];  // oprands
+    list<Operation> d[3];	// oprands
   expression_state() : opp(0) {}
   };
 

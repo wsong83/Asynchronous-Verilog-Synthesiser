@@ -29,57 +29,16 @@
 #ifndef _H_AVERILOG_UTIL_
 #define _H_AVERILOG_UTIL_
 
-#include <string>
-#include <iostream>
 #include <cstdio>
-#include <boost/shared_ptr.hpp>
 
 namespace averilog {
   class Parser;		/* the parser class that the program will really use */
   class avID;		/* identifier without dimension decalration */
 }
 
+#include "av_comp.h"
 #include "common/component.h"
-
-namespace averilog {
-
-  class avID {  // identifier without dimension decalration
-  public:
-    std::string name;
-    avID(char* text, int leng)
-      : name(text,leng) {}
-  };
-
-  std::ostream& operator<< (std::ostream&, const avID&);
-
-}
-
-// copy from averilog.lex.h
-#ifndef YY_TYPEDEF_YY_SCANNER_T
-#define YY_TYPEDEF_YY_SCANNER_T
-typedef void* yyscan_t;
-#endif
-
-namespace averilog {
-
-#define YYSTYPE av_token_type
-  
-  struct av_token_type {
-    boost::shared_ptr<netlist::BIdentifier>   tBlockName;
-    boost::shared_ptr<netlist::Expression>    tExp;		
-    boost::shared_ptr<netlist::FIdentifier>   tFuncName;
-    boost::shared_ptr<avID>                   tID;      
-    boost::shared_ptr<netlist::IIdentifier>   tInstName;
-    boost::shared_ptr<std::list<boost::shared_ptr<netlist::PoIdentifier> > > tListPort;
-    boost::shared_ptr<std::list<boost::shared_ptr<netlist::VIdentifier> > > tListVar;
-    boost::shared_ptr<netlist::MIdentifier>   tModuleName;
-    boost::shared_ptr<netlist::Number>        tNumber;    
-    boost::shared_ptr<netlist::PaIdentifier>  tParaName;
-    boost::shared_ptr<netlist::PoIdentifier>  tPortName;
-    boost::shared_ptr<netlist::Range>         tRange;	
-    boost::shared_ptr<netlist::VIdentifier>   tVarName;	
-  };
-}
+#include "av_token.h"
 
 #include "averilog.hh"
 typedef averilog::av_parser::token token;
@@ -89,18 +48,18 @@ typedef averilog::location YYLTYPE;
 namespace averilog {
 
   // report errors in scanner
-  void error_report(const std::string& err_msg, YYLTYPE * yyloc, std::ostream& os = std::cerr);
+  void error_report(const string& err_msg, YYLTYPE * yyloc, ostream& os = std::cerr);
 
   class Parser {
   public:
-    Parser(std::string, netlist::Library& lib);	/* constructor with a file name and the design library */
+    Parser(string, netlist::Library& lib);	/* constructor with a file name and the design library */
     ~Parser();
     bool parse();		/* the parser for user */
     bool initialize();		/* initialize and check all settings */
 
   private:
     FILE * sfile;		/* the file handler of the scanner */
-    std::string fname;		/* the name of the file */
+    string fname;		/* the name of the file */
     av_parser bison_instance;	/* the bison parser instance */
   }; 
 

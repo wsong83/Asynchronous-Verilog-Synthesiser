@@ -27,19 +27,20 @@
  */
 
 enum ctype_t {
-  tBlockName,			/* block name */
-  tExp,                 /* expression */
-  tFuncName,			/* function name */
-  tInstName,			/* instance name */
-  tModule,              /* Module declaration */
-  tModuleName,			/* module name */
-  tNumber,              /* number */
-  tParaName,			/* parameter name */
-  tPort,                /* port */
-  tPortName,			/* port name */
-  tRange,               /* range */
-  tVarName,             /* variable name */
-  tWire,                /* wire */
-  tUnkown               /* type not initiated, indicate error!! */
+  tBlockName,		    /* block name */
+  tExp,			    /* expression */
+  tFuncName,		    /* function name */
+  tInstName,		    /* instance name */
+  tModule,		    /* Module declaration */
+  tModuleName,		    /* module name */
+  tNumber,		    /* number */
+  tParaName,		    /* parameter name */
+  tPort,		    /* port */
+  tPortName,		    /* port name */
+  tRegister,		    /* reg */
+  tRange,		    /* range */
+  tVarName,		    /* variable name */
+  tWire,		    /* wire */
+  tUnkown		    /* type not initiated, indicate error!! */
 };
 

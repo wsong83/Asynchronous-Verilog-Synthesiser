@@ -38,13 +38,14 @@ namespace netlist {
       : NetComp(tModule), name(nm) {}
 
     // dummy
-    std::ostream& streamout(std::ostream& os) const;
+    ostream& streamout(ostream& os) const;
     
     
     // data
     MIdentifier name;
-    DataBase<PoIdentifier, Port> db_port;
-    DataBase<VIdentifier, Wire> db_wire;
+    DataBase<PoIdentifier, Port>      db_port;    /* input and output ports */
+    DataBase<VIdentifier,  Wire>      db_wire;	  /* wires */
+    DataBase<VIdentifier,  Register>  db_reg;	  /* registers */
 
   };
 

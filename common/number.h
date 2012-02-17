@@ -40,7 +40,7 @@ namespace netlist {
     Number(int d);
 
     // helpers
-    const std::string& get_txt_value() const { return txt_value; }
+    const string& get_txt_value() const { return txt_value; }
     mpz_class get_value() const { return mpz_class(txt_value, 2); }
     int get_length() const { return num_leng; }
     bool is_valuable() const { return valuable; }
@@ -49,14 +49,14 @@ namespace netlist {
     Number addition (const Number& rhs) const;
     Number& operator+= (const Number& rhs);
     Number& lfsh (int rhs);
-    virtual std::ostream& streamout(std::ostream&) const;
+    virtual ostream& streamout(ostream&) const;
 
     // operation
     void negate() {}
 
   private:
     unsigned int num_leng;	/* the number of digits in the number */
-    std::string txt_value;	/* literals of the number, useful when non-deterministic */
+    string txt_value;	/* literals of the number, useful when non-deterministic */
     bool valid;			/* true when number format is ok */
     bool valuable;		/* true when the number is const and deterministic */
 

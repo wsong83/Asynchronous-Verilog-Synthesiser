@@ -29,11 +29,9 @@
 #ifndef _H_RANGE_
 #define _H_RANGE_
 
-#include <utility>
-
 namespace netlist {
 
-  typedef std::pair<Expression, Expression> Range_Exp;
+  typedef pair<Expression, Expression> Range_Exp;
 
   class Range : public NetComp {
   public:
@@ -46,12 +44,12 @@ namespace netlist {
     // helpers
     bool is_valuable() const { return type == TConst; }
     bool is_single() const {return type != TRange; }
-    virtual std::ostream& streamout(std::ostream&) const;
+    virtual ostream& streamout(ostream&) const;
     
   private:
     mpz_class c;		     /* constant */
-    boost::shared_ptr<Expression> v; /* variable */
-    boost::shared_ptr<Range_Exp> r;  /* range expression */
+    shared_ptr<Expression> v; /* variable */
+    shared_ptr<Range_Exp> r;  /* range expression */
     
     enum type_t {
       TConst, 

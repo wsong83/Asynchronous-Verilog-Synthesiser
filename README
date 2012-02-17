@@ -1,0 +1,5 @@
+Supported features:
+Module identifier delcaration with port list;
+Wire declaration;
+Register declaration;
+Input and output declaration;

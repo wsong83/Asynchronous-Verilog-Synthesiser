@@ -33,7 +33,7 @@ using namespace netlist;
 netlist::Port::Port(const PoIdentifier& pid)
   : NetComp(tPort), name(pid) {}
 
-std::ostream& netlist::Port::streamout(std::ostream& os) const {
+ostream& netlist::Port::streamout(ostream& os) const {
   if(is_input())
     os << "input ";
   else if(is_output())
@@ -43,7 +43,7 @@ std::ostream& netlist::Port::streamout(std::ostream& os) const {
   else
     os << "UNKOWN_port ";
 
-  os << name << ";" << std::endl;
+  os << name << ";" << endl;
 
   return os;
 

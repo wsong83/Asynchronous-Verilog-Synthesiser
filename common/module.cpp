@@ -28,12 +28,12 @@
 
 #include "component.h"
 
-std::ostream& netlist::Module::streamout(std::ostream& os) const {
+ostream& netlist::Module::streamout(ostream& os) const {
   os << name;
-  if(db_port.empty()) os << ";" << std::endl;
+  if(db_port.empty()) os << ";" << endl;
   else {
     os << "(";
-    std::map<PoIdentifier, boost::shared_ptr<Port> >::const_iterator it, end;
+    map<PoIdentifier, shared_ptr<Port> >::const_iterator it, end;
     it = db_port.begin();
     end = db_port.end();
     while(it != end){
@@ -42,10 +42,12 @@ std::ostream& netlist::Module::streamout(std::ostream& os) const {
       if(it != end)
         os << ", ";
       else
-        os << ");";
+        os << ");" << endl;
     }
   }
+  os << db_port;
   os << db_wire;
-  os << "endmodule" << std::endl;
+  os << db_reg;
+  os << "endmodule" << endl;
   return os;
 }

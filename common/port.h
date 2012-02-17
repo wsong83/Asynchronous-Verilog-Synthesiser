@@ -43,7 +43,7 @@ namespace netlist {
     bool is_input() const { return input&&!output; }
     bool is_output() const { return !input&&output; }
     bool is_inout() const { return input&&output; }
-    std::ostream& streamout(std::ostream& os) const;
+    ostream& streamout(ostream& os) const;
    
     PoIdentifier name;
 

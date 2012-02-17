@@ -20,36 +20,38 @@
  */
 
 /* 
- * 
- * 06/02/2012   Wei Song
+ * Register
+ * 17/02/2012   Wei Song
  *
  *
  */
 
-#include "common/component.h"
-#include "averilog/src/averilog_util.h"
-#include "averilog/src/averilog.lex.h"
+#include "component.h"
 
-int main(int argc, char*argv[])
-{
-  int tmp;
-  YYSTYPE lval;
-  yyscan_t scanner;
-  YYLTYPE yyloc;
-  FILE * sfile;
+using namespace netlist;
 
-  sfile = fopen(argv[1], "r");
-  string fn(argv[1]);
-  yyloc.initialize(&fn);
-  avlex_init (&scanner);
-  avset_in(sfile, scanner);
-  while((tmp = avlex(&lval, &yyloc, scanner)) != 0) {
-    cout << tmp << " ";
-    if(tmp == token::number)
-      cout << "Number:" << *(lval.tNumber) << " ";
+ostream& netlist::Register::streamout(ostream& os) const {
+  vector<Range>::const_iterator it, end;
+
+  os << "reg ";
+  vector<Range> rm = name.get_range();
+  for(it=rm.begin(), end=rm.end(); it != end; it++) {
+    os << "[" << *it;
+    if(it->is_single())
+      os << ":" << *it;
+    os << "]";
   }
-    
-  avlex_destroy(scanner);
-  fclose(sfile);
-  return 0;
+  os << " " << name.name;
+  rm = name.get_dimension();
+  for(it=rm.begin(), end=rm.end(); it != end; it++) {
+    os << "[" << *it;
+    if(it->is_single())
+      os << ":" << *it;
+    os << "]";
+  }
+  os << ";" << endl;
+  return os;
+
 }
+  
+    
