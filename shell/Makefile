@@ -17,44 +17,27 @@
 #    along with this program; if not, write to the Free Software
 #    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
 #
-# Top level Makefile
+# Makefile
 # Due to be replace by autoconf tool suite
-# 06/02/2012   Wei Song
+# 18/02/2012   Wei Song
 #
 #
 
-# global variables
-export BISON_EXE = ~/tool/local/bin/bison
-export FLEX_EXE = ~/tool/local/bin/flex
-export CXX = g++
-
-export CXXFLAGS = -Wall -g
-export LINKFLAGS = -lboost_regex -lgmpxx -lgmp
+# variables
+INCDIRS = -I./ -I../
 
 # targets
-SUBDIRS = averilog netlist shell
-TESTDIRS = averilog/test netlist/test
+TARGETS = err_report.o
+HEADERS = $(wildcard ./*.h)
+HEADERS += ../averilog/location.hh
 
 # actions
+all: $(TARGETS)
 
-all: subdirs
+$(TARGETS): %.o:%.cpp $(HEADERS)
+	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
 
-test: subdirs testdirs
-
-.PHONY: subdirs $(SUBDIRS) clean testdirs $(TESTDIRS)
-
-subdirs: $(SUBDIRS)
-
-$(SUBDIRS):
-	$(MAKE) -C $@
-
-testdirs: $(TESTDIRS)
-
-$(TESTDIRS):
-	$(MAKE) -C $@
+.PHONY: clean
 
 clean:
 	-rm *.o
-	-for d in $(SUBDIRS); do $(MAKE) -C $$d clean; done
-	-for d in $(TESTDIRS); do $(MAKE) -C $$d clean; done
-

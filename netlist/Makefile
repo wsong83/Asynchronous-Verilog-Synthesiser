@@ -28,11 +28,12 @@ INCDIRS = -I./ -I../
 
 # targets
 TARGETS = operation.o number.o identifier.o range.o expression.o port.o register.o wire.o module.o library.o
+HEADERS = $(wildcard ./*.h)
 
 # actions
 all: $(TARGETS)
 
-$(TARGETS): %.o:%.cpp %.h component.h comp_type.h
+$(TARGETS): %.o:%.cpp $(HEADERS)
 	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
 
 .PHONY: clean
