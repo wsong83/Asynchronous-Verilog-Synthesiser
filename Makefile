@@ -1,4 +1,4 @@
-# Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
+# Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
 #    Advanced Processor Technologies Group, School of Computer Science
 #    University of Manchester, Manchester M13 9PL UK
 #
@@ -32,8 +32,8 @@ export CXXFLAGS = -Wall -g
 export LINKFLAGS = -lboost_regex -lgmpxx -lgmp
 
 # targets
-SUBDIRS = averilog/src common
-TESTDIRS = averilog/test common/test
+SUBDIRS = averilog netlist
+TESTDIRS = averilog/test netlist/test
 
 # actions
 

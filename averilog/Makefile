@@ -24,19 +24,20 @@
 #
 
 # variables
-INCDIRS = -I./ -I../../
+INCDIRS = -I./ -I../
 TARGETS = averilog.o averilog.lex.o averilog_util.o
+HEADERS = $(wildcard ../netlist/*.h)
 
 # targets
 all: $(TARGETS)
 
-averilog.o: averilog.cc averilog.lex.c averilog_util.h $(wildcard ../../common/*.h)
+averilog.o: averilog.cc averilog.lex.c averilog_util.h $(HEADERS)
 	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
 
-averilog.lex.o: averilog.lex.c averilog.cc averilog_util.h $(wildcard ../../common/*.h)
+averilog.lex.o: averilog.lex.c averilog.cc averilog_util.h $(HEADERS)
 	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
 
-averilog_util.o: averilog_util.cpp averilog_util.h $(wildcard ../../common/*.h)
+averilog_util.o: averilog_util.cpp averilog_util.h $(HEADERS)
 	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
 
 averilog.cc: averilog.y

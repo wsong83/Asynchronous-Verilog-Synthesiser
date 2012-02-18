@@ -29,7 +29,7 @@
 #ifndef _H_IDENTIFIER_
 #define _H_IDENTIFIER_
 
-#include "averilog/src/av_comp.h"
+#include "averilog/av_comp.h"
 
 namespace netlist {
 

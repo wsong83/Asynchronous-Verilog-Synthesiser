@@ -27,8 +27,8 @@
  */
 
 #include "component.h"
-#include "averilog/src/av_token.h"
-#include "averilog/src/averilog.hh"
+#include "averilog/av_token.h"
+#include "averilog/averilog.hh"
 
 using namespace netlist;
 

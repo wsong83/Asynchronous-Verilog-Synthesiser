@@ -26,9 +26,9 @@
  *
  */
 
-#include "common/component.h"
-#include "averilog/src/averilog_util.h"
-#include "averilog/src/averilog.lex.h"
+#include "netlist/component.h"
+#include "averilog/averilog_util.h"
+#include "averilog/averilog.lex.h"
 
 int main(int argc, char*argv[])
 {

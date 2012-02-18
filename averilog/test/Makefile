@@ -1,4 +1,4 @@
-# Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
+# Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
 #    Advanced Processor Technologies Group, School of Computer Science
 #    University of Manchester, Manchester M13 9PL UK
 #
@@ -26,8 +26,8 @@
 # variables
 INCDIRS = -I./ -I../../
 TARGETS = scanner parser
-OTHER_OBJS = $(wildcard ../../common/*.o)
-OTHER_OBJS += $(wildcard ../src/*.o)
+OTHER_OBJS = $(wildcard ../../netlist/*.o)
+OTHER_OBJS += $(wildcard ../*.o)
 
 
 # targets

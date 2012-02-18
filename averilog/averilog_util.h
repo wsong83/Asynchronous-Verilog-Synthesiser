@@ -37,7 +37,7 @@ namespace averilog {
 }
 
 #include "av_comp.h"
-#include "common/component.h"
+#include "netlist/component.h"
 #include "av_token.h"
 
 #include "averilog.hh"
