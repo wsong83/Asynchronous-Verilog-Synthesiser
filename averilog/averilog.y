@@ -8,7 +8,7 @@
 %locations
 %parse-param {std::string fname}
 %parse-param {FILE * *sfile}
-%parse-param {netlist::Library& Lib}
+%parse-param {shell::Env& av_env}
 %lex-param {yyscan_t avscanner}
 %debug
 %{
@@ -52,11 +52,13 @@
   yyscan_t avscanner;
   
   void averilog::av_parser::error (const location_type& loc, const string& msg) {
-    cout << loc << " " << msg << endl;
+    av_env.error(loc, "Parser-0");
   }
   
   using namespace netlist;
     
+#define Lib (*(av_env.curLib))
+
 %}
 
 %initial-action
@@ -263,12 +265,12 @@ description
     ;
 
 module_declaration
-    : "module" module_identifier ';'  { if(!Lib.insert(*$2)) cout << "new module " << *$2 << " insertion failure!" << endl; }
+: "module" module_identifier ';'  { if(!Lib.insert(*$2)) av_env.error(yylloc, "SYN_MODULE-0", $2->name); }
         module_items
         "endmodule"                   { cout<< *(static_pointer_cast<Module>(Lib.get_current_comp())); Lib.pop(); }
     | "module" module_identifier '(' list_of_port_identifiers ')' ';'
     {
-      if(!Lib.insert(*$2)) cout << "new module " << *$2 << " insertion failure!" << endl;
+      if(!Lib.insert(*$2)) av_env.error(yylloc, "SYN_MODULE-0", $2->name);
       // get a pointer to the current module
       shared_ptr<Module> cm = static_pointer_cast<Module>(Lib.get_current_comp());
       // insert ports

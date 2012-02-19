@@ -20,44 +20,25 @@
  */
 
 /* 
- * Averilog parser utilities.
- * 01/02/2012   Wei Song
+ * Shell environment
+ * 18/02/2012   Wei Song
  *
  *
  */
 
-//#include <cstdio>
-#include "averilog_util.h"
+#include "shell_top.h"
 
-using namespace averilog;
+using namespace shell;
 
-void averilog::error_report(const string& err_msg, YYLTYPE * yyloc, ostream& os) {
-  os << "\n" << *yyloc << " Error: " << err_msg << endl;
+shell::Env::Env() {}
+
+bool shell::Env::initialise() {
+  // set up the default work library and add it in the link library
+  shared_ptr<Library> work(new Library("work"));
+  link_lib["work"] = work;
+
+  // set work to be the current library
+  curLib = work;
+
+  return true;
 }
-
-ostream& averilog::operator<< (ostream& os, const avID& hs) {
-  os << hs.name;
-  return os;
-}
-
-averilog::Parser::Parser(string fn, shell::Env& env)
-  : sfile(NULL), fname(fn), bison_instance(fn, &sfile, env)
-{ }
-
-averilog::Parser::~Parser() {
-  if(sfile != NULL)
-    fclose(sfile);
-}
-
-bool averilog::Parser::initialize() {
-  sfile = fopen(fname.c_str(), "r");
-  return sfile != NULL;
-}
-
-bool averilog::Parser::parse() {
-  return 0 == bison_instance.parse();
-}
-
-  
-  
-

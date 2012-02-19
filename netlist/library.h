@@ -29,8 +29,6 @@
 #ifndef _H_VA_LIBRARY_
 #define _H_VA_LIBRARY_
 
-#include <boost/shared_ptr.hpp>
-
 namespace netlist {
 
   class Library {

@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef _H_SHELL_SHELL_ENV_
-#define _H_SHELL_SHELL_ENV_
+#ifndef _H_SHELL_SHELL_TOP_
+#define _H_SHELL_SHELL_TOP_
 
 #include <string>
 using std::string;
@@ -40,14 +40,23 @@ using std::cerr;
 
 #include <utility>
 
+#include <map>
+using std::map;
+
+#include <boost/shared_ptr.hpp>
+using boost::shared_ptr;
+
 namespace shell {
   // err_report.h
   class ErrorType;
-  class err_report;
+  class ErrReport;
   
 
+  // env.h
+  class Env;
 }
 
 #include "err_report.h"
+#include "env.h"
 
 #endif

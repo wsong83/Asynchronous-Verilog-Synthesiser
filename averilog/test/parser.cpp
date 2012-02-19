@@ -26,15 +26,16 @@
  *
  */
 
-#include "netlist/component.h"
+#include "shell/shell_top.h"
 #include "averilog/averilog_util.h"
 #include "averilog/averilog.lex.h"
 
 int main(int argc, char* argv[])
 {
 
-  netlist::Library lib("work");
-  averilog::Parser dut(argv[1], lib);
+  shell::Env env;
+  env.initialise();
+  averilog::Parser dut(argv[1], env);
 
   if(!dut.initialize()) {
     cout << "parser initialization fails!" << endl;

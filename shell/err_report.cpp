@@ -29,7 +29,7 @@
 #include <boost/format.hpp>
 using boost::format;
 
-#include "shell_env.h"
+#include "shell_top.h"
 using namespace shell;
 
 using std::pair;
@@ -42,17 +42,18 @@ using std::pair;
       ErrorType(ErrorType::eSev, eMsg, eNum) \
     ))
 
-map<string, ErrorType> shell::err_report::errList;
+map<string, ErrorType> shell::ErrReport::errList;
+ostream shell::ErrReport::os(cerr.rdbuf()); // in default send errors to cerr
 
-shell::err_report::err_report()
-  : os(cerr) {
+shell::ErrReport::ErrReport() {
   // define the error types, may be move this part to a separated header file in the future
-  ERR_DEFINE("Parser-0",   EFatal, "Unkown parser error. Please report to developer.", 0);
-  ERR_DEFINE("SYN-NUM-0",  EError, "Unrecoginised format of number %1%.", 1);
-  ERR_DEFINE("SYN-PORT-0", EError, "Port %1% is not found in the port declaration list in module %2%.", 2);
+  ERR_DEFINE("Parser-0",     EFatal, "Unkown parser error. Please report to developer.", 0);
+  ERR_DEFINE("SYN_MODULE-0", EError, "Module %1% is already defined.", 1);
+  ERR_DEFINE("SYN-NUM-0",    EError, "Unrecoginised format of number %1%.", 1);
+  ERR_DEFINE("SYN-PORT-0",   EError, "Port %1% is not found in the port declaration list in module %2%.", 2);
 }
 
-bool shell::err_report::suppress(const string& errID) {
+bool shell::ErrReport::suppress(const string& errID) {
   map<string, ErrorType>::iterator it, end;
   it = errList.find(errID);
   end = errList.end();
@@ -64,13 +65,13 @@ bool shell::err_report::suppress(const string& errID) {
   } else { return false; }
 }
 
-void shell::err_report::set_output(ostream& new_os) {
-  os = new_os;
+void shell::ErrReport::set_output(ostream& new_os) {
+  os.rdbuf(new_os.rdbuf());     // redirect the streambuf to the new_os ostream
 }
 
-bool shell::err_report::operator () (const averilog::location& loc, const string& errID,
+bool shell::ErrReport::operator () (const averilog::location& loc, const string& errID,
 				     const string& p1, const string& p2, const string& p3) const {
-  const string rtype[4] = {"Information ", "Warning ", "Error ", "Fatal Error "}; 
+  const string rtype[4] = {"Fatal Error: ", "Error: ", "Warning: ", "Information: "}; 
   map<string, ErrorType>::const_iterator it, end;
   it = errList.find(errID);
   end = errList.end();
@@ -83,22 +84,22 @@ bool shell::err_report::operator () (const averilog::location& loc, const string
 
   switch(it->second.num_of_para) {
   case 0: {
-    os << loc << ": " << errID << " " << rtype[eT.severe] 
+    os << loc << ": [" << errID << "] " << rtype[eT.severe]
        << eT.errMsg << endl; 
     return true;
   }
   case 1: {
-    os << loc << ": " << errID << " " << rtype[eT.severe] 
+    os << loc << ": [" << errID << "] " << rtype[eT.severe] 
        << format(eT.errMsg) % p1 << endl;
     return true;
   }
   case 2: {
-    os << loc << ": " << errID << " " << rtype[eT.severe] 
+    os << loc << ": [" << errID << "] " << rtype[eT.severe] 
        << format(eT.errMsg) % p1 % p2 << endl;
     return true;
   }
   case 3: {
-    os << loc << ": " << errID << " " << rtype[eT.severe] 
+    os << loc << ": [" << errID << "] " << rtype[eT.severe] 
        << format(eT.errMsg) % p1 % p2 % p3 << endl;
     return true;
   }

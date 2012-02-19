@@ -27,7 +27,7 @@
 INCDIRS = -I./ -I../
 
 # targets
-TARGETS = err_report.o
+TARGETS = err_report.o env.o
 HEADERS = $(wildcard ./*.h)
 HEADERS += ../averilog/location.hh
 

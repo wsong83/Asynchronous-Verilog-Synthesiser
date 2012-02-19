@@ -37,7 +37,7 @@ namespace averilog {
 }
 
 #include "av_comp.h"
-#include "netlist/component.h"
+#include "shell/shell_top.h"
 #include "av_token.h"
 
 #include "averilog.hh"
@@ -52,7 +52,7 @@ namespace averilog {
 
   class Parser {
   public:
-    Parser(string, netlist::Library& lib);	/* constructor with a file name and the design library */
+    Parser(string, shell::Env& env);	/* constructor with a file name and the design library */
     ~Parser();
     bool parse();		/* the parser for user */
     bool initialize();		/* initialize and check all settings */

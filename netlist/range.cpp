@@ -28,6 +28,11 @@
 
 #include "component.h"
 #include "averilog/av_token.h"
+
+// Env is a parameter to the parser, which is not declared yet
+namespace shell {
+  class Env;
+}
 #include "averilog/averilog.hh"
 
 using namespace netlist;

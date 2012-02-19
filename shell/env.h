@@ -20,44 +20,39 @@
  */
 
 /* 
- * Averilog parser utilities.
- * 01/02/2012   Wei Song
+ * Shell environment
+ * 18/02/2012   Wei Song
  *
  *
  */
 
-//#include <cstdio>
-#include "averilog_util.h"
+#ifndef _H_SHELL_SHELL_ENV_
+#define _H_SHELL_SHELL_ENV_
 
-using namespace averilog;
+#include "netlist/component.h"
+using netlist::Library;
+using netlist::Module;
 
-void averilog::error_report(const string& err_msg, YYLTYPE * yyloc, ostream& os) {
-  os << "\n" << *yyloc << " Error: " << err_msg << endl;
+namespace shell {
+
+  class Env {
+  public:
+    Env();
+
+    bool initialise();               /* set up basic environment */
+
+
+
+    // data member
+    map<string, shared_ptr<Library> >  link_lib;     /* libraries used in design elaboration */
+    map<string, shared_ptr<Library> >  target_lib;   /* libraries used in mapping */
+    ErrReport error;                                 /* the gobal level error report function */
+    shared_ptr<Library> curLib;                      /* current library */
+    shared_ptr<Module> curDgn;                       /* current design */
+    
+  };
+
 }
 
-ostream& averilog::operator<< (ostream& os, const avID& hs) {
-  os << hs.name;
-  return os;
-}
 
-averilog::Parser::Parser(string fn, shell::Env& env)
-  : sfile(NULL), fname(fn), bison_instance(fn, &sfile, env)
-{ }
-
-averilog::Parser::~Parser() {
-  if(sfile != NULL)
-    fclose(sfile);
-}
-
-bool averilog::Parser::initialize() {
-  sfile = fopen(fname.c_str(), "r");
-  return sfile != NULL;
-}
-
-bool averilog::Parser::parse() {
-  return 0 == bison_instance.parse();
-}
-
-  
-  
-
+#endif

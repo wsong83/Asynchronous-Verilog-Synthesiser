@@ -29,9 +29,6 @@
 #ifndef _H_SHELL_ERR_REPORT_
 #define _H_SHELL_ERR_REPORT_
 
-#include <map>
-using std::map;
-
 #include "averilog/location.hh"
 
 namespace shell {
@@ -58,9 +55,9 @@ namespace shell {
 
   };
 
-  class err_report {		/* a error report function class */
+  class ErrReport {		/* a error report function class */
   public:
-    err_report();
+    ErrReport();
     bool suppress(const string&);       /* try to suppress a type of error message */
     void set_output(ostream&);		/* set the output stream */
     bool operator() (const averilog::location& loc, /* error location */
@@ -72,7 +69,7 @@ namespace shell {
 
   private:
     static map<string, ErrorType> errList; /* a record for all kinds of errors */
-    ostream& os;		           /* output stream */
+    static ostream os;                     /* output stream */
 
   };
 
