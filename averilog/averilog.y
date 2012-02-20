@@ -237,6 +237,7 @@
 %type <tExp>        expression
 %type <tListPort>   list_of_port_identifiers
 %type <tListVar>    list_of_variable_identifiers
+%type <tListVar>    list_of_lv_variable_identifiers
 %type <tModuleName> module_identifier
 %type <tPortName>   port_identifier
 %type <tExp>        primary
@@ -510,6 +511,11 @@ list_of_variable_identifiers
     | variable_identifier '=' expression
     | list_of_variable_identifiers ',' variable_identifier { $$ = $1; $$->push_back($3); }
     | list_of_variable_identifiers ',' variable_identifier '=' expression
+    ;
+
+list_of_lv_variable_identifiers 
+    : variable_identifier                      { $$.reset(new list<shared_ptr<VIdentifier> >()); $$->push_back($1); }
+    | list_of_variable_identifiers ',' variable_identifier { $$ = $1; $$->push_back($3); }
     ;
 
 // A.2.4 Declaration assignments
@@ -849,6 +855,10 @@ concatenation
     | '{' expression concatenation '}'
     ;
 
+lv_concatenation
+    : '{' list_of_lv_variable_identifiers '}'
+    ;
+
 // A.8.2 Function calls
 function_call
     : function_identifier '(' expressions ')'
@@ -903,7 +913,45 @@ range_expression
 //A.8.4 Primaries
 primary
     : number              { $$.reset(new Expression(*$1)); }             
-    | variable_identifier
+    | variable_identifier 
+    {
+      // search this variable in current components until reach a module level
+      list<shared_ptr<NetComp> >::iterator it = Lib.get_current_it();
+      bool reach_a_module = false;
+      bool found = false;
+      shared_ptr<Identifier> idp = static_pointer_cast<Identifier>($1);
+      while(Lib.it_valid(it)) {
+	shared_ptr<NetComp> ccp(*it); /* point for the current component */
+	switch(ccp->get_type()) {
+	case NetComp::tModule: {
+	  reach_a_module = true;
+	  Module& cm = *(static_pointer_cast<Module>(ccp));
+	  shared_ptr<Wire> wp = cm.db_wire.find(*$1);
+	  if(0 != wp.use_count()) {
+	    found = true;
+	    wp->fout.push_back($1);
+	    break;
+	  }
+	  shared_ptr<Register> rp = cm.db_reg.find(*$1);
+	  if(0 != rp.use_count()) {
+	    found = true;
+	    rp->fout.push_back($1);
+	    break;
+	  }
+	  break;
+	}
+	default:
+	  // should not run to here
+	  assert(0 == "component type");
+	}
+	if(reach_a_module || found) break;
+	else it++;
+      }
+      if(found)
+	$$.reset(new Expression($1));
+      else
+	av_env.error(yylloc, "SYN-VAR-3", $1->name);
+    }
     | concatenation
     | function_call
     | '(' expression ')'  { $$ = $2; }
@@ -911,8 +959,8 @@ primary
 
 //A.8.5 Expression left-side values
 variable_lvalue
-: variable_identifier    
-    | concatenation
+    : variable_identifier    
+    | lv_concatenation
     ;
 
 //A.9 General

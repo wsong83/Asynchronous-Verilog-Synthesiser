@@ -41,6 +41,12 @@ netlist::Expression::Expression(const Number& exp)
   eqn.push_back(Operation(num));
 }
 
+netlist::Expression::Expression(shared_ptr<Identifier> idp) 
+  : NetComp(tExp), valuable(false)
+{
+  eqn.push_back(Operation(idp));
+}
+
 bool netlist::Expression::is_valuable() const {
   return valuable;
 }

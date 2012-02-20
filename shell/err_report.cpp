@@ -55,6 +55,7 @@ shell::ErrReport::ErrReport() {
   ERR_DEFINE("SYN-VAR-0",    EError, 2, "%1% %2% is defined outside a block environment.");
   ERR_DEFINE("SYN-VAR-1",    EError, 1, "Lonely %1% declaration without a signal list");
   ERR_DEFINE("SYN-VAR-2",    EError, 3, "%1% %2% is already declared in block %3%");
+  ERR_DEFINE("SYN-VAR-3",    EError, 1, "Variable (wire/reg/parameter) %1% is not found in current block.");
 }
 
 bool shell::ErrReport::suppress(const string& errID) {

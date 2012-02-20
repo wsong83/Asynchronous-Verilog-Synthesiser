@@ -39,8 +39,8 @@ namespace netlist {
     ostream& streamout(ostream& os) const;
 
     VIdentifier name;
-    list<VIdentifier *> fin; /* drivers */
-    list<VIdentifier *> fout; /* loads */
+    list<shared_ptr<VIdentifier> > fin; /* drivers */
+    list<shared_ptr<VIdentifier> > fout; /* loads */
 
   };
 

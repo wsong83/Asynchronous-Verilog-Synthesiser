@@ -46,6 +46,7 @@ namespace netlist {
     DataBase<PoIdentifier, Port>      db_port;    /* input and output ports */
     DataBase<VIdentifier,  Wire>      db_wire;	  /* wires */
     DataBase<VIdentifier,  Register>  db_reg;	  /* registers */
+    //DataBase<PaIdentifier, Parameter> db_param;	  /* parameters */
 
     //name for unnamed items
     BIdentifier unamed_block;
