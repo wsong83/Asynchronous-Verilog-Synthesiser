@@ -36,7 +36,7 @@ using std::pair;
 
 
 // simplify the error type definitions
-#define ERR_DEFINE(eID, eSev, eMsg, eNum)    \
+#define ERR_DEFINE(eID, eSev, eNum, eMsg)    \
   errList.insert(pair<string, ErrorType>(    \
       eID,                                   \
       ErrorType(ErrorType::eSev, eMsg, eNum) \
@@ -47,10 +47,14 @@ ostream shell::ErrReport::os(cerr.rdbuf()); // in default send errors to cerr
 
 shell::ErrReport::ErrReport() {
   // define the error types, may be move this part to a separated header file in the future
-  ERR_DEFINE("Parser-0",     EFatal, "Unkown parser error. Please report to developer.", 0);
-  ERR_DEFINE("SYN_MODULE-0", EError, "Module %1% is already defined.", 1);
-  ERR_DEFINE("SYN-NUM-0",    EError, "Unrecoginised format of number %1%.", 1);
-  ERR_DEFINE("SYN-PORT-0",   EError, "Port %1% is not found in the port declaration list in module %2%.", 2);
+  ERR_DEFINE("PARSER-0",     EFatal, 0, "Unkown parser error. Please report to developer.");
+  ERR_DEFINE("SYN-FILE-0",   EError, 0, "File terminated in multi-line comments.");
+  ERR_DEFINE("SYN_MODULE-0", EError, 1, "Module %1% is already defined.");
+  ERR_DEFINE("SYN-NUM-0",    EError, 1, "Unrecoginised format of number %1%.");
+  ERR_DEFINE("SYN-PORT-0",   EError, 2, "Port %1% is not found in the port declaration list in module %2%.");
+  ERR_DEFINE("SYN-VAR-0",    EError, 2, "%1% %2% is defined outside a block environment.");
+  ERR_DEFINE("SYN-VAR-1",    EError, 1, "Lonely %1% declaration without a signal list");
+  ERR_DEFINE("SYN-VAR-2",    EError, 3, "%1% %2% is already declared in block %3%");
 }
 
 bool shell::ErrReport::suppress(const string& errID) {

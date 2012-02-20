@@ -52,7 +52,7 @@
   yyscan_t avscanner;
   
   void averilog::av_parser::error (const location_type& loc, const string& msg) {
-    av_env.error(loc, "Parser-0");
+    av_env.error(loc, "PARSER-0");
   }
   
   using namespace netlist;
@@ -61,10 +61,11 @@
 
 %}
 
+
 %initial-action
 {
   @$.initialize(&fname);
-  avlex_init(&avscanner);
+  avlex_init_extra(&av_env, &avscanner);
   avset_in(*sfile, avscanner);
 }
 
@@ -324,7 +325,7 @@ input_declaration
       for(it = $2->begin(), end = $2->end(); it != end; it++) {
         shared_ptr<Port> cp = cm->db_port.find(*(*it));
         if(0 != cp.use_count()) cp->set_input();
-        else {  cout << yylloc << " port " << *it << " not found in the module!" << endl; }
+        else { av_env.error(yylloc, "SYN-PORT-0", (*it)->name, cm->name.name); }
       }
     }
     | "input" '[' expression ':' expression ']' list_of_port_identifiers
@@ -340,7 +341,7 @@ input_declaration
           vector<Range> rm;
           rm.push_back(Range(pair<Expression, Expression>(*$3, *$5)));
           cp->name.set_range(rm);
-        } else {  cout << yylloc << " port " << *it << " not found in the module!" << endl; }
+        } else {  av_env.error(yylloc, "SYN-PORT-0", (*it)->name, cm->name.name); }
       }
     }  
     ;
@@ -355,7 +356,7 @@ output_declaration
       for(it = $2->begin(), end = $2->end(); it != end; it++) {
         shared_ptr<Port> cp = cm->db_port.find(*(*it));
         if(0 != cp.use_count()) cp->set_output();
-        else {  cout << yylloc << " port " << *it << " not found in the module!" << endl; }
+        else {  av_env.error(yylloc, "SYN-PORT-0", (*it)->name, cm->name.name); }
       }
     }
     | "output" '[' expression ':' expression ']' list_of_port_identifiers
@@ -371,7 +372,7 @@ output_declaration
           vector<Range> rm;
           rm.push_back(Range(pair<Expression, Expression>(*$3, *$5)));
           cp->name.set_range(rm);
-        } else {  cout << yylloc << " port " << *it << " not found in the module!" << endl; }
+        } else {  av_env.error(yylloc, "SYN-PORT-0", (*it)->name, cm->name.name); }
       }
     }  
     ;
@@ -380,35 +381,40 @@ output_declaration
 variable_declaration 
     : "wire" list_of_variable_identifiers 
     {
-      shared_ptr<NetComp> father = Lib.get_current_comp();
-      // check valid
-      if(father.use_count() == 0) { cout << "error! current block not found!" << endl; return -1;}
-      
-      shared_ptr<Module> cm;
-      switch(father->get_type()) {
-      case NetComp::tModule: { 
+      if(0 == $2->size()) {
+	av_env.error(yylloc, "SYN-VAR-1", "Wire");
+      } else if(0 == Lib.get_current_comp().use_count()) {
+	av_env.error(yylloc, "SYN-VAR-0", "Wire", (*($2->begin()))->name);
+      } else {
+	shared_ptr<NetComp> father = Lib.get_current_comp();
+	shared_ptr<Module> cm;
+	switch(father->get_type()) {
+	case NetComp::tModule: { 
           cm = static_pointer_cast<Module>(father);
           while(!$2->empty()) {
             shared_ptr<Wire> cw(new Wire(*($2->front())));
             $2->pop_front();
             if(!cm->db_wire.insert(cw->name, cw)) {
-              cout << yylloc << " error! duplicate wire declaration " << $2->front() << endl; return -1;
+	      av_env.error(yylloc, "SYN-VAR-2", "Wire", cw->name.name, cm->name.name);
             }
           }
         } break;
-      default: ;/* doing nothing right now */
+	default: ;/* doing nothing right now */
+	}
       }
       ////////////////////////////////////////
     } 
     | "wire" '[' expression ':' expression ']' list_of_variable_identifiers
     {
-      shared_ptr<NetComp> father = Lib.get_current_comp();
-      // check valid
-      if(father.use_count() == 0) { cout << "error! current block not found!" << endl; return -1;}
-      
-      shared_ptr<Module> cm;
-      switch(father->get_type()) {
-      case NetComp::tModule: { 
+      if(0 == $7->size()) {
+	av_env.error(yylloc, "SYN-VAR-1", "Wire");
+      } else if(0 == Lib.get_current_comp().use_count()) {
+	av_env.error(yylloc, "SYN-VAR-0", "Wire", (*($7->begin()))->name);
+      } else {
+	shared_ptr<NetComp> father = Lib.get_current_comp();
+	shared_ptr<Module> cm;
+	switch(father->get_type()) {
+	case NetComp::tModule: { 
           cm = static_pointer_cast<Module>(father);
           while(!$7->empty()) {
             VIdentifier& wn = *($7->front());
@@ -417,45 +423,51 @@ variable_declaration
             shared_ptr<Wire> cw(new Wire(wn));
             $7->pop_front();
             if(!cm->db_wire.insert(cw->name, cw)) {
-              cout << yylloc << " error! duplicate wire declaration " << $7->front() << endl; return -1;
+	      av_env.error(yylloc, "SYN-VAR-2", "Wire", cw->name.name, cm->name.name);
             }
           }
         } break;
-      default: ;/* doing nothing right now */ 
+	default: ;/* doing nothing right now */ 
+	}
       }
       /////////////////////////////////////////////
     }
     | "reg" list_of_variable_identifiers 
     {
-      shared_ptr<NetComp> father = Lib.get_current_comp();
-      // check valid
-      if(father.use_count() == 0) { cout << "error! current block not found!" << endl; return -1;}
-      
-      shared_ptr<Module> cm;
-      switch(father->get_type()) {
-      case NetComp::tModule: { 
+      if(0 == $2->size()) {
+	av_env.error(yylloc, "SYN-VAR-1", "Reg");
+      } else if(0 == Lib.get_current_comp().use_count()) {
+	av_env.error(yylloc, "SYN-VAR-0", "reg", (*($2->begin()))->name);
+      } else {
+	shared_ptr<NetComp> father = Lib.get_current_comp();
+	shared_ptr<Module> cm;
+	switch(father->get_type()) {
+	case NetComp::tModule: { 
           cm = static_pointer_cast<Module>(father);
           while(!$2->empty()) {
             shared_ptr<Register> cr(new Register(*($2->front())));
             $2->pop_front();
             if(!cm->db_reg.insert(cr->name, cr)) {
-              cout << yylloc << " error! duplicate wire declaration " << $2->front() << endl; return -1;
+              av_env.error(yylloc, "SYN-VAR-2", "Reg", cr->name.name, cm->name.name);
             }
           }
         } break;
-      default: ;/* doing nothing right now */
+	default: ;/* doing nothing right now */
+	}
       }
       ////////////////////////////////////////
     } 
     | "reg" '[' expression ':' expression ']' list_of_variable_identifiers
     {
-      shared_ptr<NetComp> father = Lib.get_current_comp();
-      // check valid
-      if(father.use_count() == 0) { cout << "error! current block not found!" << endl; return -1;}
-      
-      shared_ptr<Module> cm;
-      switch(father->get_type()) {
-      case NetComp::tModule: { 
+      if(0 == $7->size()) {
+	av_env.error(yylloc, "SYN-VAR-1", "Reg");
+      } else if(0 == Lib.get_current_comp().use_count()) {
+	av_env.error(yylloc, "SYN-VAR-0", "reg", (*($7->begin()))->name);
+      } else {
+	shared_ptr<NetComp> father = Lib.get_current_comp();
+	shared_ptr<Module> cm;
+	switch(father->get_type()) {
+	case NetComp::tModule: { 
           cm = static_pointer_cast<Module>(father);
           while(!$7->empty()) {
             VIdentifier& rn = *($7->front());
@@ -464,11 +476,12 @@ variable_declaration
             shared_ptr<Register> cr(new Register(rn));
             $7->pop_front();
             if(!cm->db_reg.insert(cr->name, cr)) {
-              cout << yylloc << " error! duplicate wire declaration " << $7->front() << endl; return -1;
+              av_env.error(yylloc, "SYN-VAR-2", "Reg", cr->name.name, cm->name.name);
             }
           }
         } break;
-      default: ;/* doing nothing right now */ 
+	default: ;/* doing nothing right now */ 
+	}
       }
       /////////////////////////////////////////////
     }

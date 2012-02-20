@@ -47,6 +47,11 @@ namespace netlist {
     DataBase<VIdentifier,  Wire>      db_wire;	  /* wires */
     DataBase<VIdentifier,  Register>  db_reg;	  /* registers */
 
+    //name for unnamed items
+    BIdentifier unamed_block;
+    IIdentifier unamed_instance;
+    VIdentifier unamed_var;
+
   };
 
   NETLIST_STREAMOUT(Module);

@@ -32,7 +32,7 @@
 using namespace averilog;
 
 void averilog::error_report(const string& err_msg, YYLTYPE * yyloc, ostream& os) {
-  os << "\n" << *yyloc << " Error: " << err_msg << endl;
+  os << "\n" << *yyloc << " Scanner Error: " << err_msg << endl;
 }
 
 ostream& averilog::operator<< (ostream& os, const avID& hs) {

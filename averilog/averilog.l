@@ -4,6 +4,7 @@
 %option yylineno
 %option prefix="av"
 %option outfile="averilog.lex.c" header-file="averilog.lex.h"
+%option extra-type="shell::Env *"
 
 %{
 /*
@@ -116,8 +117,7 @@ operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
 {fnum}    { 
               yylval->tNumber.reset(new netlist::Number(yytext, yyleng));
               if(!yylval->tNumber->is_valid()) {
-                error_report("Wrong number format.", yylloc);
-                yyterminate();
+                yyget_extra(yyscanner)->error(*yylloc, "SYN-NUM-0", string(yytext, yyleng));
               }
               return token::number; 
             }
@@ -132,7 +132,7 @@ operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
 "//"[^\n]*[\n] { yylloc->lines();    }
 "/*"        { BEGIN(COMMENT);        }
 <COMMENT>[^\n] { /* do nothing */    }
-<COMMENT><<EOF>> { error_report("EOF in multi-line comment.", yylloc); yyterminate(); }
+<COMMENT><<EOF>> {  yyget_extra(yyscanner)->error(*yylloc, "SYN-FILE-0"); yyterminate(); }
 <COMMENT>"\n"  { yylloc->lines();    }
 "*/"        { BEGIN(0);              } 
 {ws}        { /* white space, do nothing */ }
