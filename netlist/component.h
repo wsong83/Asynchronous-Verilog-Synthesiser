@@ -102,6 +102,9 @@ namespace netlist {
   class PoIdentifier;		/* port identifier */
   class VIdentifier;		/* variable name, including local variable, wire and reg */
 
+  // concatenation.h
+  class Concatenation;
+
   // range.h
   class Range;			/* range expression */
 
@@ -130,6 +133,7 @@ namespace netlist {
 #include "operation.h"
 #include "number.h"
 #include "identifier.h"
+#include "concatenation.h"
 #include "range.h"
 #include "expression.h"
 #include "port.h"

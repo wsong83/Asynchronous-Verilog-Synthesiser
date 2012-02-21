@@ -28,6 +28,7 @@
 
 enum ctype_t {
   tBlockName,		    /* block name */
+  tConcatenation,       /* concatenation */
   tExp,			    /* expression */
   tFuncName,		    /* function name */
   tInstName,		    /* instance name */
