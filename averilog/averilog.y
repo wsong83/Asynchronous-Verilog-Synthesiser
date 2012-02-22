@@ -234,10 +234,11 @@
 %left  oUNARY
 
  // type definitions
+%type <tConcatenation> concatenation
 %type <tExp>        expression
+%type <tListExp>    expressions
 %type <tListPort>   list_of_port_identifiers
 %type <tListVar>    list_of_variable_identifiers
-%type <tListVar>    list_of_lv_variable_identifiers
 %type <tModuleName> module_identifier
 %type <tPortName>   port_identifier
 %type <tExp>        primary
@@ -511,11 +512,6 @@ list_of_variable_identifiers
     | variable_identifier '=' expression
     | list_of_variable_identifiers ',' variable_identifier { $$ = $1; $$->push_back($3); }
     | list_of_variable_identifiers ',' variable_identifier '=' expression
-    ;
-
-list_of_lv_variable_identifiers 
-    : variable_identifier                      { $$.reset(new list<shared_ptr<VIdentifier> >()); $$->push_back($1); }
-    | list_of_variable_identifiers ',' variable_identifier { $$ = $1; $$->push_back($3); }
     ;
 
 // A.2.4 Declaration assignments
@@ -846,17 +842,24 @@ loop_statement
 // A.8 Expressions
 // A.8.1 Concatenations
 expressions
-    : expression
-    | expressions ',' expression
+    : expression                  { $$.reset(), $$->push_back($1); }
+    | expressions ',' expression  { $$ = $1, $$->push_back($3); }
     ;
 
 concatenation
     : '{' expressions '}'
+    {
+      list<shared_ptr<netlist::Expression> >::iterator it, end;
+      $$.reset();
+      for(it = $2->begin(), end = $2->end(); it != end; it++) {
+	*$$ + ConElem(*it);
+      }
+    }
     | '{' expression concatenation '}'
-    ;
-
-lv_concatenation
-    : '{' list_of_lv_variable_identifiers '}'
+    {
+      $$.reset();
+      *$$ + ConElem($2, $3->data);
+    }
     ;
 
 // A.8.2 Function calls
@@ -960,7 +963,7 @@ primary
 //A.8.5 Expression left-side values
 variable_lvalue
     : variable_identifier    
-    | lv_concatenation
+    | concatenation
     ;
 
 //A.9 General

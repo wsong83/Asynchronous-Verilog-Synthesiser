@@ -35,42 +35,45 @@ namespace netlist {
     /* A concatenation is a list<ConElem>
      * while every element is <exprssion, concatenation>,
      * representing something like {3{a,b}},
-     * or a variable.
+     * or an expression.
      * So the whole structure is recursive.
      */
   public:
-    ConElem(const shared_ptr<Expression>& exp, const list<ConElem>& elems)
-      : con(exp, elems) {}
-    ConElem(const shared_ptr<Identifier>& var)
-      : var(var) {}
+    ConElem(const shared_ptr<Expression>& expr, const list<ConElem>& elems)
+      : con(expr, elems) {}
+    ConElem(const shared_ptr<Expression>& expr)
+      : exp(expr) {}
     ConElem(const ConElem& rhs)
-      : con(rhs.con), var(rhs.var) {}
+      : con(rhs.con), exp(rhs.exp) {}
     
     ConElem& operator= (const ConElem& rhs) {
       con = rhs.con;
-      var = rhs.var;
+      exp = rhs.exp;
       return *this;
     }
 
     ConElem& operator= (const pair<shared_ptr<Expression>, list<ConElem> >& rhs) {
       con = rhs;
-      var.reset();
+      exp.reset();
       return *this;
     }
 
-    ConElem& operator= (const shared_ptr<Identifier>& rhs) {
+    ConElem& operator= (const shared_ptr<Expression>& rhs) {
       con.first.reset();
       con.second.clear();
-      var = rhs;
+      exp = rhs;
       return *this;
     }
 
+    ostream& streamout(ostream&) const;
+
     pair<shared_ptr<Expression>, list<ConElem> > con;
-    shared_ptr<Identifier> var;
+    shared_ptr<Expression> exp;
 
   private:
     ConElem();                  /* no default constructor */
   };
+  NETLIST_STREAMOUT(ConElem);
 
   class Concatenation : public NetComp {
   public:
@@ -78,14 +81,15 @@ namespace netlist {
     NETLIST_DEFAULT_CON(Concatenation, tConcatenation);
     
     // helpers
-    ostream& streamout(ostream&);
-
+    ostream& streamout(ostream&) const;
+    Concatenation& operator+ (const Concatenation& rhs);
+    Concatenation& operator+ (const ConElem& rhs);
 
     // data
     list<ConElem> data;
 
   };
-
+  NETLIST_STREAMOUT(Concatenation);
 }
 
 #endif

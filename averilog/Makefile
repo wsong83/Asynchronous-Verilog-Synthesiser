@@ -49,7 +49,7 @@ averilog.lex.c: averilog.l
 .PHONY: clean
 
 clean:
-	-rm *.o
+	-rm *.o *.output
 	-rm averilog.lex.*
 	-rm averilog.cc averilog.hh stack.hh location.hh position.hh
 

@@ -125,6 +125,9 @@ namespace netlist {
 
   // library.h
   class Library;
+
+  // uni_name.h
+  class UniName;
   
 }
 
@@ -141,5 +144,6 @@ namespace netlist {
 #include "register.h"
 #include "module.h"
 #include "library.h"
+#include "uni_name.h"
 
 #endif

@@ -39,9 +39,11 @@ namespace netlist {
     Expression(shared_ptr<Identifier>); /* a variable/parameter is an expression */
 
     // helpers
-    bool is_valuable() const; /* check valuable */
+    bool is_valuable() const;    /* check valuable */
     Number get_value() const;    /* fetch the value if valuable */
-    void reduce();           /* try to reduce the equation */
+    void reduce();               /* try to reduce the equation */
+    // return the size of equation
+    int size() const { return eqn.size(); }
     
     // develope the equation
     void append(Operation::operation_t);
@@ -51,9 +53,10 @@ namespace netlist {
     virtual ostream& streamout(ostream&) const;
     bool operator== (const Expression& rhs) const;
     
+    list<Operation> eqn;
+
   private:
     bool valuable;
-    list<Operation> eqn;
     
   };
 

@@ -59,6 +59,11 @@ Number netlist::Operation::get_num() const{
   return *(static_pointer_cast<Number>(data));
 }
 
+shared_ptr<Concatenation> netlist::Operation::get_con() const {
+  assert(otype == oCon);
+  return static_pointer_cast<Concatenation>(data);
+}
+
 Identifier netlist::Operation::get_var() const{
   assert(otype == oVar);
   return *(static_pointer_cast<Identifier>(data));
@@ -69,7 +74,7 @@ ostream& netlist::Operation::streamout(ostream& os) const {
   case oNULL:                          return os;
   case oNum:        os << *(static_pointer_cast<Number>(data)); return os;
   case oVar:        os << *(static_pointer_cast<Identifier>(data)); return os;
-  case oCon: // dummy
+  case oCon:        os << *(static_pointer_cast<Concatenation>(data)); return os;
   case oFun: // dummy
   case oUPos:
   case oAdd:        os << "+";         return os;

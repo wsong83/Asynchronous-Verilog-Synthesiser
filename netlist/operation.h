@@ -87,6 +87,7 @@ namespace netlist {
     operation_t get_type() const { return otype; }
     Number& get_num_ref();
     Number get_num() const;
+    shared_ptr<Concatenation> get_con() const;
     Identifier get_var() const;
     ostream& streamout(ostream&) const;
 
