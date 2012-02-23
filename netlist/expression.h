@@ -37,6 +37,7 @@ namespace netlist {
     Expression();
     Expression(const Number&);	/* a number is an expression */
     Expression(shared_ptr<Identifier>); /* a variable/parameter is an expression */
+    Expression(shared_ptr<Concatenation>); /* a concatenation is an expression */
 
     // helpers
     bool is_valuable() const;    /* check valuable */

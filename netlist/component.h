@@ -104,6 +104,9 @@ namespace netlist {
 
   // concatenation.h
   class Concatenation;
+  
+  // lconcatenation.h
+  class LConcatenation;
 
   // range.h
   class Range;			/* range expression */
@@ -119,6 +122,9 @@ namespace netlist {
 
   // register.h
   class Register;
+
+  // assign.h
+  class Assign;
 
   // module.h
   class Module;
@@ -137,11 +143,13 @@ namespace netlist {
 #include "number.h"
 #include "identifier.h"
 #include "concatenation.h"
+#include "lconcatenation.h"
 #include "range.h"
 #include "expression.h"
 #include "port.h"
 #include "wire.h"
 #include "register.h"
+#include "assign.h"
 #include "module.h"
 #include "library.h"
 #include "uni_name.h"

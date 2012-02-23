@@ -47,6 +47,12 @@ netlist::Expression::Expression(shared_ptr<Identifier> idp)
   eqn.push_back(Operation(idp));
 }
 
+netlist::Expression::Expression(shared_ptr<Concatenation> Conp) 
+  : NetComp(tExp), valuable(false)
+{
+  eqn.push_back(Operation(Conp));
+}
+
 bool netlist::Expression::is_valuable() const {
   return valuable;
 }
@@ -79,6 +85,7 @@ void netlist::Expression::reduce() {
         return;
       } else {
         shared_ptr<expression_state> m_state = m_stack.top();
+	// to do: reduce the function or concatenation
         m_state->d[(m_state->opp)++].push_back(it);
         while(true) {
           if(m_state->ops == m_state->opp) { // ready for execute

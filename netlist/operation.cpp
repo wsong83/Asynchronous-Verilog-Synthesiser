@@ -49,6 +49,10 @@ netlist::Operation::Operation(shared_ptr<Identifier> id)
   : otype(oVar), valuable(false), data(id)
 { }
 
+netlist::Operation::Operation(shared_ptr<Concatenation> con)
+  : otype(oCon), valuable(false), data(con)
+{ }
+
 Number& netlist::Operation::get_num_ref(){
   assert(otype == oNum);
   return *(static_pointer_cast<Number>(data));
@@ -59,14 +63,14 @@ Number netlist::Operation::get_num() const{
   return *(static_pointer_cast<Number>(data));
 }
 
-shared_ptr<Concatenation> netlist::Operation::get_con() const {
+shared_ptr<Concatenation> netlist::Operation::get_con() {
   assert(otype == oCon);
   return static_pointer_cast<Concatenation>(data);
 }
 
-Identifier netlist::Operation::get_var() const{
+shared_ptr<Identifier> netlist::Operation::get_var(){
   assert(otype == oVar);
-  return *(static_pointer_cast<Identifier>(data));
+  return static_pointer_cast<Identifier>(data);
 }
 
 ostream& netlist::Operation::streamout(ostream& os) const {

@@ -20,30 +20,27 @@
  */
 
 /* 
- * Definition of the types of netlist components.
- * 09/02/2012   Wei Song
+ * Block/non-block assignments
+ * 23/02/2012   Wei Song
  *
  *
  */
 
-enum ctype_t {
-  tAssign,		    /* assignment */
-  tBlockName,		    /* block name */
-  tConcatenation,	    /* concatenation */
-  tExp,			    /* expression */
-  tFuncName,		    /* function name */
-  tInstName,		    /* instance name */
-  tLConcatenation,	    /* left-side concatenation */
-  tModule,		    /* Module declaration */
-  tModuleName,		    /* module name */
-  tNumber,		    /* number */
-  tParaName,		    /* parameter name */
-  tPort,		    /* port */
-  tPortName,		    /* port name */
-  tRegister,		    /* reg */
-  tRange,		    /* range */
-  tVarName,		    /* variable name */
-  tWire,		    /* wire */
-  tUnkown		    /* type not initiated, indicate error!! */
-};
+#include "component.h"
 
+using namespace netlist;
+
+netlist::Assign::Assign( shared_ptr<LConcatenation> lhs,
+			 shared_ptr<Expression> rhs,
+			 bool b
+			 )
+  : NetComp(tAssign), name(UniName::uni_name()), lval(lhs), rexp(rhs), blocking(b)
+{}
+
+ostream& netlist::Assign::streamout(ostream& os) const {
+  os << *lval;
+  if(blocking) os << " = ";
+  else os << " <= ";
+  os << *rexp;
+  return os;
+}

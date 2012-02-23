@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -20,30 +20,36 @@
  */
 
 /* 
- * Definition of the types of netlist components.
- * 09/02/2012   Wei Song
+ * left-side concatenation, only to be the target of an assignment
+ * 23/02/2012   Wei Song
  *
  *
  */
 
-enum ctype_t {
-  tAssign,		    /* assignment */
-  tBlockName,		    /* block name */
-  tConcatenation,	    /* concatenation */
-  tExp,			    /* expression */
-  tFuncName,		    /* function name */
-  tInstName,		    /* instance name */
-  tLConcatenation,	    /* left-side concatenation */
-  tModule,		    /* Module declaration */
-  tModuleName,		    /* module name */
-  tNumber,		    /* number */
-  tParaName,		    /* parameter name */
-  tPort,		    /* port */
-  tPortName,		    /* port name */
-  tRegister,		    /* reg */
-  tRange,		    /* range */
-  tVarName,		    /* variable name */
-  tWire,		    /* wire */
-  tUnkown		    /* type not initiated, indicate error!! */
-};
+#ifndef _H_LCONCATENATION_
+#define _H_LCONCATENATION_
 
+namespace netlist {
+
+  class LConcatenation : public NetComp {
+  public:
+    // constructors
+    LConcatenation(shared_ptr<Concatenation>);
+    LConcatenation(shared_ptr<VIdentifier>);
+
+    // helpers
+    ostream& streamout(ostream&) const;
+    bool is_valid() const { return valid; }
+
+    // data
+    list<shared_ptr<VIdentifier> > data; /* store the list of variable identifiers, wires or registers */
+    
+  private:
+    bool valid;
+
+  };
+  NETLIST_STREAMOUT(LConcatenation);
+
+}
+
+#endif

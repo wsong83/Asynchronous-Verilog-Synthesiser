@@ -48,6 +48,14 @@ ostream& netlist::Module::streamout(ostream& os) const {
   os << db_port;
   os << db_wire;
   os << db_reg;
+  
+  // continueous assignments
+  {
+    map<string, shared_ptr<Assign> >::const_iterator it, end;
+    for(it = db_assign.begin(), end = db_assign.end(); it != end; it++)
+      os << "assign " << *(it->second) << ";" << endl;
+  }
+
   os << "endmodule" << endl;
   return os;
 }

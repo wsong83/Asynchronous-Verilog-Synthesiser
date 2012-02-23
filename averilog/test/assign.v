@@ -3,7 +3,7 @@ module test_module (o);
    wire [2:0]   o;
    reg [4+25:4'd35] sig, tmp;
    
-   assign o = 3;
+   assign o = {3'b11};
    
 endmodule // test
 

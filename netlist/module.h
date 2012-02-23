@@ -48,6 +48,9 @@ namespace netlist {
     DataBase<VIdentifier,  Register>  db_reg;	  /* registers */
     //DataBase<PaIdentifier, Parameter> db_param;	  /* parameters */
 
+    DataBase<string, Assign>          db_assign; /* continueous assignments */
+
+
     //name for unnamed items
     BIdentifier unamed_block;
     IIdentifier unamed_instance;

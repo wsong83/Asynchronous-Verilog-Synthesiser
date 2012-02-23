@@ -80,15 +80,15 @@ namespace netlist {
     Operation(shared_ptr<Number>);
     Operation(shared_ptr<Identifier>);
     //    Operation(shared_ptr<FuncCall>);
-    //    Operation(shared_ptr<Concatenation>);
+    Operation(shared_ptr<Concatenation>);
 
     // helpers
     bool is_valuable() const { return valuable; }
     operation_t get_type() const { return otype; }
     Number& get_num_ref();
     Number get_num() const;
-    shared_ptr<Concatenation> get_con() const;
-    Identifier get_var() const;
+    shared_ptr<Concatenation> get_con();
+    shared_ptr<Identifier> get_var();
     ostream& streamout(ostream&) const;
 
   private:

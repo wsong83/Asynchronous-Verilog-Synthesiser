@@ -234,8 +234,11 @@
 %left  oUNARY
 
  // type definitions
+%type <tAssign>     blocking_assignment
+%type <tAssign>     nonblocking_assignment
 %type <tConcatenation> concatenation
 %type <tExp>        expression
+%type <tLConcatenation> variable_lvalue
 %type <tListExp>    expressions
 %type <tListPort>   list_of_port_identifiers
 %type <tListVar>    list_of_variable_identifiers
@@ -743,12 +746,34 @@ generate_block
 
 //A.6.1 Continuous assignment statements
 continuous_assign 
-    : "assign" list_of_net_assignments ';'   
+    : "assign" list_of_net_assignments ';'  
     ;
 
 list_of_net_assignments 
     : blocking_assignment                                
+    {
+      shared_ptr<NetComp> father = Lib.get_current_comp();
+      shared_ptr<Module> cm;
+      
+      if(father->get_type() != NetComp::tModule) /* assign in non-module environment */
+	av_env.error(yylloc, "SYN-ASSIGN-1");
+      else {
+	cm = static_pointer_cast<Module>(father);
+	cm->db_assign.insert($1->name, $1);
+      }
+    }
     | list_of_net_assignments ',' blocking_assignment
+    {
+      shared_ptr<NetComp> father = Lib.get_current_comp();
+      shared_ptr<Module> cm;
+      
+      if(father->get_type() != NetComp::tModule) /* assign in non-module environment */
+	av_env.error(yylloc, "SYN-ASSIGN-1");
+      else {
+	cm = static_pointer_cast<Module>(father);
+	cm->db_assign.insert($3->name, $3);
+      }
+    }
     ;
 
 
@@ -758,11 +783,11 @@ always_construct
     ;
 
 blocking_assignment 
-: variable_lvalue '=' expression  
+    : variable_lvalue '=' expression  { $$.reset(new Assign($1, $3, true)); }
     ;
 
 nonblocking_assignment 
-    : variable_lvalue "<=" expression
+    : variable_lvalue "<=" expression  { $$.reset(new Assign($1, $3, true)); }
     ;
 
 //A.6.3 Parallel and sequential blocks    
@@ -842,7 +867,7 @@ loop_statement
 // A.8 Expressions
 // A.8.1 Concatenations
 expressions
-    : expression                  { $$.reset(), $$->push_back($1); }
+    : expression                  { $$.reset(new list<shared_ptr<Expression> >), $$->push_back($1); }
     | expressions ',' expression  { $$ = $1, $$->push_back($3); }
     ;
 
@@ -850,14 +875,14 @@ concatenation
     : '{' expressions '}'
     {
       list<shared_ptr<netlist::Expression> >::iterator it, end;
-      $$.reset();
+      $$.reset(new Concatenation);
       for(it = $2->begin(), end = $2->end(); it != end; it++) {
 	*$$ + ConElem(*it);
       }
     }
     | '{' expression concatenation '}'
     {
-      $$.reset();
+      $$.reset(new Concatenation);
       *$$ + ConElem($2, $3->data);
     }
     ;
@@ -955,15 +980,20 @@ primary
       else
 	av_env.error(yylloc, "SYN-VAR-3", $1->name);
     }
-    | concatenation
+    | concatenation { $$.reset(new Expression($1)); }
     | function_call
     | '(' expression ')'  { $$ = $2; }
     ;
 
 //A.8.5 Expression left-side values
 variable_lvalue
-    : variable_identifier    
-    | concatenation
+    : variable_identifier { $$.reset(new LConcatenation($1)); }
+    | concatenation       
+    { 
+      $$.reset(new LConcatenation($1));
+      if($$->is_valid()) 
+	av_env.error(yylloc, "SYN-ASSIGN-0");
+    }
     ;
 
 //A.9 General
