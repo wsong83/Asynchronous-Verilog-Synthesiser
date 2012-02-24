@@ -94,7 +94,7 @@ Number netlist::Number::addition(const Number& rhs) const {
   mpz_class d2(rhs.txt_value, 2);
   d1 = d1 + d2;
   m.txt_value = d1.get_str(2);
-  m.txt_value = m.num_leng = m.txt_value.size();
+  m.num_leng = m.txt_value.size();
   return m;
 }
 

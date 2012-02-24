@@ -33,6 +33,7 @@ using namespace netlist;
 netlist::LConcatenation::LConcatenation(shared_ptr<Concatenation> con)
   : valid(false)
 {
+  con->reduce();
   list<ConElem>::const_iterator it, end;
   for( it = con->data.begin(), end = con->data.end(); it != end; it++) {
     if(0 == it->exp.use_count()) break; // the concatenation contain sub-contenations
@@ -58,13 +59,13 @@ ostream& netlist::LConcatenation::streamout(ostream& os) const {
     end=data.end();
     os << "{";
     while(true) {
-      os << *it;
+      os << *(*it);
       it++;
       if(it != end)
-	os << ",";
+        os << ",";
       else {
-	os << "}";
-	break;
+        os << "}";
+        break;
       }
     }
   }

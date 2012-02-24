@@ -144,39 +144,40 @@ void netlist::Concatenation::reduce() {
     it->reduce();
     if(it->exp.use_count() != 0) { // an expression
       if(it->exp->eqn.size() == 1 &&
-	 it->exp->eqn.front().get_type() == Operation::oCon) { // embedded concatenation
-	shared_ptr<Concatenation> cmp = it->exp->eqn.front().get_con(); // fetch the concatenation
-	data.insert(it,cmp->data.begin(), cmp->data.end());	// copy the elements to the current level
-	data.erase(it); // delete current one as its content is copied
-
-	// re-run all element inserted
-	if(pre == begin) {	// the first element is removed
-	  begin = data.begin();
-	  it = data.begin();
-	  pre = data.begin();
-	} else {		// find the start of the inserted elements
-	  it = pre;
-	  it++;
-	}	  
+         it->exp->eqn.front().get_type() == Operation::oCon) { // embedded concatenation
+        shared_ptr<Concatenation> cmp = it->exp->eqn.front().get_con(); // fetch the concatenation
+        data.insert(it,cmp->data.begin(), cmp->data.end());	// copy the elements to the current level
+        data.erase(it); // delete current one as its content is copied
+        
+        // re-run all element inserted
+        if(pre == begin) {	// the first element is removed
+          begin = data.begin();
+          it = data.begin();
+          pre = data.begin();
+        } else {		// find the start of the inserted elements
+          it = pre;
+          it++;
+        }	  
       } else it++;
     } else {			// a {x{con}}
       if(it->con.first->is_valuable()) { // x is a const number, repeat con for x times
-	for(mpz_class i = it->con.first->get_value().get_value(); i!=0; i++)
-	  data.insert(it, it->con.second.begin(), it->con.second.end());
-	data.erase(it);
-	// re-run all element inserted
-	if(pre == begin) {	// the first element is removed
-	  begin = data.begin();
-	  it = data.begin();
-	  pre = data.begin();
-	} else {		// find the start of the inserted elements
-	  it = pre;
-	  it++;
-	}
+        for(mpz_class i = it->con.first->get_value().get_value(); i!=0; i--)
+          data.insert(it, it->con.second.begin(), it->con.second.end());
+        data.erase(it);
+ 
+        // re-run all element inserted
+        if(pre == begin) {	// the first element is removed
+          begin = data.begin();
+          it = data.begin();
+          pre = data.begin();
+        } else {		// find the start of the inserted elements
+          it = pre;
+          it++;
+        }
       } else it++;	
     }
   }
-
+  
   // second iteration, remove continueous numbers
   begin = data.begin();
   it = data.begin();
@@ -187,11 +188,11 @@ void netlist::Concatenation::reduce() {
     if(it == pre) it++;		// bypass the first element
     else {
       if(pre->exp.use_count() != 0 &&
-	 pre->exp->is_valuable() &&
-	 it->exp.use_count() != 0 &&
-	 it->exp->is_valuable()) { // both pre and it are numbers
-	pre->exp->concatenate(it->exp);
-	it = data.erase(it);
+         pre->exp->is_valuable() &&
+         it->exp.use_count() != 0 &&
+         it->exp->is_valuable()) { // both pre and it are numbers
+        pre->exp->concatenate(it->exp);
+        it = data.erase(it);
       } else it++;
     }
   }

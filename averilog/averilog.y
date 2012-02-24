@@ -465,14 +465,14 @@ variable_declaration
     | "reg" '[' expression ':' expression ']' list_of_variable_identifiers
     {
       if(0 == $7->size()) {
-	av_env.error(yylloc, "SYN-VAR-1", "Reg");
+        av_env.error(yylloc, "SYN-VAR-1", "Reg");
       } else if(0 == Lib.get_current_comp().use_count()) {
-	av_env.error(yylloc, "SYN-VAR-0", "reg", (*($7->begin()))->name);
+        av_env.error(yylloc, "SYN-VAR-0", "reg", (*($7->begin()))->name);
       } else {
-	shared_ptr<NetComp> father = Lib.get_current_comp();
-	shared_ptr<Module> cm;
-	switch(father->get_type()) {
-	case NetComp::tModule: { 
+        shared_ptr<NetComp> father = Lib.get_current_comp();
+        shared_ptr<Module> cm;
+        switch(father->get_type()) {
+        case NetComp::tModule: { 
           cm = static_pointer_cast<Module>(father);
           while(!$7->empty()) {
             VIdentifier& rn = *($7->front());
@@ -485,8 +485,8 @@ variable_declaration
             }
           }
         } break;
-	default: ;/* doing nothing right now */ 
-	}
+        default: ;/* doing nothing right now */ 
+        }
       }
       /////////////////////////////////////////////
     }
@@ -756,10 +756,10 @@ list_of_net_assignments
       shared_ptr<Module> cm;
       
       if(father->get_type() != NetComp::tModule) /* assign in non-module environment */
-	av_env.error(yylloc, "SYN-ASSIGN-1");
+        av_env.error(yylloc, "SYN-ASSIGN-1");
       else {
-	cm = static_pointer_cast<Module>(father);
-	cm->db_assign.insert($1->name, $1);
+        cm = static_pointer_cast<Module>(father);
+        cm->db_assign.insert($1->name, $1);
       }
     }
     | list_of_net_assignments ',' blocking_assignment
@@ -768,10 +768,10 @@ list_of_net_assignments
       shared_ptr<Module> cm;
       
       if(father->get_type() != NetComp::tModule) /* assign in non-module environment */
-	av_env.error(yylloc, "SYN-ASSIGN-1");
+        av_env.error(yylloc, "SYN-ASSIGN-1");
       else {
-	cm = static_pointer_cast<Module>(father);
-	cm->db_assign.insert($3->name, $3);
+        cm = static_pointer_cast<Module>(father);
+        cm->db_assign.insert($3->name, $3);
       }
     }
     ;
@@ -783,11 +783,11 @@ always_construct
     ;
 
 blocking_assignment 
-    : variable_lvalue '=' expression  { $$.reset(new Assign($1, $3, true)); }
+    : variable_lvalue '=' expression  { $3->reduce(); $$.reset(new Assign($1, $3, true)); }
     ;
 
 nonblocking_assignment 
-    : variable_lvalue "<=" expression  { $$.reset(new Assign($1, $3, true)); }
+    : variable_lvalue "<=" expression  { $3->reduce(); $$.reset(new Assign($1, $3, true)); }
     ;
 
 //A.6.3 Parallel and sequential blocks    
@@ -877,7 +877,7 @@ concatenation
       list<shared_ptr<netlist::Expression> >::iterator it, end;
       $$.reset(new Concatenation);
       for(it = $2->begin(), end = $2->end(); it != end; it++) {
-	*$$ + ConElem(*it);
+        *$$ + ConElem(*it);
       }
     }
     | '{' expression concatenation '}'
@@ -949,36 +949,36 @@ primary
       bool found = false;
       shared_ptr<Identifier> idp = static_pointer_cast<Identifier>($1);
       while(Lib.it_valid(it)) {
-	shared_ptr<NetComp> ccp(*it); /* point for the current component */
-	switch(ccp->get_type()) {
-	case NetComp::tModule: {
-	  reach_a_module = true;
-	  Module& cm = *(static_pointer_cast<Module>(ccp));
-	  shared_ptr<Wire> wp = cm.db_wire.find(*$1);
-	  if(0 != wp.use_count()) {
-	    found = true;
-	    wp->fout.push_back($1);
-	    break;
-	  }
-	  shared_ptr<Register> rp = cm.db_reg.find(*$1);
-	  if(0 != rp.use_count()) {
-	    found = true;
-	    rp->fout.push_back($1);
-	    break;
-	  }
-	  break;
-	}
-	default:
-	  // should not run to here
-	  assert(0 == "component type");
-	}
-	if(reach_a_module || found) break;
-	else it++;
+        shared_ptr<NetComp> ccp(*it); /* point for the current component */
+        switch(ccp->get_type()) {
+        case NetComp::tModule: {
+          reach_a_module = true;
+          Module& cm = *(static_pointer_cast<Module>(ccp));
+          shared_ptr<Wire> wp = cm.db_wire.find(*$1);
+          if(0 != wp.use_count()) {
+            found = true;
+            wp->fout.push_back($1);
+            break;
+          }
+          shared_ptr<Register> rp = cm.db_reg.find(*$1);
+          if(0 != rp.use_count()) {
+            found = true;
+            rp->fout.push_back($1);
+            break;
+          }
+          break;
+        }
+        default:
+          // should not run to here
+          assert(0 == "component type");
+        }
+        if(reach_a_module || found) break;
+        else it++;
       }
       if(found)
-	$$.reset(new Expression($1));
+        $$.reset(new Expression($1));
       else
-	av_env.error(yylloc, "SYN-VAR-3", $1->name);
+        av_env.error(yylloc, "SYN-VAR-3", $1->name);
     }
     | concatenation { $$.reset(new Expression($1)); }
     | function_call
@@ -991,8 +991,8 @@ variable_lvalue
     | concatenation       
     { 
       $$.reset(new LConcatenation($1));
-      if($$->is_valid()) 
-	av_env.error(yylloc, "SYN-ASSIGN-0");
+      if(!$$->is_valid()) 
+        av_env.error(yylloc, "SYN-ASSIGN-0");
     }
     ;
 
