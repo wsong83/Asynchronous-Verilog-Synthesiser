@@ -122,7 +122,7 @@ ostream& netlist::Number::streamout (ostream& os) const{
     if(d > MAX_INT_IN_STREAMOUT || d < -MAX_INT_IN_STREAMOUT)
       os << num_leng << "'h" << d.get_str(16);
     else
-      os << d;
+      os << num_leng << "'d" << d;
   } else
     os << num_leng << "'b" << txt_value;
   return os;

@@ -232,7 +232,7 @@ VIdentifier& netlist::VIdentifier::add_prefix(const Identifier& prefix) {
 ostream& netlist::VIdentifier::streamout(ostream& os) const {
   vector<Range>::const_iterator it, end;
 
-  os << "wire ";
+  //os << "wire ";
   for(it=m_range.begin(), end=m_range.end(); it != end; it++) {
     os << "[" << *it << "]";
   }
