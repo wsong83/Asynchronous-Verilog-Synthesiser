@@ -84,6 +84,8 @@ namespace netlist {
     
     ctype_t get_type() const { return ctype; }
     ctype_t ctype;
+
+    virtual void reduce() {}	/* many netlist component need method to reduce itself */
   };
 
   // operation.h

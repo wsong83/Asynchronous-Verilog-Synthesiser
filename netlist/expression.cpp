@@ -73,23 +73,25 @@ void netlist::Expression::reduce() {
 
   while(!eqn.empty()) {
     // fetch a new operation element
-    Operation& it = eqn.front();
+    Operation it = eqn.front();
     eqn.pop_front();
     
     // check the operation
     if(it.get_type() <= Operation::oFun) {   // a prime
       if(m_stack.empty()) {     // only one element and it is a prime
         assert(eqn.empty());    // eqn should be empty
+	it.reduce();
         eqn.push_back(it);
         valuable = it.is_valuable();
         return;
       } else {
         shared_ptr<expression_state> m_state = m_stack.top();
-	// to do: reduce the function or concatenation
-        m_state->d[(m_state->opp)++].push_back(it);
+        it.reduce();
+	m_state->d[(m_state->opp)++].push_back(it);
+	//cout << m_state->d[m_state->opp-1].front() << endl;
         while(true) {
           if(m_state->ops == m_state->opp) { // ready for execute
-            execute_operation(m_state->op.get_type(), m_state->d[0], m_state->d[3], m_state->d[2]);
+            execute_operation(m_state->op.get_type(), m_state->d[0], m_state->d[1], m_state->d[2]);
             m_stack.pop();
             // recursive iterations
             if(m_stack.empty()) { // final
@@ -109,7 +111,7 @@ void netlist::Expression::reduce() {
         }
       }
     } else {                  // an operator
-      shared_ptr<expression_state> m_state;
+      shared_ptr<expression_state> m_state(new expression_state);
       m_state->op = it;
       if(it.get_type() <= Operation::oUNxor) { // unary
           m_state->ops = 1;
@@ -176,6 +178,15 @@ void netlist::Expression::append(Operation::operation_t otype, Expression& d1, E
 
 bool netlist::Expression::operator== (const Expression& rhs) const {
   return false;
+}
+
+void netlist::Expression::concatenate(shared_ptr<Expression> rhs) {
+  assert(eqn.size() == 1 &&
+	 eqn.front().get_type() == Operation::oNum &&
+	 rhs->eqn.size() == 1 &&
+	 rhs->eqn.front().get_type() == Operation::oNum);
+
+  eqn.front().get_num_ref().concatenate(rhs->eqn.front().get_num_ref());
 }
 
 Expression netlist::operator+ (const Expression& lhs, const Expression& rhs) {

@@ -32,29 +32,34 @@
 namespace netlist {
 
   typedef pair<Expression, Expression> Range_Exp;
+  typedef pair<mpz_class, mpz_class> Range_Const;
 
   class Range : public NetComp {
   public:
     // constructors
     Range(const mpz_class&);	/* select by a fix number */
+    Range(const mpz_class&, const mpz_class&);	/* select by a fix number */
     Range(const Expression&);	/* select by an expression  */
     Range(const Range_Exp&);    /* declare or select by a range expression */
     Range(const Range_Exp&, int); /* select by a range expression using positive or negtive colon */
 
     // helpers
-    bool is_valuable() const { return type == TConst; }
-    bool is_single() const {return type != TRange; }
+    bool is_const() const { return type == TConst && type == TCRange; }
+    bool is_single() const {return type != TRange && type != TCRange; }
     virtual ostream& streamout(ostream&) const;
     
   private:
     mpz_class c;		     /* constant */
-    shared_ptr<Expression> v; /* variable */
-    shared_ptr<Range_Exp> r;  /* range expression */
+    shared_ptr<Expression> v;	     /* variable */
+    shared_ptr<Range_Exp> r;	     /* range expression */
+    shared_ptr<Range_Const> cr;	     /* const range */
     
     enum type_t {
       TConst, 
       TVar, 
-      TRange} type;
+      TRange,
+      TCRange
+    } type;
     
 
   };

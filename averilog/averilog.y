@@ -895,40 +895,40 @@ function_call
 //A.8.3 Expressions
 expression
     : primary                       { $$ = $1; }
-    | '+' primary %prec oUNARY
-    | '-' primary %prec oUNARY
-    | '!' primary %prec oUNARY
-    | '~' primary %prec oUNARY
-    | '&' primary %prec oUNARY
-    | "~&" primary %prec oUNARY
-    | '|' primary %prec oUNARY
-    | "~|" primary %prec oUNARY
-    | '^' primary %prec oUNARY
-    | "~^" primary %prec oUNARY
-    | expression '+' expression
-    | expression '-' expression
-    | expression '*' expression
-    | expression '/' expression
-    | expression '%' expression
-    | expression "==" expression
-    | expression "!=" expression
-    | expression "===" expression
-    | expression "!==" expression
-    | expression "&&" expression
-    | expression "||" expression
-    | expression "**" expression
-    | expression '<' expression
-    | expression "<=" expression
-    | expression '>' expression
-    | expression ">=" expression
-    | expression '&' expression
-    | expression '|' expression
-    | expression '^' expression
-    | expression "~^" expression
-    | expression ">>" expression
-    | expression "<<" expression
-    | expression ">>>" expression
-    | expression '?' expression ':' expression
+    | '+' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oUPos);       }
+    | '-' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oUNeg);       }
+    | '!' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oULRev);      }
+    | '~' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oURev);       }
+    | '&' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oUAnd);       }
+    | "~&" primary %prec oUNARY     { $$ = $2; $$->append(Operation::oUNand);      }
+    | '|' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oUOr);        }
+    | "~|" primary %prec oUNARY     { $$ = $2; $$->append(Operation::oUNor);       }
+    | '^' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oXor);        }
+    | "~^" primary %prec oUNARY     { $$ = $2; $$->append(Operation::oNxor);       }
+    | expression '+' expression     { $$ = $1; $$->append(Operation::oAdd, *$3);   }
+    | expression '-' expression     { $$ = $1; $$->append(Operation::oMinus, *$3); }
+    | expression '*' expression     { $$ = $1; $$->append(Operation::oTime, *$3);  }
+    | expression '/' expression     { $$ = $1; $$->append(Operation::oDiv, *$3);   }
+    | expression '%' expression     { $$ = $1; $$->append(Operation::oMode, *$3);  }
+    | expression "==" expression    { $$ = $1; $$->append(Operation::oEq, *$3);    }
+    | expression "!=" expression    { $$ = $1; $$->append(Operation::oNeq, *$3);   }
+    | expression "===" expression   { $$ = $1; $$->append(Operation::oCEq, *$3);   }
+    | expression "!==" expression   { $$ = $1; $$->append(Operation::oCNeq, *$3);  }
+    | expression "&&" expression    { $$ = $1; $$->append(Operation::oLAnd, *$3);  }
+    | expression "||" expression    { $$ = $1; $$->append(Operation::oLOr, *$3);   }
+    | expression "**" expression    { $$ = $1; $$->append(Operation::oPower, *$3); }
+    | expression '<' expression     { $$ = $1; $$->append(Operation::oLess, *$3);  }
+    | expression "<=" expression    { $$ = $1; $$->append(Operation::oLe, *$3);    }
+    | expression '>' expression     { $$ = $1; $$->append(Operation::oGreat, *$3); }
+    | expression ">=" expression    { $$ = $1; $$->append(Operation::oGe, *$3);    }
+    | expression '&' expression     { $$ = $1; $$->append(Operation::oAnd, *$3);   }
+    | expression '|' expression     { $$ = $1; $$->append(Operation::oOr, *$3);    }
+    | expression '^' expression     { $$ = $1; $$->append(Operation::oXor, *$3);   }
+    | expression "~^" expression    { $$ = $1; $$->append(Operation::oNxor, *$3);  }
+    | expression ">>" expression    { $$ = $1; $$->append(Operation::oRS, *$3);    }
+    | expression "<<" expression    { $$ = $1; $$->append(Operation::oLS, *$3);    }
+    | expression ">>>" expression   { $$ = $1; $$->append(Operation::oLRS, *$3);   }
+    | expression '?' expression ':' expression { $$ = $1, $$->append(Operation::oQuestion, *$3, *$5); }
     ;
 
 range_expression

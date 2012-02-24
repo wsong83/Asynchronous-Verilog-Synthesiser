@@ -128,6 +128,13 @@ ostream& netlist::Number::streamout (ostream& os) const{
   return os;
 }
 
+void netlist::Number::concatenate(const Number& rhs) {
+  txt_value = txt_value + rhs.txt_value;
+  num_leng += rhs.num_leng;
+  valuable = valuable && rhs.valuable;
+}
+
+
 bool netlist::Number::bin2num(char *text, int txt_leng, int start) {
   string m;
   bool v = true;

@@ -89,6 +89,7 @@ namespace netlist {
     Number get_num() const;
     shared_ptr<Concatenation> get_con();
     shared_ptr<Identifier> get_var();
+    void reduce();
     ostream& streamout(ostream&) const;
 
   private:

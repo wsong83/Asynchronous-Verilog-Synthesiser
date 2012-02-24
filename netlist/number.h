@@ -49,7 +49,8 @@ namespace netlist {
     Number addition (const Number& rhs) const;
     Number& operator+= (const Number& rhs);
     Number& lfsh (int rhs);
-    virtual ostream& streamout(ostream&) const;
+    ostream& streamout(ostream&) const;
+    void concatenate(const Number&); /* concatenate two fixed-point number */
 
     // operation
     void negate() {}

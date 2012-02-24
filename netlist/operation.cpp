@@ -120,6 +120,11 @@ ostream& netlist::Operation::streamout(ostream& os) const {
   return os;
 }
 
+void netlist::Operation::reduce() {
+  if(data.use_count() != 0)
+    data->reduce();
+}
+
 // dummy yet
 void netlist::execute_operation( Operation::operation_t op,
                                  list<Operation>& d1,
@@ -128,9 +133,9 @@ void netlist::execute_operation( Operation::operation_t op,
                                  ) {
   // check parameters
   assert(op >= Operation::oUPos);
-  if(op <= Operation::oUNxor) assert(!d1.empty());
-  if(op <= Operation::oLOr) assert(!d2.empty());
-  if(op <= Operation::oQuestion) assert(!d3.empty());
+  assert(!d1.empty());
+  if(op >= Operation::oPower) assert(!d2.empty());
+  if(op >= Operation::oQuestion) assert(!d3.empty());
 
   // will use d1 as return
   switch(op) {

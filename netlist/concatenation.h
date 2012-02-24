@@ -46,25 +46,11 @@ namespace netlist {
     ConElem(const ConElem& rhs)
       : con(rhs.con), exp(rhs.exp) {}
     
-    ConElem& operator= (const ConElem& rhs) {
-      con = rhs.con;
-      exp = rhs.exp;
-      return *this;
-    }
+    ConElem& operator= (const ConElem& rhs);
+    ConElem& operator= (const pair<shared_ptr<Expression>, list<ConElem> >& rhs);
+    ConElem& operator= (const shared_ptr<Expression>& rhs);
 
-    ConElem& operator= (const pair<shared_ptr<Expression>, list<ConElem> >& rhs) {
-      con = rhs;
-      exp.reset();
-      return *this;
-    }
-
-    ConElem& operator= (const shared_ptr<Expression>& rhs) {
-      con.first.reset();
-      con.second.clear();
-      exp = rhs;
-      return *this;
-    }
-
+    void reduce();
     ostream& streamout(ostream&) const;
 
     pair<shared_ptr<Expression>, list<ConElem> > con;
@@ -84,6 +70,7 @@ namespace netlist {
     ostream& streamout(ostream&) const;
     Concatenation& operator+ (const Concatenation& rhs);
     Concatenation& operator+ (const ConElem& rhs);
+    void reduce();
 
     // data
     list<ConElem> data;

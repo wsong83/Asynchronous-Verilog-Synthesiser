@@ -50,6 +50,7 @@ namespace netlist {
     void append(Operation::operation_t);
     void append(Operation::operation_t, Expression&);
     void append(Operation::operation_t, Expression&, Expression&);
+    void concatenate(shared_ptr<Expression>); /* concatenate the number in two expressions */
     
     virtual ostream& streamout(ostream&) const;
     bool operator== (const Expression& rhs) const;
