@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -53,6 +53,9 @@ netlist::Expression::Expression(shared_ptr<Concatenation> Conp)
   eqn.push_back(Operation(Conp));
 }
 
+netlist::Expression::Expression(const list<Operation>& reqn, bool rvaluable)
+  : eqn(reqn), valuable(rvaluable) { }
+
 bool netlist::Expression::is_valuable() const {
   return valuable;
 }
@@ -80,15 +83,14 @@ void netlist::Expression::reduce() {
     if(it.get_type() <= Operation::oFun) {   // a prime
       if(m_stack.empty()) {     // only one element and it is a prime
         assert(eqn.empty());    // eqn should be empty
-	it.reduce();
+        it.reduce();
         eqn.push_back(it);
         valuable = it.is_valuable();
         return;
       } else {
         shared_ptr<expression_state> m_state = m_stack.top();
         it.reduce();
-	m_state->d[(m_state->opp)++].push_back(it);
-	//cout << m_state->d[m_state->opp-1].front() << endl;
+        m_state->d[(m_state->opp)++].push_back(it);
         while(true) {
           if(m_state->ops == m_state->opp) { // ready for execute
             execute_operation(m_state->op.get_type(), m_state->d[0], m_state->d[1], m_state->d[2]);
@@ -98,13 +100,11 @@ void netlist::Expression::reduce() {
               assert(eqn.empty());    // eqn should be empty
               eqn.splice(eqn.end(), m_state->d[0]);
               valuable = eqn.front().is_valuable();
-              //delete m_state;
               return;
             } else {
               shared_ptr<expression_state> tmp = m_state;
               m_state = m_stack.top();
               m_state->d[m_state->opp].splice(m_state->d[m_state->opp].end(), tmp->d[0]);
-              //delete tmp;
               (m_state->opp)++;
             }
           } else break;       // do nothing, proceed to the next element
@@ -126,6 +126,14 @@ void netlist::Expression::reduce() {
 
   // should not run to here
   assert(1 == 0);
+}
+
+shared_ptr<Expression> netlist::Expression::deep_copy() const{
+  list<Operation> reqn;
+  list<Operation>::const_iterator it, end;
+  for(it = eqn.begin(), end = eqn.end(); it != end; it++)
+    reqn.push_back(it->deep_copy());
+  return shared_ptr<Expression>(new Expression(reqn, valuable));
 }
 
 void netlist::Expression::append(Operation::operation_t otype) {
@@ -257,7 +265,7 @@ ostream& netlist::Expression::streamout(ostream& os) const {
 	  } 
 	}
       } else {
-	os << c;
+        os << c;
       }
     } else {			// must be an operator
       op_cnt = 0;

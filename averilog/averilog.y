@@ -271,7 +271,7 @@ description
     ;
 
 module_declaration
-: "module" module_identifier ';'  { if(!Lib.insert(*$2)) av_env.error(yylloc, "SYN_MODULE-0", $2->name); }
+    : "module" module_identifier ';'  { if(!Lib.insert(*$2)) av_env.error(yylloc, "SYN_MODULE-0", $2->name); }
         module_items
         "endmodule"                   { cout<< *(static_pointer_cast<Module>(Lib.get_current_comp())); Lib.pop(); }
     | "module" module_identifier '(' list_of_port_identifiers ')' ';'

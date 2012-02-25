@@ -51,6 +51,20 @@ ConElem& netlist::ConElem::operator= (const shared_ptr<Expression>& rhs) {
   return *this;
 }
 
+ConElem netlist::ConElem::deep_copy() const{
+  if(0 != exp.use_count()) {    // {exp}
+    shared_ptr<Expression> expp = exp->deep_copy();
+    return ConElem(expp);
+  } else {
+    shared_ptr<Expression> expp = con.first->deep_copy();
+    list<ConElem> lcon;
+    list<ConElem>::const_iterator it, end;
+    for(it=con.second.begin(), end=con.second.end(); it != end; it++)
+      lcon.push_back(it->deep_copy());
+    return ConElem(expp, lcon);
+  }
+}
+
 void netlist::ConElem::reduce() {
   if(0 != con.first.use_count()) {
     con.first->reduce();
@@ -161,8 +175,13 @@ void netlist::Concatenation::reduce() {
       } else it++;
     } else {			// a {x{con}}
       if(it->con.first->is_valuable()) { // x is a const number, repeat con for x times
-        for(mpz_class i = it->con.first->get_value().get_value(); i!=0; i--)
-          data.insert(it, it->con.second.begin(), it->con.second.end());
+        for(mpz_class i = it->con.first->get_value().get_value(); i!=0; i--) {
+          // deep copy
+          list<ConElem>::iterator iit, iend;
+          for(iit = it->con.second.begin(), iend = it->con.second.end(); iit != iend; iit++) {
+            data.insert(it, iit->deep_copy());
+          }
+        }
         data.erase(it);
  
         // re-run all element inserted
@@ -177,6 +196,8 @@ void netlist::Concatenation::reduce() {
       } else it++;	
     }
   }
+
+  cout << *this << endl;
   
   // second iteration, remove continueous numbers
   begin = data.begin();
@@ -186,15 +207,17 @@ void netlist::Concatenation::reduce() {
 
   while(it != end) {
     if(it == pre) it++;		// bypass the first element
-    else {
-      if(pre->exp.use_count() != 0 &&
-         pre->exp->is_valuable() &&
-         it->exp.use_count() != 0 &&
-         it->exp->is_valuable()) { // both pre and it are numbers
-        pre->exp->concatenate(it->exp);
-        it = data.erase(it);
-      } else it++;
+    else if(pre->exp.use_count() != 0 &&
+            pre->exp->is_valuable() &&
+            it->exp.use_count() != 0 &&
+            it->exp->is_valuable()) { // both pre and it are numbers
+      pre->exp->concatenate(it->exp);
+      it = data.erase(it);
+    } else { 
+      pre = it; 
+      it++; 
     }
+    cout << *this << endl;
   }
 }
 

@@ -73,6 +73,15 @@ shared_ptr<Identifier> netlist::Operation::get_var(){
   return static_pointer_cast<Identifier>(data);
 }
 
+Operation netlist::Operation::deep_copy() const{
+  switch(otype) {
+  case oNum: {
+    return Operation(shared_ptr<Number>(new Number(get_num())));
+  }
+  case oVar: {
+    
+}
+
 ostream& netlist::Operation::streamout(ostream& os) const {
   switch(otype) {
   case oNULL:                          return os;

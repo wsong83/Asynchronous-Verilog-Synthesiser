@@ -79,7 +79,7 @@ namespace netlist {
     Operation(operation_t);
     Operation(shared_ptr<Number>);
     Operation(shared_ptr<Identifier>);
-    //    Operation(shared_ptr<FuncCall>);
+    // Operation(shared_ptr<FuncCall>);
     Operation(shared_ptr<Concatenation>);
 
     // helpers
@@ -90,6 +90,7 @@ namespace netlist {
     shared_ptr<Concatenation> get_con();
     shared_ptr<Identifier> get_var();
     void reduce();
+    Operation deep_copy() const;
     ostream& streamout(ostream&) const;
 
   private:

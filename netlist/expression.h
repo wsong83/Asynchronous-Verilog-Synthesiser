@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -38,6 +38,7 @@ namespace netlist {
     Expression(const Number&);	/* a number is an expression */
     Expression(shared_ptr<Identifier>); /* a variable/parameter is an expression */
     Expression(shared_ptr<Concatenation>); /* a concatenation is an expression */
+    Expression(const list<Operation>&, bool); /* needed for deep copy */
 
     // helpers
     bool is_valuable() const;    /* check valuable */
@@ -45,6 +46,7 @@ namespace netlist {
     void reduce();               /* try to reduce the equation */
     // return the size of equation
     int size() const { return eqn.size(); }
+    shared_ptr<Expression> deep_copy();
     
     // develope the equation
     void append(Operation::operation_t);

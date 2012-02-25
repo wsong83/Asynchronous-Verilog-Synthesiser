@@ -49,6 +49,7 @@ namespace netlist {
     ConElem& operator= (const ConElem& rhs);
     ConElem& operator= (const pair<shared_ptr<Expression>, list<ConElem> >& rhs);
     ConElem& operator= (const shared_ptr<Expression>& rhs);
+    ConElem deep_copy() const;
 
     void reduce();
     ostream& streamout(ostream&) const;
