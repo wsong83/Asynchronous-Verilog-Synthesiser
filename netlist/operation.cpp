@@ -79,7 +79,19 @@ Operation netlist::Operation::deep_copy() const{
     return Operation(shared_ptr<Number>(new Number(get_num())));
   }
   case oVar: {
-    
+    if(data->get_type() == NetComp::tVarName) {
+      return Operation((static_pointer_cast<VIdentifier>(data))->deep_copy());
+    } else {
+      assert(0 == "Currently impossible to be other types");
+      return Operation();
+    }
+  }
+  case oCon: {
+    return Operation(static_pointer_cast<Concatenation>(data)->deep_copy());
+  }
+  default:
+    return Operation(otype);
+  }
 }
 
 ostream& netlist::Operation::streamout(ostream& os) const {

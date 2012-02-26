@@ -72,6 +72,7 @@ namespace netlist {
     Concatenation& operator+ (const Concatenation& rhs);
     Concatenation& operator+ (const ConElem& rhs);
     void reduce();
+    shared_ptr<Concatenation> deep_copy() const;
 
     // data
     list<ConElem> data;

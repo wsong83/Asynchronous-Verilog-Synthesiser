@@ -221,4 +221,11 @@ void netlist::Concatenation::reduce() {
   }
 }
 
+shared_ptr<Concatenation> netlist::Concatenation::deep_copy() const {
+  shared_ptr<Concatenation> rv(new Concatenation);
+  list<ConElem>::const_iterator it, end;
+  for(it = data.begin(), end = data.end(); it != end; it++)
+    rv->data.push_back(it->deep_copy());
 
+  return rv;
+}

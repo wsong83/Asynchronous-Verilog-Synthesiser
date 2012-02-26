@@ -157,6 +157,7 @@ namespace netlist {
     VIdentifier(const string&);
     VIdentifier(const averilog::avID&);
     VIdentifier(const string&, const vector<Range>&);
+    VIdentifier(const VIdentifier&); /* needed for deep copy */
 
     //helpers
     VIdentifier& operator++ ();
@@ -166,6 +167,7 @@ namespace netlist {
     void set_dimension(const vector<Range>& nd) { m_dimension = nd; }
     const vector<Range>& get_range() const {return m_range;}
     const vector<Range>& get_dimension() const {return m_dimension;}
+    shared_ptr<VIdentifier> deep_copy() const;
     
     // register the var name in the block database
     template<typename T> 

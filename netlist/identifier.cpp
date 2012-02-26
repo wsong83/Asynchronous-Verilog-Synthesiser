@@ -202,6 +202,11 @@ netlist::VIdentifier::VIdentifier(const averilog::avID& id)
 netlist::VIdentifier::VIdentifier(const string& nm, const vector<Range>& rg)
   : Identifier(NetComp::tVarName, nm), m_range(rg), numbered(false) {  }
 
+netlist::VIdentifier::VIdentifier(const VIdentifier& rhs)
+  : Identifier(NetComp::tVarName, rhs.name), 
+    m_range(rhs.m_range), m_dimension(rhs.m_dimension),
+    db_sig(rhs.db_sig), inout_t(rhs.inout_t), numbered(false) { }
+
 VIdentifier& netlist::VIdentifier::operator++ () {
   const boost::regex numbered_name("_(\\d+)\\z");
   boost::smatch mr;
@@ -243,6 +248,34 @@ ostream& netlist::VIdentifier::streamout(ostream& os) const {
 
   return os;
 }
+
+shared_ptr<VIdentifier> netlist::VIdentifier::deep_copy() const {
+  shared_ptr<VIdentifier> rv(new VIdentifier(*this));
+
+  for(int i=m_range.size()-1; i>=0; i++ )
+    rv->m_range[i] = m_range[i].deep_copy();
   
+  for(int i=m_dimension.size()-1; i>=0; i++ )
+    rv->m_dimension[i] = m_dimension[i].deep_copy();
+  
+  switch(db_sig->get_type()) {
+  case NetComp::tWire: {
+    bool result = rv->db_register<Wire>(*(db_sig->dbp), inout_t);
+    assert(result);
+    break;
+  }
+  case NetComp::tRegister: {
+    bool result = rv->db_register<Register>(*(db_sig->dbp), inout_t);
+    assert(result);
+    break;
+  }
+  default:
+    // should not run to here
+    assert(0 == "Variable type wrong");
+  }
+
+  return rv;
+
+}  
 
 
