@@ -34,15 +34,15 @@ namespace netlist {
   class LConcatenation : public NetComp {
   public:
     // constructors
-    LConcatenation(shared_ptr<Concatenation>);
-    LConcatenation(shared_ptr<VIdentifier>);
+    LConcatenation(Concatenation&);
+    LConcatenation(const VIdentifier&);
 
     // helpers
     ostream& streamout(ostream&) const;
     bool is_valid() const { return valid; }
 
     // data
-    list<shared_ptr<VIdentifier> > data; /* store the list of variable identifiers, wires or registers */
+    list<VIdentifier> data; /* store the list of variable identifiers, wires or registers */
     
   private:
     bool valid;

@@ -20,33 +20,36 @@
  */
 
 /* 
- * Wire
- * 15/02/2012   Wei Song
+ * Register
+ * 27/02/2012   Wei Song
  *
  *
  */
 
-#ifndef _H_WIRE_
-#define _H_WIRE_
+#include "component.h"
 
-namespace netlist {
-  
-  class Wire : public NetComp {
-  public:
-    NETLIST_DEFAULT_CON(Wire, tWire);
-    Wire(const VIdentifier& id): NetComp(tWire), name(id) {}
+using namespace netlist;
 
-    ostream& streamout(ostream& os) const;
+ostream& netlist::Variable::streamout(ostream& os) const {
+  vector<Range>::const_iterator it, end;
 
-    VIdentifier name;
-    list<shared_ptr<VIdentifier> > fin; /* drivers */
-    list<shared_ptr<VIdentifier> > fout; /* loads */
-
-  };
-
-  NETLIST_STREAMOUT(Wire);
-
+  vector<Range> rm = name.get_range();
+  for(it=rm.begin(), end=rm.end(); it != end; it++) {
+    os << "[" << *it;
+    if(it->is_single())
+      os << ":" << *it;
+    os << "]";
+  }
+  os << " " << name.name;
+  rm = name.get_dimension();
+  for(it=rm.begin(), end=rm.end(); it != end; it++) {
+    os << "[" << *it;
+    if(it->is_single())
+      os << ":" << *it;
+    os << "]";
+  }
+  return os;
 
 }
-
-#endif
+  
+    

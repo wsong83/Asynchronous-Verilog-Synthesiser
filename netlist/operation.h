@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -76,21 +76,20 @@ namespace netlist {
     };
 
     Operation();
+    Operation(const Operation&);
     Operation(operation_t);
-    Operation(shared_ptr<Number>);
-    Operation(shared_ptr<Identifier>);
-    // Operation(shared_ptr<FuncCall>);
-    Operation(shared_ptr<Concatenation>);
+    Operation(const Number&);
+    Operation(const VIdentifier&);
+    Operation(const Concatenation&);
 
     // helpers
+    Operation& operator= (const Operation&);
     bool is_valuable() const { return valuable; }
     operation_t get_type() const { return otype; }
-    Number& get_num_ref();
-    Number get_num() const;
-    shared_ptr<Concatenation> get_con();
-    shared_ptr<Identifier> get_var();
+    Number& get_num();
+    Concatenation& get_con();
+    VIdentifier& get_var();
     void reduce();
-    Operation deep_copy() const;
     ostream& streamout(ostream&) const;
 
   private:
@@ -110,7 +109,6 @@ namespace netlist {
   void execute_UPos(list<Operation>&);
   void execute_UNeg(list<Operation>&);
   void execute_Add(list<Operation>&, list<Operation>&);
- 
 
 }
 

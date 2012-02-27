@@ -100,7 +100,6 @@ namespace netlist {
   class FIdentifier;		/* function name */
   class MIdentifier;		/* module name */
   class IIdentifier;		/* instance name */
-  class PaIdentifier;		/* parameter name */
   class PoIdentifier;		/* port identifier */
   class VIdentifier;		/* variable name, including local variable, wire and reg */
 
@@ -119,11 +118,8 @@ namespace netlist {
   // port.h
   class Port;
 
-  // wire.h
-  class Wire;
-
-  // register.h
-  class Register;
+  // variable.h
+  class Variable;
 
   // assign.h
   class Assign;
@@ -136,7 +132,7 @@ namespace netlist {
 
   // uni_name.h
   class UniName;
-  
+
 }
 
 #include "defines.h"
@@ -144,13 +140,12 @@ namespace netlist {
 #include "operation.h"
 #include "number.h"
 #include "identifier.h"
+#include "expression.h"
 #include "concatenation.h"
 #include "lconcatenation.h"
 #include "range.h"
-#include "expression.h"
 #include "port.h"
-#include "wire.h"
-#include "register.h"
+#include "variable.h"
 #include "assign.h"
 #include "module.h"
 #include "library.h"

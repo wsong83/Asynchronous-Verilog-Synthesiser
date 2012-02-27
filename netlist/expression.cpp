@@ -37,20 +37,19 @@ netlist::Expression::Expression()
 netlist::Expression::Expression(const Number& exp) 
   : NetComp(tExp), valuable(exp.is_valuable())
 {
-  shared_ptr<Number> num(new Number(exp));
-  eqn.push_back(Operation(num));
+  eqn.push_back(Operation(exp));
 }
 
-netlist::Expression::Expression(shared_ptr<Identifier> idp) 
+netlist::Expression::Expression(const VIdentifier& id) 
   : NetComp(tExp), valuable(false)
 {
-  eqn.push_back(Operation(idp));
+  eqn.push_back(Operation(id));
 }
 
-netlist::Expression::Expression(shared_ptr<Concatenation> Conp) 
+netlist::Expression::Expression(const Concatenation& con) 
   : NetComp(tExp), valuable(false)
 {
-  eqn.push_back(Operation(Conp));
+  eqn.push_back(Operation(con));
 }
 
 netlist::Expression::Expression(const list<Operation>& reqn, bool rvaluable)
@@ -76,21 +75,21 @@ void netlist::Expression::reduce() {
 
   while(!eqn.empty()) {
     // fetch a new operation element
-    Operation it = eqn.front();
+    Operation m = eqn.front();
     eqn.pop_front();
     
     // check the operation
-    if(it.get_type() <= Operation::oFun) {   // a prime
+    if(m.get_type() <= Operation::oFun) {   // a prime
       if(m_stack.empty()) {     // only one element and it is a prime
         assert(eqn.empty());    // eqn should be empty
-        it.reduce();
-        eqn.push_back(it);
-        valuable = it.is_valuable();
+        m.reduce();
+        eqn.push_back(m);
+        valuable = m.is_valuable();
         return;
       } else {
         shared_ptr<expression_state> m_state = m_stack.top();
-        it.reduce();
-        m_state->d[(m_state->opp)++].push_back(it);
+        m.reduce();
+        m_state->d[(m_state->opp)++].push_back(m);
         while(true) {
           if(m_state->ops == m_state->opp) { // ready for execute
             execute_operation(m_state->op.get_type(), m_state->d[0], m_state->d[1], m_state->d[2]);
@@ -112,7 +111,7 @@ void netlist::Expression::reduce() {
       }
     } else {                  // an operator
       shared_ptr<expression_state> m_state(new expression_state);
-      m_state->op = it;
+      m_state->op = m;
       if(it.get_type() <= Operation::oUNxor) { // unary
           m_state->ops = 1;
       } else if(it.get_type() <= Operation::oLOr) { // two operands
@@ -126,14 +125,6 @@ void netlist::Expression::reduce() {
 
   // should not run to here
   assert(1 == 0);
-}
-
-shared_ptr<Expression> netlist::Expression::deep_copy() const{
-  list<Operation> reqn;
-  list<Operation>::const_iterator it, end;
-  for(it = eqn.begin(), end = eqn.end(); it != end; it++)
-    reqn.push_back(it->deep_copy());
-  return shared_ptr<Expression>(new Expression(reqn, valuable));
 }
 
 void netlist::Expression::append(Operation::operation_t otype) {

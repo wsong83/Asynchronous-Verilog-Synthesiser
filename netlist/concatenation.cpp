@@ -27,75 +27,33 @@
  */
 
 #include "component.h"
-#include <algorithm>
-using std::for_each;
 
 using namespace netlist;
 
-ConElem& netlist::ConElem::operator= (const ConElem& rhs) {
-  con = rhs.con;
-  exp = rhs.exp;
-  return *this;
-}
-
-ConElem& netlist::ConElem::operator= (const pair<shared_ptr<Expression>, list<ConElem> >& rhs) {
-  con = rhs;
-  exp.reset();
-  return *this;
-}
-
-ConElem& netlist::ConElem::operator= (const shared_ptr<Expression>& rhs) {
-  con.first.reset();
-  con.second.clear();
-  exp = rhs;
-  return *this;
-}
-
-ConElem netlist::ConElem::deep_copy() const{
-  if(0 != exp.use_count()) {    // {exp}
-    shared_ptr<Expression> expp = exp->deep_copy();
-    return ConElem(expp);
-  } else {
-    shared_ptr<Expression> expp = con.first->deep_copy();
-    list<ConElem> lcon;
-    list<ConElem>::const_iterator it, end;
-    for(it=con.second.begin(), end=con.second.end(); it != end; it++)
-      lcon.push_back(it->deep_copy());
-    return ConElem(expp, lcon);
-  }
-}
-
 void netlist::ConElem::reduce() {
-  if(0 != con.first.use_count()) {
-    con.first->reduce();
+  exp.reduce();
+  if(0 != con.size()) {
     list<ConElem>::iterator it, end;
-    for(it=con.second.begin(), end=con.second.end(); it != end; it++)
+    for(it=con.begin(), end=con.end(); it != end; it++)
       it->reduce();
-  } else {
-      exp->reduce();
   }
 }
 
 ostream& netlist::ConElem::streamout(ostream& os) const {
-  if(0 != exp.use_count()) {
-    os << *exp;
-  } else if(0 != con.first.use_count()) {
-    os << "{" << *(con.first) << "{";
-    if(con.second.size() > 0) {
-      list<ConElem>::const_iterator it, end;
-      it=con.second.begin();
-      end=con.second.end(); 
-      while(true) {
-	os << *it;
-	it++;
-	if(it != end)
-	  os << ",";
-	else
-	  break;
-      }
-    } else {
-      // should not come here
-      assert(0 == "an empty sub concatenation");
+  if(0 == con.size()) {
+    os << exp;
+  } else {
+    os << "{" << exp << "{";
+    list<ConElem>::const_iterator it, end;
+    it=con.begin();
+    end=con.end(); 
+    while(true) {
+      os << *it;
+      it++;
+      if(it != end)
+        os << ",";
+      else
+        break;
     }
     os << "}}";
   }
@@ -123,22 +81,22 @@ ostream& netlist::Concatenation::streamout(ostream& os) const {
   return os;
 }
     
-Concatenation& netlist::Concatenation::operator+ (const Concatenation& rhs) {
-  list<ConElem>::const_iterator it, end;
+Concatenation& netlist::Concatenation::operator+ (Concatenation& rhs) {
+  list<ConElem>::iterator it, end;
   for(it=rhs.data.begin(), end=rhs.data.end(); it != end; it++)
     *this + *it;
   return *this;
 }
 
-Concatenation& netlist::Concatenation::operator+ (const ConElem& rhs) {
+Concatenation& netlist::Concatenation::operator+ (ConElem& rhs) {
   // check whether it is an embedded concatenation
-  if( 0 != rhs.exp.use_count() &&
-      rhs.exp->size() == 1     &&
-      rhs.exp->eqn.front().get_type() == Operation::oCon
+  if( 0 == rhs.con.size() &&
+      rhs.exp.size() == 1 &&
+      rhs.exp.eqn.front().get_type() == Operation::oCon
       ) {
-    shared_ptr<Concatenation> conp = rhs.exp->eqn.front().get_con();
-    list<ConElem>::const_iterator it, end;
-    for(it=conp->data.begin(), end=conp->data.end(); it != end; it++)
+    Concatenation& m_con = rhs.exp.eqn.front().get_con();
+    list<ConElem>::iterator it, end;
+    for(it=m_con.data.begin(), end=m_con.data.end(); it != end; it++)
       *this + *it;
   } else {
     data.push_back(rhs);
@@ -156,11 +114,11 @@ void netlist::Concatenation::reduce() {
   // first iteration, remove embedded concatenations
   while(it != end) {
     it->reduce();
-    if(it->exp.use_count() != 0) { // an expression
-      if(it->exp->eqn.size() == 1 &&
-         it->exp->eqn.front().get_type() == Operation::oCon) { // embedded concatenation
-        shared_ptr<Concatenation> cmp = it->exp->eqn.front().get_con(); // fetch the concatenation
-        data.insert(it,cmp->data.begin(), cmp->data.end());	// copy the elements to the current level
+    if(it->con.size() == 0) { // an expression
+      if(it->exp.eqn.size() == 1 &&
+         it->exp.eqn.front().get_type() == Operation::oCon) { // embedded concatenation
+        Concatenation cm = it->exp.eqn.front().get_con(); // fetch the concatenation
+        data.insert(it,cm.data.begin(), cm.data.end());	// copy the elements to the current level
         data.erase(it); // delete current one as its content is copied
         
         // re-run all element inserted
@@ -174,13 +132,9 @@ void netlist::Concatenation::reduce() {
         }	  
       } else it++;
     } else {			// a {x{con}}
-      if(it->con.first->is_valuable()) { // x is a const number, repeat con for x times
-        for(mpz_class i = it->con.first->get_value().get_value(); i!=0; i--) {
-          // deep copy
-          list<ConElem>::iterator iit, iend;
-          for(iit = it->con.second.begin(), iend = it->con.second.end(); iit != iend; iit++) {
-            data.insert(it, iit->deep_copy());
-          }
+      if(it->exp.is_valuable()) { // x is a const number, repeat con for x times
+        for(mpz_class i = it->exp.get_value().get_value(); i!=0; i--) {
+          data.insert(it,it->con.begin(), it->con.end());
         }
         data.erase(it);
  
@@ -207,11 +161,11 @@ void netlist::Concatenation::reduce() {
 
   while(it != end) {
     if(it == pre) it++;		// bypass the first element
-    else if(pre->exp.use_count() != 0 &&
-            pre->exp->is_valuable() &&
-            it->exp.use_count() != 0 &&
-            it->exp->is_valuable()) { // both pre and it are numbers
-      pre->exp->concatenate(it->exp);
+    else if(pre->con.size() == 0   &&
+            pre->exp.is_valuable() &&
+            it->con.size() == 0    &&
+            it->exp.is_valuable()) { // both pre and it are numbers
+      pre->exp.concatenate(it->exp);
       it = data.erase(it);
     } else { 
       pre = it; 
@@ -221,11 +175,3 @@ void netlist::Concatenation::reduce() {
   }
 }
 
-shared_ptr<Concatenation> netlist::Concatenation::deep_copy() const {
-  shared_ptr<Concatenation> rv(new Concatenation);
-  list<ConElem>::const_iterator it, end;
-  for(it = data.begin(), end = data.end(); it != end; it++)
-    rv->data.push_back(it->deep_copy());
-
-  return rv;
-}

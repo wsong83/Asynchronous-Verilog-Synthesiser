@@ -20,8 +20,8 @@
  */
 
 /* 
- * Register
- * 15/02/2012   Wei Song
+ * Variable
+ * 27/02/2012   Wei Song
  *
  *
  */
@@ -31,20 +31,23 @@
 
 namespace netlist {
   
-  class Register : public NetComp {
+  class Variable : public NetComp {
   public:
-    NETLIST_DEFAULT_CON(Register, tRegister);
-    Register(const VIdentifier& id): NetComp(tRegister), name(id) {}
+    Variable() : NetComp(tVariable), fin_id(0), fout_id(0) {}
+    Variable(const VIdentifier& id): NetComp(tVariable), name(id), fin_id(0), fout_id(0) {}
 
     ostream& streamout(ostream& os) const;
 
     VIdentifier name;
-    list<shared_ptr<VIdentifier> > fin;	        /* drivers, hope to use weak_ptr but failed */
-    list<shared_ptr<VIdentifier> > fout;	/* loads */
+    map<unsigned int, VIdentifier *> fin; /* drivers, hope to use weak_ptr but failed */
+    map<unsigned int, VIdentifier *> fout; /* loads */
+
+  private:
+    unsigned int fin_id, fout_id;
 
   };
 
-  NETLIST_STREAMOUT(Register);
+  NETLIST_STREAMOUT(Variable);
 
 
 }

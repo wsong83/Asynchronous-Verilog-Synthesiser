@@ -39,26 +39,17 @@ namespace netlist {
      * So the whole structure is recursive.
      */
   public:
-    ConElem(const shared_ptr<Expression>& expr, const list<ConElem>& elems)
-      : con(expr, elems) {}
-    ConElem(const shared_ptr<Expression>& expr)
+    ConElem(const Expression& expr, const list<ConElem>& elems)
+      : exp(expr), con(elems) {}
+    ConElem(const Expression& expr)
       : exp(expr) {}
-    ConElem(const ConElem& rhs)
-      : con(rhs.con), exp(rhs.exp) {}
     
-    ConElem& operator= (const ConElem& rhs);
-    ConElem& operator= (const pair<shared_ptr<Expression>, list<ConElem> >& rhs);
-    ConElem& operator= (const shared_ptr<Expression>& rhs);
-    ConElem deep_copy() const;
-
     void reduce();
     ostream& streamout(ostream&) const;
 
-    pair<shared_ptr<Expression>, list<ConElem> > con;
-    shared_ptr<Expression> exp;
+    Expression exp;
+    list<ConElem> con;
 
-  private:
-    ConElem();                  /* no default constructor */
   };
   NETLIST_STREAMOUT(ConElem);
 
@@ -69,10 +60,9 @@ namespace netlist {
     
     // helpers
     ostream& streamout(ostream&) const;
-    Concatenation& operator+ (const Concatenation& rhs);
-    Concatenation& operator+ (const ConElem& rhs);
+    Concatenation& operator+ (Concatenation& rhs);
+    Concatenation& operator+ (ConElem& rhs);
     void reduce();
-    shared_ptr<Concatenation> deep_copy() const;
 
     // data
     list<ConElem> data;

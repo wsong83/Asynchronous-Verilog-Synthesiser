@@ -36,9 +36,8 @@ namespace netlist {
     // constructors
     Expression();
     Expression(const Number&);	/* a number is an expression */
-    Expression(shared_ptr<Identifier>); /* a variable/parameter is an expression */
-    Expression(shared_ptr<Concatenation>); /* a concatenation is an expression */
-    Expression(const list<Operation>&, bool); /* needed for deep copy */
+    Expression(const VIdentifier&); /* a variable/parameter is an expression */
+    Expression(const Concatenation&); /* a concatenation is an expression */
 
     // helpers
     bool is_valuable() const;    /* check valuable */
@@ -46,13 +45,12 @@ namespace netlist {
     void reduce();               /* try to reduce the equation */
     // return the size of equation
     int size() const { return eqn.size(); }
-    shared_ptr<Expression> deep_copy();
     
     // develope the equation
     void append(Operation::operation_t);
     void append(Operation::operation_t, Expression&);
     void append(Operation::operation_t, Expression&, Expression&);
-    void concatenate(shared_ptr<Expression>); /* concatenate the number in two expressions */
+    void concatenate(const Expression&); /* concatenate the number in two expressions */
     
     virtual ostream& streamout(ostream&) const;
     bool operator== (const Expression& rhs) const;

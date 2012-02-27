@@ -34,6 +34,25 @@ netlist::Operation::Operation()
   : otype(oNULL), valuable(false)
 {}
 
+netlist::Operation::Operation(const Operation& rhs)
+  : otype(rhs.otype), valuable(rhs.valuable) {
+  if(rhs.otype == oNum) data.reset(new Number(*(static_pointer_cast<Number>(rhs.data))));
+  if(rhs.otype == oVar) data.reset(new VIdentifier(*(static_pointer_cast<VIdentifier>(rhs.data))));
+  if(rhs.otype == oCon) data.reset(new Concatenation(*(static_pointer_cast<Concatenation>(rhs.data))));
+  if(rhs.otype == oFun) assert(0 == "Function not implemented yet");
+}
+
+Operation& netlist::Operation::operator= (const Operation& rhs) {
+  otype = rhs.otype;
+  valuable = rhs.valuable;
+  data.reset();
+  if(rhs.otype == oNum) data.reset(new Number(*(static_pointer_cast<Number>(rhs.data))));
+  if(rhs.otype == oVar) data.reset(new VIdentifier(*(static_pointer_cast<VIdentifier>(rhs.data))));
+  if(rhs.otype == oCon) data.reset(new Concatenation(*(static_pointer_cast<Concatenation>(rhs.data))));
+  if(rhs.otype == oFun) assert(0 == "Function not implemented yet");
+  return *this;
+}
+
 netlist::Operation::Operation(operation_t otype)
   : otype(otype), valuable(false)
 {
@@ -41,64 +60,38 @@ netlist::Operation::Operation(operation_t otype)
   assert(otype > oFun);
 }
 
-netlist::Operation::Operation(shared_ptr<Number> num)
-  : otype(oNum), valuable(num->is_valuable()), data(num)
+netlist::Operation::Operation(const Number& num)
+  : otype(oNum), valuable(num.is_valuable()), data(new Number(num))
 { }
 
-netlist::Operation::Operation(shared_ptr<Identifier> id)
-  : otype(oVar), valuable(false), data(id)
+netlist::Operation::Operation(const VIdentifier& id)
+  : otype(oVar), valuable(false), data(new VIdentifier(id))
 { }
 
-netlist::Operation::Operation(shared_ptr<Concatenation> con)
-  : otype(oCon), valuable(false), data(con)
+netlist::Operation::Operation(const Concatenation& con)
+  : otype(oCon), valuable(false), data(new Concatenation(con))
 { }
 
-Number& netlist::Operation::get_num_ref(){
+Number& netlist::Operation::get_num(){
   assert(otype == oNum);
   return *(static_pointer_cast<Number>(data));
 }
 
-Number netlist::Operation::get_num() const{
-  assert(otype == oNum);
-  return *(static_pointer_cast<Number>(data));
-}
-
-shared_ptr<Concatenation> netlist::Operation::get_con() {
+Concatenation& netlist::Operation::get_con(){
   assert(otype == oCon);
-  return static_pointer_cast<Concatenation>(data);
+  return *(static_pointer_cast<Concatenation>(data));
 }
 
-shared_ptr<Identifier> netlist::Operation::get_var(){
+VIdentifier& netlist::Operation::get_var(){
   assert(otype == oVar);
-  return static_pointer_cast<Identifier>(data);
-}
-
-Operation netlist::Operation::deep_copy() const{
-  switch(otype) {
-  case oNum: {
-    return Operation(shared_ptr<Number>(new Number(get_num())));
-  }
-  case oVar: {
-    if(data->get_type() == NetComp::tVarName) {
-      return Operation((static_pointer_cast<VIdentifier>(data))->deep_copy());
-    } else {
-      assert(0 == "Currently impossible to be other types");
-      return Operation();
-    }
-  }
-  case oCon: {
-    return Operation(static_pointer_cast<Concatenation>(data)->deep_copy());
-  }
-  default:
-    return Operation(otype);
-  }
+  return *(static_pointer_cast<VIdentifier>(data));
 }
 
 ostream& netlist::Operation::streamout(ostream& os) const {
   switch(otype) {
   case oNULL:                          return os;
   case oNum:        os << *(static_pointer_cast<Number>(data)); return os;
-  case oVar:        os << *(static_pointer_cast<Identifier>(data)); return os;
+  case oVar:        os << *(static_pointer_cast<VIdentifier>(data)); return os;
   case oCon:        os << *(static_pointer_cast<Concatenation>(data)); return os;
   case oFun: // dummy
   case oUPos:
@@ -224,7 +217,7 @@ void netlist::execute_UNeg(list<Operation>& d1) {
 // +
 void netlist::execute_Add(list<Operation>& d1, list<Operation>& d2) {
   if(d1.front().is_valuable() && d2.front().is_valuable()) {
-    d1.front().get_num_ref() = d1.front().get_num() + d2.front().get_num();
+    d1.front().get_num() = d1.front().get_num() + d2.front().get_num();
   } else {
     d1.push_front(Operation(Operation::oAdd));
     d1.splice(d1.end(), d2);

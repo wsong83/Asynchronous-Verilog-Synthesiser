@@ -30,17 +30,17 @@
 
 using namespace netlist;
 
-netlist::Assign::Assign( shared_ptr<LConcatenation> lhs,
-			 shared_ptr<Expression> rhs,
-			 bool b
-			 )
+netlist::Assign::Assign( const LConcatenation& lhs,
+                         const Expression& rhs,
+                         bool b
+                         )
   : NetComp(tAssign), name(UniName::uni_name()), lval(lhs), rexp(rhs), blocking(b)
 {}
 
 ostream& netlist::Assign::streamout(ostream& os) const {
-  os << *lval;
+  os << lval;
   if(blocking) os << " = ";
   else os << " <= ";
-  os << *rexp;
+  os << rexp;
   return os;
 }

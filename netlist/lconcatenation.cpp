@@ -30,36 +30,36 @@
 
 using namespace netlist;
 
-netlist::LConcatenation::LConcatenation(shared_ptr<Concatenation> con)
+netlist::LConcatenation::LConcatenation(Concatenation& con)
   : valid(false)
 {
-  con->reduce();
-  list<ConElem>::const_iterator it, end;
-  for( it = con->data.begin(), end = con->data.end(); it != end; it++) {
-    if(0 == it->exp.use_count()) break; // the concatenation contain sub-contenations
-    if(it->exp->eqn.size() != 1) break; // the expression ia still complex
-    if(it->exp->eqn.front().get_type() != Operation::oVar) break; // wrong type
-    if(it->exp->eqn.front().get_var()->get_type() != NetComp::tVarName) break; // wrong type
-    data.push_back(static_pointer_cast<VIdentifier>(it->exp->eqn.front().get_var()));
+  con.reduce();
+  list<ConElem>::iterator it, end;
+  for( it = con.data.begin(), end = con.data.end(); it != end; it++) {
+    if(0 != it->con.size()) break; // the concatenation contain sub-contenations
+    if(it->exp.eqn.size() != 1) break; // the expression ia still complex
+    if(it->exp.eqn.front().get_type() != Operation::oVar) break; // wrong type
+    if(it->exp.eqn.front().get_var().get_type() != NetComp::tVarName) break; // wrong type
+    data.push_back(it->exp.eqn.front().get_var());
   }
   if(it == end) valid = true;
 }
 
-netlist::LConcatenation::LConcatenation(shared_ptr<VIdentifier> id)
+netlist::LConcatenation::LConcatenation(const VIdentifier& id)
   : valid(true) { data.push_back(id); }
 
 
 ostream& netlist::LConcatenation::streamout(ostream& os) const {
   assert(valid);
 
-  if(1 == data.size()) os << *data.front();
+  if(1 == data.size()) os << data.front();
   else {
-    list<shared_ptr<VIdentifier> >::const_iterator it, end;
+    list<VIdentifier>::const_iterator it, end;
     it=data.begin();
     end=data.end();
     os << "{";
     while(true) {
-      os << *(*it);
+      os << *it;
       it++;
       if(it != end)
         os << ",";

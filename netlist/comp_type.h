@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -27,23 +27,24 @@
  */
 
 enum ctype_t {
-  tAssign,		    /* assignment */
-  tBlockName,		    /* block name */
-  tConcatenation,	    /* concatenation */
-  tExp,			    /* expression */
-  tFuncName,		    /* function name */
-  tInstName,		    /* instance name */
-  tLConcatenation,	    /* left-side concatenation */
-  tModule,		    /* Module declaration */
-  tModuleName,		    /* module name */
-  tNumber,		    /* number */
-  tParaName,		    /* parameter name */
-  tPort,		    /* port */
-  tPortName,		    /* port name */
-  tRegister,		    /* reg */
-  tRange,		    /* range */
-  tVarName,		    /* variable name */
-  tWire,		    /* wire */
-  tUnkown		    /* type not initiated, indicate error!! */
+  tAssign,                  /* assignment */
+  tBlockName,               /* block name */
+  tConcatenation,           /* concatenation */
+  tExp,                     /* expression */
+  tFuncName,                /* function name */
+  tInstName,                /* instance name */
+  tLConcatenation,          /* left-side concatenation */
+  tModule,                  /* Module declaration */
+  tModuleName,              /* module name */
+  tNumber,                  /* number */
+  tParaName,                /* parameter name */
+  tPort,                    /* port */
+  tPortName,                /* port name */
+  tRegister,                /* reg */
+  tRange,                   /* range */
+  tVariable,                /* variable, including wire, reg, and parameter */
+  tVarName,                 /* variable name */
+  tWire,                    /* wire */
+  tUnkown                   /* type not initiated, indicate error!! */
 };
 

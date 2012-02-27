@@ -119,17 +119,6 @@ namespace netlist {
   };
   NETLIST_STREAMOUT(IIdentifier);
 
-  /////////// parameter identifier
-  class PaIdentifier : public Identifier {
-  public:
-    // constructors
-    PaIdentifier() : Identifier(NetComp::tParaName) {}
-    PaIdentifier(const string&);
-
-    // helpers
-  };
-  NETLIST_STREAMOUT(PaIdentifier);
-
   /////////// port identifier
   class PoIdentifier : public Identifier {
   public:
