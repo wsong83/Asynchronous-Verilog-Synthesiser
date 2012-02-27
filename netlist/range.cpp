@@ -43,34 +43,34 @@ netlist::Range::Range(const mpz_class& sel)
 netlist::Range::Range(const mpz_class& rl, const mpz_class& rr)
   : cr(new Range_Const(rl,rr)), type(TCRange) {  }
 
-netlist::Range::Range(const Expression& sel)
+netlist::Range::Range(const shared_ptr<Expression>& sel)
   : type(TVar) 
 { 
-  if(sel.is_valuable()) {	// constant expression, value it now
-    c = sel.get_value().get_value();
+  if(sel->is_valuable()) {	// constant expression, value it now
+    c = sel->get_value().get_value();
     type = TConst;
   } else {
-    v.reset(new Expression(sel));
+    v = sel;
   }
  };
 
 netlist::Range::Range(const Range_Exp& sel)
   : type(TRange) 
 {  
-  if(sel.first == sel.second) {	// only one bit is selected
-    if(sel.first.is_valuable()) { // constant expression, value it now
-      c = sel.first.get_value().get_value();
+  if(*(sel.first) == *(sel.second)) {	// only one bit is selected
+    if(sel.first->is_valuable()) { // constant expression, value it now
+      c = sel.first->get_value().get_value();
       type = TConst;
     } else {			// variable expression
-      v.reset(new Expression(sel.first));
+      v = sel.first;
       type = TVar;
     }
   } else {
-    if(sel.first.is_valuable() && sel.second.is_valuable()) {
+    if(sel.first->is_valuable() && sel.second->is_valuable()) {
       type = TCRange;
-      cr.reset(new Range_Const(sel.first.get_value().get_value(), sel.second.get_value().get_value()));
+      cr.reset(new Range_Const(sel.first->get_value().get_value(), sel.second->get_value().get_value()));
     } else {
-      r.reset(new Range_Exp(sel));
+      r = sel;
     } 
   }
 };
@@ -120,3 +120,15 @@ ostream& netlist::Range::streamout(ostream& os) const {
   return os;
 }
 
+Range netlist::Range::deep_copy() const {
+  Range rv;
+  rv.c = c;
+  if(0 != this->v.use_count())
+    rv.v = v.deep_copy();
+  if(0 != this->r.use_count())
+    rv.r =  Range_Exp(r.first->deep_copy(), r.second->deep_copy());
+  if(0 != this->cr.use_count())
+    rv.cr = cr;
+  rv.type = type;
+  return rv;
+}
