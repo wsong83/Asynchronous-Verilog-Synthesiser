@@ -77,6 +77,11 @@ Number& netlist::Operation::get_num(){
   return *(static_pointer_cast<Number>(data));
 }
 
+Number netlist::Operation::get_num() const{
+  assert(otype == oNum);
+  return *(static_pointer_cast<Number>(data));
+}
+
 Concatenation& netlist::Operation::get_con(){
   assert(otype == oCon);
   return *(static_pointer_cast<Concatenation>(data));

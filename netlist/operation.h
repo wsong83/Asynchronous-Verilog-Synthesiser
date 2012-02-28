@@ -87,6 +87,7 @@ namespace netlist {
     bool is_valuable() const { return valuable; }
     operation_t get_type() const { return otype; }
     Number& get_num();
+    Number get_num() const;
     Concatenation& get_con();
     VIdentifier& get_var();
     void reduce();

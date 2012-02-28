@@ -200,8 +200,8 @@ netlist::VIdentifier::VIdentifier(const string& nm, const vector<Range>& rg)
 
 netlist::VIdentifier::VIdentifier(const VIdentifier& rhs)
   : Identifier(NetComp::tVarName, rhs.name), 
-    m_range(rhs.m_range), m_dimension(rhs.m_dimension),
-    db_sig(rhs.db_sig), inout_t(rhs.inout_t), numbered(false) { }
+    m_range(rhs.m_range), m_dimension(rhs.m_dimension), numbered(false),
+    db_sig(rhs.db_sig), inout_t(rhs.inout_t) { }
 
 VIdentifier& netlist::VIdentifier::operator++ () {
   const boost::regex numbered_name("_(\\d+)\\z");

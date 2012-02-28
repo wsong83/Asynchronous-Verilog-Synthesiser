@@ -41,7 +41,7 @@ netlist::Range::Range(const mpz_class& sel)
   : c(sel), type(TConst) {  }
 
 netlist::Range::Range(const mpz_class& rl, const mpz_class& rr)
-  : cr(new Range_Const(rl,rr)), type(TCRange) {  }
+  : cr(rl,rr), type(TCRange) {  }
 
 netlist::Range::Range(const Expression& sel)
   : type(TVar) 
@@ -68,7 +68,8 @@ netlist::Range::Range(const Range_Exp& sel)
   } else {
     if(sel.first.is_valuable() && sel.second.is_valuable()) {
       type = TCRange;
-      cr.reset(new Range_Const(sel.first.get_value().get_value(), sel.second.get_value().get_value()));
+      cr.first = sel.first.get_value().get_value();
+      cr.second = sel.second.get_value().get_value();
     } else {
       r = sel;
     } 
@@ -101,9 +102,10 @@ netlist::Range::Range(const Range_Exp& sel, int ctype)
   } else {
     if(m_sel.first.is_valuable() && m_sel.second.is_valuable()) {
       type = TCRange;
-      cr = Range_Const(m_sel.first.get_value().get_value(), m_sel.second.get_value().get_value());
+      cr.first = m_sel.first.get_value().get_value();
+      cr.second = m_sel.second.get_value().get_value();
     } else {
-      r = Range_Exp(m_sel);
+      r = m_sel;
     } 
   }
 }
@@ -112,8 +114,8 @@ ostream& netlist::Range::streamout(ostream& os) const {
   switch(type) {
   case TConst: os << c; break;
   case TVar: os << v; break;
-  case TRange: os << r->first << ":" << r->second; break;
-  case TCRange: os << cr->first << ":" << cr->second; break;
+  case TRange: os << r.first << ":" << r.second; break;
+  case TCRange: os << cr.first << ":" << cr.second; break;
   default: // should not go here
     assert(0 == "Wrong range type");
   }

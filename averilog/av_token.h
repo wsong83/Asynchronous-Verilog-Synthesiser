@@ -53,7 +53,6 @@ namespace averilog {
     shared_ptr<list<shared_ptr<netlist::VIdentifier> > >  tListVar;
     shared_ptr<netlist::MIdentifier>   tModuleName;
     shared_ptr<netlist::Number>        tNumber;    
-    shared_ptr<netlist::PaIdentifier>  tParaName;
     shared_ptr<netlist::PoIdentifier>  tPortName;
     shared_ptr<netlist::Range>         tRange;	
     shared_ptr<netlist::VIdentifier>   tVarName;	

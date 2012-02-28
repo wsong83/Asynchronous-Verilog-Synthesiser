@@ -52,9 +52,6 @@ netlist::Expression::Expression(const Concatenation& con)
   eqn.push_back(Operation(con));
 }
 
-netlist::Expression::Expression(const list<Operation>& reqn, bool rvaluable)
-  : eqn(reqn), valuable(rvaluable) { }
-
 bool netlist::Expression::is_valuable() const {
   return valuable;
 }
@@ -112,9 +109,9 @@ void netlist::Expression::reduce() {
     } else {                  // an operator
       shared_ptr<expression_state> m_state(new expression_state);
       m_state->op = m;
-      if(it.get_type() <= Operation::oUNxor) { // unary
+      if(m.get_type() <= Operation::oUNxor) { // unary
           m_state->ops = 1;
-      } else if(it.get_type() <= Operation::oLOr) { // two operands
+      } else if(m.get_type() <= Operation::oLOr) { // two operands
         m_state->ops = 2;
       } else {
         m_state->ops = 3;
@@ -179,13 +176,13 @@ bool netlist::Expression::operator== (const Expression& rhs) const {
   return false;
 }
 
-void netlist::Expression::concatenate(shared_ptr<Expression> rhs) {
+void netlist::Expression::concatenate(const Expression& rhs) {
   assert(eqn.size() == 1 &&
 	 eqn.front().get_type() == Operation::oNum &&
-	 rhs->eqn.size() == 1 &&
-	 rhs->eqn.front().get_type() == Operation::oNum);
+         rhs.eqn.size() == 1 &&
+	 rhs.eqn.front().get_type() == Operation::oNum);
 
-  eqn.front().get_num_ref().concatenate(rhs->eqn.front().get_num_ref());
+  eqn.front().get_num().concatenate(rhs.eqn.front().get_num());
 }
 
 Expression netlist::operator+ (const Expression& lhs, const Expression& rhs) {
