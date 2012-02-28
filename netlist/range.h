@@ -37,6 +37,7 @@ namespace netlist {
   class Range : public NetComp {
   public:
     // constructors
+    Range() : type(TErr) { }
     Range(const mpz_class&);	/* select by a fix number */
     Range(const mpz_class&, const mpz_class&);	/* select by a fix number */
     Range(const Expression&);	/* select by an expression  */
@@ -55,6 +56,7 @@ namespace netlist {
     Range_Const cr;             /* const range */
     
     enum type_t {
+      TErr,
       TConst, 
       TVar, 
       TRange,

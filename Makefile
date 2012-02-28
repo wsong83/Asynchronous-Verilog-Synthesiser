@@ -32,7 +32,7 @@ export CXXFLAGS = -Wall -g
 export LINKFLAGS = -lboost_regex -lgmpxx -lgmp
 
 # targets
-SUBDIRS = netlist shell averilog
+SUBDIRS = averilog netlist shell
 TESTDIRS = averilog/test netlist/test
 
 # actions

@@ -34,6 +34,7 @@ namespace netlist {
   class LConcatenation : public NetComp {
   public:
     // constructors
+    LConcatenation() : valid(false) { }
     LConcatenation(Concatenation&);
     LConcatenation(const VIdentifier&);
 

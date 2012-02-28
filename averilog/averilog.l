@@ -115,18 +115,18 @@ operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
 "buf"       { return token::pBuf;   }
 {operator}  { return yytext[0]; }
 {fnum}    { 
-              yylval->tNumber.reset(new netlist::Number(yytext, yyleng));
-              if(!yylval->tNumber->is_valid()) {
+              yylval->tNumber = netlist::Number(yytext, yyleng);
+              if(!yylval->tNumber.is_valid()) {
                 yyget_extra(yyscanner)->error(*yylloc, "SYN-NUM-0", string(yytext, yyleng));
               }
               return token::number; 
             }
 {dec}    { 
-              yylval->tNumber.reset(new netlist::Number(yytext, yyleng));
+              yylval->tNumber = netlist::Number(yytext, yyleng);
               return token::number; 
             }
 {identifier}  { 
-                yylval->tID.reset(new averilog::avID(yytext, yyleng));
+                yylval->tID = averilog::avID(yytext, yyleng);
                 return token::identifier; 
               }
 "//"[^\n]*[\n] { yylloc->lines();    }

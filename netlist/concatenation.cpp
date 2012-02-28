@@ -151,8 +151,6 @@ void netlist::Concatenation::reduce() {
     }
   }
 
-  cout << *this << endl;
-  
   // second iteration, remove continueous numbers
   begin = data.begin();
   it = data.begin();
@@ -171,7 +169,6 @@ void netlist::Concatenation::reduce() {
       pre = it; 
       it++; 
     }
-    cout << *this << endl;
   }
 }
 

@@ -271,19 +271,19 @@ description
     ;
 
 module_declaration
-    : "module" module_identifier ';'  { if(!Lib.insert(*$2)) av_env.error(yylloc, "SYN_MODULE-0", $2->name); }
+    : "module" module_identifier ';'  { if(!Lib.insert($2)) av_env.error(yylloc, "SYN_MODULE-0", $2.name); }
         module_items
         "endmodule"                   { cout<< *(static_pointer_cast<Module>(Lib.get_current_comp())); Lib.pop(); }
     | "module" module_identifier '(' list_of_port_identifiers ')' ';'
     {
-      if(!Lib.insert(*$2)) av_env.error(yylloc, "SYN_MODULE-0", $2->name);
+      if(!Lib.insert($2)) av_env.error(yylloc, "SYN_MODULE-0", $2.name);
       // get a pointer to the current module
       shared_ptr<Module> cm = static_pointer_cast<Module>(Lib.get_current_comp());
       // insert ports
-      list<shared_ptr<PoIdentifier> >::iterator it, end;
-      for(it = $4->begin(), end = $4->end(); it != end; it++) {
-        shared_ptr<PoIdentifier> pid(*it);
-        cm->db_port.insert(*pid, shared_ptr<Port>(new Port(*pid)));
+      list<PoIdentifier>::iterator it, end;
+      for(it = $4.begin(), end = $4.end(); it != end; it++) {
+        PoIdentifier& pid = *it;
+        cm->db_port.insert(pid, shared_ptr<Port>(new Port(pid)));
       }
     }
         module_items
@@ -326,11 +326,11 @@ input_declaration
       // get a pointer to the current module
       shared_ptr<Module> cm = static_pointer_cast<Module>(Lib.get_current_comp());
       // insert ports
-      list<shared_ptr<PoIdentifier> >::iterator it, end;
-      for(it = $2->begin(), end = $2->end(); it != end; it++) {
-        shared_ptr<Port> cp = cm->db_port.find(*(*it));
+      list<PoIdentifier>::iterator it, end;
+      for(it = $2.begin(), end = $2.end(); it != end; it++) {
+        shared_ptr<Port> cp = cm->db_port.find(*it);
         if(0 != cp.use_count()) cp->set_input();
-        else { av_env.error(yylloc, "SYN-PORT-0", (*it)->name, cm->name.name); }
+        else { av_env.error(yylloc, "SYN-PORT-0", it->name, cm->name.name); }
       }
     }
     | "input" '[' expression ':' expression ']' list_of_port_identifiers
@@ -338,15 +338,15 @@ input_declaration
       // get a pointer to the current module
       shared_ptr<Module> cm = static_pointer_cast<Module>(Lib.get_current_comp());
       // insert ports
-      list<shared_ptr<PoIdentifier> >::iterator it, end;
-      for(it = $7->begin(), end = $7->end(); it != end; it++) {
-        shared_ptr<Port> cp = cm->db_port.find(*(*it));
+      list<PoIdentifier>::iterator it, end;
+      for(it = $7.begin(), end = $7.end(); it != end; it++) {
+        shared_ptr<Port> cp = cm->db_port.find(*it);
         if(0 != cp.use_count()) { 
           cp->set_input();
           vector<Range> rm;
-          rm.push_back(Range(pair<Expression, Expression>(*$3, *$5)));
+          rm.push_back(Range(pair<Expression, Expression>($3, $5)));
           cp->name.set_range(rm);
-        } else {  av_env.error(yylloc, "SYN-PORT-0", (*it)->name, cm->name.name); }
+        } else {  av_env.error(yylloc, "SYN-PORT-0", it->name, cm->name.name); }
       }
     }  
     ;
@@ -357,11 +357,11 @@ output_declaration
       // get a pointer to the current module
       shared_ptr<Module> cm = static_pointer_cast<Module>(Lib.get_current_comp());
       // insert ports
-      list<shared_ptr<PoIdentifier> >::iterator it, end;
-      for(it = $2->begin(), end = $2->end(); it != end; it++) {
-        shared_ptr<Port> cp = cm->db_port.find(*(*it));
+      list<PoIdentifier>::iterator it, end;
+      for(it = $2.begin(), end = $2.end(); it != end; it++) {
+        shared_ptr<Port> cp = cm->db_port.find(*it);
         if(0 != cp.use_count()) cp->set_output();
-        else {  av_env.error(yylloc, "SYN-PORT-0", (*it)->name, cm->name.name); }
+        else {  av_env.error(yylloc, "SYN-PORT-0", it->name, cm->name.name); }
       }
     }
     | "output" '[' expression ':' expression ']' list_of_port_identifiers
@@ -369,15 +369,15 @@ output_declaration
       // get a pointer to the current module
       shared_ptr<Module> cm = static_pointer_cast<Module>(Lib.get_current_comp());
       // insert ports
-      list<shared_ptr<PoIdentifier> >::iterator it, end;
-      for(it = $7->begin(), end = $7->end(); it != end; it++) {
-        shared_ptr<Port> cp = cm->db_port.find(*(*it));
+      list<PoIdentifier>::iterator it, end;
+      for(it = $7.begin(), end = $7.end(); it != end; it++) {
+        shared_ptr<Port> cp = cm->db_port.find(*it);
         if(0 != cp.use_count()) { 
           cp->set_output();
           vector<Range> rm;
-          rm.push_back(Range(pair<Expression, Expression>(*$3, *$5)));
+          rm.push_back(Range(pair<Expression, Expression>($3, $5)));
           cp->name.set_range(rm);
-        } else {  av_env.error(yylloc, "SYN-PORT-0", (*it)->name, cm->name.name); }
+        } else {  av_env.error(yylloc, "SYN-PORT-0", it->name, cm->name.name); }
       }
     }  
     ;
@@ -386,21 +386,21 @@ output_declaration
 variable_declaration 
     : "wire" list_of_variable_identifiers 
     {
-      if(0 == $2->size()) {
-	av_env.error(yylloc, "SYN-VAR-1", "Wire");
+      if(0 == $2.size()) {
+        av_env.error(yylloc, "SYN-VAR-1", "Wire");
       } else if(0 == Lib.get_current_comp().use_count()) {
-	av_env.error(yylloc, "SYN-VAR-0", "Wire", (*($2->begin()))->name);
+        av_env.error(yylloc, "SYN-VAR-0", "Wire", $2.front().name);
       } else {
-	shared_ptr<NetComp> father = Lib.get_current_comp();
-	shared_ptr<Module> cm;
-	switch(father->get_type()) {
-	case NetComp::tModule: { 
+        shared_ptr<NetComp> father = Lib.get_current_comp();
+        shared_ptr<Module> cm;
+        switch(father->get_type()) {
+        case NetComp::tModule: { 
           cm = static_pointer_cast<Module>(father);
-          while(!$2->empty()) {
-            shared_ptr<Wire> cw(new Wire(*($2->front())));
-            $2->pop_front();
+          while(!$2.empty()) {
+            shared_ptr<Variable> cw(new Variable($2.front()));
+            $2.pop_front();
             if(!cm->db_wire.insert(cw->name, cw)) {
-	      av_env.error(yylloc, "SYN-VAR-2", "Wire", cw->name.name, cm->name.name);
+              av_env.error(yylloc, "SYN-VAR-2", "Wire", cw->name.name, cm->name.name);
             }
           }
         } break;
@@ -411,24 +411,24 @@ variable_declaration
     } 
     | "wire" '[' expression ':' expression ']' list_of_variable_identifiers
     {
-      if(0 == $7->size()) {
-	av_env.error(yylloc, "SYN-VAR-1", "Wire");
+      if(0 == $7.size()) {
+        av_env.error(yylloc, "SYN-VAR-1", "Wire");
       } else if(0 == Lib.get_current_comp().use_count()) {
-	av_env.error(yylloc, "SYN-VAR-0", "Wire", (*($7->begin()))->name);
+        av_env.error(yylloc, "SYN-VAR-0", "Wire", $7.front().name);
       } else {
-	shared_ptr<NetComp> father = Lib.get_current_comp();
-	shared_ptr<Module> cm;
-	switch(father->get_type()) {
-	case NetComp::tModule: { 
+        shared_ptr<NetComp> father = Lib.get_current_comp();
+        shared_ptr<Module> cm;
+        switch(father->get_type()) {
+        case NetComp::tModule: { 
           cm = static_pointer_cast<Module>(father);
-          while(!$7->empty()) {
-            VIdentifier& wn = *($7->front());
-            Range rm(pair<Expression, Expression>(*$3, *$5));
+          while(!$7.empty()) {
+            VIdentifier& wn = $7.front();
+            Range rm(pair<Expression, Expression>($3, $5));
             wn.set_range(vector<Range>(1, rm));
-            shared_ptr<Wire> cw(new Wire(wn));
-            $7->pop_front();
+            shared_ptr<Variable> cw(new Variable(wn));
+            $7.pop_front();
             if(!cm->db_wire.insert(cw->name, cw)) {
-	      av_env.error(yylloc, "SYN-VAR-2", "Wire", cw->name.name, cm->name.name);
+              av_env.error(yylloc, "SYN-VAR-2", "Wire", cw->name.name, cm->name.name);
             }
           }
         } break;
@@ -439,19 +439,19 @@ variable_declaration
     }
     | "reg" list_of_variable_identifiers 
     {
-      if(0 == $2->size()) {
-	av_env.error(yylloc, "SYN-VAR-1", "Reg");
+      if(0 == $2.size()) {
+        av_env.error(yylloc, "SYN-VAR-1", "Reg");
       } else if(0 == Lib.get_current_comp().use_count()) {
-	av_env.error(yylloc, "SYN-VAR-0", "reg", (*($2->begin()))->name);
+        av_env.error(yylloc, "SYN-VAR-0", "reg", $2.front().name);
       } else {
-	shared_ptr<NetComp> father = Lib.get_current_comp();
-	shared_ptr<Module> cm;
-	switch(father->get_type()) {
-	case NetComp::tModule: { 
+        shared_ptr<NetComp> father = Lib.get_current_comp();
+        shared_ptr<Module> cm;
+        switch(father->get_type()) {
+        case NetComp::tModule: { 
           cm = static_pointer_cast<Module>(father);
-          while(!$2->empty()) {
-            shared_ptr<Register> cr(new Register(*($2->front())));
-            $2->pop_front();
+          while(!$2.empty()) {
+            shared_ptr<Variable> cr(new Variable($2.front()));
+            $2.pop_front();
             if(!cm->db_reg.insert(cr->name, cr)) {
               av_env.error(yylloc, "SYN-VAR-2", "Reg", cr->name.name, cm->name.name);
             }
@@ -464,22 +464,22 @@ variable_declaration
     } 
     | "reg" '[' expression ':' expression ']' list_of_variable_identifiers
     {
-      if(0 == $7->size()) {
+      if(0 == $7.size()) {
         av_env.error(yylloc, "SYN-VAR-1", "Reg");
       } else if(0 == Lib.get_current_comp().use_count()) {
-        av_env.error(yylloc, "SYN-VAR-0", "reg", (*($7->begin()))->name);
+        av_env.error(yylloc, "SYN-VAR-0", "reg", $7.front().name);
       } else {
         shared_ptr<NetComp> father = Lib.get_current_comp();
         shared_ptr<Module> cm;
         switch(father->get_type()) {
         case NetComp::tModule: { 
           cm = static_pointer_cast<Module>(father);
-          while(!$7->empty()) {
-            VIdentifier& rn = *($7->front());
-            Range rm(pair<Expression, Expression>(*$3, *$5));
+          while(!$7.empty()) {
+            VIdentifier& rn = $7.front();
+            Range rm(pair<Expression, Expression>($3, $5));
             rn.set_range(vector<Range>(1, rm));
-            shared_ptr<Register> cr(new Register(rn));
-            $7->pop_front();
+            shared_ptr<Variable> cr(new Variable(rn));
+            $7.pop_front();
             if(!cm->db_reg.insert(cr->name, cr)) {
               av_env.error(yylloc, "SYN-VAR-2", "Reg", cr->name.name, cm->name.name);
             }
@@ -506,14 +506,14 @@ list_of_param_assignments
     ;
 
 list_of_port_identifiers 
-    : port_identifier                          { $$.reset(new list<shared_ptr<PoIdentifier> >()); $$->push_back($1); }
-    | list_of_port_identifiers ',' port_identifier { $$ = $1; $$->push_back($3);  }
+    : port_identifier                          { $$.clear(); $$.push_back($1); }
+    | list_of_port_identifiers ',' port_identifier { $$ = $1; $$.push_back($3);  }
     ;
 
 list_of_variable_identifiers 
-    : variable_identifier                      { $$.reset(new list<shared_ptr<VIdentifier> >()); $$->push_back($1); }
+    : variable_identifier                      { $$.clear(); $$.push_back($1); }
     | variable_identifier '=' expression
-    | list_of_variable_identifiers ',' variable_identifier { $$ = $1; $$->push_back($3); }
+    | list_of_variable_identifiers ',' variable_identifier { $$ = $1; $$.push_back($3); }
     | list_of_variable_identifiers ',' variable_identifier '=' expression
     ;
 
@@ -783,11 +783,11 @@ always_construct
     ;
 
 blocking_assignment 
-    : variable_lvalue '=' expression  { $3->reduce(); $$.reset(new Assign($1, $3, true)); }
+    : variable_lvalue '=' expression  { $3.reduce(); $$.reset(new Assign($1, $3, true)); }
     ;
 
 nonblocking_assignment 
-    : variable_lvalue "<=" expression  { $3->reduce(); $$.reset(new Assign($1, $3, true)); }
+    : variable_lvalue "<=" expression  { $3.reduce(); $$.reset(new Assign($1, $3, true)); }
     ;
 
 //A.6.3 Parallel and sequential blocks    
@@ -867,23 +867,26 @@ loop_statement
 // A.8 Expressions
 // A.8.1 Concatenations
 expressions
-    : expression                  { $$.reset(new list<shared_ptr<Expression> >), $$->push_back($1); }
-    | expressions ',' expression  { $$ = $1, $$->push_back($3); }
+    : expression                  { $$.clear(); $$.push_back($1); }
+    | expressions ',' expression  { $$ = $1, $$.push_back($3); }
     ;
 
 concatenation
     : '{' expressions '}'
     {
-      list<shared_ptr<netlist::Expression> >::iterator it, end;
-      $$.reset(new Concatenation);
-      for(it = $2->begin(), end = $2->end(); it != end; it++) {
-        *$$ + ConElem(*it);
+      list<Expression>::iterator it, end;
+      $$ = Concatenation();
+      for(it = $2.begin(), end = $2.end(); it != end; it++) {
+        ConElem m(*it);
+        $$ + m;
+        //$$ + ConElem(*it);
       }
     }
     | '{' expression concatenation '}'
     {
-      $$.reset(new Concatenation);
-      *$$ + ConElem($2, $3->data);
+      $$ = Concatenation(); 
+      ConElem m($2, $3.data);
+      $$ + m;
     }
     ;
 
@@ -894,41 +897,41 @@ function_call
 
 //A.8.3 Expressions
 expression
-    : primary                       { $$ = $1; }
-    | '+' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oUPos);       }
-    | '-' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oUNeg);       }
-    | '!' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oULRev);      }
-    | '~' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oURev);       }
-    | '&' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oUAnd);       }
-    | "~&" primary %prec oUNARY     { $$ = $2; $$->append(Operation::oUNand);      }
-    | '|' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oUOr);        }
-    | "~|" primary %prec oUNARY     { $$ = $2; $$->append(Operation::oUNor);       }
-    | '^' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oXor);        }
-    | "~^" primary %prec oUNARY     { $$ = $2; $$->append(Operation::oNxor);       }
-    | expression '+' expression     { $$ = $1; $$->append(Operation::oAdd, *$3);   }
-    | expression '-' expression     { $$ = $1; $$->append(Operation::oMinus, *$3); }
-    | expression '*' expression     { $$ = $1; $$->append(Operation::oTime, *$3);  }
-    | expression '/' expression     { $$ = $1; $$->append(Operation::oDiv, *$3);   }
-    | expression '%' expression     { $$ = $1; $$->append(Operation::oMode, *$3);  }
-    | expression "==" expression    { $$ = $1; $$->append(Operation::oEq, *$3);    }
-    | expression "!=" expression    { $$ = $1; $$->append(Operation::oNeq, *$3);   }
-    | expression "===" expression   { $$ = $1; $$->append(Operation::oCEq, *$3);   }
-    | expression "!==" expression   { $$ = $1; $$->append(Operation::oCNeq, *$3);  }
-    | expression "&&" expression    { $$ = $1; $$->append(Operation::oLAnd, *$3);  }
-    | expression "||" expression    { $$ = $1; $$->append(Operation::oLOr, *$3);   }
-    | expression "**" expression    { $$ = $1; $$->append(Operation::oPower, *$3); }
-    | expression '<' expression     { $$ = $1; $$->append(Operation::oLess, *$3);  }
-    | expression "<=" expression    { $$ = $1; $$->append(Operation::oLe, *$3);    }
-    | expression '>' expression     { $$ = $1; $$->append(Operation::oGreat, *$3); }
-    | expression ">=" expression    { $$ = $1; $$->append(Operation::oGe, *$3);    }
-    | expression '&' expression     { $$ = $1; $$->append(Operation::oAnd, *$3);   }
-    | expression '|' expression     { $$ = $1; $$->append(Operation::oOr, *$3);    }
-    | expression '^' expression     { $$ = $1; $$->append(Operation::oXor, *$3);   }
-    | expression "~^" expression    { $$ = $1; $$->append(Operation::oNxor, *$3);  }
-    | expression ">>" expression    { $$ = $1; $$->append(Operation::oRS, *$3);    }
-    | expression "<<" expression    { $$ = $1; $$->append(Operation::oLS, *$3);    }
-    | expression ">>>" expression   { $$ = $1; $$->append(Operation::oLRS, *$3);   }
-    | expression '?' expression ':' expression { $$ = $1, $$->append(Operation::oQuestion, *$3, *$5); }
+    : primary                       { $$ = $1;                                   }
+    | '+' primary %prec oUNARY      { $$ = $2; $$.append(Operation::oUPos);      }
+    | '-' primary %prec oUNARY      { $$ = $2; $$.append(Operation::oUNeg);      }
+    | '!' primary %prec oUNARY      { $$ = $2; $$.append(Operation::oULRev);     }
+    | '~' primary %prec oUNARY      { $$ = $2; $$.append(Operation::oURev);      }
+    | '&' primary %prec oUNARY      { $$ = $2; $$.append(Operation::oUAnd);      }
+    | "~&" primary %prec oUNARY     { $$ = $2; $$.append(Operation::oUNand);     }
+    | '|' primary %prec oUNARY      { $$ = $2; $$.append(Operation::oUOr);       }
+    | "~|" primary %prec oUNARY     { $$ = $2; $$.append(Operation::oUNor);      }
+    | '^' primary %prec oUNARY      { $$ = $2; $$.append(Operation::oXor);       }
+    | "~^" primary %prec oUNARY     { $$ = $2; $$.append(Operation::oNxor);      }
+    | expression '+' expression     { $$ = $1; $$.append(Operation::oAdd, $3);   }
+    | expression '-' expression     { $$ = $1; $$.append(Operation::oMinus, $3); }
+    | expression '*' expression     { $$ = $1; $$.append(Operation::oTime, $3);  }
+    | expression '/' expression     { $$ = $1; $$.append(Operation::oDiv, $3);   }
+    | expression '%' expression     { $$ = $1; $$.append(Operation::oMode, $3);  }
+    | expression "==" expression    { $$ = $1; $$.append(Operation::oEq, $3);    }
+    | expression "!=" expression    { $$ = $1; $$.append(Operation::oNeq, $3);   }
+    | expression "===" expression   { $$ = $1; $$.append(Operation::oCEq, $3);   }
+    | expression "!==" expression   { $$ = $1; $$.append(Operation::oCNeq, $3);  }
+    | expression "&&" expression    { $$ = $1; $$.append(Operation::oLAnd, $3);  }
+    | expression "||" expression    { $$ = $1; $$.append(Operation::oLOr, $3);   }
+    | expression "**" expression    { $$ = $1; $$.append(Operation::oPower, $3); }
+    | expression '<' expression     { $$ = $1; $$.append(Operation::oLess, $3);  }
+    | expression "<=" expression    { $$ = $1; $$.append(Operation::oLe, $3);    }
+    | expression '>' expression     { $$ = $1; $$.append(Operation::oGreat, $3); }
+    | expression ">=" expression    { $$ = $1; $$.append(Operation::oGe, $3);    }
+    | expression '&' expression     { $$ = $1; $$.append(Operation::oAnd, $3);   }
+    | expression '|' expression     { $$ = $1; $$.append(Operation::oOr, $3);    }
+    | expression '^' expression     { $$ = $1; $$.append(Operation::oXor, $3);   }
+    | expression "~^" expression    { $$ = $1; $$.append(Operation::oNxor, $3);  }
+    | expression ">>" expression    { $$ = $1; $$.append(Operation::oRS, $3);    }
+    | expression "<<" expression    { $$ = $1; $$.append(Operation::oLS, $3);    }
+    | expression ">>>" expression   { $$ = $1; $$.append(Operation::oLRS, $3);   }
+    | expression '?' expression ':' expression { $$ = $1, $$.append(Operation::oQuestion, $3, $5); }
     ;
 
 range_expression
@@ -940,30 +943,32 @@ range_expression
 
 //A.8.4 Primaries
 primary
-    : number              { $$.reset(new Expression(*$1)); }             
+    : number              { $$ = $1; }             
     | variable_identifier 
     {
       // search this variable in current components until reach a module level
       list<shared_ptr<NetComp> >::iterator it = Lib.get_current_it();
       bool reach_a_module = false;
       bool found = false;
-      shared_ptr<Identifier> idp = static_pointer_cast<Identifier>($1);
       while(Lib.it_valid(it)) {
         shared_ptr<NetComp> ccp(*it); /* point for the current component */
         switch(ccp->get_type()) {
         case NetComp::tModule: {
           reach_a_module = true;
           Module& cm = *(static_pointer_cast<Module>(ccp));
-          shared_ptr<Wire> wp = cm.db_wire.find(*$1);
-          if(0 != wp.use_count()) {
+          shared_ptr<Variable> vp = cm.db_wire.find($1);
+          if(0 != vp.use_count()) {
             found = true;
-            wp->fout.push_back($1);
             break;
           }
-          shared_ptr<Register> rp = cm.db_reg.find(*$1);
-          if(0 != rp.use_count()) {
+          vp = cm.db_reg.find($1);
+          if(0 != vp.use_count()) {
             found = true;
-            rp->fout.push_back($1);
+            break;
+          }
+          vp = cm.db_param.find($1);
+          if(0 != vp.use_count()) {
+            found = true;
             break;
           }
           break;
@@ -976,22 +981,22 @@ primary
         else it++;
       }
       if(found)
-        $$.reset(new Expression($1));
+        $$ = $1;
       else
-        av_env.error(yylloc, "SYN-VAR-3", $1->name);
+        av_env.error(yylloc, "SYN-VAR-3", $1.name);
     }
-    | concatenation { $$.reset(new Expression($1)); }
+    | concatenation { $$ = $1; }
     | function_call
     | '(' expression ')'  { $$ = $2; }
     ;
 
 //A.8.5 Expression left-side values
 variable_lvalue
-    : variable_identifier { $$.reset(new LConcatenation($1)); }
+    : variable_identifier { $$ = $1 ; }
     | concatenation       
     { 
-      $$.reset(new LConcatenation($1));
-      if(!$$->is_valid()) 
+      $$ = $1;
+      if(!$$.is_valid()) 
         av_env.error(yylloc, "SYN-ASSIGN-0");
     }
     ;
@@ -1007,7 +1012,7 @@ function_identifier
     ;
 
 module_identifier
-    :  identifier             { $$.reset(new MIdentifier(*$1)); }
+    :  identifier             { $$ = $1; }
     ;
 
 instance_identifier 
@@ -1019,11 +1024,11 @@ parameter_identifier
     ;
 
 variable_identifier
-: identifier           { $$.reset(new VIdentifier(*$1)); }
+    : identifier           { $$ = $1; }
     | variable_identifier '[' range_expression ']'
     ;
 
 port_identifier
-    : identifier       { $$.reset(new PoIdentifier(*$1)); }             
+    : identifier       { $$ = $1; }             
     ;
 

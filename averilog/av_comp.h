@@ -37,6 +37,7 @@ namespace averilog {
   class avID {  // identifier without dimension decalration
   public:
     string name;
+    avID() {}
     avID(char* text, int leng)
       : name(text,leng) {}
   };

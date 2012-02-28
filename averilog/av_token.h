@@ -40,22 +40,22 @@ namespace averilog {
 #define YYSTYPE av_token_type
   
   struct av_token_type {
-    shared_ptr<netlist::Assign>        tAssign;
-    shared_ptr<netlist::BIdentifier>   tBlockName;
-    shared_ptr<netlist::Concatenation> tConcatenation;
-    shared_ptr<netlist::Expression>    tExp;		
-    shared_ptr<netlist::FIdentifier>   tFuncName;
-    shared_ptr<avID>                   tID;      
-    shared_ptr<netlist::IIdentifier>   tInstName;
-    shared_ptr<netlist::LConcatenation> tLConcatenation;
-    shared_ptr<list<shared_ptr<netlist::Expression> > >   tListExp;
-    shared_ptr<list<shared_ptr<netlist::PoIdentifier> > > tListPort;
-    shared_ptr<list<shared_ptr<netlist::VIdentifier> > >  tListVar;
-    shared_ptr<netlist::MIdentifier>   tModuleName;
-    shared_ptr<netlist::Number>        tNumber;    
-    shared_ptr<netlist::PoIdentifier>  tPortName;
-    shared_ptr<netlist::Range>         tRange;	
-    shared_ptr<netlist::VIdentifier>   tVarName;	
+    shared_ptr<netlist::Assign> tAssign;
+    netlist::BIdentifier        tBlockName;
+    netlist::Concatenation      tConcatenation;
+    netlist::Expression         tExp;		
+    netlist::FIdentifier        tFuncName;
+    avID                        tID;      
+    netlist::IIdentifier        tInstName;
+    netlist::LConcatenation     tLConcatenation;
+    list<netlist::Expression>   tListExp;
+    list<netlist::PoIdentifier> tListPort;
+    list<netlist::VIdentifier>  tListVar;
+    netlist::MIdentifier        tModuleName;
+    netlist::Number             tNumber;    
+    netlist::PoIdentifier       tPortName;
+    netlist::Range              tRange;	
+    netlist::VIdentifier        tVarName;	
   };
 }
 
