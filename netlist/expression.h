@@ -45,6 +45,8 @@ namespace netlist {
     void reduce();               /* try to reduce the equation */
     // return the size of equation
     int size() const { return eqn.size(); }
+    void db_register(int iod = 1);
+    void db_expunge();
     
     // develope the equation
     void append(Operation::operation_t);

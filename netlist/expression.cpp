@@ -124,6 +124,18 @@ void netlist::Expression::reduce() {
   assert(1 == 0);
 }
 
+void netlist::Expression::db_register(int iod) {
+  list<Operation>::iterator it, end;
+  for(it = eqn.begin(), end = eqn.end(); it != end; it++)
+    it->db_register(iod);
+}
+
+void netlist::Expression::db_expunge() {
+  list<Operation>::iterator it, end;
+  for(it = eqn.begin(), end = eqn.end(); it != end; it++)
+    it->db_expunge();
+}
+
 void netlist::Expression::append(Operation::operation_t otype) {
   assert(tExp == ctype);     // this object whould be valid
   assert(otype >= Operation::oUPos && otype < Operation::oPower);

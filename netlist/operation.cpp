@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -90,6 +90,44 @@ Concatenation& netlist::Operation::get_con(){
 VIdentifier& netlist::Operation::get_var(){
   assert(otype == oVar);
   return *(static_pointer_cast<VIdentifier>(data));
+}
+
+void netlist::Operation::db_register(int iod) {
+  if(data.use_count()) {
+    switch(data->get_type()) {
+    case NetComp::tVarName: {
+      shared_ptr<VIdentifier> vp = static_pointer_cast<VIdentifier>(data);
+      if(vp->db_registered()) {
+        assert(vp->get_inout_dir() == iod);
+      } else {
+        vp->db_register(iod);
+      }
+      break;
+    }
+    case NetComp::tConcatenation: {
+      (static_pointer_cast<Concatenation>(data))->db_register(iod);
+      break;
+    }
+    default:;                   // do nothing
+    }
+  }
+}
+
+void netlist::Operation::db_expunge() {
+  if(data.use_count()) {
+    switch(data->get_type()) {
+    case NetComp::tVarName: {
+      shared_ptr<VIdentifier> vp = static_pointer_cast<VIdentifier>(data);
+      vp->db_expunge();
+      break;
+    }
+    case NetComp::tConcatenation: {
+      (static_pointer_cast<Concatenation>(data))->db_expunge();
+      break;
+    }
+    default:;                   // do nothing
+    }
+  }
 }
 
 ostream& netlist::Operation::streamout(ostream& os) const {

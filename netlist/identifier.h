@@ -156,75 +156,22 @@ namespace netlist {
     void set_dimension(const vector<Range>& nd) { m_dimension = nd; }
     const vector<Range>& get_range() const {return m_range;}
     const vector<Range>& get_dimension() const {return m_dimension;}
-    shared_ptr<VIdentifier> deep_copy() const;
-    
-    // register the var name in the block database
-    template<typename T> 
-      bool db_register(DataBase<VIdentifier, T>& db, int inout_t) { /* inout_t: 0 in, 1 out, 2 inout */
-      shared_ptr<T>item = db.find(*this);
-      if(0 != item.use_count()) { /* found */
-        switch(inout_t) {
-        case 0: {               /* input */
-          item->fin.push_back(this);
-          this->db_sig = item;
-          this->inout_t = inout_t;
-          return true;
-        }
-        case 1: {
-          item->fout.push_back(this);
-          this->db_sig = item;
-          this->inout_t = inout_t;
-          return true;
-        }
-        default:
-          // should not run to here
-          assert(0 == "wrong inout type");
-        }
-        return false;
-      } else {
-        return false;
-      }
-    }
-
-    // expunge the register in the block data base
-    template<typename T>
-      bool db_expunge() {
-      if(db_sig.use_count() != 0) return false; /* not registered yet */
-      
-      shared_ptr<T> item = static_pointer_cast<T>(db_sig);
-      
-      switch(inout_t) {
-      case 0: {               /* input */
-        item->fin.remove(this);
-        this->db_sig.reset();
-        return true;
-      }
-      case 1: {
-        item->fout.remove(this);
-        this->db_sig.reset();
-        return true;
-      }
-      default:
-        // should not run to here
-        assert(0 == "wrong inout type");
-      }
-      return false;
-    }
-
-    // update the registered info in the block data base
-    template<typename T>
-      bool db_update(DataBase<VIdentifier, T>& db, int inout_t) {
-      db_expunge<T>();
-      return db_register<T>(db, inout_t);
-    }
-
+    void db_register(shared_ptr<Variable>&, int);
+    void db_register(int);      /* light weight version when father is available */
+    void db_register();         /* light weight version when father and direction is available */
+    void db_expunge();
+    bool db_registered() const { return uid != 0; }
+    void set_father(shared_ptr<Variable> f, int iod = 1) { assert(uid == 0); father = f; inout_t = iod;}
+    void reset_uid(unsigned int id) { uid = id; } /* only used by Variable::get_id() */
+    int get_inout_dir() const { return inout_t; }
 
   private:
     vector<Range> m_range;
     vector<Range> m_dimension;
-    bool numbered;
-    shared_ptr<NetComp> db_sig; /* the wire/reg/var in the database */
-    int inout_t;
+    bool numbered;                 /* true when it is numbered unnamed variable */
+    shared_ptr<Variable> father;   /* the wire/reg/var in the database */
+    int inout_t;                   /* input / output type */
+    unsigned int uid;              /* used as the key to search this variable as fanin or fanout */
   };
   NETLIST_STREAMOUT(VIdentifier);
 

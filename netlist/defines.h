@@ -31,5 +31,8 @@
 
 #define MAX_INT_IN_STREAMOUT 32
 
+// the maximal number of uids unused in a map (Variable) before a clean 
+#define MAX_NUMBER_UNUSED_IN_MAP 512
+
 
 #endif

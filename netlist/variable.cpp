@@ -51,5 +51,28 @@ ostream& netlist::Variable::streamout(ostream& os) const {
   return os;
 
 }
+
+unsigned int netlist::Variable::get_id(int iod) {
+  assert(iod < 2 && iod >= 0);
+
+  uid[iod]++;
+  unsigned int rv = uid[iod];
   
+  if(rv-fan[iod].size() > MAX_NUMBER_UNUSED_IN_MAP) { // clean the map
+    unsigned int index = 1;
+    map<unsigned int, VIdentifier *> new_map;
+    map<unsigned int, VIdentifier *>::iterator it, end, cur;
+    for(it = fan[iod].begin(), end = fan[iod].end(); it != end; index++) {
+      it->second->reset_uid(index);
+      cur = it; it++;
+      VIdentifier * vp = cur->second;
+      fan[iod].erase(cur);
+      fan[iod].insert(it, pair<unsigned int, VIdentifier *>(index, vp));
+    }
+     
+    rv = uid[iod] = index;
+  }
+
+  return rv;
+}
     

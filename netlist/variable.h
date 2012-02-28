@@ -33,17 +33,17 @@ namespace netlist {
   
   class Variable : public NetComp {
   public:
-    Variable() : NetComp(tVariable), fin_id(0), fout_id(0) {}
-    Variable(const VIdentifier& id): NetComp(tVariable), name(id), fin_id(0), fout_id(0) {}
+    Variable() : NetComp(tVariable), uid({0,0}) {}
+    Variable(const VIdentifier& id): NetComp(tVariable), name(id), uid({0,0}) {}
 
     ostream& streamout(ostream& os) const;
 
     VIdentifier name;
-    map<unsigned int, VIdentifier *> fin; /* drivers, hope to use weak_ptr but failed */
-    map<unsigned int, VIdentifier *> fout; /* loads */
+    map<unsigned int, VIdentifier *> fan[2]; /* fan[0] for fanin, fan[1] for fanout */
+    unsigned int get_id(int);
 
   private:
-    unsigned int fin_id, fout_id;
+    unsigned int uid[2];
 
   };
 

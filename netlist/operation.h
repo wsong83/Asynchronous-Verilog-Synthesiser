@@ -91,6 +91,8 @@ namespace netlist {
     Concatenation& get_con();
     VIdentifier& get_var();
     void reduce();
+    void db_register(int iod = 1);
+    void db_expunge();
     ostream& streamout(ostream&) const;
 
   private:

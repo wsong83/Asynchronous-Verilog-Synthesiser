@@ -28,7 +28,7 @@ export BISON_EXE = ~/tool/local/bin/bison
 export FLEX_EXE = ~/tool/local/bin/flex
 export CXX = g++
 
-export CXXFLAGS = -Wall -g
+export CXXFLAGS = -std=c++0x -Wall -g
 export LINKFLAGS = -lboost_regex -lgmpxx -lgmp
 
 # targets

@@ -41,6 +41,8 @@ namespace netlist {
     // helpers
     ostream& streamout(ostream&) const;
     bool is_valid() const { return valid; }
+    void db_register();
+    void db_expunge();
 
     // data
     list<VIdentifier> data; /* store the list of variable identifiers, wires or registers */

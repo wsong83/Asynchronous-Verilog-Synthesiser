@@ -47,6 +47,7 @@ namespace netlist {
     // helpers
     bool is_const() const { return type == TConst && type == TCRange; }
     bool is_single() const {return type != TRange && type != TCRange; }
+    void db_register();
     virtual ostream& streamout(ostream&) const;
     
   private:

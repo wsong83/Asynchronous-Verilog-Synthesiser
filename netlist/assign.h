@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -38,6 +38,8 @@ namespace netlist {
 
     // helpers
     ostream& streamout(ostream&) const;
+    void db_register() { lval.db_register(); rexp.db_register(); }
+    void db_expunge() { lval.db_expunge(); rexp.db_expunge(); }
 
     // data
     string name;         /* as a key in the database, it has no practical meaning */

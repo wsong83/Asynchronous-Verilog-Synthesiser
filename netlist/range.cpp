@@ -109,6 +109,12 @@ netlist::Range::Range(const Range_Exp& sel, int ctype)
     } 
   }
 }
+
+void netlist::Range::db_register() {
+  v.db_register(1);
+  r.first.db_register(1);
+  r.second.db_register(1);
+}
   
 ostream& netlist::Range::streamout(ostream& os) const {
   switch(type) {

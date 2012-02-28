@@ -783,11 +783,11 @@ always_construct
     ;
 
 blocking_assignment 
-    : variable_lvalue '=' expression  { $3.reduce(); $$.reset(new Assign($1, $3, true)); }
+    : variable_lvalue '=' expression  { $3.reduce(); $$.reset(new Assign($1, $3, true)); $$->db_register();}
     ;
 
 nonblocking_assignment 
-    : variable_lvalue "<=" expression  { $3.reduce(); $$.reset(new Assign($1, $3, true)); }
+    : variable_lvalue "<=" expression  { $3.reduce(); $$.reset(new Assign($1, $3, true)); $$->db_register();}
     ;
 
 //A.6.3 Parallel and sequential blocks    
@@ -959,16 +959,19 @@ primary
           shared_ptr<Variable> vp = cm.db_wire.find($1);
           if(0 != vp.use_count()) {
             found = true;
+            $1.set_father(vp);
             break;
           }
           vp = cm.db_reg.find($1);
           if(0 != vp.use_count()) {
             found = true;
+            $1.set_father(vp);
             break;
           }
           vp = cm.db_param.find($1);
           if(0 != vp.use_count()) {
             found = true;
+            $1.set_father(vp);
             break;
           }
           break;

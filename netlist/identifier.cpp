@@ -187,21 +187,21 @@ ostream& netlist::PoIdentifier::streamout(ostream& os) const {
 
 //////////////////////////////// variable identifier /////////////////
 netlist::VIdentifier::VIdentifier()
-  : Identifier(NetComp::tVarName, "n_0"), numbered(true) {  }
+  : Identifier(NetComp::tVarName, "n_0"), numbered(true), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const string& nm)
-  : Identifier(NetComp::tVarName, nm), numbered(false) {  }
+  : Identifier(NetComp::tVarName, nm), numbered(false), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const averilog::avID& id)
-  : Identifier(NetComp::tVarName, id.name), numbered(false) { }
+  : Identifier(NetComp::tVarName, id.name), numbered(false), uid(0) { }
 
 netlist::VIdentifier::VIdentifier(const string& nm, const vector<Range>& rg)
-  : Identifier(NetComp::tVarName, nm), m_range(rg), numbered(false) {  }
+  : Identifier(NetComp::tVarName, nm), m_range(rg), numbered(false), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const VIdentifier& rhs)
   : Identifier(NetComp::tVarName, rhs.name), 
     m_range(rhs.m_range), m_dimension(rhs.m_dimension), numbered(false),
-    db_sig(rhs.db_sig), inout_t(rhs.inout_t) { }
+    father(rhs.father), inout_t(rhs.inout_t), uid(0) { }
 
 VIdentifier& netlist::VIdentifier::operator++ () {
   const boost::regex numbered_name("_(\\d+)\\z");
@@ -244,6 +244,49 @@ ostream& netlist::VIdentifier::streamout(ostream& os) const {
 
   return os;
 }
+
+void netlist::VIdentifier::db_register(shared_ptr<Variable>& f, int iod) {
+  assert(uid == 0);
+  assert(iod >= 0 && iod <= 1);
+
+  // store the father and the inout direction
+  father = f;
+  inout_t = iod;
+
+  // generate a unique id
+  uid = f->get_id(iod);
+  
+  // insert the fanin/out
+  pair<map<unsigned int, VIdentifier*>::iterator, bool> rv;
+  rv = f->fan[iod].insert(pair<unsigned int, VIdentifier *>(uid, this));
+  assert(rv.second);
+
+  // TODO:
+  // currently variables in range are not registered or considered, supposing no variable in ranges
+  // this must be fixed when parameters are support
+  // register in range may also be supported when memory structure is supported for auot synthesis
+}
+
+void netlist::VIdentifier::db_register(int iod) {
+  assert(father.use_count());
+  assert(uid == 0);
+  db_register(father, iod);
+}
+
+void netlist::VIdentifier::db_register() {
+  assert(father.use_count());
+  assert(uid == 0);
+  db_register(father, inout_t);
+}
+
+void netlist::VIdentifier::db_expunge() {
+  assert(uid != 0);
+  assert(father.use_count());
+  
+  int rv = father->fan[inout_t].erase(uid);
+  assert(rv == 1);
+}
+
 
 
 

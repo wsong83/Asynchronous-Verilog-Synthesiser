@@ -39,6 +39,22 @@ void netlist::ConElem::reduce() {
   }
 }
 
+void netlist::ConElem::db_register(int iod) {
+  exp.db_register(iod);
+
+  list<ConElem>::iterator it, end;
+  for(it = con.begin(), end = con.end(); it != end; it++) 
+    it->db_register(iod);
+}
+
+void netlist::ConElem::db_expunge() {
+  exp.db_expunge();
+
+  list<ConElem>::iterator it, end;
+  for(it = con.begin(), end = con.end(); it != end; it++) 
+    it->db_expunge();
+}
+
 ostream& netlist::ConElem::streamout(ostream& os) const {
   if(0 == con.size()) {
     os << exp;
@@ -172,3 +188,14 @@ void netlist::Concatenation::reduce() {
   }
 }
 
+void netlist::Concatenation::db_register(int iod) {
+  list<ConElem>::iterator it, end;
+  for(it = data.begin(), end = data.end(); it != end; it++) 
+    it->db_register(iod);
+}
+
+void netlist::Concatenation::db_expunge() {
+  list<ConElem>::iterator it, end;
+  for(it = data.begin(), end = data.end(); it != end; it++) 
+    it->db_expunge();
+}
