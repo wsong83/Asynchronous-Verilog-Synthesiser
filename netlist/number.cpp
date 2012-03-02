@@ -98,6 +98,16 @@ Number netlist::Number::addition(const Number& rhs) const {
   return m;
 }
 
+Number netlist::Number::minus(const Number& rhs) const {
+  assert(valuable && rhs.valuable);
+  Number m(0);
+  mpz_class d1(txt_value, 2);
+  mpz_class d2(rhs.txt_value, 2);
+  d1 = d1 - d2;
+  m.txt_value = d1.get_str(2);
+  m.num_leng = m.txt_value.size();
+  return m;
+}
 
 Number& netlist::Number::operator+= (const Number& rhs) {
   assert(valuable && rhs.valuable);
@@ -300,6 +310,10 @@ bool netlist::Number::hex2num(char *text, int txt_leng, int start) {
 
 Number netlist::operator+ (const Number& lhs, const Number& rhs) {
   return lhs.addition(rhs);
+}
+
+Number netlist::operator- (const Number& lhs, const Number& rhs) {
+  return lhs.minus(rhs);
 }
 
 Number netlist::operator<< (const Number& lhs, int rhs) {

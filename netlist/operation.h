@@ -112,6 +112,7 @@ namespace netlist {
   void execute_UPos(list<Operation>&);
   void execute_UNeg(list<Operation>&);
   void execute_Add(list<Operation>&, list<Operation>&);
+  void execute_Minus(list<Operation>&, list<Operation>&);
 
 }
 

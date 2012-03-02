@@ -215,55 +215,58 @@ ostream& netlist::Expression::streamout(ostream& os) const {
     c = *it;
     if(c.get_type() <= Operation::oFun) {
       if(op.get_type() != Operation::oNULL) {
-	if(op.get_type() <= Operation::oUNxor) { // unary operation always add parenthesis
-	  os << "(" << op << c << ")";
-	  if(!m_stack.empty()) {op = m_stack.top(); m_stack.pop();}
-	} else if(op.get_type() < Operation::oQuestion) { // two operands
-	  if(!m_stack.empty() && op.get_type() >= m_stack.top().get_type()+10) {
-	    if(op_cnt == 0) { 	// first operand
-	      os << "(" << c << op;
-	      op_cnt = 1;
-	    } else {
-	      os << c << ")";
-	      op_cnt = 0;
-	      op = m_stack.top(); m_stack.pop();
-	    }
-	  } else {
-	    if(op_cnt == 0) { 	// first operand
-	      os  << c << op;
-	      op_cnt = 1;
-	    } else {
-	      os << c;
-	      op_cnt = 0;
-	      op = m_stack.top(); m_stack.pop();
-	    }
-	  }
-	} else {		// ?
-	  if(!m_stack.empty()) {
-	    if(op_cnt == 0) { 	// first operand
-	      os << "(" << c << " ? ";
-	      op_cnt = 1;
-	    } else if(op_cnt == 1){
-	      os << c << " : ";
-	      op_cnt = 2;
-	    } else {
-	      os << c << ")";
-	      op_cnt = 0;
-	      op = m_stack.top(); m_stack.pop();
-	    }
-	  } else {
-	    if(op_cnt == 0) { 	// first operand
-	      os << c << " ? ";
-	      op_cnt = 1;
-	    } else if(op_cnt == 1){
-	      os << c << " : ";
-	      op_cnt = 2;
-	    } else {
-	      os << c;
-	      op_cnt = 0;
-	    }
-	  } 
-	}
+        if(op.get_type() <= Operation::oUNxor) { // unary operation always add parenthesis
+          os << "(" << op << c << ")";
+          if(!m_stack.empty()) {op = m_stack.top(); m_stack.pop();}
+          else op = Operation();
+        } else if(op.get_type() < Operation::oQuestion) { // two operands
+          if(!m_stack.empty() && op.get_type() >= m_stack.top().get_type()+10) {
+            if(op_cnt == 0) { 	// first operand
+              os << "(" << c << op;
+              op_cnt = 1;
+            } else {
+              os << c << ")";
+              op_cnt = 0;
+              op = m_stack.top(); m_stack.pop();
+            }
+          } else {
+            if(op_cnt == 0) { 	// first operand
+              os  << c << op;
+              op_cnt = 1;
+            } else {
+              os << c;
+              op_cnt = 0;
+              if(!m_stack.empty()) {op = m_stack.top(); m_stack.pop();}
+              else op = Operation();
+            }
+          }
+        } else {		// ?
+          if(!m_stack.empty()) {
+            if(op_cnt == 0) { 	// first operand
+              os << "(" << c << " ? ";
+              op_cnt = 1;
+            } else if(op_cnt == 1){
+              os << c << " : ";
+              op_cnt = 2;
+            } else {
+              os << c << ")";
+              op_cnt = 0;
+              if(!m_stack.empty()) {op = m_stack.top(); m_stack.pop();}
+              else op = Operation();
+            }
+          } else {
+            if(op_cnt == 0) { 	// first operand
+              os << c << " ? ";
+              op_cnt = 1;
+            } else if(op_cnt == 1){
+              os << c << " : ";
+              op_cnt = 2;
+            } else {
+              os << c;
+              op_cnt = 0;
+            }
+          } 
+        }
       } else {
         os << c;
       }

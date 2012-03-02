@@ -47,6 +47,7 @@ namespace netlist {
     bool is_valid() const { return valid; }
     Number& truncate (int lhs, int rhs);
     Number addition (const Number& rhs) const;
+    Number minus (const Number& rhs) const;
     Number& operator+= (const Number& rhs);
     Number& lfsh (int rhs);
     ostream& streamout(ostream&) const;
@@ -75,6 +76,7 @@ namespace netlist {
 
   // overload operators
   Number operator+ (const Number& lhs, const Number& rhs);
+  Number operator- (const Number& lhs, const Number& rhs);
   Number operator<< (const Number& lhs, int rhs);
   NETLIST_STREAMOUT(Number)
 

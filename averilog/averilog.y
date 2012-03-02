@@ -995,7 +995,50 @@ primary
 
 //A.8.5 Expression left-side values
 variable_lvalue
-    : variable_identifier { $$ = $1 ; }
+    : variable_identifier 
+    {
+      // search this variable in current components until reach a module level
+      list<shared_ptr<NetComp> >::iterator it = Lib.get_current_it();
+      bool reach_a_module = false;
+      bool found = false;
+      while(Lib.it_valid(it)) {
+        shared_ptr<NetComp> ccp(*it); /* point for the current component */
+        switch(ccp->get_type()) {
+        case NetComp::tModule: {
+          reach_a_module = true;
+          Module& cm = *(static_pointer_cast<Module>(ccp));
+          shared_ptr<Variable> vp = cm.db_wire.find($1);
+          if(0 != vp.use_count()) {
+            found = true;
+            $1.set_father(vp);
+            break;
+          }
+          vp = cm.db_reg.find($1);
+          if(0 != vp.use_count()) {
+            found = true;
+            $1.set_father(vp);
+            break;
+          }
+          vp = cm.db_param.find($1);
+          if(0 != vp.use_count()) {
+            found = true;
+            $1.set_father(vp);
+            break;
+          }
+          break;
+        }
+        default:
+          // should not run to here
+          assert(0 == "component type");
+        }
+        if(reach_a_module || found) break;
+        else it++;
+      }
+      if(found)
+        $$ = $1;
+      else
+        av_env.error(yylloc, "SYN-VAR-3", $1.name);
+    }
     | concatenation       
     { 
       $$ = $1;

@@ -1,0 +1,1 @@
+* if a port is not defined explicitly as wire or reg, it cannot be fined in databases, should add automatic infer

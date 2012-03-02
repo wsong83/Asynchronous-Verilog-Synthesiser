@@ -180,6 +180,23 @@ ostream& netlist::Operation::streamout(ostream& os) const {
 void netlist::Operation::reduce() {
   if(data.use_count() != 0)
     data->reduce();
+
+  // change to simpler types of operation if possible
+  switch(otype) {
+  case oCon: {
+    Concatenation& mcon = *(static_pointer_cast<Concatenation>(data));
+    if(mcon.data.size() == 1 &&
+       mcon.data.front().exp.is_valuable() &&
+       mcon.data.front().con.size() == 0
+       ) {
+      data.reset(new Number(mcon.data.front().exp.get_value()));
+      otype = oNum;
+      valuable = true;
+    }
+    break;
+  }
+  default:;
+  }
 }
 
 // dummy yet
@@ -211,7 +228,7 @@ void netlist::execute_operation( Operation::operation_t op,
   case Operation::oDiv:      break;
   case Operation::oMode:     break;
   case Operation::oAdd:      execute_Add(d1, d2); return;
-  case Operation::oMinus:    break;
+  case Operation::oMinus:    execute_Minus(d1, d2); return;
   case Operation::oRS:       break;
   case Operation::oLS:       break;
   case Operation::oLRS:      break;
@@ -267,3 +284,15 @@ void netlist::execute_Add(list<Operation>& d1, list<Operation>& d2) {
   }
   return;
 }
+
+// -
+void netlist::execute_Minus(list<Operation>& d1, list<Operation>& d2) {
+  if(d1.front().is_valuable() && d2.front().is_valuable()) {
+    d1.front().get_num() = d1.front().get_num() - d2.front().get_num();
+  } else {
+    d1.push_front(Operation(Operation::oAdd));
+    d1.splice(d1.end(), d2);
+  }
+  return;
+}
+  
