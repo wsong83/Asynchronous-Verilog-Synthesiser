@@ -79,6 +79,18 @@ netlist::Number::Number(int d)
   num_leng = txt_value.size();
 }
 
+netlist::Number::Number(const mpz_class& m) 
+  : NetComp(tNumber), txt_value(), valid(true), valuable(true)
+{
+  txt_value = m.get_str(2);
+  num_leng = txt_value.size();
+}
+
+netlist::Number::Number(const string& txt)
+  : NetComp(tNumber), num_leng(txt.size()), txt_value(txt), valid(true)
+{
+  check_valuable();
+}
 
 Number& netlist::Number::truncate (int lhs, int rhs) { // no sign support
   assert(lhs >= 0 && (unsigned int)(lhs) <= num_leng && rhs >= 0 && rhs <= lhs);
@@ -306,7 +318,16 @@ bool netlist::Number::hex2num(char *text, int txt_leng, int start) {
   return true;
 }
 
+bool netlist::Number::check_valuable() {
+  for(unsigned int i=0; i<txt_value.size(); i++)
+    if(txt_value[i] == 'x' || txt_value[i] == 'z') {
+      valuable = false;
+      return false;
+    }
 
+  valuable = true;
+  return true;
+}
 
 Number netlist::operator+ (const Number& lhs, const Number& rhs) {
   return lhs.addition(rhs);

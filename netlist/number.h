@@ -38,6 +38,8 @@ namespace netlist {
     Number() : NetComp(tNumber), valid(false), valuable(false) {}
     Number(char *text, int txt_leng); /* constructor for scanner */
     Number(int d);
+    Number(const string&);
+    Number(const mpz_class&);
 
     // helpers
     const string& get_txt_value() const { return txt_value; }
@@ -69,9 +71,7 @@ namespace netlist {
     bool dec2num(char *text, int txt_leng, int start);
     bool oct2num(char *text, int txt_leng, int start);
     bool hex2num(char *text, int txt_leng, int start);
-    void update_value();
-    void update_txt_value();
-
+    bool check_valuable();
   };
 
   // overload operators

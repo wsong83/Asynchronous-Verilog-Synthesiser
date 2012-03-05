@@ -111,8 +111,38 @@ namespace netlist {
 
   void execute_UPos(list<Operation>&);
   void execute_UNeg(list<Operation>&);
-  void execute_Add(list<Operation>&, list<Operation>&);
-  void execute_Minus(list<Operation>&, list<Operation>&);
+  void execute_ULRev(list<Operation>&); /* ! */
+  void execute_URev(list<Operation>&);  /* ~ */
+  void execute_UAnd(list<Operation>&);  /* unary & */
+  void execute_UNand(list<Operation>&); /* unary ~& */
+  void execute_UOr(list<Operation>&);   /* unary | */
+  void execute_UNor(list<Operation>&);  /* unary ~| */
+  void execute_UXor(list<Operation>&);  /* unary ^ */
+  void execute_UNxor(list<Operation>&); /* unary ~^ */
+  void execute_Power(list<Operation>&, list<Operation>&); /* ** */
+  void execute_Time(list<Operation>&, list<Operation>&);  /* * */
+  void execute_Div(list<Operation>&, list<Operation>&); /* / */
+  void execute_Mode(list<Operation>&, list<Operation>&); /* % */
+  void execute_Add(list<Operation>&, list<Operation>&);  /* + */
+  void execute_Minus(list<Operation>&, list<Operation>&); /* - */
+  void execute_RS(list<Operation>&, list<Operation>&);    /* >> */
+  void execute_LS(list<Operation>&, list<Operation>&);    /* << */
+  void execute_LRS(list<Operation>&, list<Operation>&);   /* >>> */
+  void execute_Less(list<Operation>&, list<Operation>&);  /* < */
+  void execute_Le(list<Operation>&, list<Operation>&);    /* <= */
+  void execute_Great(list<Operation>&, list<Operation>&); /* > */
+  void execute_Ge(list<Operation>&, list<Operation>&);    /* >= */
+  void execute_Eq(list<Operation>&, list<Operation>&);    /* == */
+  void execute_Neq(list<Operation>&, list<Operation>&);   /* != */
+  void execute_CEq(list<Operation>&, list<Operation>&);   /* === */
+  void execute_CNeq(list<Operation>&, list<Operation>&);  /* !== */
+  void execute_And(list<Operation>&, list<Operation>&);   /* & */
+  void execute_Xor(list<Operation>&, list<Operation>&);   /* ^ */
+  void execute_Nxor(list<Operation>&, list<Operation>&);  /* ~^ */
+  void execute_Or(list<Operation>&, list<Operation>&);    /* | */
+  void execute_LAnd(list<Operation>&, list<Operation>&);  /* && */
+  void execute_LOr(list<Operation>&, list<Operation>&);   /* || */
+  void execute_Question(list<Operation>&, list<Operation>&, list<Operation>&); /* ? : */
 
 }
 
