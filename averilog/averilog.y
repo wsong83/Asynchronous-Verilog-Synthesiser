@@ -238,13 +238,14 @@
 %type <tAssign>     nonblocking_assignment
 %type <tConcatenation> concatenation
 %type <tExp>        expression
+%type <tExp>        primary
 %type <tLConcatenation> variable_lvalue
 %type <tListExp>    expressions
 %type <tListPort>   list_of_port_identifiers
 %type <tListVar>    list_of_variable_identifiers
 %type <tModuleName> module_identifier
 %type <tPortName>   port_identifier
-%type <tExp>        primary
+%type <tRange>      range_expression
 %type <tVarName>    variable_identifier
 
 %start source_text
@@ -935,10 +936,10 @@ expression
     ;
 
 range_expression
-    : expression
-    | expression ':' expression
-    | expression "+:" expression
-    | expression "-:" expression
+    : expression                    { $$ = Range($1); }       
+    | expression ':' expression     { $$ = Range(pair<Expression,Expression>($1,$3)); }
+    | expression "+:" expression    { $$ = Range(pair<Expression,Expression>($1,$3), 1); }
+    | expression "-:" expression    { $$ = Range(pair<Expression,Expression>($1,$3), -1); }
     ;
 
 //A.8.4 Primaries

@@ -337,6 +337,15 @@ Number netlist::operator- (const Number& lhs, const Number& rhs) {
   return lhs.minus(rhs);
 }
 
+bool netlist::operator== (const Number& lhs, const Number& rhs) {
+  if(lhs.get_txt_value() == rhs.get_txt_value() && 
+     string::npos == lhs.get_txt_value().find('x') &&
+     string::npos == lhs.get_txt_value().find('z'))
+    return true;
+  else
+    return false;
+}
+
 Number netlist::operator<< (const Number& lhs, int rhs) {
   Number dd(lhs);
   dd.lfsh(rhs);

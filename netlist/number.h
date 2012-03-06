@@ -77,6 +77,7 @@ namespace netlist {
   // overload operators
   Number operator+ (const Number& lhs, const Number& rhs);
   Number operator- (const Number& lhs, const Number& rhs);
+  bool operator== (const Number& lhs, const Number& rhs);
   Number operator<< (const Number& lhs, int rhs);
   NETLIST_STREAMOUT(Number)
 

@@ -70,6 +70,8 @@ void netlist::Expression::reduce() {
   // state stack
   stack<shared_ptr<expression_state> > m_stack;
 
+  if(valuable) return;          // fast return path
+
   while(!eqn.empty()) {
     // fetch a new operation element
     Operation m = eqn.front();
@@ -184,10 +186,6 @@ void netlist::Expression::append(Operation::operation_t otype, Expression& d1, E
   this->reduce();
 }
 
-bool netlist::Expression::operator== (const Expression& rhs) const {
-  return false;
-}
-
 void netlist::Expression::concatenate(const Expression& rhs) {
   assert(eqn.size() == 1 &&
 	 eqn.front().get_type() == Operation::oNum &&
@@ -197,83 +195,76 @@ void netlist::Expression::concatenate(const Expression& rhs) {
   eqn.front().get_num().concatenate(rhs.eqn.front().get_num());
 }
 
-Expression netlist::operator+ (const Expression& lhs, const Expression& rhs) {
-  return Expression();
+Expression netlist::operator+ (Expression lhs, Expression rhs) {
+  lhs.append(Operation::oAdd, rhs);
+  return lhs;
 }
 
-Expression netlist::operator- (const Expression& lhs, const Expression& rhs) {
-  return Expression();
+Expression netlist::operator- (Expression lhs, Expression rhs) {
+  lhs.append(Operation::oMinus, rhs);
+  return lhs;  
+}
+
+bool netlist::operator== (const Expression& lhs, const Expression& rhs) {
+  if(lhs.is_valuable() && rhs.is_valuable() && lhs.get_value() == rhs.get_value())
+    return true;
+  else
+    return false;
 }
 
 ostream& netlist::Expression::streamout(ostream& os) const {
   list<Operation>::const_iterator it, end;
-  stack<Operation> m_stack;
+  stack<pair<Operation,unsigned int> > m_stack;
   Operation c, op;
-  int op_cnt = 0;
+  unsigned int op_cnt = 0;
 
   for(it=eqn.begin(), end=eqn.end(); it!=end; it++) {
     c = *it;
-    if(c.get_type() <= Operation::oFun) {
+    if(c.get_type() <= Operation::oFun) { // data
       if(op.get_type() != Operation::oNULL) {
         if(op.get_type() <= Operation::oUNxor) { // unary operation always add parenthesis
           os << "(" << op << c << ")";
-          if(!m_stack.empty()) {op = m_stack.top(); m_stack.pop();}
-          else op = Operation();
+          if(!m_stack.empty()) {op = m_stack.top().first; op_cnt = m_stack.top().second + 1; m_stack.pop();}
+          else { op = Operation(); op_cnt = 0; }
         } else if(op.get_type() < Operation::oQuestion) { // two operands
-          if(!m_stack.empty() && op.get_type() >= m_stack.top().get_type()+10) {
-            if(op_cnt == 0) { 	// first operand
-              os << "(" << c << op;
-              op_cnt = 1;
-            } else {
-              os << c << ")";
-              op_cnt = 0;
-              op = m_stack.top(); m_stack.pop();
-            }
+          if(op_cnt == 0) { 	// first operand
+            os << c ;
+            op_cnt = 1;
           } else {
-            if(op_cnt == 0) { 	// first operand
-              os  << c << op;
-              op_cnt = 1;
-            } else {
-              os << c;
-              op_cnt = 0;
-              if(!m_stack.empty()) {op = m_stack.top(); m_stack.pop();}
-              else op = Operation();
-            }
-          }
+            os << op << c;
+
+            if(!m_stack.empty() && op.get_type() >= m_stack.top().first.get_type()+10)
+              os << ")";
+            
+            if(!m_stack.empty()) {
+              op = m_stack.top().first; op_cnt = m_stack.top().second+1; m_stack.pop();
+            } else {op = Operation(); op_cnt = 0; }
+          } 
         } else {		// ?
-          if(!m_stack.empty()) {
-            if(op_cnt == 0) { 	// first operand
-              os << "(" << c << " ? ";
-              op_cnt = 1;
-            } else if(op_cnt == 1){
-              os << c << " : ";
-              op_cnt = 2;
-            } else {
-              os << c << ")";
-              op_cnt = 0;
-              if(!m_stack.empty()) {op = m_stack.top(); m_stack.pop();}
-              else op = Operation();
-            }
+          if(op_cnt == 0) { 	// first operand
+            os << c;
+            op_cnt = 1;
+          } else if(op_cnt == 1){
+            os << " ? " << c;
+            op_cnt = 2;
           } else {
-            if(op_cnt == 0) { 	// first operand
-              os << c << " ? ";
-              op_cnt = 1;
-            } else if(op_cnt == 1){
-              os << c << " : ";
-              op_cnt = 2;
-            } else {
-              os << c;
-              op_cnt = 0;
-            }
+            os << " : " << c;
+
+            if(!m_stack.empty() && op.get_type() >= m_stack.top().first.get_type()+10) {
+              os << ")";
+              op = m_stack.top().first; op_cnt=m_stack.top().second+1; m_stack.pop();
+            } else { op = Operation(); op_cnt = 0; }       
           } 
         }
       } else {
         os << c;
       }
     } else {			// must be an operator
-      op_cnt = 0;
-      if(Operation::oNULL != op.get_type()) m_stack.push(op);
+      if(Operation::oNULL != op.get_type()) m_stack.push(pair<Operation,unsigned int>(op,op_cnt));
       op = c;
+      op_cnt = 0;
+      if(!m_stack.empty() && op.get_type() >= m_stack.top().first.get_type()+10)
+        os << "(";
     }
   }
   

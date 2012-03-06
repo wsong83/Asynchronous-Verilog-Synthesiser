@@ -27,13 +27,6 @@
  */
 
 #include "component.h"
-#include "averilog/av_token.h"
-
-// Env is a parameter to the parser, which is not declared yet
-namespace shell {
-  class Env;
-}
-#include "averilog/averilog.hh"
 
 using namespace netlist;
 
@@ -46,32 +39,37 @@ netlist::Range::Range(const mpz_class& rl, const mpz_class& rr)
 netlist::Range::Range(const Expression& sel)
   : type(TVar) 
 { 
-  if(sel.is_valuable()) {	// constant expression, value it now
-    c = sel.get_value().get_value();
+  Expression m = sel;
+  m.reduce();
+  if(m.is_valuable()) {	// constant expression, value it now
+    c = m.get_value().get_value();
     type = TConst;
   } else {
-    v = sel;
+    v = m;
   }
  };
 
 netlist::Range::Range(const Range_Exp& sel)
   : type(TRange) 
-{  
-  if(sel.first == sel.second) {	// only one bit is selected
-    if(sel.first.is_valuable()) { // constant expression, value it now
-      c = sel.first.get_value().get_value();
+{ 
+  Range_Exp m = sel;
+  m.first.reduce();
+  m.second.reduce();
+  if(m.first == m.second) {	// only one bit is selected
+    if(m.first.is_valuable()) { // constant expression, value it now
+      c = m.first.get_value().get_value();
       type = TConst;
     } else {			// variable expression
-      v = sel.first;
+      v = m.first;
       type = TVar;
     }
   } else {
-    if(sel.first.is_valuable() && sel.second.is_valuable()) {
+    if(m.first.is_valuable() && m.second.is_valuable()) {
       type = TCRange;
-      cr.first = sel.first.get_value().get_value();
-      cr.second = sel.second.get_value().get_value();
+      cr.first = m.first.get_value().get_value();
+      cr.second = m.second.get_value().get_value();
     } else {
-      r = sel;
+      r = m;
     } 
   }
 };
@@ -80,10 +78,10 @@ netlist::Range::Range(const Range_Exp& sel, int ctype)
   : type(TRange)
 {
   Range_Exp m_sel;
-  if(ctype == averilog::av_parser::token::oPColon) { // positive colon
+  if(ctype == 1) { // positive colon
     m_sel.first = sel.first+sel.second;
     m_sel.second = sel.first;
-  } else if(ctype == averilog::av_parser::token::oNColon){ // negtive colon
+  } else if(ctype == -1){ // negtive colon
     m_sel.first = sel.first;
     m_sel.second = sel.first - sel.second;
   } else {

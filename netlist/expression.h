@@ -55,7 +55,6 @@ namespace netlist {
     void concatenate(const Expression&); /* concatenate the number in two expressions */
     
     virtual ostream& streamout(ostream&) const;
-    bool operator== (const Expression& rhs) const;
     
     list<Operation> eqn;
 
@@ -64,8 +63,9 @@ namespace netlist {
     
   };
 
-  Expression operator+ (const Expression&, const Expression&);
-  Expression operator- (const Expression&, const Expression&);
+  Expression operator+ (Expression, Expression);
+  Expression operator- (Expression, Expression);
+  bool operator== (const Expression&, const Expression&);
 
   NETLIST_STREAMOUT(Expression);
 
