@@ -238,19 +238,18 @@ void netlist::execute_operation( Operation::operation_t op,
   case Operation::oGe:       execute_Ge(d1,d2); return;
   case Operation::oEq:       execute_Eq(d1,d2); return;
   case Operation::oNeq:      execute_Neq(d1,d2); return;
-  case Operation::oCEq:      break;
-  case Operation::oCNeq:     break;
-  case Operation::oAnd:      break;
-  case Operation::oXor:      break;
-  case Operation::oNxor:     break;
-  case Operation::oOr:       break;
-  case Operation::oLAnd:     break;
-  case Operation::oLOr:      break;
-  case Operation::oQuestion: break;
+  case Operation::oCEq:      execute_CEq(d1,d2); return;
+  case Operation::oCNeq:     execute_CNeq(d1,d2); return;
+  case Operation::oAnd:      execute_And(d1,d2); return;
+  case Operation::oXor:      execute_Xor(d1,d2); return;
+  case Operation::oNxor:     execute_Nxor(d1,d2); return;
+  case Operation::oOr:       execute_Or(d1,d2); return;
+  case Operation::oLAnd:     execute_LAnd(d1,d2); return;
+  case Operation::oLOr:      execute_LOr(d1,d2); return;
+  case Operation::oQuestion: execute_Question(d1,d2,d3); return;
   default:  // should not run to here
-    assert(1 == 0);
+    assert(0 == "wrong operation type");
   }
-  assert(1 == 0);
   return;
 }
 
@@ -716,3 +715,230 @@ void netlist::execute_Neq(list<Operation>& d1, list<Operation>& d2) {
     d1.splice(d1.end(), d2);
   }
 }
+// ===
+void netlist::execute_CEq(list<Operation>& d1, list<Operation>& d2) {
+  if(d1.front().get_type() == Operation::oNum && d2.front().get_type() == Operation::oNum) {
+    string tval1 = d1.front().get_num().get_txt_value();
+    string tval2 = d2.front().get_num().get_txt_value();
+    if(tval1.size() > tval2.size())
+      tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
+    else if(tval1.size() < tval2.size())
+      tval1.insert(tval1.begin(), tval2.size() - tval1.size(), '0');
+
+    for(unsigned int i=0; i<tval1.size(); i++) {
+      if(tval1[i] != tval2[i]) {
+        d1.front().get_num() = Number("0");
+        return;
+      } 
+    }
+    // equal
+    d1.front().get_num() = Number("1");
+  } else {
+    d1.push_front(Operation(Operation::oCEq));
+    d1.splice(d1.end(), d2);
+  }
+}
+
+// !==
+void netlist::execute_CNeq(list<Operation>& d1, list<Operation>& d2) {
+  if(d1.front().get_type() == Operation::oNum && d2.front().get_type() == Operation::oNum) {
+    string tval1 = d1.front().get_num().get_txt_value();
+    string tval2 = d2.front().get_num().get_txt_value();
+    if(tval1.size() > tval2.size())
+      tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
+    else if(tval1.size() < tval2.size())
+      tval1.insert(tval1.begin(), tval2.size() - tval1.size(), '0');
+
+    for(unsigned int i=0; i<tval1.size(); i++) {
+      if(tval1[i] != tval2[i]) {
+        d1.front().get_num() = Number("1");
+        return;
+      } 
+    }
+    // equal
+    d1.front().get_num() = Number("0");
+  } else {
+    d1.push_front(Operation(Operation::oCNeq));
+    d1.splice(d1.end(), d2);
+  }
+}
+
+// &
+void netlist::execute_And(list<Operation>& d1, list<Operation>& d2) {
+  if(d1.front().get_type() == Operation::oNum && d2.front().get_type() == Operation::oNum) {
+    string tval1 = d1.front().get_num().get_txt_value();
+    string tval2 = d2.front().get_num().get_txt_value();
+    if(tval1.size() > tval2.size())
+      tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
+    else if(tval1.size() < tval2.size())
+      tval1.insert(tval1.begin(), tval2.size() - tval1.size(), '0');
+
+    for(unsigned int i=0; i<tval1.size(); i++) {
+      if(tval1[i] != '0' && tval2[i] != '0') {
+        if(tval1[i] == '1' && tval2[i] == '1')
+          tval1[i] = '1';
+        else
+          tval1[i] = 'x';
+      } else {
+        tval1[i] = '0';
+      } 
+    }
+  } else {
+    d1.push_front(Operation(Operation::oAnd));
+    d1.splice(d1.end(), d2);
+  }
+}
+
+// ^
+void netlist::execute_Xor(list<Operation>& d1, list<Operation>& d2) {
+  if(d1.front().get_type() == Operation::oNum && d2.front().get_type() == Operation::oNum) {
+    string tval1 = d1.front().get_num().get_txt_value();
+    string tval2 = d2.front().get_num().get_txt_value();
+    if(tval1.size() > tval2.size())
+      tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
+    else if(tval1.size() < tval2.size())
+      tval1.insert(tval1.begin(), tval2.size() - tval1.size(), '0');
+
+    for(unsigned int i=0; i<tval1.size(); i++) {
+      if(tval1[i] == '0') {
+        if(tval2[i] == '1')
+          tval1[i] = '1';
+        else if(tval2[i] == '0')
+          tval1[i] = '0';
+        else
+          tval1[i] = 'x';
+      } else if(tval1[i] == '1') {
+        if(tval2[i] == '1')
+          tval1[i] = '0';
+        else if(tval2[i] == '0')
+          tval1[i] = '1';
+        else
+          tval1[i] = 'x';
+      } else
+        tval1[i] = 'x';        
+    }
+  } else {
+    d1.push_front(Operation(Operation::oXor));
+    d1.splice(d1.end(), d2);
+  }
+}
+
+// ~^
+void netlist::execute_Nxor(list<Operation>& d1, list<Operation>& d2) {
+  if(d1.front().get_type() == Operation::oNum && d2.front().get_type() == Operation::oNum) {
+    string tval1 = d1.front().get_num().get_txt_value();
+    string tval2 = d2.front().get_num().get_txt_value();
+    if(tval1.size() > tval2.size())
+      tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
+    else if(tval1.size() < tval2.size())
+      tval1.insert(tval1.begin(), tval2.size() - tval1.size(), '0');
+
+    for(unsigned int i=0; i<tval1.size(); i++) {
+      if(tval1[i] == '0') {
+        if(tval2[i] == '1')
+          tval1[i] = '0';
+        else if(tval2[i] == '0')
+          tval1[i] = '1';
+        else
+          tval1[i] = 'x';
+      } else if(tval1[i] == '1') {
+        if(tval2[i] == '1')
+          tval1[i] = '1';
+        else if(tval2[i] == '0')
+          tval1[i] = '0';
+        else
+          tval1[i] = 'x';
+      } else
+        tval1[i] = 'x';        
+    }
+  } else {
+    d1.push_front(Operation(Operation::oNxor));
+    d1.splice(d1.end(), d2);
+  }
+}
+
+// |
+void netlist::execute_Or(list<Operation>& d1, list<Operation>& d2) {
+  if(d1.front().get_type() == Operation::oNum && d2.front().get_type() == Operation::oNum) {
+    string tval1 = d1.front().get_num().get_txt_value();
+    string tval2 = d2.front().get_num().get_txt_value();
+    if(tval1.size() > tval2.size())
+      tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
+    else if(tval1.size() < tval2.size())
+      tval1.insert(tval1.begin(), tval2.size() - tval1.size(), '0');
+
+    for(unsigned int i=0; i<tval1.size(); i++) {
+      if(tval1[i] == '1' || tval2[i] == '1') {
+        tval1[i] = '1';
+      } else if(tval1[i] == '0' && tval2[i] == '0') {
+        tval1[i] = '0';
+      } else
+        tval1[i] = 'x';        
+    }
+  } else {
+    d1.push_front(Operation(Operation::oOr));
+    d1.splice(d1.end(), d2);
+  }
+}
+
+// &&
+void netlist::execute_LAnd(list<Operation>& d1, list<Operation>& d2) {
+  if(d1.front().get_type() == Operation::oNum && d2.front().get_type() == Operation::oNum) {
+    string tval1 = d1.front().get_num().get_txt_value();
+    string tval2 = d2.front().get_num().get_txt_value();
+    
+    if(string::npos != tval1.find('1') && string::npos != tval2.find('1') ) {
+      d1.front().get_num() = Number("1");
+    } else if(string::npos != tval1.find('x') || 
+              string::npos != tval2.find('x') ||
+              string::npos != tval1.find('z') || 
+              string::npos != tval2.find('z') ) {
+      d1.front().get_num() = Number("x");
+    } else
+      d1.front().get_num() = Number("0");
+  } else {
+    d1.push_front(Operation(Operation::oLAnd));
+    d1.splice(d1.end(), d2);
+  }
+}
+
+// ||
+void netlist::execute_LOr(list<Operation>& d1, list<Operation>& d2) {
+  if(d1.front().get_type() == Operation::oNum && d2.front().get_type() == Operation::oNum) {
+    string tval1 = d1.front().get_num().get_txt_value();
+    string tval2 = d2.front().get_num().get_txt_value();
+    
+    if(string::npos != tval1.find('1') || string::npos != tval2.find('1') ) {
+      d1.front().get_num() = Number("1");
+    } else if(string::npos != tval1.find('x') || 
+              string::npos != tval2.find('x') ||
+              string::npos != tval1.find('z') || 
+              string::npos != tval2.find('z') ) {
+      d1.front().get_num() = Number("x");
+    } else
+      d1.front().get_num() = Number("0");
+  } else {
+    d1.push_front(Operation(Operation::oLOr));
+    d1.splice(d1.end(), d2);
+  }
+}
+
+// ?:
+void netlist::execute_Question(list<Operation>& d1, list<Operation>& d2, list<Operation>&d3) {
+  if(d1.front().get_type() == Operation::oNum) {
+    string tval1 = d1.front().get_num().get_txt_value();
+    
+    if(string::npos != tval1.find('1')) {
+      d1.clear();
+      d1.splice(d1.end(), d2);
+    } else {
+      d1.clear();
+      d1.splice(d1.end(), d3);
+    }
+  } else {
+    d1.push_front(Operation(Operation::oQuestion));
+    d1.splice(d1.end(), d2);
+    d1.splice(d1.end(), d3);
+  }
+}
+
