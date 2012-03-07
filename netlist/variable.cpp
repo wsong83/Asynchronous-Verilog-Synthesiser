@@ -35,14 +35,16 @@ ostream& netlist::Variable::streamout(ostream& os) const {
 
   vector<Range> rm = name.get_range();
   for(it=rm.begin(), end=rm.end(); it != end; it++) {
+    if(it->is_dim()) continue;
     os << "[" << *it;
     if(it->is_single())
       os << ":" << *it;
     os << "]";
   }
   os << " " << name.name;
-  rm = name.get_dimension();
+  rm = name.get_range();
   for(it=rm.begin(), end=rm.end(); it != end; it++) {
+    if(!it->is_dim()) break;
     os << "[" << *it;
     if(it->is_single())
       os << ":" << *it;

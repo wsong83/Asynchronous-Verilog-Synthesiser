@@ -200,7 +200,7 @@ netlist::VIdentifier::VIdentifier(const string& nm, const vector<Range>& rg)
 
 netlist::VIdentifier::VIdentifier(const VIdentifier& rhs)
   : Identifier(NetComp::tVarName, rhs.name), 
-    m_range(rhs.m_range), m_dimension(rhs.m_dimension), numbered(false),
+    m_range(rhs.m_range), m_select(rhs.m_select), numbered(false),
     father(rhs.father), inout_t(rhs.inout_t), uid(0) { }
 
 VIdentifier& netlist::VIdentifier::operator++ () {
@@ -233,12 +233,8 @@ VIdentifier& netlist::VIdentifier::add_prefix(const Identifier& prefix) {
 ostream& netlist::VIdentifier::streamout(ostream& os) const {
   vector<Range>::const_iterator it, end;
 
-  //os << "wire ";
-  for(it=m_range.begin(), end=m_range.end(); it != end; it++) {
-    os << "[" << *it << "]";
-  }
   os << name;
-  for(it=m_dimension.begin(), end=m_dimension.end(); it != end; it++) {
+  for(it=m_select.begin(), end=m_select.end(); it != end; it++) {
     os << "[" << *it << "]";
   }
 

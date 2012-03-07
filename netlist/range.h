@@ -41,7 +41,7 @@ namespace netlist {
     Range(const mpz_class&);	/* select by a fix number */
     Range(const mpz_class&, const mpz_class&);	/* select by a fix number */
     Range(const Expression&);	/* select by an expression  */
-    Range(const Range_Exp&);    /* declare or select by a range expression */
+    Range(const Range_Exp&, bool dim = false);    /* declare or select by a range expression */
     Range(const Range_Exp&, int); /* select by a range expression using positive or negtive colon */
 
     // helpers
@@ -49,12 +49,15 @@ namespace netlist {
     bool is_single() const {return type != TRange && type != TCRange; }
     void db_register();
     virtual ostream& streamout(ostream&) const;
+    void set_dim() { dim = true;}
+    bool is_dim() const { return dim;}
     
   private:
     mpz_class c;                /* constant */
     Expression v;               /* variable */
     Range_Exp r;                /* range expression */
     Range_Const cr;             /* const range */
+    bool dim;                   /* true when it is a dimension rather than range */
     
     enum type_t {
       TErr,

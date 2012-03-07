@@ -130,6 +130,7 @@ namespace netlist {
     // helpers
     void set_range(const vector<Range>& nr) { m_range = nr; }
     const vector<Range>& get_range() const {return m_range;}
+    vector<Range>& get_range_ref() {return m_range;}
     ostream& streamout(ostream& os) const;
 
   private:
@@ -152,10 +153,10 @@ namespace netlist {
     VIdentifier& operator++ ();
     VIdentifier& add_prefix (const Identifier&);
     ostream& streamout(ostream& os) const;
-    void set_range(const vector<Range>& nr) { m_range = nr; }
-    void set_dimension(const vector<Range>& nd) { m_dimension = nd; }
     const vector<Range>& get_range() const {return m_range;}
-    const vector<Range>& get_dimension() const {return m_dimension;}
+    const vector<Range>& get_select() const {return m_select;}
+    vector<Range>& get_range_ref() {return m_range;}
+    vector<Range>& get_select_ref() {return m_select;}
     void db_register(shared_ptr<Variable>&, int);
     void db_register(int);      /* light weight version when father is available */
     void db_register();         /* light weight version when father and direction is available */
@@ -167,7 +168,7 @@ namespace netlist {
 
   private:
     vector<Range> m_range;
-    vector<Range> m_dimension;
+    vector<Range> m_select;
     bool numbered;                 /* true when it is numbered unnamed variable */
     shared_ptr<Variable> father;   /* the wire/reg/var in the database */
     int inout_t;                   /* input / output type */

@@ -97,7 +97,7 @@ void netlist::Expression::reduce() {
             if(m_stack.empty()) { // final
               assert(eqn.empty());    // eqn should be empty
               eqn.splice(eqn.end(), m_state->d[0]);
-              valuable = eqn.front().is_valuable();
+              valuable = eqn.size() == 1 && eqn.front().is_valuable();
               return;
             } else {
               shared_ptr<expression_state> tmp = m_state;
@@ -147,9 +147,12 @@ void netlist::Expression::append(Operation::operation_t otype) {
 
   // connect the equation
   this->eqn.push_front(Operation(otype));
+  this->valuable = false;
 
   // try to reduce the final equation
   this->reduce();
+
+  //cout << *this << endl;
 }
 
 void netlist::Expression::append(Operation::operation_t otype, Expression& d1) {
@@ -163,9 +166,12 @@ void netlist::Expression::append(Operation::operation_t otype, Expression& d1) {
   // connect the equation
   this->eqn.push_front(Operation(otype));
   this->eqn.splice(this->eqn.end(), d1.eqn);
+  this->valuable = false;
   
   // try to reduce the final equation
   this->reduce();
+
+  //cout << *this << endl;
 
 }
 
@@ -181,9 +187,12 @@ void netlist::Expression::append(Operation::operation_t otype, Expression& d1, E
   this->eqn.push_front(Operation(otype));
   this->eqn.splice(this->eqn.end(), d1.eqn);
   this->eqn.splice(this->eqn.end(), d2.eqn);
+  this->valuable = false;
   
   // try to reduce the final equation
   this->reduce();
+
+  //cout << *this << endl;
 }
 
 void netlist::Expression::concatenate(const Expression& rhs) {
@@ -212,6 +221,52 @@ bool netlist::operator== (const Expression& lhs, const Expression& rhs) {
     return false;
 }
 
+namespace netlist{
+  inline void 
+  expression_pop_operators(
+                           ostream& os, 
+                           stack<pair<Operation,unsigned int> >& m_stack,
+                           Operation& op,
+                           unsigned int& op_cnt) {
+    while(true) {
+      if(!m_stack.empty()) { 
+        op = m_stack.top().first; 
+        op_cnt = m_stack.top().second + 1; 
+        m_stack.pop();
+      } else { 
+        op = Operation(); 
+        op_cnt = 0;
+        return;
+      }
+      
+      if(op.get_type() <= Operation::oUNxor) { // unary
+        continue;
+      } else if (op.get_type() < Operation::oQuestion) { // two operands
+        if(op_cnt == 2) {
+          if(!m_stack.empty() && op.get_type() >= m_stack.top().first.get_type()+10)
+            os << ")";
+          continue;
+        } else {                  // must be 1
+          os << op;
+          return;
+        }
+      } else {                    // must be ?:
+        if(op_cnt == 3) {
+          if(!m_stack.empty() && op.get_type() >= m_stack.top().first.get_type()+10)
+            os << ")";
+          continue;
+        } else if (op_cnt == 2) {
+          os << " : ";
+          return;
+        } else {                  // must be 1
+          os << " ? ";
+          return;
+        }
+      }   
+    }
+  }
+}
+
 ostream& netlist::Expression::streamout(ostream& os) const {
   list<Operation>::const_iterator it, end;
   stack<pair<Operation,unsigned int> > m_stack;
@@ -223,37 +278,34 @@ ostream& netlist::Expression::streamout(ostream& os) const {
     if(c.get_type() <= Operation::oFun) { // data
       if(op.get_type() != Operation::oNULL) {
         if(op.get_type() <= Operation::oUNxor) { // unary operation always add parenthesis
-          os << "(" << op << c << ")";
-          if(!m_stack.empty()) {op = m_stack.top().first; op_cnt = m_stack.top().second + 1; m_stack.pop();}
-          else { op = Operation(); op_cnt = 0; }
+          os << c ;
+          expression_pop_operators(os, m_stack, op, op_cnt);
         } else if(op.get_type() < Operation::oQuestion) { // two operands
           if(op_cnt == 0) { 	// first operand
-            os << c ;
+            os << c << op;
             op_cnt = 1;
           } else {
-            os << op << c;
+            os << c;
 
             if(!m_stack.empty() && op.get_type() >= m_stack.top().first.get_type()+10)
               os << ")";
-            
-            if(!m_stack.empty()) {
-              op = m_stack.top().first; op_cnt = m_stack.top().second+1; m_stack.pop();
-            } else {op = Operation(); op_cnt = 0; }
+
+            expression_pop_operators(os, m_stack, op, op_cnt);
           } 
         } else {		// ?
           if(op_cnt == 0) { 	// first operand
-            os << c;
+            os << c << " ? ";
             op_cnt = 1;
           } else if(op_cnt == 1){
-            os << " ? " << c;
+            os << c << " : ";
             op_cnt = 2;
           } else {
-            os << " : " << c;
+            os << c;
 
-            if(!m_stack.empty() && op.get_type() >= m_stack.top().first.get_type()+10) {
+            if(!m_stack.empty() && op.get_type() >= m_stack.top().first.get_type()+10)
               os << ")";
-              op = m_stack.top().first; op_cnt=m_stack.top().second+1; m_stack.pop();
-            } else { op = Operation(); op_cnt = 0; }       
+
+            expression_pop_operators(os, m_stack, op, op_cnt);
           } 
         }
       } else {
@@ -265,6 +317,8 @@ ostream& netlist::Expression::streamout(ostream& os) const {
       op_cnt = 0;
       if(!m_stack.empty() && op.get_type() >= m_stack.top().first.get_type()+10)
         os << "(";
+      if(op.get_type() <=  Operation::oUNxor)
+        os << op;
     }
   }
   

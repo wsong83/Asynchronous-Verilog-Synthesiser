@@ -51,9 +51,9 @@ ostream& netlist::Module::streamout(ostream& os) const {
   {
     map<VIdentifier, shared_ptr<Variable> >::const_iterator it, end;
     for(it = db_wire.begin(), end = db_wire.end(); it != end; it++)
-      os << "wire " << *(it->second) << endl;
+      os << "wire " << *(it->second) << ";" << endl;
     for(it = db_reg.begin(), end = db_reg.end(); it != end; it++)
-      os << "reg " << *(it->second) << endl;
+      os << "reg " << *(it->second) << ";" << endl;
   }
 
   // continueous assignments

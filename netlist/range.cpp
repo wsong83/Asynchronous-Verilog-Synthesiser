@@ -31,13 +31,13 @@
 using namespace netlist;
 
 netlist::Range::Range(const mpz_class& sel)
-  : c(sel), type(TConst) {  }
+  : c(sel),  dim(false), type(TConst) {  }
 
 netlist::Range::Range(const mpz_class& rl, const mpz_class& rr)
-  : cr(rl,rr), type(TCRange) {  }
+  : cr(rl,rr), dim(false), type(TCRange) {  }
 
 netlist::Range::Range(const Expression& sel)
-  : type(TVar) 
+  : dim(false), type(TVar) 
 { 
   Expression m = sel;
   m.reduce();
@@ -49,8 +49,8 @@ netlist::Range::Range(const Expression& sel)
   }
  };
 
-netlist::Range::Range(const Range_Exp& sel)
-  : type(TRange) 
+netlist::Range::Range(const Range_Exp& sel, bool dimm)
+  : dim(dimm), type(TRange) 
 { 
   Range_Exp m = sel;
   m.first.reduce();

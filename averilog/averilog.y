@@ -344,9 +344,8 @@ input_declaration
         shared_ptr<Port> cp = cm->db_port.find(*it);
         if(0 != cp.use_count()) { 
           cp->set_input();
-          vector<Range> rm;
-          rm.push_back(Range(pair<Expression, Expression>($3, $5)));
-          cp->name.set_range(rm);
+          Range m(pair<Expression, Expression>($3, $5));
+          cp->name.get_range_ref().push_back(m);
         } else {  av_env.error(yylloc, "SYN-PORT-0", it->name, cm->name.name); }
       }
     }  
@@ -400,6 +399,14 @@ variable_declaration
           while(!$2.empty()) {
             shared_ptr<Variable> cw(new Variable($2.front()));
             $2.pop_front();
+            // change range selector to dimension delcaration
+            cw->name.get_range_ref() = cw->name.get_select();
+            cw->name.get_select_ref().clear();
+            vector<Range>::iterator it, end;
+            for(it = cw->name.get_range_ref().begin(), end = cw->name.get_range_ref().end(); it != end; it++ )
+              it->set_dim();
+
+            // insert it in the database
             if(!cm->db_wire.insert(cw->name, cw)) {
               av_env.error(yylloc, "SYN-VAR-2", "Wire", cw->name.name, cm->name.name);
             }
@@ -424,9 +431,19 @@ variable_declaration
           cm = static_pointer_cast<Module>(father);
           while(!$7.empty()) {
             VIdentifier& wn = $7.front();
+
+            // change range selector to dimension delcaration
+            wn.get_range_ref() = wn.get_select();
+            wn.get_select_ref().clear();
+            vector<Range>::iterator it, end;
+            for(it = wn.get_range_ref().begin(), end = wn.get_range_ref().end(); it != end; it++ )
+              it->set_dim();
+
             Range rm(pair<Expression, Expression>($3, $5));
-            wn.set_range(vector<Range>(1, rm));
+            wn.get_range_ref().push_back(rm);
             shared_ptr<Variable> cw(new Variable(wn));
+
+            // insert it in the database
             $7.pop_front();
             if(!cm->db_wire.insert(cw->name, cw)) {
               av_env.error(yylloc, "SYN-VAR-2", "Wire", cw->name.name, cm->name.name);
@@ -453,6 +470,14 @@ variable_declaration
           while(!$2.empty()) {
             shared_ptr<Variable> cr(new Variable($2.front()));
             $2.pop_front();
+            // change range selector to dimension delcaration
+            cr->name.get_range_ref() = cr->name.get_select();
+            cr->name.get_select_ref().clear();
+            vector<Range>::iterator it, end;
+            for(it = cr->name.get_range_ref().begin(), end = cr->name.get_range_ref().end(); it != end; it++ )
+              it->set_dim();
+
+            // insert it in the database
             if(!cm->db_reg.insert(cr->name, cr)) {
               av_env.error(yylloc, "SYN-VAR-2", "Reg", cr->name.name, cm->name.name);
             }
@@ -477,9 +502,19 @@ variable_declaration
           cm = static_pointer_cast<Module>(father);
           while(!$7.empty()) {
             VIdentifier& rn = $7.front();
+
+            // change range selector to dimension delcaration
+            rn.get_range_ref() = rn.get_select();
+            rn.get_select_ref().clear();
+            vector<Range>::iterator it, end;
+            for(it = rn.get_range_ref().begin(), end = rn.get_range_ref().end(); it != end; it++ )
+              it->set_dim();
+
             Range rm(pair<Expression, Expression>($3, $5));
-            rn.set_range(vector<Range>(1, rm));
+            rn.get_range_ref().push_back(rm);
             shared_ptr<Variable> cr(new Variable(rn));
+
+            // insert it in the database
             $7.pop_front();
             if(!cm->db_reg.insert(cr->name, cr)) {
               av_env.error(yylloc, "SYN-VAR-2", "Reg", cr->name.name, cm->name.name);
@@ -1072,7 +1107,7 @@ parameter_identifier
 
 variable_identifier
     : identifier           { $$ = $1; }
-    | variable_identifier '[' range_expression ']'
+    | variable_identifier '[' range_expression ']' { $$.get_select_ref().push_back($3); }
     ;
 
 port_identifier
