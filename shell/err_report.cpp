@@ -53,6 +53,7 @@ shell::ErrReport::ErrReport() {
   ERR_DEFINE("SYN-FILE-0",   EError, 0, "File terminated in multi-line comments.");
   ERR_DEFINE("SYN_MODULE-0", EError, 1, "Module %1% is already defined.");
   ERR_DEFINE("SYN-NUM-0",    EError, 1, "Unrecoginised format of number %1%.");
+  ERR_DEFINE("SYN-PARA-0",   EError, 1, "Parameter %1% is declared outside a module enviornment.");
   ERR_DEFINE("SYN-PORT-0",   EError, 2, "Port %1% is not found in the port declaration list in module %2%.");
   ERR_DEFINE("SYN-VAR-0",    EError, 2, "%1% %2% is defined outside a block environment.");
   ERR_DEFINE("SYN-VAR-1",    EError, 1, "Lonely %1% declaration without a signal list");

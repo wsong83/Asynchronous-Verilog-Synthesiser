@@ -42,12 +42,12 @@ namespace netlist {
     
     // data
     MIdentifier name;
-    DataBase<PoIdentifier, Port>      db_port;    /* input and output ports */
+    DataBase<PoIdentifier, Port>     db_port;    /* input and output ports */
     DataBase<VIdentifier, Variable>  db_wire;	  /* wires */
     DataBase<VIdentifier, Variable>  db_reg;	  /* registers */
     DataBase<VIdentifier, Variable>  db_param;	  /* parameters */
 
-    DataBase<string, Assign>          db_assign; /* continueous assignments */
+    DataBase<string, Assign>         db_assign; /* continueous assignments */
 
     //name for unnamed items
     BIdentifier unamed_block;

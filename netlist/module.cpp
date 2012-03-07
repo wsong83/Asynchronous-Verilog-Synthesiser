@@ -46,6 +46,12 @@ ostream& netlist::Module::streamout(ostream& os) const {
     }
   }
   
+  {
+    map<VIdentifier, shared_ptr<Variable> >::const_iterator it, end;
+    for(it = db_param.begin(), end = db_param.end(); it != end; it++)
+      os << "parameter " << *(it->second) << ";" << endl;
+  }
+  
   os << db_port;
   
   {

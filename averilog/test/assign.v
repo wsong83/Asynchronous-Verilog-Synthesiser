@@ -1,4 +1,6 @@
 module test_module (o, c, f);
+   parameter wd = 4;
+   
    output [2:0] o, c, f;
    wire [2:0]   o, c, f;
    reg [4+25:4'd35] sig, tmp;

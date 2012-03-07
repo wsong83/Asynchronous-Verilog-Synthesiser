@@ -246,6 +246,7 @@
 %type <tModuleName> module_identifier
 %type <tPortName>   port_identifier
 %type <tRange>      range_expression
+%type <tVarName>    parameter_identifier
 %type <tVarName>    variable_identifier
 
 %start source_text
@@ -555,7 +556,23 @@ list_of_variable_identifiers
 
 // A.2.4 Declaration assignments
 param_assignment 
-    : parameter_identifier '=' expression
+    : parameter_identifier '=' expression 
+    {
+      shared_ptr<Variable> cp(new Variable($1,$3)); 
+      shared_ptr<NetComp> father = Lib.get_current_comp();
+      shared_ptr<Module> cm;
+      switch(father->get_type()) {
+      case NetComp::tModule: {
+        cm = static_pointer_cast<Module>(father);
+        if(!cm->db_param.insert(cp->name, cp)) {
+          av_env.error(yylloc, "SYN-VAR-2", "Parameter", cp->name.name, cm->name.name);
+        }
+        break;
+      }
+      default:
+        av_env.error(yylloc, "SYN-PARA-0", cp->name.name);
+      }
+    }
     ;
 
 //A.2.6 Function declarations
@@ -1102,7 +1119,7 @@ instance_identifier
     ;
 
 parameter_identifier 
-    : identifier
+    : identifier           { $$ = $1; }
     ;
 
 variable_identifier

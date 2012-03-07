@@ -30,6 +30,24 @@
 
 using namespace netlist;
 
+
+void netlist::Variable::set_value(const Number& num) {
+  exp = Expression(num);
+  update();
+}
+
+void netlist::Variable::update() {
+  exp.reduce();
+  assert(exp.is_valuable());   // must be valuable right now
+
+  Number m = exp.get_value();
+  map<unsigned int, VIdentifier *>::iterator it, end;
+  for(it=fan[1].begin(), end=fan[1].end(); it != end; it++) {
+    it->second->set_value(m);
+  }
+}
+  
+
 ostream& netlist::Variable::streamout(ostream& os) const {
   vector<Range>::const_iterator it, end;
 
@@ -50,6 +68,11 @@ ostream& netlist::Variable::streamout(ostream& os) const {
       os << ":" << *it;
     os << "]";
   }
+
+  if(exp.size() > 0) {
+    os << " = " << exp;
+  }
+
   return os;
 
 }
@@ -60,7 +83,7 @@ unsigned int netlist::Variable::get_id(int iod) {
   uid[iod]++;
   unsigned int rv = uid[iod];
   
-  if(rv-fan[iod].size() > MAX_NUMBER_UNUSED_IN_MAP) { // clean the map
+  if(rv - fan[iod].size() > MAX_NUMBER_UNUSED_IN_MAP) { // clean the map
     unsigned int index = 1;
     map<unsigned int, VIdentifier *> new_map;
     map<unsigned int, VIdentifier *>::iterator it, end, cur;

@@ -157,6 +157,10 @@ namespace netlist {
     const vector<Range>& get_select() const {return m_select;}
     vector<Range>& get_range_ref() {return m_range;}
     vector<Range>& get_select_ref() {return m_select;}
+    bool is_valuable() const { return value.is_valuable(); }
+    mpz_class get_value() const { return value.get_value(); }
+    void set_value(const Number& p) { value = p; }
+    const string& get_txt_value() const { return value.get_txt_value(); }
     void db_register(shared_ptr<Variable>&, int);
     void db_register(int);      /* light weight version when father is available */
     void db_register();         /* light weight version when father and direction is available */
@@ -167,6 +171,7 @@ namespace netlist {
     int get_inout_dir() const { return inout_t; }
 
   private:
+    Number value;
     vector<Range> m_range;
     vector<Range> m_select;
     bool numbered;                 /* true when it is numbered unnamed variable */
