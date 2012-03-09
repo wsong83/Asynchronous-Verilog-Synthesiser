@@ -37,15 +37,17 @@ namespace netlist {
     Module(const MIdentifier& nm)
       : NetComp(tModule), name(nm) {}
 
-    // dummy
+    // helpers
+    shared_ptr<Port> find_port(const PoIdentifier&) const;
     ostream& streamout(ostream& os) const;
     
     // data
     MIdentifier name;
-    DataBase<PoIdentifier, Port>     db_port;    /* input and output ports */
+    list<shared_ptr<Port> >          list_port;    /* input and output ports */
     DataBase<VIdentifier, Variable>  db_wire;	  /* wires */
     DataBase<VIdentifier, Variable>  db_reg;	  /* registers */
     DataBase<VIdentifier, Variable>  db_param;	  /* parameters */
+    DataBase<VIdentifier, Variable>  db_genvar;   /* generate variable */
 
     DataBase<string, Assign>         db_assign; /* continueous assignments */
 

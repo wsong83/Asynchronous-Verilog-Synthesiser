@@ -50,7 +50,7 @@ namespace averilog {
     netlist::LConcatenation     tLConcatenation;
     list<netlist::Expression>   tListExp;
     list<netlist::PoIdentifier> tListPort;
-    list<netlist::VIdentifier>  tListVar;
+    list<pair<netlist::VIdentifier, netlist::Expression> > tListVar;
     netlist::MIdentifier        tModuleName;
     netlist::Number             tNumber;    
     netlist::PoIdentifier       tPortName;

@@ -47,18 +47,20 @@ ostream shell::ErrReport::os(cerr.rdbuf()); // in default send errors to cerr
 
 shell::ErrReport::ErrReport() {
   // define the error types, may be move this part to a separated header file in the future
-  ERR_DEFINE("PARSER-0",     EFatal, 0, "Unkown parser error. Please report to developer.");
-  ERR_DEFINE("SYN-ASSIGN-0", EError, 0, "Wrong left-side concatenation.");
-  ERR_DEFINE("SYN-ASSIGN-1", EError, 0, "Keyword \"assign\" can only be used in module enviornment.");
-  ERR_DEFINE("SYN-FILE-0",   EError, 0, "File terminated in multi-line comments.");
-  ERR_DEFINE("SYN_MODULE-0", EError, 1, "Module %1% is already defined.");
-  ERR_DEFINE("SYN-NUM-0",    EError, 1, "Unrecoginised format of number %1%.");
-  ERR_DEFINE("SYN-PARA-0",   EError, 1, "Parameter %1% is declared outside a module enviornment.");
-  ERR_DEFINE("SYN-PORT-0",   EError, 2, "Port %1% is not found in the port declaration list in module %2%.");
-  ERR_DEFINE("SYN-VAR-0",    EError, 2, "%1% %2% is defined outside a block environment.");
-  ERR_DEFINE("SYN-VAR-1",    EError, 1, "Lonely %1% declaration without a signal list");
-  ERR_DEFINE("SYN-VAR-2",    EError, 3, "%1% %2% is already declared in block %3%");
-  ERR_DEFINE("SYN-VAR-3",    EError, 1, "Variable (wire/reg/parameter) %1% is not found in current block.");
+  ERR_DEFINE("PARSER-0",     EFatal,   0, "Unkown parser error. Please report to developer.");
+  ERR_DEFINE("SYN-ASSIGN-0", EError,   0, "Wrong left-side concatenation.");
+  ERR_DEFINE("SYN-ASSIGN-1", EError,   0, "Keyword \"assign\" can only be used in module enviornment.");
+  ERR_DEFINE("SYN-FILE-0",   EError,   0, "File terminated in multi-line comments.");
+  ERR_DEFINE("SYN-MODULE-0", EError,   1, "Module \"%1%\" is already defined.");
+  ERR_DEFINE("SYN-NUM-0",    EError,   1, "Unrecoginised format of number \"%1%\".");
+  ERR_DEFINE("SYN-PARA-0",   EError,   1, "Parameter \"%1%\" is declared outside a module enviornment.");
+  ERR_DEFINE("SYN-PORT-0",   EError,   2, "Port \"%1%\" is not found in the port declaration list in module \"%2%\".");
+  ERR_DEFINE("SYN-PORT-1",   EWarning, 2, "Port \"%1%\" is redefined in the port list of module \"%2%\" and is overlooked.");
+  ERR_DEFINE("SYN-VAR-0",    EError,   2, "\"%1% %2%\" is defined outside a block environment.");
+  ERR_DEFINE("SYN-VAR-1",    EError,   1, "Lonely \"%1%\" declaration without a signal list");
+  ERR_DEFINE("SYN-VAR-2",    EError,   3, "\"%1% %2%\" is already declared in block \"%3%\"");
+  ERR_DEFINE("SYN-VAR-3",    EError,   1, "Variable (wire/reg/parameter) \"%1%\" is not found in current block.");
+  ERR_DEFINE("SYN-VAR-4",    EWarning, 1, "Static assignment to variable \"%1%\" is overlooked.");
 }
 
 bool shell::ErrReport::suppress(const string& errID) {

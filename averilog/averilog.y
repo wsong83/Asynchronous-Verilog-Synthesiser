@@ -273,19 +273,22 @@ description
     ;
 
 module_declaration
-    : "module" module_identifier ';'  { if(!Lib.insert($2)) av_env.error(yylloc, "SYN_MODULE-0", $2.name); }
+    : "module" module_identifier ';'  { if(!Lib.insert($2)) av_env.error(yylloc, "SYN-MODULE-0", $2.name); }
         module_items
         "endmodule"                   { cout<< *(static_pointer_cast<Module>(Lib.get_current_comp())); Lib.pop(); }
     | "module" module_identifier '(' list_of_port_identifiers ')' ';'
     {
-      if(!Lib.insert($2)) av_env.error(yylloc, "SYN_MODULE-0", $2.name);
+      if(!Lib.insert($2)) av_env.error(yylloc, "SYN-MODULE-0", $2.name);
       // get a pointer to the current module
       shared_ptr<Module> cm = static_pointer_cast<Module>(Lib.get_current_comp());
       // insert ports
       list<PoIdentifier>::iterator it, end;
       for(it = $4.begin(), end = $4.end(); it != end; it++) {
         PoIdentifier& pid = *it;
-        cm->db_port.insert(pid, shared_ptr<Port>(new Port(pid)));
+        if(cm->find_port(pid).use_count() == 0)
+          cm->list_port.push_back(shared_ptr<Port>(new Port(pid)));
+        else
+          av_env.error(yylloc, "SYN-PORT-1", pid.name, cm->name.name);
       }
     }
         module_items
@@ -330,7 +333,7 @@ input_declaration
       // insert ports
       list<PoIdentifier>::iterator it, end;
       for(it = $2.begin(), end = $2.end(); it != end; it++) {
-        shared_ptr<Port> cp = cm->db_port.find(*it);
+        shared_ptr<Port> cp = cm->find_port(*it);
         if(0 != cp.use_count()) cp->set_input();
         else { av_env.error(yylloc, "SYN-PORT-0", it->name, cm->name.name); }
       }
@@ -342,7 +345,7 @@ input_declaration
       // insert ports
       list<PoIdentifier>::iterator it, end;
       for(it = $7.begin(), end = $7.end(); it != end; it++) {
-        shared_ptr<Port> cp = cm->db_port.find(*it);
+        shared_ptr<Port> cp = cm->find_port(*it);
         if(0 != cp.use_count()) { 
           cp->set_input();
           Range m(pair<Expression, Expression>($3, $5));
@@ -360,7 +363,7 @@ output_declaration
       // insert ports
       list<PoIdentifier>::iterator it, end;
       for(it = $2.begin(), end = $2.end(); it != end; it++) {
-        shared_ptr<Port> cp = cm->db_port.find(*it);
+        shared_ptr<Port> cp = cm->find_port(*it);
         if(0 != cp.use_count()) cp->set_output();
         else {  av_env.error(yylloc, "SYN-PORT-0", it->name, cm->name.name); }
       }
@@ -372,7 +375,7 @@ output_declaration
       // insert ports
       list<PoIdentifier>::iterator it, end;
       for(it = $7.begin(), end = $7.end(); it != end; it++) {
-        shared_ptr<Port> cp = cm->db_port.find(*it);
+        shared_ptr<Port> cp = cm->find_port(*it);
         if(0 != cp.use_count()) { 
           cp->set_output();
           vector<Range> rm;
@@ -388,9 +391,9 @@ variable_declaration
     : "wire" list_of_variable_identifiers 
     {
       if(0 == $2.size()) {
-        av_env.error(yylloc, "SYN-VAR-1", "Wire");
+        av_env.error(yylloc, "SYN-VAR-1", "wire");
       } else if(0 == Lib.get_current_comp().use_count()) {
-        av_env.error(yylloc, "SYN-VAR-0", "Wire", $2.front().name);
+        av_env.error(yylloc, "SYN-VAR-0", "Wire", $2.front().first.name);
       } else {
         shared_ptr<NetComp> father = Lib.get_current_comp();
         shared_ptr<Module> cm;
@@ -398,7 +401,10 @@ variable_declaration
         case NetComp::tModule: { 
           cm = static_pointer_cast<Module>(father);
           while(!$2.empty()) {
-            shared_ptr<Variable> cw(new Variable($2.front()));
+            shared_ptr<Variable> cw(new Variable($2.front().first));
+            if($2.front().second.size() != 0) 
+              av_env.error(yylloc, "SYN-VAR-4", cw->name.name);
+            
             $2.pop_front();
             // change range selector to dimension delcaration
             cw->name.get_range_ref() = cw->name.get_select();
@@ -409,7 +415,7 @@ variable_declaration
 
             // insert it in the database
             if(!cm->db_wire.insert(cw->name, cw)) {
-              av_env.error(yylloc, "SYN-VAR-2", "Wire", cw->name.name, cm->name.name);
+              av_env.error(yylloc, "SYN-VAR-2", "wire", cw->name.name, cm->name.name);
             }
           }
         } break;
@@ -421,9 +427,9 @@ variable_declaration
     | "wire" '[' expression ':' expression ']' list_of_variable_identifiers
     {
       if(0 == $7.size()) {
-        av_env.error(yylloc, "SYN-VAR-1", "Wire");
+        av_env.error(yylloc, "SYN-VAR-1", "wire");
       } else if(0 == Lib.get_current_comp().use_count()) {
-        av_env.error(yylloc, "SYN-VAR-0", "Wire", $7.front().name);
+        av_env.error(yylloc, "SYN-VAR-0", "Wire", $7.front().first.name);
       } else {
         shared_ptr<NetComp> father = Lib.get_current_comp();
         shared_ptr<Module> cm;
@@ -431,7 +437,9 @@ variable_declaration
         case NetComp::tModule: { 
           cm = static_pointer_cast<Module>(father);
           while(!$7.empty()) {
-            VIdentifier& wn = $7.front();
+            VIdentifier& wn = $7.front().first;
+            if($7.front().second.size() != 0) 
+              av_env.error(yylloc, "SYN-VAR-4", wn.name);
 
             // change range selector to dimension delcaration
             wn.get_range_ref() = wn.get_select();
@@ -447,7 +455,7 @@ variable_declaration
             // insert it in the database
             $7.pop_front();
             if(!cm->db_wire.insert(cw->name, cw)) {
-              av_env.error(yylloc, "SYN-VAR-2", "Wire", cw->name.name, cm->name.name);
+              av_env.error(yylloc, "SYN-VAR-2", "wire", cw->name.name, cm->name.name);
             }
           }
         } break;
@@ -459,9 +467,9 @@ variable_declaration
     | "reg" list_of_variable_identifiers 
     {
       if(0 == $2.size()) {
-        av_env.error(yylloc, "SYN-VAR-1", "Reg");
+        av_env.error(yylloc, "SYN-VAR-1", "reg");
       } else if(0 == Lib.get_current_comp().use_count()) {
-        av_env.error(yylloc, "SYN-VAR-0", "reg", $2.front().name);
+        av_env.error(yylloc, "SYN-VAR-0", "reg", $2.front().first.name);
       } else {
         shared_ptr<NetComp> father = Lib.get_current_comp();
         shared_ptr<Module> cm;
@@ -469,7 +477,9 @@ variable_declaration
         case NetComp::tModule: { 
           cm = static_pointer_cast<Module>(father);
           while(!$2.empty()) {
-            shared_ptr<Variable> cr(new Variable($2.front()));
+            shared_ptr<Variable> cr(new Variable($2.front().first));
+            if($2.front().second.size() != 0) 
+              av_env.error(yylloc, "SYN-VAR-4", cr->name.name);
             $2.pop_front();
             // change range selector to dimension delcaration
             cr->name.get_range_ref() = cr->name.get_select();
@@ -477,24 +487,24 @@ variable_declaration
             vector<Range>::iterator it, end;
             for(it = cr->name.get_range_ref().begin(), end = cr->name.get_range_ref().end(); it != end; it++ )
               it->set_dim();
-
+            
             // insert it in the database
             if(!cm->db_reg.insert(cr->name, cr)) {
-              av_env.error(yylloc, "SYN-VAR-2", "Reg", cr->name.name, cm->name.name);
+              av_env.error(yylloc, "SYN-VAR-2", "reg", cr->name.name, cm->name.name);
             }
           }
         } break;
-	default: ;/* doing nothing right now */
-	}
+        default: ;/* doing nothing right now */
+        }
       }
       ////////////////////////////////////////
     } 
     | "reg" '[' expression ':' expression ']' list_of_variable_identifiers
     {
       if(0 == $7.size()) {
-        av_env.error(yylloc, "SYN-VAR-1", "Reg");
+        av_env.error(yylloc, "SYN-VAR-1", "reg");
       } else if(0 == Lib.get_current_comp().use_count()) {
-        av_env.error(yylloc, "SYN-VAR-0", "reg", $7.front().name);
+        av_env.error(yylloc, "SYN-VAR-0", "reg", $7.front().first.name);
       } else {
         shared_ptr<NetComp> father = Lib.get_current_comp();
         shared_ptr<Module> cm;
@@ -502,7 +512,9 @@ variable_declaration
         case NetComp::tModule: { 
           cm = static_pointer_cast<Module>(father);
           while(!$7.empty()) {
-            VIdentifier& rn = $7.front();
+            VIdentifier& rn = $7.front().first;
+            if($7.front().second.size() != 0) 
+              av_env.error(yylloc, "SYN-VAR-4", rn.name);
 
             // change range selector to dimension delcaration
             rn.get_range_ref() = rn.get_select();
@@ -518,7 +530,7 @@ variable_declaration
             // insert it in the database
             $7.pop_front();
             if(!cm->db_reg.insert(cr->name, cr)) {
-              av_env.error(yylloc, "SYN-VAR-2", "Reg", cr->name.name, cm->name.name);
+              av_env.error(yylloc, "SYN-VAR-2", "reg", cr->name.name, cm->name.name);
             }
           }
         } break;
@@ -528,7 +540,75 @@ variable_declaration
       /////////////////////////////////////////////
     }
     | "genvar" list_of_variable_identifiers
+    {
+      if(0 == $2.size()) {
+        av_env.error(yylloc, "SYN-VAR-1", "genvar");
+      } else if(0 == Lib.get_current_comp().use_count()) {
+        av_env.error(yylloc, "SYN-VAR-0", "genvar", $2.front().first.name);
+      } else {
+        shared_ptr<NetComp> father = Lib.get_current_comp();
+        shared_ptr<Module> cm;
+        switch(father->get_type()) {
+        case NetComp::tModule: { 
+          cm = static_pointer_cast<Module>(father);
+          while(!$2.empty()) {
+            shared_ptr<Variable> cr(new Variable($2.front().first, $2.front().second));
+            $2.pop_front();
+            // change range selector to dimension delcaration
+            cr->name.get_range_ref() = cr->name.get_select();
+            cr->name.get_select_ref().clear();
+            vector<Range>::iterator it, end;
+            for(it = cr->name.get_range_ref().begin(), end = cr->name.get_range_ref().end(); it != end; it++ )
+              it->set_dim();
+            
+            // insert it in the database
+            if(!cm->db_genvar.insert(cr->name, cr)) {
+              av_env.error(yylloc, "SYN-VAR-2", "reg", cr->name.name, cm->name.name);
+            }
+          }
+        } break;
+        default: ;/* doing nothing right now */
+        }
+      }
+      ////////////////////////////////////////
+    } 
     | "integer" list_of_variable_identifiers
+    {
+      if(0 == $2.size()) {
+        av_env.error(yylloc, "SYN-VAR-1", "integer");
+      } else if(0 == Lib.get_current_comp().use_count()) {
+        av_env.error(yylloc, "SYN-VAR-0", "integer", $2.front().first.name);
+      } else {
+        shared_ptr<NetComp> father = Lib.get_current_comp();
+        shared_ptr<Module> cm;
+        switch(father->get_type()) {
+        case NetComp::tModule: { 
+          cm = static_pointer_cast<Module>(father);
+          while(!$2.empty()) {
+            shared_ptr<Variable> cr(new Variable($2.front().first));
+            if($2.front().second.size() != 0) 
+              av_env.error(yylloc, "SYN-VAR-4", cr->name.name);
+            $2.pop_front();
+            // change range selector to dimension delcaration
+            cr->name.get_range_ref() = cr->name.get_select();
+            cr->name.get_select_ref().clear();
+            vector<Range>::iterator it, end;
+            for(it = cr->name.get_range_ref().begin(), end = cr->name.get_range_ref().end(); it != end; it++ )
+              it->set_dim();
+            // an integer is a 32-bit reg
+            cr->name.get_range_ref().push_back(Range(pair<Expression, Expression>(Expression(Number(31)), Expression(Number(0)))));
+            
+            // insert it in the database
+            if(!cm->db_reg.insert(cr->name, cr)) {
+              av_env.error(yylloc, "SYN-VAR-2", "integer", cr->name.name, cm->name.name);
+            }
+          }
+        } break;
+        default: ;/* doing nothing right now */
+        }
+      }
+      ////////////////////////////////////////
+    } 
     ;
 
 list_of_variable_declarations
@@ -548,10 +628,10 @@ list_of_port_identifiers
     ;
 
 list_of_variable_identifiers 
-    : variable_identifier                      { $$.clear(); $$.push_back($1); }
-    | variable_identifier '=' expression
-    | list_of_variable_identifiers ',' variable_identifier { $$ = $1; $$.push_back($3); }
-    | list_of_variable_identifiers ',' variable_identifier '=' expression
+    : variable_identifier                      { $$.clear(); $$.push_back(pair<VIdentifier,Expression>($1, Expression())); }
+    | variable_identifier '=' expression   { $$.clear(); $$.push_back(pair<VIdentifier,Expression>($1, $3)); } 
+    | list_of_variable_identifiers ',' variable_identifier { $$.push_back(pair<VIdentifier,Expression>($3, Expression())); }
+    | list_of_variable_identifiers ',' variable_identifier '=' expression { $$.push_back(pair<VIdentifier,Expression>($3, $5)); }
     ;
 
 // A.2.4 Declaration assignments

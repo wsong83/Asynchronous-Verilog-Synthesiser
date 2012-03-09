@@ -28,16 +28,26 @@
 
 #include "component.h"
 
+using namespace netlist;
+
+shared_ptr<Port> netlist::Module::find_port(const PoIdentifier& pid) const {
+  list<shared_ptr<Port> >::const_iterator it, end;
+  for(it=list_port.begin(), end=list_port.end(); it != end; it++) {
+    if((*it)->name == pid) return *it;
+  }
+  return shared_ptr<Port>();
+}
+
 ostream& netlist::Module::streamout(ostream& os) const {
   os << name;
-  if(db_port.empty()) os << ";" << endl;
+  if(list_port.empty()) os << ";" << endl;
   else {
     os << "(";
-    map<PoIdentifier, shared_ptr<Port> >::const_iterator it, end;
-    it = db_port.begin();
-    end = db_port.end();
+    list<shared_ptr<Port> >::const_iterator it, end;
+    it = list_port.begin();
+    end = list_port.end();
     while(it != end){
-      os << (it->second)->name.name;
+      os << (*it)->name.name;
       it++;
       if(it != end)
         os << ", ";
@@ -46,29 +56,40 @@ ostream& netlist::Module::streamout(ostream& os) const {
     }
   }
   
-  {
+  { // parameters
+    if(!db_param.empty()) os << endl;
     map<VIdentifier, shared_ptr<Variable> >::const_iterator it, end;
     for(it = db_param.begin(), end = db_param.end(); it != end; it++)
       os << "parameter " << *(it->second) << ";" << endl;
   }
   
-  os << db_port;
+  { // ports
+    if(!list_port.empty()) os << endl;
+    list<shared_ptr<Port> >::const_iterator it, end;
+    for(it=list_port.begin(), end=list_port.end(); it!=end; it++)
+      os << *(*it);
+  }
   
-  {
+  { // wires and regs
     map<VIdentifier, shared_ptr<Variable> >::const_iterator it, end;
+    if(!db_wire.empty()) os << endl;
     for(it = db_wire.begin(), end = db_wire.end(); it != end; it++)
       os << "wire " << *(it->second) << ";" << endl;
+    if(!db_reg.empty()) os << endl;
     for(it = db_reg.begin(), end = db_reg.end(); it != end; it++)
       os << "reg " << *(it->second) << ";" << endl;
+    if(!db_genvar.empty()) os << endl;
+    for(it = db_genvar.begin(), end = db_genvar.end(); it != end; it++)
+      os << "genvar " << *(it->second) << ";" << endl;
   }
 
-  // continueous assignments
-  {
+  { // continueous assignments
+    if(!db_assign.empty()) os << endl;
     map<string, shared_ptr<Assign> >::const_iterator it, end;
     for(it = db_assign.begin(), end = db_assign.end(); it != end; it++)
       os << "assign " << *(it->second) << ";" << endl;
   }
 
-  os << "endmodule" << endl;
+  os << endl << "endmodule" << endl << endl;
   return os;
 }
