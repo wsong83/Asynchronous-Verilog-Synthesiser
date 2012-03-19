@@ -240,19 +240,27 @@
 %type <tExp>            expression
 %type <tExp>            primary
 %type <tInstance>       module_instance
+%type <tInstance>       n_input_gate_instance
+%type <tInstance>       n_output_gate_instance
 %type <tInstName>       instance_identifier
 %type <tLConcatenation> variable_lvalue
 %type <tListExp>        expressions
 %type <tListInst>       module_instances
+%type <tListInst>       n_input_gate_instances
+%type <tListInst>       n_output_gate_instances
 %type <tListPort>       list_of_port_identifiers
+%type <tListPortConn>   input_terminals
 %type <tListPortConn>   list_of_port_connections
 %type <tListPortConn>   named_port_connections
 %type <tListPortConn>   ordered_port_connections
+%type <tListPortConn>   output_terminals
 %type <tListVar>        list_of_parameter_assignments 
 %type <tListVar>        list_of_variable_identifiers
 %type <tListVar>        named_parameter_assignments
 %type <tListVar>        ordered_parameter_assignments
 %type <tModuleName>     module_identifier
+%type <tModuleName>     n_input_gatetype
+%type <tModuleName>     n_output_gatetype
 %type <tPortName>       port_identifier
 %type <tPortConn>       named_port_connection
 %type <tPortConn>       ordered_port_connection
@@ -711,14 +719,14 @@ n_input_gate_instances
     ;
 
 n_input_gate_instance
-    : '(' output_terminal ',' input_terminals ')'
-    | instance_identifier '(' output_terminal ',' input_terminals ')'
-    | instance_identifier '[' expression ':' expression ']' '(' output_terminal ',' input_terminals ')'
+    : '(' variable_lvalue ',' input_terminals ')'
+    | instance_identifier '(' variable_lvalue ',' input_terminals ')'
+    | instance_identifier '[' expression ':' expression ']' '(' variable_lvalue ',' input_terminals ')'
     ;
 
 input_terminals
-    : input_terminal
-    | input_terminals ',' input_terminal
+    : expression
+    | input_terminals ',' expression
     ;
 
 n_output_gate_instances
@@ -727,38 +735,29 @@ n_output_gate_instances
     ;
 
 n_output_gate_instance
-    : '(' output_terminals ',' input_terminal ')'
-    | instance_identifier '(' output_terminals ',' input_terminal ')'
-    | instance_identifier '[' expression ':' expression ']' '(' output_terminals ',' input_terminal ')'
+    : '(' output_terminals ',' expression ')'
+    | instance_identifier '(' output_terminals ',' expression ')'
+    | instance_identifier '[' expression ':' expression ']' '(' output_terminals ',' expression ')'
     ;
 
 output_terminals
-    : output_terminal
-    | output_terminals ',' output_terminal
-    ;
-
-//A.3.3 Primitive terminals
-input_terminal
-    : expression
-    ;
-
-output_terminal
     : variable_lvalue
+    | output_terminals ',' variable_lvalue
     ;
 
 //A.3.4 Primitive gate and switch types
 n_input_gatetype
-    : "and" 
-    | "nand" 
-    | "or" 
-    | "nor" 
-    | "xor" 
-    | "xnor"
+    : "and"        { $$ = string("and"); }
+    | "nand"       { $$ = string("nand"); }
+    | "or"         { $$ = string("or"); }
+    | "nor"        { $$ = string("nor"); }
+    | "xor"        { $$ = string("xor"); }
+    | "xnor"       { $$ = string("xnor"); }
     ;
 
 n_output_gatetype
-    : "buf" 
-    | "not"
+    : "buf"        { $$ = string("buf"); }
+    | "not"        { $$ = string("not"); }
     ;
 
 //A.4.1 Module instantiation

@@ -34,7 +34,7 @@ namespace netlist {
   public:
     NETLIST_DEFAULT_CON(Instance, tInstance);
     Instance(const IIdentifier& nm, const list<pair<PoIdentifier, Expression> >& polist)
-      : NetComp(tInstance), name(nm), port_list(polist) { }
+      : NetComp(tInstance), name(nm), port_list(polist), type(unknown) { }
 
     // helpers
     ostream& streamout(ostream& os) const;
@@ -46,6 +46,7 @@ namespace netlist {
     IIdentifier name;
     MIdentifier mname;
     shared_ptr<Module> module_ptr;
+    enum type_t { unknown, modu_inst, prim_inst, gate_inst} type;
     list<pair<PoIdentifier, Expression> > port_list;
     list<pair<VIdentifier, Expression> > para_list;
     
