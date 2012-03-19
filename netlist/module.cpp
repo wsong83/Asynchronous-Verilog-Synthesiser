@@ -90,6 +90,11 @@ ostream& netlist::Module::streamout(ostream& os) const {
       os << "assign " << *(it->second) << ";" << endl;
   }
 
+  { // module instances
+    os << endl;
+    os << db_instance;
+  }
+
   os << endl << "endmodule" << endl << endl;
   return os;
 }

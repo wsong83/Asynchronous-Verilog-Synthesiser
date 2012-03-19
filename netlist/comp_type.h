@@ -32,6 +32,7 @@ enum ctype_t {
   tConcatenation,           /* concatenation */
   tExp,                     /* expression */
   tFuncName,                /* function name */
+  tInstance,                /* module instance */
   tInstName,                /* instance name */
   tLConcatenation,          /* left-side concatenation */
   tModule,                  /* Module declaration */

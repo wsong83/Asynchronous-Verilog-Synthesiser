@@ -10,6 +10,10 @@ module test_module (o, f, c, o);
    assign f = 1===1'b1 ? sig[3 +: 1][3 -: 1] : {2'd3, 5'h3} + 3**4;
 
    genvar i = 0;
+
+   or_gate U0 (.out(o), .fout(f), .cin(c));
+   or_gate #(.width(wd)) U1 (.out(o), .fout(f), .cin(c));
+   or_gate U1 ();
    
 endmodule // test
 

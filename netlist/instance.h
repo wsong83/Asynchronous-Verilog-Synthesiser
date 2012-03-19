@@ -20,47 +20,38 @@
  */
 
 /* 
- * Definition of netlist components.
- * 14/02/2012   Wei Song
+ * A module instance
+ * 19/03/2012   Wei Song
  *
  *
  */
 
-#ifndef _H_MODULE_
-#define _H_MODULE_
+#ifndef _H_INSTANCE_
+#define _H_INSTANCE_
 
 namespace netlist {
-  
-  class Module : public NetComp {
+  class Instance : public NetComp {
   public:
-    NETLIST_DEFAULT_CON(Module, tModule);
-    Module(const MIdentifier& nm)
-      : NetComp(tModule), name(nm) {}
+    NETLIST_DEFAULT_CON(Instance, tInstance);
+    Instance(const IIdentifier& nm, const list<pair<PoIdentifier, Expression> >& polist)
+      : NetComp(tInstance), name(nm), port_list(polist) { }
 
     // helpers
-    shared_ptr<Port> find_port(const PoIdentifier&) const;
     ostream& streamout(ostream& os) const;
-    
+    void set_mname(const MIdentifier& mod_name) { mname = mod_name; }
+    void set_module_ptr(const shared_ptr<Module>& mp) { module_ptr = mp;}
+    void set_para(const list<pair<VIdentifier, Expression> >& para ) { para_list = para; }
+
     // data
-    MIdentifier name;
-    list<shared_ptr<Port> >          list_port;    /* input and output ports */
-    DataBase<VIdentifier, Variable>  db_wire;	  /* wires */
-    DataBase<VIdentifier, Variable>  db_reg;	  /* registers */
-    DataBase<VIdentifier, Variable>  db_param;	  /* parameters */
-    DataBase<VIdentifier, Variable>  db_genvar;   /* generate variable */
-    DataBase<IIdentifier, Instance>  db_instance; /* module instances */
-
-    DataBase<string, Assign>         db_assign; /* continueous assignments */
-
-    //name for unnamed items
-    BIdentifier unamed_block;
-    IIdentifier unamed_instance;
-    VIdentifier unamed_var;
-
+    IIdentifier name;
+    MIdentifier mname;
+    shared_ptr<Module> module_ptr;
+    list<pair<PoIdentifier, Expression> > port_list;
+    list<pair<VIdentifier, Expression> > para_list;
+    
   };
-
-  NETLIST_STREAMOUT(Module);
-
+  
+  NETLIST_STREAMOUT(Instance);
 
 }
 

@@ -234,20 +234,33 @@
 %left  oUNARY
 
  // type definitions
-%type <tAssign>     blocking_assignment
-%type <tAssign>     nonblocking_assignment
-%type <tConcatenation> concatenation
-%type <tExp>        expression
-%type <tExp>        primary
+%type <tAssign>         blocking_assignment
+%type <tAssign>         nonblocking_assignment
+%type <tConcatenation>  concatenation
+%type <tExp>            expression
+%type <tExp>            primary
+%type <tInstance>       module_instance
+%type <tInstName>       instance_identifier
 %type <tLConcatenation> variable_lvalue
-%type <tListExp>    expressions
-%type <tListPort>   list_of_port_identifiers
-%type <tListVar>    list_of_variable_identifiers
-%type <tModuleName> module_identifier
-%type <tPortName>   port_identifier
-%type <tRange>      range_expression
-%type <tVarName>    parameter_identifier
-%type <tVarName>    variable_identifier
+%type <tListExp>        expressions
+%type <tListInst>       module_instances
+%type <tListPort>       list_of_port_identifiers
+%type <tListPortConn>   list_of_port_connections
+%type <tListPortConn>   named_port_connections
+%type <tListPortConn>   ordered_port_connections
+%type <tListVar>        list_of_parameter_assignments 
+%type <tListVar>        list_of_variable_identifiers
+%type <tListVar>        named_parameter_assignments
+%type <tListVar>        ordered_parameter_assignments
+%type <tModuleName>     module_identifier
+%type <tPortName>       port_identifier
+%type <tPortConn>       named_port_connection
+%type <tPortConn>       ordered_port_connection
+%type <tRange>          range_expression
+%type <tVarAssign>      named_parameter_assignment
+%type <tVarAssign>      ordered_parameter_assignment
+%type <tVarName>        parameter_identifier
+%type <tVarName>        variable_identifier
 
 %start source_text
 
@@ -419,8 +432,8 @@ variable_declaration
             }
           }
         } break;
-	default: ;/* doing nothing right now */
-	}
+        default: ;/* doing nothing right now */
+        }
       }
       ////////////////////////////////////////
     } 
@@ -751,16 +764,53 @@ n_output_gatetype
 //A.4.1 Module instantiation
 module_instantiation 
     : module_identifier module_instances ';'
-    | module_identifier parameter_value_assignment module_instances ';'
+    {
+      shared_ptr<NetComp> father = Lib.get_current_comp();
+      shared_ptr<Module> cm;
+      switch(father->get_type()) {
+      case NetComp::tModule: { 
+        cm = static_pointer_cast<Module>(father);
+        while(!$2.empty()) {
+          shared_ptr<Instance> instp = $2.front();
+          $2.pop_front();
+          instp->set_mname($1);
+
+          // insert it in the database
+          if(!cm->db_instance.insert(instp->name, instp)) {
+            av_env.error(yylloc, "SYN-INST-0", instp->name.name);
+          }
+        }
+      } break;
+      default: ;/* doing nothing right now */
+      }
+    }
+    | module_identifier '#' '(' list_of_parameter_assignments ')' module_instances ';'
+    {
+      shared_ptr<NetComp> father = Lib.get_current_comp();
+      shared_ptr<Module> cm;
+      switch(father->get_type()) {
+      case NetComp::tModule: { 
+        cm = static_pointer_cast<Module>(father);
+        while(!$6.empty()) {
+          shared_ptr<Instance> instp = $6.front();
+          $6.pop_front();
+          instp->set_mname($1);
+          instp->set_para($4);
+          
+          // insert it in the database
+          if(!cm->db_instance.insert(instp->name, instp)) {
+            av_env.error(yylloc, "SYN-INST-0", instp->name.name);
+          }
+        }
+      } break;
+      default: ;/* doing nothing right now */
+      }
+    }
     ;
 
 module_instances
-    : module_instance
-    | module_instance ',' module_instance
-    ;
-
-parameter_value_assignment 
-    : '#' '(' list_of_parameter_assignments ')'
+    : module_instance   { $$.clear(); $$.push_back($1); }
+    | module_instance ',' module_instance { $$.push_back($3); }
     ;
 
 list_of_parameter_assignments 
@@ -769,53 +819,54 @@ list_of_parameter_assignments
     ;
   
 ordered_parameter_assignments
-    : ordered_parameter_assignment
-    | ordered_parameter_assignments ',' ordered_parameter_assignment
+    : ordered_parameter_assignment   { $$.clear(); $$.push_back($1); }
+    | ordered_parameter_assignments ',' ordered_parameter_assignment  { $$.push_back($3); }
     ;
 
 named_parameter_assignments
-    : named_parameter_assignment
-    | named_parameter_assignments ',' named_parameter_assignment
+    : named_parameter_assignment   { $$.clear(); $$.push_back($1); }
+    | named_parameter_assignments ',' named_parameter_assignment  { $$.push_back($3); }
     ;
 
 ordered_parameter_assignment 
-    : expression
+    : expression              { $$ = pair<netlist::VIdentifier, netlist::Expression>(VIdentifier(string("")), $1); }
     ;
 
 named_parameter_assignment 
-    : '.' parameter_identifier '('  ')'
-    | '.' parameter_identifier '(' expression ')'
+    : '.' parameter_identifier '('  ')'    { $$ = pair<netlist::VIdentifier, netlist::Expression>($2, Expression()); }
+    | '.' parameter_identifier '(' expression ')' { $$ = pair<netlist::VIdentifier, netlist::Expression>($2, $4); }
     ;
 
 module_instance 
-    : instance_identifier '(' ')'
+    : instance_identifier '(' ')' { $$.reset(new Instance($1, list<pair<PoIdentifier, Expression> >())); }
     | instance_identifier '[' expression ':' expression ']' '(' ')'
-    | instance_identifier '(' list_of_port_connections ')'
+    | instance_identifier '(' list_of_port_connections ')'   { $$.reset(new Instance($1, $3)); }
     | instance_identifier '[' expression ':' expression ']' '(' list_of_port_connections ')'
     ;
 
 list_of_port_connections 
     : ordered_port_connections
-    | named_port_connections
+    | named_port_connections      { $$=$1;}
     ;
 
 ordered_port_connections
-    : ordered_port_connection 
-    | ordered_port_connections ',' ordered_port_connection
+    : ordered_port_connection                                { $$.clear(); $$.push_back($1); }
+    | ordered_port_connections ',' ordered_port_connection   { $$.push_back($3); }
     ;
 
 named_port_connections
-    : named_port_connection
-    | named_port_connections ',' named_port_connection
+    : named_port_connection                             { $$.clear(); $$.push_back($1); }
+    | named_port_connections ',' named_port_connection  { $$.push_back($3); }
     ;
 
 ordered_port_connection 
-    : expression
+    : /* empty */             { $$ = pair<netlist::PoIdentifier, netlist::Expression>(PoIdentifier(string("")), Expression()); }
+    | expression              { $$ = pair<netlist::PoIdentifier, netlist::Expression>(PoIdentifier(string("")), $1); }
     ;
 
 named_port_connection 
-    : '.' port_identifier '(' ')'
-    | '.' port_identifier '(' expression ')'
+    : '.' port_identifier '(' ')' { $$ = pair<netlist::PoIdentifier, netlist::Expression>($2, Expression()); }
+    | '.' port_identifier '(' expression ')'  { $$ = pair<netlist::PoIdentifier, netlist::Expression>($2, $4);}
     ;
 
 //A.4.2 Generated instantiation
@@ -1195,7 +1246,7 @@ module_identifier
     ;
 
 instance_identifier 
-    : identifier
+    : identifier           { $$ = $1; }
     ;
 
 parameter_identifier 

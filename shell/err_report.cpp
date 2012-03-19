@@ -51,6 +51,7 @@ shell::ErrReport::ErrReport() {
   ERR_DEFINE("SYN-ASSIGN-0", EError,   0, "Wrong left-side concatenation.");
   ERR_DEFINE("SYN-ASSIGN-1", EError,   0, "Keyword \"assign\" can only be used in module enviornment.");
   ERR_DEFINE("SYN-FILE-0",   EError,   0, "File terminated in multi-line comments.");
+  ERR_DEFINE("SYN-INST-0",   EError,   1, "Instance \"%1%\" is already defined.");
   ERR_DEFINE("SYN-MODULE-0", EError,   1, "Module \"%1%\" is already defined.");
   ERR_DEFINE("SYN-NUM-0",    EError,   1, "Unrecoginised format of number \"%1%\".");
   ERR_DEFINE("SYN-PARA-0",   EError,   1, "Parameter \"%1%\" is declared outside a module enviornment.");

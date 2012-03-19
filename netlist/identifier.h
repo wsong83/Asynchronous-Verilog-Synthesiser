@@ -109,6 +109,7 @@ namespace netlist {
     // constructors
     IIdentifier();
     IIdentifier(const string&);
+    IIdentifier(const averilog::avID&);
 
     // helpers
     IIdentifier& operator++ ();

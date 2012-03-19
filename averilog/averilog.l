@@ -114,6 +114,7 @@ operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
 "xnor"      { return token::pXnor;  }
 "buf"       { return token::pBuf;   }
 {operator}  { return yytext[0]; }
+"."         { return yytext[0]; }
 {fnum}    { 
               yylval->tNumber = netlist::Number(yytext, yyleng);
               if(!yylval->tNumber.is_valid()) {

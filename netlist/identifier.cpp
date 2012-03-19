@@ -139,6 +139,9 @@ netlist::IIdentifier::IIdentifier()
 netlist::IIdentifier::IIdentifier(const string& nm)
   : Identifier(NetComp::tInstName, nm), numbered(false) {  }
 
+netlist::IIdentifier::IIdentifier(const averilog::avID& id)
+  : Identifier(NetComp::tInstName, id.name), numbered(false) { }
+
 IIdentifier& netlist::IIdentifier::operator++ () {
   const boost::regex numbered_name("_(\\d+)\\z");
   boost::smatch mr;

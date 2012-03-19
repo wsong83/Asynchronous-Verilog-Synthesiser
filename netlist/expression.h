@@ -45,6 +45,7 @@ namespace netlist {
     void reduce();               /* try to reduce the equation */
     // return the size of equation
     int size() const { return eqn.size(); }
+    bool empty() const { return eqn.empty(); }
     void db_register(int iod = 1);
     void db_expunge();
     

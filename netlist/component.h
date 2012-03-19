@@ -126,6 +126,9 @@ namespace netlist {
 
   // module.h
   class Module;
+  
+  // instance.h
+  class Instance;
 
   // library.h
   class Library;
@@ -148,6 +151,7 @@ namespace netlist {
 #include "variable.h"
 #include "assign.h"
 #include "module.h"
+#include "instance.h"
 #include "library.h"
 #include "uni_name.h"
 
