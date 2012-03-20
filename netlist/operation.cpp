@@ -72,6 +72,22 @@ netlist::Operation::Operation(const Concatenation& con)
   : otype(oCon), valuable(false), data(new Concatenation(con))
 { }
 
+netlist::Operation::Operation(const LConcatenation& con)
+  : otype(oCon), valuable(false), data(new Concatenation()) {
+  if(con.size() == 1) {
+    otype = oVar;
+    data.reset(new VIdentifier(con.front()));
+  } else {
+    // copy all elements in LConcatenation to Concatenation
+    shared_ptr<Concatenation> cp = static_pointer_cast<Concatenation>(data);
+    list<VIdentifier>::const_iterator it, end;
+    for(it=con.data.begin(), end=con.data.end(); it!=end; it++) {
+      ConElem m = Expression(*it);
+      *cp + m;
+    }
+  }
+}
+
 Number& netlist::Operation::get_num(){
   assert(otype == oNum);
   return *(static_pointer_cast<Number>(data));

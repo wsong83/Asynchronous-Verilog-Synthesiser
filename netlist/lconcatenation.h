@@ -41,6 +41,9 @@ namespace netlist {
     // helpers
     ostream& streamout(ostream&) const;
     bool is_valid() const { return valid; }
+    unsigned int size() const { return data.size(); }
+    VIdentifier& front() { return data.front(); }
+    const VIdentifier& front() const { return data.front(); }
     void db_register();
     void db_expunge();
 

@@ -52,6 +52,12 @@ netlist::Expression::Expression(const Concatenation& con)
   eqn.push_back(Operation(con));
 }
 
+netlist::Expression::Expression(const LConcatenation& con)
+  : NetComp(tExp), valuable(false)
+{
+  eqn.push_back(Operation(con));
+}
+
 bool netlist::Expression::is_valuable() const {
   return valuable;
 }

@@ -38,6 +38,7 @@ namespace netlist {
     Expression(const Number&);	/* a number is an expression */
     Expression(const VIdentifier&); /* a variable/parameter is an expression */
     Expression(const Concatenation&); /* a concatenation is an expression */
+    Expression(const LConcatenation&); /* some times need to convert a lvalue back to expression */
 
     // helpers
     bool is_valuable() const;    /* check valuable */
@@ -46,6 +47,7 @@ namespace netlist {
     // return the size of equation
     int size() const { return eqn.size(); }
     bool empty() const { return eqn.empty(); }
+    Operation& front() { return eqn.front(); }
     void db_register(int iod = 1);
     void db_expunge();
     

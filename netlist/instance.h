@@ -32,23 +32,30 @@
 namespace netlist {
   class Instance : public NetComp {
   public:
-    NETLIST_DEFAULT_CON(Instance, tInstance);
-    Instance(const IIdentifier& nm, const list<pair<PoIdentifier, Expression> >& polist)
+    enum type_t { unknown, modu_inst, prim_in_inst, prim_out_inst, gate_inst};
+ 
+    Instance()
+      : NetComp(tInstance), type(unknown) {}
+
+    Instance(const IIdentifier& nm, const list<PortConn>& polist)
       : NetComp(tInstance), name(nm), port_list(polist), type(unknown) { }
+
+    // for primary gates in most cases
+    Instance(const IIdentifier&, const list<PortConn>&, type_t);
 
     // helpers
     ostream& streamout(ostream& os) const;
     void set_mname(const MIdentifier& mod_name) { mname = mod_name; }
     void set_module_ptr(const shared_ptr<Module>& mp) { module_ptr = mp;}
-    void set_para(const list<pair<VIdentifier, Expression> >& para ) { para_list = para; }
+    void set_para(const list<ParaConn>& para ) { para_list = para; }
 
     // data
     IIdentifier name;
     MIdentifier mname;
     shared_ptr<Module> module_ptr;
-    enum type_t { unknown, modu_inst, prim_inst, gate_inst} type;
-    list<pair<PoIdentifier, Expression> > port_list;
-    list<pair<VIdentifier, Expression> > para_list;
+    list<PortConn> port_list;
+    list<ParaConn> para_list;
+    type_t type;
     
   };
   

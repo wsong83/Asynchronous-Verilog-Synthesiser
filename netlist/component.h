@@ -130,6 +130,10 @@ namespace netlist {
   // instance.h
   class Instance;
 
+  // portconn.h
+  class PortConn;               /* port connection */
+  class ParaConn;               /* parameter connection */
+
   // library.h
   class Library;
 
@@ -139,7 +143,11 @@ namespace netlist {
 }
 
 #include "defines.h"
+
+// STL classes
 #include "database.h"
+
+// NON-STL classes
 #include "operation.h"
 #include "number.h"
 #include "identifier.h"
@@ -152,6 +160,7 @@ namespace netlist {
 #include "assign.h"
 #include "module.h"
 #include "instance.h"
+#include "portconn.h"
 #include "library.h"
 #include "uni_name.h"
 

@@ -30,22 +30,46 @@
 
 using namespace netlist;
 
+netlist::Instance::Instance(const IIdentifier& nm, const list<PortConn>& polist, type_t itype)
+  : NetComp(tInstance), name(nm), port_list(polist), type(itype) {
+  switch(itype) {
+  case prim_in_inst: {
+    list<PortConn>::iterator it, end;
+    it = port_list.begin();
+    it->set_out();
+    it++;
+    for(end=port_list.end(); it!=end; it++) {
+      it->set_in();
+    }
+    break;
+  }
+  case prim_out_inst: {
+    list<PortConn>::iterator it, end;
+    it = port_list.begin();
+    it->set_in();
+    it++;
+    for(end=port_list.end(); it!=end; it++) {
+      it->set_out();
+    }
+    break;
+  }
+  default: ;
+  }
+}
+
+
 ostream& netlist::Instance::streamout(ostream& os) const {
   // the module name
   os << mname.name << " ";
 
   // parameter list
   if(!para_list.empty()) {
-    list<pair<VIdentifier, Expression> >::const_iterator it, end;
+    list<ParaConn>::const_iterator it, end;
     os << "#(";
     it=para_list.begin();
     end=para_list.end(); 
     while(it!= end) {
-      if(it->first.name.size() != 0) {
-        os << "." << it->first.name << "(" << it->second << ")";
-      } else {
-        os << it->second;
-      }
+      os << *it;
       it++;
       if(it != end)
         os << ", ";
@@ -60,15 +84,11 @@ ostream& netlist::Instance::streamout(ostream& os) const {
 
   // port connections
   {
-    list<pair<PoIdentifier, Expression> >::const_iterator it, end;
+    list<PortConn>::const_iterator it, end;
     it=port_list.begin();
     end=port_list.end(); 
     while(it!= end) {
-      if(it->first.name.size() != 0) {
-        os << "." << it->first.name << "(" << it->second << ")";
-      } else {
-        os << it->second;
-      }
+      os << *it;
       it++;
       if(it != end)
         os << ", ";

@@ -52,12 +52,14 @@ namespace averilog {
     list<netlist::Expression>   tListExp;
     list<shared_ptr<netlist::Instance> > tListInst;
     list<netlist::PoIdentifier> tListPort;
-    list<pair<netlist::PoIdentifier, netlist::Expression> > tListPortConn;
+    list<netlist::ParaConn>     tListParaAssign;
+    list<netlist::PortConn>     tListPortConn;
     list<pair<netlist::VIdentifier, netlist::Expression> > tListVar;
     netlist::MIdentifier        tModuleName;
     netlist::Number             tNumber;    
     netlist::PoIdentifier       tPortName;
-    pair<netlist::PoIdentifier, netlist::Expression> tPortConn;
+    netlist::ParaConn           tParaAssign;
+    netlist::PortConn           tPortConn;
     netlist::Range              tRange;	
     pair<netlist::VIdentifier, netlist::Expression> tVarAssign;
     netlist::VIdentifier        tVarName;	

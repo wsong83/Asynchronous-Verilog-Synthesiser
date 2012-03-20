@@ -81,6 +81,7 @@ namespace netlist {
     Operation(const Number&);
     Operation(const VIdentifier&);
     Operation(const Concatenation&);
+    Operation(const LConcatenation&);
 
     // helpers
     Operation& operator= (const Operation&);

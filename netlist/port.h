@@ -37,20 +37,20 @@ namespace netlist {
     Port(const PoIdentifier&);
 
     // helpers
-    void set_input()  { input = true;  output = false; }
-    void set_output() { input = false; output = true;  }
-    void set_inout()  { input = true;  output = true;  }
-    bool is_input() const { return input&&!output; }
-    bool is_output() const { return !input&&output; }
-    bool is_inout() const { return input&&output; }
+    void set_in() { dir = -1; }
+    void set_out() { dir = 1; }
+    void set_inout() { dir = 0; }
+    void set_dir(int mdir) { dir = mdir; }
+    int get_dir() const { return dir;}
+    bool is_in() const { return dir == -1; }
+    bool is_out() const { return dir == 1; }
+    bool is_inout() const { return dir == 0; }
     ostream& streamout(ostream& os) const;
    
     PoIdentifier name;
 
   private:
-    bool input;
-    bool output;
-
+    int dir;                    /* -1 in, 0 inout, 1 out */
   };
   NETLIST_STREAMOUT(Port);
 

@@ -53,9 +53,9 @@ namespace netlist {
     DataBase<string, Assign>         db_assign; /* continueous assignments */
 
     //name for unnamed items
-    BIdentifier unamed_block;
-    IIdentifier unamed_instance;
-    VIdentifier unamed_var;
+    BIdentifier unnamed_block;
+    IIdentifier unnamed_instance;
+    VIdentifier unnamed_var;
 
   };
 

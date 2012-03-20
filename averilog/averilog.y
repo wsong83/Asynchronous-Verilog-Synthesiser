@@ -249,24 +249,24 @@
 %type <tListInst>       n_input_gate_instances
 %type <tListInst>       n_output_gate_instances
 %type <tListPort>       list_of_port_identifiers
+%type <tListParaAssign> list_of_parameter_assignments 
+%type <tListParaAssign> named_parameter_assignments
+%type <tListParaAssign> ordered_parameter_assignments
 %type <tListPortConn>   input_terminals
 %type <tListPortConn>   list_of_port_connections
 %type <tListPortConn>   named_port_connections
 %type <tListPortConn>   ordered_port_connections
 %type <tListPortConn>   output_terminals
-%type <tListVar>        list_of_parameter_assignments 
 %type <tListVar>        list_of_variable_identifiers
-%type <tListVar>        named_parameter_assignments
-%type <tListVar>        ordered_parameter_assignments
 %type <tModuleName>     module_identifier
 %type <tModuleName>     n_input_gatetype
 %type <tModuleName>     n_output_gatetype
+%type <tParaAssign>     named_parameter_assignment
+%type <tParaAssign>     ordered_parameter_assignment
 %type <tPortName>       port_identifier
 %type <tPortConn>       named_port_connection
 %type <tPortConn>       ordered_port_connection
 %type <tRange>          range_expression
-%type <tVarAssign>      named_parameter_assignment
-%type <tVarAssign>      ordered_parameter_assignment
 %type <tVarName>        parameter_identifier
 %type <tVarName>        variable_identifier
 
@@ -355,7 +355,7 @@ input_declaration
       list<PoIdentifier>::iterator it, end;
       for(it = $2.begin(), end = $2.end(); it != end; it++) {
         shared_ptr<Port> cp = cm->find_port(*it);
-        if(0 != cp.use_count()) cp->set_input();
+        if(0 != cp.use_count()) cp->set_in();
         else { av_env.error(yylloc, "SYN-PORT-0", it->name, cm->name.name); }
       }
     }
@@ -368,7 +368,7 @@ input_declaration
       for(it = $7.begin(), end = $7.end(); it != end; it++) {
         shared_ptr<Port> cp = cm->find_port(*it);
         if(0 != cp.use_count()) { 
-          cp->set_input();
+          cp->set_in();
           Range m(pair<Expression, Expression>($3, $5));
           cp->name.get_range_ref().push_back(m);
         } else {  av_env.error(yylloc, "SYN-PORT-0", it->name, cm->name.name); }
@@ -385,7 +385,7 @@ output_declaration
       list<PoIdentifier>::iterator it, end;
       for(it = $2.begin(), end = $2.end(); it != end; it++) {
         shared_ptr<Port> cp = cm->find_port(*it);
-        if(0 != cp.use_count()) cp->set_output();
+        if(0 != cp.use_count()) cp->set_out();
         else {  av_env.error(yylloc, "SYN-PORT-0", it->name, cm->name.name); }
       }
     }
@@ -398,7 +398,7 @@ output_declaration
       for(it = $7.begin(), end = $7.end(); it != end; it++) {
         shared_ptr<Port> cp = cm->find_port(*it);
         if(0 != cp.use_count()) { 
-          cp->set_output();
+          cp->set_out();
           vector<Range> rm;
           rm.push_back(Range(pair<Expression, Expression>($3, $5)));
           cp->name.set_range(rm);
@@ -720,13 +720,32 @@ n_input_gate_instances
 
 n_input_gate_instance
     : '(' variable_lvalue ',' input_terminals ')'
+    {
+      shared_ptr<NetComp> father = Lib.get_current_comp();
+      shared_ptr<Module> cm;
+      switch(father->get_type()) {
+      case NetComp::tModule: { 
+        cm = static_pointer_cast<Module>(father);
+        $4.push_front(PortConn(Expression($2)));
+        // assign a name for the instance
+        $$.reset( new Instance(cm->unnamed_instance, $4,  Instance::prim_in_inst));
+        ++(cm->unnamed_instance);
+        break;
+      }
+      default: ;/* doing nothing right now */
+      }
+    }
     | instance_identifier '(' variable_lvalue ',' input_terminals ')'
+    {
+      $5.push_front(PortConn(Expression($3)));
+      $$.reset( new Instance($1, $5, Instance::prim_in_inst));
+    }
     | instance_identifier '[' expression ':' expression ']' '(' variable_lvalue ',' input_terminals ')'
     ;
 
 input_terminals
-    : expression
-    | input_terminals ',' expression
+    : expression                         { $$.clear(); $$.push_back(PortConn($1)); }
+    | input_terminals ',' expression     { $$.push_back(PortConn($3)); }
     ;
 
 n_output_gate_instances
@@ -741,8 +760,8 @@ n_output_gate_instance
     ;
 
 output_terminals
-    : variable_lvalue
-    | output_terminals ',' variable_lvalue
+    : variable_lvalue                      { $$.clear(); $$.push_back(PortConn(Expression($1))); }
+    | output_terminals ',' variable_lvalue { $$.push_back(PortConn(Expression($3))); }
     ;
 
 //A.3.4 Primitive gate and switch types
@@ -828,16 +847,16 @@ named_parameter_assignments
     ;
 
 ordered_parameter_assignment 
-    : expression              { $$ = pair<netlist::VIdentifier, netlist::Expression>(VIdentifier(string("")), $1); }
+    : expression              { $$ = ParaConn($1); }
     ;
 
 named_parameter_assignment 
-    : '.' parameter_identifier '('  ')'    { $$ = pair<netlist::VIdentifier, netlist::Expression>($2, Expression()); }
-    | '.' parameter_identifier '(' expression ')' { $$ = pair<netlist::VIdentifier, netlist::Expression>($2, $4); }
+    : '.' parameter_identifier '('  ')'    { $$ = ParaConn($2); }
+    | '.' parameter_identifier '(' expression ')' { $$ = ParaConn($2, $4); }
     ;
 
 module_instance 
-    : instance_identifier '(' ')' { $$.reset(new Instance($1, list<pair<PoIdentifier, Expression> >())); }
+    : instance_identifier '(' ')' { $$.reset(new Instance($1, list<PortConn>())); }
     | instance_identifier '[' expression ':' expression ']' '(' ')'
     | instance_identifier '(' list_of_port_connections ')'   { $$.reset(new Instance($1, $3)); }
     | instance_identifier '[' expression ':' expression ']' '(' list_of_port_connections ')'
@@ -859,13 +878,13 @@ named_port_connections
     ;
 
 ordered_port_connection 
-    : /* empty */             { $$ = pair<netlist::PoIdentifier, netlist::Expression>(PoIdentifier(string("")), Expression()); }
-    | expression              { $$ = pair<netlist::PoIdentifier, netlist::Expression>(PoIdentifier(string("")), $1); }
+    : /* empty */             { $$ = PortConn(); }
+    | expression              { $$ = PortConn($1); }
     ;
 
 named_port_connection 
-    : '.' port_identifier '(' ')' { $$ = pair<netlist::PoIdentifier, netlist::Expression>($2, Expression()); }
-    | '.' port_identifier '(' expression ')'  { $$ = pair<netlist::PoIdentifier, netlist::Expression>($2, $4);}
+    : '.' port_identifier '(' ')' { $$ = PortConn($2); }
+    | '.' port_identifier '(' expression ')'  { $$ = PortConn($2, $4);}
     ;
 
 //A.4.2 Generated instantiation

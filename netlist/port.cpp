@@ -34,9 +34,9 @@ netlist::Port::Port(const PoIdentifier& pid)
   : NetComp(tPort), name(pid) {}
 
 ostream& netlist::Port::streamout(ostream& os) const {
-  if(is_input())
+  if(is_in())
     os << "input ";
-  else if(is_output())
+  else if(is_out())
     os << "output ";
   else if(is_inout())
     os << "inout ";
