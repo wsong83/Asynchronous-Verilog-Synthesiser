@@ -14,6 +14,8 @@ module test_module (o, f, c, o);
    or_gate U0 (.out(o), .fout(f), .cin(c));
    or_gate #(.width(wd)) U1 (.out(o), .fout(f), .cin(c));
    or_gate U1 ();
+   any u_0 (c);
+   not (o, f, sig[0]), (c, sig[1]);
    
 endmodule // test
 

@@ -710,12 +710,52 @@ function_item_declaration
 //A.3.1 Primitive instantiation and instances
 gate_instantiation
     : n_input_gatetype n_input_gate_instances ';'
+    {
+      list<shared_ptr<Instance> >::iterator it, end;
+      shared_ptr<NetComp> father = Lib.get_current_comp();
+      shared_ptr<Module> cm;
+      
+      for(it=$2.begin(), end=$2.end(); it!=end; it++) {
+        (*it)->set_mname($1);
+        shared_ptr<Instance>& ip = *it;
+        switch(father->get_type()) {
+        case NetComp::tModule: {
+          cm = static_pointer_cast<Module>(father);
+          if(!cm->db_instance.insert(ip->name, ip)) {
+            av_env.error(yylloc, "SYN-INST-0", ip->name.name);
+          }
+          break;
+        }
+        default:;
+        }
+      }
+    }
     | n_output_gatetype n_output_gate_instances ';'
+    {
+      list<shared_ptr<Instance> >::iterator it, end;
+      shared_ptr<NetComp> father = Lib.get_current_comp();
+      shared_ptr<Module> cm;
+      
+      for(it=$2.begin(), end=$2.end(); it!=end; it++) {
+        (*it)->set_mname($1);
+        shared_ptr<Instance>& ip = *it;
+        switch(father->get_type()) {
+        case NetComp::tModule: {
+          cm = static_pointer_cast<Module>(father);
+          if(!cm->db_instance.insert(ip->name, ip)) {
+            av_env.error(yylloc, "SYN-INST-0", ip->name.name);
+          }
+          break;
+        }
+        default:;
+        }
+      }
+    }
     ;
 
 n_input_gate_instances
-    : n_input_gate_instance
-    | n_input_gate_instances ',' n_input_gate_instance
+    : n_input_gate_instance                              { $$.clear(); $$.push_back($1); }
+    | n_input_gate_instances ',' n_input_gate_instance   { $$.push_back($3); }
     ;
 
 n_input_gate_instance
@@ -726,6 +766,10 @@ n_input_gate_instance
       switch(father->get_type()) {
       case NetComp::tModule: { 
         cm = static_pointer_cast<Module>(father);
+        // get a unique name
+        while((cm->db_instance.find(cm->unnamed_instance)).use_count() != 0)
+          ++(cm->unnamed_instance);
+        // push the lvalue into port list
         $4.push_front(PortConn(Expression($2)));
         // assign a name for the instance
         $$.reset( new Instance(cm->unnamed_instance, $4,  Instance::prim_in_inst));
@@ -749,13 +793,36 @@ input_terminals
     ;
 
 n_output_gate_instances
-    : n_output_gate_instance
-    | n_output_gate_instances ',' n_output_gate_instance
+    : n_output_gate_instance                               { $$.clear(); $$.push_back($1); }
+    | n_output_gate_instances ',' n_output_gate_instance   { $$.push_back($3); }
     ;
 
 n_output_gate_instance
     : '(' output_terminals ',' expression ')'
+    {
+      shared_ptr<NetComp> father = Lib.get_current_comp();
+      shared_ptr<Module> cm;
+      switch(father->get_type()) {
+      case NetComp::tModule: { 
+        cm = static_pointer_cast<Module>(father);
+        // get a unique name
+        while((cm->db_instance.find(cm->unnamed_instance)).use_count() != 0)
+          ++(cm->unnamed_instance);
+        // push the expression into port list
+        $2.push_back(PortConn($4));
+        // assign a name for the instance
+        $$.reset( new Instance(cm->unnamed_instance, $2,  Instance::prim_out_inst));
+        ++(cm->unnamed_instance);
+        break;
+      }
+      default: ;/* doing nothing right now */
+      }
+    }
     | instance_identifier '(' output_terminals ',' expression ')'
+    {
+      $3.push_back(PortConn(Expression($5)));
+      $$.reset( new Instance($1, $3, Instance::prim_out_inst));
+    }
     | instance_identifier '[' expression ':' expression ']' '(' output_terminals ',' expression ')'
     ;
 

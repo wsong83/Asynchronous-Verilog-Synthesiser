@@ -46,11 +46,11 @@ netlist::Instance::Instance(const IIdentifier& nm, const list<PortConn>& polist,
   case prim_out_inst: {
     list<PortConn>::iterator it, end;
     it = port_list.begin();
-    it->set_in();
-    it++;
     for(end=port_list.end(); it!=end; it++) {
       it->set_out();
     }
+    it--;
+    it->set_in();
     break;
   }
   default: ;
