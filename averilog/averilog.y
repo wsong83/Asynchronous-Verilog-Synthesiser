@@ -650,7 +650,7 @@ list_of_port_identifiers
 
 list_of_variable_identifiers 
     : variable_identifier                      { $$.clear(); $$.push_back(pair<VIdentifier,Expression>($1, Expression())); }
-    | variable_identifier '=' expression   { $$.clear(); $$.push_back(pair<VIdentifier,Expression>($1, $3)); } 
+    | variable_identifier '=' expression       { $$.clear(); $$.push_back(pair<VIdentifier,Expression>($1, $3)); } 
     | list_of_variable_identifiers ',' variable_identifier { $$.push_back(pair<VIdentifier,Expression>($3, Expression())); }
     | list_of_variable_identifiers ',' variable_identifier '=' expression { $$.push_back(pair<VIdentifier,Expression>($3, $5)); }
     ;
@@ -918,7 +918,7 @@ ordered_parameter_assignment
     ;
 
 named_parameter_assignment 
-    : '.' parameter_identifier '('  ')'    { $$ = ParaConn($2); }
+    : '.' parameter_identifier '('  ')'           { $$ = ParaConn($2); }
     | '.' parameter_identifier '(' expression ')' { $$ = ParaConn($2, $4); }
     ;
 
@@ -931,7 +931,7 @@ module_instance
 
 list_of_port_connections 
     : ordered_port_connections
-    | named_port_connections      { $$=$1;}
+    | named_port_connections  
     ;
 
 ordered_port_connections
@@ -1056,26 +1056,38 @@ blocking_assignment
     ;
 
 nonblocking_assignment 
-    : variable_lvalue "<=" expression  { $3.reduce(); $$.reset(new Assign($1, $3, true)); $$->db_register();}
+    : variable_lvalue "<=" expression  { $3.reduce(); $$.reset(new Assign($1, $3, false)); $$->db_register();}
     ;
 
 //A.6.3 Parallel and sequential blocks    
-seq_block
-    : "begin" statement "end"
-    | "begin" list_of_variable_declarations statement "end"
-    | "begin" ':' block_identifier statement "end"
-    | "begin" ':' block_identifier list_of_variable_declarations statement "end"
-    ;
+//seq_block
+//    : "begin" statements "end"
+//    | "begin" list_of_variable_declarations statements "end"
+//    | "begin" ':' block_identifier statements "end"
+//    | "begin" ':' block_identifier list_of_variable_declarations statements "end"
+//    ;
 
 //A.6.4 Statements
+statements
+    : statement
+    | statements statement
+    ;
+
 statement
     : blocking_assignment ';'
-    | case_statement
-    | conditional_statement
-    | loop_statement
     | nonblocking_assignment ';'
-    | procedural_timing_control_statement
-    | seq_block
+    | "case" '(' expression ')' "default" statement_or_null "endcase"
+    | "case" '(' expression ')' case_items "endcase"
+    | "case" '(' expression ')' case_items "default" statement_or_null "endcase"
+    | "if" '(' expression ')' statement_or_null
+    | "if" '(' expression ')' statement_or_null "else" statement_or_null
+    | "while" '(' expression ')' statement
+    | "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' statement
+    | '@' '(' event_expressions ')' statement_or_null
+    | "begin" statements "end"
+    | "begin" list_of_variable_declarations statements "end"
+    | "begin" ':' block_identifier statements "end"
+    | "begin" ':' block_identifier list_of_variable_declarations statements "end"
     ;
 
 statement_or_null 
@@ -1084,9 +1096,9 @@ statement_or_null
     ;
     
 //A.6.5 Timing control statements
-event_control
-    : '@' '(' event_expressions ')'
-    ;
+//event_control
+//    : '@' '(' event_expressions ')'
+//    ;
 
 event_expressions
     : event_expression
@@ -1100,22 +1112,22 @@ event_expression
     | "negedge" expression
     ;
 
-procedural_timing_control_statement
-    : event_control statement_or_null
-    ;
+//procedural_timing_control_statement
+//    : event_control statement_or_null
+//    ;
 
 //A.6.6 Conditional statements
-conditional_statement 
-    : "if" '(' expression ')' statement_or_null
-    | "if" '(' expression ')' statement_or_null "else" statement_or_null
-    ;
+//conditional_statement 
+//    : "if" '(' expression ')' statement_or_null
+//    | "if" '(' expression ')' statement_or_null "else" statement_or_null
+//    ;
 
 //A.6.7 Case statements
-case_statement 
-    : "case" '(' expression ')' "default" statement_or_null "endcase"
-    | "case" '(' expression ')' case_items "endcase"
-    | "case" '(' expression ')' case_items "default" statement_or_null "endcase"
-    ;
+//case_statement 
+//    : "case" '(' expression ')' "default" statement_or_null "endcase"
+//    | "case" '(' expression ')' case_items "endcase"
+//    | "case" '(' expression ')' case_items "default" statement_or_null "endcase"
+//    ;
 
 case_items
     : case_item
@@ -1128,10 +1140,10 @@ case_item
     ;
 
 //A.6.8 Looping statements
-loop_statement
-    : "while" '(' expression ')' statement
-    | "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' statement
-    ;
+//loop_statement
+//    : "while" '(' expression ')' statement
+//    | "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' statement
+//    ;
 
 // A.8 Expressions
 // A.8.1 Concatenations

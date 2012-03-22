@@ -32,6 +32,7 @@ enum ctype_t {
   tConcatenation,           /* concatenation */
   tExp,                     /* expression */
   tFuncName,                /* function name */
+  tGenBlock,                /* heneration block */
   tInstance,                /* module instance */
   tInstName,                /* instance name */
   tLConcatenation,          /* left-side concatenation */
@@ -43,6 +44,7 @@ enum ctype_t {
   tPortName,                /* port name */
   tRegister,                /* reg */
   tRange,                   /* range */
+  tSeqBlock,                /* sequential block in always */
   tVariable,                /* variable, including wire, reg, and parameter */
   tVarName,                 /* variable name */
   tWire,                    /* wire */
