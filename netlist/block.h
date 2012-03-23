@@ -36,14 +36,17 @@ namespace netlist {
   public:
     // constructors
     Block(NetComp::ctype_t t, const BIdentifier& nm) 
-      : NetComp(t), name(nm) {}
+      : NetComp(t), name(nm), named(true) {}
+    Block(NetComp::ctype_t t) 
+      : NetComp(t), named(false) {}
 
     // helpers
     virtual ostream& streamout (ostream& ) const = 0;
-    void set_name(const BIdentifier& nm) {name = nm;}
+    void set_name(const BIdentifier& nm) {name = nm; named=true;}
 
     // data
     BIdentifier name;
+    bool named;
     list<NetComp> statements;   /* a general list to stor the statements */
 
   };
@@ -65,7 +68,7 @@ namespace netlist {
   public:
     // constructors
     SeqBlock()
-      : Block(NetComp::tSeqBlock, BIdentifier()), sensitive(false) {}
+      : Block(NetComp::tSeqBlock), sensitive(false) {}
     SeqBlock(const BIdentifier& nm)
       : Block(NetComp::tSeqBlock, nm), sensitive(false) {}
 
@@ -80,7 +83,7 @@ namespace netlist {
     bool add_while(Expression&, SeqBlock&);                 /* add a while statement */
     bool add_for(Assign&, Expression&, Assign&, SeqBlock&); /* add a for statement */
     bool add_seq_block(list<pair<int, Expression> >&, SeqBlock&); /* add a sequential block */
-    bool add_statements(list<SeqBlock>&);                   /* add several statements */
+    bool add_block(SeqBlock&);                              /* add a statement block */
 
     // data
     bool sensitive;                            /* whether this is a sensitive block, top level block */

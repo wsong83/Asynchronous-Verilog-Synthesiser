@@ -139,7 +139,14 @@ namespace netlist {
   class SeqBlock;
 
   // case.h
+  class CaseState;
   class CaseItem;
+
+  // if.h
+  class IfState;
+
+  // while.h
+  class WhileState;
 
   // library.h
   class Library;

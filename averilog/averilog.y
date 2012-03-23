@@ -788,12 +788,12 @@ n_input_gate_instance
     ;
 
 input_terminals
-    : expression                         { $$.clear(); $$.push_back(PortConn($1)); }
+    : expression                         { $$.push_back(PortConn($1)); }
     | input_terminals ',' expression     { $$.push_back(PortConn($3)); }
     ;
 
 n_output_gate_instances
-    : n_output_gate_instance                               { $$.clear(); $$.push_back($1); }
+    : n_output_gate_instance                               { $$.push_back($1); }
     | n_output_gate_instances ',' n_output_gate_instance   { $$.push_back($3); }
     ;
 
@@ -827,7 +827,7 @@ n_output_gate_instance
     ;
 
 output_terminals
-    : variable_lvalue                      { $$.clear(); $$.push_back(PortConn(Expression($1))); }
+    : variable_lvalue                      { $$.push_back(PortConn(Expression($1))); }
     | output_terminals ',' variable_lvalue { $$.push_back(PortConn(Expression($3))); }
     ;
 
@@ -894,8 +894,8 @@ module_instantiation
     ;
 
 module_instances
-    : module_instance   { $$.clear(); $$.push_back($1); }
-    | module_instance ',' module_instance { $$.push_back($3); }
+    : module_instance                      { $$.push_back($1); }
+    | module_instances ',' module_instance { $$.push_back($3); }
     ;
 
 list_of_parameter_assignments 
@@ -904,12 +904,12 @@ list_of_parameter_assignments
     ;
   
 ordered_parameter_assignments
-    : ordered_parameter_assignment   { $$.clear(); $$.push_back($1); }
+    : ordered_parameter_assignment                                    { $$.push_back($1); }
     | ordered_parameter_assignments ',' ordered_parameter_assignment  { $$.push_back($3); }
     ;
 
 named_parameter_assignments
-    : named_parameter_assignment   { $$.clear(); $$.push_back($1); }
+    : named_parameter_assignment                                  { $$.push_back($1); }
     | named_parameter_assignments ',' named_parameter_assignment  { $$.push_back($3); }
     ;
 
@@ -935,12 +935,12 @@ list_of_port_connections
     ;
 
 ordered_port_connections
-    : ordered_port_connection                                { $$.clear(); $$.push_back($1); }
+    : ordered_port_connection                                { $$.push_back($1); }
     | ordered_port_connections ',' ordered_port_connection   { $$.push_back($3); }
     ;
 
 named_port_connections
-    : named_port_connection                             { $$.clear(); $$.push_back($1); }
+    : named_port_connection                             { $$.push_back($1); }
     | named_port_connections ',' named_port_connection  { $$.push_back($3); }
     ;
 
@@ -1148,8 +1148,8 @@ case_item
 // A.8 Expressions
 // A.8.1 Concatenations
 expressions
-    : expression                  { $$.clear(); $$.push_back($1); }
-    | expressions ',' expression  { $$ = $1, $$.push_back($3); }
+    : expression                  { $$.push_back($1); }
+    | expressions ',' expression  { $$.push_back($3); }
     ;
 
 concatenation
@@ -1178,7 +1178,7 @@ function_call
 
 //A.8.3 Expressions
 expression
-    : primary                       { $$ = $1;                                   }
+    : primary                       {                                            }
     | '+' primary %prec oUNARY      { $$ = $2; $$.append(Operation::oUPos);      }
     | '-' primary %prec oUNARY      { $$ = $2; $$.append(Operation::oUNeg);      }
     | '!' primary %prec oUNARY      { $$ = $2; $$.append(Operation::oULRev);     }
@@ -1189,30 +1189,30 @@ expression
     | "~|" primary %prec oUNARY     { $$ = $2; $$.append(Operation::oUNor);      }
     | '^' primary %prec oUNARY      { $$ = $2; $$.append(Operation::oXor);       }
     | "~^" primary %prec oUNARY     { $$ = $2; $$.append(Operation::oNxor);      }
-    | expression '+' expression     { $$ = $1; $$.append(Operation::oAdd, $3);   }
-    | expression '-' expression     { $$ = $1; $$.append(Operation::oMinus, $3); }
-    | expression '*' expression     { $$ = $1; $$.append(Operation::oTime, $3);  }
-    | expression '/' expression     { $$ = $1; $$.append(Operation::oDiv, $3);   }
-    | expression '%' expression     { $$ = $1; $$.append(Operation::oMode, $3);  }
-    | expression "==" expression    { $$ = $1; $$.append(Operation::oEq, $3);    }
-    | expression "!=" expression    { $$ = $1; $$.append(Operation::oNeq, $3);   }
-    | expression "===" expression   { $$ = $1; $$.append(Operation::oCEq, $3);   }
-    | expression "!==" expression   { $$ = $1; $$.append(Operation::oCNeq, $3);  }
-    | expression "&&" expression    { $$ = $1; $$.append(Operation::oLAnd, $3);  }
-    | expression "||" expression    { $$ = $1; $$.append(Operation::oLOr, $3);   }
-    | expression "**" expression    { $$ = $1; $$.append(Operation::oPower, $3); }
-    | expression '<' expression     { $$ = $1; $$.append(Operation::oLess, $3);  }
-    | expression "<=" expression    { $$ = $1; $$.append(Operation::oLe, $3);    }
-    | expression '>' expression     { $$ = $1; $$.append(Operation::oGreat, $3); }
-    | expression ">=" expression    { $$ = $1; $$.append(Operation::oGe, $3);    }
-    | expression '&' expression     { $$ = $1; $$.append(Operation::oAnd, $3);   }
-    | expression '|' expression     { $$ = $1; $$.append(Operation::oOr, $3);    }
-    | expression '^' expression     { $$ = $1; $$.append(Operation::oXor, $3);   }
-    | expression "~^" expression    { $$ = $1; $$.append(Operation::oNxor, $3);  }
-    | expression ">>" expression    { $$ = $1; $$.append(Operation::oRS, $3);    }
-    | expression "<<" expression    { $$ = $1; $$.append(Operation::oLS, $3);    }
-    | expression ">>>" expression   { $$ = $1; $$.append(Operation::oLRS, $3);   }
-    | expression '?' expression ':' expression { $$ = $1, $$.append(Operation::oQuestion, $3, $5); }
+    | expression '+' expression     { $$.append(Operation::oAdd, $3);   }
+    | expression '-' expression     { $$.append(Operation::oMinus, $3); }
+    | expression '*' expression     { $$.append(Operation::oTime, $3);  }
+    | expression '/' expression     { $$.append(Operation::oDiv, $3);   }
+    | expression '%' expression     { $$.append(Operation::oMode, $3);  }
+    | expression "==" expression    { $$.append(Operation::oEq, $3);    }
+    | expression "!=" expression    { $$.append(Operation::oNeq, $3);   }
+    | expression "===" expression   { $$.append(Operation::oCEq, $3);   }
+    | expression "!==" expression   { $$.append(Operation::oCNeq, $3);  }
+    | expression "&&" expression    { $$.append(Operation::oLAnd, $3);  }
+    | expression "||" expression    { $$.append(Operation::oLOr, $3);   }
+    | expression "**" expression    { $$.append(Operation::oPower, $3); }
+    | expression '<' expression     { $$.append(Operation::oLess, $3);  }
+    | expression "<=" expression    { $$.append(Operation::oLe, $3);    }
+    | expression '>' expression     { $$.append(Operation::oGreat, $3); }
+    | expression ">=" expression    { $$.append(Operation::oGe, $3);    }
+    | expression '&' expression     { $$.append(Operation::oAnd, $3);   }
+    | expression '|' expression     { $$.append(Operation::oOr, $3);    }
+    | expression '^' expression     { $$.append(Operation::oXor, $3);   }
+    | expression "~^" expression    { $$.append(Operation::oNxor, $3);  }
+    | expression ">>" expression    { $$.append(Operation::oRS, $3);    }
+    | expression "<<" expression    { $$.append(Operation::oLS, $3);    }
+    | expression ">>>" expression   { $$.append(Operation::oLRS, $3);   }
+    | expression '?' expression ':' expression { $$.append(Operation::oQuestion, $3, $5); }
     ;
 
 range_expression
@@ -1224,7 +1224,7 @@ range_expression
 
 //A.8.4 Primaries
 primary
-    : number              { $$ = $1; }             
+    : number              { $$ = $1; }            
     | variable_identifier 
     {
       // search this variable in current components until reach a module level
@@ -1269,7 +1269,7 @@ primary
       else
         av_env.error(yylloc, "SYN-VAR-3", $1.name);
     }
-    | concatenation { $$ = $1; }
+    | concatenation      { $$ = $1; }
     | function_call
     | '(' expression ')'  { $$ = $2; }
     ;
@@ -1331,7 +1331,7 @@ variable_lvalue
 //A.9 General
 //A.9.3 Identifiers
 block_identifier 
-    : identifier
+    : identifier      
     ;
 
 function_identifier 
@@ -1339,7 +1339,7 @@ function_identifier
     ;
 
 module_identifier
-    :  identifier             { $$ = $1; }
+    :  identifier          { $$ = $1; }
     ;
 
 instance_identifier 
