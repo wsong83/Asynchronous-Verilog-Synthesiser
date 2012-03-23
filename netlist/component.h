@@ -134,6 +134,13 @@ namespace netlist {
   class PortConn;               /* port connection */
   class ParaConn;               /* parameter connection */
 
+  // blcok.h
+  class GenBlock;
+  class SeqBlock;
+
+  // case.h
+  class CaseItem;
+
   // library.h
   class Library;
 
@@ -161,6 +168,7 @@ namespace netlist {
 #include "module.h"
 #include "instance.h"
 #include "portconn.h"
+#include "block.h"
 #include "library.h"
 #include "uni_name.h"
 
