@@ -95,6 +95,15 @@ bool netlist::SeqBlock::add_seq_block(list<pair<int, Expression> >& slist, SeqBl
     return true;
 }
 
+bool netlist::SeqBlock::add_block(SeqBlock& body) {
+  statements.push_back(body);
+  return true;
+}
+
+bool netlist::SeqBlock::add_statements(SeqBlock& body) {
+  statements.splice(statements.end(), body.statements);
+  return true;
+}
 
   
       

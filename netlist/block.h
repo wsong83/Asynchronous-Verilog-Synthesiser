@@ -84,6 +84,7 @@ namespace netlist {
     bool add_for(Assign&, Expression&, Assign&, SeqBlock&); /* add a for statement */
     bool add_seq_block(list<pair<int, Expression> >&, SeqBlock&); /* add a sequential block */
     bool add_block(SeqBlock&);                              /* add a statement block */
+    bool add_statements(SeqBlock&);                         /* add several statements */
 
     // data
     bool sensitive;                            /* whether this is a sensitive block, top level block */

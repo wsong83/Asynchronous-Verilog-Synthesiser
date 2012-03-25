@@ -1074,20 +1074,20 @@ statements
     ;
 
 statement
-    : blocking_assignment ';'
-    | nonblocking_assignment ';'
-    | "case" '(' expression ')' "default" statement_or_null "endcase"
-    | "case" '(' expression ')' case_items "endcase"
-    | "case" '(' expression ')' case_items "default" statement_or_null "endcase"
-    | "if" '(' expression ')' statement_or_null
-    | "if" '(' expression ')' statement_or_null "else" statement_or_null
-    | "while" '(' expression ')' statement
-    | "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' statement
-    | '@' '(' event_expressions ')' statement_or_null
-    | "begin" statements "end"
-    | "begin" list_of_variable_declarations statements "end"
-    | "begin" ':' block_identifier statements "end"
-    | "begin" ':' block_identifier list_of_variable_declarations statements "end"
+    : blocking_assignment ';'    { $$.add_assignment($1); }
+    | nonblocking_assignment ';' { $$.add_assignment($1); }
+    | "case" '(' expression ')' "default" statement_or_null "endcase" { $$.add_case($3, $6); }
+    | "case" '(' expression ')' case_items "endcase" { $$.add_case($3, $5); }
+    | "case" '(' expression ')' case_items "default" statement_or_null "endcase" { $$.add_case($3, $5, $7); }
+    | "if" '(' expression ')' statement_or_null  { $$.add_if($3, $5, SeqBlock()); }
+    | "if" '(' expression ')' statement_or_null "else" statement_or_null  { $$.add_if($3, $5, $7); }
+    | "while" '(' expression ')' statement { $$.add_while($1, $3); }
+    | "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' statement  { $$.add_for($3, $5, $7, $9); }
+    | '@' '(' event_expressions ')' statement_or_null { $$.add_seq_block($3, $5); }
+    | "begin" statements "end" { $$.add_statements($2); }
+    | "begin" list_of_variable_declarations statements "end"  { $$.add_statements($4); }
+    | "begin" ':' block_identifier statements "end" { $$.add_statements($5); }
+    | "begin" ':' block_identifier list_of_variable_declarations statements "end" { $$.add_statements($6); }
     ;
 
 statement_or_null 
