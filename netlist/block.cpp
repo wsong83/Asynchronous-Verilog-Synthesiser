@@ -39,6 +39,10 @@ void netlist::SeqBlock::clear() {
   slist_level.clear();
 }
 
+ostream& netlist::SeqBlock::streamout(ostream& os, unsigned int indent) const {
+  return os;
+}
+
 bool netlist::SeqBlock::add_assignment(Assign& dd) {
   statements.push_back(dd);
   return true;
@@ -82,11 +86,12 @@ bool netlist::SeqBlock::add_seq_block(list<pair<int, Expression> >& slist, SeqBl
     else if(it->first < 0)
       slist_pulse.push_back(pair<bool, Expression>(false, it->second));
     else
-      slist_lvel.push_back(it->second);
+      slist_level.push_back(it->second);
   }
   
-  sensitive = true;
-  if(named = body.named) name = body.name;
+  sensitive = true; 
+  named = body.named;
+  if(named) name = body.name;
   statements = body.statements;
   
   if(slist_pulse.empty() || slist_level.empty() == false)
@@ -109,5 +114,4 @@ bool netlist::SeqBlock::add_statements(SeqBlock& body) {
   return true;
 }
 
-  
       

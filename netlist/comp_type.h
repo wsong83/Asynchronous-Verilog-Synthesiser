@@ -35,6 +35,7 @@ enum ctype_t {
   tExp,                     /* expression */
   tFuncName,                /* function name */
   tGenBlock,                /* heneration block */
+  tIf,                      /* if statement */
   tInstance,                /* module instance */
   tInstName,                /* instance name */
   tLConcatenation,          /* left-side concatenation */

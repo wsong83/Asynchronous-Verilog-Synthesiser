@@ -187,6 +187,9 @@ namespace netlist {
 #include "portconn.h"
 #include "block.h"
 #include "case.h"
+#include "if.h"
+#include "while.h"
+#include "for.h"
 #include "library.h"
 #include "uni_name.h"
 
