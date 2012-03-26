@@ -57,7 +57,7 @@ namespace netlist {
     void append(Operation::operation_t, Expression&, Expression&);
     void concatenate(const Expression&); /* concatenate the number in two expressions */
     
-    virtual ostream& streamout(ostream&) const;
+    NETLIST_STREAMOUT_FUN_DECL;
     
     list<Operation> eqn;
 

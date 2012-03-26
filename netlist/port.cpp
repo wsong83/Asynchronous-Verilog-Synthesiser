@@ -33,7 +33,8 @@ using namespace netlist;
 netlist::Port::Port(const PoIdentifier& pid)
   : NetComp(tPort), name(pid) {}
 
-ostream& netlist::Port::streamout(ostream& os) const {
+ostream& netlist::Port::streamout(ostream& os, unsigned int indent) const {
+  os << string(indent, ' ');
   if(is_in())
     os << "input ";
   else if(is_out())

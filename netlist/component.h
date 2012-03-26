@@ -64,12 +64,17 @@ using boost::static_pointer_cast;
 #ifndef NETLIST_STREAMOUT
 #define NETLIST_STREAMOUT(COMP)                                          \
   inline ostream& operator<< ( ostream& os, const COMP& rhs) { \
-    return rhs.streamout(os);                                            \
+    return rhs.streamout(os, 0);                               \
   }
 #endif
 
 #ifndef NETLIST_DEFAULT_CON
 #define NETLIST_DEFAULT_CON(COMP, CT) COMP() : NetComp(NetComp::CT) { }
+#endif
+
+#ifndef NETLIST_STREAMOUT_FUN_DECL
+#define NETLIST_STREAMOUT_FUN_DECL                    \
+  ostream& streamout (ostream&, unsigned int) const
 #endif
 
 namespace netlist {
@@ -86,7 +91,12 @@ namespace netlist {
     ctype_t ctype;
 
     virtual void reduce() {}	/* many netlist component need method to reduce itself */
+    virtual ostream& streamout (ostream& os, unsigned int indent) const {
+      os << "ERROR!!, the streamout of NetComp is used!!!" << endl;
+      assert(0 == "the streamout of NetComp is used");
+    }
   };
+  NETLIST_STREAMOUT(NetComp);
 
   // operation.h
   class Operation;
@@ -176,6 +186,7 @@ namespace netlist {
 #include "instance.h"
 #include "portconn.h"
 #include "block.h"
+#include "case.h"
 #include "library.h"
 #include "uni_name.h"
 

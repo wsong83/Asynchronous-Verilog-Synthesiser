@@ -41,8 +41,8 @@ namespace netlist {
       : NetComp(t), named(false) {}
 
     // helpers
-    virtual ostream& streamout (ostream& ) const = 0;
     void set_name(const BIdentifier& nm) {name = nm; named=true;}
+    bool is_named() const { return named; }
 
     // data
     BIdentifier name;
@@ -60,7 +60,7 @@ namespace netlist {
       : Block(NetComp::tGenBlock, nm) {}
 
     // helpers
-    ostream& streamout (ostream& ) const;
+    NETLIST_STREAMOUT_FUN_DECL;
   };
   NETLIST_STREAMOUT(GenBlock);
 
@@ -73,7 +73,7 @@ namespace netlist {
       : Block(NetComp::tSeqBlock, nm), sensitive(false) {}
 
     // helpers
-    ostream& streamout (ostream& ) const;
+    NETLIST_STREAMOUT_FUN_DECL;
     void clear();               /* clear all statements */
     bool add_assignment(Assign&); /* add a blocking or non-blocking assignment into the block */
     bool add_case(Expression&, list<CaseItem>&, CaseItem&); /* add a general case statement */

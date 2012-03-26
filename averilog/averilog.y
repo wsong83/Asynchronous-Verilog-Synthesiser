@@ -236,15 +236,23 @@
  // type definitions
 %type <tAssign>         blocking_assignment
 %type <tAssign>         nonblocking_assignment
+%type <tBlock>          statements
+%type <tBlock>          statement
+%type <tBlock>          statement_or_null 
+%type <tBlockName>      block_identifier
+%type <tCaseItem>       case_item
 %type <tConcatenation>  concatenation
 %type <tExp>            expression
 %type <tExp>            primary
+%type <tEvent>          event_expression
 %type <tInstance>       module_instance
 %type <tInstance>       n_input_gate_instance
 %type <tInstance>       n_output_gate_instance
 %type <tInstName>       instance_identifier
 %type <tLConcatenation> variable_lvalue
+%type <tListCaseItem>   case_items
 %type <tListExp>        expressions
+%type <tListEvent>      event_expressions
 %type <tListInst>       module_instances
 %type <tListInst>       n_input_gate_instances
 %type <tListInst>       n_output_gate_instances
@@ -1070,24 +1078,52 @@ nonblocking_assignment
 //A.6.4 Statements
 statements
     : statement
-    | statements statement
+    | statements statement   { $$.add_statements($2); }
     ;
 
 statement
-    : blocking_assignment ';'    { $$.add_assignment($1); }
-    | nonblocking_assignment ';' { $$.add_assignment($1); }
-    | "case" '(' expression ')' "default" statement_or_null "endcase" { $$.add_case($3, $6); }
+    : blocking_assignment ';'    { $$.add_assignment(*$1); }
+    | nonblocking_assignment ';' { $$.add_assignment(*$1); }
+    | "case" '(' expression ')' "default" statement_or_null "endcase" 
+    { CaseItem m($6); $$.add_case($3, m); }
     | "case" '(' expression ')' case_items "endcase" { $$.add_case($3, $5); }
-    | "case" '(' expression ')' case_items "default" statement_or_null "endcase" { $$.add_case($3, $5, $7); }
-    | "if" '(' expression ')' statement_or_null  { $$.add_if($3, $5, SeqBlock()); }
-    | "if" '(' expression ')' statement_or_null "else" statement_or_null  { $$.add_if($3, $5, $7); }
-    | "while" '(' expression ')' statement { $$.add_while($1, $3); }
-    | "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' statement  { $$.add_for($3, $5, $7, $9); }
-    | '@' '(' event_expressions ')' statement_or_null { $$.add_seq_block($3, $5); }
-    | "begin" statements "end" { $$.add_statements($2); }
-    | "begin" list_of_variable_declarations statements "end"  { $$.add_statements($4); }
-    | "begin" ':' block_identifier statements "end" { $$.add_statements($5); }
-    | "begin" ':' block_identifier list_of_variable_declarations statements "end" { $$.add_statements($6); }
+    | "case" '(' expression ')' case_items "default" statement_or_null "endcase" 
+    { CaseItem m($7); $$.add_case($3, $5, m); }
+    | "if" '(' expression ')' statement_or_null 
+      //{ $$.add_if($3, $5, SeqBlock()); }
+    | "if" '(' expression ')' statement_or_null "else" statement_or_null  
+      //{ $$.add_if($3, $5, $7); }
+    | "while" '(' expression ')' statement 
+      //{ $$.add_while($3, $5); }
+    | "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' statement  
+      //{ $$.add_for($3, $5, $7, $9); }
+    | '@' '(' event_expressions ')' statement_or_null 
+    { $$.add_seq_block($3, $5); /* this is not right */}
+    | "begin" statements "end" 
+    { $$.add_statements($2); }
+    | "begin" 
+    {
+      Lib.push(shared_ptr<NetComp>(new SeqBlock()));
+    } 
+      list_of_variable_declarations statements "end" 
+    { 
+      shared_ptr<SeqBlock> bp = static_pointer_cast<SeqBlock>(Lib.get_current_comp());
+      bp->add_statements($4);
+      $$ = *bp;
+      Lib.pop();
+    }
+    | "begin" ':' block_identifier statements "end" { $$.add_statements($4); $$.set_name($3); }
+    | "begin" ':' block_identifier 
+    {
+      Lib.push(shared_ptr<NetComp>(new SeqBlock($3)));
+    } 
+      list_of_variable_declarations statements "end" 
+    { 
+      shared_ptr<SeqBlock> bp = static_pointer_cast<SeqBlock>(Lib.get_current_comp());
+      bp->add_statements($6);
+      $$ = *bp;
+      Lib.pop();
+    }
     ;
 
 statement_or_null 
@@ -1101,15 +1137,15 @@ statement_or_null
 //    ;
 
 event_expressions
-    : event_expression
-    | event_expressions "or" event_expression
-    | event_expressions ',' event_expression
+    : event_expression                           { $$.push_back($1); }
+    | event_expressions "or" event_expression    { $$.push_back($3); }
+    | event_expressions ',' event_expression     { $$.push_back($3); }
     ;
 
 event_expression
-    : expression
-    | "posedge" expression
-    | "negedge" expression
+    : expression              { $$ = pair<int, Expression>(0, $1); }
+    | "posedge" expression    { $$ = pair<int, Expression>(1, $2); }
+    | "negedge" expression    { $$ = pair<int, Expression>(-1, $2); }
     ;
 
 //procedural_timing_control_statement
@@ -1130,13 +1166,13 @@ event_expression
 //    ;
 
 case_items
-    : case_item
-    | case_items case_item
+    : case_item             { $$.push_back($1); }
+    | case_items case_item  { $$.push_back($2); }
     ;
 
 case_item 
-    : expressions ':' statement_or_null
-    | "default" ':' statement_or_null
+    : expressions ':' statement_or_null    { $$ = CaseItem($1, $3); }
+    | "default" ':' statement_or_null      { $$ = CaseItem($3); }
     ;
 
 //A.6.8 Looping statements
@@ -1331,7 +1367,7 @@ variable_lvalue
 //A.9 General
 //A.9.3 Identifiers
 block_identifier 
-    : identifier      
+    : identifier            { $$ = $1; }    
     ;
 
 function_identifier 

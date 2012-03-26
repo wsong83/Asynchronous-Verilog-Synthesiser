@@ -45,7 +45,7 @@ namespace netlist {
     bool is_in() const { return dir == -1; }
     bool is_out() const { return dir == 1; }
     bool is_inout() const { return dir == 0; }
-    ostream& streamout(ostream& os) const;
+    NETLIST_STREAMOUT_FUN_DECL;
    
     PoIdentifier name;
 

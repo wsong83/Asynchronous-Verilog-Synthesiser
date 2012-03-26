@@ -43,7 +43,7 @@ namespace netlist {
 
     // helpers
     int compare(const Identifier& rhs) const; /* compare two identifiers */
-    virtual ostream& streamout(ostream&) const;
+    NETLIST_STREAMOUT_FUN_DECL;
     void hash_update();			   /* update the nearly unique hash id */
 
     // data
@@ -63,6 +63,7 @@ namespace netlist {
     // constructors
     BIdentifier(const string&);
     BIdentifier();
+    BIdentifier(const averilog::avID& );
 
     // helpers
     BIdentifier& operator++ ();
@@ -95,7 +96,7 @@ namespace netlist {
     
     // helpers
     MIdentifier& operator++ ();
-    ostream& streamout(ostream& os) const;
+    NETLIST_STREAMOUT_FUN_DECL;
 
   private:
     bool numbered;
@@ -132,7 +133,7 @@ namespace netlist {
     void set_range(const vector<Range>& nr) { m_range = nr; }
     const vector<Range>& get_range() const {return m_range;}
     vector<Range>& get_range_ref() {return m_range;}
-    ostream& streamout(ostream& os) const;
+    NETLIST_STREAMOUT_FUN_DECL;
 
   private:
     vector<Range> m_range;
@@ -153,7 +154,7 @@ namespace netlist {
     //helpers
     VIdentifier& operator++ ();
     VIdentifier& add_prefix (const Identifier&);
-    ostream& streamout(ostream& os) const;
+    NETLIST_STREAMOUT_FUN_DECL;
     const vector<Range>& get_range() const {return m_range;}
     const vector<Range>& get_select() const {return m_select;}
     vector<Range>& get_range_ref() {return m_range;}

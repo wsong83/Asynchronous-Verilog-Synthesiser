@@ -48,7 +48,7 @@ namespace netlist {
     bool is_const() const { return type == TConst && type == TCRange; }
     bool is_single() const {return type != TRange && type != TCRange; }
     void db_register();
-    virtual ostream& streamout(ostream&) const;
+    NETLIST_STREAMOUT_FUN_DECL;
     void set_dim() { dim = true;}
     bool is_dim() const { return dim;}
     

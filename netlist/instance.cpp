@@ -58,9 +58,9 @@ netlist::Instance::Instance(const IIdentifier& nm, const list<PortConn>& polist,
 }
 
 
-ostream& netlist::Instance::streamout(ostream& os) const {
+ostream& netlist::Instance::streamout(ostream& os, unsigned int indent) const {
   // the module name
-  os << mname.name << " ";
+  os << string(indent, ' ') << mname.name << " ";
 
   // parameter list
   if(!para_list.empty()) {

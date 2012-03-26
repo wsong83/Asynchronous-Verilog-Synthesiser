@@ -54,8 +54,8 @@ int netlist::Identifier::compare(const Identifier& rhs) const {
   return name.compare(rhs.name);
 }
 
-ostream& netlist::Identifier::streamout(ostream& os) const {
-  os << name;
+ostream& netlist::Identifier::streamout(ostream& os, unsigned int indent) const {
+  os << string(indent, ' ') << name;
   return os;
 }
 
@@ -82,6 +82,9 @@ netlist::BIdentifier::BIdentifier(const string& nm)
 
 netlist::BIdentifier::BIdentifier()
   : Identifier(NetComp::tBlockName, "B0"), anonymous(true)  {  }
+
+netlist::BIdentifier::BIdentifier(const averilog::avID &id)
+  : Identifier(NetComp::tBlockName, id.name), anonymous(false) {  }
 
 BIdentifier& netlist::BIdentifier::operator++ () {
   if(!anonymous) return *this;	// named block idenitifers cannot slef-increase
@@ -127,8 +130,8 @@ MIdentifier& netlist::MIdentifier::operator++ () {
   return *this;
 }
 
-ostream& netlist::MIdentifier::streamout(ostream& os) const{
-  os << "module " << name;
+ostream& netlist::MIdentifier::streamout(ostream& os, unsigned int indent) const{
+  os << string(indent, ' ') << "module " << name;
   return os;
 }
     
@@ -176,7 +179,9 @@ netlist::PoIdentifier::PoIdentifier(const string& nm)
 netlist::PoIdentifier::PoIdentifier(const averilog::avID& id)
   : Identifier(NetComp::tVarName, id.name) { }
 
-ostream& netlist::PoIdentifier::streamout(ostream& os) const {
+ostream& netlist::PoIdentifier::streamout(ostream& os, unsigned int indent) const {
+  os << string(indent, ' ');
+  
   vector<Range>::const_iterator it, end;
   
   for(it=m_range.begin(), end=m_range.end(); it != end; it++) {
@@ -233,10 +238,10 @@ VIdentifier& netlist::VIdentifier::add_prefix(const Identifier& prefix) {
   return *this;
 }
 
-ostream& netlist::VIdentifier::streamout(ostream& os) const {
+ostream& netlist::VIdentifier::streamout(ostream& os, unsigned int indent) const {
   vector<Range>::const_iterator it, end;
 
-  os << name;
+  os << string(indent, ' ') << name;
   for(it=m_select.begin(), end=m_select.end(); it != end; it++) {
     os << "[" << *it << "]";
   }

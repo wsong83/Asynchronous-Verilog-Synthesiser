@@ -37,7 +37,8 @@ netlist::Assign::Assign( const LConcatenation& lhs,
   : NetComp(tAssign), name(UniName::uni_name()), lval(lhs), rexp(rhs), blocking(b)
 {}
 
-ostream& netlist::Assign::streamout(ostream& os) const {
+ostream& netlist::Assign::streamout(ostream& os, unsigned int indent) const {
+  os << string(indent, ' ');
   os << lval;
   if(blocking) os << " = ";
   else os << " <= ";

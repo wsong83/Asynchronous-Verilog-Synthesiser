@@ -44,7 +44,7 @@ namespace netlist {
     Instance(const IIdentifier&, const list<PortConn>&, type_t);
 
     // helpers
-    ostream& streamout(ostream& os) const;
+    NETLIST_STREAMOUT_FUN_DECL;
     void set_mname(const MIdentifier& mod_name) { mname = mod_name; }
     void set_module_ptr(const shared_ptr<Module>& mp) { module_ptr = mp;}
     void set_para(const list<ParaConn>& para ) { para_list = para; }

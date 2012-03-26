@@ -273,11 +273,13 @@ namespace netlist{
   }
 }
 
-ostream& netlist::Expression::streamout(ostream& os) const {
+ostream& netlist::Expression::streamout(ostream& os, unsigned int indent) const {
   list<Operation>::const_iterator it, end;
   stack<pair<Operation,unsigned int> > m_stack;
   Operation c, op;
   unsigned int op_cnt = 0;
+
+  os << string(indent, ' ');
 
   for(it=eqn.begin(), end=eqn.end(); it!=end; it++) {
     c = *it;

@@ -79,7 +79,7 @@ namespace netlist {
     bool is_in() const { return dir == -1; }
     bool is_out() const { return dir == 1; }
     bool is_inout() const { return dir == 0; }
-    ostream& streamout (ostream& os) const {
+    ostream& streamout (ostream& os, unsigned int indent) const {
       if(named) os << "." << pname.name << "(";
       switch(type) {
       case CEXP: os << exp; break;
@@ -122,7 +122,7 @@ namespace netlist {
     // helpers
     void reduce() { preduce<ParaConn>(this); }
     bool is_named() const { return named;}
-    ostream& streamout (ostream& os) const {
+    ostream& streamout (ostream& os, unsigned int indent) const {
       if(named) os << "." << pname.name << "(";
       switch(type) {
       case CEXP: os << exp; break;

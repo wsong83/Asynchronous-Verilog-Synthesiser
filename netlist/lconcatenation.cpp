@@ -49,8 +49,10 @@ netlist::LConcatenation::LConcatenation(const VIdentifier& id)
   : valid(true) { data.push_back(id); }
 
 
-ostream& netlist::LConcatenation::streamout(ostream& os) const {
+ostream& netlist::LConcatenation::streamout(ostream& os, unsigned int indent) const {
   assert(valid);
+
+  os << string(indent, ' ');
 
   if(1 == data.size()) os << data.front();
   else {

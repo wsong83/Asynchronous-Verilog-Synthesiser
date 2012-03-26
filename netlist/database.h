@@ -104,11 +104,11 @@ namespace netlist {
       return db.end();
     }
     
-    ostream& streamout(ostream& os) const {
+    ostream& streamout(ostream& os, unsigned int indent) const {
       typename DBT::const_iterator it;
       typename DBT::const_iterator end = db.end();
       for (it = db.begin(); it != end; it++)
-        os << *((*it).second);
+        it->second->streamout(os, indent);
       return os;
     }
 
@@ -118,7 +118,7 @@ namespace netlist {
 
   template<typename K, typename T>
     ostream& operator<< ( ostream& os, const DataBase<K,T>& rhs) {
-    return rhs.streamout(os);
+    return rhs.streamout(os, 0);
   }
 }
 

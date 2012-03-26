@@ -37,7 +37,7 @@ namespace netlist {
     Assign(const LConcatenation&, const Expression&, bool);
 
     // helpers
-    ostream& streamout(ostream&) const;
+    NETLIST_STREAMOUT_FUN_DECL;
     void db_register() { lval.db_register(); rexp.db_register(); }
     void db_expunge() { lval.db_expunge(); rexp.db_expunge(); }
 

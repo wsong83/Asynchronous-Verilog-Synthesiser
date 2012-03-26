@@ -48,7 +48,10 @@ void netlist::Variable::update() {
 }
   
 
-ostream& netlist::Variable::streamout(ostream& os) const {
+ostream& netlist::Variable::streamout(ostream& os, unsigned int indent) const {
+
+  os << string(indent, ' ');
+
   vector<Range>::const_iterator it, end;
 
   vector<Range> rm = name.get_range();

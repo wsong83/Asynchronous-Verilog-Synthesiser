@@ -94,7 +94,7 @@ namespace netlist {
     void reduce();
     void db_register(int iod = 1);
     void db_expunge();
-    ostream& streamout(ostream&) const;
+    NETLIST_STREAMOUT_FUN_DECL;
 
   private:
     operation_t otype;

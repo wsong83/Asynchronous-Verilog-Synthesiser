@@ -138,7 +138,8 @@ Number& netlist::Number::lfsh (int rhs) {
   return *this;
 }
 
-ostream& netlist::Number::streamout (ostream& os) const{
+ostream& netlist::Number::streamout (ostream& os, unsigned int indent) const{
+  os << string(indent, ' ');
   if(valuable) {		// able to be represented as a decimal
     mpz_class d(txt_value,2);
     if(d > MAX_INT_IN_STREAMOUT || d < -MAX_INT_IN_STREAMOUT)

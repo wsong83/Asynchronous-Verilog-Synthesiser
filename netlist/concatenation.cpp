@@ -55,7 +55,8 @@ void netlist::ConElem::db_expunge() {
     it->db_expunge();
 }
 
-ostream& netlist::ConElem::streamout(ostream& os) const {
+ostream& netlist::ConElem::streamout(ostream& os, unsigned int indent) const {
+  os << string(indent, ' ');
   if(0 == con.size()) {
     os << exp;
   } else {
@@ -76,7 +77,8 @@ ostream& netlist::ConElem::streamout(ostream& os) const {
   return os;
 }
 
-ostream& netlist::Concatenation::streamout(ostream& os) const {
+ostream& netlist::Concatenation::streamout(ostream& os, unsigned int indent) const {
+  os << string(indent, ' ');
   if(data.size() > 1) {
     list<ConElem>::const_iterator it, end;
     os << "{";

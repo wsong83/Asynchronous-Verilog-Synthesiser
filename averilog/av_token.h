@@ -41,15 +41,20 @@ namespace averilog {
   
   struct av_token_type {
     shared_ptr<netlist::Assign> tAssign;
+    netlist::SeqBlock           tBlock;
     netlist::BIdentifier        tBlockName;
+    netlist::CaseItem           tCaseItem;
     netlist::Concatenation      tConcatenation;
-    netlist::Expression         tExp;		
+    netlist::Expression         tExp;
+    pair<int, netlist::Expression> tEvent;
     netlist::FIdentifier        tFuncName;
     avID                        tID;      
     shared_ptr<netlist::Instance> tInstance;
     netlist::IIdentifier        tInstName;
     netlist::LConcatenation     tLConcatenation;
+    list<netlist::CaseItem>     tListCaseItem;
     list<netlist::Expression>   tListExp;
+    list<pair<int, netlist::Expression> > tListEvent;
     list<shared_ptr<netlist::Instance> > tListInst;
     list<netlist::PoIdentifier> tListPort;
     list<netlist::ParaConn>     tListParaAssign;

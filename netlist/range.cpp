@@ -114,7 +114,8 @@ void netlist::Range::db_register() {
   r.second.db_register(1);
 }
   
-ostream& netlist::Range::streamout(ostream& os) const {
+ostream& netlist::Range::streamout(ostream& os, unsigned int indent) const {
+  os << string(indent, ' ');
   switch(type) {
   case TConst: os << c; break;
   case TVar: os << v; break;

@@ -38,8 +38,8 @@ shared_ptr<Port> netlist::Module::find_port(const PoIdentifier& pid) const {
   return shared_ptr<Port>();
 }
 
-ostream& netlist::Module::streamout(ostream& os) const {
-  os << name;
+ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
+  os << string(indent, ' ') << name;
   if(list_port.empty()) os << ";" << endl;
   else {
     os << "(";
@@ -60,41 +60,41 @@ ostream& netlist::Module::streamout(ostream& os) const {
     if(!db_param.empty()) os << endl;
     map<VIdentifier, shared_ptr<Variable> >::const_iterator it, end;
     for(it = db_param.begin(), end = db_param.end(); it != end; it++)
-      os << "parameter " << *(it->second) << ";" << endl;
+      os << string(indent+2, ' ') << "parameter " << *(it->second) << ";" << endl;
   }
   
   { // ports
     if(!list_port.empty()) os << endl;
     list<shared_ptr<Port> >::const_iterator it, end;
     for(it=list_port.begin(), end=list_port.end(); it!=end; it++)
-      os << *(*it);
+      os << string(indent+2, ' ') << *(*it);
   }
   
   { // wires and regs
     map<VIdentifier, shared_ptr<Variable> >::const_iterator it, end;
     if(!db_wire.empty()) os << endl;
     for(it = db_wire.begin(), end = db_wire.end(); it != end; it++)
-      os << "wire " << *(it->second) << ";" << endl;
+      os << string(indent+2, ' ') << "wire " << *(it->second) << ";" << endl;
     if(!db_reg.empty()) os << endl;
     for(it = db_reg.begin(), end = db_reg.end(); it != end; it++)
-      os << "reg " << *(it->second) << ";" << endl;
+      os << string(indent+2, ' ') << "reg " << *(it->second) << ";" << endl;
     if(!db_genvar.empty()) os << endl;
     for(it = db_genvar.begin(), end = db_genvar.end(); it != end; it++)
-      os << "genvar " << *(it->second) << ";" << endl;
+      os << string(indent+2, ' ') << "genvar " << *(it->second) << ";" << endl;
   }
 
   { // continueous assignments
     if(!db_assign.empty()) os << endl;
     map<string, shared_ptr<Assign> >::const_iterator it, end;
     for(it = db_assign.begin(), end = db_assign.end(); it != end; it++)
-      os << "assign " << *(it->second) << ";" << endl;
+      os << string(indent+2, ' ') << "assign " << *(it->second) << ";" << endl;
   }
 
   { // module instances
     os << endl;
-    os << db_instance;
+    db_instance.streamout(os, indent+2);
   }
 
-  os << endl << "endmodule" << endl << endl;
+  os << endl << string(indent, ' ') << "endmodule" << endl << endl;
   return os;
 }

@@ -52,7 +52,7 @@ namespace netlist {
     Number minus (const Number& rhs) const;
     Number& operator+= (const Number& rhs);
     Number& lfsh (int rhs);
-    ostream& streamout(ostream&) const;
+    NETLIST_STREAMOUT_FUN_DECL;
     void concatenate(const Number&); /* concatenate two fixed-point number */
 
     // operation

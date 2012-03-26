@@ -101,7 +101,11 @@ bool netlist::SeqBlock::add_block(SeqBlock& body) {
 }
 
 bool netlist::SeqBlock::add_statements(SeqBlock& body) {
-  statements.splice(statements.end(), body.statements);
+  if(body.is_named()) {
+    statements.push_back(body);
+  } else {
+    statements.splice(statements.end(), body.statements);
+  }
   return true;
 }
 

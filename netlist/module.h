@@ -39,7 +39,7 @@ namespace netlist {
 
     // helpers
     shared_ptr<Port> find_port(const PoIdentifier&) const;
-    ostream& streamout(ostream& os) const;
+    NETLIST_STREAMOUT_FUN_DECL;
     
     // data
     MIdentifier name;

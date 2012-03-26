@@ -40,7 +40,7 @@ namespace netlist {
 
     void set_value(const Number&); /* reset the value of this variable */
     void update();  /* recalculate the value and update all fanouts */
-    ostream& streamout(ostream& os) const;
+    NETLIST_STREAMOUT_FUN_DECL;
 
     VIdentifier name;
     map<unsigned int, VIdentifier *> fan[2]; /* fan[0] for fanin, fan[1] for fanout */

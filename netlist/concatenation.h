@@ -47,7 +47,7 @@ namespace netlist {
     void reduce();
     void db_register(int iod = 1);
     void db_expunge();
-    ostream& streamout(ostream&) const;
+    NETLIST_STREAMOUT_FUN_DECL;
 
     Expression exp;
     list<ConElem> con;
@@ -61,7 +61,7 @@ namespace netlist {
     NETLIST_DEFAULT_CON(Concatenation, tConcatenation);
     
     // helpers
-    ostream& streamout(ostream&) const;
+    NETLIST_STREAMOUT_FUN_DECL;
     Concatenation& operator+ (Concatenation& rhs);
     Concatenation& operator+ (ConElem& rhs);
     void reduce();

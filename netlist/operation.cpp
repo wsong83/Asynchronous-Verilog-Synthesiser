@@ -146,12 +146,13 @@ void netlist::Operation::db_expunge() {
   }
 }
 
-ostream& netlist::Operation::streamout(ostream& os) const {
+ostream& netlist::Operation::streamout(ostream& os, unsigned int indent) const {
+  os << string(indent, ' ');
   switch(otype) {
   case oNULL:                          return os;
-  case oNum:        os << *(static_pointer_cast<Number>(data)); return os;
-  case oVar:        os << *(static_pointer_cast<VIdentifier>(data)); return os;
-  case oCon:        os << *(static_pointer_cast<Concatenation>(data)); return os;
+  case oNum:
+  case oVar:
+  case oCon:        os << *data;       return os;
   case oFun: // dummy
   case oUPos:
   case oAdd:        os << "+";         return os;

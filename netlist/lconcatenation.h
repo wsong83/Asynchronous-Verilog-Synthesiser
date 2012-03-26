@@ -39,7 +39,7 @@ namespace netlist {
     LConcatenation(const VIdentifier&);
 
     // helpers
-    ostream& streamout(ostream&) const;
+    NETLIST_STREAMOUT_FUN_DECL;
     bool is_valid() const { return valid; }
     unsigned int size() const { return data.size(); }
     VIdentifier& front() { return data.front(); }
