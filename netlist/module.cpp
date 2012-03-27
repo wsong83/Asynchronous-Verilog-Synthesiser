@@ -91,8 +91,17 @@ ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
   }
 
   { // module instances
-    os << endl;
+    if(!db_instance.empty()) os << endl;
     db_instance.streamout(os, indent+2);
+  }
+
+  { // sequential blocks
+    if(!db_block.empty()) os << endl;
+    map<BIdentifier, shared_ptr<SeqBlock> >::const_iterator it, end;
+    for(it = db_assign.begin(), end = db_assign.end(); it != end; it++) {
+      os << string(indent+2, ' ') << "always ";
+      it->second->streamout(os, indent+2, true);
+    }
   }
 
   os << endl << string(indent, ' ') << "endmodule" << endl << endl;

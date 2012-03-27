@@ -51,6 +51,7 @@ namespace netlist {
     DataBase<IIdentifier, Instance>  db_instance; /* module instances */
 
     DataBase<string, Assign>         db_assign; /* continueous assignments */
+    DataBase<BIdentifier, SeqBlock>  db_block;  /* always blocks */
 
     //name for unnamed items
     BIdentifier unnamed_block;

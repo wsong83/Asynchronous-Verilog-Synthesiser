@@ -47,7 +47,7 @@ namespace netlist {
     // data
     BIdentifier name;
     bool named;
-    list<NetComp> statements;   /* a general list to stor the statements */
+    list<shared_ptr<NetComp> > statements;   /* a general list to stor the statements */
 
   };
 
@@ -74,6 +74,7 @@ namespace netlist {
 
     // helpers
     NETLIST_STREAMOUT_FUN_DECL;
+    ostream& streamout(ostream& os, unsigned int indent, bool fl_prefix) const;
     void clear();               /* clear all statements */
     bool add_assignment(Assign&); /* add a blocking or non-blocking assignment into the block */
     bool add_case(Expression&, list<CaseItem>&, CaseItem&); /* add a general case statement */
@@ -90,6 +91,7 @@ namespace netlist {
     bool sensitive;                            /* whether this is a sensitive block, top level block */
     list<pair<bool, Expression> > slist_pulse; /* pulse sensitive list */
     list<Expression> slist_level;              /* level sensitive list */
+    list<Variable> var;                        /* local variables */
     
 
   };

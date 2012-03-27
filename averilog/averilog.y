@@ -1056,7 +1056,32 @@ list_of_net_assignments
 
 //A.6.2 Procedural blocks and assignments
 always_construct 
-    : "always" statement
+    : "always" statement 
+    {
+      shared_ptr<NetComp> father = Lib.get_current_comp();
+      shared_ptr<Module> cm;
+      shared_ptr<GenBlock> cg;
+      
+      switch(father->get_type()) {
+      case NetComp::tModule: {
+        cm = static_pointer_cast<Module>(father);
+        if($2.is_named()) {
+          if(!cm->db_block.insert($2.name, shared_ptr<SeqBlock>(new SeqBlock($2))))
+            assert(0 == "block named duplicated");
+        } else {
+          while(cm->db_block.find(cm->unnamed_block))
+            ++(cm->unnamed_block);
+          cm->db_block.insert(cm->unnamed_block, shared_ptr<SeqBlock>(new SeqBlock($2)));
+        }
+        break;
+      }
+      case NetComp::tGenBlock: {
+        break;
+      }
+      default:
+        assert(0 == "wrong block type");
+      }
+    }
     ;
 
 blocking_assignment 

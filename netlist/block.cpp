@@ -40,7 +40,47 @@ void netlist::SeqBlock::clear() {
 }
 
 ostream& netlist::SeqBlock::streamout(ostream& os, unsigned int indent) const {
+  return streamout(os, indent, false);
+}
+
+ostream& netlist::SeqBlock::streamout(ostream& os, unsigned int indent, bool fl_prefix) const {
+  if(!fl_prefix) os << string(indent, ' ');
+  if(sensitive) {
+    os << "@(";
+    if(slist_pulse.size() > 0) {
+      list<pair<bool, Expression> >::const_iterator it, end;
+      it = slist_pulse.begin();
+      while(true) {
+        if(it->first)
+          os << "posedge " << it->second;
+        else
+          os << "negedge " << it->second;
+        it++;
+        if(it != end) os << " or ";
+        else break;
+      }
+    } else {
+      list<Expression>::const_iterator it, end;
+      it = slist_level.begin();
+      while(true) {
+        os << *it;
+        it++;
+        if(it != end) os << " or ";
+        else break;
+      }
+    }
+    os << ")";
+  }
+  if(statements.size() == 0)
+    os << ";" << endl;
+  else if(statements.size() == 1) {
+    if(statements.front().get_type == NetComp::tSeqBlock) {
+      ///////////////////////////////////
+    }
+  }
+  
   return os;
+      
 }
 
 bool netlist::SeqBlock::add_assignment(Assign& dd) {

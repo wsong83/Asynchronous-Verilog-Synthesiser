@@ -16,6 +16,10 @@ module test_module (o, f, c, o);
    or_gate U1 ();
    any u_0 (c);
    not (o, f, sig[0]), (c, sig[1]);
+
+   always begin
+    tmp = 5;
+   end 
    
 endmodule // test
 
