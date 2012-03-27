@@ -34,18 +34,18 @@ namespace netlist {
   class Assign : public NetComp {
   public:
     // constructors
-    Assign(const LConcatenation&, const Expression&, bool);
+    Assign(const shared_ptr<LConcatenation>&, const shared_ptr<Expression>&, bool);
 
     // helpers
     NETLIST_STREAMOUT_FUN_DECL;
-    void db_register() { lval.db_register(); rexp.db_register(); }
-    void db_expunge() { lval.db_expunge(); rexp.db_expunge(); }
+    //void db_register() { lval.db_register(); rexp.db_register(); }
+    //void db_expunge() { lval.db_expunge(); rexp.db_expunge(); }
 
     // data
-    string name;         /* as a key in the database, it has no practical meaning */
-    LConcatenation lval; /* the left-value is a left-concatenation with one or multiple identifiers */
-    Expression rexp;     /* the right-side expression */
-    bool blocking;       /* true when it is a blocking assignment */
+    string name;                     /* as a key in the database, it has no practical meaning */
+    shared_ptr<LConcatenation> lval; /* the left-value is a left-concatenation with one or multiple identifiers */
+    shared_ptr<Expression> rexp;     /* the right-side expression */
+    bool blocking;                   /* true when it is a blocking assignment */
 
   };
   NETLIST_STREAMOUT(Assign);

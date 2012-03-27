@@ -30,8 +30,8 @@
 
 using namespace netlist;
 
-netlist::Assign::Assign( const LConcatenation& lhs,
-                         const Expression& rhs,
+netlist::Assign::Assign( const shared_ptr<LConcatenation>& lhs,
+                         const shared_ptr<Expression>& rhs,
                          bool b
                          )
   : NetComp(tAssign), name(UniName::uni_name()), lval(lhs), rexp(rhs), blocking(b)
@@ -39,9 +39,9 @@ netlist::Assign::Assign( const LConcatenation& lhs,
 
 ostream& netlist::Assign::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
-  os << lval;
+  os << *lval;
   if(blocking) os << " = ";
   else os << " <= ";
-  os << rexp;
+  os << *rexp;
   return os;
 }
