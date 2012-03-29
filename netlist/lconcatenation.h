@@ -35,7 +35,7 @@ namespace netlist {
   public:
     // constructors
     LConcatenation() : valid(false) { }
-    LConcatenation(Concatenation&);
+    LConcatenation(shared_ptr<Concatenation>&);
     LConcatenation(const VIdentifier&);
 
     // helpers

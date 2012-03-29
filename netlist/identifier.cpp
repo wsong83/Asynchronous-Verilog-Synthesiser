@@ -182,10 +182,10 @@ netlist::PoIdentifier::PoIdentifier(const averilog::avID& id)
 ostream& netlist::PoIdentifier::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
   
-  vector<Range>::const_iterator it, end;
+  vector<shared_ptr<Range> >::const_iterator it, end;
   
   for(it=m_range.begin(), end=m_range.end(); it != end; it++) {
-    os << "[" << *it << "]";
+    os << "[" << *(*it) << "]";
   }
 
   os << " " << name ;
@@ -203,7 +203,7 @@ netlist::VIdentifier::VIdentifier(const string& nm)
 netlist::VIdentifier::VIdentifier(const averilog::avID& id)
   : Identifier(NetComp::tVarName, id.name), numbered(false), uid(0) { }
 
-netlist::VIdentifier::VIdentifier(const string& nm, const vector<Range>& rg)
+netlist::VIdentifier::VIdentifier(const string& nm, const vector<shared_ptr<Range> >& rg)
   : Identifier(NetComp::tVarName, nm), m_range(rg), numbered(false), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const VIdentifier& rhs)
@@ -239,11 +239,11 @@ VIdentifier& netlist::VIdentifier::add_prefix(const Identifier& prefix) {
 }
 
 ostream& netlist::VIdentifier::streamout(ostream& os, unsigned int indent) const {
-  vector<Range>::const_iterator it, end;
+  vector<shared_ptr<Range> >::const_iterator it, end;
 
   os << string(indent, ' ') << name;
   for(it=m_select.begin(), end=m_select.end(); it != end; it++) {
-    os << "[" << *it << "]";
+    os << "[" << *(*it) << "]";
   }
 
   return os;

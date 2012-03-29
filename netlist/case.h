@@ -37,16 +37,16 @@ namespace netlist{
   public:
     NETLIST_DEFAULT_CON(CaseItem, tCaseItem);
     // constructor with only one expression, the normal case
-    CaseItem(Expression& exp, SeqBlock& body) {
+    CaseItem(const shared_ptr<Expression>& exp, const shared_ptr<SeqBlock>& body) {
       exps.push_back(exp);
       add_statements(body);
     }
     // normal default case
-    CaseItem(SeqBlock& body) {
+    CaseItem(const shared_ptr<SeqBlock>& body) {
       add_statements(body);
     }
     // multiple expressions
-    CaseItem(list<Expression>& expm, SeqBlock& body) {
+    CaseItem(list<shared_ptr<Expression> >& expm, const shared_ptr<SeqBlock>& body) {
       exps.splice(exps.end(), expm);
       add_statements(body);
     }
@@ -54,11 +54,11 @@ namespace netlist{
     // helpers
     NETLIST_STREAMOUT_FUN_DECL;
     bool is_default() const {return exps.size() == 0; }
-    void add_statements (SeqBlock&); /* add sattements to this case item */
+    void add_statements (const shared_ptr<SeqBlock>&); /* add sattements to this case item */
 
     // data
-    list<Expression> exps;
-    list<NetComp> statements;
+    list<shared_ptr<Expression> > exps;
+    list<shared_ptr<NetComp> > statements;
 
   };
   NETLIST_STREAMOUT(CaseItem);
@@ -67,13 +67,13 @@ namespace netlist{
   public:
     // constructors
     NETLIST_DEFAULT_CON(CaseState, tCase);
-    CaseState(Expression& exp, list<CaseItem>& citems, CaseItem& ditem)
+    CaseState(const shared_ptr<Expression>& exp, list<shared_ptr<CaseItem> >& citems, const shared_ptr<CaseItem>& ditem)
       : NetComp(tCase), exp(exp), cases(citems) {
       cases.push_back(ditem);
     }
-    CaseState(Expression& exp, list<CaseItem>& citems)
+    CaseState(const shared_ptr<Expression>& exp, list<shared_ptr<CaseItem> >& citems)
       : NetComp(tCase), exp(exp), cases(citems) { }
-    CaseState(Expression& exp, CaseItem& ditem)
+    CaseState(const shared_ptr<Expression>& exp, const shared_ptr<CaseItem>& ditem)
       : NetComp(tCase), exp(exp) {
       cases.push_back(ditem);
     }
@@ -83,7 +83,7 @@ namespace netlist{
 
     // data
     Expression exp;
-    list<CaseItem> cases;
+    list<shared_ptr<CaseItem> > cases;
 
   };
   NETLIST_STREAMOUT(CaseState);

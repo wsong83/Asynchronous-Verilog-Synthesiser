@@ -29,95 +29,135 @@
 #ifndef _H_DATABASE_
 #define _H_DATABASE_
 
+/*
+#include <list>
+using std::list;
+#include <map>
+using std::map;
+#include <utility>
+using std::pair;
+#include <boost/shared_ptr.hpp>
+using boost::shared_ptr;
+#include <ostream>
+using std::ostream;
+*/
+
 namespace netlist {
 
-  template <typename K, typename T>
+  // the database
+  template <typename K, typename T, bool ORDER = false>
     class DataBase {
   public:
-    typedef map<K, shared_ptr<T> > DBT;
+    typedef map<K, T> DBTM;
+    typedef list<pair<K, shared_ptr<T> > > DBTL;
     typedef pair<K, shared_ptr<T> > DTT;
     
     // store a component
-    bool insert(const K& key, shared_ptr<T> comp) {
-      pair<typename DBT::iterator, bool> res = db.insert(DTT(key, comp));
-      return res.second;
+    bool insert(const K& key, const shared_ptr<T>& comp) {
+      if(ORDER) {
+        if(find(key).use_count != 0)
+          return false;
+        else {
+          db_list.push_back(DTT(key, comp));
+          return true;
+        }
+      } else {
+        pair<typename DBTM::iterator, bool> res = db_map.insert(DTT(key, comp));
+        return res.second;
+      }
     }
-
+    
     shared_ptr<T> find(const K& key) {
-      typename DBT::iterator it = db.find(key);
-      if(it != db.end())
-        return (*it).second;
-      else
-        return shared_ptr<T>();
-    }
+      if(ORDER) {
+        typename DBTL::iterator it, end;
+        
+        for(it=db_list.begin(), end=db_list.end(); it!=end; it++)
+          if(it->first == key) break;
+        
+        if(it != end)
+          return it->second;
+        else
+          return shared_ptr<T>();
 
+      } else {
+        typename DBTM::iterator it = db_map.find(key);
+
+        if(it != db_map.end())
+          return it->second;
+        else
+          return shared_ptr<T>();
+      }
+    }
+    
     unsigned int cout() const {
-      return db.size();
+      if(ORDER)
+        return db_list.size();
+      else
+        return db_map.size();
     }
-
+    
     void clear() {
-      db.clear();
+      db_list.clear();
+      db_map.clear();
     }
     
     bool empty() const {
-      return db.empty();
+      if(ORDER)
+        return db_list.empty();
+      else
+        return db_map.empty();
     }
-
+    
     bool erase(const K& key) {
-      return 1 == db.erase(key);
-    }
-
-    bool swap(const K& key, shared_ptr<T> comp) {
-      typename DBT::iterator it = db.find(key);
-      if(it != db.end()) {
-        db.erase(it);
-        db.insert(it, comp);
-        return true;
-      } else {
+      if(ORDER) {
+        typename DBTL::iterator it, end;
+        for(it=db_list.begin(), end=db_list.end(); it!=end; it++)
+          if(it->first == key) {
+            db_list.erase(it);
+            return true;
+          }
         return false;
+      } else {
+        return 1 == db_map.erase(key);
       }
     }
-
-    shared_ptr<T> fatch(const K& key) {
-      typename DBT::iterator it = db.find(key);
-      if(it != db.end()) {
-        shared_ptr<T> rv = (*it).second;
-        db.erase(it);
-        return rv;
-      } else
-        return shared_ptr<T>();
-    }
-
-    typename map<K, shared_ptr<T> >::iterator begin() {
-      return db.begin();
-    }
-
-    typename map<K, shared_ptr<T> >::const_iterator begin() const {
-      return db.begin();
+    
+    shared_ptr<T> fetch(const K& key) {
+      shared_ptr<T> m = find(key);
+      if(m.use_count() != 0) erase(key);
+      return m;
     }
     
-    typename map<K, shared_ptr<T> >::iterator end() {
-      return db.end();
-    }
+    typename DBTL::iterator begin_order()             { return db_list.begin(); }
+    typename DBTM::iterator begin()                   { return db_map.begin();  }
+    typename DBTL::const_iterator begin_order() const { return db_list.begin(); }
+    typename DBTM::const_iterator begin() const       { return db_map.begin();  }
+    typename DBTL::iterator end_order()               { return db_list.end();   }
+    typename DBTM::iterator end()                     { return db_map.end();    }
+    typename DBTL::const_iterator end_order() const   { return db_list.end();   }
+    typename DBTM::const_iterator end() const         { return db_map.end();    }
 
-    typename map<K, shared_ptr<T> >::const_iterator end() const {
-      return db.end();
-    }
-    
     ostream& streamout(ostream& os, unsigned int indent) const {
-      typename DBT::const_iterator it;
-      typename DBT::const_iterator end = db.end();
-      for (it = db.begin(); it != end; it++)
-        it->second->streamout(os, indent);
+      if(ORDER) {
+        typename DBTL::const_iterator it, end;
+        for(it=begin_order(), end=end_order(); it!=end; it++)
+          it->second->streamout(os, indent);
+      } else {
+        typename DBTM::const_iterator it, end;
+        for(it=begin(), end=end(); it!=end; it++)
+          it->second->streamout(os, indent);
+      }
       return os;
     }
-
+    
   private:
-    DBT db;
+    DBTM db_map;                /* unordered database */
+    DBTL db_list;               /* oredered database */
+    
   };
-
-  template<typename K, typename T>
-    ostream& operator<< ( ostream& os, const DataBase<K,T>& rhs) {
+  
+  template<typename K, typename T, bool ORDER>
+    ostream& operator<< ( ostream& os, const DataBase<K,T,ORDER>& rhs) {
     return rhs.streamout(os, 0);
   }
 }

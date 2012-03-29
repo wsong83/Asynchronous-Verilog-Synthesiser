@@ -30,27 +30,27 @@
 
 using namespace netlist;
 
-netlist::Instance::Instance(const IIdentifier& nm, const list<PortConn>& polist, type_t itype)
+netlist::Instance::Instance(const IIdentifier& nm, const list<shared_ptr<PortConn> >& polist, type_t itype)
   : NetComp(tInstance), name(nm), port_list(polist), type(itype) {
   switch(itype) {
   case prim_in_inst: {
-    list<PortConn>::iterator it, end;
+    list<shared_ptr<PortConn> >::iterator it, end;
     it = port_list.begin();
-    it->set_out();
+    (*it)->set_out();
     it++;
     for(end=port_list.end(); it!=end; it++) {
-      it->set_in();
+      (*it)->set_in();
     }
     break;
   }
   case prim_out_inst: {
-    list<PortConn>::iterator it, end;
+    list<shared_ptr<PortConn> >::iterator it, end;
     it = port_list.begin();
     for(end=port_list.end(); it!=end; it++) {
-      it->set_out();
+      (*it)->set_out();
     }
     it--;
-    it->set_in();
+    (*it)->set_in();
     break;
   }
   default: ;
@@ -64,12 +64,12 @@ ostream& netlist::Instance::streamout(ostream& os, unsigned int indent) const {
 
   // parameter list
   if(!para_list.empty()) {
-    list<ParaConn>::const_iterator it, end;
+    list<shared_ptr<ParaConn> >::const_iterator it, end;
     os << "#(";
     it=para_list.begin();
     end=para_list.end(); 
     while(it!= end) {
-      os << *it;
+      os << **it;
       it++;
       if(it != end)
         os << ", ";
@@ -88,7 +88,7 @@ ostream& netlist::Instance::streamout(ostream& os, unsigned int indent) const {
     it=port_list.begin();
     end=port_list.end(); 
     while(it!= end) {
-      os << *it;
+      os << **it;
       it++;
       if(it != end)
         os << ", ";

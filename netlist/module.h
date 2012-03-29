@@ -38,20 +38,19 @@ namespace netlist {
       : NetComp(tModule), name(nm) {}
 
     // helpers
-    shared_ptr<Port> find_port(const PoIdentifier&) const;
     NETLIST_STREAMOUT_FUN_DECL;
     
     // data
     MIdentifier name;
-    list<shared_ptr<Port> >          list_port;    /* input and output ports */
-    DataBase<VIdentifier, Variable>  db_wire;	  /* wires */
-    DataBase<VIdentifier, Variable>  db_reg;	  /* registers */
-    DataBase<VIdentifier, Variable>  db_param;	  /* parameters */
-    DataBase<VIdentifier, Variable>  db_genvar;   /* generate variable */
-    DataBase<IIdentifier, Instance>  db_instance; /* module instances */
+    DataBase<PoIdentifier, Port, true>     db_port;      /* input and output ports, ordered */
+    DataBase<VIdentifier, Variable>        db_wire;      /* wires */
+    DataBase<VIdentifier, Variable>        db_reg;       /* registers */
+    DataBase<VIdentifier, Variable, true>  db_param;     /* parameters, ordered */
+    DataBase<VIdentifier, Variable, true>  db_genvar;    /* generate variable, ordered */
+    DataBase<IIdentifier, Instance>        db_instance;  /* module instances */
 
-    DataBase<string, Assign>         db_assign; /* continueous assignments */
-    DataBase<BIdentifier, SeqBlock>  db_block;  /* always blocks */
+    DataBase<string, Assign>               db_assign;    /* continueous assignments */
+    DataBase<BIdentifier, SeqBlock>        db_block;     /* always blocks */
 
     //name for unnamed items
     BIdentifier unnamed_block;

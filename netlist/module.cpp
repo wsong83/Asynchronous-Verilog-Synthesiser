@@ -30,24 +30,16 @@
 
 using namespace netlist;
 
-shared_ptr<Port> netlist::Module::find_port(const PoIdentifier& pid) const {
-  list<shared_ptr<Port> >::const_iterator it, end;
-  for(it=list_port.begin(), end=list_port.end(); it != end; it++) {
-    if((*it)->name == pid) return *it;
-  }
-  return shared_ptr<Port>();
-}
-
 ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ') << name;
   if(list_port.empty()) os << ";" << endl;
   else {
     os << "(";
-    list<shared_ptr<Port> >::const_iterator it, end;
-    it = list_port.begin();
-    end = list_port.end();
+    map<PoIdentifer, shared_ptr<Port> >::const_iterator it, end;
+    it = db_port.begin();
+    end = db_port.end();
     while(it != end){
-      os << (*it)->name.name;
+      os << it->second->name.name;
       it++;
       if(it != end)
         os << ", ";

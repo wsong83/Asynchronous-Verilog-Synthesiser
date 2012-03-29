@@ -131,12 +131,12 @@ namespace netlist {
 
     // helpers
     void set_range(const vector<Range>& nr) { m_range = nr; }
-    const vector<Range>& get_range() const {return m_range;}
-    vector<Range>& get_range_ref() {return m_range;}
+    const vector<shared_ptr<Range> >& get_range() const {return m_range;}
+    vector<shared_ptr<Range> >& get_range() {return m_range;}
     NETLIST_STREAMOUT_FUN_DECL;
 
   private:
-    vector<Range> m_range;
+    vector<shared_ptr<Range> > m_range;
 
   };
   NETLIST_STREAMOUT(PoIdentifier);
@@ -148,17 +148,17 @@ namespace netlist {
     VIdentifier();
     VIdentifier(const string&);
     VIdentifier(const averilog::avID&);
-    VIdentifier(const string&, const vector<Range>&);
+    VIdentifier(const string&, const vector<shared_ptr<Range> >&);
     VIdentifier(const VIdentifier&); /* needed for deep copy */
 
     //helpers
     VIdentifier& operator++ ();
     VIdentifier& add_prefix (const Identifier&);
     NETLIST_STREAMOUT_FUN_DECL;
-    const vector<Range>& get_range() const {return m_range;}
-    const vector<Range>& get_select() const {return m_select;}
-    vector<Range>& get_range_ref() {return m_range;}
-    vector<Range>& get_select_ref() {return m_select;}
+    const vector<shared_ptr<Range> >& get_range() const {return m_range;}
+    const vector<shared_ptr<Range> >& get_select() const {return m_select;}
+    vector<shared_ptr<Range> >& get_range() {return m_range;}
+    vector<shared_ptr<Range> >& get_select() {return m_select;}
     bool is_valuable() const { return value.is_valuable(); }
     mpz_class get_value() const { return value.get_value(); }
     void set_value(const Number& p) { value = p; }
@@ -168,14 +168,14 @@ namespace netlist {
     void db_register();         /* light weight version when father and direction is available */
     void db_expunge();
     bool db_registered() const { return uid != 0; }
-    void set_father(shared_ptr<Variable> f, int iod = 1) { assert(uid == 0); father = f; inout_t = iod;}
+    void set_father(const shared_ptr<Variable>& f, int iod = 1) { assert(uid == 0); father = f; inout_t = iod;}
     void reset_uid(unsigned int id) { uid = id; } /* only used by Variable::get_id() */
     int get_inout_dir() const { return inout_t; }
 
   private:
     Number value;
-    vector<Range> m_range;
-    vector<Range> m_select;
+    vector<shared_ptr<Range> > m_range;
+    vector<shared_ptr<Range> > m_select;
     bool numbered;                 /* true when it is numbered unnamed variable */
     shared_ptr<Variable> father;   /* the wire/reg/var in the database */
     int inout_t;                   /* input / output type */

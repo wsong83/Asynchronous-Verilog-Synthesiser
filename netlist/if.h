@@ -34,13 +34,13 @@ namespace netlist {
   class IfState : public NetComp {
   public:
     // constructors
-    IfState(Expression& exp, SeqBlock& m_ifcase, SeqBlock& m_elsecase) {}
+    IfState(const shared_ptr<Expression>& exp, const shared_ptr<SeqBlock>& m_ifcase, const shared_ptr<SeqBlock>& m_elsecase) {}
 
 
     //data
-    Expression exp;
-    list<NetComp> ifcase;            /* the block to run when expression is true */
-    list<NetComp> elsecase;          /* the block to run when else is used */
+    shared_ptr<Expression> exp; /* the condition expression */
+    list<shared_ptr<NetComp> > ifcase; /* the block to run when expression is true */
+    list<shared_ptr<NetComp> > elsecase; /* the block to run when else is used */
 
   };
 

@@ -37,8 +37,8 @@ namespace netlist {
     Expression();
     Expression(const Number&);	/* a number is an expression */
     Expression(const VIdentifier&); /* a variable/parameter is an expression */
-    Expression(const Concatenation&); /* a concatenation is an expression */
-    Expression(const LConcatenation&); /* some times need to convert a lvalue back to expression */
+    Expression(const shared_ptr<Concatenation>&); /* a concatenation is an expression */
+    Expression(const shared_ptr<LConcatenation>&); /* some times need to convert a lvalue back to expression */
 
     // helpers
     bool is_valuable() const;    /* check valuable */
@@ -59,15 +59,15 @@ namespace netlist {
     
     NETLIST_STREAMOUT_FUN_DECL;
     
-    list<Operation> eqn;
+    list<shared_ptr<Operation> > eqn;
 
   private:
     bool valuable;
     
   };
 
-  Expression operator+ (Expression, Expression);
-  Expression operator- (Expression, Expression);
+  Expression& operator+ (Expression&, Expression&);
+  Expression& operator- (Expression&, Expression&);
   bool operator== (const Expression&, const Expression&);
 
   NETLIST_STREAMOUT(Expression);
@@ -75,10 +75,10 @@ namespace netlist {
   // helper class
   class expression_state {
   public:
-    Operation op;               // operator
+    shared_ptr<Operation> op;   // operator
     int ops;                    // number of operands needed
     int opp;                    // current number of operands
-    list<Operation> d[3];	// oprands
+    list<shared_ptr<Operation> > d[3]; // oprands
   expression_state() : opp(0) {}
   };
 

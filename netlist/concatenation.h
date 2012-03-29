@@ -39,9 +39,9 @@ namespace netlist {
      * So the whole structure is recursive.
      */
   public:
-    ConElem(const Expression& expr, const list<ConElem>& elems)
+    ConElem(const shared_ptr<Expression>& expr, const list<shared_ptr<ConElem> >& elems)
       : exp(expr), con(elems) {}
-    ConElem(const Expression& expr)
+    ConElem(const shared_ptr<Expression>& expr)
       : exp(expr) {}
     
     void reduce();
@@ -49,8 +49,8 @@ namespace netlist {
     void db_expunge();
     NETLIST_STREAMOUT_FUN_DECL;
 
-    Expression exp;
-    list<ConElem> con;
+    shared_ptr<Expression> exp;
+    list<shared_ptr<ConElem> > con;
 
   };
   NETLIST_STREAMOUT(ConElem);
@@ -62,14 +62,14 @@ namespace netlist {
     
     // helpers
     NETLIST_STREAMOUT_FUN_DECL;
-    Concatenation& operator+ (Concatenation& rhs);
-    Concatenation& operator+ (ConElem& rhs);
+    Concatenation& operator+ (const shared_ptr<Concatenation>& rhs);
+    Concatenation& operator+ (const shared_ptr<ConElem>& rhs);
     void reduce();
     void db_register(int iod = 1);
     void db_expunge();
 
     // data
-    list<ConElem> data;
+    list<shared_ptr<ConElem> > data;
 
   };
   NETLIST_STREAMOUT(Concatenation);

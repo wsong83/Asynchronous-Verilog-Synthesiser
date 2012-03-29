@@ -30,17 +30,17 @@
 
 using namespace netlist;
 
-netlist::LConcatenation::LConcatenation(Concatenation& con)
+netlist::LConcatenation::LConcatenation(shared_ptr<Concatenation>& con)
   : valid(false)
 {
-  con.reduce();
-  list<ConElem>::iterator it, end;
-  for( it = con.data.begin(), end = con.data.end(); it != end; it++) {
-    if(0 != it->con.size()) break; // the concatenation contain sub-contenations
-    if(it->exp.eqn.size() != 1) break; // the expression ia still complex
-    if(it->exp.eqn.front().get_type() != Operation::oVar) break; // wrong type
-    if(it->exp.eqn.front().get_var().get_type() != NetComp::tVarName) break; // wrong type
-    data.push_back(it->exp.eqn.front().get_var());
+  con->reduce();
+  list<shared_ptr<ConElem> >::iterator it, end;
+  for( it = con->data.begin(), end = con->data.end(); it != end; it++) {
+    if(0 != it->con->size()) break; // the concatenation contain sub-contenations
+    if((*it)->exp.eqn.size() != 1) break; // the expression ia still complex
+    if((*it)->exp.eqn.front()->get_type() != Operation::oVar) break; // wrong type
+    if((*it)->exp.eqn.front()->get_var().get_type() != NetComp::tVarName) break; // wrong type
+    data.push_back((*it)->exp.eqn.front()->get_var());
   }
   if(it == end) valid = true;
 }

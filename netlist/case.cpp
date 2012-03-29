@@ -37,46 +37,46 @@ ostream& netlist::CaseItem::streamout (ostream& os, unsigned int indent) const {
     os << "default: ";
   } else if(exps.size() == 1) {
     os << string(indent, ' ');    // show the indent for each line
-    os << exps.front() << ": ";
+    os << *(exps.front()) << ": ";
   } else {
     unsigned int ncase = exps.size(); // number of cases in the item
     list<Expression>::const_iterator it = exps.begin();
     for(unsigned int i=0; i< ncase-1; i++) {
       os << string(indent, ' ');    // show the indent for each line
-      os << *it << "," << endl;
+      os << *(*it) << "," << endl;
       it++;
     }
-    os << *it << ": ";
+    os << *(*it) << ": ";
   }
   
   // the body part
   if(statements.size() == 0) {
   } else if(statements.size() == 1) {
-    os << statements.front();   // this may have problem for named block in the future!!! Now just ignore it
+    os << *(statements.front());   // this may have problem for named block in the future!!! Now just ignore it
   } else {
     os << "begin" << endl;
-    list<NetComp>::const_iterator it, end;
+    list<shared_ptr<NetComp> >::const_iterator it, end;
     for(it=statements.begin(), end=statements.end(); it!=end; it++) {
-      it->streamout(os, indent+2);
+      (*it)->streamout(os, indent+2);
     }
     os << string(indent, ' ') << "end";
   }
   return os;
 }
 
-void netlist::CaseItem::add_statements(SeqBlock& body) {
-  if(body.is_named()) {
+void netlist::CaseItem::add_statements(const shared_ptr<SeqBlock>& body) {
+  if(body->is_named()) {
     statements.push_back(body);
   } else {
-    statements.splice(statements.end(), body.statements);
+    statements.splice(statements.end(), body->statements);
   }
 }
 
 ostream& netlist::CaseState::streamout (ostream& os, unsigned int indent) const {
   os << string(indent, ' ') << "case(" << exp << ")" << endl;
-  list<CaseItem>::const_iterator it, end;
+  list<shared_ptr<CaseItem> >::const_iterator it, end;
   for(it=cases.begin(), end=cases.end(); it!=end; it++) {
-    it->streamout(os, indent+2);
+    (*it)->streamout(os, indent+2);
     os << endl;
   }
   os << string(indent, ' ') << "endcase" << endl;

@@ -52,9 +52,9 @@ ostream& netlist::SeqBlock::streamout(ostream& os, unsigned int indent, bool fl_
       it = slist_pulse.begin();
       while(true) {
         if(it->first)
-          os << "posedge " << it->second;
+          os << "posedge " << *(it->second);
         else
-          os << "negedge " << it->second;
+          os << "negedge " << *(it->second);
         it++;
         if(it != end) os << " or ";
         else break;
@@ -83,56 +83,56 @@ ostream& netlist::SeqBlock::streamout(ostream& os, unsigned int indent, bool fl_
       
 }
 
-bool netlist::SeqBlock::add_assignment(Assign& dd) {
+bool netlist::SeqBlock::add_assignment(const shared_ptr<Assign>& dd) {
   statements.push_back(dd);
   return true;
 }
 
-bool netlist::SeqBlock::add_case(Expression& exp, list<CaseItem>& citems, CaseItem& ditem) {
-  statements.push_back(CaseState(exp, citems, ditem));
+bool netlist::SeqBlock::add_case(const shared_ptr<Expression>& exp, list<shared_ptr<CaseItem> >& citems, const shared_ptr<CaseItem>& ditem) {
+  statements.push_back(shared_ptr<CaseState>( new CaseState(exp, citems, ditem)));
   return true;
 }
 
-bool netlist::SeqBlock::add_case(Expression& exp, list<CaseItem>& citems) {
-  statements.push_back(CaseState(exp, citems));
+bool netlist::SeqBlock::add_case(const shared_ptr<Expression>& exp, list<shared_ptr<CaseItem> >& citems) {
+  statements.push_back(shared_ptr<CaseState>( new CaseState(exp, citems)));
   return true;
 }
 
-bool netlist::SeqBlock::add_case(Expression& exp, CaseItem& ditem) {
-  statements.push_back(CaseState(exp, ditem));
+bool netlist::SeqBlock::add_case(const shared_ptr<Expression>& exp, const shared_ptr<CaseItem>& ditem) {
+  statements.push_back(shared_ptr<CaseState>( new CaseState(exp, ditem)));
   return true;
 }
 
-bool netlist::SeqBlock::add_if(Expression& exp, SeqBlock& ifcase, SeqBlock& elsecase) {
-  statements.push_back(IfState(exp, ifcase, elsecase));
+bool netlist::SeqBlock::add_if(const shared_ptr<Expression>& exp, const shared_ptr<SeqBlock>& ifcase, const shared_ptr<SeqBlock>& elsecase) {
+  statements.push_back(shared_ptr<IfState>( new IfState(exp, ifcase, elsecase)));
   return true;
 }
 
-bool netlist::SeqBlock::add_while(Expression& exp, SeqBlock& body) {
-  statements.push_back(WhileState(exp, body));
+bool netlist::SeqBlock::add_while(const shared_ptr<Expression>& exp, const shared_ptr<SeqBlock>& body) {
+  statements.push_back(shared_ptr<WhileState>( new WhileState(exp, body)));
   return true;
 }
 
-bool netlist::SeqBlock::add_for(Assign& init, Expression& cond, Assign& incr, SeqBlock& body) {
-  statements.push_back(ForState(init, cond, incr, body));
+bool netlist::SeqBlock::add_for(const shared_ptr<Assign>& init, const shared_ptr<Expression>& cond, const shared_ptr<Assign>& incr, const shared_ptr<SeqBlock>& body) {
+  statements.push_back(shared_ptr<ForState>( new ForState(init, cond, incr, body)));
   return true;
 }
 
-bool netlist::SeqBlock::add_seq_block(list<pair<int, Expression> >& slist, SeqBlock& body) {
-  list<pair<int, Expression> >::iterator it, end;
+bool netlist::SeqBlock::add_seq_block(list<pair<int, shared_ptr<Expression> > >& slist, const shared_ptr<SeqBlock>& body) {
+  list<pair<int, shared_ptr<Expression> > >::iterator it, end;
   for(it=slist.begin(), end=slist.end(); it!=end; it++) {
     if(it->first > 0)
-      slist_pulse.push_back(pair<bool, Expression>(true, it->second));
+      slist_pulse.push_back(pair<bool, shared_ptr<Expression> >(true, it->second));
     else if(it->first < 0)
-      slist_pulse.push_back(pair<bool, Expression>(false, it->second));
+      slist_pulse.push_back(pair<bool, shared_ptr<Expression> >(false, it->second));
     else
       slist_level.push_back(it->second);
   }
   
   sensitive = true; 
-  named = body.named;
-  if(named) name = body.name;
-  statements = body.statements;
+  named = body->named;
+  if(named) name = body->name;
+  statements = body->statements;
   
   if(slist_pulse.empty() || slist_level.empty() == false)
     return false;
@@ -140,16 +140,16 @@ bool netlist::SeqBlock::add_seq_block(list<pair<int, Expression> >& slist, SeqBl
     return true;
 }
 
-bool netlist::SeqBlock::add_block(SeqBlock& body) {
+bool netlist::SeqBlock::add_block(const shared_ptr<SeqBlock>& body) {
   statements.push_back(body);
   return true;
 }
 
-bool netlist::SeqBlock::add_statements(SeqBlock& body) {
+bool netlist::SeqBlock::add_statements(const shared_ptr<SeqBlock>& body) {
   if(body.is_named()) {
     statements.push_back(body);
   } else {
-    statements.splice(statements.end(), body.statements);
+    statements.splice(statements.end(), body->statements);
   }
   return true;
 }

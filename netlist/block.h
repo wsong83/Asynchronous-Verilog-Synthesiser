@@ -76,22 +76,22 @@ namespace netlist {
     NETLIST_STREAMOUT_FUN_DECL;
     ostream& streamout(ostream& os, unsigned int indent, bool fl_prefix) const;
     void clear();               /* clear all statements */
-    bool add_assignment(Assign&); /* add a blocking or non-blocking assignment into the block */
-    bool add_case(Expression&, list<CaseItem>&, CaseItem&); /* add a general case statement */
-    bool add_case(Expression&, list<CaseItem>&);            /* add a case statement without default */
-    bool add_case(Expression&, CaseItem&);                  /* add a case statement only with a default case, odd! */
-    bool add_if(Expression&, SeqBlock&, SeqBlock&);         /* add an if statement with else case */
-    bool add_while(Expression&, SeqBlock&);                 /* add a while statement */
-    bool add_for(Assign&, Expression&, Assign&, SeqBlock&); /* add a for statement */
-    bool add_seq_block(list<pair<int, Expression> >&, SeqBlock&); /* add a sequential block */
-    bool add_block(SeqBlock&);                              /* add a statement block */
-    bool add_statements(SeqBlock&);                         /* add several statements */
+    bool add_assignment(const shared_ptr<Assign>&); /* add a blocking or non-blocking assignment into the block */
+    bool add_case(const shared_ptr<Expression>&, list<shared_ptr<CaseItem> >&, const shared_ptr<CaseItem>&); /* add a general case statement */
+    bool add_case(const shared_ptr<Expression>&, list<shared_pttr<CaseItem> >&); /* add a case statement without default */
+    bool add_case(const shared_ptr<Expression>&, const shared_ptr<CaseItem>&); /* add a case statement only with a default case, odd! */
+    bool add_if(const shared_ptr<Expression>&, const shared_ptr<SeqBlock>&, const shared_ptr<SeqBlock>&); /* add an if statement with else case */
+    bool add_while(const shared_ptr<Expression>&, const shared_ptr<SeqBlock>&); /* add a while statement */
+    bool add_for(const shared_ptr<Assign>&, const shared_ptr<Expression>&, const shared_ptr<Assign>&, const shared_ptr<SeqBlock>&); /* add a for statement */
+    bool add_seq_block(list<pair<int, shared_ptr<Expression> > >&, const shared_ptr<SeqBlock>&); /* add a sequential block */
+    bool add_block(const shared_ptr<SeqBlock>&); /* add a statement block */
+    bool add_statements(const shared_ptr<SeqBlock>&); /* add several statements */
 
     // data
-    bool sensitive;                            /* whether this is a sensitive block, top level block */
-    list<pair<bool, Expression> > slist_pulse; /* pulse sensitive list */
-    list<Expression> slist_level;              /* level sensitive list */
-    list<Variable> var;                        /* local variables */
+    bool sensitive;                                         /* whether this is a sensitive block, top level block */
+    list<pair<bool, shared_ptr<Expression> > > slist_pulse; /* pulse sensitive list */
+    list<shared_ptr<Expression> > slist_level;              /* level sensitive list */
+    list<shared_ptr<Variable> > var;                        /* local variables */
     
 
   };

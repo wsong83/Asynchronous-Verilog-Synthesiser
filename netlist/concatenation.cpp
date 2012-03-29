@@ -31,41 +31,41 @@
 using namespace netlist;
 
 void netlist::ConElem::reduce() {
-  exp.reduce();
+  exp->reduce();
   if(0 != con.size()) {
     list<ConElem>::iterator it, end;
     for(it=con.begin(), end=con.end(); it != end; it++)
-      it->reduce();
+      (*it)->reduce();
   }
 }
 
 void netlist::ConElem::db_register(int iod) {
-  exp.db_register(iod);
+  exp->db_register(iod);
 
-  list<ConElem>::iterator it, end;
+  list<shared_ptr<ConElem> >::iterator it, end;
   for(it = con.begin(), end = con.end(); it != end; it++) 
-    it->db_register(iod);
+    (*it)->db_register(iod);
 }
 
 void netlist::ConElem::db_expunge() {
-  exp.db_expunge();
+  exp->db_expunge();
 
-  list<ConElem>::iterator it, end;
+  list<shared_ptr<ConElem> >::iterator it, end;
   for(it = con.begin(), end = con.end(); it != end; it++) 
-    it->db_expunge();
+    (*it)->db_expunge();
 }
 
 ostream& netlist::ConElem::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
   if(0 == con.size()) {
-    os << exp;
+    os << *exp;
   } else {
     os << "{" << exp << "{";
-    list<ConElem>::const_iterator it, end;
+    list<shared_ptr<ConElem> >::const_iterator it, end;
     it=con.begin();
     end=con.end(); 
     while(true) {
-      os << *it;
+      os << **it;
       it++;
       if(it != end)
         os << ",";
@@ -80,12 +80,12 @@ ostream& netlist::ConElem::streamout(ostream& os, unsigned int indent) const {
 ostream& netlist::Concatenation::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
   if(data.size() > 1) {
-    list<ConElem>::const_iterator it, end;
+    list<shared_ptr<ConElem> >::const_iterator it, end;
     os << "{";
     it=data.begin();
     end=data.end(); 
     while(true) {
-      os << *it;
+      os << **it;
       it++;
       if(it != end)
 	os << ",";
@@ -94,28 +94,28 @@ ostream& netlist::Concatenation::streamout(ostream& os, unsigned int indent) con
     }
     os << "}";
   } else if (data.size() == 1) { // only one element
-    os << data.front();
+    os << *(data.front());
   }
   return os;
 }
     
-Concatenation& netlist::Concatenation::operator+ (Concatenation& rhs) {
-  list<ConElem>::iterator it, end;
+Concatenation& netlist::Concatenation::operator+ (const shared_ptr<Concatenation>& rhs) {
+  list<shared_ptr<ConElem> >::iterator it, end;
   for(it=rhs.data.begin(), end=rhs.data.end(); it != end; it++)
-    *this + *it;
+    *this + **it;
   return *this;
 }
 
-Concatenation& netlist::Concatenation::operator+ (ConElem& rhs) {
+Concatenation& netlist::Concatenation::operator+ (const shared_ptr<ConElem>& rhs) {
   // check whether it is an embedded concatenation
   if( 0 == rhs.con.size() &&
       rhs.exp.size() == 1 &&
-      rhs.exp.eqn.front().get_type() == Operation::oCon
+      rhs.exp->eqn.front()->get_type() == Operation::oCon
       ) {
-    Concatenation& m_con = rhs.exp.eqn.front().get_con();
-    list<ConElem>::iterator it, end;
+    Concatenation& m_con = rhs->exp->eqn.front()->get_con();
+    list<shared_ptr<ConElem> >::iterator it, end;
     for(it=m_con.data.begin(), end=m_con.data.end(); it != end; it++)
-      *this + *it;
+      *this + **it;
   } else {
     data.push_back(rhs);
   }
@@ -123,7 +123,7 @@ Concatenation& netlist::Concatenation::operator+ (ConElem& rhs) {
 }
 
 void netlist::Concatenation::reduce() {
-  list<ConElem>::iterator it, pre, end, begin;
+  list<shared_ptr<ConElem> >::iterator it, pre, end, begin;
   begin = data.begin();
   it = data.begin();
   pre = data.begin();
@@ -131,11 +131,11 @@ void netlist::Concatenation::reduce() {
 
   // first iteration, remove embedded concatenations
   while(it != end) {
-    it->reduce();
-    if(it->con.size() == 0) { // an expression
-      if(it->exp.eqn.size() == 1 &&
-         it->exp.eqn.front().get_type() == Operation::oCon) { // embedded concatenation
-        Concatenation cm = it->exp.eqn.front().get_con(); // fetch the concatenation
+    (*it)->reduce();
+    if((*it)->con.size() == 0) { // an expression
+      if((*it)->exp->eqn.size() == 1 &&
+         (*it)->exp->eqn.front()->get_type() == Operation::oCon) { // embedded concatenation
+        Concatenation cm = (*it)->exp.eqn.front()->get_con(); // fetch the concatenation
         data.insert(it,cm.data.begin(), cm.data.end());	// copy the elements to the current level
         data.erase(it); // delete current one as its content is copied
         
@@ -150,9 +150,9 @@ void netlist::Concatenation::reduce() {
         }	  
       } else it++;
     } else {			// a {x{con}}
-      if(it->exp.is_valuable()) { // x is a const number, repeat con for x times
-        for(mpz_class i = it->exp.get_value().get_value(); i!=0; i--) {
-          data.insert(it,it->con.begin(), it->con.end());
+      if((*it)->exp->is_valuable()) { // x is a const number, repeat con for x times
+        for(mpz_class i = (*it)->exp->get_value().get_value(); i!=0; i--) {
+          data.insert(it,(*it)->con.begin(), (*it)->con.end());
         }
         data.erase(it);
  
@@ -177,11 +177,11 @@ void netlist::Concatenation::reduce() {
 
   while(it != end) {
     if(it == pre) it++;		// bypass the first element
-    else if(pre->con.size() == 0   &&
-            pre->exp.is_valuable() &&
-            it->con.size() == 0    &&
-            it->exp.is_valuable()) { // both pre and it are numbers
-      pre->exp.concatenate(it->exp);
+    else if((*pre)->con.size() == 0   &&
+            (*pre)->exp->is_valuable() &&
+            (*it)->con.size() == 0    &&
+            (*it)->exp->is_valuable()) { // both pre and it are numbers
+      (*pre)->exp->concatenate((*it)->exp);
       it = data.erase(it);
     } else { 
       pre = it; 
@@ -191,13 +191,13 @@ void netlist::Concatenation::reduce() {
 }
 
 void netlist::Concatenation::db_register(int iod) {
-  list<ConElem>::iterator it, end;
+  list<shared_ptr<ConElem> >::iterator it, end;
   for(it = data.begin(), end = data.end(); it != end; it++) 
-    it->db_register(iod);
+    (*it)->db_register(iod);
 }
 
 void netlist::Concatenation::db_expunge() {
-  list<ConElem>::iterator it, end;
+  list<shared_ptr<ConElem> >::iterator it, end;
   for(it = data.begin(), end = data.end(); it != end; it++) 
-    it->db_expunge();
+    (*it)->db_expunge();
 }
