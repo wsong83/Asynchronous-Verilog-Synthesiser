@@ -76,15 +76,16 @@ namespace netlist {
     };
 
     Operation();
-    Operation(const Operation&);
+    //Operation(const Operation&);
     Operation(operation_t);
     Operation(const Number&);
     Operation(const VIdentifier&);
-    Operation(const Concatenation&);
-    Operation(const LConcatenation&);
+    Operation(const shared_ptr<Concatenation>&);
+    Operation(const shared_ptr<LConcatenation>&);
 
     // helpers
-    Operation& operator= (const Operation&);
+    //Operation& operator= (const Operation&);
+    Operation* deep_copy() const;
     bool is_valuable() const { return valuable; }
     operation_t get_type() const { return otype; }
     Number& get_num();
@@ -105,45 +106,45 @@ namespace netlist {
   NETLIST_STREAMOUT(Operation);
 
   void execute_operation( Operation::operation_t op,
-			  list<Operation>& d1,
-			  list<Operation>& d2,
-			  list<Operation>& d3
+			  list<shared_ptr<Operation> >& d1,
+			  list<shared_ptr<Operation> >& d2,
+			  list<shared_ptr<Operation> >& d3
 			  );
 
-  void execute_UPos(list<Operation>&);
-  void execute_UNeg(list<Operation>&);
-  void execute_ULRev(list<Operation>&); /* ! */
-  void execute_URev(list<Operation>&);  /* ~ */
-  void execute_UAnd(list<Operation>&);  /* unary & */
-  void execute_UNand(list<Operation>&); /* unary ~& */
-  void execute_UOr(list<Operation>&);   /* unary | */
-  void execute_UNor(list<Operation>&);  /* unary ~| */
-  void execute_UXor(list<Operation>&);  /* unary ^ */
-  void execute_UNxor(list<Operation>&); /* unary ~^ */
-  void execute_Power(list<Operation>&, list<Operation>&); /* ** */
-  void execute_Time(list<Operation>&, list<Operation>&);  /* * */
-  void execute_Div(list<Operation>&, list<Operation>&); /* / */
-  void execute_Mode(list<Operation>&, list<Operation>&); /* % */
-  void execute_Add(list<Operation>&, list<Operation>&);  /* + */
-  void execute_Minus(list<Operation>&, list<Operation>&); /* - */
-  void execute_RS(list<Operation>&, list<Operation>&);    /* >> */
-  void execute_LS(list<Operation>&, list<Operation>&);    /* << */
-  void execute_LRS(list<Operation>&, list<Operation>&);   /* >>> */
-  void execute_Less(list<Operation>&, list<Operation>&);  /* < */
-  void execute_Le(list<Operation>&, list<Operation>&);    /* <= */
-  void execute_Great(list<Operation>&, list<Operation>&); /* > */
-  void execute_Ge(list<Operation>&, list<Operation>&);    /* >= */
-  void execute_Eq(list<Operation>&, list<Operation>&);    /* == */
-  void execute_Neq(list<Operation>&, list<Operation>&);   /* != */
-  void execute_CEq(list<Operation>&, list<Operation>&);   /* === */
-  void execute_CNeq(list<Operation>&, list<Operation>&);  /* !== */
-  void execute_And(list<Operation>&, list<Operation>&);   /* & */
-  void execute_Xor(list<Operation>&, list<Operation>&);   /* ^ */
-  void execute_Nxor(list<Operation>&, list<Operation>&);  /* ~^ */
-  void execute_Or(list<Operation>&, list<Operation>&);    /* | */
-  void execute_LAnd(list<Operation>&, list<Operation>&);  /* && */
-  void execute_LOr(list<Operation>&, list<Operation>&);   /* || */
-  void execute_Question(list<Operation>&, list<Operation>&, list<Operation>&); /* ? : */
+  void execute_UPos(list<shared_ptr<Operation> >&);
+  void execute_UNeg(list<shared_ptr<Operation> >&);
+  void execute_ULRev(list<shared_ptr<Operation> >&); /* ! */
+  void execute_URev(list<shared_ptr<Operation> >&);  /* ~ */
+  void execute_UAnd(list<shared_ptr<Operation> >&);  /* unary & */
+  void execute_UNand(list<shared_ptr<Operation> >&); /* unary ~& */
+  void execute_UOr(list<shared_ptr<Operation> >&);   /* unary | */
+  void execute_UNor(list<shared_ptr<Operation> >&);  /* unary ~| */
+  void execute_UXor(list<shared_ptr<Operation> >&);  /* unary ^ */
+  void execute_UNxor(list<shared_ptr<Operation> >&); /* unary ~^ */
+  void execute_Power(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&); /* ** */
+  void execute_Time(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);  /* * */
+  void execute_Div(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);   /* / */
+  void execute_Mode(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);  /* % */
+  void execute_Add(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);   /* + */
+  void execute_Minus(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&); /* - */
+  void execute_RS(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);    /* >> */
+  void execute_LS(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);    /* << */
+  void execute_LRS(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);   /* >>> */
+  void execute_Less(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);  /* < */
+  void execute_Le(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);    /* <= */
+  void execute_Great(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&); /* > */
+  void execute_Ge(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);    /* >= */
+  void execute_Eq(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);    /* == */
+  void execute_Neq(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);   /* != */
+  void execute_CEq(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);   /* === */
+  void execute_CNeq(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);  /* !== */
+  void execute_And(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);   /* & */
+  void execute_Xor(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);   /* ^ */
+  void execute_Nxor(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);  /* ~^ */
+  void execute_Or(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);    /* | */
+  void execute_LAnd(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);  /* && */
+  void execute_LOr(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);   /* || */
+  void execute_Question(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&); /* ? : */
 
 }
 

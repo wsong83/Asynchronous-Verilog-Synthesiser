@@ -34,23 +34,31 @@ netlist::Operation::Operation()
   : otype(oNULL), valuable(false)
 {}
 
-netlist::Operation::Operation(const Operation& rhs)
-  : otype(rhs.otype), valuable(rhs.valuable) {
-  if(rhs.otype == oNum) data.reset(new Number(*(static_pointer_cast<Number>(rhs.data))));
-  if(rhs.otype == oVar) data.reset(new VIdentifier(*(static_pointer_cast<VIdentifier>(rhs.data))));
-  if(rhs.otype == oCon) data.reset(new Concatenation(*(static_pointer_cast<Concatenation>(rhs.data))));
-  if(rhs.otype == oFun) assert(0 == "Function not implemented yet");
-}
+//netlist::Operation::Operation(const Operation& rhs)
+//  : otype(rhs.otype), valuable(rhs.valuable) {
+//  if(rhs.otype == oNum) data.reset(new Number(*(static_pointer_cast<Number>(rhs.data))));
+//  if(rhs.otype == oVar) data.reset(new VIdentifier(*(static_pointer_cast<VIdentifier>(rhs.data))));
+//  if(rhs.otype == oCon) data.reset(new Concatenation(*(static_pointer_cast<Concatenation>(rhs.data))));
+//  if(rhs.otype == oFun) assert(0 == "Function not implemented yet");
+//}
 
-Operation& netlist::Operation::operator= (const Operation& rhs) {
-  otype = rhs.otype;
-  valuable = rhs.valuable;
-  data.reset();
-  if(rhs.otype == oNum) data.reset(new Number(*(static_pointer_cast<Number>(rhs.data))));
-  if(rhs.otype == oVar) data.reset(new VIdentifier(*(static_pointer_cast<VIdentifier>(rhs.data))));
-  if(rhs.otype == oCon) data.reset(new Concatenation(*(static_pointer_cast<Concatenation>(rhs.data))));
-  if(rhs.otype == oFun) assert(0 == "Function not implemented yet");
-  return *this;
+//Operation& netlist::Operation::operator= (const Operation& rhs) {
+//  otype = rhs.otype;
+//  valuable = rhs.valuable;
+//  data.reset();
+//  if(rhs.otype == oNum) data.reset(new Number(*(static_pointer_cast<Number>(rhs.data))));
+//  if(rhs.otype == oVar) data.reset(new VIdentifier(*(static_pointer_cast<VIdentifier>(rhs.data))));
+//  if(rhs.otype == oCon) data.reset(new Concatenation(*(static_pointer_cast<Concatenation>(rhs.data))));
+//  if(rhs.otype == oFun) assert(0 == "Function not implemented yet");
+//  return *this;
+//}
+
+Operation* netlist::Operation::deep_copy () const {
+  Operation* rv = new Operation();
+  rv->otype = otype;
+  rv->valuable = valuable;
+  if(data.use_count() != 0) rv->data = data->deep_copy();
+  return rv;
 }
 
 netlist::Operation::Operation(operation_t otype)

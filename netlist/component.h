@@ -95,6 +95,10 @@ namespace netlist {
       os << "ERROR!!, the streamout of NetComp is used!!!" << endl;
       assert(0 == "the streamout of NetComp is used");
     }
+
+    virtual NetComp* deep_copy() const { /* deep copy a netlist component */
+      return(new NetComp());
+    }
   };
   NETLIST_STREAMOUT(NetComp);
 
