@@ -34,25 +34,6 @@ netlist::Operation::Operation()
   : otype(oNULL), valuable(false)
 {}
 
-//netlist::Operation::Operation(const Operation& rhs)
-//  : otype(rhs.otype), valuable(rhs.valuable) {
-//  if(rhs.otype == oNum) data.reset(new Number(*(static_pointer_cast<Number>(rhs.data))));
-//  if(rhs.otype == oVar) data.reset(new VIdentifier(*(static_pointer_cast<VIdentifier>(rhs.data))));
-//  if(rhs.otype == oCon) data.reset(new Concatenation(*(static_pointer_cast<Concatenation>(rhs.data))));
-//  if(rhs.otype == oFun) assert(0 == "Function not implemented yet");
-//}
-
-//Operation& netlist::Operation::operator= (const Operation& rhs) {
-//  otype = rhs.otype;
-//  valuable = rhs.valuable;
-//  data.reset();
-//  if(rhs.otype == oNum) data.reset(new Number(*(static_pointer_cast<Number>(rhs.data))));
-//  if(rhs.otype == oVar) data.reset(new VIdentifier(*(static_pointer_cast<VIdentifier>(rhs.data))));
-//  if(rhs.otype == oCon) data.reset(new Concatenation(*(static_pointer_cast<Concatenation>(rhs.data))));
-//  if(rhs.otype == oFun) assert(0 == "Function not implemented yet");
-//  return *this;
-//}
-
 Operation* netlist::Operation::deep_copy () const {
   Operation* rv = new Operation();
   rv->otype = otype;
@@ -76,20 +57,20 @@ netlist::Operation::Operation(const VIdentifier& id)
   : otype(oVar), valuable(false), data(new VIdentifier(id))
 { }
 
-netlist::Operation::Operation(const Concatenation& con)
-  : otype(oCon), valuable(false), data(new Concatenation(con))
+netlist::Operation::Operation(const shared_ptr<Concatenation>& con)
+  : otype(oCon), valuable(false), data(static_pointer_cast<NetComp>(con))
 { }
 
-netlist::Operation::Operation(const LConcatenation& con)
-  : otype(oCon), valuable(false), data(new Concatenation()) {
-  if(con.size() == 1) {
+netlist::Operation::Operation(const shared_ptr<LConcatenation>& con)
+  : otype(oCon), valuable(false) {
+  if(con->size() == 1) {
     otype = oVar;
-    data.reset(new VIdentifier(con.front()));
+    data.reset(new VIdentifier(con->front()));
   } else {
     // copy all elements in LConcatenation to Concatenation
-    shared_ptr<Concatenation> cp = static_pointer_cast<Concatenation>(data);
+    shared_ptr<Concatenation> cp(new Concatenation());
     list<VIdentifier>::const_iterator it, end;
-    for(it=con.data.begin(), end=con.data.end(); it!=end; it++) {
+    for(it=con->data.begin(), end=con->data.end(); it!=end; it++) {
       ConElem m = Expression(*it);
       *cp + m;
     }
@@ -211,10 +192,10 @@ void netlist::Operation::reduce() {
   case oCon: {
     Concatenation& mcon = *(static_pointer_cast<Concatenation>(data));
     if(mcon.data.size() == 1 &&
-       mcon.data.front().exp.is_valuable() &&
-       mcon.data.front().con.size() == 0
+       mcon.data.front()->exp->is_valuable() &&
+       mcon.data.front()->con->size() == 0
        ) {
-      data.reset(new Number(mcon.data.front().exp.get_value()));
+      data.reset(new Number(mcon.data.front()->exp->get_value()));
       otype = oNum;
       valuable = true;
     }
@@ -226,9 +207,9 @@ void netlist::Operation::reduce() {
 
 // dummy yet
 void netlist::execute_operation( Operation::operation_t op,
-                                 list<Operation>& d1,
-                                 list<Operation>& d2,
-                                 list<Operation>& d3
+                                 list<shared_ptr<Operation> >& d1,
+                                 list<shared_ptr<Operation> >& d2,
+                                 list<shared_ptr<Operation> >& d3
                                  ) {
   // check parameters
   assert(op >= Operation::oUPos);
@@ -279,25 +260,25 @@ void netlist::execute_operation( Operation::operation_t op,
 }
 
 // unary +
-void netlist::execute_UPos(list<Operation>& d1) {
+void netlist::execute_UPos(list<shared_ptr<Operation> >& d1) {
   // for unary +, do nothing but omit the operator
   return;
 }
 
 // unary -
-void netlist::execute_UNeg(list<Operation>& d1) {
-  if(d1.front().is_valuable()) {
-    assert(d1.front().get_type() == Operation::oNum);
-    d1.front().get_num().negate();
+void netlist::execute_UNeg(list<shared_ptr<Operation> >& d1) {
+  if(d1.front()->is_valuable()) {
+    assert(d1.front()->get_type() == Operation::oNum);
+    d1.front()->get_num().negate();
   } else {
-    d1.push_front(Operation(Operation::oUNeg));
+    d1.push_front(new Operation(Operation::oUNeg));
   }
 }
 
 // unary !
-void netlist::execute_ULRev(list<Operation>& d1) {
-  if(d1.size() == 1 && d1.front().get_type() == Operation::oNum) {
-    string tval = d1.front().get_num().get_txt_value();
+void netlist::execute_ULRev(list<shared_ptr<Operation> >& d1) {
+  if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
+    string tval = d1.front()->get_num().get_txt_value();
     bool one = false;
     bool x = false;
     for(unsigned int i=0; i<tval.size(); i++) {
@@ -305,20 +286,20 @@ void netlist::execute_ULRev(list<Operation>& d1) {
       x = (tval[i] == 'x' || tval[i] == 'z') ? true : x;
     }
     if(one)
-      d1.front().get_num() = Number(0);
+      d1.front()->get_num() = Number(0);
     else if(x)
-      d1.front().get_num() = Number("x");
+      d1.front()->get_num() = Number("x");
     else
-      d1.front().get_num() = Number(1);
+      d1.front()->get_num() = Number(1);
   } else {
-    d1.push_front(Operation(Operation::oULRev));
+    d1.push_front(new Operation(Operation::oULRev));
   }
 }
 
 // unary ~
-void netlist::execute_URev(list<Operation>& d1) {
-  if(d1.size() == 1 && d1.front().get_type() == Operation::oNum) {
-    string tval = d1.front().get_num().get_txt_value();
+void netlist::execute_URev(list<shared_ptr<Operation> >& d1) {
+  if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
+    string tval = d1.front()->get_num().get_txt_value();
     for(unsigned int i=0; i<tval.size(); i++) {
       switch(tval[i]) {
       case '0': tval[i] = '1'; break;
@@ -328,16 +309,16 @@ void netlist::execute_URev(list<Operation>& d1) {
       default: assert(0 == "unkown value");
       } 
     }
-    d1.front().get_num() = Number(tval);
+    d1.front()->get_num() = Number(tval);
   } else {
-    d1.push_front(Operation(Operation::oURev));
+    d1.push_front(new Operation(Operation::oURev));
   }
 }
 
 // unary &
-void netlist::execute_UAnd(list<Operation>& d1) {
-  if(d1.size() == 1 && d1.front().get_type() == Operation::oNum) {
-    string tval = d1.front().get_num().get_txt_value();
+void netlist::execute_UAnd(list<shared_ptr<Operation> >& d1) {
+  if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
+    string tval = d1.front()->get_num().get_txt_value();
     char m = '1';
     for(unsigned int i=0; i<tval.size(); i++) {
       switch(tval[i]) {
@@ -348,16 +329,16 @@ void netlist::execute_UAnd(list<Operation>& d1) {
       default: assert(0 == "unkown value");
       } 
     }
-    d1.front().get_num() = Number(string(1, m));
+    d1.front()->get_num() = Number(string(1, m));
   } else {
-    d1.push_front(Operation(Operation::oUAnd));
+    d1.push_front(new Operation(Operation::oUAnd));
   }
 }
 
 // unary ~&
-void netlist::execute_UNand(list<Operation>& d1) {
-  if(d1.size() == 1 && d1.front().get_type() == Operation::oNum) {
-    string tval = d1.front().get_num().get_txt_value();
+void netlist::execute_UNand(list<shared_ptr<Operation> >& d1) {
+  if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
+    string tval = d1.front()->get_num().get_txt_value();
     char m = '1';
     for(unsigned int i=0; i<tval.size(); i++) {
       switch(tval[i]) {
@@ -369,16 +350,16 @@ void netlist::execute_UNand(list<Operation>& d1) {
       } 
     }
     if(m == '0') m = '1'; else if(m == '1') m = '0';
-    d1.front().get_num() = Number(string(1, m));
+    d1.front()->get_num() = Number(string(1, m));
   } else {
-    d1.push_front(Operation(Operation::oUNand));
+    d1.push_front( new Operation(Operation::oUNand));
   }
 }
 
 // unary |
-void netlist::execute_UOr(list<Operation>& d1) {
-  if(d1.size() == 1 && d1.front().get_type() == Operation::oNum) {
-    string tval = d1.front().get_num().get_txt_value();
+void netlist::execute_UOr(list<shared_ptr<Operation> >& d1) {
+  if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
+    string tval = d1.front()->get_num().get_txt_value();
     char m = '0';
     for(unsigned int i=0; i<tval.size(); i++) {
       switch(tval[i]) {
@@ -389,16 +370,16 @@ void netlist::execute_UOr(list<Operation>& d1) {
       default: assert(0 == "unkown value");
       } 
     }
-    d1.front().get_num() = Number(string(1, m));
+    d1.front()->get_num() = Number(string(1, m));
   } else {
-    d1.push_front(Operation(Operation::oUOr));
+    d1.push_front( new Operation(Operation::oUOr));
   }
 }
 
 // unary ~|
-void netlist::execute_UNor(list<Operation>& d1) {
-  if(d1.size() == 1 && d1.front().get_type() == Operation::oNum) {
-    string tval = d1.front().get_num().get_txt_value();
+void netlist::execute_UNor(list<shared_ptr<Operation> >& d1) {
+  if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
+    string tval = d1.front()->get_num().get_txt_value();
     char m = '0';
     for(unsigned int i=0; i<tval.size(); i++) {
       switch(tval[i]) {
@@ -410,16 +391,16 @@ void netlist::execute_UNor(list<Operation>& d1) {
       } 
     }
     if(m == '0') m = '1'; else if(m == '1') m = '0';
-    d1.front().get_num() = Number(string(1, m));
+    d1.front()->get_num() = Number(string(1, m));
   } else {
-    d1.push_front(Operation(Operation::oUNor));
+    d1.push_front( new Operation(Operation::oUNor));
   }
 }
 
 // unary ^
-void netlist::execute_UXor(list<Operation>& d1) {
-  if(d1.size() == 1 && d1.front().get_type() == Operation::oNum) {
-    string tval = d1.front().get_num().get_txt_value();
+void netlist::execute_UXor(list<shared_ptr<Operation> >& d1) {
+  if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
+    string tval = d1.front()->get_num().get_txt_value();
     char m = tval[0];
     for(unsigned int i=1; i<tval.size(); i++) {
       switch(tval[i]) {
@@ -430,16 +411,16 @@ void netlist::execute_UXor(list<Operation>& d1) {
       default: assert(0 == "unkown value");
       } 
     }
-    d1.front().get_num() = Number(string(1, m));
+    d1.front()->get_num() = Number(string(1, m));
   } else {
-    d1.push_front(Operation(Operation::oUXor));
+    d1.push_front( new Operation(Operation::oUXor));
   }
 }
 
 // unary ~^
-void netlist::execute_UNxor(list<Operation>& d1) {
-  if(d1.size() == 1 && d1.front().get_type() == Operation::oNum) {
-    string tval = d1.front().get_num().get_txt_value();
+void netlist::execute_UNxor(list<shared_ptr<Operation> >& d1) {
+  if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
+    string tval = d1.front()->get_num().get_txt_value();
     char m = tval[0];
     for(unsigned int i=1; i<tval.size(); i++) {
       switch(tval[i]) {
@@ -451,121 +432,121 @@ void netlist::execute_UNxor(list<Operation>& d1) {
       } 
     }
     if(m == '0') m = '1'; else if(m == '1') m = '0';
-    d1.front().get_num() = Number(string(1, m));
+    d1.front()->get_num() = Number(string(1, m));
   } else {
-    d1.push_front(Operation(Operation::oUNxor));
+    d1.push_front( new Operation(Operation::oUNxor));
   }
 }
   
 // **
-void netlist::execute_Power(list<Operation>& d1, list<Operation>& d2) {
-  if(d1.front().is_valuable() && d2.front().is_valuable()) {
+void netlist::execute_Power(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
+  if(d1.front()->is_valuable() && d2.front()->is_valuable()) {
     mpz_class res;
-    mpz_pow_ui(res.get_mpz_t(), d1.front().get_num().get_value().get_mpz_t(), d2.front().get_num().get_value().get_ui());
-    d1.front().get_num() = mpz_class(res);
+    mpz_pow_ui(res.get_mpz_t(), d1.front()->get_num().get_value().get_mpz_t(), d2.front()->get_num().get_value().get_ui());
+    d1.front()->get_num() = mpz_class(res);
   } else {
-    d1.push_front(Operation(Operation::oPower));
+    d1.push_front( new Operation(Operation::oPower));
     d1.splice(d1.end(), d2);
   }
 }
 
 // *
-void netlist::execute_Time(list<Operation>& d1, list<Operation>& d2) {
-  if(d1.front().is_valuable() && d2.front().is_valuable()) {
-    mpz_class res = d1.front().get_num().get_value() * d2.front().get_num().get_value();
-    d1.front().get_num() = res;
+void netlist::execute_Time(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
+  if(d1.front()->is_valuable() && d2.front()->is_valuable()) {
+    mpz_class res = d1.front()->get_num().get_value() * d2.front()->get_num().get_value();
+    d1.front()->get_num() = res;
   } else {
-    d1.push_front(Operation(Operation::oTime));
+    d1.push_front( new Operation(Operation::oTime));
     d1.splice(d1.end(), d2);
   }
 }
 
 // /
-void netlist::execute_Div(list<Operation>& d1, list<Operation>& d2) {
-  if(d1.front().is_valuable() && d2.front().is_valuable()) {
-    mpz_class res = d1.front().get_num().get_value() / d2.front().get_num().get_value();
-    d1.front().get_num() = res;
+void netlist::execute_Div(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
+  if(d1.front()->is_valuable() && d2.front()->is_valuable()) {
+    mpz_class res = d1.front()->get_num().get_value() / d2.front()->get_num().get_value();
+    d1.front()->get_num() = res;
   } else {
-    d1.push_front(Operation(Operation::oDiv));
+    d1.push_front( new Operation(Operation::oDiv));
     d1.splice(d1.end(), d2);
   }
 }
 
 // %
-void netlist::execute_Mode(list<Operation>& d1, list<Operation>& d2) {
-  if(d1.front().is_valuable() && d2.front().is_valuable()) {
-    mpz_class res = d1.front().get_num().get_value() % d2.front().get_num().get_value();
-    d1.front().get_num() = res;
+void netlist::execute_Mode(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
+  if(d1.front()->is_valuable() && d2.front()->is_valuable()) {
+    mpz_class res = d1.front()->get_num().get_value() % d2.front()->get_num().get_value();
+    d1.front()->get_num() = res;
   } else {
-    d1.push_front(Operation(Operation::oMode));
+    d1.push_front( new Operation(Operation::oMode));
     d1.splice(d1.end(), d2);
   }
 }
 
 
 // +
-void netlist::execute_Add(list<Operation>& d1, list<Operation>& d2) {
-  if(d1.front().is_valuable() && d2.front().is_valuable()) {
-    mpz_class res = d1.front().get_num().get_value() + d2.front().get_num().get_value();
-    d1.front().get_num() = res;
+void netlist::execute_Add(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
+  if(d1.front()->is_valuable() && d2.front()->is_valuable()) {
+    mpz_class res = d1.front()->get_num().get_value() + d2.front()->get_num().get_value();
+    d1.front()->get_num() = res;
   } else {
-    d1.push_front(Operation(Operation::oAdd));
+    d1.push_front( new Operation(Operation::oAdd));
     d1.splice(d1.end(), d2);
   }
 }
 
 // -
-void netlist::execute_Minus(list<Operation>& d1, list<Operation>& d2) {
-  if(d1.front().is_valuable() && d2.front().is_valuable()) {
-    mpz_class res = d1.front().get_num().get_value() - d2.front().get_num().get_value();
-    d1.front().get_num() = res;
+void netlist::execute_Minus(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
+  if(d1.front()->is_valuable() && d2.front()->is_valuable()) {
+    mpz_class res = d1.front()->get_num().get_value() - d2.front()->get_num().get_value();
+    d1.front()->get_num() = res;
   } else {
-    d1.push_front(Operation(Operation::oMinus));
+    d1.push_front( new Operation(Operation::oMinus));
     d1.splice(d1.end(), d2);
   }
 }
 
 // >>
-void netlist::execute_RS(list<Operation>& d1, list<Operation>& d2) {
-  if(d1.front().get_type() == Operation::oNum && d2.front().is_valuable()) {
-    string tval = d1.front().get_num().get_txt_value();
-    tval.erase(tval.size() - d2.front().get_num().get_value().get_ui());
-    d1.front().get_num() = Number(tval);
+void netlist::execute_RS(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
+  if(d1.front()->get_type() == Operation::oNum && d2.front()->is_valuable()) {
+    string tval = d1.front()->get_num().get_txt_value();
+    tval.erase(tval.size() - d2.front()->get_num().get_value().get_ui());
+    d1.front()->get_num() = Number(tval);
   } else {
-    d1.push_front(Operation(Operation::oRS));
+    d1.push_front( new Operation(Operation::oRS));
     d1.splice(d1.end(), d2);
   }
 }
 
 // <<
-void netlist::execute_LS(list<Operation>& d1, list<Operation>& d2) {
-  if(d1.front().get_type() == Operation::oNum && d2.front().is_valuable()) {
-    string tval = d1.front().get_num().get_txt_value();
-    tval.insert(tval.end(), d2.front().get_num().get_value().get_ui(), '0');
-    d1.front().get_num() = Number(tval);
+void netlist::execute_LS(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
+  if(d1.front()->get_type() == Operation::oNum && d2.front()->is_valuable()) {
+    string tval = d1.front()->get_num().get_txt_value();
+    tval.insert(tval.end(), d2.front()->get_num().get_value().get_ui(), '0');
+    d1.front()->get_num() = Number(tval);
   } else {
-    d1.push_front(Operation(Operation::oLS));
+    d1.push_front( new Operation(Operation::oLS));
     d1.splice(d1.end(), d2);
   }
 }
 
 // >>>, currently equivalent to >>, signed number not supported yet
-void netlist::execute_LRS(list<Operation>& d1, list<Operation>& d2) {
-  if(d1.front().get_type() == Operation::oNum && d2.front().is_valuable()) {
-    string tval = d1.front().get_num().get_txt_value();
-    tval.erase(tval.size() - d2.front().get_num().get_value().get_ui());
-    d1.front().get_num() = Number(tval);
+void netlist::execute_LRS(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
+  if(d1.front()->get_type() == Operation::oNum && d2.front()->is_valuable()) {
+    string tval = d1.front()->get_num().get_txt_value();
+    tval.erase(tval.size() - d2.front()->get_num().get_value().get_ui());
+    d1.front()->get_num() = Number(tval);
   } else {
-    d1.push_front(Operation(Operation::oLRS));
+    d1.push_front( new Operation(Operation::oLRS));
     d1.splice(d1.end(), d2);
   }
 }
 
 // <
-void netlist::execute_Less(list<Operation>& d1, list<Operation>& d2) {
-  if(d1.front().get_type() == Operation::oNum && d2.front().get_type() == Operation::oNum) {
-    string tval1 = d1.front().get_num().get_txt_value();
-    string tval2 = d2.front().get_num().get_txt_value();
+void netlist::execute_Less(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
+  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
+    string tval1 = d1.front()->get_num().get_txt_value();
+    string tval2 = d2.front()->get_num().get_txt_value();
     if(tval1.size() > tval2.size())
       tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
     else if(tval1.size() < tval2.size())
@@ -573,29 +554,29 @@ void netlist::execute_Less(list<Operation>& d1, list<Operation>& d2) {
 
     for(unsigned int i=0; i<tval1.size(); i++) {
       if(tval1[i] == '1' && tval2[i] == '0') {
-        d1.front().get_num() = Number("0");
+        d1.front()->get_num() = Number("0");
         return;
       } else if(tval1[i] == '0' && tval2[i] == '1') {
-        d1.front().get_num() = Number("1");
+        d1.front()->get_num() = Number("1");
         return;
       } else if(tval1[i] == 'x' || tval2[i] == 'x' || tval1[i] == 'z' || tval2[i] == 'z' ) {
-        d1.front().get_num() = Number("x");
+        d1.front()->get_num() = Number("x");
         return;
       }
     }
     // equal
-    d1.front().get_num() = Number("0");
+    d1.front()->get_num() = Number("0");
   } else {
-    d1.push_front(Operation(Operation::oLess));
+    d1.push_front( new Operation(Operation::oLess));
     d1.splice(d1.end(), d2);
   }
 }
 
 // <=
-void netlist::execute_Le(list<Operation>& d1, list<Operation>& d2) {
-  if(d1.front().get_type() == Operation::oNum && d2.front().get_type() == Operation::oNum) {
-    string tval1 = d1.front().get_num().get_txt_value();
-    string tval2 = d2.front().get_num().get_txt_value();
+void netlist::execute_Le(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
+  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
+    string tval1 = d1.front()->get_num().get_txt_value();
+    string tval2 = d2.front()->get_num().get_txt_value();
     if(tval1.size() > tval2.size())
       tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
     else if(tval1.size() < tval2.size())
@@ -603,29 +584,29 @@ void netlist::execute_Le(list<Operation>& d1, list<Operation>& d2) {
 
     for(unsigned int i=0; i<tval1.size(); i++) {
       if(tval1[i] == '1' && tval2[i] == '0') {
-        d1.front().get_num() = Number("0");
+        d1.front()->get_num() = Number("0");
         return;
       } else if(tval1[i] == '0' && tval2[i] == '1') {
-        d1.front().get_num() = Number("1");
+        d1.front()->get_num() = Number("1");
         return;
       } else if(tval1[i] == 'x' || tval2[i] == 'x' || tval1[i] == 'z' || tval2[i] == 'z' ) {
-        d1.front().get_num() = Number("x");
+        d1.front()->get_num() = Number("x");
         return;
       }
     }
     // equal
-    d1.front().get_num() = Number("1");
+    d1.front()->get_num() = Number("1");
   } else {
-    d1.push_front(Operation(Operation::oLe));
+    d1.push_front( new Operation(Operation::oLe));
     d1.splice(d1.end(), d2);
   }
 }
 
 // >
-void netlist::execute_Great(list<Operation>& d1, list<Operation>& d2) {
-  if(d1.front().get_type() == Operation::oNum && d2.front().get_type() == Operation::oNum) {
-    string tval1 = d1.front().get_num().get_txt_value();
-    string tval2 = d2.front().get_num().get_txt_value();
+void netlist::execute_Great(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
+  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
+    string tval1 = d1.front()->get_num().get_txt_value();
+    string tval2 = d2.front()->get_num().get_txt_value();
     if(tval1.size() > tval2.size())
       tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
     else if(tval1.size() < tval2.size())
@@ -633,29 +614,29 @@ void netlist::execute_Great(list<Operation>& d1, list<Operation>& d2) {
 
     for(unsigned int i=0; i<tval1.size(); i++) {
       if(tval1[i] == '1' && tval2[i] == '0') {
-        d1.front().get_num() = Number("1");
+        d1.front()->get_num() = Number("1");
         return;
       } else if(tval1[i] == '0' && tval2[i] == '1') {
-        d1.front().get_num() = Number("0");
+        d1.front()->get_num() = Number("0");
         return;
       } else if(tval1[i] == 'x' || tval2[i] == 'x' || tval1[i] == 'z' || tval2[i] == 'z' ) {
-        d1.front().get_num() = Number("x");
+        d1.front()->get_num() = Number("x");
         return;
       }
     }
     // equal
-    d1.front().get_num() = Number("0");
+    d1.front()->get_num() = Number("0");
   } else {
-    d1.push_front(Operation(Operation::oGreat));
+    d1.push_front( new Operation(Operation::oGreat));
     d1.splice(d1.end(), d2);
   }
 }
 
 // >=
-void netlist::execute_Ge(list<Operation>& d1, list<Operation>& d2) {
-  if(d1.front().get_type() == Operation::oNum && d2.front().get_type() == Operation::oNum) {
-    string tval1 = d1.front().get_num().get_txt_value();
-    string tval2 = d2.front().get_num().get_txt_value();
+void netlist::execute_Ge(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
+  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
+    string tval1 = d1.front()->get_num().get_txt_value();
+    string tval2 = d2.front()->get_num().get_txt_value();
     if(tval1.size() > tval2.size())
       tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
     else if(tval1.size() < tval2.size())
@@ -663,29 +644,29 @@ void netlist::execute_Ge(list<Operation>& d1, list<Operation>& d2) {
 
     for(unsigned int i=0; i<tval1.size(); i++) {
       if(tval1[i] == '1' && tval2[i] == '0') {
-        d1.front().get_num() = Number("1");
+        d1.front()->get_num() = Number("1");
         return;
       } else if(tval1[i] == '0' && tval2[i] == '1') {
-        d1.front().get_num() = Number("0");
+        d1.front()->get_num() = Number("0");
         return;
       } else if(tval1[i] == 'x' || tval2[i] == 'x' || tval1[i] == 'z' || tval2[i] == 'z' ) {
-        d1.front().get_num() = Number("x");
+        d1.front()->get_num() = Number("x");
         return;
       }
     }
     // equal
-    d1.front().get_num() = Number("1");
+    d1.front()->get_num() = Number("1");
   } else {
-    d1.push_front(Operation(Operation::oLe));
+    d1.push_front( new Operation(Operation::oLe));
     d1.splice(d1.end(), d2);
   }
 }
 
 // ==
-void netlist::execute_Eq(list<Operation>& d1, list<Operation>& d2) {
-  if(d1.front().get_type() == Operation::oNum && d2.front().get_type() == Operation::oNum) {
-    string tval1 = d1.front().get_num().get_txt_value();
-    string tval2 = d2.front().get_num().get_txt_value();
+void netlist::execute_Eq(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
+  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
+    string tval1 = d1.front()->get_num().get_txt_value();
+    string tval2 = d2.front()->get_num().get_txt_value();
     if(tval1.size() > tval2.size())
       tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
     else if(tval1.size() < tval2.size())
@@ -693,29 +674,29 @@ void netlist::execute_Eq(list<Operation>& d1, list<Operation>& d2) {
 
     for(unsigned int i=0; i<tval1.size(); i++) {
       if(tval1[i] == '1' && tval2[i] == '0') {
-        d1.front().get_num() = Number("0");
+        d1.front()->get_num() = Number("0");
         return;
       } else if(tval1[i] == '0' && tval2[i] == '1') {
-        d1.front().get_num() = Number("0");
+        d1.front()->get_num() = Number("0");
         return;
       } else if(tval1[i] == 'x' || tval2[i] == 'x' || tval1[i] == 'z' || tval2[i] == 'z' ) {
-        d1.front().get_num() = Number("x");
+        d1.front()->get_num() = Number("x");
         return;
       }
     }
     // equal
-    d1.front().get_num() = Number("1");
+    d1.front()->get_num() = Number("1");
   } else {
-    d1.push_front(Operation(Operation::oEq));
+    d1.push_front( new Operation(Operation::oEq));
     d1.splice(d1.end(), d2);
   }
 }
 
 // !=
-void netlist::execute_Neq(list<Operation>& d1, list<Operation>& d2) {
-  if(d1.front().get_type() == Operation::oNum && d2.front().get_type() == Operation::oNum) {
-    string tval1 = d1.front().get_num().get_txt_value();
-    string tval2 = d2.front().get_num().get_txt_value();
+void netlist::execute_Neq(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
+  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
+    string tval1 = d1.front()->get_num().get_txt_value();
+    string tval2 = d2.front()->get_num().get_txt_value();
     if(tval1.size() > tval2.size())
       tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
     else if(tval1.size() < tval2.size())
@@ -723,28 +704,28 @@ void netlist::execute_Neq(list<Operation>& d1, list<Operation>& d2) {
 
     for(unsigned int i=0; i<tval1.size(); i++) {
       if(tval1[i] == '1' && tval2[i] == '0') {
-        d1.front().get_num() = Number("1");
+        d1.front()->get_num() = Number("1");
         return;
       } else if(tval1[i] == '0' && tval2[i] == '1') {
-        d1.front().get_num() = Number("1");
+        d1.front()->get_num() = Number("1");
         return;
       } else if(tval1[i] == 'x' || tval2[i] == 'x' || tval1[i] == 'z' || tval2[i] == 'z' ) {
-        d1.front().get_num() = Number("x");
+        d1.front()->get_num() = Number("x");
         return;
       }
     }
     // equal
-    d1.front().get_num() = Number("0");
+    d1.front()->get_num() = Number("0");
   } else {
-    d1.push_front(Operation(Operation::oNeq));
+    d1.push_front( new Operation(Operation::oNeq));
     d1.splice(d1.end(), d2);
   }
 }
 // ===
-void netlist::execute_CEq(list<Operation>& d1, list<Operation>& d2) {
-  if(d1.front().get_type() == Operation::oNum && d2.front().get_type() == Operation::oNum) {
-    string tval1 = d1.front().get_num().get_txt_value();
-    string tval2 = d2.front().get_num().get_txt_value();
+void netlist::execute_CEq(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
+  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
+    string tval1 = d1.front()->get_num().get_txt_value();
+    string tval2 = d2.front()->get_num().get_txt_value();
     if(tval1.size() > tval2.size())
       tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
     else if(tval1.size() < tval2.size())
@@ -752,23 +733,23 @@ void netlist::execute_CEq(list<Operation>& d1, list<Operation>& d2) {
 
     for(unsigned int i=0; i<tval1.size(); i++) {
       if(tval1[i] != tval2[i]) {
-        d1.front().get_num() = Number("0");
+        d1.front()->get_num() = Number("0");
         return;
       } 
     }
     // equal
-    d1.front().get_num() = Number("1");
+    d1.front()->get_num() = Number("1");
   } else {
-    d1.push_front(Operation(Operation::oCEq));
+    d1.push_front( new Operation(Operation::oCEq));
     d1.splice(d1.end(), d2);
   }
 }
 
 // !==
-void netlist::execute_CNeq(list<Operation>& d1, list<Operation>& d2) {
-  if(d1.front().get_type() == Operation::oNum && d2.front().get_type() == Operation::oNum) {
-    string tval1 = d1.front().get_num().get_txt_value();
-    string tval2 = d2.front().get_num().get_txt_value();
+void netlist::execute_CNeq(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
+  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
+    string tval1 = d1.front()->get_num().get_txt_value();
+    string tval2 = d2.front()->get_num().get_txt_value();
     if(tval1.size() > tval2.size())
       tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
     else if(tval1.size() < tval2.size())
@@ -776,23 +757,23 @@ void netlist::execute_CNeq(list<Operation>& d1, list<Operation>& d2) {
 
     for(unsigned int i=0; i<tval1.size(); i++) {
       if(tval1[i] != tval2[i]) {
-        d1.front().get_num() = Number("1");
+        d1.front()->get_num() = Number("1");
         return;
       } 
     }
     // equal
-    d1.front().get_num() = Number("0");
+    d1.front()->get_num() = Number("0");
   } else {
-    d1.push_front(Operation(Operation::oCNeq));
+    d1.push_front( new Operation(Operation::oCNeq));
     d1.splice(d1.end(), d2);
   }
 }
 
 // &
-void netlist::execute_And(list<Operation>& d1, list<Operation>& d2) {
-  if(d1.front().get_type() == Operation::oNum && d2.front().get_type() == Operation::oNum) {
-    string tval1 = d1.front().get_num().get_txt_value();
-    string tval2 = d2.front().get_num().get_txt_value();
+void netlist::execute_And(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
+  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
+    string tval1 = d1.front()->get_num().get_txt_value();
+    string tval2 = d2.front()->get_num().get_txt_value();
     if(tval1.size() > tval2.size())
       tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
     else if(tval1.size() < tval2.size())
@@ -809,16 +790,16 @@ void netlist::execute_And(list<Operation>& d1, list<Operation>& d2) {
       } 
     }
   } else {
-    d1.push_front(Operation(Operation::oAnd));
+    d1.push_front( new Operation(Operation::oAnd));
     d1.splice(d1.end(), d2);
   }
 }
 
 // ^
-void netlist::execute_Xor(list<Operation>& d1, list<Operation>& d2) {
-  if(d1.front().get_type() == Operation::oNum && d2.front().get_type() == Operation::oNum) {
-    string tval1 = d1.front().get_num().get_txt_value();
-    string tval2 = d2.front().get_num().get_txt_value();
+void netlist::execute_Xor(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
+  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
+    string tval1 = d1.front()->get_num().get_txt_value();
+    string tval2 = d2.front()->get_num().get_txt_value();
     if(tval1.size() > tval2.size())
       tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
     else if(tval1.size() < tval2.size())
@@ -843,16 +824,16 @@ void netlist::execute_Xor(list<Operation>& d1, list<Operation>& d2) {
         tval1[i] = 'x';        
     }
   } else {
-    d1.push_front(Operation(Operation::oXor));
+    d1.push_front( new Operation(Operation::oXor));
     d1.splice(d1.end(), d2);
   }
 }
 
 // ~^
-void netlist::execute_Nxor(list<Operation>& d1, list<Operation>& d2) {
-  if(d1.front().get_type() == Operation::oNum && d2.front().get_type() == Operation::oNum) {
-    string tval1 = d1.front().get_num().get_txt_value();
-    string tval2 = d2.front().get_num().get_txt_value();
+void netlist::execute_Nxor(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
+  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
+    string tval1 = d1.front()->get_num().get_txt_value();
+    string tval2 = d2.front()->get_num().get_txt_value();
     if(tval1.size() > tval2.size())
       tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
     else if(tval1.size() < tval2.size())
@@ -877,16 +858,16 @@ void netlist::execute_Nxor(list<Operation>& d1, list<Operation>& d2) {
         tval1[i] = 'x';        
     }
   } else {
-    d1.push_front(Operation(Operation::oNxor));
+    d1.push_front( new Operation(Operation::oNxor));
     d1.splice(d1.end(), d2);
   }
 }
 
 // |
-void netlist::execute_Or(list<Operation>& d1, list<Operation>& d2) {
-  if(d1.front().get_type() == Operation::oNum && d2.front().get_type() == Operation::oNum) {
-    string tval1 = d1.front().get_num().get_txt_value();
-    string tval2 = d2.front().get_num().get_txt_value();
+void netlist::execute_Or(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
+  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
+    string tval1 = d1.front()->get_num().get_txt_value();
+    string tval2 = d2.front()->get_num().get_txt_value();
     if(tval1.size() > tval2.size())
       tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
     else if(tval1.size() < tval2.size())
@@ -901,57 +882,57 @@ void netlist::execute_Or(list<Operation>& d1, list<Operation>& d2) {
         tval1[i] = 'x';        
     }
   } else {
-    d1.push_front(Operation(Operation::oOr));
+    d1.push_front( new Operation(Operation::oOr));
     d1.splice(d1.end(), d2);
   }
 }
 
 // &&
-void netlist::execute_LAnd(list<Operation>& d1, list<Operation>& d2) {
-  if(d1.front().get_type() == Operation::oNum && d2.front().get_type() == Operation::oNum) {
-    string tval1 = d1.front().get_num().get_txt_value();
-    string tval2 = d2.front().get_num().get_txt_value();
+void netlist::execute_LAnd(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
+  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
+    string tval1 = d1.front()->get_num().get_txt_value();
+    string tval2 = d2.front()->get_num().get_txt_value();
     
     if(string::npos != tval1.find('1') && string::npos != tval2.find('1') ) {
-      d1.front().get_num() = Number("1");
+      d1.front()->get_num() = Number("1");
     } else if(string::npos != tval1.find('x') || 
               string::npos != tval2.find('x') ||
               string::npos != tval1.find('z') || 
               string::npos != tval2.find('z') ) {
-      d1.front().get_num() = Number("x");
+      d1.front()->get_num() = Number("x");
     } else
-      d1.front().get_num() = Number("0");
+      d1.front()->get_num() = Number("0");
   } else {
-    d1.push_front(Operation(Operation::oLAnd));
+    d1.push_front( new Operation(Operation::oLAnd));
     d1.splice(d1.end(), d2);
   }
 }
 
 // ||
-void netlist::execute_LOr(list<Operation>& d1, list<Operation>& d2) {
-  if(d1.front().get_type() == Operation::oNum && d2.front().get_type() == Operation::oNum) {
-    string tval1 = d1.front().get_num().get_txt_value();
-    string tval2 = d2.front().get_num().get_txt_value();
+void netlist::execute_LOr(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
+  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
+    string tval1 = d1.front()->get_num().get_txt_value();
+    string tval2 = d2.front()->get_num().get_txt_value();
     
     if(string::npos != tval1.find('1') || string::npos != tval2.find('1') ) {
-      d1.front().get_num() = Number("1");
+      d1.front()->get_num() = Number("1");
     } else if(string::npos != tval1.find('x') || 
               string::npos != tval2.find('x') ||
               string::npos != tval1.find('z') || 
               string::npos != tval2.find('z') ) {
-      d1.front().get_num() = Number("x");
+      d1.front()->get_num() = Number("x");
     } else
-      d1.front().get_num() = Number("0");
+      d1.front()->get_num() = Number("0");
   } else {
-    d1.push_front(Operation(Operation::oLOr));
+    d1.push_front( new Operation(Operation::oLOr));
     d1.splice(d1.end(), d2);
   }
 }
 
 // ?:
-void netlist::execute_Question(list<Operation>& d1, list<Operation>& d2, list<Operation>&d3) {
-  if(d1.front().get_type() == Operation::oNum) {
-    string tval1 = d1.front().get_num().get_txt_value();
+void netlist::execute_Question(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2, list<shared_ptr<Operation> >&d3) {
+  if(d1.front()->get_type() == Operation::oNum) {
+    string tval1 = d1.front()->get_num().get_txt_value();
     
     if(string::npos != tval1.find('1')) {
       d1.clear();
@@ -961,7 +942,7 @@ void netlist::execute_Question(list<Operation>& d1, list<Operation>& d2, list<Op
       d1.splice(d1.end(), d3);
     }
   } else {
-    d1.push_front(Operation(Operation::oQuestion));
+    d1.push_front( new Operation(Operation::oQuestion));
     d1.splice(d1.end(), d2);
     d1.splice(d1.end(), d3);
   }

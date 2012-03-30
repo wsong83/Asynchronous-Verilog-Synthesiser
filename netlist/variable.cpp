@@ -32,15 +32,15 @@ using namespace netlist;
 
 
 void netlist::Variable::set_value(const Number& num) {
-  exp = Expression(num);
+  exp = new Expression(num);
   update();
 }
 
 void netlist::Variable::update() {
-  exp.reduce();
-  assert(exp.is_valuable());   // must be valuable right now
+  exp->reduce();
+  assert(exp->is_valuable());   // must be valuable right now
 
-  Number m = exp.get_value();
+  Number m = exp->get_value();
   map<unsigned int, VIdentifier *>::iterator it, end;
   for(it=fan[1].begin(), end=fan[1].end(); it != end; it++) {
     it->second->set_value(m);
@@ -52,28 +52,28 @@ ostream& netlist::Variable::streamout(ostream& os, unsigned int indent) const {
 
   os << string(indent, ' ');
 
-  vector<Range>::const_iterator it, end;
+  vector<shared_ptr<Range> >::const_iterator it, end;
 
-  vector<Range> rm = name.get_range();
+  vector<shared_ptr<Range> > rm = name.get_range();
   for(it=rm.begin(), end=rm.end(); it != end; it++) {
-    if(it->is_dim()) continue;
-    os << "[" << *it;
-    if(it->is_single())
-      os << ":" << *it;
+    if((*it)->is_dim()) continue;
+    os << "[" << **it;
+    if((*it)->is_single())
+      os << ":" << **it;
     os << "]";
   }
   os << " " << name.name;
   rm = name.get_range();
   for(it=rm.begin(), end=rm.end(); it != end; it++) {
-    if(!it->is_dim()) break;
-    os << "[" << *it;
-    if(it->is_single())
-      os << ":" << *it;
+    if(!(*it)->is_dim()) break;
+    os << "[" << **it;
+    if((*it)->is_single())
+      os << ":" << **it;
     os << "]";
   }
 
-  if(exp.size() > 0) {
-    os << " = " << exp;
+  if(exp->size() > 0) {
+    os << " = " << *exp;
   }
 
   return os;

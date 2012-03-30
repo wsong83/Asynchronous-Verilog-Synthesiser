@@ -31,7 +31,7 @@
 
 namespace netlist {
 
-  typedef pair<Expression, Expression> Range_Exp;
+  typedef pair<shared_ptr<Expression>, shared_ptr<Expression> > Range_Exp;
   typedef pair<mpz_class, mpz_class> Range_Const;
 
   class Range : public NetComp {
@@ -40,7 +40,7 @@ namespace netlist {
     Range() : type(TErr) { }
     Range(const mpz_class&);	/* select by a fix number */
     Range(const mpz_class&, const mpz_class&);	/* select by a fix number */
-    Range(const Expression&);	/* select by an expression  */
+    Range(const shared_ptr<Expression>&);	/* select by an expression  */
     Range(const Range_Exp&, bool dim = false);    /* declare or select by a range expression */
     Range(const Range_Exp&, int); /* select by a range expression using positive or negtive colon */
 
@@ -54,7 +54,7 @@ namespace netlist {
     
   private:
     mpz_class c;                /* constant */
-    Expression v;               /* variable */
+    shared_ptr<Expression> v;   /* variable */
     Range_Exp r;                /* range expression */
     Range_Const cr;             /* const range */
     bool dim;                   /* true when it is a dimension rather than range */

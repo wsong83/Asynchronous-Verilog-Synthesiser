@@ -35,7 +35,7 @@ namespace netlist {
   public:
     Variable() : NetComp(tVariable), uid({0,0}) {}
     Variable(const VIdentifier& id): NetComp(tVariable), name(id), uid({0,0}) {}
-    Variable(const VIdentifier& id, const Expression& expp)
+    Variable(const VIdentifier& id, const shared_ptr<Expression>& expp)
       : NetComp(tVariable), name(id), uid({0,0}), exp(expp) {}
 
     void set_value(const Number&); /* reset the value of this variable */
@@ -48,7 +48,7 @@ namespace netlist {
 
   private:
     unsigned int uid[2];
-    Expression exp;
+    shared_ptr<Expression> exp;
 
   };
 

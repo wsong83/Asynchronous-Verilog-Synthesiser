@@ -75,8 +75,8 @@ namespace netlist {
       oQuestion = oLOr + 10       /* ? : */
     };
 
+    // constructors
     Operation();
-    //Operation(const Operation&);
     Operation(operation_t);
     Operation(const Number&);
     Operation(const VIdentifier&);
@@ -84,8 +84,7 @@ namespace netlist {
     Operation(const shared_ptr<LConcatenation>&);
 
     // helpers
-    //Operation& operator= (const Operation&);
-    Operation* deep_copy() const;
+    Operation* deep_copy() const; /* especially useful when decompose concatenations */
     bool is_valuable() const { return valuable; }
     operation_t get_type() const { return otype; }
     Number& get_num();

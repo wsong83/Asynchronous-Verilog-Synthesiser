@@ -35,34 +35,34 @@ namespace netlist {
     void preduce(T* pp) {
     if(pp->type != T::type_t::CEXP) return;
 
-    pp->exp.reduce();
+    pp->exp->reduce();
     
-    if(pp->exp.size() > 1) return; /* unable to reduce it another type */
+    if(pp->exp->size() > 1) return; /* unable to reduce it to another type */
 
-    if(pp->exp.front().get_type() == Operation::oVar) {
+    if(pp->exp->front()->get_type() == Operation::oVar) {
       pp->type = T::type_t::CVAR;
-      pp->var = pp->exp.front().get_var();
-      pp->exp = Expression();
+      pp->var = pp->exp->front()->get_var();
+      pp->exp.reset();
       return;
     }
 
-    if(pp->exp.front().get_type() == Operation::oNum) {
+    if(pp->exp->front()->get_type() == Operation::oNum) {
       pp->type = T::type_t::CNUM;
-      pp->num = pp->exp.front().get_num();
-      pp->exp = Expression();
+      pp->num = pp->exp->front()->get_num();
+      pp->exp.reset();
       return;
     }
   }
 
   class PortConn {
   public:
-    PortConn(const Expression& exp) /* ordered connection */
+    PortConn(const shared_ptr<Expression>& exp) /* ordered connection */
     : named(false), dir(0), exp(exp), type(CEXP) { reduce(); }
     
     PortConn()                  /* oredered open output connection */
       : named(false), dir(1), type(COPEN) {}
     
-    PortConn(const PoIdentifier pn, const Expression& exp) /* named connection */
+    PortConn(const PoIdentifier pn, const shared_ptr<Expression>& exp) /* named connection */
       : pname(pn), named(true), dir(0), exp(exp), type(CEXP) { reduce(); }
 
     PortConn(const PoIdentifier pn)
@@ -82,7 +82,7 @@ namespace netlist {
     ostream& streamout (ostream& os, unsigned int indent) const {
       if(named) os << "." << pname.name << "(";
       switch(type) {
-      case CEXP: os << exp; break;
+      case CEXP: os << *exp; break;
       case CVAR: os << var; break;
       case CNUM: os << num; break;
       case COPEN: os << " "; break;
@@ -97,7 +97,7 @@ namespace netlist {
     PoIdentifier pname;         /* the port name in the module definition, or parameter name */
     bool named;                 /* whether this port connection is already named */
     int dir;                    /* direction, -1 in, 0 inout, 1 out */
-    Expression exp;             /* used when the connection is in general expression */
+    shared_ptr<Expression> exp; /* used when the connection is in general expression */
     VIdentifier var;            /* reduced to a single variable, one of the normal forms */
     Number num;                 /* reduced to a const number, one of the normal forms */
     enum type_t {CEXP, CVAR, CNUM, COPEN} type; /* connection type */
@@ -110,10 +110,10 @@ namespace netlist {
     ParaConn()
       : named(false), type(COPEN) { }
 
-    ParaConn(const Expression& exp) /* ordered connection */
+    ParaConn(const shared_ptr<Expression>& exp) /* ordered connection */
       : named(false), exp(exp), type(CEXP) { reduce(); }
 
-    ParaConn(const VIdentifier& pn, const Expression& exp) /* named connection */
+    ParaConn(const VIdentifier& pn, const shared_ptr<Expression>& exp) /* named connection */
       : pname(pn), named(true), exp(exp), type(CEXP) { reduce(); }
 
     ParaConn(const VIdentifier& pn) /* named connection */
@@ -125,7 +125,7 @@ namespace netlist {
     ostream& streamout (ostream& os, unsigned int indent) const {
       if(named) os << "." << pname.name << "(";
       switch(type) {
-      case CEXP: os << exp; break;
+      case CEXP: os << *exp; break;
       case CVAR: os << var; break;
       case CNUM: os << num; break;
       case COPEN: os << " "; break;
@@ -139,7 +139,7 @@ namespace netlist {
     // date
     VIdentifier pname;          /* the port name in the module definition, or parameter name */
     bool named;                 /* whether this port connection is already named */
-    Expression exp;             /* used when the connection is in general expression */
+    shared_ptr<Expression> exp; /* used when the connection is in general expression */
     VIdentifier var;            /* reduced to a single variable, one of the normal forms */
     Number num;                 /* reduced to a const number, one of the normal forms */
     enum type_t {CEXP, CVAR, CNUM, COPEN} type; /* connection type */

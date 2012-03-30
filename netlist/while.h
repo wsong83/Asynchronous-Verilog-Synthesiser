@@ -34,12 +34,12 @@ namespace netlist {
   class WhileState : public NetComp {
   public:
     // constructors
-    WhileState(Expression& exp, SeqBlock& body) {}
+    WhileState(shared_ptr<Expression>& exp, shared_ptr<SeqBlock>& body) {}
 
 
     //data
-    Expression exp;
-    list<NetComp> statements;
+    shared_ptr<Expression> exp;
+    list<shared_ptr<NetComp> > statements;
 
   };
 

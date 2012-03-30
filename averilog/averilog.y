@@ -314,8 +314,8 @@ module_declaration
       list<PoIdentifier>::iterator it, end;
       for(it = $4.begin(), end = $4.end(); it != end; it++) {
         PoIdentifier& pid = *it;
-        if(cm->find_port(pid).use_count() == 0)
-          cm->list_port.push_back(shared_ptr<Port>(new Port(pid)));
+        if(cm->db_port.find(pid).use_count() == 0)
+          cm->db_port.insert(pid, shared_ptr<Port>(new Port(pid)));
         else
           av_env.error(yylloc, "SYN-PORT-1", pid.name, cm->name.name);
       }
@@ -362,7 +362,7 @@ input_declaration
       // insert ports
       list<PoIdentifier>::iterator it, end;
       for(it = $2.begin(), end = $2.end(); it != end; it++) {
-        shared_ptr<Port> cp = cm->find_port(*it);
+        shared_ptr<Port> cp = cm->db_port.find(*it);
         if(0 != cp.use_count()) cp->set_in();
         else { av_env.error(yylloc, "SYN-PORT-0", it->name, cm->name.name); }
       }
@@ -374,10 +374,10 @@ input_declaration
       // insert ports
       list<PoIdentifier>::iterator it, end;
       for(it = $7.begin(), end = $7.end(); it != end; it++) {
-        shared_ptr<Port> cp = cm->find_port(*it);
+        shared_ptr<Port> cp = cm->db_port.find(*it);
         if(0 != cp.use_count()) { 
           cp->set_in();
-          Range m(pair<Expression, Expression>($3, $5));
+          Range m(pair<shared_ptr<Expression>, shared_ptr<Expression> >($3, $5));
           cp->name.get_range_ref().push_back(m);
         } else {  av_env.error(yylloc, "SYN-PORT-0", it->name, cm->name.name); }
       }
@@ -392,7 +392,7 @@ output_declaration
       // insert ports
       list<PoIdentifier>::iterator it, end;
       for(it = $2.begin(), end = $2.end(); it != end; it++) {
-        shared_ptr<Port> cp = cm->find_port(*it);
+        shared_ptr<Port> cp = cm->db_port.find(*it);
         if(0 != cp.use_count()) cp->set_out();
         else {  av_env.error(yylloc, "SYN-PORT-0", it->name, cm->name.name); }
       }
@@ -404,11 +404,11 @@ output_declaration
       // insert ports
       list<PoIdentifier>::iterator it, end;
       for(it = $7.begin(), end = $7.end(); it != end; it++) {
-        shared_ptr<Port> cp = cm->find_port(*it);
+        shared_ptr<Port> cp = cm->db_port.find(*it);
         if(0 != cp.use_count()) { 
           cp->set_out();
           vector<Range> rm;
-          rm.push_back(Range(pair<Expression, Expression>($3, $5)));
+          rm.push_back(Range(pair<shared_ptr<Expression>, shared_ptr<Expression> >($3, $5)));
           cp->name.set_range(rm);
         } else {  av_env.error(yylloc, "SYN-PORT-0", it->name, cm->name.name); }
       }
@@ -438,9 +438,9 @@ variable_declaration
             // change range selector to dimension delcaration
             cw->name.get_range_ref() = cw->name.get_select();
             cw->name.get_select_ref().clear();
-            vector<Range>::iterator it, end;
+            vector<shared_ptr<Range> >::iterator it, end;
             for(it = cw->name.get_range_ref().begin(), end = cw->name.get_range_ref().end(); it != end; it++ )
-              it->set_dim();
+              (*it)->set_dim();
 
             // insert it in the database
             if(!cm->db_wire.insert(cw->name, cw)) {
@@ -473,11 +473,11 @@ variable_declaration
             // change range selector to dimension delcaration
             wn.get_range_ref() = wn.get_select();
             wn.get_select_ref().clear();
-            vector<Range>::iterator it, end;
+            vector<shared_ptr<Range> >::iterator it, end;
             for(it = wn.get_range_ref().begin(), end = wn.get_range_ref().end(); it != end; it++ )
-              it->set_dim();
+              (*it)->set_dim();
 
-            Range rm(pair<Expression, Expression>($3, $5));
+            Range rm(pair<shared_ptr<Expression>, shared_ptr<Expression> >($3, $5));
             wn.get_range_ref().push_back(rm);
             shared_ptr<Variable> cw(new Variable(wn));
 
@@ -513,9 +513,9 @@ variable_declaration
             // change range selector to dimension delcaration
             cr->name.get_range_ref() = cr->name.get_select();
             cr->name.get_select_ref().clear();
-            vector<Range>::iterator it, end;
+            vector<shared_ptr<Range> >::iterator it, end;
             for(it = cr->name.get_range_ref().begin(), end = cr->name.get_range_ref().end(); it != end; it++ )
-              it->set_dim();
+              (*it)->set_dim();
             
             // insert it in the database
             if(!cm->db_reg.insert(cr->name, cr)) {
@@ -548,11 +548,11 @@ variable_declaration
             // change range selector to dimension delcaration
             rn.get_range_ref() = rn.get_select();
             rn.get_select_ref().clear();
-            vector<Range>::iterator it, end;
+            vector<shared_ptr<Range> >::iterator it, end;
             for(it = rn.get_range_ref().begin(), end = rn.get_range_ref().end(); it != end; it++ )
-              it->set_dim();
+              (*it)->set_dim();
 
-            Range rm(pair<Expression, Expression>($3, $5));
+            Range rm(pair<shared_ptr<Expression>, shared_ptr<Expression> >($3, $5));
             rn.get_range_ref().push_back(rm);
             shared_ptr<Variable> cr(new Variable(rn));
 
@@ -586,9 +586,9 @@ variable_declaration
             // change range selector to dimension delcaration
             cr->name.get_range_ref() = cr->name.get_select();
             cr->name.get_select_ref().clear();
-            vector<Range>::iterator it, end;
+            vector<shared_ptr<Range> >::iterator it, end;
             for(it = cr->name.get_range_ref().begin(), end = cr->name.get_range_ref().end(); it != end; it++ )
-              it->set_dim();
+              (*it)->set_dim();
             
             // insert it in the database
             if(!cm->db_genvar.insert(cr->name, cr)) {
@@ -621,9 +621,9 @@ variable_declaration
             // change range selector to dimension delcaration
             cr->name.get_range_ref() = cr->name.get_select();
             cr->name.get_select_ref().clear();
-            vector<Range>::iterator it, end;
+            vector<shared_ptr<Range> >::iterator it, end;
             for(it = cr->name.get_range_ref().begin(), end = cr->name.get_range_ref().end(); it != end; it++ )
-              it->set_dim();
+              (*it)->set_dim();
             // an integer is a 32-bit reg
             cr->name.get_range_ref().push_back(Range(pair<Expression, Expression>(Expression(Number(31)), Expression(Number(0)))));
             
@@ -652,8 +652,8 @@ list_of_param_assignments
     ;
 
 list_of_port_identifiers 
-    : port_identifier                          { $$.clear(); $$.push_back($1); }
-    | list_of_port_identifiers ',' port_identifier { $$ = $1; $$.push_back($3);  }
+    : port_identifier                              { $$.push_back($1); }
+    | list_of_port_identifiers ',' port_identifier { $$.push_back($3); }
     ;
 
 list_of_variable_identifiers 

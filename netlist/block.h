@@ -91,7 +91,7 @@ namespace netlist {
     bool sensitive;                                         /* whether this is a sensitive block, top level block */
     list<pair<bool, shared_ptr<Expression> > > slist_pulse; /* pulse sensitive list */
     list<shared_ptr<Expression> > slist_level;              /* level sensitive list */
-    list<shared_ptr<Variable> > var;                        /* local variables */
+    DataBase<VIdentifier, Variable> db_var;                 /* local variables */
     
 
   };
