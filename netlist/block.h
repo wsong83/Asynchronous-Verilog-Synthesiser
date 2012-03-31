@@ -78,7 +78,7 @@ namespace netlist {
     void clear();               /* clear all statements */
     bool add_assignment(const shared_ptr<Assign>&); /* add a blocking or non-blocking assignment into the block */
     bool add_case(const shared_ptr<Expression>&, list<shared_ptr<CaseItem> >&, const shared_ptr<CaseItem>&); /* add a general case statement */
-    bool add_case(const shared_ptr<Expression>&, list<shared_pttr<CaseItem> >&); /* add a case statement without default */
+    bool add_case(const shared_ptr<Expression>&, list<shared_ptr<CaseItem> >&); /* add a case statement without default */
     bool add_case(const shared_ptr<Expression>&, const shared_ptr<CaseItem>&); /* add a case statement only with a default case, odd! */
     bool add_if(const shared_ptr<Expression>&, const shared_ptr<SeqBlock>&, const shared_ptr<SeqBlock>&); /* add an if statement with else case */
     bool add_while(const shared_ptr<Expression>&, const shared_ptr<SeqBlock>&); /* add a while statement */

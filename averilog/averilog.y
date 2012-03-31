@@ -924,7 +924,7 @@ named_parameter_assignment
     ;
 
 module_instance 
-    : instance_identifier '(' ')' { $$.reset(new Instance($1, list<shred_ptr<PortConn> >())); }
+    : instance_identifier '(' ')' { $$.reset(new Instance($1, list<shared_ptr<PortConn> >())); }
     | instance_identifier '[' expression ':' expression ']' '(' ')'
     | instance_identifier '(' list_of_port_connections ')'   { $$.reset(new Instance($1, $3)); }
     | instance_identifier '[' expression ':' expression ']' '(' list_of_port_connections ')'
@@ -1097,28 +1097,26 @@ statements
     | statements statement   { $$->add_statements($2); }
     ;
 
-///////////////////////////////////////////////////////////////////////////////////
-
 statement
-    : blocking_assignment ';'    { $$.add_assignment(*$1); }
-    | nonblocking_assignment ';' { $$.add_assignment(*$1); }
+    : blocking_assignment ';'    { $$->add_assignment($1); }
+    | nonblocking_assignment ';' { $$->add_assignment($1); }
     | "case" '(' expression ')' "default" statement_or_null "endcase" 
-    { CaseItem m($6); $$.add_case($3, m); }
-    | "case" '(' expression ')' case_items "endcase" { $$.add_case($3, $5); }
+    { shared_ptr<CaseItem> m(new CaseItem($6)); $$->add_case($3, m); }
+    | "case" '(' expression ')' case_items "endcase" { $$->add_case($3, $5); }
     | "case" '(' expression ')' case_items "default" statement_or_null "endcase" 
-    { CaseItem m($7); $$.add_case($3, $5, m); }
+    { shared_ptr<CaseItem> m(new CaseItem($7)); $$->add_case($3, $5, m); }
     | "if" '(' expression ')' statement_or_null 
-      //{ $$.add_if($3, $5, SeqBlock()); }
+      //{ $$->add_if($3, $5, SeqBlock()); }
     | "if" '(' expression ')' statement_or_null "else" statement_or_null  
-      //{ $$.add_if($3, $5, $7); }
+      //{ $$->add_if($3, $5, $7); }
     | "while" '(' expression ')' statement 
-      //{ $$.add_while($3, $5); }
+      //{ $$->add_while($3, $5); }
     | "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' statement  
-      //{ $$.add_for($3, $5, $7, $9); }
+      //{ $$->add_for($3, $5, $7, $9); }
     | '@' '(' event_expressions ')' statement_or_null 
-    { $$.add_seq_block($3, $5); /* this is not right */}
+    { $$->add_seq_block($3, $5); /* this is not right */}
     | "begin" statements "end" 
-    { $$.add_statements($2); }
+    { $$->add_statements($2); }
     | "begin" 
     {
       Lib.push(shared_ptr<NetComp>(new SeqBlock()));
@@ -1127,10 +1125,10 @@ statement
     { 
       shared_ptr<SeqBlock> bp = static_pointer_cast<SeqBlock>(Lib.get_current_comp());
       bp->add_statements($4);
-      $$ = *bp;
+      $$ = bp;
       Lib.pop();
     }
-    | "begin" ':' block_identifier statements "end" { $$.add_statements($4); $$.set_name($3); }
+    | "begin" ':' block_identifier statements "end" { $$->add_statements($4); $$->set_name($3); }
     | "begin" ':' block_identifier 
     {
       Lib.push(shared_ptr<NetComp>(new SeqBlock($3)));
@@ -1139,7 +1137,7 @@ statement
     { 
       shared_ptr<SeqBlock> bp = static_pointer_cast<SeqBlock>(Lib.get_current_comp());
       bp->add_statements($6);
-      $$ = *bp;
+      $$ = bp;
       Lib.pop();
     }
     ;
@@ -1161,9 +1159,9 @@ event_expressions
     ;
 
 event_expression
-    : expression              { $$ = pair<int, Expression>(0, $1); }
-    | "posedge" expression    { $$ = pair<int, Expression>(1, $2); }
-    | "negedge" expression    { $$ = pair<int, Expression>(-1, $2); }
+    : expression              { $$ = pair<int, shared_ptr<Expression> >(0, $1); }
+    | "posedge" expression    { $$ = pair<int, shared_ptr<Expression> >(1, $2); }
+    | "negedge" expression    { $$ = pair<int, shared_ptr<Expression> >(-1, $2); }
     ;
 
 //procedural_timing_control_statement
@@ -1189,8 +1187,8 @@ case_items
     ;
 
 case_item 
-    : expressions ':' statement_or_null    { $$ = CaseItem($1, $3); }
-    | "default" ':' statement_or_null      { $$ = CaseItem($3); }
+    : expressions ':' statement_or_null    { $$.reset(new CaseItem($1, $3)); }
+    | "default" ':' statement_or_null      { $$.reset(new CaseItem($3)); }
     ;
 
 //A.6.8 Looping statements
@@ -1209,19 +1207,19 @@ expressions
 concatenation
     : '{' expressions '}'
     {
-      list<Expression>::iterator it, end;
-      $$ = Concatenation();
+      list<shared_ptr<Expression> >::iterator it, end;
+      $$.reset( new Concatenation());
       for(it = $2.begin(), end = $2.end(); it != end; it++) {
         ConElem m(*it);
-        $$ + m;
+        *$$ + m;
         //$$ + ConElem(*it);
       }
     }
     | '{' expression concatenation '}'
     {
-      $$ = Concatenation(); 
-      ConElem m($2, $3.data);
-      $$ + m;
+      $$.reset( new Concatenation()); 
+      ConElem m($2, $3->data);
+      *$$ + m;
     }
     ;
 
@@ -1233,99 +1231,102 @@ function_call
 //A.8.3 Expressions
 expression
     : primary                       {                                            }
-    | '+' primary %prec oUNARY      { $$ = $2; $$.append(Operation::oUPos);      }
-    | '-' primary %prec oUNARY      { $$ = $2; $$.append(Operation::oUNeg);      }
-    | '!' primary %prec oUNARY      { $$ = $2; $$.append(Operation::oULRev);     }
-    | '~' primary %prec oUNARY      { $$ = $2; $$.append(Operation::oURev);      }
-    | '&' primary %prec oUNARY      { $$ = $2; $$.append(Operation::oUAnd);      }
-    | "~&" primary %prec oUNARY     { $$ = $2; $$.append(Operation::oUNand);     }
-    | '|' primary %prec oUNARY      { $$ = $2; $$.append(Operation::oUOr);       }
-    | "~|" primary %prec oUNARY     { $$ = $2; $$.append(Operation::oUNor);      }
-    | '^' primary %prec oUNARY      { $$ = $2; $$.append(Operation::oXor);       }
-    | "~^" primary %prec oUNARY     { $$ = $2; $$.append(Operation::oNxor);      }
-    | expression '+' expression     { $$.append(Operation::oAdd, $3);   }
-    | expression '-' expression     { $$.append(Operation::oMinus, $3); }
-    | expression '*' expression     { $$.append(Operation::oTime, $3);  }
-    | expression '/' expression     { $$.append(Operation::oDiv, $3);   }
-    | expression '%' expression     { $$.append(Operation::oMode, $3);  }
-    | expression "==" expression    { $$.append(Operation::oEq, $3);    }
-    | expression "!=" expression    { $$.append(Operation::oNeq, $3);   }
-    | expression "===" expression   { $$.append(Operation::oCEq, $3);   }
-    | expression "!==" expression   { $$.append(Operation::oCNeq, $3);  }
-    | expression "&&" expression    { $$.append(Operation::oLAnd, $3);  }
-    | expression "||" expression    { $$.append(Operation::oLOr, $3);   }
-    | expression "**" expression    { $$.append(Operation::oPower, $3); }
-    | expression '<' expression     { $$.append(Operation::oLess, $3);  }
-    | expression "<=" expression    { $$.append(Operation::oLe, $3);    }
-    | expression '>' expression     { $$.append(Operation::oGreat, $3); }
-    | expression ">=" expression    { $$.append(Operation::oGe, $3);    }
-    | expression '&' expression     { $$.append(Operation::oAnd, $3);   }
-    | expression '|' expression     { $$.append(Operation::oOr, $3);    }
-    | expression '^' expression     { $$.append(Operation::oXor, $3);   }
-    | expression "~^" expression    { $$.append(Operation::oNxor, $3);  }
-    | expression ">>" expression    { $$.append(Operation::oRS, $3);    }
-    | expression "<<" expression    { $$.append(Operation::oLS, $3);    }
-    | expression ">>>" expression   { $$.append(Operation::oLRS, $3);   }
-    | expression '?' expression ':' expression { $$.append(Operation::oQuestion, $3, $5); }
+    | '+' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oUPos);      }
+    | '-' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oUNeg);      }
+    | '!' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oULRev);     }
+    | '~' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oURev);      }
+    | '&' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oUAnd);      }
+    | "~&" primary %prec oUNARY     { $$ = $2; $$->append(Operation::oUNand);     }
+    | '|' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oUOr);       }
+    | "~|" primary %prec oUNARY     { $$ = $2; $$->append(Operation::oUNor);      }
+    | '^' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oXor);       }
+    | "~^" primary %prec oUNARY     { $$ = $2; $$->append(Operation::oNxor);      }
+    | expression '+' expression     { $$->append(Operation::oAdd, *$3);   }
+    | expression '-' expression     { $$->append(Operation::oMinus, *$3); }
+    | expression '*' expression     { $$->append(Operation::oTime, *$3);  }
+    | expression '/' expression     { $$->append(Operation::oDiv, *$3);   }
+    | expression '%' expression     { $$->append(Operation::oMode, *$3);  }
+    | expression "==" expression    { $$->append(Operation::oEq, *$3);    }
+    | expression "!=" expression    { $$->append(Operation::oNeq, *$3);   }
+    | expression "===" expression   { $$->append(Operation::oCEq, *$3);   }
+    | expression "!==" expression   { $$->append(Operation::oCNeq, *$3);  }
+    | expression "&&" expression    { $$->append(Operation::oLAnd, *$3);  }
+    | expression "||" expression    { $$->append(Operation::oLOr, *$3);   }
+    | expression "**" expression    { $$->append(Operation::oPower, *$3); }
+    | expression '<' expression     { $$->append(Operation::oLess, *$3);  }
+    | expression "<=" expression    { $$->append(Operation::oLe, *$3);    }
+    | expression '>' expression     { $$->append(Operation::oGreat, *$3); }
+    | expression ">=" expression    { $$->append(Operation::oGe, *$3);    }
+    | expression '&' expression     { $$->append(Operation::oAnd, *$3);   }
+    | expression '|' expression     { $$->append(Operation::oOr, *$3);    }
+    | expression '^' expression     { $$->append(Operation::oXor, *$3);   }
+    | expression "~^" expression    { $$->append(Operation::oNxor, *$3);  }
+    | expression ">>" expression    { $$->append(Operation::oRS, *$3);    }
+    | expression "<<" expression    { $$->append(Operation::oLS, *$3);    }
+    | expression ">>>" expression   { $$->append(Operation::oLRS, *$3);   }
+    | expression '?' expression ':' expression { $$->append(Operation::oQuestion, *$3, *$5); }
     ;
 
 range_expression
-    : expression                    { $$ = Range($1); }       
-    | expression ':' expression     { $$ = Range(pair<Expression,Expression>($1,$3)); }
-    | expression "+:" expression    { $$ = Range(pair<Expression,Expression>($1,$3), 1); }
-    | expression "-:" expression    { $$ = Range(pair<Expression,Expression>($1,$3), -1); }
+    : expression                    { $$.reset( new Range($1)); }       
+    | expression ':' expression     
+    { $$.reset( new Range(pair<shared_ptr<Expression>,shared_ptr<Expression> >($1,$3))); }
+    | expression "+:" expression    
+    { $$.reset( new Range(pair<shared_ptr<Expression>,shared_ptr<Expression> >($1,$3), 1)); }
+    | expression "-:" expression    
+    { $$.reset( new Range(pair<shared_ptr<Expression>,shared_ptr<Expression> >($1,$3), -1)); }
     ;
 
 //A.8.4 Primaries
 primary
-    : number              { $$ = $1; }            
+    : number              { $$.reset( new Expression($1)); }            
     | variable_identifier 
     {
       // search this variable in current components until reach a module level
-      list<shared_ptr<NetComp> >::iterator it = Lib.get_current_it();
-      bool reach_a_module = false;
-      bool found = false;
-      while(Lib.it_valid(it)) {
-        shared_ptr<NetComp> ccp(*it); /* point for the current component */
-        switch(ccp->get_type()) {
-        case NetComp::tModule: {
-          reach_a_module = true;
-          Module& cm = *(static_pointer_cast<Module>(ccp));
-          shared_ptr<Variable> vp = cm.db_wire.find($1);
-          if(0 != vp.use_count()) {
-            found = true;
-            $1.set_father(vp);
-            break;
-          }
-          vp = cm.db_reg.find($1);
-          if(0 != vp.use_count()) {
-            found = true;
-            $1.set_father(vp);
-            break;
-          }
-          vp = cm.db_param.find($1);
-          if(0 != vp.use_count()) {
-            found = true;
-            $1.set_father(vp);
-            break;
-          }
-          break;
-        }
-        default:
-          // should not run to here
-          assert(0 == "component type");
-        }
-        if(reach_a_module || found) break;
-        else it++;
-      }
-      if(found)
-        $$ = $1;
-      else
-        av_env.error(yylloc, "SYN-VAR-3", $1.name);
+      //list<shared_ptr<NetComp> >::iterator it = Lib.get_current_it();
+      //bool reach_a_module = false;
+      //bool found = false;
+      //while(Lib.it_valid(it)) {
+      //  shared_ptr<NetComp> ccp(*it); /* point for the current component */
+      //  switch(ccp->get_type()) {
+      //  case NetComp::tModule: {
+      //    reach_a_module = true;
+      //    Module& cm = *(static_pointer_cast<Module>(ccp));
+      //    shared_ptr<Variable> vp = cm.db_wire.find($1);
+      //    if(0 != vp.use_count()) {
+      //      found = true;
+      //      $1.set_father(vp);
+      //      break;
+      //    }
+      //    vp = cm.db_reg.find($1);
+      //    if(0 != vp.use_count()) {
+      //      found = true;
+      //      $1.set_father(vp);
+      //      break;
+      //    }
+      //    vp = cm.db_param.find($1);
+      //    if(0 != vp.use_count()) {
+      //      found = true;
+      //      $1.set_father(vp);
+      //      break;
+      //    }
+      //    break;
+      //  }
+      //  default:
+      //    // should not run to here
+      //    assert(0 == "component type");
+      //  }
+      //  if(reach_a_module || found) break;
+      //  else it++;
+      //}
+      //if(found)
+      $$.reset( new Expression($1));
+      //else
+      //av_env.error(yylloc, "SYN-VAR-3", $1.name);
     }
-    | concatenation      { $$ = $1; }
+    | concatenation      { $$.reset( new Expression($1)); }
     | function_call
-    | '(' expression ')'  { $$ = $2; }
+    | '(' expression ')'  { $$.reset( new Expression($2)); }
     ;
 
 //A.8.5 Expression left-side values
@@ -1333,51 +1334,51 @@ variable_lvalue
     : variable_identifier 
     {
       // search this variable in current components until reach a module level
-      list<shared_ptr<NetComp> >::iterator it = Lib.get_current_it();
-      bool reach_a_module = false;
-      bool found = false;
-      while(Lib.it_valid(it)) {
-        shared_ptr<NetComp> ccp(*it); /* point for the current component */
-        switch(ccp->get_type()) {
-        case NetComp::tModule: {
-          reach_a_module = true;
-          Module& cm = *(static_pointer_cast<Module>(ccp));
-          shared_ptr<Variable> vp = cm.db_wire.find($1);
-          if(0 != vp.use_count()) {
-            found = true;
-            $1.set_father(vp);
-            break;
-          }
-          vp = cm.db_reg.find($1);
-          if(0 != vp.use_count()) {
-            found = true;
-            $1.set_father(vp);
-            break;
-          }
-          vp = cm.db_param.find($1);
-          if(0 != vp.use_count()) {
-            found = true;
-            $1.set_father(vp);
-            break;
-          }
-          break;
-        }
-        default:
-          // should not run to here
-          assert(0 == "component type");
-        }
-        if(reach_a_module || found) break;
-        else it++;
-      }
-      if(found)
-        $$ = $1;
-      else
-        av_env.error(yylloc, "SYN-VAR-3", $1.name);
+      //list<shared_ptr<NetComp> >::iterator it = Lib.get_current_it();
+      //bool reach_a_module = false;
+      //bool found = false;
+      //while(Lib.it_valid(it)) {
+      //  shared_ptr<NetComp> ccp(*it); /* point for the current component */
+      //  switch(ccp->get_type()) {
+      //  case NetComp::tModule: {
+      //    reach_a_module = true;
+      //    Module& cm = *(static_pointer_cast<Module>(ccp));
+      //    shared_ptr<Variable> vp = cm.db_wire.find($1);
+      //    if(0 != vp.use_count()) {
+      //      found = true;
+      //      $1.set_father(vp);
+      //      break;
+      //    }
+      //    vp = cm.db_reg.find($1);
+      //    if(0 != vp.use_count()) {
+      //      found = true;
+      //      $1.set_father(vp);
+      //      break;
+      //    }
+      //    vp = cm.db_param.find($1);
+      //    if(0 != vp.use_count()) {
+      //      found = true;
+      //      $1.set_father(vp);
+      //      break;
+      //    }
+      //    break;
+      //  }
+      //  default:
+      //    // should not run to here
+      //    assert(0 == "component type");
+      //  }
+      //  if(reach_a_module || found) break;
+      //  else it++;
+      //}
+      //if(found)
+      $$.reset( new LConcatenation($1));
+      //else
+      //av_env.error(yylloc, "SYN-VAR-3", $1.name);
     }
     | concatenation       
     { 
-      $$ = $1;
-      if(!$$.is_valid()) 
+      $$.reset( new LConcatenation($1));
+      if(!$$->is_valid()) 
         av_env.error(yylloc, "SYN-ASSIGN-0");
     }
     ;

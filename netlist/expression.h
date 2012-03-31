@@ -47,7 +47,7 @@ namespace netlist {
     // return the size of equation
     int size() const { return eqn.size(); }
     bool empty() const { return eqn.empty(); }
-    Operation& front() { return eqn.front(); }
+    shared_ptr<Operation>& front() { return eqn.front(); }
     void db_register(int iod = 1);
     void db_expunge();
     
