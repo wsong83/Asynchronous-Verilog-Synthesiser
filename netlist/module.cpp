@@ -99,3 +99,24 @@ ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
   os << endl << string(indent, ' ') << "endmodule" << endl << endl;
   return os;
 }
+
+BIdentifier& netlist::Module::new_BId() {
+  while(db_block.find(unnamed_block).use_count() != 0)
+    ++unnamed_block;
+  return unnamed_block;
+}
+
+IIdentifier& netlist::Module::new_IId() {
+  while(db_instance.find(unnamed_instance).use_count() != 0)
+    ++unnamed_instance;
+  return unnamed_instance;
+}
+
+VIdentifier& netlist::Module::new_VId() {
+  while(db_wire.find(unnamed_var).use_count() +
+        db_reg.find(unnamed_var).use_count() +
+        db_param.find(unnamed_var).use_count() +
+        db_genvar.find(unnamed_var).use_count() != 0)
+    ++unnamed_var;
+  return unnamed_var;
+}

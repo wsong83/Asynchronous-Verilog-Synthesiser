@@ -657,10 +657,10 @@ list_of_port_identifiers
     ;
 
 list_of_variable_identifiers 
-    : variable_identifier                      { $$.clear(); $$.push_back(pair<VIdentifier,Expression>($1, Expression())); }
-    | variable_identifier '=' expression       { $$.clear(); $$.push_back(pair<VIdentifier,Expression>($1, $3)); } 
-    | list_of_variable_identifiers ',' variable_identifier { $$.push_back(pair<VIdentifier,Expression>($3, Expression())); }
-    | list_of_variable_identifiers ',' variable_identifier '=' expression { $$.push_back(pair<VIdentifier,Expression>($3, $5)); }
+    : variable_identifier                      { $$.push_back(pair<VIdentifier,shared_ptr<Expression> >($1, new Expression())); }
+    | variable_identifier '=' expression       { $$.push_back(pair<VIdentifier,shared_ptr<Expression> >($1, $3)); } 
+    | list_of_variable_identifiers ',' variable_identifier { $$.push_back(pair<VIdentifier,shared_ptr<Expression> >($3, new Expression())); }
+    | list_of_variable_identifiers ',' variable_identifier '=' expression { $$.push_back(pair<VIdentifier,shared_ptr<Expression> >($3, $5)); }
     ;
 
 // A.2.4 Declaration assignments
@@ -762,7 +762,7 @@ gate_instantiation
     ;
 
 n_input_gate_instances
-    : n_input_gate_instance                              { $$.clear(); $$.push_back($1); }
+    : n_input_gate_instance                              { $$.push_back($1); }
     | n_input_gate_instances ',' n_input_gate_instance   { $$.push_back($3); }
     ;
 
@@ -774,14 +774,10 @@ n_input_gate_instance
       switch(father->get_type()) {
       case NetComp::tModule: { 
         cm = static_pointer_cast<Module>(father);
-        // get a unique name
-        while((cm->db_instance.find(cm->unnamed_instance)).use_count() != 0)
-          ++(cm->unnamed_instance);
         // push the lvalue into port list
-        $4.push_front(PortConn(Expression($2)));
+        $4.push_front(PortConn(new Expression($2)));
         // assign a name for the instance
-        $$.reset( new Instance(cm->unnamed_instance, $4,  Instance::prim_in_inst));
-        ++(cm->unnamed_instance);
+        $$.reset( new Instance(cm->new_IId, $4,  Instance::prim_in_inst));
         break;
       }
       default: ;/* doing nothing right now */
@@ -789,7 +785,7 @@ n_input_gate_instance
     }
     | instance_identifier '(' variable_lvalue ',' input_terminals ')'
     {
-      $5.push_front(PortConn(Expression($3)));
+      $5.push_front(PortConn(new Expression($3)));
       $$.reset( new Instance($1, $5, Instance::prim_in_inst));
     }
     | instance_identifier '[' expression ':' expression ']' '(' variable_lvalue ',' input_terminals ')'
@@ -813,13 +809,10 @@ n_output_gate_instance
       switch(father->get_type()) {
       case NetComp::tModule: { 
         cm = static_pointer_cast<Module>(father);
-        // get a unique name
-        while((cm->db_instance.find(cm->unnamed_instance)).use_count() != 0)
-          ++(cm->unnamed_instance);
         // push the expression into port list
         $2.push_back(PortConn($4));
         // assign a name for the instance
-        $$.reset( new Instance(cm->unnamed_instance, $2,  Instance::prim_out_inst));
+        $$.reset( new Instance(cm->new_IId, $2,  Instance::prim_out_inst));
         ++(cm->unnamed_instance);
         break;
       }
@@ -828,15 +821,15 @@ n_output_gate_instance
     }
     | instance_identifier '(' output_terminals ',' expression ')'
     {
-      $3.push_back(PortConn(Expression($5)));
+      $3.push_back(PortConn($5));
       $$.reset( new Instance($1, $3, Instance::prim_out_inst));
     }
     | instance_identifier '[' expression ':' expression ']' '(' output_terminals ',' expression ')'
     ;
 
 output_terminals
-    : variable_lvalue                      { $$.push_back(PortConn(Expression($1))); }
-    | output_terminals ',' variable_lvalue { $$.push_back(PortConn(Expression($3))); }
+    : variable_lvalue                      { $$.push_back(PortConn(new Expression($1))); }
+    | output_terminals ',' variable_lvalue { $$.push_back(PortConn(new Expression($3))); }
     ;
 
 //A.3.4 Primitive gate and switch types
@@ -931,7 +924,7 @@ named_parameter_assignment
     ;
 
 module_instance 
-    : instance_identifier '(' ')' { $$.reset(new Instance($1, list<PortConn>())); }
+    : instance_identifier '(' ')' { $$.reset(new Instance($1, list<shred_ptr<PortConn> >())); }
     | instance_identifier '[' expression ':' expression ']' '(' ')'
     | instance_identifier '(' list_of_port_connections ')'   { $$.reset(new Instance($1, $3)); }
     | instance_identifier '[' expression ':' expression ']' '(' list_of_port_connections ')'
@@ -953,13 +946,13 @@ named_port_connections
     ;
 
 ordered_port_connection 
-    : /* empty */             { $$ = PortConn(); }
-    | expression              { $$ = PortConn($1); }
+    : /* empty */             { $$.reset(); }
+    | expression              { $$.reset( new PortConn($1)); }
     ;
 
 named_port_connection 
-    : '.' port_identifier '(' ')' { $$ = PortConn($2); }
-    | '.' port_identifier '(' expression ')'  { $$ = PortConn($2, $4);}
+    : '.' port_identifier '(' ')' { $$.reset( new PortConn($2)); }
+    | '.' port_identifier '(' expression ')'  { $$.reset( new PortConn($2, $4));}
     ;
 
 //A.4.2 Generated instantiation
@@ -1065,13 +1058,11 @@ always_construct
       switch(father->get_type()) {
       case NetComp::tModule: {
         cm = static_pointer_cast<Module>(father);
-        if($2.is_named()) {
-          if(!cm->db_block.insert($2.name, shared_ptr<SeqBlock>(new SeqBlock($2))))
+        if($2->is_named()) {
+          if(!cm->db_block.insert($2->name, $2))
             assert(0 == "block named duplicated");
         } else {
-          while(cm->db_block.find(cm->unnamed_block))
-            ++(cm->unnamed_block);
-          cm->db_block.insert(cm->unnamed_block, shared_ptr<SeqBlock>(new SeqBlock($2)));
+          cm->db_block.insert(cm->new_BId(), $2);
         }
         break;
       }
@@ -1085,11 +1076,11 @@ always_construct
     ;
 
 blocking_assignment 
-    : variable_lvalue '=' expression  { $3.reduce(); $$.reset(new Assign($1, $3, true)); $$->db_register();}
+    : variable_lvalue '=' expression  { $3->reduce(); $$.reset(new Assign($1, $3, true));}
     ;
 
 nonblocking_assignment 
-    : variable_lvalue "<=" expression  { $3.reduce(); $$.reset(new Assign($1, $3, false)); $$->db_register();}
+    : variable_lvalue "<=" expression  { $3->reduce(); $$.reset(new Assign($1, $3, false));}
     ;
 
 //A.6.3 Parallel and sequential blocks    
@@ -1103,8 +1094,10 @@ nonblocking_assignment
 //A.6.4 Statements
 statements
     : statement
-    | statements statement   { $$.add_statements($2); }
+    | statements statement   { $$->add_statements($2); }
     ;
+
+///////////////////////////////////////////////////////////////////////////////////
 
 statement
     : blocking_assignment ';'    { $$.add_assignment(*$1); }

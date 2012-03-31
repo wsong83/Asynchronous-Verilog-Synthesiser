@@ -39,6 +39,9 @@ namespace netlist {
 
     // helpers
     NETLIST_STREAMOUT_FUN_DECL;
+    BIdentifier& new_BId();     /* generate an unused block id */
+    IIdentifier& new_IId();     /* generate an unused instance id*/
+    VIdentifier& new_VId();     /* generate an unused variable id */
     
     // data
     MIdentifier name;
@@ -52,6 +55,7 @@ namespace netlist {
     DataBase<string, Assign>               db_assign;    /* continueous assignments */
     DataBase<BIdentifier, SeqBlock>        db_block;     /* always blocks */
 
+  private:
     //name for unnamed items
     BIdentifier unnamed_block;
     IIdentifier unnamed_instance;
