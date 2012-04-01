@@ -34,8 +34,8 @@ namespace netlist {
   class ForState : public NetComp {
   public:
     // constructors
-    ForState(Assign& init, const shared_ptr<Expression>& cond, shared_ptr<Assign>& incr, shared_ptr<SeqBlock>& body)
-      : init(init), incr(incr) {}
+    ForState(const shared_ptr<Assign>& init, const shared_ptr<Expression>& cond, const shared_ptr<Assign>& incr, const list<shared_ptr<NetComp> >& body)
+      : init(init), cond(cond), incr(incr), body(body) {}
 
 
     //data

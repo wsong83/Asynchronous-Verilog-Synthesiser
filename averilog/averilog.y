@@ -377,8 +377,8 @@ input_declaration
         shared_ptr<Port> cp = cm->db_port.find(*it);
         if(0 != cp.use_count()) { 
           cp->set_in();
-          Range m(pair<shared_ptr<Expression>, shared_ptr<Expression> >($3, $5));
-          cp->name.get_range_ref().push_back(m);
+          pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
+          cp->name.get_range().push_back(shared_ptr<Range>(new Range(m)));
         } else {  av_env.error(yylloc, "SYN-PORT-0", it->name, cm->name.name); }
       }
     }  
@@ -407,9 +407,8 @@ output_declaration
         shared_ptr<Port> cp = cm->db_port.find(*it);
         if(0 != cp.use_count()) { 
           cp->set_out();
-          vector<Range> rm;
-          rm.push_back(Range(pair<shared_ptr<Expression>, shared_ptr<Expression> >($3, $5)));
-          cp->name.set_range(rm);
+          pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
+          cp->name.get_range().push_back(shared_ptr<Range>(new Range(m)));
         } else {  av_env.error(yylloc, "SYN-PORT-0", it->name, cm->name.name); }
       }
     }  
@@ -431,15 +430,15 @@ variable_declaration
           cm = static_pointer_cast<Module>(father);
           while(!$2.empty()) {
             shared_ptr<Variable> cw(new Variable($2.front().first));
-            if($2.front().second.size() != 0) 
+            if($2.front().second.use_count() != 0) 
               av_env.error(yylloc, "SYN-VAR-4", cw->name.name);
             
             $2.pop_front();
             // change range selector to dimension delcaration
-            cw->name.get_range_ref() = cw->name.get_select();
-            cw->name.get_select_ref().clear();
+            cw->name.get_range() = cw->name.get_select();
+            cw->name.get_select().clear();
             vector<shared_ptr<Range> >::iterator it, end;
-            for(it = cw->name.get_range_ref().begin(), end = cw->name.get_range_ref().end(); it != end; it++ )
+            for(it = cw->name.get_range().begin(), end = cw->name.get_range().end(); it != end; it++ )
               (*it)->set_dim();
 
             // insert it in the database
@@ -467,18 +466,18 @@ variable_declaration
           cm = static_pointer_cast<Module>(father);
           while(!$7.empty()) {
             VIdentifier& wn = $7.front().first;
-            if($7.front().second.size() != 0) 
+            if($7.front().second.use_count() != 0) 
               av_env.error(yylloc, "SYN-VAR-4", wn.name);
 
             // change range selector to dimension delcaration
-            wn.get_range_ref() = wn.get_select();
-            wn.get_select_ref().clear();
+            wn.get_range() = wn.get_select();
+            wn.get_select().clear();
             vector<shared_ptr<Range> >::iterator it, end;
-            for(it = wn.get_range_ref().begin(), end = wn.get_range_ref().end(); it != end; it++ )
+            for(it = wn.get_range().begin(), end = wn.get_range().end(); it != end; it++ )
               (*it)->set_dim();
 
-            Range rm(pair<shared_ptr<Expression>, shared_ptr<Expression> >($3, $5));
-            wn.get_range_ref().push_back(rm);
+            pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
+            wn.get_range().push_back(shared_ptr<Range>(new Range(m)));
             shared_ptr<Variable> cw(new Variable(wn));
 
             // insert it in the database
@@ -507,14 +506,14 @@ variable_declaration
           cm = static_pointer_cast<Module>(father);
           while(!$2.empty()) {
             shared_ptr<Variable> cr(new Variable($2.front().first));
-            if($2.front().second.size() != 0) 
+            if($2.front().second.use_count() != 0) 
               av_env.error(yylloc, "SYN-VAR-4", cr->name.name);
             $2.pop_front();
             // change range selector to dimension delcaration
-            cr->name.get_range_ref() = cr->name.get_select();
-            cr->name.get_select_ref().clear();
+            cr->name.get_range() = cr->name.get_select();
+            cr->name.get_select().clear();
             vector<shared_ptr<Range> >::iterator it, end;
-            for(it = cr->name.get_range_ref().begin(), end = cr->name.get_range_ref().end(); it != end; it++ )
+            for(it = cr->name.get_range().begin(), end = cr->name.get_range().end(); it != end; it++ )
               (*it)->set_dim();
             
             // insert it in the database
@@ -542,18 +541,18 @@ variable_declaration
           cm = static_pointer_cast<Module>(father);
           while(!$7.empty()) {
             VIdentifier& rn = $7.front().first;
-            if($7.front().second.size() != 0) 
+            if($7.front().second.use_count() != 0) 
               av_env.error(yylloc, "SYN-VAR-4", rn.name);
 
             // change range selector to dimension delcaration
-            rn.get_range_ref() = rn.get_select();
-            rn.get_select_ref().clear();
+            rn.get_range() = rn.get_select();
+            rn.get_select().clear();
             vector<shared_ptr<Range> >::iterator it, end;
-            for(it = rn.get_range_ref().begin(), end = rn.get_range_ref().end(); it != end; it++ )
+            for(it = rn.get_range().begin(), end = rn.get_range().end(); it != end; it++ )
               (*it)->set_dim();
 
-            Range rm(pair<shared_ptr<Expression>, shared_ptr<Expression> >($3, $5));
-            rn.get_range_ref().push_back(rm);
+            pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
+            rn.get_range().push_back(shared_ptr<Range>(new Range(m)));
             shared_ptr<Variable> cr(new Variable(rn));
 
             // insert it in the database
@@ -584,10 +583,10 @@ variable_declaration
             shared_ptr<Variable> cr(new Variable($2.front().first, $2.front().second));
             $2.pop_front();
             // change range selector to dimension delcaration
-            cr->name.get_range_ref() = cr->name.get_select();
-            cr->name.get_select_ref().clear();
+            cr->name.get_range() = cr->name.get_select();
+            cr->name.get_select().clear();
             vector<shared_ptr<Range> >::iterator it, end;
-            for(it = cr->name.get_range_ref().begin(), end = cr->name.get_range_ref().end(); it != end; it++ )
+            for(it = cr->name.get_range().begin(), end = cr->name.get_range().end(); it != end; it++ )
               (*it)->set_dim();
             
             // insert it in the database
@@ -615,18 +614,18 @@ variable_declaration
           cm = static_pointer_cast<Module>(father);
           while(!$2.empty()) {
             shared_ptr<Variable> cr(new Variable($2.front().first));
-            if($2.front().second.size() != 0) 
+            if($2.front().second.use_count() != 0) 
               av_env.error(yylloc, "SYN-VAR-4", cr->name.name);
             $2.pop_front();
             // change range selector to dimension delcaration
-            cr->name.get_range_ref() = cr->name.get_select();
-            cr->name.get_select_ref().clear();
+            cr->name.get_range() = cr->name.get_select();
+            cr->name.get_select().clear();
             vector<shared_ptr<Range> >::iterator it, end;
-            for(it = cr->name.get_range_ref().begin(), end = cr->name.get_range_ref().end(); it != end; it++ )
+            for(it = cr->name.get_range().begin(), end = cr->name.get_range().end(); it != end; it++ )
               (*it)->set_dim();
             // an integer is a 32-bit reg
-            cr->name.get_range_ref().push_back(Range(pair<Expression, Expression>(Expression(Number(31)), Expression(Number(0)))));
-            
+            cr->name.get_range().push_back(shared_ptr<Range>(new Range(31, 0)));
+                        
             // insert it in the database
             if(!cm->db_reg.insert(cr->name, cr)) {
               av_env.error(yylloc, "SYN-VAR-2", "integer", cr->name.name, cm->name.name);
@@ -657,10 +656,14 @@ list_of_port_identifiers
     ;
 
 list_of_variable_identifiers 
-    : variable_identifier                      { $$.push_back(pair<VIdentifier,shared_ptr<Expression> >($1, new Expression())); }
-    | variable_identifier '=' expression       { $$.push_back(pair<VIdentifier,shared_ptr<Expression> >($1, $3)); } 
-    | list_of_variable_identifiers ',' variable_identifier { $$.push_back(pair<VIdentifier,shared_ptr<Expression> >($3, new Expression())); }
-    | list_of_variable_identifiers ',' variable_identifier '=' expression { $$.push_back(pair<VIdentifier,shared_ptr<Expression> >($3, $5)); }
+    : variable_identifier
+    { $$.push_back(pair<VIdentifier,shared_ptr<Expression> >($1, shared_ptr<Expression>())); }
+    | variable_identifier '=' expression
+    { $$.push_back(pair<VIdentifier,shared_ptr<Expression> >($1, $3)); } 
+    | list_of_variable_identifiers ',' variable_identifier 
+    { $$.push_back(pair<VIdentifier,shared_ptr<Expression> >($3, shared_ptr<Expression>())); }
+    | list_of_variable_identifiers ',' variable_identifier '=' expression 
+    { $$.push_back(pair<VIdentifier,shared_ptr<Expression> >($3, $5)); }
     ;
 
 // A.2.4 Declaration assignments
@@ -775,9 +778,9 @@ n_input_gate_instance
       case NetComp::tModule: { 
         cm = static_pointer_cast<Module>(father);
         // push the lvalue into port list
-        $4.push_front(PortConn(new Expression($2)));
+        $4.push_front(shared_ptr<PortConn>(new PortConn($2, 1)));
         // assign a name for the instance
-        $$.reset( new Instance(cm->new_IId, $4,  Instance::prim_in_inst));
+        $$.reset( new Instance(cm->new_IId(), $4,  Instance::prim_in_inst));
         break;
       }
       default: ;/* doing nothing right now */
@@ -785,15 +788,17 @@ n_input_gate_instance
     }
     | instance_identifier '(' variable_lvalue ',' input_terminals ')'
     {
-      $5.push_front(PortConn(new Expression($3)));
+      $5.push_front(shared_ptr<PortConn>(new PortConn($3, 1)));
       $$.reset( new Instance($1, $5, Instance::prim_in_inst));
     }
     | instance_identifier '[' expression ':' expression ']' '(' variable_lvalue ',' input_terminals ')'
     ;
 
 input_terminals
-    : expression                         { $$.push_back(PortConn($1)); }
-    | input_terminals ',' expression     { $$.push_back(PortConn($3)); }
+    : expression
+    { $$.push_back(shared_ptr<PortConn>(new PortConn($1, -1))); }
+    | input_terminals ',' expression
+    { $$.push_back(shared_ptr<PortConn>(new PortConn($3, -1))); }
     ;
 
 n_output_gate_instances
@@ -810,10 +815,9 @@ n_output_gate_instance
       case NetComp::tModule: { 
         cm = static_pointer_cast<Module>(father);
         // push the expression into port list
-        $2.push_back(PortConn($4));
+        $2.push_back(shared_ptr<PortConn>(new PortConn($4, -1)));
         // assign a name for the instance
-        $$.reset( new Instance(cm->new_IId, $2,  Instance::prim_out_inst));
-        ++(cm->unnamed_instance);
+        $$.reset( new Instance(cm->new_IId(), $2,  Instance::prim_out_inst));
         break;
       }
       default: ;/* doing nothing right now */
@@ -821,15 +825,17 @@ n_output_gate_instance
     }
     | instance_identifier '(' output_terminals ',' expression ')'
     {
-      $3.push_back(PortConn($5));
+      $3.push_back(shared_ptr<PortConn>(new PortConn($5, -1)));
       $$.reset( new Instance($1, $3, Instance::prim_out_inst));
     }
     | instance_identifier '[' expression ':' expression ']' '(' output_terminals ',' expression ')'
     ;
 
 output_terminals
-    : variable_lvalue                      { $$.push_back(PortConn(new Expression($1))); }
-    | output_terminals ',' variable_lvalue { $$.push_back(PortConn(new Expression($3))); }
+    : variable_lvalue                      
+    { $$.push_back(shared_ptr<PortConn>(new PortConn($1, 1))); }
+    | output_terminals ',' variable_lvalue 
+    { $$.push_back(shared_ptr<PortConn>(new PortConn($3, 1))); }
     ;
 
 //A.3.4 Primitive gate and switch types
@@ -915,12 +921,12 @@ named_parameter_assignments
     ;
 
 ordered_parameter_assignment 
-    : expression              { $$ = ParaConn($1); }
+: expression              { $$.reset( new ParaConn($1)); }
     ;
 
 named_parameter_assignment 
-    : '.' parameter_identifier '('  ')'           { $$ = ParaConn($2); }
-    | '.' parameter_identifier '(' expression ')' { $$ = ParaConn($2, $4); }
+    : '.' parameter_identifier '('  ')'           { $$.reset( new ParaConn($2)); }
+    | '.' parameter_identifier '(' expression ')' { $$.reset( new ParaConn($2, $4)); }
     ;
 
 module_instance 
@@ -1210,15 +1216,14 @@ concatenation
       list<shared_ptr<Expression> >::iterator it, end;
       $$.reset( new Concatenation());
       for(it = $2.begin(), end = $2.end(); it != end; it++) {
-        ConElem m(*it);
+        shared_ptr<ConElem> m(new ConElem(*it));
         *$$ + m;
-        //$$ + ConElem(*it);
       }
     }
     | '{' expression concatenation '}'
     {
       $$.reset( new Concatenation()); 
-      ConElem m($2, $3->data);
+      shared_ptr<ConElem> m(new ConElem($2, $3->data));
       *$$ + m;
     }
     ;
@@ -1326,7 +1331,7 @@ primary
     }
     | concatenation      { $$.reset( new Expression($1)); }
     | function_call
-    | '(' expression ')'  { $$.reset( new Expression($2)); }
+    | '(' expression ')'  { $$ = $2; }
     ;
 
 //A.8.5 Expression left-side values
@@ -1407,7 +1412,7 @@ parameter_identifier
 
 variable_identifier
     : identifier           { $$ = $1; }
-    | variable_identifier '[' range_expression ']' { $$.get_select_ref().push_back($3); }
+    | variable_identifier '[' range_expression ']' { $$.get_select().push_back($3); }
     ;
 
 port_identifier

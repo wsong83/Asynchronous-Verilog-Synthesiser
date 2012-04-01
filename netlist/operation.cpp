@@ -38,7 +38,7 @@ Operation* netlist::Operation::deep_copy () const {
   Operation* rv = new Operation();
   rv->otype = otype;
   rv->valuable = valuable;
-  if(data.use_count() != 0) rv->data = data->deep_copy();
+  if(data.use_count() != 0) rv->data.reset(data->deep_copy());
   return rv;
 }
 
@@ -71,7 +71,7 @@ netlist::Operation::Operation(const shared_ptr<LConcatenation>& con)
     shared_ptr<Concatenation> cp(new Concatenation());
     list<VIdentifier>::const_iterator it, end;
     for(it=con->data.begin(), end=con->data.end(); it!=end; it++) {
-      ConElem m = Expression(*it);
+      shared_ptr<ConElem> m( new ConElem(shared_ptr<Expression>(new Expression(*it))));
       *cp + m;
     }
   }
@@ -193,7 +193,7 @@ void netlist::Operation::reduce() {
     Concatenation& mcon = *(static_pointer_cast<Concatenation>(data));
     if(mcon.data.size() == 1 &&
        mcon.data.front()->exp->is_valuable() &&
-       mcon.data.front()->con->size() == 0
+       mcon.data.front()->con.size() == 0
        ) {
       data.reset(new Number(mcon.data.front()->exp->get_value()));
       otype = oNum;
@@ -271,7 +271,7 @@ void netlist::execute_UNeg(list<shared_ptr<Operation> >& d1) {
     assert(d1.front()->get_type() == Operation::oNum);
     d1.front()->get_num().negate();
   } else {
-    d1.push_front(new Operation(Operation::oUNeg));
+    d1.push_front(shared_ptr<Operation>(new Operation(Operation::oUNeg)));
   }
 }
 
@@ -292,7 +292,7 @@ void netlist::execute_ULRev(list<shared_ptr<Operation> >& d1) {
     else
       d1.front()->get_num() = Number(1);
   } else {
-    d1.push_front(new Operation(Operation::oULRev));
+    d1.push_front(shared_ptr<Operation>(new Operation(Operation::oULRev)));
   }
 }
 
@@ -311,7 +311,7 @@ void netlist::execute_URev(list<shared_ptr<Operation> >& d1) {
     }
     d1.front()->get_num() = Number(tval);
   } else {
-    d1.push_front(new Operation(Operation::oURev));
+    d1.push_front(shared_ptr<Operation>(new Operation(Operation::oURev)));
   }
 }
 
@@ -331,7 +331,7 @@ void netlist::execute_UAnd(list<shared_ptr<Operation> >& d1) {
     }
     d1.front()->get_num() = Number(string(1, m));
   } else {
-    d1.push_front(new Operation(Operation::oUAnd));
+    d1.push_front(shared_ptr<Operation>(new Operation(Operation::oUAnd)));
   }
 }
 
@@ -352,7 +352,7 @@ void netlist::execute_UNand(list<shared_ptr<Operation> >& d1) {
     if(m == '0') m = '1'; else if(m == '1') m = '0';
     d1.front()->get_num() = Number(string(1, m));
   } else {
-    d1.push_front( new Operation(Operation::oUNand));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oUNand)));
   }
 }
 
@@ -372,7 +372,7 @@ void netlist::execute_UOr(list<shared_ptr<Operation> >& d1) {
     }
     d1.front()->get_num() = Number(string(1, m));
   } else {
-    d1.push_front( new Operation(Operation::oUOr));
+    d1.push_front(shared_ptr<Operation>( new Operation(Operation::oUOr)));
   }
 }
 
@@ -393,7 +393,7 @@ void netlist::execute_UNor(list<shared_ptr<Operation> >& d1) {
     if(m == '0') m = '1'; else if(m == '1') m = '0';
     d1.front()->get_num() = Number(string(1, m));
   } else {
-    d1.push_front( new Operation(Operation::oUNor));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oUNor)));
   }
 }
 
@@ -413,7 +413,7 @@ void netlist::execute_UXor(list<shared_ptr<Operation> >& d1) {
     }
     d1.front()->get_num() = Number(string(1, m));
   } else {
-    d1.push_front( new Operation(Operation::oUXor));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oUXor)));
   }
 }
 
@@ -434,7 +434,7 @@ void netlist::execute_UNxor(list<shared_ptr<Operation> >& d1) {
     if(m == '0') m = '1'; else if(m == '1') m = '0';
     d1.front()->get_num() = Number(string(1, m));
   } else {
-    d1.push_front( new Operation(Operation::oUNxor));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oUNxor)));
   }
 }
   
@@ -445,7 +445,7 @@ void netlist::execute_Power(list<shared_ptr<Operation> >& d1, list<shared_ptr<Op
     mpz_pow_ui(res.get_mpz_t(), d1.front()->get_num().get_value().get_mpz_t(), d2.front()->get_num().get_value().get_ui());
     d1.front()->get_num() = mpz_class(res);
   } else {
-    d1.push_front( new Operation(Operation::oPower));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oPower)));
     d1.splice(d1.end(), d2);
   }
 }
@@ -456,7 +456,7 @@ void netlist::execute_Time(list<shared_ptr<Operation> >& d1, list<shared_ptr<Ope
     mpz_class res = d1.front()->get_num().get_value() * d2.front()->get_num().get_value();
     d1.front()->get_num() = res;
   } else {
-    d1.push_front( new Operation(Operation::oTime));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oTime)));
     d1.splice(d1.end(), d2);
   }
 }
@@ -467,7 +467,7 @@ void netlist::execute_Div(list<shared_ptr<Operation> >& d1, list<shared_ptr<Oper
     mpz_class res = d1.front()->get_num().get_value() / d2.front()->get_num().get_value();
     d1.front()->get_num() = res;
   } else {
-    d1.push_front( new Operation(Operation::oDiv));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oDiv)));
     d1.splice(d1.end(), d2);
   }
 }
@@ -478,7 +478,7 @@ void netlist::execute_Mode(list<shared_ptr<Operation> >& d1, list<shared_ptr<Ope
     mpz_class res = d1.front()->get_num().get_value() % d2.front()->get_num().get_value();
     d1.front()->get_num() = res;
   } else {
-    d1.push_front( new Operation(Operation::oMode));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oMode)));
     d1.splice(d1.end(), d2);
   }
 }
@@ -490,7 +490,7 @@ void netlist::execute_Add(list<shared_ptr<Operation> >& d1, list<shared_ptr<Oper
     mpz_class res = d1.front()->get_num().get_value() + d2.front()->get_num().get_value();
     d1.front()->get_num() = res;
   } else {
-    d1.push_front( new Operation(Operation::oAdd));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oAdd)));
     d1.splice(d1.end(), d2);
   }
 }
@@ -501,7 +501,7 @@ void netlist::execute_Minus(list<shared_ptr<Operation> >& d1, list<shared_ptr<Op
     mpz_class res = d1.front()->get_num().get_value() - d2.front()->get_num().get_value();
     d1.front()->get_num() = res;
   } else {
-    d1.push_front( new Operation(Operation::oMinus));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oMinus)));
     d1.splice(d1.end(), d2);
   }
 }
@@ -513,7 +513,7 @@ void netlist::execute_RS(list<shared_ptr<Operation> >& d1, list<shared_ptr<Opera
     tval.erase(tval.size() - d2.front()->get_num().get_value().get_ui());
     d1.front()->get_num() = Number(tval);
   } else {
-    d1.push_front( new Operation(Operation::oRS));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oRS)));
     d1.splice(d1.end(), d2);
   }
 }
@@ -525,7 +525,7 @@ void netlist::execute_LS(list<shared_ptr<Operation> >& d1, list<shared_ptr<Opera
     tval.insert(tval.end(), d2.front()->get_num().get_value().get_ui(), '0');
     d1.front()->get_num() = Number(tval);
   } else {
-    d1.push_front( new Operation(Operation::oLS));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oLS)));
     d1.splice(d1.end(), d2);
   }
 }
@@ -537,7 +537,7 @@ void netlist::execute_LRS(list<shared_ptr<Operation> >& d1, list<shared_ptr<Oper
     tval.erase(tval.size() - d2.front()->get_num().get_value().get_ui());
     d1.front()->get_num() = Number(tval);
   } else {
-    d1.push_front( new Operation(Operation::oLRS));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oLRS)));
     d1.splice(d1.end(), d2);
   }
 }
@@ -567,7 +567,7 @@ void netlist::execute_Less(list<shared_ptr<Operation> >& d1, list<shared_ptr<Ope
     // equal
     d1.front()->get_num() = Number("0");
   } else {
-    d1.push_front( new Operation(Operation::oLess));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oLess)));
     d1.splice(d1.end(), d2);
   }
 }
@@ -597,7 +597,7 @@ void netlist::execute_Le(list<shared_ptr<Operation> >& d1, list<shared_ptr<Opera
     // equal
     d1.front()->get_num() = Number("1");
   } else {
-    d1.push_front( new Operation(Operation::oLe));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oLe)));
     d1.splice(d1.end(), d2);
   }
 }
@@ -627,7 +627,7 @@ void netlist::execute_Great(list<shared_ptr<Operation> >& d1, list<shared_ptr<Op
     // equal
     d1.front()->get_num() = Number("0");
   } else {
-    d1.push_front( new Operation(Operation::oGreat));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oGreat)));
     d1.splice(d1.end(), d2);
   }
 }
@@ -657,7 +657,7 @@ void netlist::execute_Ge(list<shared_ptr<Operation> >& d1, list<shared_ptr<Opera
     // equal
     d1.front()->get_num() = Number("1");
   } else {
-    d1.push_front( new Operation(Operation::oLe));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oLe)));
     d1.splice(d1.end(), d2);
   }
 }
@@ -687,7 +687,7 @@ void netlist::execute_Eq(list<shared_ptr<Operation> >& d1, list<shared_ptr<Opera
     // equal
     d1.front()->get_num() = Number("1");
   } else {
-    d1.push_front( new Operation(Operation::oEq));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oEq)));
     d1.splice(d1.end(), d2);
   }
 }
@@ -717,7 +717,7 @@ void netlist::execute_Neq(list<shared_ptr<Operation> >& d1, list<shared_ptr<Oper
     // equal
     d1.front()->get_num() = Number("0");
   } else {
-    d1.push_front( new Operation(Operation::oNeq));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oNeq)));
     d1.splice(d1.end(), d2);
   }
 }
@@ -740,7 +740,7 @@ void netlist::execute_CEq(list<shared_ptr<Operation> >& d1, list<shared_ptr<Oper
     // equal
     d1.front()->get_num() = Number("1");
   } else {
-    d1.push_front( new Operation(Operation::oCEq));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oCEq)));
     d1.splice(d1.end(), d2);
   }
 }
@@ -764,7 +764,7 @@ void netlist::execute_CNeq(list<shared_ptr<Operation> >& d1, list<shared_ptr<Ope
     // equal
     d1.front()->get_num() = Number("0");
   } else {
-    d1.push_front( new Operation(Operation::oCNeq));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oCNeq)));
     d1.splice(d1.end(), d2);
   }
 }
@@ -790,7 +790,7 @@ void netlist::execute_And(list<shared_ptr<Operation> >& d1, list<shared_ptr<Oper
       } 
     }
   } else {
-    d1.push_front( new Operation(Operation::oAnd));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oAnd)));
     d1.splice(d1.end(), d2);
   }
 }
@@ -824,7 +824,7 @@ void netlist::execute_Xor(list<shared_ptr<Operation> >& d1, list<shared_ptr<Oper
         tval1[i] = 'x';        
     }
   } else {
-    d1.push_front( new Operation(Operation::oXor));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oXor)));
     d1.splice(d1.end(), d2);
   }
 }
@@ -858,7 +858,7 @@ void netlist::execute_Nxor(list<shared_ptr<Operation> >& d1, list<shared_ptr<Ope
         tval1[i] = 'x';        
     }
   } else {
-    d1.push_front( new Operation(Operation::oNxor));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oNxor)));
     d1.splice(d1.end(), d2);
   }
 }
@@ -882,7 +882,7 @@ void netlist::execute_Or(list<shared_ptr<Operation> >& d1, list<shared_ptr<Opera
         tval1[i] = 'x';        
     }
   } else {
-    d1.push_front( new Operation(Operation::oOr));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oOr)));
     d1.splice(d1.end(), d2);
   }
 }
@@ -903,7 +903,7 @@ void netlist::execute_LAnd(list<shared_ptr<Operation> >& d1, list<shared_ptr<Ope
     } else
       d1.front()->get_num() = Number("0");
   } else {
-    d1.push_front( new Operation(Operation::oLAnd));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oLAnd)));
     d1.splice(d1.end(), d2);
   }
 }
@@ -924,7 +924,7 @@ void netlist::execute_LOr(list<shared_ptr<Operation> >& d1, list<shared_ptr<Oper
     } else
       d1.front()->get_num() = Number("0");
   } else {
-    d1.push_front( new Operation(Operation::oLOr));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oLOr)));
     d1.splice(d1.end(), d2);
   }
 }
@@ -942,7 +942,7 @@ void netlist::execute_Question(list<shared_ptr<Operation> >& d1, list<shared_ptr
       d1.splice(d1.end(), d3);
     }
   } else {
-    d1.push_front( new Operation(Operation::oQuestion));
+    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oQuestion)));
     d1.splice(d1.end(), d2);
     d1.splice(d1.end(), d3);
   }

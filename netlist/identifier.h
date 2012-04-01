@@ -130,7 +130,7 @@ namespace netlist {
     PoIdentifier(const averilog::avID&);
 
     // helpers
-    void set_range(const vector<Range>& nr) { m_range = nr; }
+    void set_range(const vector<shared_ptr<Range> >& nr) { m_range = nr; }
     const vector<shared_ptr<Range> >& get_range() const {return m_range;}
     vector<shared_ptr<Range> >& get_range() {return m_range;}
     NETLIST_STREAMOUT_FUN_DECL;

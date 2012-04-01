@@ -48,16 +48,16 @@ namespace netlist {
   template <typename K, typename T, bool ORDER = false>
     class DataBase {
   public:
-    typedef map<K, T> DBTM;
+    typedef map<K, shared_ptr<T> > DBTM;
     typedef list<pair<K, shared_ptr<T> > > DBTL;
     typedef pair<K, shared_ptr<T> > DTT;
     
     // store a component
     bool insert(const K& key, const shared_ptr<T>& comp) {
       if(ORDER) {
-        if(find(key).use_count != 0)
+        if(find(key).use_count() != 0){
           return false;
-        else {
+        } else {
           db_list.push_back(DTT(key, comp));
           return true;
         }

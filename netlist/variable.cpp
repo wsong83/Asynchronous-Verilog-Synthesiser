@@ -37,6 +37,7 @@ void netlist::Variable::set_value(const Number& num) {
 }
 
 void netlist::Variable::update() {
+  assert(exp.use_count() != 0);
   exp->reduce();
   assert(exp->is_valuable());   // must be valuable right now
 
@@ -72,7 +73,7 @@ ostream& netlist::Variable::streamout(ostream& os, unsigned int indent) const {
     os << "]";
   }
 
-  if(exp->size() > 0) {
+  if(exp.use_count() != 0) {
     os << " = " << *exp;
   }
 

@@ -82,7 +82,7 @@ namespace netlist{
     NETLIST_STREAMOUT_FUN_DECL;
 
     // data
-    Expression exp;
+    shared_ptr<Expression> exp;
     list<shared_ptr<CaseItem> > cases;
 
   };

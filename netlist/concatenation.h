@@ -62,8 +62,8 @@ namespace netlist {
     
     // helpers
     NETLIST_STREAMOUT_FUN_DECL;
-    Concatenation& operator+ (const shared_ptr<Concatenation>& rhs);
-    Concatenation& operator+ (const shared_ptr<ConElem>& rhs);
+    Concatenation& operator+ (shared_ptr<Concatenation>& rhs);
+    Concatenation& operator+ (shared_ptr<ConElem>& rhs);
     void reduce();
     void db_register(int iod = 1);
     void db_expunge();

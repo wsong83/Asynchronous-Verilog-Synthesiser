@@ -42,7 +42,7 @@ namespace averilog {
   struct av_token_type {
     shared_ptr<netlist::Assign>        tAssign;
     shared_ptr<netlist::SeqBlock>      tBlock;
-    shared_ptr<netlist::BIdentifier>   tBlockName;
+    netlist::BIdentifier               tBlockName;
     shared_ptr<netlist::CaseItem>      tCaseItem;
     shared_ptr<netlist::Concatenation> tConcatenation;
     shared_ptr<netlist::Expression>    tExp;

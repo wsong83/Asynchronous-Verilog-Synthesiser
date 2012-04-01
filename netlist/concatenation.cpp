@@ -99,23 +99,23 @@ ostream& netlist::Concatenation::streamout(ostream& os, unsigned int indent) con
   return os;
 }
     
-Concatenation& netlist::Concatenation::operator+ (const shared_ptr<Concatenation>& rhs) {
+Concatenation& netlist::Concatenation::operator+ (shared_ptr<Concatenation>& rhs) {
   list<shared_ptr<ConElem> >::iterator it, end;
   for(it=rhs.data.begin(), end=rhs.data.end(); it != end; it++)
-    *this + **it;
+    *this + *it;
   return *this;
 }
 
-Concatenation& netlist::Concatenation::operator+ (const shared_ptr<ConElem>& rhs) {
+Concatenation& netlist::Concatenation::operator+ (shared_ptr<ConElem>& rhs) {
   // check whether it is an embedded concatenation
-  if( 0 == rhs.con.size() &&
-      rhs.exp.size() == 1 &&
-      rhs.exp->eqn.front()->get_type() == Operation::oCon
+  if( 0 == rhs->con.size() &&
+      rhs->exp->size() == 1 &&
+      rhs->exp->eqn.front()->get_type() == Operation::oCon
       ) {
     Concatenation& m_con = rhs->exp->eqn.front()->get_con();
     list<shared_ptr<ConElem> >::iterator it, end;
     for(it=m_con.data.begin(), end=m_con.data.end(); it != end; it++)
-      *this + **it;
+      *this + *it;
   } else {
     data.push_back(rhs);
   }
