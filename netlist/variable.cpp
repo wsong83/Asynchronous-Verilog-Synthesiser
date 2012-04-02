@@ -32,7 +32,7 @@ using namespace netlist;
 
 
 void netlist::Variable::set_value(const Number& num) {
-  exp = new Expression(num);
+  exp.reset(new Expression(num));
   update();
 }
 

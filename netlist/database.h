@@ -140,11 +140,11 @@ namespace netlist {
     ostream& streamout(ostream& os, unsigned int indent) const {
       if(ORDER) {
         typename DBTL::const_iterator it, end;
-        for(it=begin_order(), end=end_order(); it!=end; it++)
+        for(it=db_list.begin(), end=db_list.end(); it!=end; it++)
           it->second->streamout(os, indent);
       } else {
         typename DBTM::const_iterator it, end;
-        for(it=begin(), end=end(); it!=end; it++)
+        for(it=db_map.begin(), end=db_map.end(); it!=end; it++)
           it->second->streamout(os, indent);
       }
       return os;

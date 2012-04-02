@@ -291,6 +291,20 @@ void netlist::VIdentifier::db_expunge() {
   assert(rv == 1);
 }
 
-
+VIdentifier* netlist::VIdentifier::deep_copy() const {
+  VIdentifier* rv = new VIdentifier(this->name);
+  rv->value = this->value;
+  rv->numbered = this->numbered;
+  rv->father = this->father;
+  rv->inout_t = this->inout_t;
+  rv->uid = 0;                  // unregistered
+  vector<shared_ptr<Range> >::const_iterator it, end;
+  for(it=this->m_range.begin(), end=this->m_range.end(); it!=end; it++)
+    rv->m_range.push_back(shared_ptr<Range>((*it)->deep_copy()));
+  for(it=this->m_select.begin(), end=this->m_select.end(); it!=end; it++)
+    rv->m_select.push_back(shared_ptr<Range>((*it)->deep_copy()));
+  return rv;
+}
+  
 
 

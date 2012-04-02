@@ -33,7 +33,7 @@ using namespace netlist;
 void netlist::ConElem::reduce() {
   exp->reduce();
   if(0 != con.size()) {
-    list<ConElem>::iterator it, end;
+    list<shared_ptr<ConElem> >::iterator it, end;
     for(it=con.begin(), end=con.end(); it != end; it++)
       (*it)->reduce();
   }
@@ -77,6 +77,15 @@ ostream& netlist::ConElem::streamout(ostream& os, unsigned int indent) const {
   return os;
 }
 
+ConElem* netlist::ConElem::deep_copy() const {
+  ConElem* rv = new ConElem();
+  rv->exp = shared_ptr<Expression>(exp->deep_copy());
+  list<shared_ptr<ConElem> >::const_iterator it, end;
+  for(it=con.begin(), end=con.end(); it!=end; it++)
+    rv->con.push_back(shared_ptr<ConElem>((*it)->deep_copy()));
+  return rv;
+}
+
 ostream& netlist::Concatenation::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
   if(data.size() > 1) {
@@ -101,7 +110,7 @@ ostream& netlist::Concatenation::streamout(ostream& os, unsigned int indent) con
     
 Concatenation& netlist::Concatenation::operator+ (shared_ptr<Concatenation>& rhs) {
   list<shared_ptr<ConElem> >::iterator it, end;
-  for(it=rhs.data.begin(), end=rhs.data.end(); it != end; it++)
+  for(it=rhs->data.begin(), end=rhs->data.end(); it != end; it++)
     *this + *it;
   return *this;
 }
@@ -135,7 +144,7 @@ void netlist::Concatenation::reduce() {
     if((*it)->con.size() == 0) { // an expression
       if((*it)->exp->eqn.size() == 1 &&
          (*it)->exp->eqn.front()->get_type() == Operation::oCon) { // embedded concatenation
-        Concatenation cm = (*it)->exp.eqn.front()->get_con(); // fetch the concatenation
+        Concatenation cm = (*it)->exp->eqn.front()->get_con(); // fetch the concatenation
         data.insert(it,cm.data.begin(), cm.data.end());	// copy the elements to the current level
         data.erase(it); // delete current one as its content is copied
         
@@ -181,7 +190,7 @@ void netlist::Concatenation::reduce() {
             (*pre)->exp->is_valuable() &&
             (*it)->con.size() == 0    &&
             (*it)->exp->is_valuable()) { // both pre and it are numbers
-      (*pre)->exp->concatenate((*it)->exp);
+      (*pre)->exp->concatenate(*((*it)->exp));
       it = data.erase(it);
     } else { 
       pre = it; 
@@ -200,4 +209,12 @@ void netlist::Concatenation::db_expunge() {
   list<shared_ptr<ConElem> >::iterator it, end;
   for(it = data.begin(), end = data.end(); it != end; it++) 
     (*it)->db_expunge();
+}
+
+Concatenation* netlist::Concatenation::deep_copy() const {
+  Concatenation* rv = new Concatenation();
+  list<shared_ptr<ConElem> >::const_iterator it, end;
+  for(it=data.begin(), end=data.end(); it!=end; it++)
+    rv->data.push_back(shared_ptr<ConElem>((*it)->deep_copy()));
+  return rv;
 }

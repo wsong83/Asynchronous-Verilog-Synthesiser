@@ -84,7 +84,6 @@ namespace netlist {
     Operation(const shared_ptr<LConcatenation>&);
 
     // helpers
-    Operation* deep_copy() const; /* especially useful when decompose concatenations */
     bool is_valuable() const { return valuable; }
     operation_t get_type() const { return otype; }
     Number& get_num();
@@ -94,7 +93,10 @@ namespace netlist {
     void reduce();
     void db_register(int iod = 1);
     void db_expunge();
+    
+    // inherit from NetComp
     NETLIST_STREAMOUT_FUN_DECL;
+    virtual Operation* deep_copy() const; 
 
   private:
     operation_t otype;

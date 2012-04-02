@@ -48,9 +48,12 @@ namespace netlist {
     bool is_const() const { return type == TConst && type == TCRange; }
     bool is_single() const {return type != TRange && type != TCRange; }
     void db_register();
-    NETLIST_STREAMOUT_FUN_DECL;
     void set_dim() { dim = true;}
     bool is_dim() const { return dim;}
+
+    // inherit from NetComp
+    NETLIST_STREAMOUT_FUN_DECL;
+    virtual Range* deep_copy() const;
     
   private:
     mpz_class c;                /* constant */

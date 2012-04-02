@@ -151,6 +151,10 @@ ostream& netlist::Number::streamout (ostream& os, unsigned int indent) const{
   return os;
 }
 
+Number* netlist::Number::deep_copy() const {
+  return (new Number(*this));
+}
+
 void netlist::Number::concatenate(const Number& rhs) {
   txt_value = txt_value + rhs.txt_value;
   num_leng += rhs.num_leng;

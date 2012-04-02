@@ -34,7 +34,7 @@ namespace netlist {
   class WhileState : public NetComp {
   public:
     // constructors
-    WhileState(shared_ptr<Expression>& exp, shared_ptr<SeqBlock>& body) {}
+    WhileState(const shared_ptr<Expression>& exp, const shared_ptr<SeqBlock>& body) {}
 
 
     //data

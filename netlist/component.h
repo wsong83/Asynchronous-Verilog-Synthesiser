@@ -74,7 +74,7 @@ using boost::static_pointer_cast;
 
 #ifndef NETLIST_STREAMOUT_FUN_DECL
 #define NETLIST_STREAMOUT_FUN_DECL                    \
-  ostream& streamout (ostream&, unsigned int) const
+  virtual ostream& streamout (ostream&, unsigned int) const
 #endif
 
 namespace netlist {
@@ -92,11 +92,14 @@ namespace netlist {
 
     virtual void reduce() {}	/* many netlist component need method to reduce itself */
     virtual ostream& streamout (ostream& os, unsigned int indent) const {
-      os << "ERROR!!, the streamout of NetComp is used!!!" << endl;
-      assert(0 == "the streamout of NetComp is used");
+      os << "ERROR!!, the streamout() of NetComp is used!!!" << endl;
+      assert(0 == "the streamout() of NetComp is used");
+      return os;
     }
 
     virtual NetComp* deep_copy() const { /* deep copy a netlist component */
+      cout << "ERROR!!, the deep_copy() of NetComp is used!!!" << endl;
+      assert(0 == "the deep_copy() of NetComp is used");
       return(new NetComp());
     }
   };

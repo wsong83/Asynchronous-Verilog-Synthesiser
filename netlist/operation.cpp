@@ -34,14 +34,6 @@ netlist::Operation::Operation()
   : otype(oNULL), valuable(false)
 {}
 
-Operation* netlist::Operation::deep_copy () const {
-  Operation* rv = new Operation();
-  rv->otype = otype;
-  rv->valuable = valuable;
-  if(data.use_count() != 0) rv->data.reset(data->deep_copy());
-  return rv;
-}
-
 netlist::Operation::Operation(operation_t otype)
   : otype(otype), valuable(false)
 {
@@ -181,6 +173,14 @@ ostream& netlist::Operation::streamout(ostream& os, unsigned int indent) const {
   // should not run to here
   assert(1==0);
   return os;
+}
+
+Operation* netlist::Operation::deep_copy() const {
+  Operation* rv = new Operation();
+  rv->otype = this->otype;
+  rv->valuable = this->valuable;
+  if(data.use_count() != 0) rv->data = shared_ptr<NetComp>(data->deep_copy());
+  return rv;
 }
 
 void netlist::Operation::reduce() {

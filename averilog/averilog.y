@@ -487,8 +487,8 @@ variable_declaration
             }
           }
         } break;
-	default: ;/* doing nothing right now */ 
-	}
+        default: ;/* doing nothing right now */  
+        }
       }
       /////////////////////////////////////////////
     }
@@ -1100,29 +1100,29 @@ nonblocking_assignment
 //A.6.4 Statements
 statements
     : statement
-    | statements statement   { $$->add_statements($2); }
+    | statements statement   { $$.reset(new SeqBlock()); $$->add_statements($2); }
     ;
 
 statement
-    : blocking_assignment ';'    { $$->add_assignment($1); }
-    | nonblocking_assignment ';' { $$->add_assignment($1); }
+    : blocking_assignment ';'    { $$.reset(new SeqBlock()); $$->add_assignment($1); }
+    | nonblocking_assignment ';' { $$.reset(new SeqBlock()); $$->add_assignment($1); }
     | "case" '(' expression ')' "default" statement_or_null "endcase" 
-    { shared_ptr<CaseItem> m(new CaseItem($6)); $$->add_case($3, m); }
-    | "case" '(' expression ')' case_items "endcase" { $$->add_case($3, $5); }
+    { shared_ptr<CaseItem> m(new CaseItem($6)); $$.reset(new SeqBlock()); $$->add_case($3, m); }
+    | "case" '(' expression ')' case_items "endcase" { $$.reset(new SeqBlock()); $$->add_case($3, $5); }
     | "case" '(' expression ')' case_items "default" statement_or_null "endcase" 
-    { shared_ptr<CaseItem> m(new CaseItem($7)); $$->add_case($3, $5, m); }
+    { shared_ptr<CaseItem> m(new CaseItem($7)); $$.reset(new SeqBlock()); $$->add_case($3, $5, m); }
     | "if" '(' expression ')' statement_or_null 
-      //{ $$->add_if($3, $5, SeqBlock()); }
+      //{ $$.reset(new SeqBlock()); $$->add_if($3, $5, SeqBlock()); }
     | "if" '(' expression ')' statement_or_null "else" statement_or_null  
-      //{ $$->add_if($3, $5, $7); }
+      //{ $$.reset(new SeqBlock()); $$->add_if($3, $5, $7); }
     | "while" '(' expression ')' statement 
-      //{ $$->add_while($3, $5); }
+      //{ $$.reset(new SeqBlock()); $$->add_while($3, $5); }
     | "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' statement  
-      //{ $$->add_for($3, $5, $7, $9); }
+      //{ $$.reset(new SeqBlock()); $$->add_for($3, $5, $7, $9); }
     | '@' '(' event_expressions ')' statement_or_null 
-    { $$->add_seq_block($3, $5); /* this is not right */}
+    { $$.reset(new SeqBlock()); $$->add_seq_block($3, $5); /* this is not right */}
     | "begin" statements "end" 
-    { $$->add_statements($2); }
+    { $$.reset(new SeqBlock()); $$->add_statements($2); }
     | "begin" 
     {
       Lib.push(shared_ptr<NetComp>(new SeqBlock()));
@@ -1134,7 +1134,8 @@ statement
       $$ = bp;
       Lib.pop();
     }
-    | "begin" ':' block_identifier statements "end" { $$->add_statements($4); $$->set_name($3); }
+    | "begin" ':' block_identifier statements "end" 
+    { $$.reset(new SeqBlock()); $$->add_statements($4); $$->set_name($3); }
     | "begin" ':' block_identifier 
     {
       Lib.push(shared_ptr<NetComp>(new SeqBlock($3)));

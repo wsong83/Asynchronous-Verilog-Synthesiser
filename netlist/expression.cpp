@@ -31,19 +31,19 @@
 using namespace netlist;
 
 netlist::Expression::Expression()
-  : NetComp(tUnkown), valuable(false)
+  : NetComp(tExp), valuable(false)
 {}
 
 netlist::Expression::Expression(const Number& exp) 
   : NetComp(tExp), valuable(exp.is_valuable())
 {
-  eqn.push_back(Operation(exp));
+  eqn.push_back(shared_ptr<Operation>( new Operation(exp)));
 }
 
 netlist::Expression::Expression(const VIdentifier& id) 
   : NetComp(tExp), valuable(false)
 {
-  eqn.push_back(Operation(id));
+  eqn.push_back(shared_ptr<Operation>( new Operation(id)));
 }
 
 netlist::Expression::Expression(const shared_ptr<Concatenation>& con) 
@@ -67,7 +67,7 @@ Number netlist::Expression::get_value() const {
      1 == eqn.size() &&                            // and has only one element
      eqn.front()->is_valuable() &&                  // and the element is valuable
      Operation::oNum == eqn.front()->get_type())   // and it is a number
-    return eqn.front()->get_num(); 
+      return eqn.front()->get_num();
   else
     return 0;
 }
@@ -97,7 +97,7 @@ void netlist::Expression::reduce() {
         m_state->d[(m_state->opp)++].push_back(m);
         while(true) {
           if(m_state->ops == m_state->opp) { // ready for execute
-            execute_operation(m_state->op->get_type(), *(m_state->d[0]), *(m_state->d[1]), *(m_state->d[2]));
+            execute_operation(m_state->op->get_type(), m_state->d[0], m_state->d[1], m_state->d[2]);
             m_stack.pop();
             // recursive iterations
             if(m_stack.empty()) { // final
@@ -152,13 +152,12 @@ void netlist::Expression::append(Operation::operation_t otype) {
   this->reduce();
 
   // connect the equation
-  this->eqn.push_front(shared_ptr<Opertaion>(new Operation(otype)));
+  this->eqn.push_front(shared_ptr<Operation>(new Operation(otype)));
   this->valuable = false;
 
   // try to reduce the final equation
   this->reduce();
 
-  //cout << *this << endl;
 }
 
 void netlist::Expression::append(Operation::operation_t otype, Expression& d1) {
@@ -176,9 +175,6 @@ void netlist::Expression::append(Operation::operation_t otype, Expression& d1) {
   
   // try to reduce the final equation
   this->reduce();
-
-  //cout << *this << endl;
-
 }
 
 void netlist::Expression::append(Operation::operation_t otype, Expression& d1, Expression& d2) {
@@ -197,8 +193,6 @@ void netlist::Expression::append(Operation::operation_t otype, Expression& d1, E
   
   // try to reduce the final equation
   this->reduce();
-
-  //cout << *this << endl;
 }
 
 void netlist::Expression::concatenate(const Expression& rhs) {
@@ -284,7 +278,7 @@ ostream& netlist::Expression::streamout(ostream& os, unsigned int indent) const 
   for(it=eqn.begin(), end=eqn.end(); it!=end; it++) {
     c = *it;
     if(c->get_type() <= Operation::oFun) { // data
-      if(op->get_type() != Operation::oNULL) {
+      if(op.use_count() != 0) {
         if(op->get_type() <= Operation::oUNxor) { // unary operation always add parenthesis
           os << *c ;
           expression_pop_operators(os, m_stack, op, op_cnt);
@@ -320,7 +314,7 @@ ostream& netlist::Expression::streamout(ostream& os, unsigned int indent) const 
         os << *c;
       }
     } else {			// must be an operator
-      if(Operation::oNULL != op->get_type()) m_stack.push(pair<shared_ptr<Operation>,unsigned int>(op,op_cnt));
+      if(op.use_count() != 0) m_stack.push(pair<shared_ptr<Operation>,unsigned int>(op,op_cnt));
       op = c;
       op_cnt = 0;
       if(!m_stack.empty() && op->get_type() >= m_stack.top().first->get_type()+10)
@@ -331,4 +325,15 @@ ostream& netlist::Expression::streamout(ostream& os, unsigned int indent) const 
   }
   
   return os;
+}
+
+Expression* netlist::Expression::deep_copy() const {
+  Expression* rv = new Expression();
+  rv->valuable = this->valuable;
+  
+  list<shared_ptr<Operation> >::const_iterator it, end;
+  for(it=this->eqn.begin(), end=this->eqn.end(); it!=end; it++)
+    rv->eqn.push_back(shared_ptr<Operation>((*it)->deep_copy()));
+
+  return rv;
 }

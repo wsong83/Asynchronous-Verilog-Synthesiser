@@ -32,10 +32,10 @@ using namespace netlist;
 
 ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ') << name;
-  if(list_port.empty()) os << ";" << endl;
+  if(db_port.empty()) os << ";" << endl;
   else {
     os << "(";
-    map<PoIdentifer, shared_ptr<Port> >::const_iterator it, end;
+    map<PoIdentifier, shared_ptr<Port> >::const_iterator it, end;
     it = db_port.begin();
     end = db_port.end();
     while(it != end){
@@ -56,10 +56,8 @@ ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
   }
   
   { // ports
-    if(!list_port.empty()) os << endl;
-    list<shared_ptr<Port> >::const_iterator it, end;
-    for(it=list_port.begin(), end=list_port.end(); it!=end; it++)
-      os << string(indent+2, ' ') << *(*it);
+    if(!db_port.empty()) os << endl;
+    db_port.streamout(os, indent+2);
   }
   
   { // wires and regs
@@ -90,7 +88,7 @@ ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
   { // sequential blocks
     if(!db_block.empty()) os << endl;
     map<BIdentifier, shared_ptr<SeqBlock> >::const_iterator it, end;
-    for(it = db_assign.begin(), end = db_assign.end(); it != end; it++) {
+    for(it = db_block.begin(), end = db_block.end(); it != end; it++) {
       os << string(indent+2, ' ') << "always ";
       it->second->streamout(os, indent+2, true);
     }

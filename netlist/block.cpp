@@ -48,7 +48,7 @@ ostream& netlist::SeqBlock::streamout(ostream& os, unsigned int indent, bool fl_
   if(sensitive) {
     os << "@(";
     if(slist_pulse.size() > 0) {
-      list<pair<bool, Expression> >::const_iterator it, end;
+      list<pair<bool, shared_ptr<Expression> > >::const_iterator it, end;
       it = slist_pulse.begin();
       while(true) {
         if(it->first)
@@ -60,10 +60,10 @@ ostream& netlist::SeqBlock::streamout(ostream& os, unsigned int indent, bool fl_
         else break;
       }
     } else {
-      list<Expression>::const_iterator it, end;
+      list<shared_ptr<Expression> >::const_iterator it, end;
       it = slist_level.begin();
       while(true) {
-        os << *it;
+        os << **it;
         it++;
         if(it != end) os << " or ";
         else break;
@@ -74,7 +74,7 @@ ostream& netlist::SeqBlock::streamout(ostream& os, unsigned int indent, bool fl_
   if(statements.size() == 0)
     os << ";" << endl;
   else if(statements.size() == 1) {
-    if(statements.front().get_type == NetComp::tSeqBlock) {
+    if(statements.front()->get_type() == NetComp::tSeqBlock) {
       ///////////////////////////////////
     }
   }
@@ -146,7 +146,7 @@ bool netlist::SeqBlock::add_block(const shared_ptr<SeqBlock>& body) {
 }
 
 bool netlist::SeqBlock::add_statements(const shared_ptr<SeqBlock>& body) {
-  if(body.is_named()) {
+  if(body->is_named()) {
     statements.push_back(body);
   } else {
     statements.splice(statements.end(), body->statements);

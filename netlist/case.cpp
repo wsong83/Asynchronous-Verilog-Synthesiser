@@ -40,7 +40,7 @@ ostream& netlist::CaseItem::streamout (ostream& os, unsigned int indent) const {
     os << *(exps.front()) << ": ";
   } else {
     unsigned int ncase = exps.size(); // number of cases in the item
-    list<Expression>::const_iterator it = exps.begin();
+    list<shared_ptr<Expression> >::const_iterator it = exps.begin();
     for(unsigned int i=0; i< ncase-1; i++) {
       os << string(indent, ' ');    // show the indent for each line
       os << *(*it) << "," << endl;

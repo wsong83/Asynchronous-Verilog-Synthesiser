@@ -154,7 +154,6 @@ namespace netlist {
     //helpers
     VIdentifier& operator++ ();
     VIdentifier& add_prefix (const Identifier&);
-    NETLIST_STREAMOUT_FUN_DECL;
     const vector<shared_ptr<Range> >& get_range() const {return m_range;}
     const vector<shared_ptr<Range> >& get_select() const {return m_select;}
     vector<shared_ptr<Range> >& get_range() {return m_range;}
@@ -171,6 +170,10 @@ namespace netlist {
     void set_father(const shared_ptr<Variable>& f, int iod = 1) { assert(uid == 0); father = f; inout_t = iod;}
     void reset_uid(unsigned int id) { uid = id; } /* only used by Variable::get_id() */
     int get_inout_dir() const { return inout_t; }
+
+    // inherit from NetComp
+    NETLIST_STREAMOUT_FUN_DECL;
+    virtual VIdentifier* deep_copy() const;
 
   private:
     Number value;

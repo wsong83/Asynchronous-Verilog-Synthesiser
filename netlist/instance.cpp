@@ -84,7 +84,7 @@ ostream& netlist::Instance::streamout(ostream& os, unsigned int indent) const {
 
   // port connections
   {
-    list<PortConn>::const_iterator it, end;
+    list<shared_ptr<PortConn> >::const_iterator it, end;
     it=port_list.begin();
     end=port_list.end(); 
     while(it!= end) {
