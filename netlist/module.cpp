@@ -35,9 +35,9 @@ ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
   if(db_port.empty()) os << ";" << endl;
   else {
     os << "(";
-    map<PoIdentifier, shared_ptr<Port> >::const_iterator it, end;
-    it = db_port.begin();
-    end = db_port.end();
+    list<pair<PoIdentifier, shared_ptr<Port> > >::const_iterator it, end;
+    it = db_port.begin_order();
+    end = db_port.end_order();
     while(it != end){
       os << it->second->name.name;
       it++;
@@ -50,8 +50,8 @@ ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
   
   { // parameters
     if(!db_param.empty()) os << endl;
-    map<VIdentifier, shared_ptr<Variable> >::const_iterator it, end;
-    for(it = db_param.begin(), end = db_param.end(); it != end; it++)
+    list<pair<VIdentifier, shared_ptr<Variable> > >::const_iterator it, end;
+    for(it = db_param.begin_order(), end = db_param.end_order(); it != end; it++)
       os << string(indent+2, ' ') << "parameter " << *(it->second) << ";" << endl;
   }
   
@@ -68,8 +68,12 @@ ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
     if(!db_reg.empty()) os << endl;
     for(it = db_reg.begin(), end = db_reg.end(); it != end; it++)
       os << string(indent+2, ' ') << "reg " << *(it->second) << ";" << endl;
+  }
+
+  { // gen vars
+    list<pair<VIdentifier, shared_ptr<Variable> > >::const_iterator it, end;
     if(!db_genvar.empty()) os << endl;
-    for(it = db_genvar.begin(), end = db_genvar.end(); it != end; it++)
+    for(it = db_genvar.begin_order(), end = db_genvar.end_order(); it != end; it++)
       os << string(indent+2, ' ') << "genvar " << *(it->second) << ";" << endl;
   }
 

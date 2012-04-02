@@ -74,7 +74,7 @@ namespace netlist {
 
     // helpers
     NETLIST_STREAMOUT_FUN_DECL;
-    ostream& streamout(ostream& os, unsigned int indent, bool fl_prefix) const;
+    virtual ostream& streamout(ostream& os, unsigned int indent, bool fl_prefix) const;
     void clear();               /* clear all statements */
     bool add_assignment(const shared_ptr<Assign>&); /* add a blocking or non-blocking assignment into the block */
     bool add_case(const shared_ptr<Expression>&, list<shared_ptr<CaseItem> >&, const shared_ptr<CaseItem>&); /* add a general case statement */

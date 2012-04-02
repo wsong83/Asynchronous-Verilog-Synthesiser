@@ -17,8 +17,8 @@ module test_module (o, f, c, o);
    any u_0 (c);
    not (o, f, sig[0]), (c, sig[1]);
 
-   always begin
-    tmp = 5;
+   always @(posedge clk) begin
+    tmp <= 5;
    end 
    
 endmodule // test

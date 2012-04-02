@@ -47,7 +47,7 @@ ostream shell::ErrReport::os(cerr.rdbuf()); // in default send errors to cerr
 
 shell::ErrReport::ErrReport() {
   // define the error types, may be move this part to a separated header file in the future
-  ERR_DEFINE("PARSER-0",     EFatal,   0, "Unkown parser error. Please report to developer.");
+  ERR_DEFINE("PARSER-0",     EFatal,   0, "Unkown parser error. Please report to developers.");
   ERR_DEFINE("SYN-ASSIGN-0", EError,   0, "Wrong left-side concatenation.");
   ERR_DEFINE("SYN-ASSIGN-1", EError,   0, "Keyword \"assign\" can only be used in module enviornment.");
   ERR_DEFINE("SYN-FILE-0",   EError,   0, "File terminated in multi-line comments.");
