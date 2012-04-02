@@ -46,8 +46,8 @@ namespace netlist{
       add_statements(body);
     }
     // multiple expressions
-    CaseItem(list<shared_ptr<Expression> >& expm, const shared_ptr<SeqBlock>& body) {
-      exps.splice(exps.end(), expm);
+    CaseItem(const list<shared_ptr<Expression> >& expm, const shared_ptr<SeqBlock>& body) {
+      exps = expm;
       add_statements(body);
     }
 
@@ -67,11 +67,11 @@ namespace netlist{
   public:
     // constructors
     NETLIST_DEFAULT_CON(CaseState, tCase);
-    CaseState(const shared_ptr<Expression>& exp, list<shared_ptr<CaseItem> >& citems, const shared_ptr<CaseItem>& ditem)
+    CaseState(const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, const shared_ptr<CaseItem>& ditem)
       : NetComp(tCase), exp(exp), cases(citems) {
       cases.push_back(ditem);
     }
-    CaseState(const shared_ptr<Expression>& exp, list<shared_ptr<CaseItem> >& citems)
+    CaseState(const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems)
       : NetComp(tCase), exp(exp), cases(citems) { }
     CaseState(const shared_ptr<Expression>& exp, const shared_ptr<CaseItem>& ditem)
       : NetComp(tCase), exp(exp) {

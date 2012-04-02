@@ -34,8 +34,18 @@ namespace netlist {
   class IfState : public NetComp {
   public:
     // constructors
-    IfState(const shared_ptr<Expression>& exp, const shared_ptr<SeqBlock>& m_ifcase, const shared_ptr<SeqBlock>& m_elsecase) {}
+    NETLIST_DEFAULT_CON(IfState, tIf);
+    IfState(
+            const shared_ptr<Expression>& exp, 
+            const shared_ptr<SeqBlock>& m_ifcase, 
+            const shared_ptr<SeqBlock>& m_elsecase
+            );
 
+    // helpers
+    ostream& streamout(ostream&, unsigned int, bool) const; /* the streamout with first line prefix control */
+
+    // inherit from NetComp
+    NETLIST_STREAMOUT_FUN_DECL;
 
     //data
     shared_ptr<Expression> exp; /* the condition expression */
@@ -43,6 +53,8 @@ namespace netlist {
     list<shared_ptr<NetComp> > elsecase; /* the block to run when else is used */
 
   };
+
+  NETLIST_STREAMOUT(IfState);
 
 }
 

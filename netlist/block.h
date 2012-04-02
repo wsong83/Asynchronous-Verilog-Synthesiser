@@ -43,11 +43,22 @@ namespace netlist {
     // helpers
     void set_name(const BIdentifier& nm) {name = nm; named=true;}
     bool is_named() const { return named; }
+    virtual void clear();               /* clear all statements */
+    virtual bool add_assignment(const shared_ptr<Assign>&); /* add a blocking or non-blocking assignment into the block */
+    virtual bool add_case(const shared_ptr<Expression>&, const list<shared_ptr<CaseItem> >&, const shared_ptr<CaseItem>&); /* add a general case statement */
+    virtual bool add_case(const shared_ptr<Expression>&, const list<shared_ptr<CaseItem> >&); /* add a case statement without default */
+    virtual bool add_case(const shared_ptr<Expression>&, const shared_ptr<CaseItem>&); /* add a case statement only with a default case, odd! */
+    virtual bool add_if(const shared_ptr<Expression>&, const shared_ptr<SeqBlock>&, const shared_ptr<SeqBlock>&); /* add an if statement with else case */
+    virtual bool add_while(const shared_ptr<Expression>&, const shared_ptr<SeqBlock>&); /* add a while statement */
+    virtual bool add_for(const shared_ptr<Assign>&, const shared_ptr<Expression>&, const shared_ptr<Assign>&, const shared_ptr<SeqBlock>&); /* add a for statement */
+    virtual bool add_block(const shared_ptr<SeqBlock>&); /* add a statement block */
+    virtual bool add_statements(const shared_ptr<SeqBlock>&); /* add several statements */
 
     // data
     BIdentifier name;
     bool named;
     list<shared_ptr<NetComp> > statements;   /* a general list to stor the statements */
+    DataBase<VIdentifier, Variable> db_var;  /* local variables */
 
   };
 
@@ -73,25 +84,15 @@ namespace netlist {
       : Block(NetComp::tSeqBlock, nm), sensitive(false) {}
 
     // helpers
+    virtual void clear();               /* clear all statements */
+    virtual bool add_seq_block(list<pair<int, shared_ptr<Expression> > >&, const shared_ptr<SeqBlock>&); /* add a sequential block */
     NETLIST_STREAMOUT_FUN_DECL;
     virtual ostream& streamout(ostream& os, unsigned int indent, bool fl_prefix) const;
-    void clear();               /* clear all statements */
-    bool add_assignment(const shared_ptr<Assign>&); /* add a blocking or non-blocking assignment into the block */
-    bool add_case(const shared_ptr<Expression>&, list<shared_ptr<CaseItem> >&, const shared_ptr<CaseItem>&); /* add a general case statement */
-    bool add_case(const shared_ptr<Expression>&, list<shared_ptr<CaseItem> >&); /* add a case statement without default */
-    bool add_case(const shared_ptr<Expression>&, const shared_ptr<CaseItem>&); /* add a case statement only with a default case, odd! */
-    bool add_if(const shared_ptr<Expression>&, const shared_ptr<SeqBlock>&, const shared_ptr<SeqBlock>&); /* add an if statement with else case */
-    bool add_while(const shared_ptr<Expression>&, const shared_ptr<SeqBlock>&); /* add a while statement */
-    bool add_for(const shared_ptr<Assign>&, const shared_ptr<Expression>&, const shared_ptr<Assign>&, const shared_ptr<SeqBlock>&); /* add a for statement */
-    bool add_seq_block(list<pair<int, shared_ptr<Expression> > >&, const shared_ptr<SeqBlock>&); /* add a sequential block */
-    bool add_block(const shared_ptr<SeqBlock>&); /* add a statement block */
-    bool add_statements(const shared_ptr<SeqBlock>&); /* add several statements */
 
     // data
     bool sensitive;                                         /* whether this is a sensitive block, top level block */
     list<pair<bool, shared_ptr<Expression> > > slist_pulse; /* pulse sensitive list */
     list<shared_ptr<Expression> > slist_level;              /* level sensitive list */
-    DataBase<VIdentifier, Variable> db_var;                 /* local variables */
     
 
   };

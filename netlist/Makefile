@@ -27,7 +27,7 @@
 INCDIRS = -I./ -I../
 
 # targets
-TARGETS = operation.o number.o concatenation.o lconcatenation.o identifier.o range.o expression.o port.o variable.o assign.o block.o case.o module.o instance.o library.o uni_name.o
+TARGETS = operation.o number.o concatenation.o lconcatenation.o identifier.o range.o expression.o port.o variable.o assign.o block.o case.o if.o module.o instance.o library.o uni_name.o
 HEADERS = $(wildcard ./*.h)
 
 # actions
