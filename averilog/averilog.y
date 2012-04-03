@@ -1112,11 +1112,11 @@ statement
     | "case" '(' expression ')' case_items "default" statement_or_null "endcase" 
     { shared_ptr<CaseItem> m(new CaseItem($7)); $$.reset(new SeqBlock()); $$->add_case($3, $5, m); }
     | "if" '(' expression ')' statement_or_null 
-      //{ $$.reset(new SeqBlock()); $$->add_if($3, $5, SeqBlock()); }
+    { $$.reset(new SeqBlock()); $$->add_if($3, $5); }
     | "if" '(' expression ')' statement_or_null "else" statement_or_null  
-      //{ $$.reset(new SeqBlock()); $$->add_if($3, $5, $7); }
+    { $$.reset(new SeqBlock()); $$->add_if($3, $5, $7); }
     | "while" '(' expression ')' statement 
-      //{ $$.reset(new SeqBlock()); $$->add_while($3, $5); }
+    { $$.reset(new SeqBlock()); $$->add_while($3, $5); }
     | "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' statement  
       //{ $$.reset(new SeqBlock()); $$->add_for($3, $5, $7, $9); }
     | '@' '(' event_expressions ')' statement_or_null 
@@ -1150,8 +1150,8 @@ statement
     ;
 
 statement_or_null 
-    : /* empty */
-    | statement
+    : /* empty */     { $$.reset(new SeqBlock()); }
+    | statement       { $$ = $1; }
     ;
     
 //A.6.5 Timing control statements

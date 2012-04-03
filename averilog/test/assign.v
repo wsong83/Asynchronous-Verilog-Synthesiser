@@ -7,7 +7,7 @@ module test_module (o, f, c, o);
    integer intvar;
    
    assign {o,{1{c}}} = {{3'b11}, {3{2'b10}}, {2{1'b1,sig,1'b1}}};
-   assign f = 1===1'b1 ? sig[3 +: 1][3 -: 1] : {2'd3, 5'h3} + 3**4;
+   assign f = t===1'b1 ? sig[3 +: 1][3 -: 1] : {2'd3, 5'h3} + 3**4;
 
    genvar i = 0;
 
@@ -17,8 +17,12 @@ module test_module (o, f, c, o);
    any u_0 (c);
    not (o, f, sig[0]), (c, sig[1]);
 
-   always @(posedge clk) begin
-    tmp <= 5;
+   always @(posedge clk) begin:BCLK
+    if(tmp == 3) begin:TT
+      tmp <= 5;
+    end else 
+      while(tmp < 10)
+        tmp <= tmp + 1;
    end 
    
 endmodule // test

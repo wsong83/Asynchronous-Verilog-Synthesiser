@@ -50,6 +50,7 @@ enum ctype_t {
   tSeqBlock,                /* sequential block in always */
   tVariable,                /* variable, including wire, reg, and parameter */
   tVarName,                 /* variable name */
+  tWhile,                   /* while statement */
   tWire,                    /* wire */
   tUnkown                   /* type not initiated, indicate error!! */
 };

@@ -41,6 +41,11 @@ namespace netlist {
             const shared_ptr<SeqBlock>& m_elsecase
             );
 
+    IfState(
+            const shared_ptr<Expression>& exp, 
+            const shared_ptr<SeqBlock>& m_ifcase 
+            );
+
     // helpers
     ostream& streamout(ostream&, unsigned int, bool) const; /* the streamout with first line prefix control */
 

@@ -61,6 +61,11 @@ bool netlist::Block::add_if(const shared_ptr<Expression>& exp, const shared_ptr<
   return true;
 }
 
+bool netlist::Block::add_if(const shared_ptr<Expression>& exp, const shared_ptr<SeqBlock>& ifcase) {
+  statements.push_back(shared_ptr<IfState>( new IfState(exp, ifcase)));
+  return true;
+}
+
 bool netlist::Block::add_while(const shared_ptr<Expression>& exp, const shared_ptr<SeqBlock>& body) {
   statements.push_back(shared_ptr<WhileState>( new WhileState(exp, body)));
   return true;
@@ -133,7 +138,7 @@ ostream& netlist::SeqBlock::streamout(ostream& os, unsigned int indent, bool fl_
         else break;
       }
     }
-    os << ")";
+    os << ") ";
   }
   if(statements.size() == 0)
     os << ";" << endl;
@@ -156,6 +161,9 @@ ostream& netlist::SeqBlock::streamout(ostream& os, unsigned int indent, bool fl_
     case NetComp::tAssign:
       (*it)->streamout(os, indent+2);
       os << ";" << endl;
+      break;
+    case NetComp::tIf:
+      (*it)->streamout(os, indent+2);
       break;
     default:
       assert(0 == "wrong statement type!");
