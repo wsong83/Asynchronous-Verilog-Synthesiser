@@ -500,10 +500,9 @@ variable_declaration
         av_env.error(yylloc, "SYN-VAR-0", "reg", $2.front().first.name);
       } else {
         shared_ptr<NetComp> father = Lib.get_current_comp();
-        shared_ptr<Module> cm;
         switch(father->get_type()) {
         case NetComp::tModule: { 
-          cm = static_pointer_cast<Module>(father);
+          shared_ptr<Module> cm = static_pointer_cast<Module>(father);
           while(!$2.empty()) {
             shared_ptr<Variable> cr(new Variable($2.front().first));
             if($2.front().second.use_count() != 0) 
@@ -522,6 +521,27 @@ variable_declaration
             }
           }
         } break;
+        case NetComp::tSeqBlock: {
+          shared_ptr<SeqBlock> cb = static_pointer_cast<SeqBlock>(father);
+          while(!$2.empty()) {
+            shared_ptr<Variable> cr(new Variable($2.front().first));
+            if($2.front().second.use_count() != 0) 
+              av_env.error(yylloc, "SYN-VAR-4", cr->name.name);
+            $2.pop_front();
+            // change range selector to dimension delcaration
+            cr->name.get_range() = cr->name.get_select();
+            cr->name.get_select().clear();
+            vector<shared_ptr<Range> >::iterator it, end;
+            for(it = cr->name.get_range().begin(), end = cr->name.get_range().end(); it != end; it++ )
+              (*it)->set_dim();
+            
+            // insert it in the database
+            if(!cb->db_var.insert(cr->name, cr)) {
+              av_env.error(yylloc, "SYN-VAR-2", "reg", cr->name.name, cb->name.name);
+            }
+          }
+          
+        } break;
         default: ;/* doing nothing right now */
         }
       }
@@ -535,10 +555,9 @@ variable_declaration
         av_env.error(yylloc, "SYN-VAR-0", "reg", $7.front().first.name);
       } else {
         shared_ptr<NetComp> father = Lib.get_current_comp();
-        shared_ptr<Module> cm;
         switch(father->get_type()) {
         case NetComp::tModule: { 
-          cm = static_pointer_cast<Module>(father);
+          shared_ptr<Module> cm = static_pointer_cast<Module>(father);
           while(!$7.empty()) {
             VIdentifier& rn = $7.front().first;
             if($7.front().second.use_count() != 0) 
@@ -559,6 +578,31 @@ variable_declaration
             $7.pop_front();
             if(!cm->db_reg.insert(cr->name, cr)) {
               av_env.error(yylloc, "SYN-VAR-2", "reg", cr->name.name, cm->name.name);
+            }
+          }
+        } break;
+        case NetComp::tSeqBlock: { 
+          shared_ptr<SeqBlock> cb = static_pointer_cast<SeqBlock>(father);
+          while(!$7.empty()) {
+            VIdentifier& rn = $7.front().first;
+            if($7.front().second.use_count() != 0) 
+              av_env.error(yylloc, "SYN-VAR-4", rn.name);
+
+            // change range selector to dimension delcaration
+            rn.get_range() = rn.get_select();
+            rn.get_select().clear();
+            vector<shared_ptr<Range> >::iterator it, end;
+            for(it = rn.get_range().begin(), end = rn.get_range().end(); it != end; it++ )
+              (*it)->set_dim();
+
+            pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
+            rn.get_range().push_back(shared_ptr<Range>(new Range(m)));
+            shared_ptr<Variable> cr(new Variable(rn));
+
+            // insert it in the database
+            $7.pop_front();
+            if(!cb->db_var.insert(cr->name, cr)) {
+              av_env.error(yylloc, "SYN-VAR-2", "reg", cr->name.name, cb->name.name);
             }
           }
         } break;
@@ -608,10 +652,9 @@ variable_declaration
         av_env.error(yylloc, "SYN-VAR-0", "integer", $2.front().first.name);
       } else {
         shared_ptr<NetComp> father = Lib.get_current_comp();
-        shared_ptr<Module> cm;
         switch(father->get_type()) {
         case NetComp::tModule: { 
-          cm = static_pointer_cast<Module>(father);
+          shared_ptr<Module> cm = static_pointer_cast<Module>(father);
           while(!$2.empty()) {
             shared_ptr<Variable> cr(new Variable($2.front().first));
             if($2.front().second.use_count() != 0) 
@@ -629,6 +672,28 @@ variable_declaration
             // insert it in the database
             if(!cm->db_reg.insert(cr->name, cr)) {
               av_env.error(yylloc, "SYN-VAR-2", "integer", cr->name.name, cm->name.name);
+            }
+          }
+        } break;
+        case NetComp::tSeqBlock: { 
+          shared_ptr<SeqBlock> cb = static_pointer_cast<SeqBlock>(father);
+          while(!$2.empty()) {
+            shared_ptr<Variable> cr(new Variable($2.front().first));
+            if($2.front().second.use_count() != 0) 
+              av_env.error(yylloc, "SYN-VAR-4", cr->name.name);
+            $2.pop_front();
+            // change range selector to dimension delcaration
+            cr->name.get_range() = cr->name.get_select();
+            cr->name.get_select().clear();
+            vector<shared_ptr<Range> >::iterator it, end;
+            for(it = cr->name.get_range().begin(), end = cr->name.get_range().end(); it != end; it++ )
+              (*it)->set_dim();
+            // an integer is a 32-bit reg
+            cr->name.get_range().push_back(shared_ptr<Range>(new Range(31, 0)));
+                        
+            // insert it in the database
+            if(!cb->db_var.insert(cr->name, cr)) {
+              av_env.error(yylloc, "SYN-VAR-2", "integer", cr->name.name, cb->name.name);
             }
           }
         } break;
@@ -1118,7 +1183,7 @@ statement
     | "while" '(' expression ')' statement 
     { $$.reset(new SeqBlock()); $$->add_while($3, $5); }
     | "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' statement  
-      //{ $$.reset(new SeqBlock()); $$->add_for($3, $5, $7, $9); }
+    { $$.reset(new SeqBlock()); $$->add_for($3, $5, $7, $9); }
     | '@' '(' event_expressions ')' statement_or_null 
     { $$.reset(new SeqBlock()); $$->add_seq_block($3, $5); /* this is not right */}
     | "begin" statements "end" 

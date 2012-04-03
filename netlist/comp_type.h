@@ -33,6 +33,7 @@ enum ctype_t {
   tCase,                    /* a case statement */
   tConcatenation,           /* concatenation */
   tExp,                     /* expression */
+  tFor,                     /* for statement */
   tFuncName,                /* function name */
   tGenBlock,                /* heneration block */
   tIf,                      /* if statement */

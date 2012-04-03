@@ -20,7 +20,7 @@
  */
 
 /* 
- * while statements
+ * for statements
  * 03/04/2012   Wei Song
  *
  *
@@ -30,8 +30,13 @@
 
 using namespace netlist;
 
-netlist::WhileState::WhileState(const shared_ptr<Expression>& exp, const shared_ptr<SeqBlock>& body)
-  : NetComp(NetComp::tWhile), exp(exp)
+netlist::ForState::ForState(
+                            const shared_ptr<Assign>& init, 
+                            const shared_ptr<Expression>& cond, 
+                            const shared_ptr<Assign>& incr, 
+                            const shared_ptr<SeqBlock>& body
+                            )
+  : NetComp(NetComp::tFor), init(init), cond(cond), incr(incr)
 {
   if(body->is_named() || (body->db_var.size() != 0)) {
     statements.push_back(static_pointer_cast<NetComp>(body));
@@ -40,11 +45,11 @@ netlist::WhileState::WhileState(const shared_ptr<Expression>& exp, const shared_
   }
 }
 
-ostream& netlist::WhileState::streamout(ostream& os, unsigned int indent) const {
-  assert(exp.use_count() != 0);
+ostream& netlist::ForState::streamout(ostream& os, unsigned int indent) const {
+  assert(init.use_count() != 0);
 
-  os << string(indent, ' ') << "while (" << *exp << ") ";
-  
+  os << string(indent, ' ') << "for (" << *init << "; " << *cond << "; " << *incr << ") ";
+
   if(statements.size() == 1) {
     if(statements.front()->get_type() == NetComp::tSeqBlock)
       static_pointer_cast<SeqBlock>(statements.front())->streamout(os, indent, true);
@@ -60,8 +65,8 @@ ostream& netlist::WhileState::streamout(ostream& os, unsigned int indent) const 
       (*it)->streamout(os, indent+2);
       if((*it)->get_type() == NetComp::tAssign) os << ";" << endl;
     }
-    os << string(indent, ' ') << "end" << endl;
+    os << "end" << endl;
   }
-  
+
   return os;
 }

@@ -89,7 +89,7 @@ namespace netlist {
       }
     }
     
-    unsigned int cout() const {
+    unsigned int size() const {
       if(ORDER)
         return db_list.size();
       else

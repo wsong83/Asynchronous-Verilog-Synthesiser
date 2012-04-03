@@ -61,9 +61,9 @@ ostream& netlist::Variable::streamout(ostream& os, unsigned int indent) const {
     os << "[" << **it;
     if((*it)->is_single())
       os << ":" << **it;
-    os << "]";
+    os << "] ";
   }
-  os << " " << name.name;
+  os << name.name;
   rm = name.get_range();
   for(it=rm.begin(), end=rm.end(); it != end; it++) {
     if(!(*it)->is_dim()) break;

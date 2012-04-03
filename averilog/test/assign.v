@@ -20,9 +20,15 @@ module test_module (o, f, c, o);
    always @(posedge clk) begin:BCLK
     if(tmp == 3) begin:TT
       tmp <= 5;
-    end else 
+    end else if(tmp == 5)
       while(tmp < 10)
         tmp <= tmp + 1;
+    else
+      for(i=0; i<12; i=i+1) begin
+        reg [2:0] m;
+        integer m_int;
+        tmp <= tmp + i;
+      end
    end 
    
 endmodule // test

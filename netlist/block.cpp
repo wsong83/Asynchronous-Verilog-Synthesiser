@@ -140,38 +140,36 @@ ostream& netlist::SeqBlock::streamout(ostream& os, unsigned int indent, bool fl_
     }
     os << ") ";
   }
-  if(statements.size() == 0)
+
+  // the body part
+  if((statements.size() == 0) && (db_var.size() == 0))
     os << ";" << endl;
-  else if(named || statements.size() > 1) {
-    os << "begin";
-    if(named) os << ":" << name << endl;
-    else os << endl;
-  } else {
-    if(statements.front()->get_type() == NetComp::tSeqBlock) {
+  else if((statements.size() == 1) && (db_var.size() == 0))  {
+    if(statements.front()->get_type() == NetComp::tSeqBlock)
       static_pointer_cast<SeqBlock>(statements.front())->streamout(os, indent, true);
-      return os;
-    } else {
+    else {
       os << endl;
+      statements.front()->streamout(os, indent+2);
+      if(statements.front()->get_type() == NetComp::tAssign) os << ";" << endl;
     }
-  }
-
-  list<shared_ptr<NetComp> >::const_iterator it, end;
-  for(it=statements.begin(), end=statements.end(); it!=end; it++) {
-    switch((*it)->get_type()) {
-    case NetComp::tAssign:
-      (*it)->streamout(os, indent+2);
-      os << ";" << endl;
-      break;
-    case NetComp::tIf:
-      (*it)->streamout(os, indent+2);
-      break;
-    default:
-      assert(0 == "wrong statement type!");
-      break;
+  } else {
+    os << "begin" << endl;
+    // show local variables if any
+    {
+      map<VIdentifier, shared_ptr<Variable> >::const_iterator it, end;
+      for(it = db_var.begin(), end = db_var.end(); it != end; it++)
+        os << string(indent+2, ' ') << "reg " << *(it->second) << ";" << endl;
     }
+    // statements
+    {
+      list<shared_ptr<NetComp> >::const_iterator it, end;
+      for(it=statements.begin(), end=statements.end(); it!=end; it++) {
+        (*it)->streamout(os, indent+2);
+        if((*it)->get_type() == NetComp::tAssign) os << ";" << endl;
+      }
+    }
+    os << string(indent, ' ') << "end" << endl;
   }
-
-  if(named || statements.size() > 1) os << string(indent, ' ') << "end" << endl;
   
   return os; 
 }

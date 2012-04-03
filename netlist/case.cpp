@@ -50,22 +50,28 @@ ostream& netlist::CaseItem::streamout (ostream& os, unsigned int indent) const {
   }
   
   // the body part
-  if(statements.size() == 0) {
-  } else if(statements.size() == 1) {
-    os << *(statements.front());   // this may have problem for named block in the future!!! Now just ignore it
+  if(statements.size() == 1) {
+    if(statements.front()->get_type() == NetComp::tSeqBlock)
+      static_pointer_cast<SeqBlock>(statements.front())->streamout(os, indent, true);
+    else {
+      os << endl;
+      statements.front()->streamout(os, indent+2);
+      if(statements.front()->get_type() == NetComp::tAssign) os << ";" << endl;
+    }
   } else {
     os << "begin" << endl;
     list<shared_ptr<NetComp> >::const_iterator it, end;
     for(it=statements.begin(), end=statements.end(); it!=end; it++) {
       (*it)->streamout(os, indent+2);
+      if((*it)->get_type() == NetComp::tAssign) os << ";" << endl;
     }
-    os << string(indent, ' ') << "end";
+    os << string(indent, ' ') << "end" << endl;
   }
   return os;
 }
 
 void netlist::CaseItem::add_statements(const shared_ptr<SeqBlock>& body) {
-  if(body->is_named()) {
+  if(body->is_named() || (body->db_var.size() != 0)) {
     statements.push_back(body);
   } else {
     statements.splice(statements.end(), body->statements);
@@ -77,7 +83,6 @@ ostream& netlist::CaseState::streamout (ostream& os, unsigned int indent) const 
   list<shared_ptr<CaseItem> >::const_iterator it, end;
   for(it=cases.begin(), end=cases.end(); it!=end; it++) {
     (*it)->streamout(os, indent+2);
-    os << endl;
   }
   os << string(indent, ' ') << "endcase" << endl;
 

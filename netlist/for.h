@@ -34,17 +34,26 @@ namespace netlist {
   class ForState : public NetComp {
   public:
     // constructors
-    ForState(const shared_ptr<Assign>& init, const shared_ptr<Expression>& cond, const shared_ptr<Assign>& incr, const shared_ptr<SeqBlock>& body)
-      : init(init), cond(cond), incr(incr) {}
+    NETLIST_DEFAULT_CON(ForState, tFor);
+    ForState(
+             const shared_ptr<Assign>& init, 
+             const shared_ptr<Expression>& cond, 
+             const shared_ptr<Assign>& incr, 
+             const shared_ptr<SeqBlock>& body
+             );
 
+    // inherit from NetComp
+    NETLIST_STREAMOUT_FUN_DECL;
 
     //data
     shared_ptr<Assign> init;
     shared_ptr<Expression> cond;
     shared_ptr<Assign> incr;
-    list<shared_ptr<NetComp> > body;
+    list<shared_ptr<NetComp> > statements;
 
   };
+
+  NETLIST_STREAMOUT(ForState);
 
 }
 

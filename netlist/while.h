@@ -45,6 +45,8 @@ namespace netlist {
     list<shared_ptr<NetComp> > statements;
 
   };
+  
+  NETLIST_STREAMOUT(WhileState);
 
 }
 
