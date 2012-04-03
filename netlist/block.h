@@ -67,12 +67,32 @@ namespace netlist {
   public:
     // constructors
     GenBlock()
-      : Block(NetComp::tGenBlock, BIdentifier()) {}
+      : Block(NetComp::tGenBlock) {}
     GenBlock(const BIdentifier& nm)
       : Block(NetComp::tGenBlock, nm) {}
 
     // helpers
+    BIdentifier& new_BId();     /* generate an unused block id */
+    IIdentifier& new_IId();     /* generate an unused instance id*/
+    VIdentifier& new_VId();     /* generate an unused variable id */
+    
+    // helpersinherit from NetComp
     NETLIST_STREAMOUT_FUN_DECL;
+
+    // data
+    MIdentifier name;
+    DataBase<VIdentifier, Variable>        db_wire;      /* wires */
+    DataBase<VIdentifier, Variable>        db_reg;       /* registers */
+    DataBase<IIdentifier, Instance>        db_instance;  /* module instances */
+
+    DataBase<string, Assign>               db_assign;    /* continueous assignments */
+    DataBase<BIdentifier, SeqBlock>        db_block;     /* always blocks */
+
+  private:
+    //name for unnamed items
+    BIdentifier unnamed_block;
+    IIdentifier unnamed_instance;
+    VIdentifier unnamed_var;
   };
   NETLIST_STREAMOUT(GenBlock);
 

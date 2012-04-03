@@ -93,6 +93,26 @@ bool netlist::Block::add_statements(const shared_ptr<SeqBlock>& body) {
 
 ///////////////////////////////////////////////////////////////////////
 
+BIdentifier& netlist::GenBlock::new_BId() {
+  while(db_block.find(unnamed_block).use_count() != 0)
+    ++unnamed_block;
+  return unnamed_block;
+}
+
+IIdentifier& netlist::GenBlock::new_IId() {
+  while(db_instance.find(unnamed_instance).use_count() != 0)
+    ++unnamed_instance;
+  return unnamed_instance;
+}
+
+VIdentifier& netlist::GenBlock::new_VId() {
+  while(db_wire.find(unnamed_var).use_count() +
+        db_reg.find(unnamed_var).use_count() != 0)
+    ++unnamed_var;
+  return unnamed_var;
+}
+
+//////////////////////////////////////////////////////////////
 void netlist::SeqBlock::clear() {
   Block::clear();
   sensitive = false;
