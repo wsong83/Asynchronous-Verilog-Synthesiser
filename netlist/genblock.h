@@ -20,33 +20,30 @@
  */
 
 /* 
- * while statements
- * 27/03/2012   Wei Song
+ * Generate block definition
+ * A block may be embedded in another one.
+ * 04/04/2012   Wei Song
  *
  *
  */
 
-#ifndef _H_AV_WHILE_
-#define _H_AV_WHILE_
+#ifndef _H_AV_GEN_BLOCK_
+#define _H_AV_GEN_BLOCK_
 
-namespace netlist {
-
-  class WhileState : public NetComp {
+namespace netlist{
+  class GenBlock : public Block {
   public:
     // constructors
-    NETLIST_DEFAULT_CON(WhileState, tWhile);
-    WhileState(const shared_ptr<Expression>& exp, const shared_ptr<Block>& body);
-
+    GenBlock()
+      : Block(NetComp::tGenBlock) {}
+    GenBlock(const BIdentifier& nm)
+      : Block(NetComp::tGenBlock, nm) {}
+    
     // inherit from NetComp
     NETLIST_STREAMOUT_FUN_DECL;
 
-    //data
-    shared_ptr<Expression> exp;
-    list<shared_ptr<NetComp> > statements;
-
   };
-  
-  NETLIST_STREAMOUT(WhileState);
+  NETLIST_STREAMOUT(GenBlock);
 
 }
 

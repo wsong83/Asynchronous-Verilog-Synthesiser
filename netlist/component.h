@@ -59,51 +59,10 @@ using boost::static_pointer_cast;
 
 #include <cassert>
 
-
-// function macro for stream out operator <<
-#ifndef NETLIST_STREAMOUT
-#define NETLIST_STREAMOUT(COMP)                                          \
-  inline ostream& operator<< ( ostream& os, const COMP& rhs) { \
-    return rhs.streamout(os, 0);                               \
-  }
-#endif
-
-#ifndef NETLIST_DEFAULT_CON
-#define NETLIST_DEFAULT_CON(COMP, CT) COMP() : NetComp(NetComp::CT) { }
-#endif
-
-#ifndef NETLIST_STREAMOUT_FUN_DECL
-#define NETLIST_STREAMOUT_FUN_DECL                    \
-  virtual ostream& streamout (ostream&, unsigned int) const
-#endif
-
 namespace netlist {
 
-  // the base class of all netlist components
-  class NetComp {
-  public:
-#include "comp_type.h"
-    // no one should directly use this class
-    NetComp() : ctype(tUnkown) {}
-    NetComp(ctype_t tt) : ctype(tt) {}
-    
-    ctype_t get_type() const { return ctype; }
-    ctype_t ctype;
-
-    virtual void reduce() {}	/* many netlist component need method to reduce itself */
-    virtual ostream& streamout (ostream& os, unsigned int indent) const {
-      os << "ERROR!!, the streamout() of NetComp is used!!!" << endl;
-      assert(0 == "the streamout() of NetComp is used");
-      return os;
-    }
-
-    virtual NetComp* deep_copy() const { /* deep copy a netlist component */
-      cout << "ERROR!!, the deep_copy() of NetComp is used!!!" << endl;
-      assert(0 == "the deep_copy() of NetComp is used");
-      return(new NetComp());
-    }
-  };
-  NETLIST_STREAMOUT(NetComp);
+  // netcomp.h
+  class NetComp;
 
   // operation.h
   class Operation;
@@ -141,6 +100,9 @@ namespace netlist {
   // assign.h
   class Assign;
 
+  // block.h
+  class Block;
+
   // module.h
   class Module;
   
@@ -151,8 +113,10 @@ namespace netlist {
   class PortConn;               /* port connection */
   class ParaConn;               /* parameter connection */
 
-  // blcok.h
+  // genblcok.h
   class GenBlock;
+
+  // seqblock.h
   class SeqBlock;
 
   // case.h
@@ -175,6 +139,9 @@ namespace netlist {
 
 #include "defines.h"
 
+// root class
+#include "netcomp.h"
+
 // STL classes
 #include "database.h"
 
@@ -189,10 +156,12 @@ namespace netlist {
 #include "port.h"
 #include "variable.h"
 #include "assign.h"
+#include "block.h"
 #include "module.h"
 #include "instance.h"
 #include "portconn.h"
-#include "block.h"
+#include "genblock.h"
+#include "seqblock.h"
 #include "case.h"
 #include "if.h"
 #include "while.h"

@@ -51,8 +51,8 @@ ostream& netlist::CaseItem::streamout (ostream& os, unsigned int indent) const {
   
   // the body part
   if(statements.size() == 1) {
-    if(statements.front()->get_type() == NetComp::tSeqBlock)
-      static_pointer_cast<SeqBlock>(statements.front())->streamout(os, indent, true);
+    if(statements.front()->get_type() == NetComp::tBlock)
+      static_pointer_cast<Block>(statements.front())->streamout(os, indent, true);
     else {
       os << endl;
       statements.front()->streamout(os, indent+2);
@@ -70,7 +70,7 @@ ostream& netlist::CaseItem::streamout (ostream& os, unsigned int indent) const {
   return os;
 }
 
-void netlist::CaseItem::add_statements(const shared_ptr<SeqBlock>& body) {
+void netlist::CaseItem::add_statements(const shared_ptr<Block>& body) {
   if(body->is_named() || (body->db_var.size() != 0)) {
     statements.push_back(body);
   } else {

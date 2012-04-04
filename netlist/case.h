@@ -37,16 +37,16 @@ namespace netlist{
   public:
     NETLIST_DEFAULT_CON(CaseItem, tCaseItem);
     // constructor with only one expression, the normal case
-    CaseItem(const shared_ptr<Expression>& exp, const shared_ptr<SeqBlock>& body) {
+    CaseItem(const shared_ptr<Expression>& exp, const shared_ptr<Block>& body) {
       exps.push_back(exp);
       add_statements(body);
     }
     // normal default case
-    CaseItem(const shared_ptr<SeqBlock>& body) {
+    CaseItem(const shared_ptr<Block>& body) {
       add_statements(body);
     }
     // multiple expressions
-    CaseItem(const list<shared_ptr<Expression> >& expm, const shared_ptr<SeqBlock>& body) {
+    CaseItem(const list<shared_ptr<Expression> >& expm, const shared_ptr<Block>& body) {
       exps = expm;
       add_statements(body);
     }
@@ -54,7 +54,7 @@ namespace netlist{
     // helpers
     NETLIST_STREAMOUT_FUN_DECL;
     bool is_default() const {return exps.size() == 0; }
-    void add_statements (const shared_ptr<SeqBlock>&); /* add sattements to this case item */
+    void add_statements (const shared_ptr<Block>&); /* add sattements to this case item */
 
     // data
     list<shared_ptr<Expression> > exps;

@@ -28,6 +28,7 @@
 
 enum ctype_t {
   tAssign,                  /* assignment */
+  tBlock,                   /* general block */
   tBlockName,               /* block name */
   tCaseItem,                /* a case item */
   tCase,                    /* a case statement */

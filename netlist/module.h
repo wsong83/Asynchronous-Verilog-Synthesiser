@@ -31,35 +31,26 @@
 
 namespace netlist {
   
-  class Module : public NetComp {
+  class Module : public Block {
   public:
-    NETLIST_DEFAULT_CON(Module, tModule);
+    Module()
+      : Block(tModule);
     Module(const MIdentifier& nm)
-      : NetComp(tModule), name(nm) {}
+      : Block(tModule), name(nm) { named=true; }
+
+    // inherit from NetComp
+    NETLIST_STREAMOUT_FUN_DECL;
 
     // helpers
-    NETLIST_STREAMOUT_FUN_DECL;
-    BIdentifier& new_BId();     /* generate an unused block id */
-    IIdentifier& new_IId();     /* generate an unused instance id*/
-    VIdentifier& new_VId();     /* generate an unused variable id */
+    virtual void set_name(const MIdentifier& nm) { name = nm; named=true;}
+    virtual void clear();
+    virtual VIdentifier& new_VId();
     
     // data
     MIdentifier name;
     DataBase<PoIdentifier, Port, true>     db_port;      /* input and output ports, ordered */
-    DataBase<VIdentifier, Variable>        db_wire;      /* wires */
-    DataBase<VIdentifier, Variable>        db_reg;       /* registers */
     DataBase<VIdentifier, Variable, true>  db_param;     /* parameters, ordered */
     DataBase<VIdentifier, Variable, true>  db_genvar;    /* generate variable, ordered */
-    DataBase<IIdentifier, Instance>        db_instance;  /* module instances */
-
-    DataBase<string, Assign>               db_assign;    /* continueous assignments */
-    DataBase<BIdentifier, SeqBlock>        db_block;     /* always blocks */
-
-  private:
-    //name for unnamed items
-    BIdentifier unnamed_block;
-    IIdentifier unnamed_instance;
-    VIdentifier unnamed_var;
 
   };
 

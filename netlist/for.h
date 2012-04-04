@@ -39,7 +39,7 @@ namespace netlist {
              const shared_ptr<Assign>& init, 
              const shared_ptr<Expression>& cond, 
              const shared_ptr<Assign>& incr, 
-             const shared_ptr<SeqBlock>& body
+             const shared_ptr<Block>& body
              );
 
     // inherit from NetComp

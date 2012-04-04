@@ -32,8 +32,8 @@ using namespace netlist;
 
 netlist::IfState::IfState(
                           const shared_ptr<Expression>& exp, 
-                          const shared_ptr<SeqBlock>& m_ifcase, 
-                          const shared_ptr<SeqBlock>& m_elsecase
+                          const shared_ptr<Block>& m_ifcase, 
+                          const shared_ptr<Block>& m_elsecase
                           )
   : NetComp(NetComp::tIf), exp(exp) 
 {
@@ -52,7 +52,7 @@ netlist::IfState::IfState(
 
 netlist::IfState::IfState(
                           const shared_ptr<Expression>& exp, 
-                          const shared_ptr<SeqBlock>& m_ifcase
+                          const shared_ptr<Block>& m_ifcase
                           )
   : NetComp(NetComp::tIf), exp(exp) 
 {
@@ -75,8 +75,8 @@ ostream& netlist::IfState::streamout(ostream& os, unsigned int indent, bool fl_p
   os << "if (" << *exp << ") ";
 
   if(ifcase.size() == 1) {
-    if(ifcase.front()->get_type() == NetComp::tSeqBlock)
-      static_pointer_cast<SeqBlock>(ifcase.front())->streamout(os, indent, true);
+    if(ifcase.front()->get_type() == NetComp::tBlock)
+      static_pointer_cast<Block>(ifcase.front())->streamout(os, indent, true);
     else {
       os << endl;
       ifcase.front()->streamout(os, indent+2);
@@ -97,8 +97,8 @@ ostream& netlist::IfState::streamout(ostream& os, unsigned int indent, bool fl_p
   os << string(indent, ' ') << "else ";
   
   if(elsecase.size() == 1) {
-    if(elsecase.front()->get_type() == NetComp::tSeqBlock)
-      static_pointer_cast<SeqBlock>(elsecase.front())->streamout(os, indent, true);
+    if(elsecase.front()->get_type() == NetComp::tBlock)
+      static_pointer_cast<Block>(elsecase.front())->streamout(os, indent, true);
     else if(elsecase.front()->get_type() == NetComp::tIf)
       static_pointer_cast<IfState>(elsecase.front())->streamout(os, indent, true);
     else {

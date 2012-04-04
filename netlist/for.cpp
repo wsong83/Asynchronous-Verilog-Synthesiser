@@ -34,7 +34,7 @@ netlist::ForState::ForState(
                             const shared_ptr<Assign>& init, 
                             const shared_ptr<Expression>& cond, 
                             const shared_ptr<Assign>& incr, 
-                            const shared_ptr<SeqBlock>& body
+                            const shared_ptr<Block>& body
                             )
   : NetComp(NetComp::tFor), init(init), cond(cond), incr(incr)
 {
@@ -51,8 +51,8 @@ ostream& netlist::ForState::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ') << "for (" << *init << "; " << *cond << "; " << *incr << ") ";
 
   if(statements.size() == 1) {
-    if(statements.front()->get_type() == NetComp::tSeqBlock)
-      static_pointer_cast<SeqBlock>(statements.front())->streamout(os, indent, true);
+    if(statements.front()->get_type() == NetComp::tBlock)
+      static_pointer_cast<Block>(statements.front())->streamout(os, indent, true);
     else {
       os << endl;
       statements.front()->streamout(os, indent+2);

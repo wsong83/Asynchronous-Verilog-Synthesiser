@@ -37,13 +37,13 @@ namespace netlist {
     NETLIST_DEFAULT_CON(IfState, tIf);
     IfState(
             const shared_ptr<Expression>& exp, 
-            const shared_ptr<SeqBlock>& m_ifcase, 
-            const shared_ptr<SeqBlock>& m_elsecase
+            const shared_ptr<Block>& m_ifcase, 
+            const shared_ptr<Block>& m_elsecase
             );
 
     IfState(
             const shared_ptr<Expression>& exp, 
-            const shared_ptr<SeqBlock>& m_ifcase 
+            const shared_ptr<Block>& m_ifcase 
             );
 
     // helpers

@@ -68,16 +68,16 @@ namespace netlist {
     shared_ptr<Module> find(const MIdentifier& mn) { return db.find(mn); } 
     
     // return a pointer to the current netlist component
-    shared_ptr<NetComp> get_current_comp() { return comp_list.front(); }
+    shared_ptr<Block> get_current_comp() { return comp_list.front(); }
     
     // return a iterator of the current item list
-    list<shared_ptr<NetComp> >::iterator get_current_it() { return comp_list.begin(); }
+    list<shared_ptr<Block> >::iterator get_current_it() { return comp_list.begin(); }
     
     // check whether the iterator is valid in the list
-    bool it_valid(const list<shared_ptr<NetComp> >::iterator& it) const { return it != comp_list.end(); }
+    bool it_valid(const list<shared_ptr<Block> >::iterator& it) const { return it != comp_list.end(); }
     
     // push one item to the process list
-    void push(shared_ptr<NetComp> item) { comp_list.push_front(item); }
+    void push(shared_ptr<Block> item) { comp_list.push_front(item); }
     
     // pop the top item from the process list
     void pop() { comp_list.pop_front(); }
@@ -95,7 +95,7 @@ namespace netlist {
        A list provide better access to father components instead
        only the direct father.
      */
-    list<shared_ptr<NetComp> >  comp_list; 
+    list<shared_ptr<Block> >  comp_list; 
   };
 }
 

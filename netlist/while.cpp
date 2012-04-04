@@ -30,7 +30,7 @@
 
 using namespace netlist;
 
-netlist::WhileState::WhileState(const shared_ptr<Expression>& exp, const shared_ptr<SeqBlock>& body)
+netlist::WhileState::WhileState(const shared_ptr<Expression>& exp, const shared_ptr<Block>& body)
   : NetComp(NetComp::tWhile), exp(exp)
 {
   if(body->is_named() || (body->db_var.size() != 0)) {
@@ -46,8 +46,8 @@ ostream& netlist::WhileState::streamout(ostream& os, unsigned int indent) const 
   os << string(indent, ' ') << "while (" << *exp << ") ";
   
   if(statements.size() == 1) {
-    if(statements.front()->get_type() == NetComp::tSeqBlock)
-      static_pointer_cast<SeqBlock>(statements.front())->streamout(os, indent, true);
+    if(statements.front()->get_type() == NetComp::tBlock)
+      static_pointer_cast<Block>(statements.front())->streamout(os, indent, true);
     else {
       os << endl;
       statements.front()->streamout(os, indent+2);

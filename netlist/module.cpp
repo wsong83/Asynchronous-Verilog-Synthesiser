@@ -78,10 +78,16 @@ ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
   }
 
   { // continueous assignments
-    if(!db_assign.empty()) os << endl;
-    map<string, shared_ptr<Assign> >::const_iterator it, end;
-    for(it = db_assign.begin(), end = db_assign.end(); it != end; it++)
-      os << string(indent+2, ' ') << "assign " << *(it->second) << ";" << endl;
+    if(!statements.empty()) os << endl;
+    list<shared_ptr<NetComp> >::const_iterator it, end;
+    for(it = statements.begin(), end = statements.end(); it != end; it++) {
+      if((*it)->get_type() == NetComp::tAssign)
+        os << string(indent+2, ' ') << "assign " << **it << ";" << endl;
+      else {
+        os << endl;
+        (*it)->streamout(os, indent+2);
+      }
+    }
   }
 
   { // module instances
@@ -89,29 +95,16 @@ ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
     db_instance.streamout(os, indent+2);
   }
 
-  { // sequential blocks
-    if(!db_block.empty()) os << endl;
-    map<BIdentifier, shared_ptr<SeqBlock> >::const_iterator it, end;
-    for(it = db_block.begin(), end = db_block.end(); it != end; it++) {
-      os << string(indent+2, ' ') << "always ";
-      it->second->streamout(os, indent+2, true);
-    }
-  }
-
   os << endl << string(indent, ' ') << "endmodule" << endl << endl;
   return os;
 }
 
-BIdentifier& netlist::Module::new_BId() {
-  while(db_block.find(unnamed_block).use_count() != 0)
-    ++unnamed_block;
-  return unnamed_block;
-}
 
-IIdentifier& netlist::Module::new_IId() {
-  while(db_instance.find(unnamed_instance).use_count() != 0)
-    ++unnamed_instance;
-  return unnamed_instance;
+void netlist::Module::clear() {
+  Block::clear();
+  db_port.clear();
+  db_param.clear();
+  db_genvar.clear();
 }
 
 VIdentifier& netlist::Module::new_VId() {

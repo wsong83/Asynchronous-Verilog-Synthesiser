@@ -35,58 +35,44 @@ namespace netlist {
   class Block : public NetComp {
   public:
     // constructors
+    Block()
+      : NetComp(NetComp::tBlock), named(false) {}
     Block(NetComp::ctype_t t, const BIdentifier& nm) 
       : NetComp(t), name(nm), named(true) {}
+    Block(const BIdentifier& nm) 
+      : NetComp(NetComp::tBlock), name(nm), named(true) {}
     Block(NetComp::ctype_t t) 
       : NetComp(t), named(false) {}
 
     // helpers
-    void set_name(const BIdentifier& nm) {name = nm; named=true;}
-    bool is_named() const { return named; }
+    virtual void set_name(const BIdentifier& nm) {name = nm; named=true;}
+    virtual bool is_named() const { return named; }
     virtual void clear();               /* clear all statements */
     virtual bool add_assignment(const shared_ptr<Assign>&); /* add a blocking or non-blocking assignment into the block */
     virtual bool add_case(const shared_ptr<Expression>&, const list<shared_ptr<CaseItem> >&, const shared_ptr<CaseItem>&); /* add a general case statement */
     virtual bool add_case(const shared_ptr<Expression>&, const list<shared_ptr<CaseItem> >&); /* add a case statement without default */
     virtual bool add_case(const shared_ptr<Expression>&, const shared_ptr<CaseItem>&); /* add a case statement only with a default case, odd! */
-    virtual bool add_if(const shared_ptr<Expression>&, const shared_ptr<SeqBlock>&, const shared_ptr<SeqBlock>&); /* add an if statement with else case */
-    virtual bool add_if(const shared_ptr<Expression>&, const shared_ptr<SeqBlock>&); /* add an if statement without else case */
-    virtual bool add_while(const shared_ptr<Expression>&, const shared_ptr<SeqBlock>&); /* add a while statement */
-    virtual bool add_for(const shared_ptr<Assign>&, const shared_ptr<Expression>&, const shared_ptr<Assign>&, const shared_ptr<SeqBlock>&); /* add a for statement */
-    virtual bool add_block(const shared_ptr<SeqBlock>&); /* add a statement block */
-    virtual bool add_statements(const shared_ptr<SeqBlock>&); /* add several statements */
-
-    // data
-    BIdentifier name;
-    bool named;
-    list<shared_ptr<NetComp> > statements;   /* a general list to stor the statements */
-    DataBase<VIdentifier, Variable> db_var;  /* local variables */
-
-  };
-
-  class GenBlock : public Block {
-  public:
-    // constructors
-    GenBlock()
-      : Block(NetComp::tGenBlock) {}
-    GenBlock(const BIdentifier& nm)
-      : Block(NetComp::tGenBlock, nm) {}
+    virtual bool add_if(const shared_ptr<Expression>&, const shared_ptr<Block>&, const shared_ptr<Block>&); /* add an if statement with else case */
+    virtual bool add_if(const shared_ptr<Expression>&, const shared_ptr<Block>&); /* add an if statement without else case */
+    virtual bool add_while(const shared_ptr<Expression>&, const shared_ptr<Block>&); /* add a while statement */
+    virtual bool add_for(const shared_ptr<Assign>&, const shared_ptr<Expression>&, const shared_ptr<Assign>&, const shared_ptr<Block>&); /* add a for statement */
+    virtual bool add_block(const shared_ptr<Block>&); /* add a statement block */
+    virtual bool add_statements(const shared_ptr<Block>&); /* add several statements */
 
     // helpers
     BIdentifier& new_BId();     /* generate an unused block id */
     IIdentifier& new_IId();     /* generate an unused instance id*/
     VIdentifier& new_VId();     /* generate an unused variable id */
     
-    // helpersinherit from NetComp
-    NETLIST_STREAMOUT_FUN_DECL;
 
     // data
-    MIdentifier name;
+    BIdentifier name;
+    bool named;
+    list<shared_ptr<NetComp> >             statements;   /* a general list to stor the statements */
     DataBase<VIdentifier, Variable>        db_wire;      /* wires */
     DataBase<VIdentifier, Variable>        db_reg;       /* registers */
     DataBase<IIdentifier, Instance>        db_instance;  /* module instances */
-
-    DataBase<string, Assign>               db_assign;    /* continueous assignments */
-    DataBase<BIdentifier, SeqBlock>        db_block;     /* always blocks */
+    DataBase<BIdentifier, BIdentifier>     db_block;     /* just used to generate a unused block id */
 
   private:
     //name for unnamed items
@@ -94,32 +80,8 @@ namespace netlist {
     IIdentifier unnamed_instance;
     VIdentifier unnamed_var;
   };
-  NETLIST_STREAMOUT(GenBlock);
 
-  class SeqBlock : public Block {
-  public:
-    // constructors
-    SeqBlock()
-      : Block(NetComp::tSeqBlock), sensitive(false) {}
-    SeqBlock(const BIdentifier& nm)
-      : Block(NetComp::tSeqBlock, nm), sensitive(false) {}
-
-    // helpers
-    virtual void clear();               /* clear all statements */
-    virtual bool add_seq_block(list<pair<int, shared_ptr<Expression> > >&, const shared_ptr<SeqBlock>&); /* add a sequential block */
-    NETLIST_STREAMOUT_FUN_DECL;
-    virtual ostream& streamout(ostream& os, unsigned int indent, bool fl_prefix) const;
-
-    // data
-    bool sensitive;                                         /* whether this is a sensitive block, top level block */
-    list<pair<bool, shared_ptr<Expression> > > slist_pulse; /* pulse sensitive list */
-    list<shared_ptr<Expression> > slist_level;              /* level sensitive list */
-    
-
-  };
-  NETLIST_STREAMOUT(SeqBlock);
-
-  
+ 
 }
 
 #endif

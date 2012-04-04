@@ -20,33 +20,44 @@
  */
 
 /* 
- * while statements
- * 27/03/2012   Wei Song
+ * Sequential block definition
+ * A block may be embedded in another one.
+ * 04/04/2012   Wei Song
  *
  *
  */
 
-#ifndef _H_AV_WHILE_
-#define _H_AV_WHILE_
+#ifndef _H_AV_SEQ_BLOCK_
+#define _H_AV_SEQ_BLOCK_
 
-namespace netlist {
+namespace netlist{
 
-  class WhileState : public NetComp {
+  class SeqBlock : public Block {
   public:
     // constructors
-    NETLIST_DEFAULT_CON(WhileState, tWhile);
-    WhileState(const shared_ptr<Expression>& exp, const shared_ptr<Block>& body);
-
+  SeqBlock()
+    : Block(NetComp::tSeqBlock), sensitive(false) {}
+  SeqBlock(const BIdentifier& nm)
+    : Block(NetComp::tSeqBlock, nm), sensitive(false) {}
+  SeqBlock(list<pair<int, shared_ptr<Expression> > >&, const shared_ptr<Block>&);
+  SeqBlock(const shared_ptr<Block>&);
+    
+    // helpers
+    virtual void clear();               /* clear all statements */
+    virtual ostream& streamout(ostream& os, unsigned int indent, bool fl_prefix) const;
+    
     // inherit from NetComp
     NETLIST_STREAMOUT_FUN_DECL;
-
-    //data
-    shared_ptr<Expression> exp;
-    list<shared_ptr<NetComp> > statements;
-
+    
+    // data
+    bool sensitive;                                         /* whether this is a sensitive block, top level block */
+    list<pair<bool, shared_ptr<Expression> > > slist_pulse; /* pulse sensitive list */
+    list<shared_ptr<Expression> > slist_level;              /* level sensitive list */
+    
+    
   };
-  
-  NETLIST_STREAMOUT(WhileState);
+  NETLIST_STREAMOUT(SeqBlock);
+
 
 }
 
