@@ -90,7 +90,7 @@ bool netlist::Block::add_block(const shared_ptr<Block>& body) {
 }
 
 bool netlist::Block::add_statements(const shared_ptr<Block>& body) {
-  if(body->is_named() || (body->db_var.size() != 0)) {
+  if(body->is_named() || (body->db_reg.size() != 0)) {
     statements.push_back(body);
   } else {
     statements.splice(statements.end(), body->statements);
@@ -117,3 +117,64 @@ VIdentifier& netlist::Block::new_VId() {
   return unnamed_var;
 }
 
+ostream& netlist::Block::streamout(ostream& os, unsigned int indent) const {
+  streamout(os, indent, false);
+  return os;
+}
+
+ostream& netlist::Block::streamout(ostream& os, unsigned int indent, bool fl_prefix) const {
+
+  if(!fl_prefix) os << string(indent, ' ');
+
+  // the body part
+  if((statements.size() + 
+      db_reg.size() +
+      db_wire.size() +
+      db_instance.size() == 1) &&
+     (!named))  {
+    if(statements.front()->get_type() == NetComp::tBlock)
+      static_pointer_cast<Block>(statements.front())->streamout(os, indent, true);
+    else {
+      os << endl;
+
+      if(statements.size() > 0) {
+        statements.front()->streamout(os, indent+2);
+        if(statements.front()->get_type() == NetComp::tAssign) os << ";" << endl;
+      }
+
+      if(db_wire.size() > 0)
+        os << string(indent+2, ' ') << "wire" << *(db_wire.begin()->second) << ";" << endl;
+
+      if(db_reg.size() > 0)
+        os << string(indent+2, ' ') << "reg" << *(db_wire.begin()->second) << ";" << endl;
+
+      if(db_instance.size() > 0)
+        db_instance.streamout(os, indent+2);
+    }
+  } else {
+    os << "begin";
+    if(named) os << ": " << name.name;
+    os << endl;
+    // show local variables if any
+    {
+      map<VIdentifier, shared_ptr<Variable> >::const_iterator it, end;
+      for(it = db_wire.begin(), end = db_wire.end(); it != end; it++)
+        os << string(indent+2, ' ') << "wire " << *(it->second) << ";" << endl;
+      for(it = db_reg.begin(), end = db_reg.end(); it != end; it++)
+        os << string(indent+2, ' ') << "reg " << *(it->second) << ";" << endl;
+      db_instance.streamout(os, indent+2);
+    }
+    // statements
+    {
+      list<shared_ptr<NetComp> >::const_iterator it, end;
+      for(it=statements.begin(), end=statements.end(); it!=end; it++) {
+        (*it)->streamout(os, indent+2);
+        if((*it)->get_type() == NetComp::tAssign) os << ";" << endl;
+      }
+    }
+    os << string(indent, ' ') << "end" << endl;
+  }
+
+  return os;
+}
+  

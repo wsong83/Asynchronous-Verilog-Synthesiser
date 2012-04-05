@@ -37,13 +37,21 @@ netlist::IfState::IfState(
                           )
   : NetComp(NetComp::tIf), exp(exp) 
 {
-  if(m_ifcase->is_named() || (m_ifcase->db_var.size() != 0)) {
+  if(m_ifcase->is_named() || 
+     (m_ifcase->db_reg.size() +
+      m_ifcase->db_wire.size() +
+      m_ifcase->db_instance.size() > 0)
+     ) {
     ifcase.push_back(static_pointer_cast<NetComp>(m_ifcase));
   } else {
     ifcase = m_ifcase->statements;
   }
 
-  if(m_elsecase->is_named() || (m_elsecase->db_var.size() != 0)) {
+  if(m_elsecase->is_named() || 
+     (m_elsecase->db_reg.size() +
+      m_elsecase->db_wire.size() +
+      m_elsecase->db_instance.size() > 0)
+     ) {
     elsecase.push_back(static_pointer_cast<NetComp>(m_elsecase));
   } else {
     elsecase = m_elsecase->statements;
@@ -56,7 +64,11 @@ netlist::IfState::IfState(
                           )
   : NetComp(NetComp::tIf), exp(exp) 
 {
-  if(m_ifcase->is_named()) {
+  if(m_ifcase->is_named() || 
+     (m_ifcase->db_reg.size() +
+      m_ifcase->db_wire.size() +
+      m_ifcase->db_instance.size() > 0)
+     ) {
     ifcase.push_back(static_pointer_cast<NetComp>(m_ifcase));
   } else {
     ifcase = m_ifcase->statements;

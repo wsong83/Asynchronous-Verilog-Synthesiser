@@ -47,6 +47,8 @@ ostream& netlist::SeqBlock::streamout(ostream& os, unsigned int indent, bool fl_
   
   if(!fl_prefix) os << string(indent, ' ');
   
+  os << "always ";
+  
   if(sensitive) {
     os << "@(";
     if(slist_pulse.size() > 0) {
@@ -79,43 +81,15 @@ ostream& netlist::SeqBlock::streamout(ostream& os, unsigned int indent, bool fl_
     os << ") ";
   }
 
-  // the body part
-  if((statements.size() == 1) && (db_var.size() == 0) && (!named))  {
-    if(statements.front()->get_type() == NetComp::tSeqBlock)
-      static_pointer_cast<SeqBlock>(statements.front())->streamout(os, indent, true);
-    else {
-      os << endl;
-      statements.front()->streamout(os, indent+2);
-      if(statements.front()->get_type() == NetComp::tAssign) os << ";" << endl;
-    }
-  } else {
-    os << "begin";
-    if(named) os << ": " << name.name;
-    os << endl;
-    // show local variables if any
-    {
-      map<VIdentifier, shared_ptr<Variable> >::const_iterator it, end;
-      for(it = db_var.begin(), end = db_var.end(); it != end; it++)
-        os << string(indent+2, ' ') << "reg " << *(it->second) << ";" << endl;
-    }
-    // statements
-    {
-      list<shared_ptr<NetComp> >::const_iterator it, end;
-      for(it=statements.begin(), end=statements.end(); it!=end; it++) {
-        (*it)->streamout(os, indent+2);
-        if((*it)->get_type() == NetComp::tAssign) os << ";" << endl;
-      }
-    }
-    os << string(indent, ' ') << "end" << endl;
-  }
-  
+  Block::streamout(os, indent, true);
+
   return os; 
 }
 
 netlist::SeqBlock::SeqBlock(list<pair<int, shared_ptr<Expression> > >& slist, const shared_ptr<Block>& body) 
   : Block(*body)
 {
-  type = NetComp::tSeqBlock;
+  ctype = NetComp::tSeqBlock;
   
   list<pair<int, shared_ptr<Expression> > >::iterator it, end;
   for(it=slist.begin(), end=slist.end(); it!=end; it++) {
@@ -131,11 +105,9 @@ netlist::SeqBlock::SeqBlock(list<pair<int, shared_ptr<Expression> > >& slist, co
   named = body->named;
   if(named) name = body->name;
   statements = body->statements;
-  
-  if(slist_pulse.empty() || slist_level.empty() == false)
-    return false;
-  else
-    return true;
+
+  // TODO: checking sensitive list, only one type is used
+
 }
       
 netlist::SeqBlock::SeqBlock(const shared_ptr<Block>& body) 

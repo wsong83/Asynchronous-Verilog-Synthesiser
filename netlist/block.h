@@ -63,7 +63,10 @@ namespace netlist {
     BIdentifier& new_BId();     /* generate an unused block id */
     IIdentifier& new_IId();     /* generate an unused instance id*/
     VIdentifier& new_VId();     /* generate an unused variable id */
+    virtual ostream& streamout(ostream& os, unsigned int indent, bool fl_prefix) const;
     
+    // inherit from NetComp
+    NETLIST_STREAMOUT_FUN_DECL;
 
     // data
     BIdentifier name;
@@ -74,13 +77,14 @@ namespace netlist {
     DataBase<IIdentifier, Instance>        db_instance;  /* module instances */
     DataBase<BIdentifier, BIdentifier>     db_block;     /* just used to generate a unused block id */
 
-  private:
+  protected:
     //name for unnamed items
     BIdentifier unnamed_block;
     IIdentifier unnamed_instance;
     VIdentifier unnamed_var;
   };
 
+  NETLIST_STREAMOUT(Block);
  
 }
 

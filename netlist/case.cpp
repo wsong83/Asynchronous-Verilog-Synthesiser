@@ -71,7 +71,11 @@ ostream& netlist::CaseItem::streamout (ostream& os, unsigned int indent) const {
 }
 
 void netlist::CaseItem::add_statements(const shared_ptr<Block>& body) {
-  if(body->is_named() || (body->db_var.size() != 0)) {
+  if(body->is_named() || 
+     (body->db_reg.size() +
+      body->db_wire.size() +
+      body->db_instance.size() > 0)
+     ) {
     statements.push_back(body);
   } else {
     statements.splice(statements.end(), body->statements);

@@ -35,17 +35,17 @@ namespace netlist{
   class SeqBlock : public Block {
   public:
     // constructors
-  SeqBlock()
+    SeqBlock()
     : Block(NetComp::tSeqBlock), sensitive(false) {}
-  SeqBlock(const BIdentifier& nm)
+    SeqBlock(const BIdentifier& nm)
     : Block(NetComp::tSeqBlock, nm), sensitive(false) {}
-  SeqBlock(list<pair<int, shared_ptr<Expression> > >&, const shared_ptr<Block>&);
-  SeqBlock(const shared_ptr<Block>&);
+    SeqBlock(list<pair<int, shared_ptr<Expression> > >&, const shared_ptr<Block>&);
+    SeqBlock(const shared_ptr<Block>&);
     
     // helpers
     virtual void clear();               /* clear all statements */
-    virtual ostream& streamout(ostream& os, unsigned int indent, bool fl_prefix) const;
-    
+    virtual ostream& streamout(ostream&, unsigned int, bool) const;
+
     // inherit from NetComp
     NETLIST_STREAMOUT_FUN_DECL;
     
@@ -56,6 +56,7 @@ namespace netlist{
     
     
   };
+
   NETLIST_STREAMOUT(SeqBlock);
 
 

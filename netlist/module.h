@@ -34,7 +34,7 @@ namespace netlist {
   class Module : public Block {
   public:
     Module()
-      : Block(tModule);
+      : Block(tModule) {}
     Module(const MIdentifier& nm)
       : Block(tModule), name(nm) { named=true; }
 

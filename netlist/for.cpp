@@ -38,7 +38,11 @@ netlist::ForState::ForState(
                             )
   : NetComp(NetComp::tFor), init(init), cond(cond), incr(incr)
 {
-  if(body->is_named() || (body->db_var.size() != 0)) {
+  if(body->is_named() || 
+     (body->db_reg.size() +
+      body->db_wire.size() +
+      body->db_instance.size() > 0)
+     ) {
     statements.push_back(static_pointer_cast<NetComp>(body));
   } else {
     statements = body->statements;

@@ -33,7 +33,7 @@
 #ifndef NETLIST_STREAMOUT
 #define NETLIST_STREAMOUT(COMP)                                \
   inline ostream& operator<< ( ostream& os, const COMP& rhs) { \
-    return rhs.streamout(os, 0);                               \
+    return rhs.streamout(os, (unsigned int)(0));               \
   }
 #endif
 
