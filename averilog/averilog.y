@@ -239,6 +239,9 @@
 %type <tBlock>          statements
 %type <tBlock>          statement
 %type <tBlock>          statement_or_null 
+%type <tBlock>          generate_item
+%type <tBlock>          generate_items
+%type <tBlock>          generate_item_or_null
 %type <tBlockName>      block_identifier
 %type <tCaseItem>       case_item
 %type <tConcatenation>  concatenation
@@ -855,14 +858,13 @@ generated_instantiation
     ;
 
 generate_items
-    : /* empty */
-    | generate_item
+    : generate_item
     | generate_items generate_item
     ;
 
 generate_item_or_null
-    : /* empty */
-    | generate_item
+    : /* empty */        { $$.reset(new Block()); }
+    | generate_item      { $$ = $1; }
     ;
 
 generate_item 
