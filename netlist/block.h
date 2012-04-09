@@ -36,17 +36,19 @@ namespace netlist {
   public:
     // constructors
     Block()
-      : NetComp(NetComp::tBlock), named(false) {}
+      : NetComp(NetComp::tBlock), named(false), complex(false) {}
     Block(NetComp::ctype_t t, const BIdentifier& nm) 
-      : NetComp(t), name(nm), named(true) {}
+      : NetComp(t), name(nm), named(true), complex(false) {}
     Block(const BIdentifier& nm) 
-      : NetComp(NetComp::tBlock), name(nm), named(true) {}
+      : NetComp(NetComp::tBlock), name(nm), named(true), complex(true) {}
     Block(NetComp::ctype_t t) 
-      : NetComp(t), named(false) {}
+      : NetComp(t), named(false), complex(false) {}
 
     // helpers
-    virtual void set_name(const BIdentifier& nm) {name = nm; named=true;}
+    virtual void set_name(const BIdentifier& nm) {name = nm; named=true; complex = true;}
+    virtual void set_complex() { complex = true; } /* set the block to be complex block */
     virtual bool is_named() const { return named; }
+    virtual bool is_complex() const { return complex; } /* when complex, this block should not be dismantled */
     virtual void clear();               /* clear all statements */
     virtual bool add_assignment(const shared_ptr<Assign>&); /* add a blocking or non-blocking assignment into the block */
     virtual bool add_case(const shared_ptr<Expression>&, const list<shared_ptr<CaseItem> >&, const shared_ptr<CaseItem>&); /* add a general case statement */
@@ -70,7 +72,6 @@ namespace netlist {
 
     // data
     BIdentifier name;
-    bool named;
     list<shared_ptr<NetComp> >             statements;   /* a general list to stor the statements */
     DataBase<VIdentifier, Variable>        db_wire;      /* wires */
     DataBase<VIdentifier, Variable>        db_reg;       /* registers */
@@ -82,6 +83,10 @@ namespace netlist {
     BIdentifier unnamed_block;
     IIdentifier unnamed_instance;
     VIdentifier unnamed_var;
+
+    bool named;                 /* true when named */
+    bool complex;               /* true when the block should not be dismantaled */
+
   };
 
   NETLIST_STREAMOUT(Block);

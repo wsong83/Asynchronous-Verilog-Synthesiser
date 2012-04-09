@@ -868,28 +868,32 @@ generate_item_or_null
     ;
 
 generate_item 
-    : variable_declaration ';'
-    | function_declaration
-    | continuous_assign
-    | gate_instantiation
-    | module_instantiation
-    | always_construct
-    | generate_conditional_statement
-    | generate_case_statement
-    | generate_loop_statement
-    | generate_block
-    ;
-
-generate_conditional_statement 
-    : "if" '(' expression ')' generate_item_or_null 
+    : variable_declaration ';'  { $$.reset(new Block()); }
+    | function_declaration      { $$.reset(new Block()); }
+    | continuous_assign         { $$.reset(new Block()); }
+    | gate_instantiation        { $$.reset(new Block()); }
+    | module_instantiation      { $$.reset(new Block()); }
+    | always_construct          { $$.reset(new Block()); }
+    | "if" '(' expression ')' generate_item_or_null 
     | "if" '(' expression ')' generate_item_or_null "else" generate_item_or_null
-    ;
-
-generate_case_statement 
-    : "case" '(' expression ')' "default" generate_item_or_null "endcase"
+    | "case" '(' expression ')' "default" generate_item_or_null "endcase"
     | "case" '(' expression ')' genvar_case_items "endcase"
     | "case" '(' expression ')' genvar_case_items "default" generate_item_or_null "endcase"
+    | "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' "begin" ':' block_identifier generate_item_or_null "end"
+    | "begin" generate_items "end"
+    | "begin" ':' block_identifier  generate_items "end"
     ;
+
+//generate_conditional_statement 
+//    : "if" '(' expression ')' generate_item_or_null 
+//    | "if" '(' expression ')' generate_item_or_null "else" generate_item_or_null
+//    ;
+
+//generate_case_statement 
+//    : "case" '(' expression ')' "default" generate_item_or_null "endcase"
+//    | "case" '(' expression ')' genvar_case_items "endcase"
+//    | "case" '(' expression ')' genvar_case_items "default" generate_item_or_null "endcase"
+//    ;
 
 genvar_case_items
     : genvar_case_item
@@ -901,14 +905,14 @@ genvar_case_item
     | "default" ':' generate_item_or_null
     ;
 
-generate_loop_statement 
-    : "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' "begin" ':' block_identifier generate_item_or_null "end"
-    ;
+//generate_loop_statement 
+//    : "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' "begin" ':' block_identifier generate_item_or_null "end"
+//    ;
 
-generate_block 
-    : "begin" generate_items "end"
-    | "begin" ':' block_identifier  generate_items "end"
-    ;
+//generate_block 
+//    : "begin" generate_items "end"
+//    | "begin" ':' block_identifier  generate_items "end"
+//    ;
 
 //A.6.1 Continuous assignment statements
 continuous_assign 
