@@ -33,6 +33,7 @@ using namespace netlist;
 
 void netlist::Block::clear() {
   named = false;
+  blocked = false;
   statements.clear();
   db_wire.clear();
   db_reg.clear();
@@ -43,58 +44,73 @@ void netlist::Block::clear() {
   unnamed_var = VIdentifier();
 }
 
+bool netlist::Block::add(const shared_ptr<NetComp>&& dd) {
+  statements.push(dd);
+  return true;
+}
+
 bool netlist::Block::add_assignment(const shared_ptr<Assign>& dd) {
   statements.push_back(dd);
+  check();
   return true;
 }
 
 bool netlist::Block::add_case(const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, const shared_ptr<CaseItem>& ditem) {
   statements.push_back(shared_ptr<CaseState>( new CaseState(exp, citems, ditem)));
+  check();
   return true;
 }
 
 bool netlist::Block::add_case(const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems) {
   statements.push_back(shared_ptr<CaseState>( new CaseState(exp, citems)));
+  check();
   return true;
 }
 
 bool netlist::Block::add_case(const shared_ptr<Expression>& exp, const shared_ptr<CaseItem>& ditem) {
   statements.push_back(shared_ptr<CaseState>( new CaseState(exp, ditem)));
+  check();
   return true;
 }
 
 bool netlist::Block::add_if(const shared_ptr<Expression>& exp, const shared_ptr<Block>& ifcase, const shared_ptr<Block>& elsecase) {
   statements.push_back(shared_ptr<IfState>( new IfState(exp, ifcase, elsecase)));
+  check();
   return true;
 }
 
 bool netlist::Block::add_if(const shared_ptr<Expression>& exp, const shared_ptr<Block>& ifcase) {
   statements.push_back(shared_ptr<IfState>( new IfState(exp, ifcase)));
+  check();
   return true;
 }
 
 bool netlist::Block::add_while(const shared_ptr<Expression>& exp, const shared_ptr<Block>& body) {
   statements.push_back(shared_ptr<WhileState>( new WhileState(exp, body)));
+  check();
   return true;
 }
 
 bool netlist::Block::add_for(const shared_ptr<Assign>& init, const shared_ptr<Expression>& cond, const shared_ptr<Assign>& incr, const shared_ptr<Block>& body) {
   statements.push_back(shared_ptr<ForState>( new ForState(init, cond, incr, body)));
+  check();
   return true;
 }
 
 
 bool netlist::Block::add_block(const shared_ptr<Block>& body) {
   statements.push_back(body);
+  check();
   return true;
 }
 
 bool netlist::Block::add_statements(const shared_ptr<Block>& body) {
-  if(body->is_named() || (body->db_reg.size() != 0)) {
+  if(body->is_blocked()) {
     statements.push_back(body);
   } else {
     statements.splice(statements.end(), body->statements);
   }
+  check();
   return true;
 }
 
@@ -127,29 +143,13 @@ ostream& netlist::Block::streamout(ostream& os, unsigned int indent, bool fl_pre
   if(!fl_prefix) os << string(indent, ' ');
 
   // the body part
-  if((statements.size() + 
-      db_reg.size() +
-      db_wire.size() +
-      db_instance.size() == 1) &&
-     (!named))  {
+  if(!complex)  {
     if(statements.front()->get_type() == NetComp::tBlock)
       static_pointer_cast<Block>(statements.front())->streamout(os, indent, true);
     else {
       os << endl;
-
-      if(statements.size() > 0) {
-        statements.front()->streamout(os, indent+2);
-        if(statements.front()->get_type() == NetComp::tAssign) os << ";" << endl;
-      }
-
-      if(db_wire.size() > 0)
-        os << string(indent+2, ' ') << "wire" << *(db_wire.begin()->second) << ";" << endl;
-
-      if(db_reg.size() > 0)
-        os << string(indent+2, ' ') << "reg" << *(db_wire.begin()->second) << ";" << endl;
-
-      if(db_instance.size() > 0)
-        db_instance.streamout(os, indent+2);
+      statements.front()->streamout(os, indent+2);
+      if(statements.front()->get_type() == NetComp::tAssign) os << ";" << endl;
     }
   } else {
     os << "begin";
@@ -177,4 +177,4 @@ ostream& netlist::Block::streamout(ostream& os, unsigned int indent, bool fl_pre
 
   return os;
 }
-  
+

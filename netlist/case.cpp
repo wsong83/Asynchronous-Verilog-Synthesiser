@@ -50,36 +50,8 @@ ostream& netlist::CaseItem::streamout (ostream& os, unsigned int indent) const {
   }
   
   // the body part
-  if(statements.size() == 1) {
-    if(statements.front()->get_type() == NetComp::tBlock)
-      static_pointer_cast<Block>(statements.front())->streamout(os, indent, true);
-    else {
-      os << endl;
-      statements.front()->streamout(os, indent+2);
-      if(statements.front()->get_type() == NetComp::tAssign) os << ";" << endl;
-    }
-  } else {
-    os << "begin" << endl;
-    list<shared_ptr<NetComp> >::const_iterator it, end;
-    for(it=statements.begin(), end=statements.end(); it!=end; it++) {
-      (*it)->streamout(os, indent+2);
-      if((*it)->get_type() == NetComp::tAssign) os << ";" << endl;
-    }
-    os << string(indent, ' ') << "end" << endl;
-  }
+  body->streamout(os, indent+2);
   return os;
-}
-
-void netlist::CaseItem::add_statements(const shared_ptr<Block>& body) {
-  if(body->is_named() || 
-     (body->db_reg.size() +
-      body->db_wire.size() +
-      body->db_instance.size() > 0)
-     ) {
-    statements.push_back(body);
-  } else {
-    statements.splice(statements.end(), body->statements);
-  }
 }
 
 ostream& netlist::CaseState::streamout (ostream& os, unsigned int indent) const {

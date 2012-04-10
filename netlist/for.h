@@ -49,7 +49,7 @@ namespace netlist {
     shared_ptr<Assign> init;
     shared_ptr<Expression> cond;
     shared_ptr<Assign> incr;
-    list<shared_ptr<NetComp> > statements;
+    shared_ptr<Block> body;
 
   };
 

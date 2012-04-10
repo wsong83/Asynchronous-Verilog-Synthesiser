@@ -54,8 +54,8 @@ namespace netlist {
 
     //data
     shared_ptr<Expression> exp; /* the condition expression */
-    list<shared_ptr<NetComp> > ifcase; /* the block to run when expression is true */
-    list<shared_ptr<NetComp> > elsecase; /* the block to run when else is used */
+    shared_ptr<Block> ifcase; /* the block to run when expression is true */
+    shared_ptr<Block> elsecase; /* the block to run when else is used */
 
   };
 

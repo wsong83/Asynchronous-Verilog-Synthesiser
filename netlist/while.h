@@ -42,7 +42,7 @@ namespace netlist {
 
     //data
     shared_ptr<Expression> exp;
-    list<shared_ptr<NetComp> > statements;
+    shared_ptr<Block> body;
 
   };
   

@@ -36,20 +36,21 @@ namespace netlist {
   public:
     // constructors
     Block()
-      : NetComp(NetComp::tBlock), named(false), complex(false) {}
+      : NetComp(NetComp::tBlock), named(false), blocked(false) {}
     Block(NetComp::ctype_t t, const BIdentifier& nm) 
-      : NetComp(t), name(nm), named(true), complex(false) {}
+      : NetComp(t), name(nm), named(true), blocked(true) {}
     Block(const BIdentifier& nm) 
-      : NetComp(NetComp::tBlock), name(nm), named(true), complex(true) {}
+      : NetComp(NetComp::tBlock), name(nm), named(true), blocked(true) {}
     Block(NetComp::ctype_t t) 
-      : NetComp(t), named(false), complex(false) {}
+      : NetComp(t), named(false) {}
 
     // helpers
-    virtual void set_name(const BIdentifier& nm) {name = nm; named=true; complex = true;}
-    virtual void set_complex() { complex = true; } /* set the block to be complex block */
+    virtual void set_name(const BIdentifier& nm) {name = nm; named=true; blocked = true;}
+    virtual void set_blocked() { blocked = true; }
     virtual bool is_named() const { return named; }
-    virtual bool is_complex() const { return complex; } /* when complex, this block should not be dismantled */
+    virtual bool is_blocked() const { return blocked; }
     virtual void clear();               /* clear all statements */
+    virtual bool add(const shared_ptr<NetComp>&); /* add a general statement to this block */
     virtual bool add_assignment(const shared_ptr<Assign>&); /* add a blocking or non-blocking assignment into the block */
     virtual bool add_case(const shared_ptr<Expression>&, const list<shared_ptr<CaseItem> >&, const shared_ptr<CaseItem>&); /* add a general case statement */
     virtual bool add_case(const shared_ptr<Expression>&, const list<shared_ptr<CaseItem> >&); /* add a case statement without default */
@@ -60,6 +61,7 @@ namespace netlist {
     virtual bool add_for(const shared_ptr<Assign>&, const shared_ptr<Expression>&, const shared_ptr<Assign>&, const shared_ptr<Block>&); /* add a for statement */
     virtual bool add_block(const shared_ptr<Block>&); /* add a statement block */
     virtual bool add_statements(const shared_ptr<Block>&); /* add several statements */
+    virtual void elab_inparse();                           /* resolve the content in statements during parsing */
 
     // helpers
     BIdentifier& new_BId();     /* generate an unused block id */
@@ -79,13 +81,14 @@ namespace netlist {
     DataBase<BIdentifier, BIdentifier>     db_block;     /* just used to generate a unused block id */
 
   protected:
+
     //name for unnamed items
     BIdentifier unnamed_block;
     IIdentifier unnamed_instance;
     VIdentifier unnamed_var;
 
     bool named;                 /* true when named */
-    bool complex;               /* true when the block should not be dismantaled */
+    bool blocked;               /* user used begin and end for this block */
 
   };
 

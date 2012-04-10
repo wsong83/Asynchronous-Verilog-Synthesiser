@@ -35,44 +35,19 @@ netlist::IfState::IfState(
                           const shared_ptr<Block>& m_ifcase, 
                           const shared_ptr<Block>& m_elsecase
                           )
-  : NetComp(NetComp::tIf), exp(exp) 
+  : NetComp(NetComp::tIf), exp(exp), ifcase(m_ifcase), elsecase(m_elsecase)
 {
-  if(m_ifcase->is_named() || 
-     (m_ifcase->db_reg.size() +
-      m_ifcase->db_wire.size() +
-      m_ifcase->db_instance.size() > 0)
-     ) {
-    ifcase.push_back(static_pointer_cast<NetComp>(m_ifcase));
-  } else {
-    ifcase = m_ifcase->statements;
-  }
-
-  if(m_elsecase->is_named() || 
-     (m_elsecase->db_reg.size() +
-      m_elsecase->db_wire.size() +
-      m_elsecase->db_instance.size() > 0)
-     ) {
-    elsecase.push_back(static_pointer_cast<NetComp>(m_elsecase));
-  } else {
-    elsecase = m_elsecase->statements;
-  }
+  ifcase->elab_inparse();
+  elsecase->elab_inparse();
 }
 
 netlist::IfState::IfState(
                           const shared_ptr<Expression>& exp, 
                           const shared_ptr<Block>& m_ifcase
                           )
-  : NetComp(NetComp::tIf), exp(exp) 
+  : NetComp(NetComp::tIf), exp(exp),  ifcase(m_ifcase)
 {
-  if(m_ifcase->is_named() || 
-     (m_ifcase->db_reg.size() +
-      m_ifcase->db_wire.size() +
-      m_ifcase->db_instance.size() > 0)
-     ) {
-    ifcase.push_back(static_pointer_cast<NetComp>(m_ifcase));
-  } else {
-    ifcase = m_ifcase->statements;
-  }
+  ifcase->elab_inparse();
 }
 
 ostream& netlist::IfState::streamout(ostream& os, unsigned int indent) const {
@@ -85,48 +60,12 @@ ostream& netlist::IfState::streamout(ostream& os, unsigned int indent, bool fl_p
   if(!fl_prefix) os << string(indent, ' ');
   
   os << "if (" << *exp << ") ";
-
-  if(ifcase.size() == 1) {
-    if(ifcase.front()->get_type() == NetComp::tBlock)
-      static_pointer_cast<Block>(ifcase.front())->streamout(os, indent, true);
-    else {
-      os << endl;
-      ifcase.front()->streamout(os, indent+2);
-      if(ifcase.front()->get_type() == NetComp::tAssign) os << ";" << endl;
-    }
-  } else {
-    os << "begin" << endl;
-    list<shared_ptr<NetComp> >::const_iterator it, end;
-    for(it=ifcase.begin(), end=ifcase.end(); it!=end; it++) {
-      (*it)->streamout(os, indent+2);
-      if((*it)->get_type() == NetComp::tAssign) os << ";" << endl;
-    }
-    os << "end" << endl;
-  }
+  ifcase->streamout(os, indent+2);
 
   if(elsecase.size() == 0) return os;
 
   os << string(indent, ' ') << "else ";
-  
-  if(elsecase.size() == 1) {
-    if(elsecase.front()->get_type() == NetComp::tBlock)
-      static_pointer_cast<Block>(elsecase.front())->streamout(os, indent, true);
-    else if(elsecase.front()->get_type() == NetComp::tIf)
-      static_pointer_cast<IfState>(elsecase.front())->streamout(os, indent, true);
-    else {
-      os << endl;
-      elsecase.front()->streamout(os, indent+2);
-      if(elsecase.front()->get_type() == NetComp::tAssign) os << ";" << endl;
-    }
-  } else {
-    os << "begin" << endl;
-    list<shared_ptr<NetComp> >::const_iterator it, end;
-    for(it=elsecase.begin(), end=elsecase.end(); it!=end; it++) {
-      (*it)->streamout(os, indent+2);
-      if((*it)->get_type() == NetComp::tAssign) os << ";" << endl;
-    }
-    os << "end" << endl;
-  }
+  elsecase->streamout(os, indent+2);
   
   return os;
 

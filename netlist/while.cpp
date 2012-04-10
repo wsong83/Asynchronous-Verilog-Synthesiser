@@ -31,41 +31,16 @@
 using namespace netlist;
 
 netlist::WhileState::WhileState(const shared_ptr<Expression>& exp, const shared_ptr<Block>& body)
-  : NetComp(NetComp::tWhile), exp(exp)
+  : NetComp(NetComp::tWhile), exp(exp), body(body)
 {
-  if(body->is_named() || 
-     (body->db_reg.size() +
-      body->db_wire.size() +
-      body->db_instance.size() > 0)
-     ) {
-    statements.push_back(static_pointer_cast<NetComp>(body));
-  } else {
-    statements = body->statements;
-  }
+  body->elab_inparse();
 }
 
 ostream& netlist::WhileState::streamout(ostream& os, unsigned int indent) const {
   assert(exp.use_count() != 0);
 
   os << string(indent, ' ') << "while (" << *exp << ") ";
-  
-  if(statements.size() == 1) {
-    if(statements.front()->get_type() == NetComp::tBlock)
-      static_pointer_cast<Block>(statements.front())->streamout(os, indent, true);
-    else {
-      os << endl;
-      statements.front()->streamout(os, indent+2);
-      if(statements.front()->get_type() == NetComp::tAssign) os << ";" << endl;
-    }
-  } else {
-    os << "begin" << endl;
-    list<shared_ptr<NetComp> >::const_iterator it, end;
-    for(it=statements.begin(), end=statements.end(); it!=end; it++) {
-      (*it)->streamout(os, indent+2);
-      if((*it)->get_type() == NetComp::tAssign) os << ";" << endl;
-    }
-    os << string(indent, ' ') << "end" << endl;
-  }
-  
+  body->streamout(os, indent+2);
+
   return os;
 }

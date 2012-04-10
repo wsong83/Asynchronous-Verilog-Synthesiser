@@ -244,6 +244,7 @@
 %type <tBlock>          generate_item_or_null
 %type <tBlockName>      block_identifier
 %type <tCaseItem>       case_item
+%type <tCaseItem>       generate_case_item
 %type <tConcatenation>  concatenation
 %type <tExp>            expression
 %type <tExp>            primary
@@ -254,6 +255,7 @@
 %type <tInstName>       instance_identifier
 %type <tLConcatenation> variable_lvalue
 %type <tListCaseItem>   case_items
+%type <tListCaseItem>   generate_case_items
 %type <tListExp>        expressions
 %type <tListEvent>      event_expressions
 %type <tListInst>       module_instances
@@ -421,175 +423,87 @@ output_declaration
 variable_declaration 
     : "wire" list_of_variable_identifiers 
     {
-      if(0 == $2.size()) {
-        av_env.error(yylloc, "SYN-VAR-1", "wire");
-      } else if(0 == Lib.get_current_comp().use_count()) {
-        av_env.error(yylloc, "SYN-VAR-0", "Wire", $2.front().first.name);
-      } else {
-        while(!$2.empty()) {
-          shared_ptr<Variable> cw(new Variable($2.front().first));
-          if($2.front().second.use_count() != 0) 
-            av_env.error(yylloc, "SYN-VAR-4", cw->name.name);
-          
-          $2.pop_front();
-          // change range selector to dimension delcaration
-          cw->name.get_range() = cw->name.get_select();
-          cw->name.get_select().clear();
-          vector<shared_ptr<Range> >::iterator it, end;
-          for(it = cw->name.get_range().begin(), end = cw->name.get_range().end(); it != end; it++ )
-            (*it)->set_dim();
-          
-          // insert it in the database
-          if(!Lib.get_current_comp()->db_wire.insert(cw->name, cw)) {
-            av_env.error(yylloc, "SYN-VAR-2", "wire", cw->name.name, Lib.get_current_comp()->name.name);
-          }
-        } 
+      list<pair<VIdentifier, shared_ptr<Expression> > >::iterator it, end;
+      for(it=$2.begin(), end=$2.end(); it!=end; it++){
+        $$.push_back(shared_ptr<Variable>(new Variable(it->first, it->second, Variable::TWire)));
+        $$.back()->name.get_range() = $$.back()->name.get_select();
+        $$.back()->name.get_select().clear();
+        vector<shared_ptr<Range> >::iterator rg_it, rg_end;
+        for(rg_it = $$.back()->name.get_range().begin(), rg_end = $$.back()->name.get_range().end(); 
+            rg_it != rg_end; rg_it++ )
+          (*it)->set_dim();
       }
-      ////////////////////////////////////////
-    } 
+    }
     | "wire" '[' expression ':' expression ']' list_of_variable_identifiers
     {
-      if(0 == $7.size()) {
-        av_env.error(yylloc, "SYN-VAR-1", "wire");
-      } else if(0 == Lib.get_current_comp().use_count()) {
-        av_env.error(yylloc, "SYN-VAR-0", "Wire", $7.front().first.name);
-      } else {
-        while(!$7.empty()) {
-          VIdentifier& wn = $7.front().first;
-          if($7.front().second.use_count() != 0) 
-            av_env.error(yylloc, "SYN-VAR-4", wn.name);
-          
-          // change range selector to dimension delcaration
-          wn.get_range() = wn.get_select();
-          wn.get_select().clear();
-          vector<shared_ptr<Range> >::iterator it, end;
-          for(it = wn.get_range().begin(), end = wn.get_range().end(); it != end; it++ )
-            (*it)->set_dim();
-          
-          pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
-          wn.get_range().push_back(shared_ptr<Range>(new Range(m)));
-          shared_ptr<Variable> cw(new Variable(wn));
-          
-          // insert it in the database
-          $7.pop_front();
-          if(!Lib.get_current_comp()->db_wire.insert(cw->name, cw)) {
-            av_env.error(yylloc, "SYN-VAR-2", "wire", cw->name.name, Lib.get_current_comp()->name.name);
-          }
-        }
+      list<pair<VIdentifier, shared_ptr<Expression> > >::iterator it, end;
+      for(it=$7.begin(), end=$7.end(); it!=end; it++){
+        $$.push_back(shared_ptr<Variable>(new Variable(it->first, it->second, Variable::TWire)));
+        $$.back()->name.get_range() = $$.back()->name.get_select();
+        $$.back()->name.get_select().clear();
+        vector<shared_ptr<Range> >::iterator rg_it, rg_end;
+        for(rg_it = $$.back()->name.get_range().begin(), rg_end = $$.back()->name.get_range().end(); 
+            rg_it != rg_end; rg_it++ )
+          (*it)->set_dim();
+        pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
+        $$.back()->name.get_range().push_back(shared_ptr<Range>(new Range(m)));
       }
     }
     | "reg" list_of_variable_identifiers 
     {
-      if(0 == $2.size()) {
-        av_env.error(yylloc, "SYN-VAR-1", "reg");
-      } else if(0 == Lib.get_current_comp().use_count()) {
-        av_env.error(yylloc, "SYN-VAR-0", "reg", $2.front().first.name);
-      } else {
-        while(!$2.empty()) {
-          shared_ptr<Variable> cr(new Variable($2.front().first));
-          if($2.front().second.use_count() != 0) 
-            av_env.error(yylloc, "SYN-VAR-4", cr->name.name);
-          $2.pop_front();
-          // change range selector to dimension delcaration
-          cr->name.get_range() = cr->name.get_select();
-          cr->name.get_select().clear();
-          vector<shared_ptr<Range> >::iterator it, end;
-          for(it = cr->name.get_range().begin(), end = cr->name.get_range().end(); it != end; it++ )
-            (*it)->set_dim();
-          
-          // insert it in the database
-          if(!Lib.get_current_comp()->db_reg.insert(cr->name, cr)) {
-            av_env.error(yylloc, "SYN-VAR-2", "reg", cr->name.name, Lib.get_current_comp()->name.name);
-          }
-        }
+      list<pair<VIdentifier, shared_ptr<Expression> > >::iterator it, end;
+      for(it=$2.begin(), end=$2.end(); it!=end; it++){
+        $$.push_back(shared_ptr<Variable>(new Variable(it->first, it->second, Variable::TReg)));
+        $$.back()->name.get_range() = $$.back()->name.get_select();
+        $$.back()->name.get_select().clear();
+        vector<shared_ptr<Range> >::iterator rg_it, rg_end;
+        for(rg_it = $$.back()->name.get_range().begin(), rg_end = $$.back()->name.get_range().end(); 
+            rg_it != rg_end; rg_it++ )
+          (*it)->set_dim();
       }
-      ////////////////////////////////////////
-    } 
+    }
     | "reg" '[' expression ':' expression ']' list_of_variable_identifiers
     {
-      if(0 == $7.size()) {
-        av_env.error(yylloc, "SYN-VAR-1", "reg");
-      } else if(0 == Lib.get_current_comp().use_count()) {
-        av_env.error(yylloc, "SYN-VAR-0", "reg", $7.front().first.name);
-      } else {
-        while(!$7.empty()) {
-          VIdentifier& rn = $7.front().first;
-          if($7.front().second.use_count() != 0) 
-            av_env.error(yylloc, "SYN-VAR-4", rn.name);
-          
-          // change range selector to dimension delcaration
-          rn.get_range() = rn.get_select();
-          rn.get_select().clear();
-          vector<shared_ptr<Range> >::iterator it, end;
-          for(it = rn.get_range().begin(), end = rn.get_range().end(); it != end; it++ )
-            (*it)->set_dim();
-          
-          pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
-          rn.get_range().push_back(shared_ptr<Range>(new Range(m)));
-          shared_ptr<Variable> cr(new Variable(rn));
-          
-          // insert it in the database
-          $7.pop_front();
-          if(!Lib.get_current_comp()->db_reg.insert(cr->name, cr)) {
-            av_env.error(yylloc, "SYN-VAR-2", "reg", cr->name.name, Lib.get_current_comp()->name.name);
-          }
-        }
+      list<pair<VIdentifier, shared_ptr<Expression> > >::iterator it, end;
+      for(it=$7.begin(), end=$7.end(); it!=end; it++){
+        $$.push_back(shared_ptr<Variable>(new Variable(it->first, it->second, Variable::TReg)));
+        $$.back()->name.get_range() = $$.back()->name.get_select();
+        $$.back()->name.get_select().clear();
+        vector<shared_ptr<Range> >::iterator rg_it, rg_end;
+        for(rg_it = $$.back()->name.get_range().begin(), rg_end = $$.back()->name.get_range().end(); 
+            rg_it != rg_end; rg_it++ )
+          (*it)->set_dim();
+        pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
+        $$.back()->name.get_range().push_back(shared_ptr<Range>(new Range(m)));
       }
     }
     | "genvar" list_of_variable_identifiers
     {
-      if(0 == $2.size()) {
-        av_env.error(yylloc, "SYN-VAR-1", "genvar");
-      } else if(0 == Lib.get_current_comp().use_count()) {
-        av_env.error(yylloc, "SYN-VAR-0", "genvar", $2.front().first.name);
-      } else {
-        while(!$2.empty()) {
-          shared_ptr<Variable> cr(new Variable($2.front().first, $2.front().second));
-          $2.pop_front();
-          // change range selector to dimension delcaration
-          cr->name.get_range() = cr->name.get_select();
-          cr->name.get_select().clear();
-          vector<shared_ptr<Range> >::iterator it, end;
-          for(it = cr->name.get_range().begin(), end = cr->name.get_range().end(); it != end; it++ )
-            (*it)->set_dim();
-          
-          // insert it in the database
-          assert(Lib.get_current_comp()->get_type() == NetComp::tModule);
-          shared_ptr<Module> cm = static_pointer_cast<Module>(Lib.get_current_comp());
-          if(!cm->db_genvar.insert(cr->name, cr)) {
-            av_env.error(yylloc, "SYN-VAR-2", "reg", cr->name.name, cm->name.name);
-          }
-        }
+      list<pair<VIdentifier, shared_ptr<Expression> > >::iterator it, end;
+      for(it=$2.begin(), end=$2.end(); it!=end; it++){
+        $$.push_back(shared_ptr<Variable>(new Variable(it->first, it->second, Variable::TGenvar)));
+        $$.back()->name.get_range() = $$.back()->name.get_select();
+        $$.back()->name.get_select().clear();
+        vector<shared_ptr<Range> >::iterator rg_it, rg_end;
+        for(rg_it = $$.back()->name.get_range().begin(), rg_end = $$.back()->name.get_range().end(); 
+            rg_it != rg_end; rg_it++ )
+          (*it)->set_dim();
       }
-    } 
+    }
     | "integer" list_of_variable_identifiers
     {
-      if(0 == $2.size()) {
-        av_env.error(yylloc, "SYN-VAR-1", "integer");
-      } else if(0 == Lib.get_current_comp().use_count()) {
-        av_env.error(yylloc, "SYN-VAR-0", "integer", $2.front().first.name);
-      } else {
-        while(!$2.empty()) {
-          shared_ptr<Variable> cr(new Variable($2.front().first));
-          if($2.front().second.use_count() != 0) 
-            av_env.error(yylloc, "SYN-VAR-4", cr->name.name);
-          $2.pop_front();
-          // change range selector to dimension delcaration
-          cr->name.get_range() = cr->name.get_select();
-          cr->name.get_select().clear();
-          vector<shared_ptr<Range> >::iterator it, end;
-          for(it = cr->name.get_range().begin(), end = cr->name.get_range().end(); it != end; it++ )
-            (*it)->set_dim();
-          // an integer is a 32-bit reg
-          cr->name.get_range().push_back(shared_ptr<Range>(new Range(31, 0)));
-          
-          // insert it in the database
-          if(!Lib.get_current_comp()->db_reg.insert(cr->name, cr)) {
-            av_env.error(yylloc, "SYN-VAR-2", "integer", cr->name.name, Lib.get_current_comp()->name.name);
-          }
-        }
+      list<pair<VIdentifier, shared_ptr<Expression> > >::iterator it, end;
+      for(it=$7.begin(), end=$7.end(); it!=end; it++){
+        $$.push_back(shared_ptr<Variable>(new Variable(it->first, it->second, Variable::TReg)));
+        $$.back()->name.get_range() = $$.back()->name.get_select();
+        $$.back()->name.get_select().clear();
+        vector<shared_ptr<Range> >::iterator rg_it, rg_end;
+        for(rg_it = $$.back()->name.get_range().begin(), rg_end = $$.back()->name.get_range().end(); 
+            rg_it != rg_end; rg_it++ )
+          (*it)->set_dim();
+        $$.back()->name.get_range().push_back(shared_ptr<Range>(new Range(31, 0)));
       }
-    } 
+    }
     ;
 
 list_of_variable_declarations
@@ -668,24 +582,16 @@ gate_instantiation
     : n_input_gatetype n_input_gate_instances ';'
     {
       list<shared_ptr<Instance> >::iterator it, end;
-      for(it=$2.begin(), end=$2.end(); it!=end; it++) {
+      for(it=$2.begin(), end=$2.end(); it!=end; it++)
         (*it)->set_mname($1);
-        shared_ptr<Instance>& ip = *it;
-        if(!Lib.get_current_comp()->db_instance.insert(ip->name, ip)) {
-          av_env.error(yylloc, "SYN-INST-0", ip->name.name);
-        }
-      }
+      $$ = $2;
     }
     | n_output_gatetype n_output_gate_instances ';'
     {
       list<shared_ptr<Instance> >::iterator it, end;
-      for(it=$2.begin(), end=$2.end(); it!=end; it++) {
+      for(it=$2.begin(), end=$2.end(); it!=end; it++)
         (*it)->set_mname($1);
-        shared_ptr<Instance>& ip = *it;
-        if(!Lib.get_current_comp()->db_instance.insert(ip->name, ip)) {
-          av_env.error(yylloc, "SYN-INST-0", ip->name.name);
-        }
-      }
+      $$ = $2;
     }
     ;
 
@@ -764,30 +670,19 @@ n_output_gatetype
 module_instantiation 
     : module_identifier module_instances ';'
     {
-      while(!$2.empty()) {
-        shared_ptr<Instance> instp = $2.front();
-        $2.pop_front();
-        instp->set_mname($1);
-        
-        // insert it in the database
-        if(!Lib.get_current_comp()->db_instance.insert(instp->name, instp)) {
-          av_env.error(yylloc, "SYN-INST-0", instp->name.name);
-        }
-      }
+      list<shared_ptr<netlist::Instance> >::iterator it, end;
+      for(it=$2.begin(),end=$2.end(); it!=end; it++)
+        it->set_mname($1);
+      $$ = $2;
     }
     | module_identifier '#' '(' list_of_parameter_assignments ')' module_instances ';'
     {
-      while(!$6.empty()) {
-        shared_ptr<Instance> instp = $6.front();
-        $6.pop_front();
-        instp->set_mname($1);
-        instp->set_para($4);
-        
-        // insert it in the database
-        if(!Lib.get_current_comp()->db_instance.insert(instp->name, instp)) {
-          av_env.error(yylloc, "SYN-INST-0", instp->name.name);
-        }
+      list<shared_ptr<netlist::Instance> >::iterator it, end;
+      for(it=$6.begin(),end=$6.end(); it!=end; it++) {
+        it->set_mname($1);
+        it->set_para($4);
       }
+      $$ = $2;
     }
     ;
 
@@ -812,7 +707,7 @@ named_parameter_assignments
     ;
 
 ordered_parameter_assignment 
-: expression              { $$.reset( new ParaConn($1)); }
+    : expression              { $$.reset( new ParaConn($1)); }
     ;
 
 named_parameter_assignment 
@@ -858,8 +753,8 @@ generated_instantiation
     ;
 
 generate_items
-    : generate_item
-    | generate_items generate_item
+    : generate_item                 { $$.reset(new Block()); $$->add_statements($1); }
+    | generate_items generate_item  { $$->add_statements($2);                        }
     ;
 
 generate_item_or_null
@@ -868,20 +763,26 @@ generate_item_or_null
     ;
 
 generate_item 
-    : variable_declaration ';'  { $$.reset(new Block()); }
+    : variable_declaration ';'  { $$.reset(new Block());  $$->add($1);}
     | function_declaration      { $$.reset(new Block()); }
-    | continuous_assign         { $$.reset(new Block()); }
-    | gate_instantiation        { $$.reset(new Block()); }
-    | module_instantiation      { $$.reset(new Block()); }
-    | always_construct          { $$.reset(new Block()); }
-    | "if" '(' expression ')' generate_item_or_null 
+    | continuous_assign         { $$.reset(new Block());  $$->add($1) }
+    | gate_instantiation        { $$.reset(new Block());  $$->add($1) }
+    | module_instantiation      { $$.reset(new Block());  $$->add($1) }
+    | always_construct          { $$.reset(new Block());  $$->add($1) }
+    | "if" '(' expression ')'  generate_item_or_null 
+    { $$.reset(new Block()); $$->add_if($3, $5); }
     | "if" '(' expression ')' generate_item_or_null "else" generate_item_or_null
-    | "case" '(' expression ')' "default" generate_item_or_null "endcase"
-    | "case" '(' expression ')' genvar_case_items "endcase"
-    | "case" '(' expression ')' genvar_case_items "default" generate_item_or_null "endcase"
+    { $$.reset(new Block()); $$->add_if($3, $5, $7); }
+    | "case" '(' expression ')' "default"  generate_item_or_null "endcase"
+    { shared_ptr<CaseItem> m(new CaseItem($6)); $$.reset(new Block()); $$->add_case($3, m); }
+    | "case" '(' expression ')' generate_case_items "endcase"
+    { $$.reset(new Block()); $$->add_case($3, $5); }
+    | "case" '(' expression ')' generate_case_items "default" generate_item_or_null "endcase"
+    { shared_ptr<CaseItem> m(new CaseItem($7)); $$.reset(new Block()); $$->add_case($3, $5, m); }
     | "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' "begin" ':' block_identifier generate_item_or_null "end"
-    | "begin" generate_items "end"
-    | "begin" ':' block_identifier  generate_items "end"
+    { $$.reset(new Block($11)); $$->add_for($3, $5, $7, $12); }
+    | "begin" generate_items "end" { $$ = $2; }
+    | "begin" ':' block_identifier generate_items "end" { $$ = $4; $$->set_name($3); }
     ;
 
 //generate_conditional_statement 
@@ -891,18 +792,35 @@ generate_item
 
 //generate_case_statement 
 //    : "case" '(' expression ')' "default" generate_item_or_null "endcase"
-//    | "case" '(' expression ')' genvar_case_items "endcase"
-//    | "case" '(' expression ')' genvar_case_items "default" generate_item_or_null "endcase"
+//    | "case" '(' expression ')' generate_case_items "endcase"
+//    | "case" '(' expression ')' generate_case_items "default" generate_item_or_null "endcase"
 //    ;
 
-genvar_case_items
-    : genvar_case_item
-    | genvar_case_items genvar_case_item
+generate_case_items
+    : generate_case_item                          { $$.push_back($1); }
+    | generate_case_items generate_case_item      { $$.push_back($2); }
     ;
 
-genvar_case_item 
-    : expressions ':' generate_item_or_null 
-    | "default" ':' generate_item_or_null
+generate_case_item 
+    : expressions ':' 
+    {
+      Lib.push(shared_ptr<Block>(new Block()));
+    }
+    generate_item_or_null     
+    { 
+      Lib.get_current_comp()->add_statements($4);
+      $$.reset(new CaseItem($1, Lib.get_current_comp())); 
+      Lib.pop();
+    }
+    | "default" ':' 
+    {
+      Lib.push(shared_ptr<Block>(new Block()));
+    }
+    generate_item_or_null       
+    { 
+      Lib.get_current_comp()->add_statements($4);
+      $$.reset(new CaseItem(Lib.get_current_comp())); 
+    }
     ;
 
 //generate_loop_statement 
@@ -954,8 +872,8 @@ nonblocking_assignment
 
 //A.6.4 Statements
 statements
-    : statement
-    | statements statement   { $$.reset(new Block()); $$->add_statements($2); }
+    : statement              { $$.reset(new Block()); $$->add_statements($1); }
+    | statements statement   { $$->add_statements($2);                        }
     ;
 
 statement
@@ -975,28 +893,31 @@ statement
     | "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' statement  
     { $$.reset(new Block()); $$->add_for($3, $5, $7, $9); }
     | "begin" statements "end" 
-    { $$.reset(new Block()); $$->add_statements($2); }
-    | "begin" 
-    {
-      Lib.push(shared_ptr<Block>(new Block()));
-    } 
-      list_of_variable_declarations statements "end" 
+    { $$ = $2; }
+    | "begin" list_of_variable_declarations statements "end" 
     { 
-      Lib.get_current_comp()->add_statements($4);
-      $$ = Lib.get_current_comp();
-      Lib.pop();
+      $$.reset(new Block());
+      $$->set_blocked();
+      list<shared_ptr<Variable> >::iterator it, end;
+      for(it=$2.begin(),end=$2.end(); it!=end; it++)
+        $$->add(*it);
+      $$->add_statements($3);
+      $$->elab_inparse();
     }
     | "begin" ':' block_identifier statements "end" 
-    { $$.reset(new Block()); $$->add_statements($4); $$->set_name($3); }
-    | "begin" ':' block_identifier 
-    {
-      Lib.push(shared_ptr<Block>(new Block($3)));
-    } 
-      list_of_variable_declarations statements "end" 
     { 
-      Lib.get_current_comp()->add_statements($6);
-      $$ = Lib.get_current_comp();
-      Lib.pop();
+      $$.reset(new Block($3)); 
+      $$->add_statements($4); 
+      $$->elab_inparse();
+    }
+    | "begin" ':' block_identifier list_of_variable_declarations statements "end" 
+    { 
+      $$.reset(new Block($3));
+      list<shared_ptr<Variable> >::iterator it, end;
+      for(it=$4.begin(),end=$4.end(); it!=end; it++)
+        $$->add(*it);
+      $$->add_statements($5);
+      $$->elab_inparse();
     }
     ;
 
