@@ -115,3 +115,85 @@ VIdentifier& netlist::Module::new_VId() {
     ++unnamed_var;
   return unnamed_var;
 }
+
+void netlist::Module::elab_inparse() {
+  list<shared_ptr<NetComp> >::iterator it, end;
+  for(it=statements.begin(), end=statements.end(); it!=end; it++) {
+    switch((*it)->get_type()) {
+    case NetComp::tAssign: {
+      SP_CAST(m, Assign, *it);
+      m->set_name(new_BId());
+      db_other.insert(m->name, m);
+      break;
+    }
+    case NetComp::tBlock: {
+      SP_CAST(m, Assign, *it);
+      if(!m->is_named()) m->name = new_BId();
+      db_block.insert(m->name, m);
+      break;
+    }
+    case NetComp::tCase: {
+      SP_CAST(m, CaseState, *it);
+      m->set_name(new_BId());
+      db_other.insert(m->name, m);
+      break;
+    }
+    case NetComp::tFor: {
+      SP_CAST(m, ForState, *it);
+      m->set_name(new_BId());
+      db_other.insert(m->name, m);
+      break;
+    }
+    case NetComp::tIf: {
+      SP_CAST(m, IfState, *it);
+      m->set_name(new_BId());
+      db_other.insert(m->name, m);
+      break;
+    }
+    case NetComp::tInstance: {
+      SP_CAST(m, Instance, *it);
+      if(!m->is_named()) m->set_name(new_BId());
+      db_other.insert(m->name, m);
+      break;
+    }
+    case NetComp::tWhile: {
+      SP_CAST(m, WhileState, *it);
+      m->set_name(new_BId());
+      db_other.insert(m->name, m);
+      break;
+    }
+    case NetComp::tPort: {
+      SP_CAST(m, Port, *it);
+      db_other.insert(m->name, m);
+      break;
+    }
+    case NetComp::tVariable: {
+      SP_CAST(m, Variable, *it);
+      switch(m->get_vtype()) {
+      case Variable::TWire: {
+        db_wire.insert(m->name, m);
+        break;
+      }
+      case Variable::TReg: {
+        db_reg.insert(m->name, m);
+        break;
+      }
+      case Variable::TParam: {
+        db_param.insert(m->name, m);
+        break;
+      }
+      case Variable::TGenvar: {
+        db_genvar.insert(m->name, m);
+        break;
+      }
+      default:
+        assert(0 == "wrong type of variable in general block!");
+      }
+      break;
+    }
+    default:
+      assert(0 == "wrong type os statement in general block!");
+    }
+  }
+}
+

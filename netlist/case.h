@@ -70,7 +70,6 @@ namespace netlist{
   class CaseState : public NetComp {
   public:
     // constructors
-    NETLIST_DEFAULT_CON(CaseState, tCase);
     CaseState(const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, const shared_ptr<CaseItem>& ditem)
       : NetComp(tCase), exp(exp), cases(citems) {
       cases.push_back(ditem);
@@ -84,10 +83,16 @@ namespace netlist{
 
     // helpers
     NETLIST_STREAMOUT_FUN_DECL;
+    void set_name(const BIdentifier& nm) {name = nm; named=true;}
+    bool is_named() const { return named; }
 
     // data
+    BIdentifier name;           /* dummy name for search index */
     shared_ptr<Expression> exp;
     list<shared_ptr<CaseItem> > cases;
+    
+  private:
+    bool named;
 
   };
   NETLIST_STREAMOUT(CaseState);

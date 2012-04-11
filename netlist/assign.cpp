@@ -34,7 +34,7 @@ netlist::Assign::Assign( const shared_ptr<LConcatenation>& lhs,
                          const shared_ptr<Expression>& rhs,
                          bool b
                          )
-  : NetComp(tAssign), name(UniName::uni_name()), lval(lhs), rexp(rhs), blocking(b)
+  : NetComp(tAssign), lval(lhs), rexp(rhs), blocking(b)
 {}
 
 ostream& netlist::Assign::streamout(ostream& os, unsigned int indent) const {

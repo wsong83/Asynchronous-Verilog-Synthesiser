@@ -31,13 +31,13 @@
 using namespace netlist;
 
 netlist::Range::Range(const mpz_class& sel)
-  : c(sel),  dim(false), type(TConst) {  }
+  : c(sel), type(TConst) {  }
 
 netlist::Range::Range(const mpz_class& rl, const mpz_class& rr)
-  : cr(rl,rr), dim(false), type(TCRange) {  }
+  : cr(rl,rr), type(TCRange) {  }
 
 netlist::Range::Range(const shared_ptr<Expression>& sel)
-  : dim(false), type(TVar) 
+  : type(TVar) 
 { 
   shared_ptr<Expression> m(sel->deep_copy());
   m->reduce();

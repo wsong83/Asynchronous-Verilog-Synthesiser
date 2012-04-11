@@ -31,7 +31,7 @@
 using namespace netlist;
 
 netlist::LConcatenation::LConcatenation(shared_ptr<Concatenation>& con)
-  : valid(false)
+  : NetComp(LConcatenation)
 {
   con->reduce();
   list<shared_ptr<ConElem> >::iterator it, end;
@@ -46,7 +46,7 @@ netlist::LConcatenation::LConcatenation(shared_ptr<Concatenation>& con)
 }
 
 netlist::LConcatenation::LConcatenation(const VIdentifier& id)
-  : valid(true) { data.push_back(id); }
+  : NetComp(LConcatenation), valid(true) { data.push_back(id); }
 
 
 ostream& netlist::LConcatenation::streamout(ostream& os, unsigned int indent) const {

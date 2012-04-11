@@ -34,7 +34,7 @@ using namespace netlist;
 
 // decimal or integer
 netlist::Number::Number(char *text, int txt_leng) 
-  : NetComp(tNumber), txt_value(), valid(false), valuable(false)
+  : NetComp(tNumber)
 {
   string m;
   int i;
@@ -72,7 +72,7 @@ netlist::Number::Number(char *text, int txt_leng)
 }
 
 netlist::Number::Number(int d) 
-  : NetComp(tNumber), txt_value(), valid(true), valuable(true)
+  : NetComp(tNumber), valid(true), valuable(true)
 {
   mpz_class m(d);
   txt_value = m.get_str(2);
@@ -80,7 +80,7 @@ netlist::Number::Number(int d)
 }
 
 netlist::Number::Number(const mpz_class& m) 
-  : NetComp(tNumber), txt_value(), valid(true), valuable(true)
+  : NetComp(tNumber), valid(true), valuable(true)
 {
   txt_value = m.get_str(2);
   num_leng = txt_value.size();

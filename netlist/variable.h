@@ -35,20 +35,20 @@ namespace netlist {
   public:
 
     enum vtype_t {
-      TWire, TReg, TPara, TGenvar, TVar
+      TVar, TWire, TReg, TParam, TGenvar
     } vtype;
 
-    Variable() : NetComp(tVariable), vtype(TVar), uid({0,0}) {}
-    Variable(const VIdentifier& id): NetComp(tVariable), vtype(TVar), name(id), uid({0,0}) {}
+    Variable() : NetComp(tVariable) {}
+    Variable(const VIdentifier& id): NetComp(tVariable), name(id) {}
     Variable(const VIdentifier& id, const shared_ptr<Expression>& expp, vtype_t mtype = TVar)
-      : NetComp(tVariable), vtype(mtype), name(id), uid({0,0}), exp(expp) {}
+      : NetComp(tVariable), vtype(mtype), name(id), exp(expp) {}
 
     void set_value(const Number&); /* reset the value of this variable */
     void set_wire() { vtype = TWire; }
     void set_reg() { vtype = TReg; }
     void set_para() { vtype = TPara; }
     void set_genvar() { vtype = TGenvar; }
-    vtype_t get_type() const { return vtype; }
+    vtype_t get_vtype() const { return vtype; }
     void update();  /* recalculate the value and update all fanouts */
     NETLIST_STREAMOUT_FUN_DECL;
 

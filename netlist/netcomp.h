@@ -51,6 +51,10 @@
   virtual COMP* ptr() { return this; }
 #endif
 
+#ifndef SP_CAST
+#define SP_CAST(m, T, d)                      \
+  shared_ptr<T > m = static_pointer_cast<T >(d)
+#endif
 
 namespace netlist{
   

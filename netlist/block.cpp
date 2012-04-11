@@ -114,6 +114,74 @@ bool netlist::Block::add_statements(const shared_ptr<Block>& body) {
   return true;
 }
 
+void netlist::Block::elab_inparse() {
+  list<shared_ptr<NetComp> >::iterator it, end;
+  for(it=statements.begin(), end=statements.end(); it!=end; it++) {
+    switch((*it)->get_type()) {
+    case NetComp::tAssign: {
+      SP_CAST(m, Assign, *it);
+      m->set_name(new_BId());
+      db_other.insert(m->name, m);
+      break;
+    }
+    case NetComp::tBlock: {
+      SP_CAST(m, Assign, *it);
+      if(!m->is_named()) m->name = new_BId();
+      db_block.insert(m->name, m);
+      break;
+    }
+    case NetComp::tCase: {
+      SP_CAST(m, CaseState, *it);
+      m->set_name(new_BId());
+      db_other.insert(m->name, m);
+      break;
+    }
+    case NetComp::tFor: {
+      SP_CAST(m, ForState, *it);
+      m->set_name(new_BId());
+      db_other.insert(m->name, m);
+      break;
+    }
+    case NetComp::tIf: {
+      SP_CAST(m, IfState, *it);
+      m->set_name(new_BId());
+      db_other.insert(m->name, m);
+      break;
+    }
+    case NetComp::tInstance: {
+      SP_CAST(m, Instance, *it);
+      if(!m->is_named()) m->set_name(new_BId());
+      db_other.insert(m->name, m);
+      break;
+    }
+    case NetComp::tWhile: {
+      SP_CAST(m, WhileState, *it);
+      m->set_name(new_BId());
+      db_other.insert(m->name, m);
+      break;
+    }
+    case NetComp::tVariable: {
+      SP_CAST(m, Variable, *it);
+      switch(m->get_vtype()) {
+      case Variable::TWire: {
+        db_wire.insert(m->name, m);
+        break;
+      }
+      case Variable::TReg: {
+        db_reg.insert(m->name, m);
+        break;
+      }
+      default:
+        assert(0 == "wrong type of variable in general block!");
+      }
+      break;
+    }
+    default:
+      assert(0 == "wrong type os statement in general block!");
+    }
+  }
+}
+
 BIdentifier& netlist::Block::new_BId() {
   while(db_block.find(unnamed_block).use_count() != 0)
     ++unnamed_block;

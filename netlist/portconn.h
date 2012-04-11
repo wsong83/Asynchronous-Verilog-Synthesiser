@@ -57,13 +57,13 @@ namespace netlist {
   class PortConn {
   public:
     PortConn(const shared_ptr<Expression>& exp, int dir_m = 0) /* ordered connection */
-    : named(false), dir(dir_m), exp(exp), type(CEXP) { reduce(); }
+      : dir(dir_m), exp(exp), type(CEXP) { reduce(); }
     
     PortConn(const shared_ptr<LConcatenation>& lval, int dir_m = 0) /* ordered connection */
-    : named(false), dir(dir_m), exp(new Expression(lval)), type(CEXP) { reduce(); }
+      : dir(dir_m), exp(new Expression(lval)), type(CEXP) { reduce(); }
     
     PortConn()                  /* oredered open output connection */
-      : named(false), dir(1), type(COPEN) {}
+      : dir(1), type(COPEN) {}
     
     PortConn(const PoIdentifier pn, const shared_ptr<Expression>& exp, int dir_m = 0) /* named connection */
       : pname(pn), named(true), dir(0), exp(exp), type(CEXP) { reduce(); }
@@ -82,6 +82,7 @@ namespace netlist {
     bool is_in() const { return dir == -1; }
     bool is_out() const { return dir == 1; }
     bool is_inout() const { return dir == 0; }
+
     ostream& streamout (ostream& os, unsigned int indent) const {
       if(named) os << "." << pname.name << "(";
       switch(type) {
@@ -98,12 +99,14 @@ namespace netlist {
 
     // date
     PoIdentifier pname;         /* the port name in the module definition, or parameter name */
-    bool named;                 /* whether this port connection is already named */
     int dir;                    /* direction, -1 in, 0 inout, 1 out */
     shared_ptr<Expression> exp; /* used when the connection is in general expression */
     VIdentifier var;            /* reduced to a single variable, one of the normal forms */
     Number num;                 /* reduced to a const number, one of the normal forms */
     enum type_t {CEXP, CVAR, CNUM, COPEN} type; /* connection type */
+
+  private:
+    bool named;
 
   };
   NETLIST_STREAMOUT(PortConn);
@@ -111,10 +114,10 @@ namespace netlist {
   class ParaConn {
   public:
     ParaConn()
-      : named(false), type(COPEN) { }
+      : type(COPEN) { }
 
     ParaConn(const shared_ptr<Expression>& exp) /* ordered connection */
-      : named(false), exp(exp), type(CEXP) { reduce(); }
+      : exp(exp), type(CEXP) { reduce(); }
 
     ParaConn(const VIdentifier& pn, const shared_ptr<Expression>& exp) /* named connection */
       : pname(pn), named(true), exp(exp), type(CEXP) { reduce(); }
@@ -141,12 +144,13 @@ namespace netlist {
 
     // date
     VIdentifier pname;          /* the port name in the module definition, or parameter name */
-    bool named;                 /* whether this port connection is already named */
     shared_ptr<Expression> exp; /* used when the connection is in general expression */
     VIdentifier var;            /* reduced to a single variable, one of the normal forms */
     Number num;                 /* reduced to a const number, one of the normal forms */
     enum type_t {CEXP, CVAR, CNUM, COPEN} type; /* connection type */
 
+  private:
+    bool named;                 /* whether this port connection is already named */
   };
   NETLIST_STREAMOUT(ParaConn);
 

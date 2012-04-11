@@ -35,14 +35,13 @@ namespace netlist {
   class Block : public NetComp {
   public:
     // constructors
-    Block()
-      : NetComp(NetComp::tBlock), named(false), blocked(false) {}
+    NETLIST_DEFAULT_CON(Block, tBlock);
     Block(NetComp::ctype_t t, const BIdentifier& nm) 
       : NetComp(t), name(nm), named(true), blocked(true) {}
     Block(const BIdentifier& nm) 
       : NetComp(NetComp::tBlock), name(nm), named(true), blocked(true) {}
     Block(NetComp::ctype_t t) 
-      : NetComp(t), named(false) {}
+      : NetComp(t) {}
 
     // helpers
     virtual void set_name(const BIdentifier& nm) {name = nm; named=true; blocked = true;}
@@ -78,7 +77,9 @@ namespace netlist {
     DataBase<VIdentifier, Variable>        db_wire;      /* wires */
     DataBase<VIdentifier, Variable>        db_reg;       /* registers */
     DataBase<IIdentifier, Instance>        db_instance;  /* module instances */
-    DataBase<BIdentifier, BIdentifier>     db_block;     /* just used to generate a unused block id */
+    DataBase<BIdentifier, Block>           db_block;     /* sub-blocks */
+    DataBase<BIdentifier, NetComp>         db_other;     /* non-block statements, including assignements, if, etc. */
+    
 
   protected:
 

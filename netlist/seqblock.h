@@ -35,10 +35,9 @@ namespace netlist{
   class SeqBlock : public Block {
   public:
     // constructors
-    SeqBlock()
-    : Block(NetComp::tSeqBlock), sensitive(false) {}
+    NETLIST_DEFAULT_CON(SeqBlock, tSeqBlock);
     SeqBlock(const BIdentifier& nm)
-    : Block(NetComp::tSeqBlock, nm), sensitive(false) {}
+      : Block(NetComp::tSeqBlock, nm) {}
     SeqBlock(list<pair<int, shared_ptr<Expression> > >&, const shared_ptr<Block>&);
     SeqBlock(const shared_ptr<Block>&);
     

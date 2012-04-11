@@ -78,13 +78,13 @@ bool netlist::operator== (const Identifier& lhs, const Identifier& rhs) {
 
 //////////////////////////////// Block identifier /////////////////
 netlist::BIdentifier::BIdentifier(const string& nm)
-  : Identifier(NetComp::tBlockName, nm), anonymous(false)  {  }
+  : Identifier(NetComp::tBlockName, nm)  {  }
 
 netlist::BIdentifier::BIdentifier()
   : Identifier(NetComp::tBlockName, "B0"), anonymous(true)  {  }
 
 netlist::BIdentifier::BIdentifier(const averilog::avID &id)
-  : Identifier(NetComp::tBlockName, id.name), anonymous(false) {  }
+  : Identifier(NetComp::tBlockName, id.name) {  }
 
 BIdentifier& netlist::BIdentifier::operator++ () {
   if(!anonymous) return *this;	// named block idenitifers cannot slef-increase
@@ -104,10 +104,10 @@ netlist::FIdentifier::FIdentifier(const string& nm)
 
 //////////////////////////////// Module identifier /////////////////
 netlist::MIdentifier::MIdentifier(const string& nm)
-  : Identifier(NetComp::tModuleName, nm), numbered(false) {  }
+  : Identifier(NetComp::tModuleName, nm) {  }
 
 netlist::MIdentifier::MIdentifier(const averilog::avID &id)
-  : Identifier(NetComp::tModuleName, id.name), numbered(false) {  }
+  : Identifier(NetComp::tModuleName, id.name) {  }
 
 MIdentifier& netlist::MIdentifier::operator++ () {
   const boost::regex numbered_name("_(\\d+)\\z");
@@ -140,10 +140,10 @@ netlist::IIdentifier::IIdentifier()
   : Identifier(NetComp::tInstName, "u_0"), numbered(true) {  }
 
 netlist::IIdentifier::IIdentifier(const string& nm)
-  : Identifier(NetComp::tInstName, nm), numbered(false) {  }
+  : Identifier(NetComp::tInstName, nm) {  }
 
 netlist::IIdentifier::IIdentifier(const averilog::avID& id)
-  : Identifier(NetComp::tInstName, id.name), numbered(false) { }
+  : Identifier(NetComp::tInstName, id.name) { }
 
 IIdentifier& netlist::IIdentifier::operator++ () {
   const boost::regex numbered_name("_(\\d+)\\z");
@@ -195,21 +195,21 @@ ostream& netlist::PoIdentifier::streamout(ostream& os, unsigned int indent) cons
 
 //////////////////////////////// variable identifier /////////////////
 netlist::VIdentifier::VIdentifier()
-  : Identifier(NetComp::tVarName, "n_0"), numbered(true), uid(0) {  }
+  : Identifier(NetComp::tVarName, "n_0"), numbered(true) {  }
 
 netlist::VIdentifier::VIdentifier(const string& nm)
-  : Identifier(NetComp::tVarName, nm), numbered(false), uid(0) {  }
+  : Identifier(NetComp::tVarName, nm) {  }
 
 netlist::VIdentifier::VIdentifier(const averilog::avID& id)
-  : Identifier(NetComp::tVarName, id.name), numbered(false), uid(0) { }
+  : Identifier(NetComp::tVarName, id.name) { }
 
 netlist::VIdentifier::VIdentifier(const string& nm, const vector<shared_ptr<Range> >& rg)
-  : Identifier(NetComp::tVarName, nm), m_range(rg), numbered(false), uid(0) {  }
+  : Identifier(NetComp::tVarName, nm), m_range(rg) {  }
 
 netlist::VIdentifier::VIdentifier(const VIdentifier& rhs)
   : Identifier(NetComp::tVarName, rhs.name), 
-    m_range(rhs.m_range), m_select(rhs.m_select), numbered(false),
-    father(rhs.father), inout_t(rhs.inout_t), uid(0) { }
+    m_range(rhs.m_range), m_select(rhs.m_select),
+    father(rhs.father), inout_t(rhs.inout_t) { }
 
 VIdentifier& netlist::VIdentifier::operator++ () {
   const boost::regex numbered_name("_(\\d+)\\z");

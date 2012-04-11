@@ -30,10 +30,6 @@
 
 using namespace netlist;
 
-netlist::Expression::Expression()
-  : NetComp(tExp), valuable(false)
-{}
-
 netlist::Expression::Expression(const Number& exp) 
   : NetComp(tExp), valuable(exp.is_valuable())
 {
@@ -41,19 +37,19 @@ netlist::Expression::Expression(const Number& exp)
 }
 
 netlist::Expression::Expression(const VIdentifier& id) 
-  : NetComp(tExp), valuable(false)
+  : NetComp(tExp)
 {
   eqn.push_back(shared_ptr<Operation>( new Operation(id)));
 }
 
 netlist::Expression::Expression(const shared_ptr<Concatenation>& con) 
-  : NetComp(tExp), valuable(false)
+  : NetComp(tExp)
 {
   eqn.push_back(shared_ptr<Operation>( new Operation(con)));
 }
 
 netlist::Expression::Expression(const shared_ptr<LConcatenation>& con)
-  : NetComp(tExp), valuable(false)
+  : NetComp(tExp)
 {
   eqn.push_back(shared_ptr<Operation>(new Operation(con)));
 }
