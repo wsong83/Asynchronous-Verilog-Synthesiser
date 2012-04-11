@@ -31,7 +31,7 @@
 using namespace netlist;
 
 netlist::Instance::Instance(const IIdentifier& nm, const list<shared_ptr<PortConn> >& polist, type_t itype)
-  : NetComp(tInstance), name(nm), port_list(polist), type(itype) {
+  : NetComp(tInstance), name(nm), port_list(polist), type(itype), named(true) {
   switch(itype) {
   case prim_in_inst: {
     list<shared_ptr<PortConn> >::iterator it, end;

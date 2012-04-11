@@ -44,65 +44,46 @@ void netlist::Block::clear() {
   unnamed_var = VIdentifier();
 }
 
-bool netlist::Block::add(const shared_ptr<NetComp>&& dd) {
-  statements.push(dd);
-  return true;
-}
-
-bool netlist::Block::add_assignment(const shared_ptr<Assign>& dd) {
+bool netlist::Block::add(const shared_ptr<NetComp>& dd) {
   statements.push_back(dd);
-  check();
   return true;
 }
 
 bool netlist::Block::add_case(const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, const shared_ptr<CaseItem>& ditem) {
   statements.push_back(shared_ptr<CaseState>( new CaseState(exp, citems, ditem)));
-  check();
   return true;
 }
 
 bool netlist::Block::add_case(const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems) {
   statements.push_back(shared_ptr<CaseState>( new CaseState(exp, citems)));
-  check();
   return true;
 }
 
 bool netlist::Block::add_case(const shared_ptr<Expression>& exp, const shared_ptr<CaseItem>& ditem) {
   statements.push_back(shared_ptr<CaseState>( new CaseState(exp, ditem)));
-  check();
   return true;
 }
 
 bool netlist::Block::add_if(const shared_ptr<Expression>& exp, const shared_ptr<Block>& ifcase, const shared_ptr<Block>& elsecase) {
   statements.push_back(shared_ptr<IfState>( new IfState(exp, ifcase, elsecase)));
-  check();
   return true;
 }
 
 bool netlist::Block::add_if(const shared_ptr<Expression>& exp, const shared_ptr<Block>& ifcase) {
   statements.push_back(shared_ptr<IfState>( new IfState(exp, ifcase)));
-  check();
   return true;
 }
 
 bool netlist::Block::add_while(const shared_ptr<Expression>& exp, const shared_ptr<Block>& body) {
   statements.push_back(shared_ptr<WhileState>( new WhileState(exp, body)));
-  check();
   return true;
 }
 
 bool netlist::Block::add_for(const shared_ptr<Assign>& init, const shared_ptr<Expression>& cond, const shared_ptr<Assign>& incr, const shared_ptr<Block>& body) {
   statements.push_back(shared_ptr<ForState>( new ForState(init, cond, incr, body)));
-  check();
   return true;
 }
 
-
-bool netlist::Block::add_block(const shared_ptr<Block>& body) {
-  statements.push_back(body);
-  check();
-  return true;
-}
 
 bool netlist::Block::add_statements(const shared_ptr<Block>& body) {
   if(body->is_blocked()) {
@@ -110,7 +91,6 @@ bool netlist::Block::add_statements(const shared_ptr<Block>& body) {
   } else {
     statements.splice(statements.end(), body->statements);
   }
-  check();
   return true;
 }
 
@@ -118,49 +98,49 @@ void netlist::Block::elab_inparse() {
   list<shared_ptr<NetComp> >::iterator it, end;
   for(it=statements.begin(), end=statements.end(); it!=end; it++) {
     switch((*it)->get_type()) {
-    case NetComp::tAssign: {
+    case tAssign: {
       SP_CAST(m, Assign, *it);
       m->set_name(new_BId());
       db_other.insert(m->name, m);
       break;
     }
-    case NetComp::tBlock: {
+    case tBlock: {
       SP_CAST(m, Assign, *it);
       if(!m->is_named()) m->name = new_BId();
-      db_block.insert(m->name, m);
+      db_other.insert(m->name, m);
       break;
     }
-    case NetComp::tCase: {
+    case tCase: {
       SP_CAST(m, CaseState, *it);
       m->set_name(new_BId());
       db_other.insert(m->name, m);
       break;
     }
-    case NetComp::tFor: {
+    case tFor: {
       SP_CAST(m, ForState, *it);
       m->set_name(new_BId());
       db_other.insert(m->name, m);
       break;
     }
-    case NetComp::tIf: {
+    case tIf: {
       SP_CAST(m, IfState, *it);
       m->set_name(new_BId());
       db_other.insert(m->name, m);
       break;
     }
-    case NetComp::tInstance: {
+    case tInstance: {
       SP_CAST(m, Instance, *it);
-      if(!m->is_named()) m->set_name(new_BId());
-      db_other.insert(m->name, m);
+      if(!m->is_named()) m->set_name(new_IId());
+      db_instance.insert(m->name, m);
       break;
     }
-    case NetComp::tWhile: {
+    case tWhile: {
       SP_CAST(m, WhileState, *it);
       m->set_name(new_BId());
       db_other.insert(m->name, m);
       break;
     }
-    case NetComp::tVariable: {
+    case tVariable: {
       SP_CAST(m, Variable, *it);
       switch(m->get_vtype()) {
       case Variable::TWire: {

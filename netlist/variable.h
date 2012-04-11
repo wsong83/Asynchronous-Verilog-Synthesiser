@@ -46,7 +46,7 @@ namespace netlist {
     void set_value(const Number&); /* reset the value of this variable */
     void set_wire() { vtype = TWire; }
     void set_reg() { vtype = TReg; }
-    void set_para() { vtype = TPara; }
+    void set_para() { vtype = TParam; }
     void set_genvar() { vtype = TGenvar; }
     vtype_t get_vtype() const { return vtype; }
     void update();  /* recalculate the value and update all fanouts */

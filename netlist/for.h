@@ -45,11 +45,20 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_STREAMOUT_FUN_DECL;
 
+    // helpers
+    void set_name(const BIdentifier& nm) { name = nm; named = true;}
+    bool is_named() const { return named; }
+
     //data
     shared_ptr<Assign> init;
     shared_ptr<Expression> cond;
     shared_ptr<Assign> incr;
     shared_ptr<Block> body;
+
+    BIdentifier name;           /* dummy name for index search */
+
+  private:
+    bool named;
 
   };
 

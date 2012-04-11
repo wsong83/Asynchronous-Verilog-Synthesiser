@@ -38,7 +38,7 @@ namespace netlist {
       : NetComp(tInstance), type(unknown) {}
 
     Instance(const IIdentifier& nm, const list<shared_ptr<PortConn> >& polist)
-      : NetComp(tInstance), name(nm), port_list(polist), type(unknown) { }
+      : NetComp(tInstance), name(nm), port_list(polist), type(unknown), named(true) { }
 
     // for primary gates in most cases
     Instance(const IIdentifier&, const list<shared_ptr<PortConn> >&, type_t);
@@ -46,8 +46,10 @@ namespace netlist {
     // helpers
     NETLIST_STREAMOUT_FUN_DECL;
     void set_mname(const MIdentifier& mod_name) { mname = mod_name; }
+    void set_name(const IIdentifier& nm) { name = nm; named=true; }
     void set_module_ptr(const shared_ptr<Module>& mp) { module_ptr = mp;}
     void set_para(const list<shared_ptr<ParaConn> >& para ) { para_list = para; }
+    bool is_named() const { return named; }
 
     // data
     IIdentifier name;
@@ -56,6 +58,9 @@ namespace netlist {
     list<shared_ptr<PortConn> > port_list;
     list<shared_ptr<ParaConn> > para_list;
     type_t type;
+
+  private:
+    bool named;
     
   };
   

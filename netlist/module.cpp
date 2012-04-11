@@ -120,54 +120,54 @@ void netlist::Module::elab_inparse() {
   list<shared_ptr<NetComp> >::iterator it, end;
   for(it=statements.begin(), end=statements.end(); it!=end; it++) {
     switch((*it)->get_type()) {
-    case NetComp::tAssign: {
+    case tAssign: {
       SP_CAST(m, Assign, *it);
       m->set_name(new_BId());
       db_other.insert(m->name, m);
       break;
     }
-    case NetComp::tBlock: {
+    case tBlock: {
       SP_CAST(m, Assign, *it);
       if(!m->is_named()) m->name = new_BId();
       db_block.insert(m->name, m);
       break;
     }
-    case NetComp::tCase: {
+    case tCase: {
       SP_CAST(m, CaseState, *it);
       m->set_name(new_BId());
       db_other.insert(m->name, m);
       break;
     }
-    case NetComp::tFor: {
+    case tFor: {
       SP_CAST(m, ForState, *it);
       m->set_name(new_BId());
       db_other.insert(m->name, m);
       break;
     }
-    case NetComp::tIf: {
+    case tIf: {
       SP_CAST(m, IfState, *it);
       m->set_name(new_BId());
       db_other.insert(m->name, m);
       break;
     }
-    case NetComp::tInstance: {
+    case tInstance: {
       SP_CAST(m, Instance, *it);
       if(!m->is_named()) m->set_name(new_BId());
       db_other.insert(m->name, m);
       break;
     }
-    case NetComp::tWhile: {
+    case tWhile: {
       SP_CAST(m, WhileState, *it);
       m->set_name(new_BId());
       db_other.insert(m->name, m);
       break;
     }
-    case NetComp::tPort: {
+    case tPort: {
       SP_CAST(m, Port, *it);
       db_other.insert(m->name, m);
       break;
     }
-    case NetComp::tVariable: {
+    case tVariable: {
       SP_CAST(m, Variable, *it);
       switch(m->get_vtype()) {
       case Variable::TWire: {

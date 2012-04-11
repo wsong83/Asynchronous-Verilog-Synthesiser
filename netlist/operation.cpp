@@ -54,7 +54,7 @@ netlist::Operation::Operation(const shared_ptr<Concatenation>& con)
 { }
 
 netlist::Operation::Operation(const shared_ptr<LConcatenation>& con)
-  : otype(oCon), 
+  : otype(oCon) 
 {
   if(con->size() == 1) {
     otype = oVar;

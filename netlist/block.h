@@ -50,7 +50,16 @@ namespace netlist {
     virtual bool is_blocked() const { return blocked; }
     virtual void clear();               /* clear all statements */
     virtual bool add(const shared_ptr<NetComp>&); /* add a general statement to this block */
-    virtual bool add_assignment(const shared_ptr<Assign>&); /* add a blocking or non-blocking assignment into the block */
+    
+    /* a template funtion to add all sorts of netlist components */
+    template<typename T>
+      bool add_list(const list<shared_ptr<T> >& ll) {
+      typename list<shared_ptr<T> >::const_iterator it, end;
+      for(it=ll.begin(), end=ll.end(); it!=end; it++)
+        add(*it);
+      return true;
+    }
+
     virtual bool add_case(const shared_ptr<Expression>&, const list<shared_ptr<CaseItem> >&, const shared_ptr<CaseItem>&); /* add a general case statement */
     virtual bool add_case(const shared_ptr<Expression>&, const list<shared_ptr<CaseItem> >&); /* add a case statement without default */
     virtual bool add_case(const shared_ptr<Expression>&, const shared_ptr<CaseItem>&); /* add a case statement only with a default case, odd! */
@@ -58,7 +67,6 @@ namespace netlist {
     virtual bool add_if(const shared_ptr<Expression>&, const shared_ptr<Block>&); /* add an if statement without else case */
     virtual bool add_while(const shared_ptr<Expression>&, const shared_ptr<Block>&); /* add a while statement */
     virtual bool add_for(const shared_ptr<Assign>&, const shared_ptr<Expression>&, const shared_ptr<Assign>&, const shared_ptr<Block>&); /* add a for statement */
-    virtual bool add_block(const shared_ptr<Block>&); /* add a statement block */
     virtual bool add_statements(const shared_ptr<Block>&); /* add several statements */
     virtual void elab_inparse();                           /* resolve the content in statements during parsing */
 

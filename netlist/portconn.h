@@ -66,10 +66,10 @@ namespace netlist {
       : dir(1), type(COPEN) {}
     
     PortConn(const PoIdentifier pn, const shared_ptr<Expression>& exp, int dir_m = 0) /* named connection */
-      : pname(pn), named(true), dir(0), exp(exp), type(CEXP) { reduce(); }
+      : pname(pn), dir(0), exp(exp), type(CEXP), named(true) { reduce(); }
 
     PortConn(const PoIdentifier pn)
-      : pname(pn), named(true), dir(1), type(COPEN) {}
+      : pname(pn), dir(1), type(COPEN), named(true) {}
 
     // helpers
     void reduce() { preduce<PortConn>(this); }
@@ -120,10 +120,10 @@ namespace netlist {
       : exp(exp), type(CEXP) { reduce(); }
 
     ParaConn(const VIdentifier& pn, const shared_ptr<Expression>& exp) /* named connection */
-      : pname(pn), named(true), exp(exp), type(CEXP) { reduce(); }
+      : pname(pn), exp(exp), type(CEXP), named(true) { reduce(); }
 
     ParaConn(const VIdentifier& pn) /* named connection */
-      : pname(pn), named(true), type(COPEN) { }
+      : pname(pn), type(COPEN), named(true) { }
 
     // helpers
     void reduce() { preduce<ParaConn>(this); }

@@ -41,7 +41,9 @@ namespace netlist {
     //void db_register() { lval.db_register(); rexp.db_register(); }
     //void db_expunge() { lval.db_expunge(); rexp.db_expunge(); }
     void set_name(const BIdentifier& nm) {name = nm; named=true;}
+    void set_continuous() { continuous = true; }
     bool is_named() const { return named; }
+    bool is_continuous() const { return continuous; }
 
     // data
     BIdentifier name;                /* as a key in the database, it has no practical meaning */
@@ -50,6 +52,7 @@ namespace netlist {
 
   private:
     bool blocking;                   /* true when it is a blocking assignment */
+    bool continuous;                 /* true when it is a continuous assignment */
     bool named;                      /* true when a unique name is set */
   };
   NETLIST_STREAMOUT(Assign);

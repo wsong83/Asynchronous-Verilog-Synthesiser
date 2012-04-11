@@ -254,11 +254,15 @@
 %type <tInstance>       n_output_gate_instance
 %type <tInstName>       instance_identifier
 %type <tLConcatenation> variable_lvalue
+%type <tListAssign>     continuous_assign
+%type <tListAssign>     list_of_net_assignments
 %type <tListCaseItem>   case_items
 %type <tListCaseItem>   generate_case_items
 %type <tListExp>        expressions
 %type <tListEvent>      event_expressions
+%type <tListInst>       gate_instantiation
 %type <tListInst>       module_instances
+%type <tListInst>       module_instantiation
 %type <tListInst>       n_input_gate_instances
 %type <tListInst>       n_output_gate_instances
 %type <tListPort>       list_of_port_identifiers
@@ -271,6 +275,8 @@
 %type <tListPortConn>   ordered_port_connections
 %type <tListPortConn>   output_terminals
 %type <tListVar>        list_of_variable_identifiers
+%type <tListVarDecl>    list_of_variable_declarations
+%type <tListVarDecl>    variable_declaration
 %type <tModuleName>     module_identifier
 %type <tModuleName>     n_input_gatetype
 %type <tModuleName>     n_output_gatetype
@@ -280,6 +286,7 @@
 %type <tPortConn>       named_port_connection
 %type <tPortConn>       ordered_port_connection
 %type <tRange>          range_expression
+%type <tSeqBlock>       always_construct
 %type <tVarName>        parameter_identifier
 %type <tVarName>        variable_identifier
 
@@ -431,7 +438,7 @@ variable_declaration
         vector<shared_ptr<Range> >::iterator rg_it, rg_end;
         for(rg_it = $$.back()->name.get_range().begin(), rg_end = $$.back()->name.get_range().end(); 
             rg_it != rg_end; rg_it++ )
-          (*it)->set_dim();
+          (*rg_it)->set_dim();
       }
     }
     | "wire" '[' expression ':' expression ']' list_of_variable_identifiers
@@ -444,7 +451,7 @@ variable_declaration
         vector<shared_ptr<Range> >::iterator rg_it, rg_end;
         for(rg_it = $$.back()->name.get_range().begin(), rg_end = $$.back()->name.get_range().end(); 
             rg_it != rg_end; rg_it++ )
-          (*it)->set_dim();
+          (*rg_it)->set_dim();
         pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
         $$.back()->name.get_range().push_back(shared_ptr<Range>(new Range(m)));
       }
@@ -459,7 +466,7 @@ variable_declaration
         vector<shared_ptr<Range> >::iterator rg_it, rg_end;
         for(rg_it = $$.back()->name.get_range().begin(), rg_end = $$.back()->name.get_range().end(); 
             rg_it != rg_end; rg_it++ )
-          (*it)->set_dim();
+          (*rg_it)->set_dim();
       }
     }
     | "reg" '[' expression ':' expression ']' list_of_variable_identifiers
@@ -472,7 +479,7 @@ variable_declaration
         vector<shared_ptr<Range> >::iterator rg_it, rg_end;
         for(rg_it = $$.back()->name.get_range().begin(), rg_end = $$.back()->name.get_range().end(); 
             rg_it != rg_end; rg_it++ )
-          (*it)->set_dim();
+          (*rg_it)->set_dim();
         pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
         $$.back()->name.get_range().push_back(shared_ptr<Range>(new Range(m)));
       }
@@ -487,28 +494,28 @@ variable_declaration
         vector<shared_ptr<Range> >::iterator rg_it, rg_end;
         for(rg_it = $$.back()->name.get_range().begin(), rg_end = $$.back()->name.get_range().end(); 
             rg_it != rg_end; rg_it++ )
-          (*it)->set_dim();
+          (*rg_it)->set_dim();
       }
     }
     | "integer" list_of_variable_identifiers
     {
       list<pair<VIdentifier, shared_ptr<Expression> > >::iterator it, end;
-      for(it=$7.begin(), end=$7.end(); it!=end; it++){
+      for(it=$2.begin(), end=$2.end(); it!=end; it++){
         $$.push_back(shared_ptr<Variable>(new Variable(it->first, it->second, Variable::TReg)));
         $$.back()->name.get_range() = $$.back()->name.get_select();
         $$.back()->name.get_select().clear();
         vector<shared_ptr<Range> >::iterator rg_it, rg_end;
         for(rg_it = $$.back()->name.get_range().begin(), rg_end = $$.back()->name.get_range().end(); 
             rg_it != rg_end; rg_it++ )
-          (*it)->set_dim();
+          (*rg_it)->set_dim();
         $$.back()->name.get_range().push_back(shared_ptr<Range>(new Range(31, 0)));
       }
     }
     ;
 
 list_of_variable_declarations
-    : variable_declaration ';'
-    | list_of_variable_declarations  variable_declaration ';'
+    : variable_declaration ';'                                { $$ = $1;                  }
+    | list_of_variable_declarations  variable_declaration ';' { $$.splice($$.end(), $2); }
     ;
 
 // A.2.3 Declaration lists
@@ -672,17 +679,17 @@ module_instantiation
     {
       list<shared_ptr<netlist::Instance> >::iterator it, end;
       for(it=$2.begin(),end=$2.end(); it!=end; it++)
-        it->set_mname($1);
+        (*it)->set_mname($1);
       $$ = $2;
     }
     | module_identifier '#' '(' list_of_parameter_assignments ')' module_instances ';'
     {
       list<shared_ptr<netlist::Instance> >::iterator it, end;
       for(it=$6.begin(),end=$6.end(); it!=end; it++) {
-        it->set_mname($1);
-        it->set_para($4);
+        (*it)->set_mname($1);
+        (*it)->set_para($4);
       }
-      $$ = $2;
+      $$ = $6;
     }
     ;
 
@@ -763,12 +770,12 @@ generate_item_or_null
     ;
 
 generate_item 
-    : variable_declaration ';'  { $$.reset(new Block());  $$->add($1);}
-    | function_declaration      { $$.reset(new Block()); }
-    | continuous_assign         { $$.reset(new Block());  $$->add($1) }
-    | gate_instantiation        { $$.reset(new Block());  $$->add($1) }
-    | module_instantiation      { $$.reset(new Block());  $$->add($1) }
-    | always_construct          { $$.reset(new Block());  $$->add($1) }
+    : variable_declaration ';'  { $$.reset(new Block());  $$->add_list<Variable>($1);  }
+    | function_declaration      { $$.reset(new Block());                               }
+    | continuous_assign         { $$.reset(new Block());  $$->add_list<Assign>($1);    }
+    | gate_instantiation        { $$.reset(new Block());  $$->add_list<Instance>($1);  }
+    | module_instantiation      { $$.reset(new Block());  $$->add_list<Instance>($1);  }
+    | always_construct          { $$.reset(new Block());  $$->add($1);                 }
     | "if" '(' expression ')'  generate_item_or_null 
     { $$.reset(new Block()); $$->add_if($3, $5); }
     | "if" '(' expression ')' generate_item_or_null "else" generate_item_or_null
@@ -834,31 +841,25 @@ generate_case_item
 
 //A.6.1 Continuous assignment statements
 continuous_assign 
-    : "assign" list_of_net_assignments ';'  
+    : "assign" list_of_net_assignments ';'
+    {
+      list<shared_ptr<Assign> >::iterator it, end;
+      for(it=$2.begin(), end=$2.end(); it!=end; it++)
+        (*it)->set_continuous();
+      $$ = $2;
+    }
     ;
 
 list_of_net_assignments 
-    : blocking_assignment                                
-    {
-      Lib.get_current_comp()->add_assignment($1); 
-    }
-    | list_of_net_assignments ',' blocking_assignment
-    {
-      Lib.get_current_comp()->add_assignment($3); 
-    }
+    : blocking_assignment                             { $$.push_back($1); }
+    | list_of_net_assignments ',' blocking_assignment { $$.push_back($3); }
     ;
 
 
 //A.6.2 Procedural blocks and assignments
 always_construct 
-    : "always" '@' '(' event_expressions ')' statement_or_null 
-    { 
-      Lib.get_current_comp()->add_block(shared_ptr<SeqBlock>(new SeqBlock($4, $6)));
-    } 
-    | "always" statement 
-    {
-      Lib.get_current_comp()->add_block(shared_ptr<SeqBlock>(new SeqBlock($2)));
-    }
+    : "always" '@' '(' event_expressions ')' statement_or_null   { $$.reset(new SeqBlock($4, $6)); } 
+    | "always" statement                                         { $$.reset(new SeqBlock($2));     }
     ;
 
 blocking_assignment 
@@ -877,8 +878,8 @@ statements
     ;
 
 statement
-    : blocking_assignment ';'    { $$.reset(new Block()); $$->add_assignment($1); }
-    | nonblocking_assignment ';' { $$.reset(new Block()); $$->add_assignment($1); }
+    : blocking_assignment ';'    { $$.reset(new Block()); $$->add($1); }
+    | nonblocking_assignment ';' { $$.reset(new Block()); $$->add($1); }
     | "case" '(' expression ')' "default" statement_or_null "endcase" 
     { shared_ptr<CaseItem> m(new CaseItem($6)); $$.reset(new Block()); $$->add_case($3, m); }
     | "case" '(' expression ')' case_items "endcase" { $$.reset(new Block()); $$->add_case($3, $5); }
@@ -898,9 +899,7 @@ statement
     { 
       $$.reset(new Block());
       $$->set_blocked();
-      list<shared_ptr<Variable> >::iterator it, end;
-      for(it=$2.begin(),end=$2.end(); it!=end; it++)
-        $$->add(*it);
+      $$->add_list<Variable>($2);
       $$->add_statements($3);
       $$->elab_inparse();
     }
@@ -914,8 +913,7 @@ statement
     { 
       $$.reset(new Block($3));
       list<shared_ptr<Variable> >::iterator it, end;
-      for(it=$4.begin(),end=$4.end(); it!=end; it++)
-        $$->add(*it);
+      $$->add_list<Variable>($4);
       $$->add_statements($5);
       $$->elab_inparse();
     }
