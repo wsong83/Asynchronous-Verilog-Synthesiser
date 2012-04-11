@@ -38,10 +38,10 @@ namespace netlist {
       TVar, TWire, TReg, TParam, TGenvar
     } vtype;
 
-    Variable() : NetComp(tVariable) {}
-    Variable(const VIdentifier& id): NetComp(tVariable), name(id) {}
+    Variable() : NetComp(tVariable), uid({0,0}) {}
+    Variable(const VIdentifier& id): NetComp(tVariable), name(id), uid({0,0}) {}
     Variable(const VIdentifier& id, const shared_ptr<Expression>& expp, vtype_t mtype = TVar)
-      : NetComp(tVariable), vtype(mtype), name(id), exp(expp) {}
+      : NetComp(tVariable), vtype(mtype), name(id), uid({0,0}), exp(expp) {}
 
     void set_value(const Number&); /* reset the value of this variable */
     void set_wire() { vtype = TWire; }

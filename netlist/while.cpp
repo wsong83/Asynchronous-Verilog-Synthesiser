@@ -31,7 +31,7 @@
 using namespace netlist;
 
 netlist::WhileState::WhileState(const shared_ptr<Expression>& exp, const shared_ptr<Block>& body)
-  : NetComp(NetComp::tWhile), exp(exp), body(body)
+  : NetComp(NetComp::tWhile), exp(exp), body(body), named(false)
 {
   body->elab_inparse();
 }
@@ -40,7 +40,7 @@ ostream& netlist::WhileState::streamout(ostream& os, unsigned int indent) const 
   assert(exp.use_count() != 0);
 
   os << string(indent, ' ') << "while (" << *exp << ") ";
-  body->streamout(os, indent+2);
+  body->streamout(os, indent+2, true);
 
   return os;
 }

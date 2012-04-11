@@ -129,7 +129,7 @@ void netlist::Module::elab_inparse() {
     case tBlock: {
       SP_CAST(m, Assign, *it);
       if(!m->is_named()) m->name = new_BId();
-      db_block.insert(m->name, m);
+      db_other.insert(m->name, m);
       break;
     }
     case tCase: {
@@ -152,8 +152,8 @@ void netlist::Module::elab_inparse() {
     }
     case tInstance: {
       SP_CAST(m, Instance, *it);
-      if(!m->is_named()) m->set_name(new_BId());
-      db_other.insert(m->name, m);
+      if(!m->is_named()) m->set_name(new_IId());
+      db_instance.insert(m->name, m);
       break;
     }
     case tWhile: {
@@ -164,7 +164,7 @@ void netlist::Module::elab_inparse() {
     }
     case tPort: {
       SP_CAST(m, Port, *it);
-      db_other.insert(m->name, m);
+      db_port.insert(m->name, m);
       break;
     }
     case tVariable: {
@@ -195,5 +195,9 @@ void netlist::Module::elab_inparse() {
       assert(0 == "wrong type os statement in general block!");
     }
   }
+
+  // double check the size
+  if(statements.size() > 1)
+    blocked = true;             // indicating multiple variable defintions (may happen when it is module or genblock)
 }
 

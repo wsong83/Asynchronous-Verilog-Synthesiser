@@ -35,9 +35,9 @@ namespace netlist{
   class SeqBlock : public Block {
   public:
     // constructors
-    SeqBlock() : Block(tSeqBlock) {};
+    SeqBlock() : Block(tSeqBlock), sensitive(false) {};
     SeqBlock(const BIdentifier& nm)
-      : Block(tSeqBlock, nm) {}
+      : Block(tSeqBlock, nm), sensitive(false) {}
     SeqBlock(list<pair<int, shared_ptr<Expression> > >&, const shared_ptr<Block>&);
     SeqBlock(const shared_ptr<Block>&);
     

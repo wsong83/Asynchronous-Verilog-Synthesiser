@@ -34,7 +34,7 @@ namespace netlist {
   class Expression : public NetComp {
   public:
     // constructors
-    Expression();
+    NETLIST_DEFAULT_CON(Expression, tExp);
     Expression(const Number&);	/* a number is an expression */
     Expression(const VIdentifier&); /* a variable/parameter is an expression */
     Expression(const shared_ptr<Concatenation>&); /* a concatenation is an expression */

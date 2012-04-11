@@ -45,7 +45,7 @@ ostream& netlist::ForState::streamout(ostream& os, unsigned int indent) const {
   assert(init.use_count() != 0);
 
   os << string(indent, ' ') << "for (" << *init << "; " << *cond << "; " << *incr << ") ";
-  body->streamout(os, indent+2);
+  body->streamout(os, indent+2, true);
 
   return os;
 }

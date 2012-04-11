@@ -160,6 +160,10 @@ void netlist::Block::elab_inparse() {
       assert(0 == "wrong type os statement in general block!");
     }
   }
+
+  // double check the size
+  if(statements.size() > 1)
+    blocked = true;             // indicating multiple variable defintions (may happen when it is module or genblock)
 }
 
 BIdentifier& netlist::Block::new_BId() {
@@ -191,35 +195,34 @@ ostream& netlist::Block::streamout(ostream& os, unsigned int indent, bool fl_pre
   if(!fl_prefix) os << string(indent, ' ');
 
   // the body part
-  if(!complex)  {
+  if(!blocked)  {
     if(statements.front()->get_type() == NetComp::tBlock)
       static_pointer_cast<Block>(statements.front())->streamout(os, indent, true);
     else {
       os << endl;
       statements.front()->streamout(os, indent+2);
-      if(statements.front()->get_type() == NetComp::tAssign) os << ";" << endl;
+      if(statements.front()->get_type() == NetComp::tAssign &&
+         !(static_pointer_cast<Assign>(statements.front())->is_continuous()))
+        os << ";" << endl;
     }
   } else {
     os << "begin";
     if(named) os << ": " << name.name;
     os << endl;
-    // show local variables if any
-    {
-      map<VIdentifier, shared_ptr<Variable> >::const_iterator it, end;
-      for(it = db_wire.begin(), end = db_wire.end(); it != end; it++)
-        os << string(indent+2, ' ') << "wire " << *(it->second) << ";" << endl;
-      for(it = db_reg.begin(), end = db_reg.end(); it != end; it++)
-        os << string(indent+2, ' ') << "reg " << *(it->second) << ";" << endl;
-      db_instance.streamout(os, indent+2);
-    }
-    // statements
-    {
-      list<shared_ptr<NetComp> >::const_iterator it, end;
-      for(it=statements.begin(), end=statements.end(); it!=end; it++) {
+    
+    list<shared_ptr<NetComp> >::const_iterator it, end;
+    for(it=statements.begin(), end=statements.end(); it!=end; it++) {
+      if((*it)->get_type() == NetComp::tBlock)
+        static_pointer_cast<Block>(*it)->streamout(os, indent, true);
+      else {
+        os << endl;
         (*it)->streamout(os, indent+2);
-        if((*it)->get_type() == NetComp::tAssign) os << ";" << endl;
+        if((*it)->get_type() == NetComp::tAssign &&
+           !(static_pointer_cast<Assign>(*it)->is_continuous()))
+          os << ";" << endl;
       }
     }
+      
     os << string(indent, ' ') << "end" << endl;
   }
 

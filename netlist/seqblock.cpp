@@ -102,7 +102,7 @@ netlist::SeqBlock::SeqBlock(list<pair<int, shared_ptr<Expression> > >& slist, co
   }
   
   sensitive = true; 
-  named = body->named;
+  named = body->is_named();
   if(named) name = body->name;
   statements = body->statements;
 
@@ -111,7 +111,7 @@ netlist::SeqBlock::SeqBlock(list<pair<int, shared_ptr<Expression> > >& slist, co
 }
       
 netlist::SeqBlock::SeqBlock(const shared_ptr<Block>& body) 
-  : Block(*body)
+  : Block(*body), sensitive(false)
 {}
 
       
