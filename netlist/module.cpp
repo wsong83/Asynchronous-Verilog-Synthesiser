@@ -30,6 +30,49 @@
 
 using namespace netlist;
 
+netlist::Module::Module(const MIdentifier& nm, const shared_ptr<Block>& body)
+  : Block(*body), name(nm) {
+  named=true; 
+  elab_inparse();
+}
+
+netlist::Module::Module(const MIdentifier& nm, const list<PoIdentifier>& port_list, const shared_ptr<Block>& body)
+  : Block(*body), name(nm) {
+  
+  named=true;
+  
+  // insert ports
+  list<PoIdentifier>::const_iterator it, end;
+  for(it=port_list.begin(),end=port_list.end(); it!=end; it++)
+    db_port.insert(*it, shared_ptr<Port>(new Port(*it)));
+
+  elab_inparse();
+}
+
+netlist::Module::Module(const MIdentifier& nm, const list<shared_ptr<Variable> >& para_list,
+                        const list<PoIdentifier>& port_list, const shared_ptr<Block>& body)
+  : Block(*body), name(nm) {
+  
+  named=true;
+  
+  // insert parameters
+  {
+    list<shared_ptr<Variable> >::const_iterator it, end;
+    for(it=para_list.begin(),end=para_list.end(); it!=end; it++)
+      db_param.insert((*it)->name, *it);  
+  }
+
+  // insert ports
+  {
+    list<PoIdentifier>::const_iterator it, end;
+    for(it=port_list.begin(),end=port_list.end(); it!=end; it++)
+      db_port.insert(*it, shared_ptr<Port>(new Port(*it)));
+  }
+
+  elab_inparse();
+}
+
+
 ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ') << name;
   if(db_port.empty()) os << ";" << endl;
@@ -48,51 +91,17 @@ ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
     }
   }
   
-  { // parameters
-    if(!db_param.empty()) os << endl;
-    list<pair<VIdentifier, shared_ptr<Variable> > >::const_iterator it, end;
-    for(it = db_param.begin_order(), end = db_param.end_order(); it != end; it++)
-      os << string(indent+2, ' ') << "parameter " << *(it->second) << ";" << endl;
-  }
-  
-  { // ports
-    if(!db_port.empty()) os << endl;
-    db_port.streamout(os, indent+2);
-  }
-  
-  { // wires and regs
-    map<VIdentifier, shared_ptr<Variable> >::const_iterator it, end;
-    if(!db_wire.empty()) os << endl;
-    for(it = db_wire.begin(), end = db_wire.end(); it != end; it++)
-      os << string(indent+2, ' ') << "wire " << *(it->second) << ";" << endl;
-    if(!db_reg.empty()) os << endl;
-    for(it = db_reg.begin(), end = db_reg.end(); it != end; it++)
-      os << string(indent+2, ' ') << "reg " << *(it->second) << ";" << endl;
-  }
-
-  { // gen vars
-    list<pair<VIdentifier, shared_ptr<Variable> > >::const_iterator it, end;
-    if(!db_genvar.empty()) os << endl;
-    for(it = db_genvar.begin_order(), end = db_genvar.end_order(); it != end; it++)
-      os << string(indent+2, ' ') << "genvar " << *(it->second) << ";" << endl;
-  }
-
-  { // continueous assignments
-    if(!statements.empty()) os << endl;
-    list<shared_ptr<NetComp> >::const_iterator it, end;
-    for(it = statements.begin(), end = statements.end(); it != end; it++) {
-      if((*it)->get_type() == NetComp::tAssign)
-        os << string(indent+2, ' ') << "assign " << **it << ";" << endl;
-      else {
-        os << endl;
-        (*it)->streamout(os, indent+2);
-      }
+  list<shared_ptr<NetComp> >::const_iterator it, end;
+  for(it=statements.begin(), end=statements.end(); it!=end; it++) {
+    if((*it)->get_type() == NetComp::tBlock)
+      static_pointer_cast<Block>(*it)->streamout(os, indent+2);
+    else {
+      os << endl;
+      (*it)->streamout(os, indent+2);
+      if((*it)->get_type() == NetComp::tAssign &&
+         !(static_pointer_cast<Assign>(*it)->is_continuous()))
+        os << ";" << endl;
     }
-  }
-
-  { // module instances
-    if(!db_instance.empty()) os << endl;
-    db_instance.streamout(os, indent+2);
   }
 
   os << endl << string(indent, ' ') << "endmodule" << endl << endl;
@@ -108,12 +117,19 @@ void netlist::Module::clear() {
 }
 
 VIdentifier& netlist::Module::new_VId() {
-  while(db_wire.find(unnamed_var).use_count() +
-        db_reg.find(unnamed_var).use_count() +
+  while(db_var.find(unnamed_var).use_count() +
         db_param.find(unnamed_var).use_count() +
         db_genvar.find(unnamed_var).use_count() != 0)
     ++unnamed_var;
   return unnamed_var;
+}
+
+BIdentifier& netlist::Module::new_BId() {
+  while(db_seqblock.find(unnamed_block).use_count() +
+        db_assign.find(unnamed_block).use_count() +
+        db_genblock.find(unnamed_block).use_count() != 0)
+    ++unnamed_block;
+  return unnamed_block;
 }
 
 void netlist::Module::elab_inparse() {
@@ -123,63 +139,48 @@ void netlist::Module::elab_inparse() {
     case tAssign: {
       SP_CAST(m, Assign, *it);
       m->set_name(new_BId());
-      db_other.insert(m->name, m);
+      db_assign.insert(m->name, m);
       break;
     }
-    case tBlock: {
-      SP_CAST(m, Assign, *it);
+    case tSeqBlock: {
+      SP_CAST(m, SeqBlock, *it);
       if(!m->is_named()) m->name = new_BId();
-      db_other.insert(m->name, m);
+      db_seqblock.insert(m->name, m);
       break;
     }
-    case tCase: {
-      SP_CAST(m, CaseState, *it);
-      m->set_name(new_BId());
-      db_other.insert(m->name, m);
+    case tGenBlock: {
+      SP_CAST(m, GenBlock, *it);
+      if(!m->is_named()) m->name = new_BId();
+      db_genblock.insert(m->name, m);
       break;
-    }
-    case tFor: {
-      SP_CAST(m, ForState, *it);
-      m->set_name(new_BId());
-      db_other.insert(m->name, m);
-      break;
-    }
-    case tIf: {
-      SP_CAST(m, IfState, *it);
-      m->set_name(new_BId());
-      db_other.insert(m->name, m);
-      break;
-    }
+    }      
     case tInstance: {
       SP_CAST(m, Instance, *it);
       if(!m->is_named()) m->set_name(new_IId());
       db_instance.insert(m->name, m);
       break;
     }
-    case tWhile: {
-      SP_CAST(m, WhileState, *it);
-      m->set_name(new_BId());
-      db_other.insert(m->name, m);
-      break;
-    }
     case tPort: {
       SP_CAST(m, Port, *it);
-      db_port.insert(m->name, m);
+      // should check first
+      /// if multiple definitions exist for the same parameter, the last one take effect
+      db_port.swap(m->name, m);
       break;
     }
     case tVariable: {
       SP_CAST(m, Variable, *it);
       switch(m->get_vtype()) {
       case Variable::TWire: {
-        db_wire.insert(m->name, m);
+        db_var.insert(m->name, m);
         break;
       }
       case Variable::TReg: {
-        db_reg.insert(m->name, m);
+        db_var.insert(m->name, m);
         break;
       }
       case Variable::TParam: {
-        db_param.insert(m->name, m);
+        /// if multiple definitions exist for the same parameter, the last one take effect
+        db_param.swap(m->name, m); 
         break;
       }
       case Variable::TGenvar: {
@@ -196,8 +197,5 @@ void netlist::Module::elab_inparse() {
     }
   }
 
-  // double check the size
-  if(statements.size() > 1)
-    blocked = true;             // indicating multiple variable defintions (may happen when it is module or genblock)
+  blocked = true;               // module is always blocked
 }
-

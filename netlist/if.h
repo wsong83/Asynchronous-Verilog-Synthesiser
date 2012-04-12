@@ -34,7 +34,6 @@ namespace netlist {
   class IfState : public NetComp {
   public:
     // constructors
-    //NETLIST_DEFAULT_CON(IfState, tIf);
     IfState(
             const shared_ptr<Expression>& exp, 
             const shared_ptr<Block>& m_ifcase, 

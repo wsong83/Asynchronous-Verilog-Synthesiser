@@ -36,7 +36,7 @@ netlist::ForState::ForState(
                             const shared_ptr<Assign>& incr, 
                             const shared_ptr<Block>& body
                             )
-  : NetComp(NetComp::tFor), init(init), cond(cond), incr(incr), body(body)
+  : NetComp(NetComp::tFor), init(init), cond(cond), incr(incr), body(body), named(false)
 {
   body->elab_inparse();
 }

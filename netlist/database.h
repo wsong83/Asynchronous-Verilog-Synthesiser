@@ -88,6 +88,12 @@ namespace netlist {
           return shared_ptr<T>();
       }
     }
+
+    shared_ptr<T> swap(const K& key, const shared_ptr<T>& comp) {
+      shared_ptr<T> rv = fetch(key);
+      insert(key, comp);
+      return rv;
+    }
     
     unsigned int size() const {
       if(ORDER)

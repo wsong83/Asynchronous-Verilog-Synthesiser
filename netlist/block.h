@@ -35,13 +35,13 @@ namespace netlist {
   class Block : public NetComp {
   public:
     // constructors
-    NETLIST_DEFAULT_CON(Block, tBlock);
-    Block(NetComp::ctype_t t, const BIdentifier& nm) 
+    Block() : NetComp(tBlock), named(false), blocked(false) {}
+    Block(ctype_t t, const BIdentifier& nm) 
       : NetComp(t), name(nm), named(true), blocked(true) {}
     Block(const BIdentifier& nm) 
-      : NetComp(NetComp::tBlock), name(nm), named(true), blocked(true) {}
+      : NetComp(tBlock), name(nm), named(true), blocked(true) {}
     Block(NetComp::ctype_t t) 
-      : NetComp(t) {}
+      : NetComp(t), named(false), blocked(false) {}
 
     // helpers
     virtual void set_name(const BIdentifier& nm) {name = nm; named=true; blocked = true;}
@@ -82,11 +82,9 @@ namespace netlist {
     // data
     BIdentifier name;
     list<shared_ptr<NetComp> >             statements;   /* a general list to stor the statements */
-    DataBase<VIdentifier, Variable>        db_wire;      /* wires */
-    DataBase<VIdentifier, Variable>        db_reg;       /* registers */
+    DataBase<VIdentifier, Variable>        db_var;       /* variables */
     DataBase<IIdentifier, Instance>        db_instance;  /* module instances */
-    DataBase<BIdentifier, Block>           db_block;     /* sub-blocks */
-    DataBase<BIdentifier, NetComp>         db_other;     /* non-block statements, including assignements, if, etc. */
+    DataBase<BIdentifier, NetComp, true>   db_other;     /* non-block statements, including assignements, if, etc. */
     
 
   protected:

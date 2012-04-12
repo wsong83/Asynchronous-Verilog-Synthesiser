@@ -35,10 +35,9 @@ void netlist::Block::clear() {
   named = false;
   blocked = false;
   statements.clear();
-  db_wire.clear();
-  db_reg.clear();
+  db_var.clear();
   db_instance.clear();
-  db_block.clear();
+  db_other.clear();
   unnamed_block = BIdentifier();
   unnamed_instance = IIdentifier();
   unnamed_var = VIdentifier();
@@ -105,7 +104,7 @@ void netlist::Block::elab_inparse() {
       break;
     }
     case tBlock: {
-      SP_CAST(m, Assign, *it);
+      SP_CAST(m, Block, *it);
       if(!m->is_named()) m->name = new_BId();
       db_other.insert(m->name, m);
       break;
@@ -144,11 +143,11 @@ void netlist::Block::elab_inparse() {
       SP_CAST(m, Variable, *it);
       switch(m->get_vtype()) {
       case Variable::TWire: {
-        db_wire.insert(m->name, m);
+        db_var.insert(m->name, m);
         break;
       }
       case Variable::TReg: {
-        db_reg.insert(m->name, m);
+        db_var.insert(m->name, m);
         break;
       }
       default:
@@ -167,7 +166,7 @@ void netlist::Block::elab_inparse() {
 }
 
 BIdentifier& netlist::Block::new_BId() {
-  while(db_block.find(unnamed_block).use_count() != 0)
+  while(db_other.find(unnamed_block).use_count() != 0)
     ++unnamed_block;
   return unnamed_block;
 }
@@ -179,8 +178,7 @@ IIdentifier& netlist::Block::new_IId() {
 }
 
 VIdentifier& netlist::Block::new_VId() {
-  while(db_wire.find(unnamed_var).use_count() +
-        db_reg.find(unnamed_var).use_count() != 0)
+  while(db_var.find(unnamed_var).use_count() != 0)
     ++unnamed_var;
   return unnamed_var;
 }

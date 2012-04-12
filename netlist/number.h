@@ -35,7 +35,7 @@ namespace netlist {
   class Number : public NetComp{
   public:
     // constructors
-    NETLIST_DEFAULT_CON(Number, tNumber);
+    Number() : num_leng(0), valid(false), valuable(false) {};
     Number(char *text, int txt_leng); /* constructor for scanner */
     Number(int d);
     Number(const string&);

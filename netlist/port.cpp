@@ -31,7 +31,7 @@
 using namespace netlist;
 
 netlist::Port::Port(const PoIdentifier& pid)
-  : NetComp(tPort), name(pid) {}
+  : NetComp(tPort), name(pid), dir(0) {}
 
 ostream& netlist::Port::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');

@@ -71,13 +71,13 @@ namespace netlist{
   public:
     // constructors
     CaseState(const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, const shared_ptr<CaseItem>& ditem)
-      : NetComp(tCase), exp(exp), cases(citems) {
+      : NetComp(tCase), exp(exp), cases(citems), named(false) {
       cases.push_back(ditem);
     }
     CaseState(const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems)
-      : NetComp(tCase), exp(exp), cases(citems) { }
+      : NetComp(tCase), exp(exp), cases(citems), named(false) { }
     CaseState(const shared_ptr<Expression>& exp, const shared_ptr<CaseItem>& ditem)
-      : NetComp(tCase), exp(exp) {
+      : NetComp(tCase), exp(exp), named(false) {
       cases.push_back(ditem);
     }
 

@@ -34,11 +34,12 @@ namespace netlist{
   class GenBlock : public Block {
   public:
     // constructors
-    GenBlock()
-      : Block(NetComp::tGenBlock) {}
-    GenBlock(const BIdentifier& nm)
-      : Block(NetComp::tGenBlock, nm) {}
+    GenBlock(const Block& body);
     
+    // helpers
+    virtual ostream& streamout(ostream&, unsigned int, bool) const;    
+    virtual void elab_inparse();        /* resolve the content during parsing */
+
     // inherit from NetComp
     NETLIST_STREAMOUT_FUN_DECL;
 

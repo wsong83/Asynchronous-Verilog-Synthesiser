@@ -34,7 +34,7 @@ namespace netlist {
   class ForState : public NetComp {
   public:
     // constructors
-    NETLIST_DEFAULT_CON(ForState, tFor);
+    ForState() : NetComp(tFor), named(false) {}
     ForState(
              const shared_ptr<Assign>& init, 
              const shared_ptr<Expression>& cond, 

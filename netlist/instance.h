@@ -32,16 +32,17 @@
 namespace netlist {
   class Instance : public NetComp {
   public:
-    enum type_t { unknown, modu_inst, prim_in_inst, prim_out_inst, gate_inst};
+    enum type_t { unknown_inst, modu_inst, prim_in_inst, prim_out_inst, gate_inst};
  
     Instance()
-      : NetComp(tInstance), type(unknown) {}
+      : NetComp(tInstance), type(unknown_inst), named(false) {}
 
     Instance(const IIdentifier& nm, const list<shared_ptr<PortConn> >& polist)
-      : NetComp(tInstance), name(nm), port_list(polist), type(unknown), named(true) { }
+      : NetComp(tInstance), name(nm), port_list(polist), type(unknown_inst), named(true) { }
 
     // for primary gates in most cases
     Instance(const IIdentifier&, const list<shared_ptr<PortConn> >&, type_t);
+    Instance(const list<shared_ptr<PortConn> >&, type_t);
 
     // helpers
     NETLIST_STREAMOUT_FUN_DECL;

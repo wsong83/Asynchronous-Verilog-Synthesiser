@@ -37,7 +37,7 @@ namespace netlist {
   class Range : public NetComp {
   public:
     // constructors
-    Range() : type(TErr) { }
+    Range() : dim(false), rtype(TR_Err) { }
     Range(const mpz_class&);	/* select by a fix number */
     Range(const mpz_class&, const mpz_class&);	/* select by a fix number */
     Range(const shared_ptr<Expression>&);	/* select by an expression  */
@@ -45,8 +45,8 @@ namespace netlist {
     Range(const Range_Exp&, int); /* select by a range expression using positive or negtive colon */
 
     // helpers
-    bool is_const() const { return type == TConst && type == TCRange; }
-    bool is_single() const {return type != TRange && type != TCRange; }
+    bool is_const() const { return rtype == TR_Const && rtype == TR_CRange; }
+    bool is_single() const {return rtype != TR_Range && rtype != TR_CRange; }
     void db_register();
     void set_dim() { dim = true;}
     bool is_dim() const { return dim;}
@@ -62,13 +62,13 @@ namespace netlist {
     Range_Const cr;             /* const range */
     bool dim;                   /* true when it is a dimension rather than range */
     
-    enum type_t {
-      TErr,
-      TConst, 
-      TVar, 
-      TRange,
-      TCRange
-    } type;
+    enum rtype_t {
+      TR_Err,
+      TR_Const, 
+      TR_Var, 
+      TR_Range,
+      TR_CRange
+    } rtype;
     
 
   };

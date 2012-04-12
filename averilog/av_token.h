@@ -48,6 +48,7 @@ namespace averilog {
     shared_ptr<netlist::Expression>    tExp;
     pair<int, shared_ptr<netlist::Expression> > tEvent;
     netlist::FIdentifier               tFuncName;
+    shared_ptr<netlist::GenBlock>      tGenBlock;
     avID                               tID;      
     shared_ptr<netlist::Instance>      tInstance;
     netlist::IIdentifier               tInstName;
@@ -59,10 +60,12 @@ namespace averilog {
     list<shared_ptr<netlist::Instance> > tListInst;
     list<netlist::PoIdentifier>        tListPort;
     list<shared_ptr<netlist::ParaConn> > tListParaAssign;
+    list<shared_ptr<netlist::Port> >   tListPortDecl;
     list<shared_ptr<netlist::PortConn> > tListPortConn;
     list<pair<netlist::VIdentifier, shared_ptr<netlist::Expression> > > tListVar;
     list<shared_ptr<netlist::Variable> > tListVarDecl;
     netlist::MIdentifier               tModuleName;
+    shared_ptr<netlist::Module>        tModule;
     netlist::Number                    tNumber;    
     netlist::PoIdentifier              tPortName;
     shared_ptr<netlist::ParaConn>      tParaAssign;

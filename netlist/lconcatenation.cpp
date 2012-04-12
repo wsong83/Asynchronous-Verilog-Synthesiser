@@ -31,7 +31,7 @@
 using namespace netlist;
 
 netlist::LConcatenation::LConcatenation(shared_ptr<Concatenation>& con)
-  : NetComp(tLConcatenation)
+  : NetComp(tLConcatenation), valid(false)
 {
   con->reduce();
   list<shared_ptr<ConElem> >::iterator it, end;

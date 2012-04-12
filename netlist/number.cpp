@@ -34,7 +34,7 @@ using namespace netlist;
 
 // decimal or integer
 netlist::Number::Number(char *text, int txt_leng) 
-  : NetComp(tNumber)
+  : NetComp(tNumber), valid(false), valuable(false)
 {
   string m;
   int i;

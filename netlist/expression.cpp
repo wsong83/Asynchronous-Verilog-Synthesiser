@@ -37,19 +37,19 @@ netlist::Expression::Expression(const Number& exp)
 }
 
 netlist::Expression::Expression(const VIdentifier& id) 
-  : NetComp(tExp)
+  : NetComp(tExp), valuable(false)
 {
   eqn.push_back(shared_ptr<Operation>( new Operation(id)));
 }
 
 netlist::Expression::Expression(const shared_ptr<Concatenation>& con) 
-  : NetComp(tExp)
+  : NetComp(tExp), valuable(false)
 {
   eqn.push_back(shared_ptr<Operation>( new Operation(con)));
 }
 
 netlist::Expression::Expression(const shared_ptr<LConcatenation>& con)
-  : NetComp(tExp)
+  : NetComp(tExp), valuable(false)
 {
   eqn.push_back(shared_ptr<Operation>(new Operation(con)));
 }

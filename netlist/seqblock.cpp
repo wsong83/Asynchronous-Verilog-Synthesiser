@@ -107,11 +107,27 @@ netlist::SeqBlock::SeqBlock(list<pair<int, shared_ptr<Expression> > >& slist, co
   statements = body->statements;
 
   // TODO: checking sensitive list, only one type is used
+  elab_inparse();
 
 }
       
-netlist::SeqBlock::SeqBlock(const shared_ptr<Block>& body) 
-  : Block(*body), sensitive(false)
-{}
+netlist::SeqBlock::SeqBlock(const Block& body) 
+  : Block(body), sensitive(false)
+{
+  ctype = tSeqBlock;
+  elab_inparse();
+}
 
+void netlist::SeqBlock::elab_inparse() {
+
+  // TODO: checking sensitive list, only one type is used
+  //       right now nothing is checked
+
+  // just use the elab_inparse of Block is fine for always blocks
+  Block::elab_inparse();
+
+  // make sure it is blocked
+  blocked = true;
+
+}
       

@@ -60,7 +60,7 @@ namespace netlist {
     // insert a new module by its object
     bool insert(shared_ptr<Module> mm) { 
       bool rv = db.insert(mm->name, mm); 
-      if(rv) comp_list.push_front(mm);
+      //if(rv) comp_list.push_front(mm);
       return rv;
     }
     

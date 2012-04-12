@@ -90,7 +90,7 @@ namespace netlist {
   class MIdentifier : public Identifier {
   public:
     // constructors
-    MIdentifier() : Identifier(NetComp::tModuleName) {}
+    MIdentifier() : Identifier(tModuleName) {}
     MIdentifier(const string&);
     MIdentifier(const averilog::avID& );
     
@@ -149,7 +149,6 @@ namespace netlist {
     VIdentifier(const string&);
     VIdentifier(const averilog::avID&);
     VIdentifier(const string&, const vector<shared_ptr<Range> >&);
-    VIdentifier(const VIdentifier&); /* needed for deep copy */
 
     //helpers
     VIdentifier& operator++ ();

@@ -57,10 +57,10 @@ namespace netlist {
   class PortConn {
   public:
     PortConn(const shared_ptr<Expression>& exp, int dir_m = 0) /* ordered connection */
-      : dir(dir_m), exp(exp), type(CEXP) { reduce(); }
+      : dir(dir_m), exp(exp), type(CEXP), named(false) { reduce(); }
     
     PortConn(const shared_ptr<LConcatenation>& lval, int dir_m = 0) /* ordered connection */
-      : dir(dir_m), exp(new Expression(lval)), type(CEXP) { reduce(); }
+      : dir(dir_m), exp(new Expression(lval)), type(CEXP), named(false) { reduce(); }
     
     PortConn()                  /* oredered open output connection */
       : dir(1), type(COPEN) {}
@@ -114,10 +114,10 @@ namespace netlist {
   class ParaConn {
   public:
     ParaConn()
-      : type(COPEN) { }
+      : type(COPEN), named(false) { }
 
     ParaConn(const shared_ptr<Expression>& exp) /* ordered connection */
-      : exp(exp), type(CEXP) { reduce(); }
+      : exp(exp), type(CEXP), named(false) { reduce(); }
 
     ParaConn(const VIdentifier& pn, const shared_ptr<Expression>& exp) /* named connection */
       : pname(pn), exp(exp), type(CEXP), named(true) { reduce(); }

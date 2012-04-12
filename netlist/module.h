@@ -37,6 +37,10 @@ namespace netlist {
       : Block(tModule) {}
     Module(const MIdentifier& nm)
       : Block(tModule), name(nm) { named=true; }
+    Module(const MIdentifier& nm, const shared_ptr<Block>& body);
+    Module(const MIdentifier& nm, const list<PoIdentifier>& port_list, const shared_ptr<Block>& body);
+    Module(const MIdentifier& nm, const list<shared_ptr<Variable> >& para_list, 
+           const list<PoIdentifier>& port_list, const shared_ptr<Block>& body);
 
     // inherit from NetComp
     NETLIST_STREAMOUT_FUN_DECL;
@@ -45,6 +49,7 @@ namespace netlist {
     virtual void set_name(const MIdentifier& nm) { name = nm; named=true;}
     virtual void clear();
     virtual VIdentifier& new_VId();
+    virtual BIdentifier& new_BId();
     virtual void elab_inparse();                           /* resolve the content in statements during parsing */
     
     // data
@@ -52,6 +57,9 @@ namespace netlist {
     DataBase<PoIdentifier, Port, true>     db_port;      /* input and output ports, ordered */
     DataBase<VIdentifier, Variable, true>  db_param;     /* parameters, ordered */
     DataBase<VIdentifier, Variable, true>  db_genvar;    /* generate variable, ordered */
+    DataBase<BIdentifier, SeqBlock>        db_seqblock;  /* always blocks */
+    DataBase<BIdentifier, Assign>          db_assign;    /* continuous assignments */
+    DataBase<BIdentifier, GenBlock>        db_genblock;  /* generation blocks */
 
   };
 

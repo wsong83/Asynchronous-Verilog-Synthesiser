@@ -43,7 +43,7 @@ namespace shell {
     };
     
     ErrorType(severe_t severe, const string& errMsg, int nopara)
-      : severe(severe), errMsg(errMsg), num_of_para(nopara) {}
+      : severe(severe), suppressed(false), errMsg(errMsg), num_of_para(nopara) {}
     
     ErrorType ( const ErrorType& dd)
       : severe(dd.severe), suppressed(dd.suppressed), errMsg(dd.errMsg), num_of_para(dd.num_of_para) {}

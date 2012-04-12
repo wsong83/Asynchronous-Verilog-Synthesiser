@@ -242,6 +242,8 @@
 %type <tBlock>          generate_item
 %type <tBlock>          generate_items
 %type <tBlock>          generate_item_or_null
+%type <tBlock>          module_item
+%type <tBlock>          module_items
 %type <tBlockName>      block_identifier
 %type <tCaseItem>       case_item
 %type <tCaseItem>       generate_case_item
@@ -249,6 +251,7 @@
 %type <tExp>            expression
 %type <tExp>            primary
 %type <tEvent>          event_expression
+%type <tGenBlock>       generated_instantiation
 %type <tInstance>       module_instance
 %type <tInstance>       n_input_gate_instance
 %type <tInstance>       n_output_gate_instance
@@ -274,9 +277,13 @@
 %type <tListPortConn>   named_port_connections
 %type <tListPortConn>   ordered_port_connections
 %type <tListPortConn>   output_terminals
+%type <tListPortDecl>   input_declaration
+%type <tListPortDecl>   output_declaration
 %type <tListVar>        list_of_variable_identifiers
 %type <tListVarDecl>    list_of_variable_declarations
 %type <tListVarDecl>    variable_declaration
+%type <tListVarDecl>    list_of_param_assignments
+%type <tListVarDecl>    parameter_declaration
 %type <tModuleName>     module_identifier
 %type <tModuleName>     n_input_gatetype
 %type <tModuleName>     n_output_gatetype
@@ -314,50 +321,46 @@ description
     ;
 
 module_declaration
-    : "module" module_identifier ';'  { if(!Lib.insert($2)) av_env.error(yylloc, "SYN-MODULE-0", $2.name); }
-        module_items
-        "endmodule"                   { cout<< *(Lib.get_current_comp()); Lib.pop(); }
-    | "module" module_identifier '(' list_of_port_identifiers ')' ';'
+    : "module" module_identifier ';' module_items "endmodule"                   
     {
-      if(!Lib.insert($2)) av_env.error(yylloc, "SYN-MODULE-0", $2.name);
-      // get a pointer to the current module
-      shared_ptr<Module> cm = static_pointer_cast<Module>(Lib.get_current_comp());
-      // insert ports
-      list<PoIdentifier>::iterator it, end;
-      for(it = $4.begin(), end = $4.end(); it != end; it++) {
-        PoIdentifier& pid = *it;
-        if(cm->db_port.find(pid).use_count() == 0)
-          cm->db_port.insert(pid, shared_ptr<Port>(new Port(pid)));
-        else
-          av_env.error(yylloc, "SYN-PORT-1", pid.name, cm->name.name);
-      }
+      shared_ptr<Module> m(new Module($2, $4));
+      if(!Lib.insert(m)) av_env.error(yylloc, "SYN-MODULE-0", $2.name); 
+      cout<< *m;
     }
-        module_items
-        "endmodule"                      { cout<< *(Lib.get_current_comp()); Lib.pop(); }
+    | "module" module_identifier '(' list_of_port_identifiers ')' ';' module_items "endmodule"
+    { 
+      shared_ptr<Module> m(new Module($2, $4, $7));
+      if(!Lib.insert(m)) av_env.error(yylloc, "SYN-MODULE-0", $2.name); 
+      cout<< *m;
+    }
     | "module" module_identifier '#' '(' parameter_declaration ')' '(' list_of_port_identifiers ')' ';'
-        module_items
-      "endmodule"                   
+      module_items "endmodule"
+    {
+      shared_ptr<Module> m(new Module($2, $5, $8, $11));
+      if(!Lib.insert(m)) av_env.error(yylloc, "SYN-MODULE-0", $2.name); 
+      cout<< *m;
+    }
     ;
 
 // A.1.4 Module paramters and ports
 
 // A.1.5 Module items
 module_item
-    : parameter_declaration ';'
-    | input_declaration ';'
-    | output_declaration ';'
-    | variable_declaration ';' 
+    : parameter_declaration ';'  { $$.reset(new Block()); $$->add_list<Variable>($1); }
+    | input_declaration ';'      { $$.reset(new Block()); $$->add_list<Port>($1);     }
+    | output_declaration ';'     { $$.reset(new Block()); $$->add_list<Port>($1);     }
+    | variable_declaration ';'   { $$.reset(new Block()); $$->add_list<Variable>($1); }
     | function_declaration
-    | continuous_assign
-    | gate_instantiation
-    | module_instantiation
-    | always_construct
-    | generated_instantiation
+    | continuous_assign          { $$.reset(new Block()); $$->add_list<Assign>($1);   }
+    | gate_instantiation         { $$.reset(new Block()); $$->add_list<Instance>($1); }
+    | module_instantiation       { $$.reset(new Block()); $$->add_list<Instance>($1); }
+    | always_construct           { $$.reset(new Block()); $$->add($1);                }
+    | generated_instantiation    { $$.reset(new Block()); $$->add($1);                }
     ;
 
 module_items
-    : module_item
-    | module_items module_item
+    : module_item                { $$.reset(new Block()); $$->add_statements($1);     }
+    | module_items module_item   { $$->add_statements($2);                            }
     
 // A.2.1 Declaration types
 // A.2.1.1 Module parameter declarations
@@ -369,29 +372,23 @@ parameter_declaration
 input_declaration 
     : "input" list_of_port_identifiers
     {      
-      // get a pointer to the current module
-      shared_ptr<Module> cm = static_pointer_cast<Module>(Lib.get_current_comp());
-      // insert ports
       list<PoIdentifier>::iterator it, end;
       for(it = $2.begin(), end = $2.end(); it != end; it++) {
-        shared_ptr<Port> cp = cm->db_port.find(*it);
-        if(0 != cp.use_count()) cp->set_in();
-        else { av_env.error(yylloc, "SYN-PORT-0", it->name, cm->name.name); }
+        shared_ptr<Port> cp(new Port(*it));
+        cp->set_in();
+        $$.push_back(cp);
       }
     }
     | "input" '[' expression ':' expression ']' list_of_port_identifiers
     {      
-      // get a pointer to the current module
-      shared_ptr<Module> cm = static_pointer_cast<Module>(Lib.get_current_comp());
-      // insert ports
+      
       list<PoIdentifier>::iterator it, end;
       for(it = $7.begin(), end = $7.end(); it != end; it++) {
-        shared_ptr<Port> cp = cm->db_port.find(*it);
-        if(0 != cp.use_count()) { 
-          cp->set_in();
-          pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
-          cp->name.get_range().push_back(shared_ptr<Range>(new Range(m)));
-        } else {  av_env.error(yylloc, "SYN-PORT-0", it->name, cm->name.name); }
+        shared_ptr<Port> cp( new Port(*it));
+        cp->set_in();
+        pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
+        cp->name.get_range().push_back(shared_ptr<Range>(new Range(m)));
+        $$.push_back(cp);
       }
     }  
     ;
@@ -399,29 +396,22 @@ input_declaration
 output_declaration 
     : "output" list_of_port_identifiers
     {      
-      // get a pointer to the current module
-      shared_ptr<Module> cm = static_pointer_cast<Module>(Lib.get_current_comp());
-      // insert ports
       list<PoIdentifier>::iterator it, end;
       for(it = $2.begin(), end = $2.end(); it != end; it++) {
-        shared_ptr<Port> cp = cm->db_port.find(*it);
-        if(0 != cp.use_count()) cp->set_out();
-        else {  av_env.error(yylloc, "SYN-PORT-0", it->name, cm->name.name); }
+        shared_ptr<Port> cp( new Port(*it));
+        cp->set_out();
+        $$.push_back(cp);
       }
     }
     | "output" '[' expression ':' expression ']' list_of_port_identifiers
     {      
-      // get a pointer to the current module
-      shared_ptr<Module> cm = static_pointer_cast<Module>(Lib.get_current_comp());
-      // insert ports
       list<PoIdentifier>::iterator it, end;
       for(it = $7.begin(), end = $7.end(); it != end; it++) {
-        shared_ptr<Port> cp = cm->db_port.find(*it);
-        if(0 != cp.use_count()) { 
-          cp->set_out();
-          pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
-          cp->name.get_range().push_back(shared_ptr<Range>(new Range(m)));
-        } else {  av_env.error(yylloc, "SYN-PORT-0", it->name, cm->name.name); }
+        shared_ptr<Port> cp( new Port(*it));
+        cp->set_out();
+        pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
+        cp->name.get_range().push_back(shared_ptr<Range>(new Range(m)));
+        $$.push_back(cp);
       }
     }  
     ;
@@ -520,8 +510,10 @@ list_of_variable_declarations
 
 // A.2.3 Declaration lists
 list_of_param_assignments 
-    : param_assignment
-    | list_of_param_assignments ',' param_assignment
+    : parameter_identifier '=' expression
+    { $$.push_back(shared_ptr<Variable>(new Variable($1,$3,Variable::TParam))); }
+    | list_of_param_assignments ',' parameter_identifier '=' expression
+    { $$.push_back(shared_ptr<Variable>(new Variable($3,$5,Variable::TParam))); }
     ;
 
 list_of_port_identifiers 
@@ -541,17 +533,9 @@ list_of_variable_identifiers
     ;
 
 // A.2.4 Declaration assignments
-param_assignment 
-    : parameter_identifier '=' expression 
-    {
-      shared_ptr<Variable> cp(new Variable($1,$3)); 
-      assert(Lib.get_current_comp()->get_type() == NetComp::tModule);
-      shared_ptr<Module> cm = static_pointer_cast<Module>(Lib.get_current_comp());
-      if(!cm->db_param.insert(cp->name, cp)) {
-        av_env.error(yylloc, "SYN-VAR-2", "Parameter", cp->name.name, cm->name.name);
-      }
-    }
-    ;
+//param_assignment 
+//    : parameter_identifier '=' expression { $$.reset(new Variable($1,$3,Variable::TParam)); }
+//    ;
 
 //A.2.6 Function declarations
 function_declaration
@@ -640,8 +624,7 @@ n_output_gate_instance
     {
       // push the expression into port list
       $2.push_back(shared_ptr<PortConn>(new PortConn($4, -1)));
-      // assign a name for the instance
-      $$.reset( new Instance(Lib.get_current_comp()->new_IId(), $2,  Instance::prim_out_inst));
+      $$.reset( new Instance($2,  Instance::prim_out_inst));
     }
     | instance_identifier '(' output_terminals ',' expression ')'
     {
@@ -756,7 +739,7 @@ named_port_connection
 
 //A.4.2 Generated instantiation
 generated_instantiation 
-    : "generate" generate_items "endgenerate"
+    : "generate" generate_items "endgenerate"   { $$.reset(new GenBlock(*$2)); }
     ;
 
 generate_items
@@ -859,7 +842,7 @@ list_of_net_assignments
 //A.6.2 Procedural blocks and assignments
 always_construct 
     : "always" '@' '(' event_expressions ')' statement_or_null   { $$.reset(new SeqBlock($4, $6)); } 
-    | "always" statement                                         { $$.reset(new SeqBlock($2));     }
+    | "always" statement                                         { $$.reset(new SeqBlock(*$2));    }
     ;
 
 blocking_assignment 

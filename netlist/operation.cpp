@@ -31,11 +31,11 @@
 using namespace netlist;
 
 netlist::Operation::Operation()
-  : otype(oNULL)
+  : otype(oNULL), valuable(false)
 {}
 
 netlist::Operation::Operation(operation_t otype)
-  : otype(otype)
+  : otype(otype), valuable(false)
 {
   // only operators do not need an operand
   assert(otype > oFun);
@@ -46,15 +46,15 @@ netlist::Operation::Operation(const Number& num)
 { }
 
 netlist::Operation::Operation(const VIdentifier& id)
-  : otype(oVar), data(new VIdentifier(id))
+  : otype(oVar), valuable(false), data(new VIdentifier(id))
 { }
 
 netlist::Operation::Operation(const shared_ptr<Concatenation>& con)
-  : otype(oCon), data(static_pointer_cast<NetComp>(con))
+  : otype(oCon), valuable(false), data(static_pointer_cast<NetComp>(con))
 { }
 
 netlist::Operation::Operation(const shared_ptr<LConcatenation>& con)
-  : otype(oCon) 
+  : otype(oCon), valuable(false)
 {
   if(con->size() == 1) {
     otype = oVar;

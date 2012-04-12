@@ -34,14 +34,16 @@ netlist::Assign::Assign( const shared_ptr<LConcatenation>& lhs,
                          const shared_ptr<Expression>& rhs,
                          bool b
                          )
-  : NetComp(tAssign), lval(lhs), rexp(rhs), blocking(b)
+  : NetComp(tAssign), lval(lhs), rexp(rhs), blocking(b), continuous(false), named(false)
 {}
 
 ostream& netlist::Assign::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
+  if(continuous) os << "assign ";
   os << *lval;
   if(blocking) os << " = ";
   else os << " <= ";
   os << *rexp;
+  if(continuous) os << endl;
   return os;
 }

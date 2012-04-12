@@ -39,11 +39,12 @@ namespace netlist{
     SeqBlock(const BIdentifier& nm)
       : Block(tSeqBlock, nm), sensitive(false) {}
     SeqBlock(list<pair<int, shared_ptr<Expression> > >&, const shared_ptr<Block>&);
-    SeqBlock(const shared_ptr<Block>&);
+    SeqBlock(const Block&);
     
     // helpers
     virtual void clear();               /* clear all statements */
     virtual ostream& streamout(ostream&, unsigned int, bool) const;
+    virtual void elab_inparse();        /* resolve the content during parsing */
 
     // inherit from NetComp
     NETLIST_STREAMOUT_FUN_DECL;

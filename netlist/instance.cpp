@@ -57,6 +57,33 @@ netlist::Instance::Instance(const IIdentifier& nm, const list<shared_ptr<PortCon
   }
 }
 
+netlist::Instance::Instance(const list<shared_ptr<PortConn> >& polist, type_t itype)
+  : NetComp(tInstance), port_list(polist), type(itype), named(false) {
+  switch(itype) {
+  case prim_in_inst: {
+    list<shared_ptr<PortConn> >::iterator it, end;
+    it = port_list.begin();
+    (*it)->set_out();
+    it++;
+    for(end=port_list.end(); it!=end; it++) {
+      (*it)->set_in();
+    }
+    break;
+  }
+  case prim_out_inst: {
+    list<shared_ptr<PortConn> >::iterator it, end;
+    it = port_list.begin();
+    for(end=port_list.end(); it!=end; it++) {
+      (*it)->set_out();
+    }
+    it--;
+    (*it)->set_in();
+    break;
+  }
+  default: ;
+  }
+}
+
 
 ostream& netlist::Instance::streamout(ostream& os, unsigned int indent) const {
   // the module name

@@ -31,26 +31,26 @@
 using namespace netlist;
 
 netlist::Range::Range(const mpz_class& sel)
-  : c(sel), type(TConst) {  }
+  : c(sel), dim(false), rtype(TR_Const) {  }
 
 netlist::Range::Range(const mpz_class& rl, const mpz_class& rr)
-  : cr(rl,rr), type(TCRange) {  }
+  : cr(rl,rr), dim(false), rtype(TR_CRange) {  }
 
 netlist::Range::Range(const shared_ptr<Expression>& sel)
-  : type(TVar) 
+  : dim(false), rtype(TR_Var) 
 { 
   shared_ptr<Expression> m(sel->deep_copy());
   m->reduce();
   if(m->is_valuable()) {	// constant expression, value it now
     c = m->get_value().get_value();
-    type = TConst;
+    rtype = TR_Const;
   } else {
     v = m;
   }
  };
 
 netlist::Range::Range(const Range_Exp& sel, bool dimm)
-  : dim(dimm), type(TRange) 
+  : dim(dimm), rtype(TR_Range) 
 { 
   Range_Exp m(shared_ptr<Expression>(sel.first->deep_copy()), shared_ptr<Expression>(sel.second->deep_copy()));
   m.first->reduce();
@@ -58,14 +58,14 @@ netlist::Range::Range(const Range_Exp& sel, bool dimm)
   if(*(m.first) == *(m.second)) {	// only one bit is selected
     if(m.first->is_valuable()) { // constant expression, value it now
       c = m.first->get_value().get_value();
-      type = TConst;
+      rtype = TR_Const;
     } else {			// variable expression
       v = m.first;
-      type = TVar;
+      rtype = TR_Var;
     }
   } else {
     if(m.first->is_valuable() && m.second->is_valuable()) {
-      type = TCRange;
+      rtype = TR_CRange;
       cr.first = m.first->get_value().get_value();
       cr.second = m.second->get_value().get_value();
     } else {
@@ -74,16 +74,16 @@ netlist::Range::Range(const Range_Exp& sel, bool dimm)
   }
 };
 
-netlist::Range::Range(const Range_Exp& sel, int ctype)
-  : type(TRange)
+netlist::Range::Range(const Range_Exp& sel, int updown)
+  : dim(false), rtype(TR_Range)
 {
   shared_ptr<Expression> first(sel.first->deep_copy());
   Range_Exp m_sel;
-  if(ctype == 1) { // positive colon
+  if(updown == 1) { // positive colon
     *first+*(sel.second);
     m_sel.first = first;
     m_sel.second.reset(sel.first->deep_copy());
-  } else if(ctype == -1){ // negtive colon
+  } else if(updown == -1){ // negtive colon
     m_sel.first.reset(sel.first->deep_copy());
     *first - *(sel.second);
     m_sel.second = first;
@@ -95,14 +95,14 @@ netlist::Range::Range(const Range_Exp& sel, int ctype)
   if(*(m_sel.first) == *(m_sel.second)) {	// only one bit is selected
     if(m_sel.first->is_valuable()) { // constant expression, value it now
       c = m_sel.first->get_value().get_value();
-      type = TConst;
+      rtype = TR_Const;
     } else {			// variable expression
       v = m_sel.first;
-      type = TVar;
+      rtype = TR_Var;
     } 
   } else {
     if(m_sel.first->is_valuable() && m_sel.second->is_valuable()) {
-      type = TCRange;
+      rtype = TR_CRange;
       cr.first = m_sel.first->get_value().get_value();
       cr.second = m_sel.second->get_value().get_value();
     } else {
@@ -119,11 +119,11 @@ void netlist::Range::db_register() {
   
 ostream& netlist::Range::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
-  switch(type) {
-  case TConst: os << c; break;
-  case TVar: os << *v; break;
-  case TRange: os << *(r.first) << ":" << *(r.second); break;
-  case TCRange: os << cr.first << ":" << cr.second; break;
+  switch(rtype) {
+  case TR_Const: os << c; break;
+  case TR_Var: os << *v; break;
+  case TR_Range: os << *(r.first) << ":" << *(r.second); break;
+  case TR_CRange: os << cr.first << ":" << cr.second; break;
   default: // should not go here
     assert(0 == "Wrong range type");
   }
@@ -132,15 +132,15 @@ ostream& netlist::Range::streamout(ostream& os, unsigned int indent) const {
 
 Range* netlist::Range::deep_copy() const {
   Range* rv = new Range();
-  switch(type) {
-  case TConst: rv->c = c; break;
-  case TVar: rv->v = shared_ptr<Expression>(v->deep_copy()); break;
-  case TRange: rv->r = Range_Exp(shared_ptr<Expression>(r.first->deep_copy()), shared_ptr<Expression>(r.second->deep_copy())); break;
-  case TCRange: rv->cr = cr; break;
+  switch(rtype) {
+  case TR_Const: rv->c = c; break;
+  case TR_Var: rv->v = shared_ptr<Expression>(v->deep_copy()); break;
+  case TR_Range: rv->r = Range_Exp(shared_ptr<Expression>(r.first->deep_copy()), shared_ptr<Expression>(r.second->deep_copy())); break;
+  case TR_CRange: rv->cr = cr; break;
   default: // should not go here
     assert(0 == "Wrong range type");
   }
   rv->dim = dim;
-  rv->type = type;
+  rv->rtype = rtype;
   return rv;
 }
