@@ -60,12 +60,15 @@ ostream& netlist::IfState::streamout(ostream& os, unsigned int indent, bool fl_p
   if(!fl_prefix) os << string(indent, ' ');
   
   os << "if (" << *exp << ") ";
-  ifcase->streamout(os, indent+2, true);
+  ifcase->streamout(os, indent, true);
 
   if(elsecase.use_count() == 0) return os;
 
   os << string(indent, ' ') << "else ";
-  elsecase->streamout(os, indent+2, true);
+  if(!elsecase->is_blocked() && (elsecase->front()->get_type() == NetComp::tIf)) {
+    static_pointer_cast<IfState>(elsecase->front())->streamout(os, indent, true);
+  } else
+    elsecase->streamout(os, indent, true);
   
   return os;
 

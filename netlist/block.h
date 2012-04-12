@@ -75,6 +75,8 @@ namespace netlist {
     IIdentifier& new_IId();     /* generate an unused instance id*/
     VIdentifier& new_VId();     /* generate an unused variable id */
     virtual ostream& streamout(ostream& os, unsigned int indent, bool fl_prefix) const;
+    const shared_ptr<NetComp>& front() const { return statements.front(); }
+    shared_ptr<NetComp>& front() { return statements.front(); }
     
     // inherit from NetComp
     NETLIST_STREAMOUT_FUN_DECL;
@@ -84,7 +86,7 @@ namespace netlist {
     list<shared_ptr<NetComp> >             statements;   /* a general list to stor the statements */
     DataBase<VIdentifier, Variable>        db_var;       /* variables */
     DataBase<IIdentifier, Instance>        db_instance;  /* module instances */
-    DataBase<BIdentifier, NetComp, true>   db_other;     /* non-block statements, including assignements, if, etc. */
+    DataBase<BIdentifier, NetComp>         db_other;     /* non-block statements, including assignements, if, etc. */
     
 
   protected:

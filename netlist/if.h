@@ -46,7 +46,7 @@ namespace netlist {
             );
 
     // helpers
-    ostream& streamout(ostream&, unsigned int, bool) const; /* the streamout with first line prefix control */
+    virtual ostream& streamout(ostream&, unsigned int, bool) const; /* the streamout with first line prefix control */
     void set_name(const BIdentifier& nm) { name = nm; named = true;}
     bool is_named() const { return named; }
 

@@ -53,6 +53,14 @@ ostream& netlist::Variable::streamout(ostream& os, unsigned int indent) const {
 
   os << string(indent, ' ');
 
+  switch(vtype) {
+  case TWire:   os << "wire ";      break;
+  case TReg:    os << "reg ";       break;
+  case TParam:  os << "parameter "; break;
+  case TGenvar: os << "genvar ";    break;
+  default: assert(0 == "uninitialized variable!");
+  }
+
   vector<shared_ptr<Range> >::const_iterator it, end;
 
   vector<shared_ptr<Range> > rm = name.get_range();
@@ -76,6 +84,8 @@ ostream& netlist::Variable::streamout(ostream& os, unsigned int indent) const {
   if(exp.use_count() != 0) {
     os << " = " << *exp;
   }
+
+  os << ";" << endl;
 
   return os;
 

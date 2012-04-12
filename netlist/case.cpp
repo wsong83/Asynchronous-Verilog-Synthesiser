@@ -50,7 +50,7 @@ ostream& netlist::CaseItem::streamout (ostream& os, unsigned int indent) const {
   }
   
   // the body part
-  body->streamout(os, indent+2, true);
+  body->streamout(os, indent, true);
   return os;
 }
 

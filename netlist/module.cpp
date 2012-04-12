@@ -90,18 +90,34 @@ ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
         os << ");" << endl;
     }
   }
-  
+
+  // parameters
+  if(db_param.size() > 0) {
+    os << endl;
+    db_param.streamout(os, indent+2);
+  }
+  // ports
+  if(db_port.size() > 0) {
+    os << endl;
+    db_port.streamout(os, indent+2);
+  }
+  // variables
+  if(db_var.size() > 0) {
+    os << endl;
+    db_var.streamout(os, indent+2);
+  }
+  // generate variables
+  if(db_genvar.size() > 0) {
+    os << endl;
+    db_genvar.streamout(os, indent+2);
+  }
+
+  // statements
+  ctype_t mt = tUnkown;
   list<shared_ptr<NetComp> >::const_iterator it, end;
   for(it=statements.begin(), end=statements.end(); it!=end; it++) {
-    if((*it)->get_type() == NetComp::tBlock)
-      static_pointer_cast<Block>(*it)->streamout(os, indent+2);
-    else {
-      os << endl;
-      (*it)->streamout(os, indent+2);
-      if((*it)->get_type() == NetComp::tAssign &&
-         !(static_pointer_cast<Assign>(*it)->is_continuous()))
-        os << ";" << endl;
-    }
+    if(mt != (*it)->get_type()) { os << endl; mt = (*it)->get_type(); }
+    (*it)->streamout(os, indent+2);
   }
 
   os << endl << string(indent, ' ') << "endmodule" << endl << endl;
@@ -165,6 +181,10 @@ void netlist::Module::elab_inparse() {
       // should check first
       /// if multiple definitions exist for the same parameter, the last one take effect
       db_port.swap(m->name, m);
+      
+      // port declarations are not statements
+      it = statements.erase(it);
+      it--;
       break;
     }
     case tVariable: {
@@ -190,6 +210,10 @@ void netlist::Module::elab_inparse() {
       default:
         assert(0 == "wrong type of variable in general block!");
       }
+      // variable declarations are not statements
+      it = statements.erase(it);
+      it--;
+      break;      
       break;
     }
     default:

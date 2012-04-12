@@ -27,6 +27,7 @@
  */
 
 enum ctype_t {
+  tUnkown,                  /* type not initiated, indicate error!! */
   tAssign,                  /* assignment */
   tBlock,                   /* general block */
   tBlockName,               /* block name */
@@ -53,7 +54,6 @@ enum ctype_t {
   tVariable,                /* variable, including wire, reg, and parameter */
   tVarName,                 /* variable name */
   tWhile,                   /* while statement */
-  tWire,                    /* wire */
-  tUnkown                   /* type not initiated, indicate error!! */
+  tWire                     /* wire */
 };
 

@@ -40,7 +40,7 @@ ostream& netlist::WhileState::streamout(ostream& os, unsigned int indent) const 
   assert(exp.use_count() != 0);
 
   os << string(indent, ' ') << "while (" << *exp << ") ";
-  body->streamout(os, indent+2, true);
+  body->streamout(os, indent, true);
 
   return os;
 }

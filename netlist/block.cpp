@@ -153,6 +153,9 @@ void netlist::Block::elab_inparse() {
       default:
         assert(0 == "wrong type of variable in general block!");
       }
+      // variable declarations are not statements
+      it = statements.erase(it);
+      it--;
       break;
     }
     default:
@@ -161,7 +164,7 @@ void netlist::Block::elab_inparse() {
   }
 
   // double check the size
-  if(statements.size() > 1)
+  if(statements.size() + db_var.size() > 1)
     blocked = true;             // indicating multiple variable defintions (may happen when it is module or genblock)
 }
 
@@ -205,25 +208,19 @@ ostream& netlist::Block::streamout(ostream& os, unsigned int indent, bool fl_pre
     }
   } else {
     os << "begin";
-    if(named) os << ": " << name.name;
+    if(named) os << ": " << name;
     os << endl;
     
+    db_var.streamout(os, indent+2);
     list<shared_ptr<NetComp> >::const_iterator it, end;
     for(it=statements.begin(), end=statements.end(); it!=end; it++) {
-      if((*it)->get_type() == NetComp::tBlock)
-        static_pointer_cast<Block>(*it)->streamout(os, indent, true);
-      else {
-        os << endl;
-        (*it)->streamout(os, indent+2);
-        if((*it)->get_type() == NetComp::tAssign &&
-           !(static_pointer_cast<Assign>(*it)->is_continuous()))
-          os << ";" << endl;
-      }
+      (*it)->streamout(os, indent+2);
+      if((*it)->get_type() == NetComp::tAssign &&
+         !(static_pointer_cast<Assign>(*it)->is_continuous()))
+        os << ";" << endl;
     }
-      
     os << string(indent, ' ') << "end" << endl;
-  }
-
+  }   
   return os;
 }
 
