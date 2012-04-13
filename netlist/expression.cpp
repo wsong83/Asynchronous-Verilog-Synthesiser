@@ -36,8 +36,20 @@ netlist::Expression::Expression(const Number& exp)
   eqn.push_back(shared_ptr<Operation>( new Operation(exp)));
 }
 
+netlist::Expression::Expression(const location& lloc, const Number& exp) 
+  : NetComp(tExp, lloc), valuable(exp.is_valuable())
+{
+  eqn.push_back(shared_ptr<Operation>( new Operation(exp)));
+}
+
 netlist::Expression::Expression(const VIdentifier& id) 
   : NetComp(tExp), valuable(false)
+{
+  eqn.push_back(shared_ptr<Operation>( new Operation(id)));
+}
+
+netlist::Expression::Expression(const location& lloc, const VIdentifier& id) 
+  : NetComp(tExp, lloc), valuable(false)
 {
   eqn.push_back(shared_ptr<Operation>( new Operation(id)));
 }
@@ -48,8 +60,20 @@ netlist::Expression::Expression(const shared_ptr<Concatenation>& con)
   eqn.push_back(shared_ptr<Operation>( new Operation(con)));
 }
 
+netlist::Expression::Expression(const location& lloc, const shared_ptr<Concatenation>& con) 
+  : NetComp(tExp, lloc), valuable(false)
+{
+  eqn.push_back(shared_ptr<Operation>( new Operation(con)));
+}
+
 netlist::Expression::Expression(const shared_ptr<LConcatenation>& con)
   : NetComp(tExp), valuable(false)
+{
+  eqn.push_back(shared_ptr<Operation>(new Operation(con)));
+}
+
+netlist::Expression::Expression(const location& lloc, const shared_ptr<LConcatenation>& con)
+  : NetComp(tExp, lloc), valuable(false)
 {
   eqn.push_back(shared_ptr<Operation>(new Operation(con)));
 }
@@ -325,6 +349,7 @@ ostream& netlist::Expression::streamout(ostream& os, unsigned int indent) const 
 
 Expression* netlist::Expression::deep_copy() const {
   Expression* rv = new Expression();
+  rv->loc = loc;
   rv->valuable = this->valuable;
   
   list<shared_ptr<Operation> >::const_iterator it, end;

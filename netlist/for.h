@@ -35,7 +35,15 @@ namespace netlist {
   public:
     // constructors
     ForState() : NetComp(tFor), named(false) {}
+    ForState(const location& lloc) : NetComp(tFor, lloc), named(false) {}
     ForState(
+             const shared_ptr<Assign>& init, 
+             const shared_ptr<Expression>& cond, 
+             const shared_ptr<Assign>& incr, 
+             const shared_ptr<Block>& body
+             );
+    ForState(
+             const location& lloc,
              const shared_ptr<Assign>& init, 
              const shared_ptr<Expression>& cond, 
              const shared_ptr<Assign>& incr, 

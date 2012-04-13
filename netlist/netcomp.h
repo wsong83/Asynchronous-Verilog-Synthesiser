@@ -29,6 +29,9 @@
 #ifndef _H_AV_NETCOMP_
 #define _H_AV_NETCOMP_
 
+#include "averilog/location.hh"
+using averilog::location;
+
 // function macro for stream out operator <<
 #ifndef NETLIST_STREAMOUT
 #define NETLIST_STREAMOUT(COMP)                                \
@@ -39,6 +42,10 @@
 
 #ifndef NETLIST_DEFAULT_CON
 #define NETLIST_DEFAULT_CON(COMP, CT) COMP() : NetComp(NetComp::CT) { }
+#endif
+
+#ifndef NETLIST_DEFAULT_CON_WL
+#define NETLIST_DEFAULT_CON_WL(COMP, CT) COMP(const location& lloc) : NetComp(NetComp::CT, lloc) { }
 #endif
 
 #ifndef NETLIST_STREAMOUT_FUN_DECL
@@ -65,9 +72,11 @@ namespace netlist{
     // no one should directly use this class
     NetComp() : ctype(tUnkown) {}
     NetComp(ctype_t tt) : ctype(tt) {}
+    NetComp(ctype_t tt, const averilog::location& lloc) : ctype(tt), loc(lloc) {}
     
     ctype_t get_type() const { return ctype; }
     ctype_t ctype;
+    location loc;
     
     virtual void reduce() {}	/* many netlist component need method to reduce itself */
 

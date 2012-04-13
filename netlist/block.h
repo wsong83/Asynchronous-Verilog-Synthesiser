@@ -36,12 +36,19 @@ namespace netlist {
   public:
     // constructors
     Block() : NetComp(tBlock), named(false), blocked(false) {}
+    Block(const location& lloc) : NetComp(tBlock, lloc), named(false), blocked(false) {}
     Block(ctype_t t, const BIdentifier& nm) 
       : NetComp(t), name(nm), named(true), blocked(true) {}
+    Block(ctype_t t, const location& lloc, const BIdentifier& nm) 
+      : NetComp(t, lloc), name(nm), named(true), blocked(true) {}
     Block(const BIdentifier& nm) 
       : NetComp(tBlock), name(nm), named(true), blocked(true) {}
+    Block(const location& lloc, const BIdentifier& nm) 
+      : NetComp(tBlock, lloc), name(nm), named(true), blocked(true) {}
     Block(NetComp::ctype_t t) 
       : NetComp(t), named(false), blocked(false) {}
+    Block(NetComp::ctype_t t, const location& lloc) 
+      : NetComp(t, lloc), named(false), blocked(false) {}
 
     // helpers
     virtual void set_name(const BIdentifier& nm) {name = nm; named=true; blocked = true;}

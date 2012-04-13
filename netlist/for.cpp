@@ -41,6 +41,18 @@ netlist::ForState::ForState(
   body->elab_inparse();
 }
 
+netlist::ForState::ForState(
+                            const location& lloc,
+                            const shared_ptr<Assign>& init, 
+                            const shared_ptr<Expression>& cond, 
+                            const shared_ptr<Assign>& incr, 
+                            const shared_ptr<Block>& body
+                            )
+  : NetComp(NetComp::tFor, lloc), init(init), cond(cond), incr(incr), body(body), named(false)
+{
+  body->elab_inparse();
+}
+
 ostream& netlist::ForState::streamout(ostream& os, unsigned int indent) const {
   assert(init.use_count() != 0);
 

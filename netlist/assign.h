@@ -35,6 +35,7 @@ namespace netlist {
   public:
     // constructors
     Assign(const shared_ptr<LConcatenation>&, const shared_ptr<Expression>&, bool);
+    Assign(const location& lloc, const shared_ptr<LConcatenation>&, const shared_ptr<Expression>&, bool);
 
     // helpers
     NETLIST_STREAMOUT_FUN_DECL;

@@ -41,6 +41,7 @@ void netlist::Block::clear() {
   unnamed_block = BIdentifier();
   unnamed_instance = IIdentifier();
   unnamed_var = VIdentifier();
+  loc = location();
 }
 
 bool netlist::Block::add(const shared_ptr<NetComp>& dd) {

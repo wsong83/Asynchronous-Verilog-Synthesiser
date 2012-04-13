@@ -79,6 +79,7 @@ ostream& netlist::ConElem::streamout(ostream& os, unsigned int indent) const {
 
 ConElem* netlist::ConElem::deep_copy() const {
   ConElem* rv = new ConElem();
+  rv->loc = loc;
   rv->exp = shared_ptr<Expression>(exp->deep_copy());
   list<shared_ptr<ConElem> >::const_iterator it, end;
   for(it=con.begin(), end=con.end(); it!=end; it++)

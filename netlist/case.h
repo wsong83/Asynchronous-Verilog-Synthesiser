@@ -36,22 +36,39 @@ namespace netlist{
   class CaseItem : public NetComp {
   public:
     NETLIST_DEFAULT_CON(CaseItem, tCaseItem);
+    NETLIST_DEFAULT_CON_WL(CaseItem, tCaseItem);
     // constructor with only one expression, the normal case
     CaseItem(const shared_ptr<Expression>& exp, const shared_ptr<Block>& body) 
-      : body(body)
+      : NetComp(tCaseItem), body(body)
+    {
+      exps.push_back(exp);
+      body->elab_inparse();
+    }
+    CaseItem(const location& lloc, const shared_ptr<Expression>& exp, const shared_ptr<Block>& body) 
+      : NetComp(tCaseItem, lloc), body(body)
     {
       exps.push_back(exp);
       body->elab_inparse();
     }
     // normal default case
     CaseItem(const shared_ptr<Block>& body) 
-      : body(body)
+      : NetComp(tCaseItem), body(body)
+    {
+      body->elab_inparse();
+    }
+    CaseItem(const location& lloc, const shared_ptr<Block>& body) 
+      : NetComp(tCaseItem, lloc), body(body)
     {
       body->elab_inparse();
     }
     // multiple expressions
     CaseItem(const list<shared_ptr<Expression> >& expm, const shared_ptr<Block>& body)
-      : exps(expm), body(body)
+      : NetComp(tCaseItem), exps(expm), body(body)
+    {
+      body->elab_inparse();
+    }
+    CaseItem(const location& lloc, const list<shared_ptr<Expression> >& expm, const shared_ptr<Block>& body)
+      : NetComp(tCaseItem, lloc), exps(expm), body(body)
     {
       body->elab_inparse();
     }
@@ -74,10 +91,20 @@ namespace netlist{
       : NetComp(tCase), exp(exp), cases(citems), named(false) {
       cases.push_back(ditem);
     }
+    CaseState(const location& lloc, const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, const shared_ptr<CaseItem>& ditem)
+      : NetComp(tCase, lloc), exp(exp), cases(citems), named(false) {
+      cases.push_back(ditem);
+    }
     CaseState(const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems)
       : NetComp(tCase), exp(exp), cases(citems), named(false) { }
+    CaseState(const location& lloc, const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems)
+      : NetComp(tCase, lloc), exp(exp), cases(citems), named(false) { }
     CaseState(const shared_ptr<Expression>& exp, const shared_ptr<CaseItem>& ditem)
       : NetComp(tCase), exp(exp), named(false) {
+      cases.push_back(ditem);
+    }
+    CaseState(const location& lloc, const shared_ptr<Expression>& exp, const shared_ptr<CaseItem>& ditem)
+      : NetComp(tCase, lloc), exp(exp), named(false) {
       cases.push_back(ditem);
     }
 
