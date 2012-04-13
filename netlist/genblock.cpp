@@ -49,17 +49,16 @@ ostream& netlist::GenBlock::streamout(ostream& os, unsigned int indent, bool fl_
 
   os << "generate " << endl;
   
+  // statements
+  ctype_t mt = tUnkown;
   list<shared_ptr<NetComp> >::const_iterator it, end;
   for(it=statements.begin(), end=statements.end(); it!=end; it++) {
-    if((*it)->get_type() == NetComp::tBlock)
-      static_pointer_cast<Block>(*it)->streamout(os, indent+2);
-    else {
-      os << endl;
-      (*it)->streamout(os, indent+2);
-      if((*it)->get_type() == NetComp::tAssign &&
-         !(static_pointer_cast<Assign>(*it)->is_continuous()))
-        os << ";" << endl;
-    }
+    ctype_t mt_nxt = (*it)->get_type();
+    if(mt != mt_nxt || mt != tAssign) {
+      if(mt != tUnkown) os << endl;
+      mt = mt_nxt;
+    } 
+    (*it)->streamout(os, indent+2);
   }
 
   os << string(indent, ' ') << "endgenerate" << endl;

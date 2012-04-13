@@ -55,7 +55,7 @@ ostream& netlist::CaseItem::streamout (ostream& os, unsigned int indent) const {
 }
 
 ostream& netlist::CaseState::streamout (ostream& os, unsigned int indent) const {
-  os << string(indent, ' ') << "case(" << exp << ")" << endl;
+  os << string(indent, ' ') << "case(" << *exp << ")" << endl;
   list<shared_ptr<CaseItem> >::const_iterator it, end;
   for(it=cases.begin(), end=cases.end(); it!=end; it++) {
     (*it)->streamout(os, indent+2);

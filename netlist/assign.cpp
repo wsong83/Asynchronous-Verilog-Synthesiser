@@ -44,6 +44,6 @@ ostream& netlist::Assign::streamout(ostream& os, unsigned int indent) const {
   if(blocking) os << " = ";
   else os << " <= ";
   os << *rexp;
-  if(continuous) os << endl;
+  if(continuous) os << ";" << endl;
   return os;
 }

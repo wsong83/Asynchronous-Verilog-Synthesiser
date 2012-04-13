@@ -116,7 +116,10 @@ ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
   ctype_t mt = tUnkown;
   list<shared_ptr<NetComp> >::const_iterator it, end;
   for(it=statements.begin(), end=statements.end(); it!=end; it++) {
-    if(mt != (*it)->get_type()) { os << endl; mt = (*it)->get_type(); }
+    ctype_t mt_nxt = (*it)->get_type();
+    if(mt != mt_nxt || mt != tAssign) { 
+      os << endl; mt = mt_nxt; 
+    }
     (*it)->streamout(os, indent+2);
   }
 

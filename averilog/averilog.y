@@ -770,7 +770,7 @@ generate_item
     | "case" '(' expression ')' generate_case_items "default" generate_item_or_null "endcase"
     { shared_ptr<CaseItem> m(new CaseItem($7)); $$.reset(new Block()); $$->add_case($3, $5, m); }
     | "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' "begin" ':' block_identifier generate_item_or_null "end"
-    { $$.reset(new Block($11)); $$->add_for($3, $5, $7, $12); }
+    { $$.reset(new Block()); $12->set_name($11); $$->add_for($3, $5, $7, $12); }
     | "begin" generate_items "end" { $$ = $2; }
     | "begin" ':' block_identifier generate_items "end" { $$ = $4; $$->set_name($3); }
     ;

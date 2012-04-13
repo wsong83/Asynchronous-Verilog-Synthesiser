@@ -30,6 +30,21 @@ module test_module (o, f, c, o);
         tmp <= tmp + i;
       end
    end 
+
+   generate
+     for(i=0; i<5; i = i + 1) begin:G1
+       assign c[i] = tmp[i];
+     end
+
+    case(sig)
+    2'b00: assign www = sig;
+    2'b01: assign xxx = sig + 1;
+    endcase
+
+    always
+      o = 34;
+
+   endgenerate
    
 endmodule // test
 
