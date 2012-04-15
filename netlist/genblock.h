@@ -35,6 +35,7 @@ namespace netlist{
   public:
     // constructors
     GenBlock(const Block& body);
+    GenBlock(const location& lloc, const Block& body);
     
     // helpers
     virtual ostream& streamout(ostream&, unsigned int, bool) const;    

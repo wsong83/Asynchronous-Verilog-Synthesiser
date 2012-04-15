@@ -33,6 +33,9 @@ using namespace netlist;
 netlist::Port::Port(const PoIdentifier& pid)
   : NetComp(tPort), name(pid), dir(0) {}
 
+netlist::Port::Port(const location& lloc, const PoIdentifier& pid)
+  : NetComp(tPort, lloc), name(pid), dir(0) {}
+
 ostream& netlist::Port::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
   if(is_in())

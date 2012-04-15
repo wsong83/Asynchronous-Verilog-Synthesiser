@@ -36,6 +36,7 @@ namespace netlist {
     // constructors
     WhileState() : NetComp(tWhile), named(false) {}
     WhileState(const shared_ptr<Expression>& exp, const shared_ptr<Block>& body);
+    WhileState(const location& lloc, const shared_ptr<Expression>& exp, const shared_ptr<Block>& body);
 
     // inherit from NetComp
     NETLIST_STREAMOUT_FUN_DECL;

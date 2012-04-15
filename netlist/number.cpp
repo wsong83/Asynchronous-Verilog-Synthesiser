@@ -71,6 +71,44 @@ netlist::Number::Number(char *text, int txt_leng)
   }
 }
 
+netlist::Number::Number(const location& lloc, char *text, int txt_leng) 
+  : NetComp(tNumber, lloc), valid(false), valuable(false)
+{
+  string m;
+  int i;
+  for(i = 0; i < txt_leng; i++) {
+    if(isdigit(text[i]))
+      m.push_back(text[i]);
+    else if(text[i] != '_')
+      break;			// error
+  }
+  
+  if(m.empty()) m.push_back('1');
+
+  mpz_class dd(m, 10);
+  
+  if(i == txt_leng) { 		// simple number
+    valid = true;
+    valuable = true;
+    txt_value = dd.get_str(2);
+    num_leng = txt_value.size();
+  } else {			// fixed number
+    num_leng = dd.get_si();
+    if(text[i++] != '\'') return; // wrong format
+    switch(text[i]) {
+    case 'b':
+    case 'B': valid = bin2num(text, txt_leng, i); return;
+    case 'd':
+    case 'D': valid = dec2num(text, txt_leng, i); return;
+    case 'O':
+    case 'o': valid = oct2num(text, txt_leng, i); return;
+    case 'H':
+    case 'h': valid = hex2num(text, txt_leng, i); return;
+    default: return;		// wrong number format
+    }
+  }
+}
+
 netlist::Number::Number(int d) 
   : NetComp(tNumber), valid(true), valuable(true)
 {
@@ -88,6 +126,12 @@ netlist::Number::Number(const mpz_class& m)
 
 netlist::Number::Number(const string& txt)
   : NetComp(tNumber), num_leng(txt.size()), txt_value(txt), valid(true)
+{
+  check_valuable();
+}
+
+netlist::Number::Number(const location& lloc, const string& txt)
+  : NetComp(tNumber, lloc), num_leng(txt.size()), txt_value(txt), valid(true)
 {
   check_valuable();
 }

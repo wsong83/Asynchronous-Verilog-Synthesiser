@@ -31,7 +31,22 @@
 using namespace netlist;
 
 netlist::LConcatenation::LConcatenation(shared_ptr<Concatenation>& con)
-  : NetComp(tLConcatenation), valid(false)
+  : NetComp(tLConcatenation, con->loc), valid(false)
+{
+  con->reduce();
+  list<shared_ptr<ConElem> >::iterator it, end;
+  for( it = con->data.begin(), end = con->data.end(); it != end; it++) {
+    if(0 != (*it)->con.size()) break; // the concatenation contain sub-concatenations
+    if((*it)->exp->size() != 1) break; // the expression ia still complex
+    if((*it)->exp->front()->get_type() != Operation::oVar) break; // wrong type
+    if((*it)->exp->front()->get_var().get_type() != tVarName) break; // wrong type
+    data.push_back((*it)->exp->front()->get_var());
+  }
+  if(it == end) valid = true;
+}
+
+netlist::LConcatenation::LConcatenation(const location& lloc, shared_ptr<Concatenation>& con)
+  : NetComp(tLConcatenation, lloc), valid(false)
 {
   con->reduce();
   list<shared_ptr<ConElem> >::iterator it, end;
@@ -46,7 +61,10 @@ netlist::LConcatenation::LConcatenation(shared_ptr<Concatenation>& con)
 }
 
 netlist::LConcatenation::LConcatenation(const VIdentifier& id)
-  : NetComp(tLConcatenation), valid(true) { data.push_back(id); }
+  : NetComp(tLConcatenation, id.loc), valid(true) { data.push_back(id); }
+
+netlist::LConcatenation::LConcatenation(const location& lloc, const VIdentifier& id)
+  : NetComp(tLConcatenation, lloc), valid(true) { data.push_back(id); }
 
 
 ostream& netlist::LConcatenation::streamout(ostream& os, unsigned int indent) const {

@@ -37,9 +37,16 @@ namespace netlist {
       : Block(tModule) {}
     Module(const MIdentifier& nm)
       : Block(tModule), name(nm) { named=true; }
+  Module(const location& lloc, const MIdentifier& nm)
+    : Block(tModule, lloc), name(nm) { named=true; }
     Module(const MIdentifier& nm, const shared_ptr<Block>& body);
+    Module(const location& lloc, const MIdentifier& nm, const shared_ptr<Block>& body);
     Module(const MIdentifier& nm, const list<PoIdentifier>& port_list, const shared_ptr<Block>& body);
+    Module(const location& lloc, const MIdentifier& nm, const list<PoIdentifier>& port_list, const shared_ptr<Block>& body);
     Module(const MIdentifier& nm, const list<shared_ptr<Variable> >& para_list, 
+           const list<PoIdentifier>& port_list, const shared_ptr<Block>& body);
+    Module(const location& lloc, const MIdentifier& nm, 
+           const list<shared_ptr<Variable> >& para_list, 
            const list<PoIdentifier>& port_list, const shared_ptr<Block>& body);
 
     // inherit from NetComp

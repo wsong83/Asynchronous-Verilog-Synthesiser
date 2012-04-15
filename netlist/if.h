@@ -41,6 +41,19 @@ namespace netlist {
             );
 
     IfState(
+            const location& lloc,
+            const shared_ptr<Expression>& exp, 
+            const shared_ptr<Block>& m_ifcase, 
+            const shared_ptr<Block>& m_elsecase
+            );
+
+    IfState(
+            const shared_ptr<Expression>& exp, 
+            const shared_ptr<Block>& m_ifcase 
+            );
+
+    IfState(
+            const location& lloc,
             const shared_ptr<Expression>& exp, 
             const shared_ptr<Block>& m_ifcase 
             );

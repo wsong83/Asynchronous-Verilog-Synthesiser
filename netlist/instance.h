@@ -40,9 +40,19 @@ namespace netlist {
     Instance(const IIdentifier& nm, const list<shared_ptr<PortConn> >& polist)
       : NetComp(tInstance), name(nm), port_list(polist), type(unknown_inst), named(true) { }
 
+    Instance(
+            const location& lloc, 
+            const IIdentifier& nm, 
+            const list<shared_ptr<PortConn> >& polist
+            )
+      : NetComp(tInstance, lloc), name(nm), port_list(polist), 
+      type(unknown_inst), named(true) { }
+
     // for primary gates in most cases
     Instance(const IIdentifier&, const list<shared_ptr<PortConn> >&, type_t);
+    Instance(const location&, const IIdentifier&, const list<shared_ptr<PortConn> >&, type_t);
     Instance(const list<shared_ptr<PortConn> >&, type_t);
+    Instance(const location&, const list<shared_ptr<PortConn> >&, type_t);
 
     // helpers
     NETLIST_STREAMOUT_FUN_DECL;

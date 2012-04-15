@@ -36,7 +36,9 @@ namespace netlist {
     // constructors
     // NETLIST_DEFAULT_CON(LConcatenation, tLConcatenation);
     LConcatenation(shared_ptr<Concatenation>&);
+    LConcatenation(const location&, shared_ptr<Concatenation>&);
     LConcatenation(const VIdentifier&);
+    LConcatenation(const location&, const VIdentifier&);
 
     // helpers
     NETLIST_STREAMOUT_FUN_DECL;

@@ -36,6 +36,12 @@ netlist::WhileState::WhileState(const shared_ptr<Expression>& exp, const shared_
   body->elab_inparse();
 }
 
+netlist::WhileState::WhileState(const location& lloc, const shared_ptr<Expression>& exp, const shared_ptr<Block>& body)
+  : NetComp(NetComp::tWhile, lloc), exp(exp), body(body), named(false)
+{
+  body->elab_inparse();
+}
+
 ostream& netlist::WhileState::streamout(ostream& os, unsigned int indent) const {
   assert(exp.use_count() != 0);
 

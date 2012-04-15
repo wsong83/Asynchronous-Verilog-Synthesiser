@@ -39,7 +39,9 @@ namespace netlist {
     // constructors
     Identifier() {}
     Identifier(NetComp::ctype_t ctype) : NetComp(ctype) {}
+    Identifier(NetComp::ctype_t ctype, const location& lloc) : NetComp(ctype, lloc) {}
     Identifier(NetComp::ctype_t, const string&);
+    Identifier(NetComp::ctype_t, const location& lloc, const string&);
 
     // helpers
     int compare(const Identifier& rhs) const; /* compare two identifiers */
@@ -62,8 +64,11 @@ namespace netlist {
   public:
     // constructors
     BIdentifier(const string&);
+    BIdentifier(const location& lloc, const string&);
     BIdentifier();
+    BIdentifier(const location& lloc);
     BIdentifier(const averilog::avID& );
+    BIdentifier(const location& lloc, const averilog::avID& );
 
     // helpers
     BIdentifier& operator++ ();
@@ -80,6 +85,7 @@ namespace netlist {
     // constructors
     FIdentifier() : Identifier(NetComp::tFuncName) { }
     FIdentifier(const string&);
+    FIdentifier(const location& lloc, const string&);
     
     // helpers
 
@@ -91,8 +97,11 @@ namespace netlist {
   public:
     // constructors
     MIdentifier() : Identifier(tModuleName) {}
+    MIdentifier(const location& lloc) : Identifier(tModuleName, lloc) {}
     MIdentifier(const string&);
+    MIdentifier(const location& lloc, const string&);
     MIdentifier(const averilog::avID& );
+    MIdentifier(const location& lloc, const averilog::avID& );
     
     // helpers
     MIdentifier& operator++ ();
@@ -109,8 +118,11 @@ namespace netlist {
   public:
     // constructors
     IIdentifier();
+    IIdentifier(const location&);
     IIdentifier(const string&);
+    IIdentifier(const location&, const string&);
     IIdentifier(const averilog::avID&);
+    IIdentifier(const location&, const averilog::avID&);
 
     // helpers
     IIdentifier& operator++ ();
@@ -126,8 +138,11 @@ namespace netlist {
   public:
     // constructors
     PoIdentifier() : Identifier(NetComp::tPortName) {}
+    PoIdentifier(const location& lloc) : Identifier(NetComp::tPortName, lloc) {}
     PoIdentifier(const string&);
+    PoIdentifier(const location&, const string&);
     PoIdentifier(const averilog::avID&);
+    PoIdentifier(const location&, const averilog::avID&);
 
     // helpers
     void set_range(const vector<shared_ptr<Range> >& nr) { m_range = nr; }
@@ -146,9 +161,13 @@ namespace netlist {
   public:
     // constructors
     VIdentifier();
+    VIdentifier(const location&);
     VIdentifier(const string&);
+    VIdentifier(const location&, const string&);
     VIdentifier(const averilog::avID&);
+    VIdentifier(const location&, const averilog::avID&);
     VIdentifier(const string&, const vector<shared_ptr<Range> >&);
+    VIdentifier(const location&, const string&, const vector<shared_ptr<Range> >&);
 
     //helpers
     VIdentifier& operator++ ();

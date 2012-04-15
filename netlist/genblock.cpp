@@ -38,6 +38,14 @@ netlist::GenBlock::GenBlock(const Block& body)
   elab_inparse();
 }
 
+netlist::GenBlock::GenBlock(const location& lloc, const Block& body)
+  : Block(body)
+{
+  ctype = tGenBlock;
+  loc = lloc;
+  elab_inparse();
+}
+
 ostream& netlist::GenBlock::streamout(ostream& os, unsigned int indent) const {
   streamout(os, indent, false);
   return os;

@@ -36,10 +36,31 @@ netlist::Module::Module(const MIdentifier& nm, const shared_ptr<Block>& body)
   elab_inparse();
 }
 
+netlist::Module::Module(const location& lloc, const MIdentifier& nm, const shared_ptr<Block>& body)
+  : Block(*body), name(nm) {
+  named=true; 
+  loc = lloc;
+  elab_inparse();
+}
+
 netlist::Module::Module(const MIdentifier& nm, const list<PoIdentifier>& port_list, const shared_ptr<Block>& body)
   : Block(*body), name(nm) {
   
   named=true;
+  
+  // insert ports
+  list<PoIdentifier>::const_iterator it, end;
+  for(it=port_list.begin(),end=port_list.end(); it!=end; it++)
+    db_port.insert(*it, shared_ptr<Port>(new Port(*it)));
+
+  elab_inparse();
+}
+
+netlist::Module::Module(const location& lloc, const MIdentifier& nm, const list<PoIdentifier>& port_list, const shared_ptr<Block>& body)
+  : Block(*body), name(nm) {
+  
+  named=true;
+  loc = lloc;
   
   // insert ports
   list<PoIdentifier>::const_iterator it, end;
@@ -54,6 +75,31 @@ netlist::Module::Module(const MIdentifier& nm, const list<shared_ptr<Variable> >
   : Block(*body), name(nm) {
   
   named=true;
+  
+  // insert parameters
+  {
+    list<shared_ptr<Variable> >::const_iterator it, end;
+    for(it=para_list.begin(),end=para_list.end(); it!=end; it++)
+      db_param.insert((*it)->name, *it);  
+  }
+
+  // insert ports
+  {
+    list<PoIdentifier>::const_iterator it, end;
+    for(it=port_list.begin(),end=port_list.end(); it!=end; it++)
+      db_port.insert(*it, shared_ptr<Port>(new Port(*it)));
+  }
+
+  elab_inparse();
+}
+
+netlist::Module::Module(const location& lloc, const MIdentifier& nm, 
+                        const list<shared_ptr<Variable> >& para_list,
+                        const list<PoIdentifier>& port_list, const shared_ptr<Block>& body)
+  : Block(*body), name(nm) {
+  
+  named = true;
+  loc = lloc;
   
   // insert parameters
   {

@@ -59,8 +59,18 @@ namespace netlist {
     PortConn(const shared_ptr<Expression>& exp, int dir_m = 0) /* ordered connection */
       : dir(dir_m), exp(exp), type(CEXP), named(false) { reduce(); }
     
+    PortConn(const location& lloc, 
+             const shared_ptr<Expression>& exp, 
+             int dir_m = 0) /* ordered connection */
+      : loc(lloc), dir(dir_m), exp(exp), type(CEXP), named(false) { reduce(); }
+    
     PortConn(const shared_ptr<LConcatenation>& lval, int dir_m = 0) /* ordered connection */
       : dir(dir_m), exp(new Expression(lval)), type(CEXP), named(false) { reduce(); }
+    
+    PortConn(const location& lloc, 
+             const shared_ptr<LConcatenation>& lval, 
+             int dir_m = 0) /* ordered connection */
+      : loc(lloc), dir(dir_m), exp(new Expression(lval)), type(CEXP), named(false) { reduce(); }
     
     PortConn()                  /* oredered open output connection */
       : dir(1), type(COPEN) {}
@@ -68,8 +78,16 @@ namespace netlist {
     PortConn(const PoIdentifier pn, const shared_ptr<Expression>& exp, int dir_m = 0) /* named connection */
       : pname(pn), dir(0), exp(exp), type(CEXP), named(true) { reduce(); }
 
+    PortConn(const location& lloc, 
+             const PoIdentifier pn, 
+             const shared_ptr<Expression>& exp, int dir_m = 0) /* named connection */
+      : loc(lloc), pname(pn), dir(0), exp(exp), type(CEXP), named(true) { reduce(); }
+
     PortConn(const PoIdentifier pn)
       : pname(pn), dir(1), type(COPEN), named(true) {}
+
+    PortConn(const location& lloc, const PoIdentifier pn)
+      : loc(lloc), pname(pn), dir(1), type(COPEN), named(true) {}
 
     // helpers
     void reduce() { preduce<PortConn>(this); }
@@ -98,6 +116,7 @@ namespace netlist {
     }
 
     // date
+    location loc;               /* location in ht source file */
     PoIdentifier pname;         /* the port name in the module definition, or parameter name */
     int dir;                    /* direction, -1 in, 0 inout, 1 out */
     shared_ptr<Expression> exp; /* used when the connection is in general expression */
@@ -119,11 +138,20 @@ namespace netlist {
     ParaConn(const shared_ptr<Expression>& exp) /* ordered connection */
       : exp(exp), type(CEXP), named(false) { reduce(); }
 
+    ParaConn(const location& lloc, const shared_ptr<Expression>& exp) /* ordered connection */
+      : loc(lloc), exp(exp), type(CEXP), named(false) { reduce(); }
+
     ParaConn(const VIdentifier& pn, const shared_ptr<Expression>& exp) /* named connection */
       : pname(pn), exp(exp), type(CEXP), named(true) { reduce(); }
 
+    ParaConn(const location& lloc, const VIdentifier& pn, const shared_ptr<Expression>& exp) /* named connection */
+      : loc(lloc), pname(pn), exp(exp), type(CEXP), named(true) { reduce(); }
+
     ParaConn(const VIdentifier& pn) /* named connection */
       : pname(pn), type(COPEN), named(true) { }
+
+    ParaConn(const location& lloc, const VIdentifier& pn) /* named connection */
+      : loc(lloc), pname(pn), type(COPEN), named(true) { }
 
     // helpers
     void reduce() { preduce<ParaConn>(this); }
@@ -143,6 +171,7 @@ namespace netlist {
     }
 
     // date
+    location loc;               /* location in ht source file */
     VIdentifier pname;          /* the port name in the module definition, or parameter name */
     shared_ptr<Expression> exp; /* used when the connection is in general expression */
     VIdentifier var;            /* reduced to a single variable, one of the normal forms */

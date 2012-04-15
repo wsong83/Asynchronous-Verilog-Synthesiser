@@ -42,10 +42,32 @@ netlist::IfState::IfState(
 }
 
 netlist::IfState::IfState(
+                          const location& lloc,
+                          const shared_ptr<Expression>& exp, 
+                          const shared_ptr<Block>& m_ifcase, 
+                          const shared_ptr<Block>& m_elsecase
+                          )
+  : NetComp(NetComp::tIf, lloc), exp(exp), ifcase(m_ifcase), elsecase(m_elsecase), named(false)
+{
+  ifcase->elab_inparse();
+  elsecase->elab_inparse();
+}
+
+netlist::IfState::IfState(
                           const shared_ptr<Expression>& exp, 
                           const shared_ptr<Block>& m_ifcase
                           )
   : NetComp(NetComp::tIf), exp(exp),  ifcase(m_ifcase), named(false)
+{
+  ifcase->elab_inparse();
+}
+
+netlist::IfState::IfState(
+                          const location& lloc,
+                          const shared_ptr<Expression>& exp, 
+                          const shared_ptr<Block>& m_ifcase
+                          )
+  : NetComp(NetComp::tIf, lloc), exp(exp),  ifcase(m_ifcase), named(false)
 {
   ifcase->elab_inparse();
 }

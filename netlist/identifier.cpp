@@ -46,6 +46,12 @@ netlist::Identifier::Identifier(ctype_t ctype, const string& nm)
   hash_update();
 }
 
+netlist::Identifier::Identifier(ctype_t ctype, const location& lloc, const string& nm)
+  : NetComp(ctype, lloc), name(nm)
+{
+  hash_update();
+}
+
 int netlist::Identifier::compare(const Identifier& rhs) const {
   if(hashid != rhs.hashid)
     return hashid > rhs.hashid ? 1 : -1;
@@ -80,11 +86,20 @@ bool netlist::operator== (const Identifier& lhs, const Identifier& rhs) {
 netlist::BIdentifier::BIdentifier(const string& nm)
   : Identifier(tBlockName, nm), anonymous(false)  {  }
 
+netlist::BIdentifier::BIdentifier(const location& lloc, const string& nm)
+  : Identifier(tBlockName, lloc, nm), anonymous(false)  {  }
+
 netlist::BIdentifier::BIdentifier()
   : Identifier(tBlockName, "B0"), anonymous(true)  {  }
 
+netlist::BIdentifier::BIdentifier(const location& lloc)
+  : Identifier(tBlockName, lloc, "B0"), anonymous(true)  {  }
+
 netlist::BIdentifier::BIdentifier(const averilog::avID &id)
   : Identifier(tBlockName, id.name), anonymous(false) {  }
+
+netlist::BIdentifier::BIdentifier(const location& lloc, const averilog::avID &id)
+  : Identifier(tBlockName, lloc, id.name), anonymous(false) {  }
 
 BIdentifier& netlist::BIdentifier::operator++ () {
   if(!anonymous) return *this;	// named block idenitifers cannot slef-increase
@@ -101,13 +116,22 @@ BIdentifier& netlist::BIdentifier::operator++ () {
 netlist::FIdentifier::FIdentifier(const string& nm)
   : Identifier(tFuncName, nm) {  }
 
+netlist::FIdentifier::FIdentifier(const location& lloc, const string& nm)
+  : Identifier(tFuncName, lloc, nm) {  }
+
 
 //////////////////////////////// Module identifier /////////////////
 netlist::MIdentifier::MIdentifier(const string& nm)
   : Identifier(tModuleName, nm), numbered(false) {  }
 
+netlist::MIdentifier::MIdentifier(const location& lloc, const string& nm)
+  : Identifier(tModuleName, lloc, nm), numbered(false) {  }
+
 netlist::MIdentifier::MIdentifier(const averilog::avID &id)
   : Identifier(tModuleName, id.name), numbered(false) {  }
+
+netlist::MIdentifier::MIdentifier(const location& lloc, const averilog::avID &id)
+  : Identifier(tModuleName, lloc, id.name), numbered(false) {  }
 
 MIdentifier& netlist::MIdentifier::operator++ () {
   const boost::regex numbered_name("_(\\d+)\\z");
@@ -139,11 +163,20 @@ ostream& netlist::MIdentifier::streamout(ostream& os, unsigned int indent) const
 netlist::IIdentifier::IIdentifier()
   : Identifier(tInstName, "u_0"), numbered(true) {  }
 
+netlist::IIdentifier::IIdentifier(const location& lloc)
+  : Identifier(tInstName, lloc, "u_0"), numbered(true) {  }
+
 netlist::IIdentifier::IIdentifier(const string& nm)
   : Identifier(tInstName, nm), numbered(false) {  }
 
+netlist::IIdentifier::IIdentifier(const location& lloc, const string& nm)
+  : Identifier(tInstName, lloc, nm), numbered(false) {  }
+
 netlist::IIdentifier::IIdentifier(const averilog::avID& id)
   : Identifier(tInstName, id.name), numbered(false) { }
+
+netlist::IIdentifier::IIdentifier(const location& lloc, const averilog::avID& id)
+  : Identifier(tInstName, lloc, id.name), numbered(false) { }
 
 IIdentifier& netlist::IIdentifier::operator++ () {
   const boost::regex numbered_name("_(\\d+)\\z");
@@ -176,8 +209,14 @@ IIdentifier& netlist::IIdentifier::add_prefix(const Identifier& prefix) {
 netlist::PoIdentifier::PoIdentifier(const string& nm)
   : Identifier(tPortName, nm) {  }
 
+netlist::PoIdentifier::PoIdentifier(const location& lloc, const string& nm)
+  : Identifier(tPortName, lloc, nm) {  }
+
 netlist::PoIdentifier::PoIdentifier(const averilog::avID& id)
   : Identifier(tVarName, id.name) { }
+
+netlist::PoIdentifier::PoIdentifier(const location& lloc, const averilog::avID& id)
+  : Identifier(tVarName, lloc, id.name) { }
 
 ostream& netlist::PoIdentifier::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
@@ -197,14 +236,26 @@ ostream& netlist::PoIdentifier::streamout(ostream& os, unsigned int indent) cons
 netlist::VIdentifier::VIdentifier()
   : Identifier(tVarName, "n_0"), numbered(true), inout_t(0), uid(0) {  }
 
+netlist::VIdentifier::VIdentifier(const location& lloc)
+  : Identifier(tVarName, lloc, "n_0"), numbered(true), inout_t(0), uid(0) {  }
+
 netlist::VIdentifier::VIdentifier(const string& nm)
   : Identifier(tVarName, nm), numbered(false), inout_t(0), uid(0) {  }
+
+netlist::VIdentifier::VIdentifier(const location& lloc, const string& nm)
+  : Identifier(tVarName, lloc, nm), numbered(false), inout_t(0), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const averilog::avID& id)
   : Identifier(tVarName, id.name), numbered(false), inout_t(0), uid(0) { }
 
+netlist::VIdentifier::VIdentifier(const location& lloc, const averilog::avID& id)
+  : Identifier(tVarName, lloc, id.name), numbered(false), inout_t(0), uid(0) { }
+
 netlist::VIdentifier::VIdentifier(const string& nm, const vector<shared_ptr<Range> >& rg)
   : Identifier(tVarName, nm), m_range(rg), numbered(false), inout_t(0), uid(0) {  }
+
+netlist::VIdentifier::VIdentifier(const location& lloc, const string& nm, const vector<shared_ptr<Range> >& rg)
+  : Identifier(tVarName, lloc, nm), m_range(rg), numbered(false), inout_t(0), uid(0) {  }
 
 VIdentifier& netlist::VIdentifier::operator++ () {
   const boost::regex numbered_name("_(\\d+)\\z");
@@ -287,7 +338,7 @@ void netlist::VIdentifier::db_expunge() {
 }
 
 VIdentifier* netlist::VIdentifier::deep_copy() const {
-  VIdentifier* rv = new VIdentifier(this->name);
+  VIdentifier* rv = new VIdentifier(this->loc, this->name);
   rv->value = this->value;
   rv->numbered = this->numbered;
   rv->father = this->father;

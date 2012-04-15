@@ -37,12 +37,17 @@ namespace netlist {
   class Range : public NetComp {
   public:
     // constructors
-    Range() : dim(false), rtype(TR_Err) { }
+    Range() : NetComp(tRange), dim(false), rtype(TR_Err) { }
     Range(const mpz_class&);	/* select by a fix number */
+    Range(const location&, const mpz_class&);	/* select by a fix number */
     Range(const mpz_class&, const mpz_class&);	/* select by a fix number */
+    Range(const location&, const mpz_class&, const mpz_class&);	/* select by a fix number */
     Range(const shared_ptr<Expression>&);	/* select by an expression  */
+    Range(const location&, const shared_ptr<Expression>&);	/* select by an expression  */
     Range(const Range_Exp&, bool dim = false);    /* declare or select by a range expression */
+    Range(const location&, const Range_Exp&, bool dim = false);    /* declare or select by a range expression */
     Range(const Range_Exp&, int); /* select by a range expression using positive or negtive colon */
+    Range(const location&, const Range_Exp&, int); /* select by a range expression using positive or negtive colon */
 
     // helpers
     bool is_const() const { return rtype == TR_Const && rtype == TR_CRange; }

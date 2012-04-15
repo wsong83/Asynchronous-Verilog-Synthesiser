@@ -36,10 +36,15 @@ namespace netlist{
   public:
     // constructors
     SeqBlock() : Block(tSeqBlock), sensitive(false) {};
+    SeqBlock(const location& lloc) : Block(tSeqBlock, lloc), sensitive(false) {};
     SeqBlock(const BIdentifier& nm)
       : Block(tSeqBlock, nm), sensitive(false) {}
+    SeqBlock(const location& lloc, const BIdentifier& nm)
+      : Block(tSeqBlock, lloc, nm), sensitive(false) {}
     SeqBlock(list<pair<int, shared_ptr<Expression> > >&, const shared_ptr<Block>&);
+    SeqBlock(const location&, list<pair<int, shared_ptr<Expression> > >&, const shared_ptr<Block>&);
     SeqBlock(const Block&);
+    SeqBlock(const location&, const Block&);
     
     // helpers
     virtual void clear();               /* clear all statements */

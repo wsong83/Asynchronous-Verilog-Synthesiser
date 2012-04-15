@@ -89,7 +89,33 @@ ostream& netlist::SeqBlock::streamout(ostream& os, unsigned int indent, bool fl_
 netlist::SeqBlock::SeqBlock(list<pair<int, shared_ptr<Expression> > >& slist, const shared_ptr<Block>& body) 
   : Block(*body)
 {
-  ctype = NetComp::tSeqBlock;
+  ctype = tSeqBlock;
+  
+  list<pair<int, shared_ptr<Expression> > >::iterator it, end;
+  for(it=slist.begin(), end=slist.end(); it!=end; it++) {
+    if(it->first > 0)
+      slist_pulse.push_back(pair<bool, shared_ptr<Expression> >(true, it->second));
+    else if(it->first < 0)
+      slist_pulse.push_back(pair<bool, shared_ptr<Expression> >(false, it->second));
+    else
+      slist_level.push_back(it->second);
+  }
+  
+  sensitive = true; 
+  named = body->is_named();
+  if(named) name = body->name;
+  statements = body->statements;
+
+  // TODO: checking sensitive list, only one type is used
+  elab_inparse();
+
+}
+      
+netlist::SeqBlock::SeqBlock(const location& lloc, list<pair<int, shared_ptr<Expression> > >& slist, const shared_ptr<Block>& body) 
+  : Block(*body)
+{
+  ctype = tSeqBlock;
+  loc = lloc;
   
   list<pair<int, shared_ptr<Expression> > >::iterator it, end;
   for(it=slist.begin(), end=slist.end(); it!=end; it++) {
@@ -115,6 +141,14 @@ netlist::SeqBlock::SeqBlock(const Block& body)
   : Block(body), sensitive(false)
 {
   ctype = tSeqBlock;
+  elab_inparse();
+}
+
+netlist::SeqBlock::SeqBlock(const location& lloc, const Block& body) 
+  : Block(body), sensitive(false)
+{
+  ctype = tSeqBlock;
+  loc = lloc;
   elab_inparse();
 }
 

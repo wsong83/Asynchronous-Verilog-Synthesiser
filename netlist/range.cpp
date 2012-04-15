@@ -31,13 +31,32 @@
 using namespace netlist;
 
 netlist::Range::Range(const mpz_class& sel)
-  : c(sel), dim(false), rtype(TR_Const) {  }
+  : NetComp(tRange), c(sel), dim(false), rtype(TR_Const) {  }
+
+netlist::Range::Range(const location& lloc, const mpz_class& sel)
+  : NetComp(tRange, lloc), c(sel), dim(false), rtype(TR_Const) {  }
 
 netlist::Range::Range(const mpz_class& rl, const mpz_class& rr)
-  : cr(rl,rr), dim(false), rtype(TR_CRange) {  }
+  : NetComp(tRange), cr(rl,rr), dim(false), rtype(TR_CRange) {  }
+
+netlist::Range::Range(const location& lloc, const mpz_class& rl, const mpz_class& rr)
+  : NetComp(tRange, lloc), cr(rl,rr), dim(false), rtype(TR_CRange) {  }
 
 netlist::Range::Range(const shared_ptr<Expression>& sel)
-  : dim(false), rtype(TR_Var) 
+  : NetComp(tRange), dim(false), rtype(TR_Var) 
+{ 
+  shared_ptr<Expression> m(sel->deep_copy());
+  m->reduce();
+  if(m->is_valuable()) {	// constant expression, value it now
+    c = m->get_value().get_value();
+    rtype = TR_Const;
+  } else {
+    v = m;
+  }
+ };
+
+netlist::Range::Range(const location& lloc, const shared_ptr<Expression>& sel)
+  : NetComp(tRange, lloc), dim(false), rtype(TR_Var) 
 { 
   shared_ptr<Expression> m(sel->deep_copy());
   m->reduce();
@@ -50,7 +69,32 @@ netlist::Range::Range(const shared_ptr<Expression>& sel)
  };
 
 netlist::Range::Range(const Range_Exp& sel, bool dimm)
-  : dim(dimm), rtype(TR_Range) 
+  : NetComp(tRange), dim(dimm), rtype(TR_Range) 
+{ 
+  Range_Exp m(shared_ptr<Expression>(sel.first->deep_copy()), shared_ptr<Expression>(sel.second->deep_copy()));
+  m.first->reduce();
+  m.second->reduce();
+  if(*(m.first) == *(m.second)) {	// only one bit is selected
+    if(m.first->is_valuable()) { // constant expression, value it now
+      c = m.first->get_value().get_value();
+      rtype = TR_Const;
+    } else {			// variable expression
+      v = m.first;
+      rtype = TR_Var;
+    }
+  } else {
+    if(m.first->is_valuable() && m.second->is_valuable()) {
+      rtype = TR_CRange;
+      cr.first = m.first->get_value().get_value();
+      cr.second = m.second->get_value().get_value();
+    } else {
+      r = m;
+    } 
+  }
+};
+
+netlist::Range::Range(const location& lloc, const Range_Exp& sel, bool dimm)
+  : NetComp(tRange, lloc), dim(dimm), rtype(TR_Range) 
 { 
   Range_Exp m(shared_ptr<Expression>(sel.first->deep_copy()), shared_ptr<Expression>(sel.second->deep_copy()));
   m.first->reduce();
@@ -75,7 +119,44 @@ netlist::Range::Range(const Range_Exp& sel, bool dimm)
 };
 
 netlist::Range::Range(const Range_Exp& sel, int updown)
-  : dim(false), rtype(TR_Range)
+  : NetComp(tRange), dim(false), rtype(TR_Range)
+{
+  shared_ptr<Expression> first(sel.first->deep_copy());
+  Range_Exp m_sel;
+  if(updown == 1) { // positive colon
+    *first+*(sel.second);
+    m_sel.first = first;
+    m_sel.second.reset(sel.first->deep_copy());
+  } else if(updown == -1){ // negtive colon
+    m_sel.first.reset(sel.first->deep_copy());
+    *first - *(sel.second);
+    m_sel.second = first;
+  } else {
+    // error
+    assert(1 == 0);
+  }
+
+  if(*(m_sel.first) == *(m_sel.second)) {	// only one bit is selected
+    if(m_sel.first->is_valuable()) { // constant expression, value it now
+      c = m_sel.first->get_value().get_value();
+      rtype = TR_Const;
+    } else {			// variable expression
+      v = m_sel.first;
+      rtype = TR_Var;
+    } 
+  } else {
+    if(m_sel.first->is_valuable() && m_sel.second->is_valuable()) {
+      rtype = TR_CRange;
+      cr.first = m_sel.first->get_value().get_value();
+      cr.second = m_sel.second->get_value().get_value();
+    } else {
+      r = m_sel;
+    } 
+  }
+}
+
+netlist::Range::Range(const location& lloc, const Range_Exp& sel, int updown)
+  : NetComp(tRange, lloc), dim(false), rtype(TR_Range)
 {
   shared_ptr<Expression> first(sel.first->deep_copy());
   Range_Exp m_sel;

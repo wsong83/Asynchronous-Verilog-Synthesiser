@@ -35,6 +35,7 @@ namespace netlist {
   public:
     // constructors
     Port(const PoIdentifier&);
+    Port(const location&, const PoIdentifier&);
 
     // helpers
     void set_in() { dir = -1; }
