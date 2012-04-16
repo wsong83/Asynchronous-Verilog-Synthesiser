@@ -49,6 +49,8 @@ shell::ErrReport::ErrReport() {
   #include "err_def.h"
 }
 
+bool shell::ErrReport::fail = false;
+
 bool shell::ErrReport::suppress(const string& errID) {
   map<string, ErrorType>::iterator it, end;
   it = errList.find(errID);
@@ -76,33 +78,44 @@ bool shell::ErrReport::operator () (const averilog::location& loc, const string&
 
   const ErrorType& eT = it->second;
 
-  if(eT.suppressed) return true;
+  if(eT.suppressed) return false;
 
   switch(it->second.num_of_para) {
   case 0: {
     os << loc << ": [" << errID << "] " << rtype[eT.severe]
        << eT.errMsg << endl; 
-    return true;
+    break;
   }
   case 1: {
     os << loc << ": [" << errID << "] " << rtype[eT.severe] 
        << format(eT.errMsg) % p1 << endl;
-    return true;
+    break;
   }
   case 2: {
     os << loc << ": [" << errID << "] " << rtype[eT.severe] 
        << format(eT.errMsg) % p1 % p2 << endl;
-    return true;
+    break;
   }
   case 3: {
     os << loc << ": [" << errID << "] " << rtype[eT.severe] 
        << format(eT.errMsg) % p1 % p2 % p3 << endl;
-    return true;
+    break;
   }
   default:
     // should not come here
     assert(0 == "wrong number of error parameters");
   } 
-  return false;
 
+  shell::ErrReport::fail |= (eT.severe <= ErrorType::EError);
+  return (eT.severe <= ErrorType::EError);
 }
+
+bool shell::ErrReport::failure(const string& errID) const {
+  map<string, ErrorType>::const_iterator it, end;
+  it = errList.find(errID);
+  end = errList.end();
+  assert(it != end);		// make sure the error id exist
+
+  return (it->second.severe <= ErrorType::EError);
+} 
+  

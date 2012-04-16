@@ -55,8 +55,8 @@ namespace netlist {
     // helpers
     virtual void set_name(const MIdentifier& nm) { name = nm; named=true;}
     virtual void clear();
-    virtual VIdentifier& new_VId();
-    virtual BIdentifier& new_BId();
+    VIdentifier& new_VId();
+    BIdentifier& new_BId();
     virtual void elab_inparse();                           /* resolve the content in statements during parsing */
     
     // data

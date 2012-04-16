@@ -54,8 +54,18 @@ bool netlist::Block::add_case(const shared_ptr<Expression>& exp, const list<shar
   return true;
 }
 
+bool netlist::Block::add_case(const location& lloc, const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, const shared_ptr<CaseItem>& ditem) {
+  statements.push_back(shared_ptr<CaseState>( new CaseState(lloc, exp, citems, ditem)));
+  return true;
+}
+
 bool netlist::Block::add_case(const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems) {
   statements.push_back(shared_ptr<CaseState>( new CaseState(exp, citems)));
+  return true;
+}
+
+bool netlist::Block::add_case(const location& lloc, const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems) {
+  statements.push_back(shared_ptr<CaseState>( new CaseState(lloc, exp, citems)));
   return true;
 }
 
@@ -64,8 +74,18 @@ bool netlist::Block::add_case(const shared_ptr<Expression>& exp, const shared_pt
   return true;
 }
 
+bool netlist::Block::add_case(const location& lloc, const shared_ptr<Expression>& exp, const shared_ptr<CaseItem>& ditem) {
+  statements.push_back(shared_ptr<CaseState>( new CaseState(lloc, exp, ditem)));
+  return true;
+}
+
 bool netlist::Block::add_if(const shared_ptr<Expression>& exp, const shared_ptr<Block>& ifcase, const shared_ptr<Block>& elsecase) {
   statements.push_back(shared_ptr<IfState>( new IfState(exp, ifcase, elsecase)));
+  return true;
+}
+
+bool netlist::Block::add_if(const location& lloc, const shared_ptr<Expression>& exp, const shared_ptr<Block>& ifcase, const shared_ptr<Block>& elsecase) {
+  statements.push_back(shared_ptr<IfState>( new IfState(lloc, exp, ifcase, elsecase)));
   return true;
 }
 
@@ -74,8 +94,18 @@ bool netlist::Block::add_if(const shared_ptr<Expression>& exp, const shared_ptr<
   return true;
 }
 
+bool netlist::Block::add_if(const location& lloc, const shared_ptr<Expression>& exp, const shared_ptr<Block>& ifcase) {
+  statements.push_back(shared_ptr<IfState>( new IfState(lloc, exp, ifcase)));
+  return true;
+}
+
 bool netlist::Block::add_while(const shared_ptr<Expression>& exp, const shared_ptr<Block>& body) {
   statements.push_back(shared_ptr<WhileState>( new WhileState(exp, body)));
+  return true;
+}
+
+bool netlist::Block::add_while(const location& lloc, const shared_ptr<Expression>& exp, const shared_ptr<Block>& body) {
+  statements.push_back(shared_ptr<WhileState>( new WhileState(lloc, exp, body)));
   return true;
 }
 
@@ -84,6 +114,10 @@ bool netlist::Block::add_for(const shared_ptr<Assign>& init, const shared_ptr<Ex
   return true;
 }
 
+bool netlist::Block::add_for(const location& lloc, const shared_ptr<Assign>& init, const shared_ptr<Expression>& cond, const shared_ptr<Assign>& incr, const shared_ptr<Block>& body) {
+  statements.push_back(shared_ptr<ForState>( new ForState(lloc, init, cond, incr, body)));
+  return true;
+}
 
 bool netlist::Block::add_statements(const shared_ptr<Block>& body) {
   if(body->is_blocked()) {

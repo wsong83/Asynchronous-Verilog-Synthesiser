@@ -66,15 +66,60 @@ namespace netlist {
         add(*it);
       return true;
     }
+    
+    /* add a general case statement */
+    bool add_case(const shared_ptr<Expression>&, 
+                          const list<shared_ptr<CaseItem> >&, const shared_ptr<CaseItem>&); 
+    
+    /* add a general case statement */
+    bool add_case(const location& lloc, const shared_ptr<Expression>&, 
+                          const list<shared_ptr<CaseItem> >&, const shared_ptr<CaseItem>&);
+ 
+    /* add a case statement without default */
+    bool add_case(const shared_ptr<Expression>&, 
+                          const list<shared_ptr<CaseItem> >&);
 
-    virtual bool add_case(const shared_ptr<Expression>&, const list<shared_ptr<CaseItem> >&, const shared_ptr<CaseItem>&); /* add a general case statement */
-    virtual bool add_case(const shared_ptr<Expression>&, const list<shared_ptr<CaseItem> >&); /* add a case statement without default */
-    virtual bool add_case(const shared_ptr<Expression>&, const shared_ptr<CaseItem>&); /* add a case statement only with a default case, odd! */
-    virtual bool add_if(const shared_ptr<Expression>&, const shared_ptr<Block>&, const shared_ptr<Block>&); /* add an if statement with else case */
-    virtual bool add_if(const shared_ptr<Expression>&, const shared_ptr<Block>&); /* add an if statement without else case */
-    virtual bool add_while(const shared_ptr<Expression>&, const shared_ptr<Block>&); /* add a while statement */
-    virtual bool add_for(const shared_ptr<Assign>&, const shared_ptr<Expression>&, const shared_ptr<Assign>&, const shared_ptr<Block>&); /* add a for statement */
-    virtual bool add_statements(const shared_ptr<Block>&); /* add several statements */
+    /* add a case statement without default */
+    bool add_case(const location& lloc, const shared_ptr<Expression>&, 
+                          const list<shared_ptr<CaseItem> >&); 
+
+    /* add a case statement only with a default case, odd! */
+    bool add_case(const shared_ptr<Expression>&, 
+                          const shared_ptr<CaseItem>&);
+
+    /* add a case statement only with a default case, odd! */
+    bool add_case(const location& lloc, const shared_ptr<Expression>&, 
+                          const shared_ptr<CaseItem>&);
+
+    /* add an if statement with else case */
+    bool add_if(const shared_ptr<Expression>&, 
+                        const shared_ptr<Block>&, const shared_ptr<Block>&); 
+    
+    /* add an if statement with else case */
+    bool add_if(const location& lloc, const shared_ptr<Expression>&, 
+                        const shared_ptr<Block>&, const shared_ptr<Block>&);
+
+    /* add an if statement without else case */
+    bool add_if(const shared_ptr<Expression>&, const shared_ptr<Block>&);
+
+    /* add an if statement without else case */
+    bool add_if(const location& lloc, const shared_ptr<Expression>&, const shared_ptr<Block>&);
+
+    /* add a while statement */
+    bool add_while(const shared_ptr<Expression>&, const shared_ptr<Block>&);
+
+    /* add a while statement */
+    bool add_while(const location& lloc, const shared_ptr<Expression>&, const shared_ptr<Block>&);
+
+    /* add a for statement */
+    bool add_for(const shared_ptr<Assign>&, 
+                         const shared_ptr<Expression>&, const shared_ptr<Assign>&, const shared_ptr<Block>&); 
+
+    /* add a for statement */
+    bool add_for(const location& lloc, const shared_ptr<Assign>&, 
+                         const shared_ptr<Expression>&, const shared_ptr<Assign>&, const shared_ptr<Block>&);
+
+    bool add_statements(const shared_ptr<Block>&); /* add several statements */
     virtual void elab_inparse();                           /* resolve the content in statements during parsing */
 
     // helpers

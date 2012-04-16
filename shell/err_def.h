@@ -42,8 +42,8 @@ ERR_DEFINE("PARSER-0",
 
 /// on the left side of an assign should be a non-const variable or concatenation
 ERR_DEFINE("SYN-ASSIGN-0", 
-           EError,   0, "Wrong left-side value."
-           );
+           EError,   0, 
+           "Wrong left-side value.");
 
 ERR_DEFINE("SYN-ASSIGN-1", 
            EError,   0, 
@@ -57,6 +57,10 @@ ERR_DEFINE("SYN-FILE-0",
 ERR_DEFINE("SYN-INST-0",   
            EError,   1, 
            "Instance \"%1%\" is already defined.");
+
+ERR_DEFINE("SYN-INST-1",   
+           EWarning,   0, 
+           "Primary gate is unnamed and will be named by a default name.");
 
 // duplicated module definition. The duplicated module will be ignored.
 ERR_DEFINE("SYN-MODULE-0", 

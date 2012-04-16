@@ -50,7 +50,7 @@
 #define yylex avlex
   
   yyscan_t avscanner;
-  
+
   void averilog::av_parser::error (const location_type& loc, const string& msg) {
     av_env.error(loc, "PARSER-0");
   }
@@ -323,21 +323,21 @@ description
 module_declaration
     : "module" module_identifier ';' module_items "endmodule"                   
     {
-      shared_ptr<Module> m(new Module($2, $4));
-      if(!Lib.insert(m)) av_env.error(yylloc, "SYN-MODULE-0", $2.name); 
+      shared_ptr<Module> m(new Module(@$, $2, $4));
+      if(!Lib.insert(m)) av_env.error(@$, "SYN-MODULE-0", $2.name); 
       cout<< *m;
     }
     | "module" module_identifier '(' list_of_port_identifiers ')' ';' module_items "endmodule"
     { 
-      shared_ptr<Module> m(new Module($2, $4, $7));
-      if(!Lib.insert(m)) av_env.error(yylloc, "SYN-MODULE-0", $2.name); 
+      shared_ptr<Module> m(new Module(@$, $2, $4, $7));
+      if(!Lib.insert(m)) av_env.error(@$, "SYN-MODULE-0", $2.name); 
       cout<< *m;
     }
     | "module" module_identifier '#' '(' parameter_declaration ')' '(' list_of_port_identifiers ')' ';'
       module_items "endmodule"
     {
-      shared_ptr<Module> m(new Module($2, $5, $8, $11));
-      if(!Lib.insert(m)) av_env.error(yylloc, "SYN-MODULE-0", $2.name); 
+      shared_ptr<Module> m(new Module(@$, $2, $5, $8, $11));
+      if(!Lib.insert(m)) av_env.error(@$, "SYN-MODULE-0", $2.name); 
       cout<< *m;
     }
     ;
@@ -374,7 +374,7 @@ input_declaration
     {      
       list<PoIdentifier>::iterator it, end;
       for(it = $2.begin(), end = $2.end(); it != end; it++) {
-        shared_ptr<Port> cp(new Port(*it));
+        shared_ptr<Port> cp(new Port(it->loc, *it));
         cp->set_in();
         $$.push_back(cp);
       }
@@ -384,10 +384,10 @@ input_declaration
       
       list<PoIdentifier>::iterator it, end;
       for(it = $7.begin(), end = $7.end(); it != end; it++) {
-        shared_ptr<Port> cp( new Port(*it));
+        shared_ptr<Port> cp( new Port(it->loc, *it));
         cp->set_in();
         pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
-        cp->name.get_range().push_back(shared_ptr<Range>(new Range(m)));
+        cp->name.get_range().push_back(shared_ptr<Range>(new Range(@2+@6, m)));
         $$.push_back(cp);
       }
     }  
@@ -398,7 +398,7 @@ output_declaration
     {      
       list<PoIdentifier>::iterator it, end;
       for(it = $2.begin(), end = $2.end(); it != end; it++) {
-        shared_ptr<Port> cp( new Port(*it));
+        shared_ptr<Port> cp( new Port(it->loc, *it));
         cp->set_out();
         $$.push_back(cp);
       }
@@ -407,10 +407,10 @@ output_declaration
     {      
       list<PoIdentifier>::iterator it, end;
       for(it = $7.begin(), end = $7.end(); it != end; it++) {
-        shared_ptr<Port> cp( new Port(*it));
+        shared_ptr<Port> cp( new Port(it->loc, *it));
         cp->set_out();
         pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
-        cp->name.get_range().push_back(shared_ptr<Range>(new Range(m)));
+        cp->name.get_range().push_back(shared_ptr<Range>(new Range(@2+@6,m)));
         $$.push_back(cp);
       }
     }  
@@ -422,7 +422,8 @@ variable_declaration
     {
       list<pair<VIdentifier, shared_ptr<Expression> > >::iterator it, end;
       for(it=$2.begin(), end=$2.end(); it!=end; it++){
-        $$.push_back(shared_ptr<Variable>(new Variable(it->first, it->second, Variable::TWire)));
+        $$.push_back(shared_ptr<Variable>(new Variable(it->first.loc, 
+                                                       it->first, it->second, Variable::TWire)));
         $$.back()->name.get_range() = $$.back()->name.get_select();
         $$.back()->name.get_select().clear();
         vector<shared_ptr<Range> >::iterator rg_it, rg_end;
@@ -435,7 +436,8 @@ variable_declaration
     {
       list<pair<VIdentifier, shared_ptr<Expression> > >::iterator it, end;
       for(it=$7.begin(), end=$7.end(); it!=end; it++){
-        $$.push_back(shared_ptr<Variable>(new Variable(it->first, it->second, Variable::TWire)));
+        $$.push_back(shared_ptr<Variable>(new Variable(it->first.loc, 
+                                                       it->first, it->second, Variable::TWire)));
         $$.back()->name.get_range() = $$.back()->name.get_select();
         $$.back()->name.get_select().clear();
         vector<shared_ptr<Range> >::iterator rg_it, rg_end;
@@ -443,14 +445,15 @@ variable_declaration
             rg_it != rg_end; rg_it++ )
           (*rg_it)->set_dim();
         pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
-        $$.back()->name.get_range().push_back(shared_ptr<Range>(new Range(m)));
+        $$.back()->name.get_range().push_back(shared_ptr<Range>(new Range(@2+@6, m)));
       }
     }
     | "reg" list_of_variable_identifiers 
     {
       list<pair<VIdentifier, shared_ptr<Expression> > >::iterator it, end;
       for(it=$2.begin(), end=$2.end(); it!=end; it++){
-        $$.push_back(shared_ptr<Variable>(new Variable(it->first, it->second, Variable::TReg)));
+        $$.push_back(shared_ptr<Variable>(new Variable(it->first.loc, 
+                                                       it->first, it->second, Variable::TReg)));
         $$.back()->name.get_range() = $$.back()->name.get_select();
         $$.back()->name.get_select().clear();
         vector<shared_ptr<Range> >::iterator rg_it, rg_end;
@@ -463,7 +466,8 @@ variable_declaration
     {
       list<pair<VIdentifier, shared_ptr<Expression> > >::iterator it, end;
       for(it=$7.begin(), end=$7.end(); it!=end; it++){
-        $$.push_back(shared_ptr<Variable>(new Variable(it->first, it->second, Variable::TReg)));
+        $$.push_back(shared_ptr<Variable>(new Variable(it->first.loc, 
+                                                       it->first, it->second, Variable::TReg)));
         $$.back()->name.get_range() = $$.back()->name.get_select();
         $$.back()->name.get_select().clear();
         vector<shared_ptr<Range> >::iterator rg_it, rg_end;
@@ -471,14 +475,15 @@ variable_declaration
             rg_it != rg_end; rg_it++ )
           (*rg_it)->set_dim();
         pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
-        $$.back()->name.get_range().push_back(shared_ptr<Range>(new Range(m)));
+        $$.back()->name.get_range().push_back(shared_ptr<Range>(new Range(@2+@6, m)));
       }
     }
     | "genvar" list_of_variable_identifiers
     {
       list<pair<VIdentifier, shared_ptr<Expression> > >::iterator it, end;
       for(it=$2.begin(), end=$2.end(); it!=end; it++){
-        $$.push_back(shared_ptr<Variable>(new Variable(it->first, it->second, Variable::TGenvar)));
+        $$.push_back(shared_ptr<Variable>(new Variable(it->first.loc, 
+                                                       it->first, it->second, Variable::TGenvar)));
         $$.back()->name.get_range() = $$.back()->name.get_select();
         $$.back()->name.get_select().clear();
         vector<shared_ptr<Range> >::iterator rg_it, rg_end;
@@ -491,7 +496,8 @@ variable_declaration
     {
       list<pair<VIdentifier, shared_ptr<Expression> > >::iterator it, end;
       for(it=$2.begin(), end=$2.end(); it!=end; it++){
-        $$.push_back(shared_ptr<Variable>(new Variable(it->first, it->second, Variable::TReg)));
+        $$.push_back(shared_ptr<Variable>(new Variable(it->first.loc, 
+                                                       it->first, it->second, Variable::TReg)));
         $$.back()->name.get_range() = $$.back()->name.get_select();
         $$.back()->name.get_select().clear();
         vector<shared_ptr<Range> >::iterator rg_it, rg_end;
@@ -511,9 +517,9 @@ list_of_variable_declarations
 // A.2.3 Declaration lists
 list_of_param_assignments 
     : parameter_identifier '=' expression
-    { $$.push_back(shared_ptr<Variable>(new Variable($1,$3,Variable::TParam))); }
+    { $$.push_back(shared_ptr<Variable>(new Variable(@$, $1,$3,Variable::TParam))); }
     | list_of_param_assignments ',' parameter_identifier '=' expression
-    { $$.push_back(shared_ptr<Variable>(new Variable($3,$5,Variable::TParam))); }
+    { $$.push_back(shared_ptr<Variable>(new Variable(@3+@5, $3,$5,Variable::TParam))); }
     ;
 
 list_of_port_identifiers 
@@ -595,23 +601,23 @@ n_input_gate_instance
     : '(' variable_lvalue ',' input_terminals ')'
     {
       // push the lvalue into port list
-      $4.push_front(shared_ptr<PortConn>(new PortConn($2, 1)));
-      // assign a name for the instance
-      $$.reset( new Instance(Lib.get_current_comp()->new_IId(), $4,  Instance::prim_in_inst));
+      $4.push_front(shared_ptr<PortConn>(new PortConn(@2, $2, 1)));
+      av_env.error(@$, "SYN-INST-1"); 
+      $$.reset( new Instance(@$, $4,  Instance::prim_in_inst));
     }
     | instance_identifier '(' variable_lvalue ',' input_terminals ')'
     {
-      $5.push_front(shared_ptr<PortConn>(new PortConn($3, 1)));
-      $$.reset( new Instance($1, $5, Instance::prim_in_inst));
+      $5.push_front(shared_ptr<PortConn>(new PortConn(@3, $3, 1)));
+      $$.reset( new Instance(@$, $1, $5, Instance::prim_in_inst));
     }
     | instance_identifier '[' expression ':' expression ']' '(' variable_lvalue ',' input_terminals ')'
     ;
 
 input_terminals
     : expression
-    { $$.push_back(shared_ptr<PortConn>(new PortConn($1, -1))); }
+    { $$.push_back(shared_ptr<PortConn>(new PortConn(@$, $1, -1))); }
     | input_terminals ',' expression
-    { $$.push_back(shared_ptr<PortConn>(new PortConn($3, -1))); }
+    { $$.push_back(shared_ptr<PortConn>(new PortConn(@3, $3, -1))); }
     ;
 
 n_output_gate_instances
@@ -623,22 +629,23 @@ n_output_gate_instance
     : '(' output_terminals ',' expression ')'
     {
       // push the expression into port list
-      $2.push_back(shared_ptr<PortConn>(new PortConn($4, -1)));
-      $$.reset( new Instance($2,  Instance::prim_out_inst));
+      $2.push_back(shared_ptr<PortConn>(new PortConn(@$, $4, -1)));
+      av_env.error(@$, "SYN-INST-1"); 
+      $$.reset( new Instance(@$, $2,  Instance::prim_out_inst));
     }
     | instance_identifier '(' output_terminals ',' expression ')'
     {
-      $3.push_back(shared_ptr<PortConn>(new PortConn($5, -1)));
-      $$.reset( new Instance($1, $3, Instance::prim_out_inst));
+      $3.push_back(shared_ptr<PortConn>(new PortConn(@5, $5, -1)));
+      $$.reset( new Instance(@$, $1, $3, Instance::prim_out_inst));
     }
     | instance_identifier '[' expression ':' expression ']' '(' output_terminals ',' expression ')'
     ;
 
 output_terminals
     : variable_lvalue                      
-    { $$.push_back(shared_ptr<PortConn>(new PortConn($1, 1))); }
+    { $$.push_back(shared_ptr<PortConn>(new PortConn(@$, $1, 1))); }
     | output_terminals ',' variable_lvalue 
-    { $$.push_back(shared_ptr<PortConn>(new PortConn($3, 1))); }
+    { $$.push_back(shared_ptr<PortConn>(new PortConn(@3, $3, 1))); }
     ;
 
 //A.3.4 Primitive gate and switch types
@@ -697,18 +704,18 @@ named_parameter_assignments
     ;
 
 ordered_parameter_assignment 
-    : expression              { $$.reset( new ParaConn($1)); }
+    : expression              { $$.reset( new ParaConn(@$, $1)); }
     ;
 
 named_parameter_assignment 
-    : '.' parameter_identifier '('  ')'           { $$.reset( new ParaConn($2)); }
-    | '.' parameter_identifier '(' expression ')' { $$.reset( new ParaConn($2, $4)); }
+    : '.' parameter_identifier '('  ')'           { $$.reset( new ParaConn(@$, $2)); }
+    | '.' parameter_identifier '(' expression ')' { $$.reset( new ParaConn(@$, $2, $4)); }
     ;
 
 module_instance 
-    : instance_identifier '(' ')' { $$.reset(new Instance($1, list<shared_ptr<PortConn> >())); }
+    : instance_identifier '(' ')' { $$.reset(new Instance(@$, $1, list<shared_ptr<PortConn> >())); }
     | instance_identifier '[' expression ':' expression ']' '(' ')'
-    | instance_identifier '(' list_of_port_connections ')'   { $$.reset(new Instance($1, $3)); }
+    | instance_identifier '(' list_of_port_connections ')'   { $$.reset(new Instance(@$, $1, $3)); }
     | instance_identifier '[' expression ':' expression ']' '(' list_of_port_connections ')'
     ;
 
@@ -729,17 +736,17 @@ named_port_connections
 
 ordered_port_connection 
     : /* empty */             { $$.reset(); }
-    | expression              { $$.reset( new PortConn($1)); }
+    | expression              { $$.reset( new PortConn(@$, $1)); }
     ;
 
 named_port_connection 
-    : '.' port_identifier '(' ')' { $$.reset( new PortConn($2)); }
-    | '.' port_identifier '(' expression ')'  { $$.reset( new PortConn($2, $4));}
+    : '.' port_identifier '(' ')' { $$.reset( new PortConn(@$, $2)); }
+    | '.' port_identifier '(' expression ')'  { $$.reset( new PortConn(@$, $2, $4));}
     ;
 
 //A.4.2 Generated instantiation
 generated_instantiation 
-    : "generate" generate_items "endgenerate"   { $$.reset(new GenBlock(*$2)); }
+    : "generate" generate_items "endgenerate"   { $$.reset(new GenBlock(@$, *$2)); }
     ;
 
 generate_items
@@ -760,19 +767,19 @@ generate_item
     | module_instantiation      { $$.reset(new Block());  $$->add_list<Instance>($1);  }
     | always_construct          { $$.reset(new Block());  $$->add($1);                 }
     | "if" '(' expression ')'  generate_item_or_null 
-    { $$.reset(new Block()); $$->add_if($3, $5); }
+    { $$.reset(new Block()); $$->add_if(@$, $3, $5); }
     | "if" '(' expression ')' generate_item_or_null "else" generate_item_or_null
-    { $$.reset(new Block()); $$->add_if($3, $5, $7); }
+    { $$.reset(new Block()); $$->add_if(@$, $3, $5, $7); }
     | "case" '(' expression ')' "default"  generate_item_or_null "endcase"
-    { shared_ptr<CaseItem> m(new CaseItem($6)); $$.reset(new Block()); $$->add_case($3, m); }
+    { shared_ptr<CaseItem> m(new CaseItem(@6, $6)); $$.reset(new Block()); $$->add_case(@$, $3, m); }
     | "case" '(' expression ')' generate_case_items "endcase"
-    { $$.reset(new Block()); $$->add_case($3, $5); }
+    { $$.reset(new Block()); $$->add_case(@$, $3, $5); }
     | "case" '(' expression ')' generate_case_items "default" generate_item_or_null "endcase"
-    { shared_ptr<CaseItem> m(new CaseItem($7)); $$.reset(new Block()); $$->add_case($3, $5, m); }
+    { shared_ptr<CaseItem> m(new CaseItem(@7, $7)); $$.reset(new Block()); $$->add_case(@$, $3, $5, m); }
     | "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' "begin" ':' block_identifier generate_item_or_null "end"
-    { $$.reset(new Block()); $12->set_name($11); $$->add_for($3, $5, $7, $12); }
-    | "begin" generate_items "end" { $$ = $2; }
-    | "begin" ':' block_identifier generate_items "end" { $$ = $4; $$->set_name($3); }
+    { $$.reset(new Block()); $12->set_name($11); $$->add_for(@$, $3, $5, $7, $12); }
+    | "begin" generate_items "end" { $$ = $2; $$->loc = @$;}
+    | "begin" ':' block_identifier generate_items "end" { $$ = $4; $$->set_name($3); $$->loc = @$;}
     ;
 
 //generate_conditional_statement 
@@ -792,25 +799,8 @@ generate_case_items
     ;
 
 generate_case_item 
-    : expressions ':' 
-    {
-      Lib.push(shared_ptr<Block>(new Block()));
-    }
-    generate_item_or_null     
-    { 
-      Lib.get_current_comp()->add_statements($4);
-      $$.reset(new CaseItem($1, Lib.get_current_comp())); 
-      Lib.pop();
-    }
-    | "default" ':' 
-    {
-      Lib.push(shared_ptr<Block>(new Block()));
-    }
-    generate_item_or_null       
-    { 
-      Lib.get_current_comp()->add_statements($4);
-      $$.reset(new CaseItem(Lib.get_current_comp())); 
-    }
+    : expressions ':' generate_item_or_null     { $$.reset(new CaseItem(@$, $1, $3)); }
+    | "default" ':' generate_item_or_null       { $$.reset(new CaseItem(@$, $3)); }
     ;
 
 //generate_loop_statement 
@@ -841,16 +831,16 @@ list_of_net_assignments
 
 //A.6.2 Procedural blocks and assignments
 always_construct 
-    : "always" '@' '(' event_expressions ')' statement_or_null   { $$.reset(new SeqBlock($4, $6)); } 
-    | "always" statement                                         { $$.reset(new SeqBlock(*$2));    }
+    : "always" '@' '(' event_expressions ')' statement_or_null   { $$.reset(new SeqBlock(@$, $4, $6)); } 
+    | "always" statement                                         { $$.reset(new SeqBlock(@$, *$2));    }
     ;
 
 blocking_assignment 
-    : variable_lvalue '=' expression  { $3->reduce(); $$.reset(new Assign($1, $3, true));}
+    : variable_lvalue '=' expression  { $3->reduce(); $$.reset(new Assign(@$, $1, $3, true));}
     ;
 
 nonblocking_assignment 
-    : variable_lvalue "<=" expression  { $3->reduce(); $$.reset(new Assign($1, $3, false));}
+    : variable_lvalue "<=" expression  { $3->reduce(); $$.reset(new Assign(@$, $1, $3, false));}
     ;
 
 
@@ -864,23 +854,23 @@ statement
     : blocking_assignment ';'    { $$.reset(new Block()); $$->add($1); }
     | nonblocking_assignment ';' { $$.reset(new Block()); $$->add($1); }
     | "case" '(' expression ')' "default" statement_or_null "endcase" 
-    { shared_ptr<CaseItem> m(new CaseItem($6)); $$.reset(new Block()); $$->add_case($3, m); }
-    | "case" '(' expression ')' case_items "endcase" { $$.reset(new Block()); $$->add_case($3, $5); }
+    { shared_ptr<CaseItem> m(new CaseItem(@$, $6)); $$.reset(new Block()); $$->add_case(@$, $3, m); }
+    | "case" '(' expression ')' case_items "endcase" { $$.reset(new Block()); $$->add_case(@$, $3, $5); }
     | "case" '(' expression ')' case_items "default" statement_or_null "endcase" 
-    { shared_ptr<CaseItem> m(new CaseItem($7)); $$.reset(new Block()); $$->add_case($3, $5, m); }
+    { shared_ptr<CaseItem> m(new CaseItem(@$, $7)); $$.reset(new Block()); $$->add_case(@$, $3, $5, m); }
     | "if" '(' expression ')' statement_or_null 
-    { $$.reset(new Block()); $$->add_if($3, $5); }
+    { $$.reset(new Block()); $$->add_if(@$, $3, $5); }
     | "if" '(' expression ')' statement_or_null "else" statement_or_null  
-    { $$.reset(new Block()); $$->add_if($3, $5, $7); }
+    { $$.reset(new Block()); $$->add_if(@$, $3, $5, $7); }
     | "while" '(' expression ')' statement 
-    { $$.reset(new Block()); $$->add_while($3, $5); }
+    { $$.reset(new Block()); $$->add_while(@$, $3, $5); }
     | "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' statement  
-    { $$.reset(new Block()); $$->add_for($3, $5, $7, $9); }
+    { $$.reset(new Block()); $$->add_for(@$, $3, $5, $7, $9); }
     | "begin" statements "end" 
     { $$ = $2; }
     | "begin" list_of_variable_declarations statements "end" 
     { 
-      $$.reset(new Block());
+      $$.reset(new Block(@$));
       $$->set_blocked();
       $$->add_list<Variable>($2);
       $$->add_statements($3);
@@ -888,13 +878,13 @@ statement
     }
     | "begin" ':' block_identifier statements "end" 
     { 
-      $$.reset(new Block($3)); 
+      $$.reset(new Block(@$, $3)); 
       $$->add_statements($4); 
       $$->elab_inparse();
     }
     | "begin" ':' block_identifier list_of_variable_declarations statements "end" 
     { 
-      $$.reset(new Block($3));
+      $$.reset(new Block(@$, $3));
       list<shared_ptr<Variable> >::iterator it, end;
       $$->add_list<Variable>($4);
       $$->add_statements($5);
@@ -925,8 +915,8 @@ case_items
     ;
 
 case_item 
-    : expressions ':' statement_or_null    { $$.reset(new CaseItem($1, $3)); }
-    | "default" ':' statement_or_null      { $$.reset(new CaseItem($3)); }
+    : expressions ':' statement_or_null    { $$.reset(new CaseItem(@$, $1, $3)); }
+    | "default" ':' statement_or_null      { $$.reset(new CaseItem(@$, $3)); }
     ;
 
 // A.8 Expressions
@@ -940,16 +930,16 @@ concatenation
     : '{' expressions '}'
     {
       list<shared_ptr<Expression> >::iterator it, end;
-      $$.reset( new Concatenation());
+      $$.reset( new Concatenation(@$));
       for(it = $2.begin(), end = $2.end(); it != end; it++) {
-        shared_ptr<ConElem> m(new ConElem(*it));
+        shared_ptr<ConElem> m(new ConElem((*it)->loc, *it));
         *$$ + m;
       }
     }
     | '{' expression concatenation '}'
     {
-      $$.reset( new Concatenation()); 
-      shared_ptr<ConElem> m(new ConElem($2, $3->data));
+      $$.reset( new Concatenation(@$)); 
+      shared_ptr<ConElem> m(new ConElem(@$, $2, $3->data));
       *$$ + m;
     }
     ;
@@ -961,83 +951,83 @@ function_call
 
 //A.8.3 Expressions
 expression
-    : primary                       {                                            }
-    | '+' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oUPos);      }
-    | '-' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oUNeg);      }
-    | '!' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oULRev);     }
-    | '~' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oURev);      }
-    | '&' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oUAnd);      }
-    | "~&" primary %prec oUNARY     { $$ = $2; $$->append(Operation::oUNand);     }
-    | '|' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oUOr);       }
-    | "~|" primary %prec oUNARY     { $$ = $2; $$->append(Operation::oUNor);      }
-    | '^' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oXor);       }
-    | "~^" primary %prec oUNARY     { $$ = $2; $$->append(Operation::oNxor);      }
-    | expression '+' expression     { $$->append(Operation::oAdd, *$3);   }
-    | expression '-' expression     { $$->append(Operation::oMinus, *$3); }
-    | expression '*' expression     { $$->append(Operation::oTime, *$3);  }
-    | expression '/' expression     { $$->append(Operation::oDiv, *$3);   }
-    | expression '%' expression     { $$->append(Operation::oMode, *$3);  }
-    | expression "==" expression    { $$->append(Operation::oEq, *$3);    }
-    | expression "!=" expression    { $$->append(Operation::oNeq, *$3);   }
-    | expression "===" expression   { $$->append(Operation::oCEq, *$3);   }
-    | expression "!==" expression   { $$->append(Operation::oCNeq, *$3);  }
-    | expression "&&" expression    { $$->append(Operation::oLAnd, *$3);  }
-    | expression "||" expression    { $$->append(Operation::oLOr, *$3);   }
-    | expression "**" expression    { $$->append(Operation::oPower, *$3); }
-    | expression '<' expression     { $$->append(Operation::oLess, *$3);  }
-    | expression "<=" expression    { $$->append(Operation::oLe, *$3);    }
-    | expression '>' expression     { $$->append(Operation::oGreat, *$3); }
-    | expression ">=" expression    { $$->append(Operation::oGe, *$3);    }
-    | expression '&' expression     { $$->append(Operation::oAnd, *$3);   }
-    | expression '|' expression     { $$->append(Operation::oOr, *$3);    }
-    | expression '^' expression     { $$->append(Operation::oXor, *$3);   }
-    | expression "~^" expression    { $$->append(Operation::oNxor, *$3);  }
-    | expression ">>" expression    { $$->append(Operation::oRS, *$3);    }
-    | expression "<<" expression    { $$->append(Operation::oLS, *$3);    }
-    | expression ">>>" expression   { $$->append(Operation::oLRS, *$3);   }
-    | expression '?' expression ':' expression { $$->append(Operation::oQuestion, *$3, *$5); }
+    : primary                       {                                                          }
+    | '+' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oUPos); $$->loc = @$;     }
+    | '-' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oUNeg); $$->loc = @$;     }
+    | '!' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oULRev); $$->loc = @$;    }
+    | '~' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oURev); $$->loc = @$;     }
+    | '&' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oUAnd); $$->loc = @$;     }
+    | "~&" primary %prec oUNARY     { $$ = $2; $$->append(Operation::oUNand); $$->loc = @$;    }
+    | '|' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oUOr); $$->loc = @$;      }
+    | "~|" primary %prec oUNARY     { $$ = $2; $$->append(Operation::oUNor); $$->loc = @$;     }
+    | '^' primary %prec oUNARY      { $$ = $2; $$->append(Operation::oXor); $$->loc = @$;      }
+    | "~^" primary %prec oUNARY     { $$ = $2; $$->append(Operation::oNxor); $$->loc = @$;     }
+    | expression '+' expression     { $$->append(Operation::oAdd, *$3); $$->loc = @$;          }
+    | expression '-' expression     { $$->append(Operation::oMinus, *$3); $$->loc = @$;        }
+    | expression '*' expression     { $$->append(Operation::oTime, *$3); $$->loc = @$;         }
+    | expression '/' expression     { $$->append(Operation::oDiv, *$3); $$->loc = @$;          }
+    | expression '%' expression     { $$->append(Operation::oMode, *$3); $$->loc = @$;         }
+    | expression "==" expression    { $$->append(Operation::oEq, *$3); $$->loc = @$;           }
+    | expression "!=" expression    { $$->append(Operation::oNeq, *$3); $$->loc = @$;          }
+    | expression "===" expression   { $$->append(Operation::oCEq, *$3); $$->loc = @$;          }
+    | expression "!==" expression   { $$->append(Operation::oCNeq, *$3); $$->loc = @$;         }
+    | expression "&&" expression    { $$->append(Operation::oLAnd, *$3); $$->loc = @$;         }
+    | expression "||" expression    { $$->append(Operation::oLOr, *$3); $$->loc = @$;          }
+    | expression "**" expression    { $$->append(Operation::oPower, *$3); $$->loc = @$;        }
+    | expression '<' expression     { $$->append(Operation::oLess, *$3); $$->loc = @$;         }
+    | expression "<=" expression    { $$->append(Operation::oLe, *$3); $$->loc = @$;           }
+    | expression '>' expression     { $$->append(Operation::oGreat, *$3); $$->loc = @$;        }
+    | expression ">=" expression    { $$->append(Operation::oGe, *$3); $$->loc = @$;           }
+    | expression '&' expression     { $$->append(Operation::oAnd, *$3); $$->loc = @$;          }
+    | expression '|' expression     { $$->append(Operation::oOr, *$3); $$->loc = @$;           }
+    | expression '^' expression     { $$->append(Operation::oXor, *$3); $$->loc = @$;          }
+    | expression "~^" expression    { $$->append(Operation::oNxor, *$3); $$->loc = @$;         }
+    | expression ">>" expression    { $$->append(Operation::oRS, *$3); $$->loc = @$;           }
+    | expression "<<" expression    { $$->append(Operation::oLS, *$3); $$->loc = @$;           }
+    | expression ">>>" expression   { $$->append(Operation::oLRS, *$3); $$->loc = @$;          }
+    | expression '?' expression ':' expression { $$->append(Operation::oQuestion, *$3, *$5); $$->loc = @$; }
     ;
 
 range_expression
-    : expression                    { $$.reset( new Range($1)); }       
+    : expression                    { $$.reset( new Range(@$, $1)); }       
     | expression ':' expression     
-    { $$.reset( new Range(pair<shared_ptr<Expression>,shared_ptr<Expression> >($1,$3))); }
+    { $$.reset( new Range(@$, pair<shared_ptr<Expression>,shared_ptr<Expression> >($1,$3))); }
     | expression "+:" expression    
-    { $$.reset( new Range(pair<shared_ptr<Expression>,shared_ptr<Expression> >($1,$3), 1)); }
+    { $$.reset( new Range(@$, pair<shared_ptr<Expression>,shared_ptr<Expression> >($1,$3), 1)); }
     | expression "-:" expression    
-    { $$.reset( new Range(pair<shared_ptr<Expression>,shared_ptr<Expression> >($1,$3), -1)); }
+    { $$.reset( new Range(@$, pair<shared_ptr<Expression>,shared_ptr<Expression> >($1,$3), -1)); }
     ;
 
 //A.8.4 Primaries
 primary
-    : number              { $$.reset( new Expression($1)); }            
+    : number              { $$.reset( new Expression(@$, $1)); }            
     | variable_identifier 
     {
-      $$.reset( new Expression($1));
+      $$.reset( new Expression(@$, $1));
     }
-    | concatenation      { $$.reset( new Expression($1)); }
+    | concatenation      { $$.reset( new Expression(@$, $1)); }
     | function_call
-    | '(' expression ')'  { $$ = $2; }
+    | '(' expression ')'  { $$ = $2; $$->loc = @$; }
     ;
 
 //A.8.5 Expression left-side values
 variable_lvalue
     : variable_identifier 
     {
-      $$.reset( new LConcatenation($1));
+      $$.reset( new LConcatenation(@$, $1));
     }
     | concatenation       
     { 
-      $$.reset( new LConcatenation($1));
+      $$.reset( new LConcatenation(@$, $1));
       if(!$$->is_valid()) 
-        av_env.error(yylloc, "SYN-ASSIGN-0");
+        av_env.error(@$, "SYN-ASSIGN-0");
     }
     ;
 
 //A.9 General
 //A.9.3 Identifiers
 block_identifier 
-    : identifier            { $$ = $1; }    
+    : identifier            { $$ = $1; $$.loc = @$; }    
     ;
 
 function_identifier 
@@ -1045,23 +1035,23 @@ function_identifier
     ;
 
 module_identifier
-    :  identifier          { $$ = $1; }
+    :  identifier          { $$ = $1; $$.loc = @$; }
     ;
 
 instance_identifier 
-    : identifier           { $$ = $1; }
+    : identifier           { $$ = $1; $$.loc = @$; }
     ;
 
 parameter_identifier 
-    : identifier           { $$ = $1; }
+    : identifier           { $$ = $1; $$.loc = @$; }
     ;
 
 variable_identifier
-    : identifier           { $$ = $1; }
-    | variable_identifier '[' range_expression ']' { $$.get_select().push_back($3); }
+    : identifier           { $$ = $1; $$.loc = @$; }
+    | variable_identifier '[' range_expression ']' { $$ = $1; $$.get_select().push_back($3); }
     ;
 
 port_identifier
-    : identifier       { $$ = $1; }             
+    : identifier       { $$ = $1; $$ = $1; }             
     ;
 

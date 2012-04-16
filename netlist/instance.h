@@ -58,6 +58,7 @@ namespace netlist {
     NETLIST_STREAMOUT_FUN_DECL;
     void set_mname(const MIdentifier& mod_name) { mname = mod_name; }
     void set_name(const IIdentifier& nm) { name = nm; named=true; }
+    void set_default_name(const IIdentifier& nm) {name = nm; }
     void set_module_ptr(const shared_ptr<Module>& mp) { module_ptr = mp;}
     void set_para(const list<shared_ptr<ParaConn> >& para ) { para_list = para; }
     bool is_named() const { return named; }
