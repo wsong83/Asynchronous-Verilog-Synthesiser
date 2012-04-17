@@ -48,19 +48,24 @@ using averilog::location;
 #define NETLIST_DEFAULT_CON_WL(COMP, CT) COMP(const location& lloc) : NetComp(NetComp::CT, lloc) { }
 #endif
 
-#ifndef NETLIST_STREAMOUT_FUN_DECL
-#define NETLIST_STREAMOUT_FUN_DECL                    \
+#ifndef NETLIST_STREAMOUT_DECL
+#define NETLIST_STREAMOUT_DECL                    \
   virtual ostream& streamout (ostream&, unsigned int) const
-#endif
-
-#ifndef NETLIST_REF
-#define NETLIST_REF(COMP)               \
-  virtual COMP* ptr() { return this; }
 #endif
 
 #ifndef SP_CAST
 #define SP_CAST(m, T, d)                      \
   shared_ptr<T > m = static_pointer_cast<T >(d)
+#endif
+
+#ifndef NETLIST_CHECK_INPARSE_DECL
+#define NETLIST_CHECK_INPARSE_DECL           \
+  virtual bool check_inparse( );
+#endif
+
+#ifndef NETLIST_SET_FATHER_DECL
+#define NETLIST_SET_FATHER_DECL           \
+  virtual void set_father(Block* pf);    
 #endif
 
 namespace netlist{
@@ -70,9 +75,9 @@ namespace netlist{
   public:
 #include "comp_type.h"
     // no one should directly use this class
-    NetComp() : ctype(tUnkown) {}
-    NetComp(ctype_t tt) : ctype(tt) {}
-    NetComp(ctype_t tt, const averilog::location& lloc) : ctype(tt), loc(lloc) {}
+    NetComp() : ctype(tUnkown), father(NULL) {}
+    NetComp(ctype_t tt) : ctype(tt), father(NULL) {}
+    NetComp(ctype_t tt, const averilog::location& lloc) : ctype(tt), loc(lloc), father(NULL) {}
     
     ctype_t get_type() const { return ctype; }
     ctype_t ctype;
@@ -94,12 +99,22 @@ namespace netlist{
       return(new NetComp());
     }
 
-    // return a reference of the current object in the right class type
-    virtual NetComp* ptr() { 
-      cout << "ERROR!!, ptr() of NetComp is used!!!" << endl;
-      assert(0 == "the ptr() of NetComp is used");
-      return this; 
+    // syntax check during parsing
+    virtual bool check_inparse() {
+      cout << "ERROR!!, the check_inparse() of NetComp is used!!!" << endl;
+      assert(0 == "the check_inparse() of NetComp is used");
+      return false;
     }
+
+    // set the father block pointer
+    virtual void set_father(Block* pf) {
+      // here a naked pointer is used because tranfer this to shared_ptr is too complicated to be employed
+      father = pf;
+    }
+
+  protected:
+    Block* father;              /* the pointer pointed to the father block */
+      
   };
   NETLIST_STREAMOUT(NetComp);
   

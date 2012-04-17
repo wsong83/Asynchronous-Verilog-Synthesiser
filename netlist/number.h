@@ -57,7 +57,7 @@ namespace netlist {
     void concatenate(const Number&); /* concatenate two fixed-point number */
 
     // inherit from NetComp
-    NETLIST_STREAMOUT_FUN_DECL;
+    NETLIST_STREAMOUT_DECL;
     virtual Number* deep_copy() const;
 
     // operation

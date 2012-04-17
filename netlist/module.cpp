@@ -174,13 +174,6 @@ ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
 }
 
 
-void netlist::Module::clear() {
-  Block::clear();
-  db_port.clear();
-  db_param.clear();
-  db_genvar.clear();
-}
-
 VIdentifier& netlist::Module::new_VId() {
   while(db_var.find(unnamed_var).use_count() +
         db_param.find(unnamed_var).use_count() +
@@ -209,27 +202,52 @@ void netlist::Module::elab_inparse() {
     }
     case tSeqBlock: {
       SP_CAST(m, SeqBlock, *it);
-      if(!m->is_named()) m->name = new_BId();
-      db_seqblock.insert(m->name, m);
+      if(!m->is_named()) {
+        m->set_default_name(new_BId());
+        db_seqblock.insert(m->name, m);
+      } else {
+        m = db_seqblock.swap(m->name, m);
+        if(m.use_count() != 0) {
+          m->set_default_name(new_BId());
+          db_seqblock.insert(m->name, m);
+        }
+      }         
       break;
     }
     case tGenBlock: {
       SP_CAST(m, GenBlock, *it);
-      if(!m->is_named()) m->name = new_BId();
-      db_genblock.insert(m->name, m);
+      if(!m->is_named()) {
+        m->set_default_name(new_BId());
+        db_genblock.insert(m->name, m);
+      } else {
+        m = db_genblock.swap(m->name, m);
+        if(m.use_count() != 0) {
+          m->set_default_name(new_BId());
+          db_genblock.insert(m->name, m);
+        }
+      }         
       break;
     }      
     case tInstance: {
       SP_CAST(m, Instance, *it);
-      if(!m->is_named()) m->set_name(new_IId());
-      db_instance.insert(m->name, m);
+      if(!m->is_named()) {
+        G_ENV->error(m->loc, "SYN-INST-1");
+        m->set_default_name(new_IId());
+        db_instance.insert(m->name, m);
+      } else {
+        m = db_instance.swap(m->name, m);
+        if(m.use_count() != 0) {
+          m->set_default_name(new_IId());
+          db_instance.insert(m->name, m);
+        }
+      }                 
       break;
     }
     case tPort: {
       SP_CAST(m, Port, *it);
       // should check first
       /// if multiple definitions exist for the same parameter, the last one take effect
-      db_port.swap(m->name, m);
+      shared_ptr<Port> mm = db_port.swap(m->name, m);
       
       // port declarations are not statements
       it = statements.erase(it);
@@ -257,13 +275,13 @@ void netlist::Module::elab_inparse() {
         break;
       }
       default:
-        assert(0 == "wrong type of variable in general block!");
+        G_ENV->error(m->loc, "SYN-VAR-0", m->name.name);
       }
       // variable declarations are not statements
       it = statements.erase(it);
       it--;
+      end = statements.end();
       break;      
-      break;
     }
     default:
       assert(0 == "wrong type os statement in general block!");

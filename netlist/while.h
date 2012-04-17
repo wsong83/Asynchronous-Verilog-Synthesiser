@@ -39,7 +39,7 @@ namespace netlist {
     WhileState(const location& lloc, const shared_ptr<Expression>& exp, const shared_ptr<Block>& body);
 
     // inherit from NetComp
-    NETLIST_STREAMOUT_FUN_DECL;
+    NETLIST_STREAMOUT_DECL;
 
     // helpers
     void set_name(const BIdentifier& nm) { name = nm; named = true;}

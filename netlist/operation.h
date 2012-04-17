@@ -95,7 +95,7 @@ namespace netlist {
     void db_expunge();
     
     // inherit from NetComp
-    NETLIST_STREAMOUT_FUN_DECL;
+    NETLIST_STREAMOUT_DECL;
     virtual Operation* deep_copy() const; 
 
   private:

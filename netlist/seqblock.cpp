@@ -31,13 +31,6 @@
 
 using namespace netlist;
 
-void netlist::SeqBlock::clear() {
-  Block::clear();
-  sensitive = false;
-  slist_pulse.clear();
-  slist_level.clear();
-}
-
 ostream& netlist::SeqBlock::streamout(ostream& os, unsigned int indent) const {
   streamout(os, indent, false);
   return os;

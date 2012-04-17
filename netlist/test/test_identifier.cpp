@@ -30,6 +30,8 @@
 
 using namespace netlist;
 
+shared_ptr<shell::Env> G_ENV;
+
 int main(){
   BIdentifier empty;
   BIdentifier named("test_identifier");

@@ -56,7 +56,7 @@ namespace netlist {
     void set_genvar() { vtype = TGenvar; }
     vtype_t get_vtype() const { return vtype; }
     void update();  /* recalculate the value and update all fanouts */
-    NETLIST_STREAMOUT_FUN_DECL;
+    NETLIST_STREAMOUT_DECL;
 
     VIdentifier name;
     map<unsigned int, VIdentifier *> fan[2]; /* fan[0] for fanin, fan[1] for fanout */

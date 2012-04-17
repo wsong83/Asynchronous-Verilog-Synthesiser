@@ -50,11 +50,10 @@ namespace netlist {
            const list<PoIdentifier>& port_list, const shared_ptr<Block>& body);
 
     // inherit from NetComp
-    NETLIST_STREAMOUT_FUN_DECL;
+    NETLIST_STREAMOUT_DECL;
 
     // helpers
     virtual void set_name(const MIdentifier& nm) { name = nm; named=true;}
-    virtual void clear();
     VIdentifier& new_VId();
     BIdentifier& new_BId();
     virtual void elab_inparse();                           /* resolve the content in statements during parsing */

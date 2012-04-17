@@ -47,12 +47,11 @@ namespace netlist{
     SeqBlock(const location&, const Block&);
     
     // helpers
-    virtual void clear();               /* clear all statements */
     virtual ostream& streamout(ostream&, unsigned int, bool) const;
     virtual void elab_inparse();        /* resolve the content during parsing */
 
     // inherit from NetComp
-    NETLIST_STREAMOUT_FUN_DECL;
+    NETLIST_STREAMOUT_DECL;
     
     // data
     bool sensitive;                                         /* whether this is a sensitive block, top level block */

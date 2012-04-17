@@ -74,7 +74,7 @@ namespace netlist{
     }
 
     // helpers
-    NETLIST_STREAMOUT_FUN_DECL;
+    NETLIST_STREAMOUT_DECL;
     bool is_default() const {return exps.size() == 0; }
 
     // data
@@ -109,7 +109,7 @@ namespace netlist{
     }
 
     // helpers
-    NETLIST_STREAMOUT_FUN_DECL;
+    NETLIST_STREAMOUT_DECL;
     void set_name(const BIdentifier& nm) {name = nm; named=true;}
     bool is_named() const { return named; }
 

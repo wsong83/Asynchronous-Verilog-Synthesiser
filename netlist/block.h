@@ -51,11 +51,11 @@ namespace netlist {
       : NetComp(t, lloc), named(false), blocked(false) {}
 
     // helpers
-    virtual void set_name(const BIdentifier& nm) {name = nm; named=true; blocked = true;}
+    virtual void set_name(const BIdentifier& nm) { name = nm; named=true; blocked = true; }
+    void set_default_name(const BIdentifier& nm) { name = nm; }
     virtual void set_blocked() { blocked = true; }
-    virtual bool is_named() const { return named; }
-    virtual bool is_blocked() const { return blocked; }
-    virtual void clear();               /* clear all statements */
+    bool is_named() const { return named; }
+    bool is_blocked() const { return blocked; }
     virtual bool add(const shared_ptr<NetComp>&); /* add a general statement to this block */
     
     /* a template funtion to add all sorts of netlist components */
@@ -120,7 +120,7 @@ namespace netlist {
                          const shared_ptr<Expression>&, const shared_ptr<Assign>&, const shared_ptr<Block>&);
 
     bool add_statements(const shared_ptr<Block>&); /* add several statements */
-    virtual void elab_inparse();                           /* resolve the content in statements during parsing */
+    virtual void elab_inparse(); /* resolve the content in statements during parsing */
 
     // helpers
     BIdentifier& new_BId();     /* generate an unused block id */
@@ -129,9 +129,12 @@ namespace netlist {
     virtual ostream& streamout(ostream& os, unsigned int indent, bool fl_prefix) const;
     const shared_ptr<NetComp>& front() const { return statements.front(); }
     shared_ptr<NetComp>& front() { return statements.front(); }
+    virtual void set_father();  /* set the father pointer to all sub-elements */
     
     // inherit from NetComp
-    NETLIST_STREAMOUT_FUN_DECL;
+    NETLIST_STREAMOUT_DECL;
+    NETLIST_CHECK_INPARSE_DECL;
+    using NetComp::set_father;
 
     // data
     BIdentifier name;

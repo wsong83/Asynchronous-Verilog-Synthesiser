@@ -42,7 +42,7 @@ namespace netlist{
     virtual void elab_inparse();        /* resolve the content during parsing */
 
     // inherit from NetComp
-    NETLIST_STREAMOUT_FUN_DECL;
+    NETLIST_STREAMOUT_DECL;
 
   };
   NETLIST_STREAMOUT(GenBlock);

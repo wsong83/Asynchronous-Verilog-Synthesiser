@@ -53,7 +53,7 @@ namespace netlist {
     void reduce();
     void db_register(int iod = 1);
     void db_expunge();
-    NETLIST_STREAMOUT_FUN_DECL;
+    NETLIST_STREAMOUT_DECL;
     virtual ConElem* deep_copy() const;
 
     shared_ptr<Expression> exp;
@@ -77,7 +77,7 @@ namespace netlist {
     void db_expunge();
 
     // inherit from NetComp
-    NETLIST_STREAMOUT_FUN_DECL;
+    NETLIST_STREAMOUT_DECL;
     virtual Concatenation* deep_copy() const;
 
     // data

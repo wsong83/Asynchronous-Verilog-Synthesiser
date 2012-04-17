@@ -45,7 +45,7 @@ namespace netlist {
 
     // helpers
     int compare(const Identifier& rhs) const; /* compare two identifiers */
-    NETLIST_STREAMOUT_FUN_DECL;
+    NETLIST_STREAMOUT_DECL;
     void hash_update();			   /* update the nearly unique hash id */
 
     // data
@@ -105,7 +105,7 @@ namespace netlist {
     
     // helpers
     MIdentifier& operator++ ();
-    NETLIST_STREAMOUT_FUN_DECL;
+    NETLIST_STREAMOUT_DECL;
 
   private:
     bool numbered;
@@ -148,7 +148,7 @@ namespace netlist {
     void set_range(const vector<shared_ptr<Range> >& nr) { m_range = nr; }
     const vector<shared_ptr<Range> >& get_range() const {return m_range;}
     vector<shared_ptr<Range> >& get_range() {return m_range;}
-    NETLIST_STREAMOUT_FUN_DECL;
+    NETLIST_STREAMOUT_DECL;
 
   private:
     vector<shared_ptr<Range> > m_range;
@@ -190,7 +190,7 @@ namespace netlist {
     int get_inout_dir() const { return inout_t; }
 
     // inherit from NetComp
-    NETLIST_STREAMOUT_FUN_DECL;
+    NETLIST_STREAMOUT_DECL;
     virtual VIdentifier* deep_copy() const;
 
   private:

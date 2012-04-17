@@ -63,7 +63,7 @@ namespace netlist {
     void concatenate(const Expression&); /* concatenate the number in two expressions */
 
     // inherit from NetComp
-    NETLIST_STREAMOUT_FUN_DECL;
+    NETLIST_STREAMOUT_DECL;
     virtual Expression* deep_copy() const;
     
     list<shared_ptr<Operation> > eqn;

@@ -167,6 +167,11 @@ namespace netlist {
 #include "while.h"
 #include "for.h"
 #include "library.h"
-#include "uni_name.h"
+//#include "uni_name.h"
+
+// the environment
+#include "shell/err_report.h"
+#include "shell/env.h"
+extern shared_ptr<shell::Env> G_ENV;
 
 #endif

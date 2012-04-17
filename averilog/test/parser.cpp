@@ -30,12 +30,13 @@
 #include "averilog/averilog_util.h"
 #include "averilog/averilog.lex.h"
 
+shared_ptr<shell::Env> G_ENV(new shell::Env());
+
 int main(int argc, char* argv[])
 {
 
-  shell::Env env;
-  env.initialise();
-  averilog::Parser dut(argv[1], env);
+  G_ENV->initialise();
+  averilog::Parser dut(argv[1], *G_ENV);
 
   if(!dut.initialize()) {
     cout << "parser initialization fails!" << endl;

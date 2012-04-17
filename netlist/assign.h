@@ -37,8 +37,11 @@ namespace netlist {
     Assign(const shared_ptr<LConcatenation>&, const shared_ptr<Expression>&, bool);
     Assign(const location& lloc, const shared_ptr<LConcatenation>&, const shared_ptr<Expression>&, bool);
 
+    // inherit from NetComp
+    NETLIST_STREAMOUT_DECL;
+    NETLIST_CHECK_INPARSE_DECL;
+
     // helpers
-    NETLIST_STREAMOUT_FUN_DECL;
     //void db_register() { lval.db_register(); rexp.db_register(); }
     //void db_expunge() { lval.db_expunge(); rexp.db_expunge(); }
     void set_name(const BIdentifier& nm) {name = nm; named=true;}
@@ -56,6 +59,7 @@ namespace netlist {
     bool continuous;                 /* true when it is a continuous assignment */
     bool named;                      /* true when a unique name is set */
   };
+
   NETLIST_STREAMOUT(Assign);
 
 }

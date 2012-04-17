@@ -55,3 +55,8 @@ ostream& netlist::Assign::streamout(ostream& os, unsigned int indent) const {
   if(continuous) os << ";" << endl;
   return os;
 }
+
+bool netlist::Assign::check_inparse() {
+  bool rv = true;
+  return false;
+}

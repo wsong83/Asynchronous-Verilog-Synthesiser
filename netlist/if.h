@@ -64,7 +64,7 @@ namespace netlist {
     bool is_named() const { return named; }
 
     // inherit from NetComp
-    NETLIST_STREAMOUT_FUN_DECL;
+    NETLIST_STREAMOUT_DECL;
 
     //data
     shared_ptr<Expression> exp; /* the condition expression */

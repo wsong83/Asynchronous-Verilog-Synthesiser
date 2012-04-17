@@ -82,13 +82,13 @@ ERR_DEFINE("SYN-PORT-0",
 
 // port redefinition. The duplicated one will be ignored.
 ERR_DEFINE("SYN-PORT-1",   
-           EWarning, 2, 
-           "Port \"%1%\" is redefined in the port list of module \"%2%\" and is overlooked.");
+           EError, 2, 
+           "Port \"%1%\" is already defined at %2% while the current one take effect.");
 
 // define a reg outside a block or wire outside a module/generate. It will be ignored
 ERR_DEFINE("SYN-VAR-0",    
-           EError,   2, 
-           "\"%1% %2%\" is defined at an illegal place.");
+           EError,   1, 
+           "variable \"%1%\" is defined at an illegal place.");
 
 // duplicate variable declaration. The duplicated one will be ignored.
 ERR_DEFINE("SYN-VAR-1",    

@@ -87,8 +87,60 @@ void netlist::GenBlock::elab_inparse() {
     }
     case tSeqBlock: {
       SP_CAST(m, SeqBlock, *it);
-      if(!m->is_named()) m->name = new_BId();
-      db_other.insert(m->name, m);
+      if(!m->is_named()) {
+        m->set_default_name(new_BId());
+        db_other.insert(m->name, m);
+      } else {
+        shared_ptr<NetComp> tmp = db_other.swap(m->name, m);
+        if(tmp.use_count() != 0) {
+          // an unnamed block has the same name as the named block, rename it and reinsert the block
+          switch(tmp->get_type()) {
+          case tAssign:
+            {SP_CAST(mm, Assign, tmp); mm->set_name(new_BId()); db_other.insert(mm->name, mm);break;}
+          case tCase:
+            {SP_CAST(mm, CaseState, tmp); mm->set_name(new_BId()); db_other.insert(mm->name, mm);break;}
+          case tFor:
+            {SP_CAST(mm, ForState, tmp); mm->set_name(new_BId()); db_other.insert(mm->name, mm);break;}
+          case tIf:
+            {SP_CAST(mm, IfState, tmp); mm->set_name(new_BId()); db_other.insert(mm->name, mm);break;}
+          case tWhile:
+            {SP_CAST(mm, WhileState, tmp); mm->set_name(new_BId()); db_other.insert(mm->name, mm);break;}
+          case tSeqBlock:
+            {SP_CAST(mm, SeqBlock, tmp); mm->set_default_name(new_BId()); db_other.insert(mm->name, mm);break;}
+          default:       assert(0 == "wrong type!");
+          }
+        } 
+      }         
+      break;
+    }
+    case tGenBlock: {
+      SP_CAST(m, GenBlock, *it);
+      if(!m->is_named()) {
+        m->set_default_name(new_BId());
+        db_other.insert(m->name, m);
+      } else {
+        shared_ptr<NetComp> tmp = db_other.swap(m->name, m);
+        if(tmp.use_count() != 0) {
+          // an unnamed block has the same name as the named block, rename it and reinsert the block
+          switch(tmp->get_type()) {
+          case tAssign:
+            {SP_CAST(mm, Assign, tmp); mm->set_name(new_BId()); db_other.insert(mm->name, mm);break;}
+          case tCase:
+            {SP_CAST(mm, CaseState, tmp); mm->set_name(new_BId()); db_other.insert(mm->name, mm);break;}
+          case tFor:
+            {SP_CAST(mm, ForState, tmp); mm->set_name(new_BId()); db_other.insert(mm->name, mm);break;}
+          case tIf:
+            {SP_CAST(mm, IfState, tmp); mm->set_name(new_BId()); db_other.insert(mm->name, mm);break;}
+          case tWhile:
+            {SP_CAST(mm, WhileState, tmp); mm->set_name(new_BId()); db_other.insert(mm->name, mm);break;}
+          case tSeqBlock:
+            {SP_CAST(mm, SeqBlock, tmp); mm->set_default_name(new_BId()); db_other.insert(mm->name, mm);break;}
+          case tGenBlock:
+            {SP_CAST(mm, SeqBlock, tmp); mm->set_default_name(new_BId()); db_other.insert(mm->name, mm);break;}
+          default:       assert(0 == "wrong type!");
+          }
+        } 
+      }         
       break;
     }
     case tCase: {
@@ -111,8 +163,17 @@ void netlist::GenBlock::elab_inparse() {
     }
     case tInstance: {
       SP_CAST(m, Instance, *it);
-      if(!m->is_named()) m->set_name(new_IId());
-      db_instance.insert(m->name, m);
+      if(!m->is_named()) {
+        m->set_default_name(new_IId());
+        db_instance.insert(m->name, m);
+      } else {
+        m = db_instance.swap(m->name, m);
+        if(m.use_count() != 0) {
+          // it is an unnamed instance
+          m->set_default_name(new_IId());
+          db_instance.insert(m->name, m);
+        }
+      }
       break;
     }
     case tWhile: {

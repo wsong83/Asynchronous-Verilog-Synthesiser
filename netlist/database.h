@@ -168,4 +168,35 @@ namespace netlist {
   }
 }
 
+// macro to set the father pointer to all elements in a database
+// to keep the function of the database as pure as possible, this is defined as a macro
+// DN, the name of the data base
+// K, key type
+// T, component type
+// F the father pointer
+#ifndef DATABASE_SET_FATHER_FUN
+#define DATABASE_SET_FATHER_FUN(DN, K, T, F)          \
+{                                                     \
+  map<K, shared_ptr<T> >::iterator it, end;           \
+  for(it=DN.begin(), end=DN.end(); it!=end; it++)     \
+    it->second->set_father(F);                        \
+}    
+#endif
+
+// macro to set the father pointer to all elements in an ordered database
+// to keep the function of the database as pure as possible, this is defined as a macro
+// DN, the name of the data base
+// K, key type
+// T, component type
+// F the father pointer
+#ifndef DATABASE_SET_FATHER_ORDER_FUN
+#define DATABASE_SET_FATHER_ORDER_FUN(DN, K, T, F)            \
+{                                                             \
+  list<pair<K, shared_ptr<T> > >::iterator it, end;           \
+  for(it=DN.begin_order(), end=DN.end_order(); it!=end; it++) \
+    it->second->set_father(F);                                \
+}                            
+#endif
+
+
 #endif

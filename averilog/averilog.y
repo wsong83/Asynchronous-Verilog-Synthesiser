@@ -602,7 +602,6 @@ n_input_gate_instance
     {
       // push the lvalue into port list
       $4.push_front(shared_ptr<PortConn>(new PortConn(@2, $2, 1)));
-      av_env.error(@$, "SYN-INST-1"); 
       $$.reset( new Instance(@$, $4,  Instance::prim_in_inst));
     }
     | instance_identifier '(' variable_lvalue ',' input_terminals ')'
@@ -630,7 +629,6 @@ n_output_gate_instance
     {
       // push the expression into port list
       $2.push_back(shared_ptr<PortConn>(new PortConn(@$, $4, -1)));
-      av_env.error(@$, "SYN-INST-1"); 
       $$.reset( new Instance(@$, $2,  Instance::prim_out_inst));
     }
     | instance_identifier '(' output_terminals ',' expression ')'
@@ -778,8 +776,8 @@ generate_item
     { shared_ptr<CaseItem> m(new CaseItem(@7, $7)); $$.reset(new Block()); $$->add_case(@$, $3, $5, m); }
     | "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' "begin" ':' block_identifier generate_item_or_null "end"
     { $$.reset(new Block()); $12->set_name($11); $$->add_for(@$, $3, $5, $7, $12); }
-    | "begin" generate_items "end" { $$ = $2; $$->loc = @$;}
-    | "begin" ':' block_identifier generate_items "end" { $$ = $4; $$->set_name($3); $$->loc = @$;}
+    | "begin" generate_items "end" { $$.reset(new Block());  shared_ptr<GenBlock> m(new GenBlock(@$, *$2)); $$->add(m);}
+    | "begin" ':' block_identifier generate_items "end" { $$.reset(new Block()); shared_ptr<GenBlock> m(new GenBlock(@$, *$4)); m->set_name($3); $$->add(m);}
     ;
 
 //generate_conditional_statement 
