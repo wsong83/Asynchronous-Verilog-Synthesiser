@@ -51,7 +51,7 @@ netlist::Module::Module(const MIdentifier& nm, const list<PoIdentifier>& port_li
   // insert ports
   list<PoIdentifier>::const_iterator it, end;
   for(it=port_list.begin(),end=port_list.end(); it!=end; it++)
-    db_port.insert(*it, shared_ptr<Port>(new Port(*it)));
+    db_port.insert(*it, shared_ptr<Port>(new Port(it->loc, *it)));
 
   elab_inparse();
 }
@@ -65,7 +65,7 @@ netlist::Module::Module(const location& lloc, const MIdentifier& nm, const list<
   // insert ports
   list<PoIdentifier>::const_iterator it, end;
   for(it=port_list.begin(),end=port_list.end(); it!=end; it++)
-    db_port.insert(*it, shared_ptr<Port>(new Port(*it)));
+    db_port.insert(*it, shared_ptr<Port>(new Port(it->loc, *it)));
 
   elab_inparse();
 }
@@ -87,7 +87,7 @@ netlist::Module::Module(const MIdentifier& nm, const list<shared_ptr<Variable> >
   {
     list<PoIdentifier>::const_iterator it, end;
     for(it=port_list.begin(),end=port_list.end(); it!=end; it++)
-      db_port.insert(*it, shared_ptr<Port>(new Port(*it)));
+      db_port.insert(*it, shared_ptr<Port>(new Port(it->loc, *it)));
   }
 
   elab_inparse();
@@ -112,7 +112,7 @@ netlist::Module::Module(const location& lloc, const MIdentifier& nm,
   {
     list<PoIdentifier>::const_iterator it, end;
     for(it=port_list.begin(),end=port_list.end(); it!=end; it++)
-      db_port.insert(*it, shared_ptr<Port>(new Port(*it)));
+      db_port.insert(*it, shared_ptr<Port>(new Port(it->loc, *it)));
   }
 
   elab_inparse();
@@ -248,6 +248,9 @@ void netlist::Module::elab_inparse() {
       // should check first
       /// if multiple definitions exist for the same parameter, the last one take effect
       shared_ptr<Port> mm = db_port.swap(m->name, m);
+      if(mm.use_count() != 0) {
+        G_ENV->error(m->loc, "SYN-PORT-1", toString(m), toString(mm->loc));
+      }
       
       // port declarations are not statements
       it = statements.erase(it);

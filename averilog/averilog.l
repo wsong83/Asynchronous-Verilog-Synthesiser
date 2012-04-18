@@ -116,14 +116,14 @@ operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
 {operator}  { return yytext[0]; }
 "."         { return yytext[0]; }
 {fnum}    { 
-              yylval->tNumber = netlist::Number(yytext, yyleng);
+              yylval->tNumber = netlist::Number(*yylloc, yytext, yyleng);
               if(!yylval->tNumber.is_valid()) {
                 yyget_extra(yyscanner)->error(*yylloc, "SYN-NUM-0", string(yytext, yyleng));
               }
               return token::number; 
             }
 {dec}    { 
-              yylval->tNumber = netlist::Number(yytext, yyleng);
+              yylval->tNumber = netlist::Number(*yylloc, yytext, yyleng);
               return token::number; 
             }
 {identifier}  { 

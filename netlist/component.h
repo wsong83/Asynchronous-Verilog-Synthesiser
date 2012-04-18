@@ -174,4 +174,19 @@ namespace netlist {
 #include "shell/env.h"
 extern shared_ptr<shell::Env> G_ENV;
 
+// objects to string templates
+template <typename T>
+inline string toString (const T& obj) {
+  std::ostringstream sos;
+  sos << obj;
+  return sos.str();
+}
+
+// blocks: Block, SeqBlock, GenBlock, Module
+template <typename T>
+inline string toString (const shared_ptr<T>& obj) {
+  return obj->name.name;
+}
+
+
 #endif

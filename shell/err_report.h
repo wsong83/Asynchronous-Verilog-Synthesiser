@@ -29,6 +29,7 @@
 #ifndef _H_SHELL_ERR_REPORT_
 #define _H_SHELL_ERR_REPORT_
 
+#include <sstream>
 #include "averilog/location.hh"
 
 namespace shell {

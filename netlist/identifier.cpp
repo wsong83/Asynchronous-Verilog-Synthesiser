@@ -353,4 +353,3 @@ VIdentifier* netlist::VIdentifier::deep_copy() const {
 }
   
 
-

@@ -1025,7 +1025,7 @@ variable_lvalue
 //A.9 General
 //A.9.3 Identifiers
 block_identifier 
-    : identifier            { $$ = $1; $$.loc = @$; }    
+    : identifier            { $$ = BIdentifier(@$, $1); }    
     ;
 
 function_identifier 
@@ -1033,23 +1033,23 @@ function_identifier
     ;
 
 module_identifier
-    :  identifier          { $$ = $1; $$.loc = @$; }
+    :  identifier          { $$ = MIdentifier(@$, $1); }
     ;
 
 instance_identifier 
-    : identifier           { $$ = $1; $$.loc = @$; }
+    : identifier           { $$ = IIdentifier(@$, $1); }
     ;
 
 parameter_identifier 
-    : identifier           { $$ = $1; $$.loc = @$; }
+    : identifier           { $$ = VIdentifier(@$, $1); }
     ;
 
 variable_identifier
-    : identifier           { $$ = $1; $$.loc = @$; }
+    : identifier           { $$ = VIdentifier(@$, $1); }
     | variable_identifier '[' range_expression ']' { $$ = $1; $$.get_select().push_back($3); }
     ;
 
 port_identifier
-    : identifier       { $$ = $1; $$ = $1; }             
+    : identifier          { $$ = PoIdentifier(@$, $1); }             
     ;
 

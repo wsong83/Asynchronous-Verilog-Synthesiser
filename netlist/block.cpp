@@ -305,3 +305,4 @@ void netlist::Block::set_father() {
   DATABASE_SET_FATHER_FUN(db_instance, IIdentifier, Instance, this);
   DATABASE_SET_FATHER_FUN(db_other, BIdentifier, NetComp, this);
 }
+
