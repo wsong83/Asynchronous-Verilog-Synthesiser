@@ -52,7 +52,8 @@
   yyscan_t avscanner;
 
   void averilog::av_parser::error (const location_type& loc, const string& msg) {
-    av_env.error(loc, "PARSER-0");
+    //av_env.error(loc, "PARSER-0");
+    //cout << msg << endl;
   }
   
   using namespace netlist;
@@ -356,10 +357,13 @@ module_item
     | module_instantiation       { $$.reset(new Block()); $$->add_list<Instance>($1); }
     | always_construct           { $$.reset(new Block()); $$->add($1);                }
     | generated_instantiation    { $$.reset(new Block()); $$->add($1);                }
+    | statement                  { $$.reset(new Block()); av_env.error(@$, "SYN-MODULE-1");  }
+    | error                      { $$.reset(new Block()); av_env.error(@$, "SYN-MODULE-1");  }
     ;
 
 module_items
-    : module_item                { $$.reset(new Block()); $$->add_statements($1);     }
+    : /* empty */                { $$.reset(new Block());                             }
+    | module_item                { $$.reset(new Block()); $$->add_statements($1);     }
     | module_items module_item   { $$->add_statements($2);                            }
     
 // A.2.1 Declaration types

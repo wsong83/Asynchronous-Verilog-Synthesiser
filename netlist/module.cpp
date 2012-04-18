@@ -47,12 +47,7 @@ netlist::Module::Module(const MIdentifier& nm, const list<PoIdentifier>& port_li
   : Block(*body), name(nm) {
   
   named=true;
-  
-  // insert ports
-  list<PoIdentifier>::const_iterator it, end;
-  for(it=port_list.begin(),end=port_list.end(); it!=end; it++)
-    db_port.insert(*it, shared_ptr<Port>(new Port(it->loc, *it)));
-
+  init_port_list(port_list);
   elab_inparse();
 }
 
@@ -61,12 +56,7 @@ netlist::Module::Module(const location& lloc, const MIdentifier& nm, const list<
   
   named=true;
   loc = lloc;
-  
-  // insert ports
-  list<PoIdentifier>::const_iterator it, end;
-  for(it=port_list.begin(),end=port_list.end(); it!=end; it++)
-    db_port.insert(*it, shared_ptr<Port>(new Port(it->loc, *it)));
-
+  init_port_list(port_list);
   elab_inparse();
 }
 
@@ -75,21 +65,8 @@ netlist::Module::Module(const MIdentifier& nm, const list<shared_ptr<Variable> >
   : Block(*body), name(nm) {
   
   named=true;
-  
-  // insert parameters
-  {
-    list<shared_ptr<Variable> >::const_iterator it, end;
-    for(it=para_list.begin(),end=para_list.end(); it!=end; it++)
-      db_param.insert((*it)->name, *it);  
-  }
-
-  // insert ports
-  {
-    list<PoIdentifier>::const_iterator it, end;
-    for(it=port_list.begin(),end=port_list.end(); it!=end; it++)
-      db_port.insert(*it, shared_ptr<Port>(new Port(it->loc, *it)));
-  }
-
+  init_param_list(para_list);
+  init_port_list(port_list);
   elab_inparse();
 }
 
@@ -100,21 +77,8 @@ netlist::Module::Module(const location& lloc, const MIdentifier& nm,
   
   named = true;
   loc = lloc;
-  
-  // insert parameters
-  {
-    list<shared_ptr<Variable> >::const_iterator it, end;
-    for(it=para_list.begin(),end=para_list.end(); it!=end; it++)
-      db_param.insert((*it)->name, *it);  
-  }
-
-  // insert ports
-  {
-    list<PoIdentifier>::const_iterator it, end;
-    for(it=port_list.begin(),end=port_list.end(); it!=end; it++)
-      db_port.insert(*it, shared_ptr<Port>(new Port(it->loc, *it)));
-  }
-
+  init_param_list(para_list);
+  init_port_list(port_list);
   elab_inparse();
 }
 
@@ -190,80 +154,190 @@ BIdentifier& netlist::Module::new_BId() {
   return unnamed_block;
 }
 
+shared_ptr<Variable> netlist::Module::find_var(const VIdentifier& key) const {
+  shared_ptr<Variable>     rv = db_param.find(key);
+  if(rv.use_count() == 0)  rv = db_genvar.find(key);
+  if(rv.use_count() == 0)  rv = db_var.find(key);
+  return rv;
+}
+
+shared_ptr<Block> netlist::Module::find_block(const BIdentifier& key) const {
+  shared_ptr<Block>        rv = db_seqblock.find(key);
+  if(rv.use_count() == 0)  rv = db_genblock.find(key);
+  return rv;
+}
+
+shared_ptr<NetComp> netlist::Module::find_item(const BIdentifier& key) const {
+  shared_ptr<NetComp>      rv = db_seqblock.find(key);
+  if(rv.use_count() == 0)  rv = db_genblock.find(key);
+  if(rv.use_count() == 0)  rv = db_assign.find(key);
+  return rv;
+}
+
 void netlist::Module::elab_inparse() {
   list<shared_ptr<NetComp> >::iterator it, end;
   for(it=statements.begin(), end=statements.end(); it!=end; it++) {
-    switch((*it)->get_type()) {
-    case tAssign: {
-      SP_CAST(m, Assign, *it);
-      m->set_name(new_BId());
-      db_assign.insert(m->name, m);
-      break;
-    }
-    case tSeqBlock: {
-      SP_CAST(m, SeqBlock, *it);
-      if(!m->is_named()) {
-        m->set_default_name(new_BId());
-        db_seqblock.insert(m->name, m);
-      } else {
-        m = db_seqblock.swap(m->name, m);
-        if(m.use_count() != 0) {
-          m->set_default_name(new_BId());
-          db_seqblock.insert(m->name, m);
-        }
-      }         
-      break;
-    }
-    case tGenBlock: {
-      SP_CAST(m, GenBlock, *it);
-      if(!m->is_named()) {
-        m->set_default_name(new_BId());
-        db_genblock.insert(m->name, m);
-      } else {
-        m = db_genblock.swap(m->name, m);
-        if(m.use_count() != 0) {
-          m->set_default_name(new_BId());
-          db_genblock.insert(m->name, m);
-        }
-      }         
-      break;
-    }      
-    case tInstance: {
-      SP_CAST(m, Instance, *it);
-      if(!m->is_named()) {
-        G_ENV->error(m->loc, "SYN-INST-1");
-        m->set_default_name(new_IId());
-        db_instance.insert(m->name, m);
-      } else {
-        m = db_instance.swap(m->name, m);
-        if(m.use_count() != 0) {
-          m->set_default_name(new_IId());
-          db_instance.insert(m->name, m);
-        }
-      }                 
-      break;
-    }
-    case tPort: {
-      SP_CAST(m, Port, *it);
-      // should check first
-      /// if multiple definitions exist for the same parameter, the last one take effect
-      shared_ptr<Port> mm = db_port.swap(m->name, m);
-      if(mm.use_count() != 0) {
-        G_ENV->error(m->loc, "SYN-PORT-1", toString(m), toString(mm->loc));
-      }
-      
-      // port declarations are not statements
+    if(elab_inparse_item(*it)) {
+      // the item should be removed
       it = statements.erase(it);
       it--;
-      break;
+      end = statements.end();
     }
-    case tVariable: {
-      SP_CAST(m, Variable, *it);
-      switch(m->get_vtype()) {
-      case Variable::TWire: {
-        db_var.insert(m->name, m);
-        break;
+  }
+
+  blocked = true;               // module is always blocked
+  
+  if(statements.size() == 0)
+    G_ENV->error(loc, "SYN-MODULE-2", name.name);
+
+}
+
+
+void netlist::Module::init_port_list(const list<PoIdentifier>& port_list) {
+  list<PoIdentifier>::const_iterator it, end;
+  for(it=port_list.begin(),end=port_list.end(); it!=end; it++) {
+    shared_ptr<Port> m = db_port.swap(*it, shared_ptr<Port>(new Port(it->loc, *it)));
+    if(m.use_count() != 0) {
+      // duplicated declaration
+      G_ENV->error(it->loc, "SYN-PORT-1", it->name, toString(m->loc));
+    }
+  }
+}  
+
+void netlist::Module::init_param_list(const list<shared_ptr<Variable> >& para_list) {
+  list<shared_ptr<Variable> >::const_iterator it, end;
+  for(it=para_list.begin(),end=para_list.end(); it!=end; it++)
+    db_param.insert((*it)->name, *it);  
+}
+
+bool netlist::Module::elab_inparse_item(const shared_ptr<NetComp>& it) {
+  // return true when this item should be removed from the statement list
+
+  switch(it->get_type()) {
+    case tAssign: {
+      SP_CAST(m, Assign, it);
+      m->set_name(new_BId());
+      db_assign.insert(m->name, m);
+      return false;
+    }
+  case tSeqBlock: {
+    SP_CAST(m, SeqBlock, it);
+    if(!m->is_named()) {
+      m->set_default_name(new_BId());
+      db_seqblock.insert(m->name, m);
+    } else {
+      shared_ptr<NetComp> item = find_item(m->name);
+      if(item.use_count() != 0) { // name conflicts
+        shared_ptr<Block> blk = find_block(m->name);
+        if(blk.use_count() != 0 && blk->is_named()) { // conflict with a named block
+          G_ENV->error(m->loc, "SYN-BLOCK-0", m->name.name, toString(blk->loc));
+          // rename and insert
+          while(find_item(++(m->name)).use_count() != 0) {}
+          db_seqblock.insert(m->name, m);
+        } else {              // conflict with a unnamed block
+          //fatch the item
+          switch(item->get_type()) {
+          case tSeqBlock: 
+            item = db_seqblock.swap(m->name, m); 
+            break;
+          case tGenBlock: 
+            item = db_genblock.fetch(m->name); 
+            db_seqblock.insert(m->name, m); 
+            break;
+          default: 
+            item = db_assign.fetch(m->name); 
+            db_seqblock.insert(m->name, m); 
+            break;
+          }
+          // reinsert the unnamed item
+          elab_inparse_item(item);
+        }
+      } else { // no name conflicts
+        db_seqblock.insert(m->name, m); 
       }
+    }
+    return false;
+  }
+  case tGenBlock: {
+    SP_CAST(m, GenBlock, it);
+    if(!m->is_named()) {
+      m->set_default_name(new_BId());
+      db_genblock.insert(m->name, m);
+    } else {
+      shared_ptr<NetComp> item = find_item(m->name);
+      if(item.use_count() != 0) { // name conflicts
+        shared_ptr<Block> blk = find_block(m->name);
+        if(blk.use_count() != 0 && blk->is_named()) { // conflict with a named block
+          G_ENV->error(m->loc, "SYN-BLOCK-0", m->name.name, toString(blk->loc));
+          // rename and insert
+          while(find_item(++(m->name)).use_count() != 0) {}
+          db_genblock.insert(m->name, m);
+        } else {              // conflict with a unnamed block
+          //fatch the item
+          switch(item->get_type()) {
+          case tSeqBlock: 
+            item = db_seqblock.fetch(m->name); 
+            db_genblock.insert(m->name, m); 
+            break;
+          case tGenBlock: 
+            item = db_genblock.swap(m->name, m); 
+            break;
+          default: 
+            item = db_assign.fetch(m->name); 
+            db_genblock.insert(m->name, m); 
+            break;
+          }
+          // reinsert the unnamed item
+          elab_inparse_item(item);
+        }
+      } else { // no name conflicts
+        db_genblock.insert(m->name, m); 
+      }
+    }
+    return false;
+  }
+  case tInstance: {
+    SP_CAST(m, Instance, it);
+    if(!m->is_named()) {
+      G_ENV->error(m->loc, "SYN-INST-1");
+      m->set_default_name(new_IId());
+      db_instance.insert(m->name, m);
+    } else {
+      shared_ptr<Instance> mm = db_instance.find(m->name);
+      if(mm.use_count() != 0) {
+        if(mm->is_named()) {
+          G_ENV->error(m->loc, "SYN-INST-0", m->name.name, toString(mm->loc));
+          while(db_instance.find(++(m->name)).use_count() != 0) {}
+          db_instance.insert(m->name, m);
+        } else {                  // conflict with an unnamed instance
+          mm = db_instance.swap(m->name, m);
+          elab_inparse_item(mm);
+        }
+      } else {
+        db_instance.insert(m->name, m);
+      }
+    }                 
+    return false;
+  }
+  case tPort: {
+    SP_CAST(m, Port, it);
+    shared_ptr<Port> mm = db_port.find(m->name);
+    if(mm.use_count() != 0) {
+      db_port.swap(m->name, m);
+    } else {
+      G_ENV->error(m->loc, "SYN-PORT-0", toString(m), name.name);
+      db_port.insert(m->name, m);
+    }
+    return true;
+  }
+  case tVariable: {
+    SP_CAST(m, Variable, it);
+    shared_ptr<Variable> mm = find_var(m->name);
+    if(mm.use_count() != 0) {
+      G_ENV->error(m->loc, "SYN-VAR-1", m->name.name, toString(mm->loc));
+    } else {
+      switch(m->get_vtype()) {
+      case Variable::TWire:
       case Variable::TReg: {
         db_var.insert(m->name, m);
         break;
@@ -280,16 +354,11 @@ void netlist::Module::elab_inparse() {
       default:
         G_ENV->error(m->loc, "SYN-VAR-0", m->name.name);
       }
-      // variable declarations are not statements
-      it = statements.erase(it);
-      it--;
-      end = statements.end();
-      break;      
     }
-    default:
-      assert(0 == "wrong type os statement in general block!");
-    }
+    return true;
   }
-
-  blocked = true;               // module is always blocked
+  default:
+    G_ENV->error(it->loc, "SYN-MODULE-1");
+    return true;
+  }
 }

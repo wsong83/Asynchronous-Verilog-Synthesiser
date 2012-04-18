@@ -56,6 +56,9 @@ namespace netlist {
     virtual void set_name(const MIdentifier& nm) { name = nm; named=true;}
     VIdentifier& new_VId();
     BIdentifier& new_BId();
+    shared_ptr<Variable>  find_var       (const VIdentifier&) const; /* find a variable */
+    shared_ptr<Block>     find_block     (const BIdentifier&) const; /* find a block */
+    shared_ptr<NetComp>   find_item      (const BIdentifier&) const; /* find an item in db_other */
     virtual void elab_inparse();                           /* resolve the content in statements during parsing */
     
     // data
@@ -67,11 +70,16 @@ namespace netlist {
     DataBase<BIdentifier, Assign>          db_assign;    /* continuous assignments */
     DataBase<BIdentifier, GenBlock>        db_genblock;  /* generation blocks */
 
+  private:
+    // only used in constructors
+    void init_port_list(const list<PoIdentifier>&);
+    void init_param_list(const list<shared_ptr<Variable> >&);
+    // helper in elab_inparse
+    bool elab_inparse_item( const shared_ptr<NetComp>&);
+
   };
 
   NETLIST_STREAMOUT(Module);
-
-
 }
 
 #endif

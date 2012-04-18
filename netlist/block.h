@@ -126,6 +126,9 @@ namespace netlist {
     BIdentifier& new_BId();     /* generate an unused block id */
     IIdentifier& new_IId();     /* generate an unused instance id*/
     VIdentifier& new_VId();     /* generate an unused variable id */
+    shared_ptr<NetComp>   find_item      (const BIdentifier&) const; /* find an item in db_other */
+    shared_ptr<Instance>  find_instance  (const IIdentifier&) const; /* find an instance */
+    shared_ptr<Variable>  find_var       (const VIdentifier&) const; /* find a variable */
     virtual ostream& streamout(ostream& os, unsigned int indent, bool fl_prefix) const;
     const shared_ptr<NetComp>& front() const { return statements.front(); }
     shared_ptr<NetComp>& front() { return statements.front(); }

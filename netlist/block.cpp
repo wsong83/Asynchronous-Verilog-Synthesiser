@@ -249,6 +249,18 @@ VIdentifier& netlist::Block::new_VId() {
   return unnamed_var;
 }
 
+shared_ptr<NetComp> netlist::Block::find_item(const BIdentifier& key) const {
+  return db_other.find(key);
+}
+
+shared_ptr<Instance> netlist::Block::find_instance(const IIdentifier& key) const {
+  return db_instance.find(key);
+}
+
+shared_ptr<Variable> netlist::Block::find_var(const VIdentifier& key) const {
+  return db_var.find(key);
+}
+
 ostream& netlist::Block::streamout(ostream& os, unsigned int indent) const {
   streamout(os, indent, false);
   return os;

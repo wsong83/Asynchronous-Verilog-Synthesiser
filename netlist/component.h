@@ -174,6 +174,9 @@ namespace netlist {
 #include "shell/env.h"
 extern shared_ptr<shell::Env> G_ENV;
 
+
+#include <sstream>
+
 // objects to string templates
 template <typename T>
 inline string toString (const T& obj) {

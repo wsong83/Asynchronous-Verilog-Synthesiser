@@ -89,6 +89,28 @@ namespace netlist {
       }
     }
 
+    shared_ptr<T> find(const K& key) const {
+      if(ORDER) {
+        typename DBTL::const_iterator it, end;
+        
+        for(it=db_list.begin(), end=db_list.end(); it!=end; it++)
+          if(it->first == key) break;
+        
+        if(it != end)
+          return it->second;
+        else
+          return shared_ptr<T>();
+
+      } else {
+        typename DBTM::const_iterator it = db_map.find(key);
+
+        if(it != db_map.end())
+          return it->second;
+        else
+          return shared_ptr<T>();
+      }
+    }
+
     shared_ptr<T> swap(const K& key, const shared_ptr<T>& comp) {
       shared_ptr<T> rv = fetch(key);
       insert(key, comp);
