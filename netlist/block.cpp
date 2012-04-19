@@ -118,113 +118,12 @@ bool netlist::Block::add_statements(const shared_ptr<Block>& body) {
 void netlist::Block::elab_inparse() {
   list<shared_ptr<NetComp> >::iterator it, end;
   for(it=statements.begin(), end=statements.end(); it!=end; it++) {
-    switch((*it)->get_type()) {
-    case tAssign: {
-      SP_CAST(m, Assign, *it);
-      m->set_name(new_BId());
-      db_other.insert(m->name, m);
-      break;
-    }
-    case tBlock: {
-      SP_CAST(m, Block, *it);
-      if(m->is_blocked()) {
-        if(!m->is_named()) {
-          m->set_default_name(new_BId());
-          db_other.insert(m->name, m);
-        } else {
-          shared_ptr<NetComp> tmp = db_other.swap(m->name, m);
-          if(tmp.use_count() != 0) {
-            // an unnamed block has the same name as the named block, rename it and reinsert the block
-            switch(tmp->get_type()) {
-            case tAssign:
-              {SP_CAST(mm, Assign, tmp); mm->set_name(new_BId()); db_other.insert(mm->name, mm);break;}
-            case tCase:
-              {SP_CAST(mm, CaseState, tmp); mm->set_name(new_BId()); db_other.insert(mm->name, mm);break;}
-            case tFor:
-              {SP_CAST(mm, ForState, tmp); mm->set_name(new_BId()); db_other.insert(mm->name, mm);break;}
-            case tIf:
-              {SP_CAST(mm, IfState, tmp); mm->set_name(new_BId()); db_other.insert(mm->name, mm);break;}
-            case tWhile:
-              {SP_CAST(mm, WhileState, tmp); mm->set_name(new_BId()); db_other.insert(mm->name, mm);break;}
-            case tBlock:
-              {SP_CAST(mm, Block, tmp); mm->set_default_name(new_BId()); db_other.insert(mm->name, mm);break;}
-            default:       assert(0 == "wrong type!");
-            }
-          } 
-        }
-      } else { // not blocked, move all items in the sub-block to this level
-        it = statements.erase(it);
-        list<shared_ptr<NetComp> >::iterator it_m = it;
-        it--;
-        statements.splice(it_m, m->statements);
-        end = statements.end();
-      }    
-      break;
-    }
-    case tCase: {
-      SP_CAST(m, CaseState, *it);
-      m->set_name(new_BId());
-      db_other.insert(m->name, m);
-      break;
-    }
-    case tFor: {
-      SP_CAST(m, ForState, *it);
-      m->set_name(new_BId());
-      db_other.insert(m->name, m);
-      break;
-    }
-    case tIf: {
-      SP_CAST(m, IfState, *it);
-      m->set_name(new_BId());
-      db_other.insert(m->name, m);
-      break;
-    }
-    case tInstance: {
-      SP_CAST(m, Instance, *it);
-      if(!m->is_named()) {
-        G_ENV->error(m->loc, "SYN-INST-1");
-        m->set_default_name(new_IId());
-        db_instance.insert(m->name, m);
-      } else {
-        m = db_instance.swap(m->name, m);
-        if(m.use_count() != 0) {
-          // it is an unnamed instance
-          m->set_default_name(new_IId());
-          db_instance.insert(m->name, m);
-        }
-      }
-      break;
-    }
-    case tWhile: {
-      SP_CAST(m, WhileState, *it);
-      m->set_name(new_BId());
-      db_other.insert(m->name, m);
-      break;
-    }
-    case tVariable: {
-      SP_CAST(m, Variable, *it);
-      switch(m->get_vtype()) {
-      case Variable::TWire: {
-        db_var.insert(m->name, m);
-        break;
-      }
-      case Variable::TReg: {
-        db_var.insert(m->name, m);
-        break;
-      }
-      default:
-        G_ENV->error(m->loc, "SYN-VAR-0", m->name.name);
-      }
-      // variable declarations are not statements
+    if(elab_inparse_item(*it, it)) {
       it = statements.erase(it);
       it--;
       end = statements.end();
-      break;
     }
-    default:
-      assert(0 == "wrong type os statement in general block!");
-    }
- }
+  }
 
   // double check the size
   if(statements.size() + db_var.size() > 1)
@@ -330,6 +229,8 @@ bool netlist::Block::elab_inparse_item(
     db_other.insert(m->name, m);
     return false;
   }
+  case tGenBlock:
+  case tSeqBlock:
   case tBlock: {
     SP_CAST(m, Block, it);
     if(m->is_blocked()) {
@@ -339,8 +240,12 @@ bool netlist::Block::elab_inparse_item(
       } else {
         shared_ptr<NetComp> item = find_item(m->name);
         if(item.use_count()!=0) { // name conflict
-          if((item->get_type() == tBlock || item->get_type() == tSeqBlock || item->get_type() == tGenBlock) 
-             && (static_pointer_cast<Block>(item))->is_named()) { // really conflict with a named block
+          if((item->get_type() == tBlock || 
+              item->get_type() == tSeqBlock || 
+              item->get_type() == tGenBlock
+              ) && 
+             (static_pointer_cast<Block>(item))->is_named()
+             ) { // really conflict with a named block
             G_ENV->error(m->loc, "SYN-BLOCK-0", m->name.name, toString(item->loc));
             while(find_item(++(m->name)).use_count() != 0) {}
             db_other.insert(m->name, m);
@@ -372,19 +277,19 @@ bool netlist::Block::elab_inparse_item(
     SP_CAST(m, CaseState, it);
     m->set_name(new_BId());
     db_other.insert(m->name, m);
-    break;
+    return false;
   }
   case tFor: {
     SP_CAST(m, ForState, it);
     m->set_name(new_BId());
     db_other.insert(m->name, m);
-    break;
+    return false;
   }
   case tIf: {
     SP_CAST(m, IfState, it);
     m->set_name(new_BId());
     db_other.insert(m->name, m);
-    break;
+    return false;
   }
   case tInstance: {
     SP_CAST(m, Instance, it);
@@ -413,7 +318,7 @@ bool netlist::Block::elab_inparse_item(
     SP_CAST(m, WhileState, it);
     m->set_name(new_BId());
     db_other.insert(m->name, m);
-    break;
+    return false;
   }
   case tVariable: {
     SP_CAST(m, Variable, it);

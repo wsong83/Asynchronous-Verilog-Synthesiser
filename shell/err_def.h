@@ -38,7 +38,7 @@
 /// patterns that cannot recognised by the averilog parser, need to improve the parser grammer file in this case
 ERR_DEFINE("PARSER-0",     
            EFatal,   0, 
-           "unkown parser error. Please report to the developers <wsong83@gmail.com>.");
+           "unkown parser error. Please report to the developers.");
 
 /// on the left side of an assign should be a non-const variable or concatenation
 ERR_DEFINE("SYN-ASSIGN-0", 
