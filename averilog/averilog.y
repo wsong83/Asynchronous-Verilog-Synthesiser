@@ -369,7 +369,7 @@ module_items
 // A.2.1 Declaration types
 // A.2.1.1 Module parameter declarations
 parameter_declaration
-    : "parameter" list_of_param_assignments
+    : "parameter" list_of_param_assignments { $$ = $2; }
     ;
 
 // A.2.1.2 Port declarations
