@@ -344,7 +344,7 @@ bool netlist::Module::elab_inparse_item(const shared_ptr<NetComp>& it) {
       }
       case Variable::TParam: {
         /// if multiple definitions exist for the same parameter, the last one take effect
-        db_param.swap(m->name, m); 
+        db_param.insert(m->name, m); 
         break;
       }
       case Variable::TGenvar: {

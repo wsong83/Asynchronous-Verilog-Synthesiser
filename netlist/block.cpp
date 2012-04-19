@@ -318,3 +318,125 @@ void netlist::Block::set_father() {
   DATABASE_SET_FATHER_FUN(db_other, BIdentifier, NetComp, this);
 }
 
+bool netlist::Block::elab_inparse_item(
+                                       const shared_ptr<NetComp>& it,
+                                       list<shared_ptr<NetComp> >::iterator& itor
+                                       ) 
+{
+  switch(it->get_type()) {
+  case tAssign: {
+    SP_CAST(m, Assign, it);
+    m->set_name(new_BId());
+    db_other.insert(m->name, m);
+    return false;
+  }
+  case tBlock: {
+    SP_CAST(m, Block, it);
+    if(m->is_blocked()) {
+      if(!m->is_named()) {
+        m->set_default_name(new_BId());
+        db_other.insert(m->name, m);
+      } else {
+        shared_ptr<NetComp> item = find_item(m->name);
+        if(item.use_count()!=0) { // name conflict
+          if((item->get_type() == tBlock || item->get_type() == tSeqBlock || item->get_type() == tGenBlock) 
+             && (static_pointer_cast<Block>(item))->is_named()) { // really conflict with a named block
+            G_ENV->error(m->loc, "SYN-BLOCK-0", m->name.name, toString(item->loc));
+            while(find_item(++(m->name)).use_count() != 0) {}
+            db_other.insert(m->name, m);
+          } else { // conflict with an unnamed block
+            item = db_other.swap(m->name, m);
+            elab_inparse_item(item, itor);
+          }
+        } else {
+          db_other.insert(m->name, m);
+        }
+      }
+      return false;
+    } else { // not blocked, move all items in the sub-block to this level
+      if(itor == statements.begin()) { // the first one
+        statements.splice(itor, m->statements);
+        statements.erase(itor);
+        itor = statements.begin();
+      } else {
+        list<shared_ptr<NetComp> >::iterator pre = itor;
+        --pre;
+        statements.splice(itor, m->statements);
+        statements.erase(itor);
+        itor = pre;
+      }
+      return false;
+    }
+  }
+  case tCase: {
+    SP_CAST(m, CaseState, it);
+    m->set_name(new_BId());
+    db_other.insert(m->name, m);
+    break;
+  }
+  case tFor: {
+    SP_CAST(m, ForState, it);
+    m->set_name(new_BId());
+    db_other.insert(m->name, m);
+    break;
+  }
+  case tIf: {
+    SP_CAST(m, IfState, it);
+    m->set_name(new_BId());
+    db_other.insert(m->name, m);
+    break;
+  }
+  case tInstance: {
+    SP_CAST(m, Instance, it);
+    if(!m->is_named()) {
+      G_ENV->error(m->loc, "SYN-INST-1");
+      m->set_default_name(new_IId());
+      db_instance.insert(m->name, m);
+    } else {
+      shared_ptr<Instance> mm = db_instance.find(m->name);
+      if(mm.use_count() != 0) {
+        if(mm->is_named()) {
+          G_ENV->error(m->loc, "SYN-INST-0", m->name.name, toString(mm->loc));
+          while(db_instance.find(++(m->name)).use_count() != 0) {}
+          db_instance.insert(m->name, m);
+        } else {                  // conflict with an unnamed instance
+          mm = db_instance.swap(m->name, m);
+          elab_inparse_item(mm, itor);
+        }
+      } else {
+        db_instance.insert(m->name, m);
+      }
+    }                 
+    return false;
+  }
+  case tWhile: {
+    SP_CAST(m, WhileState, it);
+    m->set_name(new_BId());
+    db_other.insert(m->name, m);
+    break;
+  }
+  case tVariable: {
+    SP_CAST(m, Variable, it);
+    shared_ptr<Variable> mm = find_var(m->name);
+    if(mm.use_count() != 0) {
+      G_ENV->error(m->loc, "SYN-VAR-1", m->name.name, toString(mm->loc));
+    } else {
+      switch(m->get_vtype()) {
+      case Variable::TWire:
+      case Variable::TReg: {
+        db_var.insert(m->name, m);
+        break;
+      }
+      default:
+        G_ENV->error(m->loc, "SYN-VAR-0", m->name.name);
+      }
+    }
+    return true;
+  }
+  default:
+    G_ENV->error(it->loc, "SYN-MODULE-1");
+    return true;
+  }
+}
+
+

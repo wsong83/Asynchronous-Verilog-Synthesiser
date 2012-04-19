@@ -156,6 +156,9 @@ namespace netlist {
 
     bool named;                 /* true when named */
     bool blocked;               /* user used begin and end for this block */
+    
+    // helper in elab_inparse
+    bool elab_inparse_item (const shared_ptr<NetComp>&, list<shared_ptr<NetComp> >::iterator&);
 
   };
 

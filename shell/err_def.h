@@ -95,7 +95,7 @@ ERR_DEFINE("SYN-PORT-0",
 // port redefinition. The duplicated one will be ignored.
 ERR_DEFINE("SYN-PORT-1",   
            EError, 2, 
-           "port \"%1%\" is already defined at %2% while the current one take effect.");
+           "port \"%1%\" is already defined at %2%.");
 
 // define a reg outside a block or wire outside a module/generate. It will be ignored
 ERR_DEFINE("SYN-VAR-0",    
