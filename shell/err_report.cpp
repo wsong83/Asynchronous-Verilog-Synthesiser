@@ -42,14 +42,15 @@ using std::pair;
       ErrorType(ErrorType::eSev, eMsg, eNum) \
     ))
 
-map<string, ErrorType> shell::ErrReport::errList;
-ostream shell::ErrReport::os(cerr.rdbuf()); // in default send errors to cerr
+//map<string, ErrorType> shell::ErrReport::errList;
+//ostream shell::ErrReport::os(cerr.rdbuf()); // in default send errors to cerr
 
-shell::ErrReport::ErrReport() {
+shell::ErrReport::ErrReport()
+  : os(cerr.rdbuf()), fail(false) {
   #include "err_def.h"
 }
 
-bool shell::ErrReport::fail = false;
+//bool shell::ErrReport::fail = false;
 
 bool shell::ErrReport::suppress(const string& errID) {
   map<string, ErrorType>::iterator it, end;
@@ -68,7 +69,7 @@ void shell::ErrReport::set_output(ostream& new_os) {
 }
 
 bool shell::ErrReport::operator () (const averilog::location& loc, const string& errID,
-				     const string& p1, const string& p2, const string& p3) const {
+				     const string& p1, const string& p2, const string& p3) {
   const string rtype[4] = {"Fatal Error: ", "Error: ", "Warning: ", "Information: "}; 
   map<string, ErrorType>::const_iterator it, end;
   it = errList.find(errID);
@@ -106,7 +107,7 @@ bool shell::ErrReport::operator () (const averilog::location& loc, const string&
     assert(0 == "wrong number of error parameters");
   } 
 
-  shell::ErrReport::fail |= (eT.severe <= ErrorType::EError);
+  fail |= (eT.severe <= ErrorType::EError);
   return (eT.severe <= ErrorType::EError);
 }
 

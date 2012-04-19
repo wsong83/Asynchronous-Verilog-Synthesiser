@@ -65,15 +65,15 @@ namespace shell {
 		     const string& p1 = "",	    /* the first parameter */
 		     const string& p2 = "",	    /* the second parameter */
 		     const string& p3 = ""	    /* the third parameter, maximum three */
-		     ) const;
+		     ) ;
     bool failure(const string& errID) const;
-    bool is_failed() const { return shell::ErrReport::fail; }
-    void clear() { shell::ErrReport::fail = false; }
+    bool is_failed() const { return fail; }
+    void clear() { fail = false; }
 
   private:
-    static map<string, ErrorType> errList; /* a record for all kinds of errors */
-    static ostream os;                     /* output stream */
-    static bool fail;                      /* record the failure of current module, should be cleared for new modules */
+    map<string, ErrorType> errList; /* a record for all kinds of errors */
+    ostream os;                     /* output stream */
+    bool fail;                      /* record the failure of current module, should be cleared for new modules */
   };
 
 }
