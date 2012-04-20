@@ -146,9 +146,11 @@ netlist::SeqBlock::SeqBlock(const location& lloc, const Block& body)
 }
 
 void netlist::SeqBlock::elab_inparse() {
+  if(!(slist_pulse.empty() || slist_level.empty())) // none list is empty
+    G_ENV->error(loc, "SYN-BLOCK-1", name.name);
 
-  // TODO: checking sensitive list, only one type is used
-  //       right now nothing is checked
+  if(slist_pulse.empty() && slist_level.empty())
+    G_ENV->error(loc, "SYN-BLOCK-2", name.name);
 
   // just use the elab_inparse of Block is fine for always blocks
   Block::elab_inparse();

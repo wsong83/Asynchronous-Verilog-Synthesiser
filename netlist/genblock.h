@@ -44,6 +44,9 @@ namespace netlist{
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
 
+  private:
+    bool elab_inparse_item( const shared_ptr<NetComp>&);
+
   };
   NETLIST_STREAMOUT(GenBlock);
 

@@ -78,128 +78,11 @@ void netlist::GenBlock::elab_inparse() {
   
   list<shared_ptr<NetComp> >::iterator it, end;
   for(it=statements.begin(), end=statements.end(); it!=end; it++) {
-    switch((*it)->get_type()) {
-    case tAssign: {
-      SP_CAST(m, Assign, *it);
-      m->set_name(new_BId());
-      db_other.insert(m->name, m);
-      break;
-    }
-    case tSeqBlock: {
-      SP_CAST(m, SeqBlock, *it);
-      if(!m->is_named()) {
-        m->set_default_name(new_BId());
-        db_other.insert(m->name, m);
-      } else {
-        shared_ptr<NetComp> tmp = db_other.swap(m->name, m);
-        if(tmp.use_count() != 0) {
-          // an unnamed block has the same name as the named block, rename it and reinsert the block
-          switch(tmp->get_type()) {
-          case tAssign:
-            {SP_CAST(mm, Assign, tmp); mm->set_name(new_BId()); db_other.insert(mm->name, mm);break;}
-          case tCase:
-            {SP_CAST(mm, CaseState, tmp); mm->set_name(new_BId()); db_other.insert(mm->name, mm);break;}
-          case tFor:
-            {SP_CAST(mm, ForState, tmp); mm->set_name(new_BId()); db_other.insert(mm->name, mm);break;}
-          case tIf:
-            {SP_CAST(mm, IfState, tmp); mm->set_name(new_BId()); db_other.insert(mm->name, mm);break;}
-          case tWhile:
-            {SP_CAST(mm, WhileState, tmp); mm->set_name(new_BId()); db_other.insert(mm->name, mm);break;}
-          case tSeqBlock:
-            {SP_CAST(mm, SeqBlock, tmp); mm->set_default_name(new_BId()); db_other.insert(mm->name, mm);break;}
-          default:       assert(0 == "wrong type!");
-          }
-        } 
-      }         
-      break;
-    }
-    case tGenBlock: {
-      SP_CAST(m, GenBlock, *it);
-      if(!m->is_named()) {
-        m->set_default_name(new_BId());
-        db_other.insert(m->name, m);
-      } else {
-        shared_ptr<NetComp> tmp = db_other.swap(m->name, m);
-        if(tmp.use_count() != 0) {
-          // an unnamed block has the same name as the named block, rename it and reinsert the block
-          switch(tmp->get_type()) {
-          case tAssign:
-            {SP_CAST(mm, Assign, tmp); mm->set_name(new_BId()); db_other.insert(mm->name, mm);break;}
-          case tCase:
-            {SP_CAST(mm, CaseState, tmp); mm->set_name(new_BId()); db_other.insert(mm->name, mm);break;}
-          case tFor:
-            {SP_CAST(mm, ForState, tmp); mm->set_name(new_BId()); db_other.insert(mm->name, mm);break;}
-          case tIf:
-            {SP_CAST(mm, IfState, tmp); mm->set_name(new_BId()); db_other.insert(mm->name, mm);break;}
-          case tWhile:
-            {SP_CAST(mm, WhileState, tmp); mm->set_name(new_BId()); db_other.insert(mm->name, mm);break;}
-          case tSeqBlock:
-            {SP_CAST(mm, SeqBlock, tmp); mm->set_default_name(new_BId()); db_other.insert(mm->name, mm);break;}
-          case tGenBlock:
-            {SP_CAST(mm, SeqBlock, tmp); mm->set_default_name(new_BId()); db_other.insert(mm->name, mm);break;}
-          default:       assert(0 == "wrong type!");
-          }
-        } 
-      }         
-      break;
-    }
-    case tCase: {
-      SP_CAST(m, CaseState, *it);
-      m->set_name(new_BId());
-      db_other.insert(m->name, m);
-      break;
-    }
-    case tFor: {
-      SP_CAST(m, ForState, *it);
-      m->set_name(new_BId());
-      db_other.insert(m->name, m);
-      break;
-    }
-    case tIf: {
-      SP_CAST(m, IfState, *it);
-      m->set_name(new_BId());
-      db_other.insert(m->name, m);
-      break;
-    }
-    case tInstance: {
-      SP_CAST(m, Instance, *it);
-      if(!m->is_named()) {
-        m->set_default_name(new_IId());
-        db_instance.insert(m->name, m);
-      } else {
-        m = db_instance.swap(m->name, m);
-        if(m.use_count() != 0) {
-          // it is an unnamed instance
-          m->set_default_name(new_IId());
-          db_instance.insert(m->name, m);
-        }
-      }
-      break;
-    }
-    case tWhile: {
-      SP_CAST(m, WhileState, *it);
-      m->set_name(new_BId());
-      db_other.insert(m->name, m);
-      break;
-    }
-    case tVariable: {
-      SP_CAST(m, Variable, *it);
-      switch(m->get_vtype()) {
-      case Variable::TWire: {
-        db_var.insert(m->name, m);
-        break;
-      }
-      case Variable::TReg: {
-        db_var.insert(m->name, m);
-        break;
-      }
-      default:
-        assert(0 == "wrong type of variable in general block!");
-      }
-      break;
-    }
-    default:
-      assert(0 == "wrong type os statement in general block!");
+    if(elab_inparse_item(*it)) {
+      // the item should be removed
+      it = statements.erase(it);
+      it--;
+      end = statements.end();
     }
   }
   
@@ -207,3 +90,112 @@ void netlist::GenBlock::elab_inparse() {
 
 }
 
+bool netlist::GenBlock::elab_inparse_item( const shared_ptr<NetComp>& it) {
+  // return true when this item should be removed from the statement list
+  
+  switch(it->get_type()) {
+  case tAssign: {
+    SP_CAST(m, Assign, it);
+    m->set_name(new_BId());
+    db_other.insert(m->name, m);
+    return false;
+  }
+  case tGenBlock:
+  case tSeqBlock: {
+    SP_CAST(m, Block, it);
+    if(!m->is_named()) {
+      m->set_default_name(new_BId());
+      db_other.insert(m->name, m);
+    } else {
+      shared_ptr<NetComp> item = find_item(m->name);
+      if(item.use_count() != 0) { // name conflicts
+        if((item->get_type() == tBlock || 
+            item->get_type() == tSeqBlock || 
+            item->get_type() == tGenBlock
+            ) && 
+           (static_pointer_cast<Block>(item))->is_named()
+           ) { // really conflict with a named block
+          G_ENV->error(m->loc, "SYN-BLOCK-0", m->name.name, toString(item->loc));
+          while(find_item(++(m->name)).use_count() != 0) {}
+          db_other.insert(m->name, m);
+        } else { // conflict with an unnamed block
+          item = db_other.swap(m->name, m);
+          elab_inparse_item(item);
+        }
+      } else {
+        db_other.insert(m->name, m);
+      }
+    }
+    return false;
+  }
+  case tCase: {
+    SP_CAST(m, CaseState, it);
+    m->set_name(new_BId());
+    db_other.insert(m->name, m);
+    return false;
+  }
+  case tFor: {
+    SP_CAST(m, ForState, it);
+    m->set_name(new_BId());
+    db_other.insert(m->name, m);
+    return false;
+  }
+  case tIf: {
+    SP_CAST(m, IfState, it);
+    m->set_name(new_BId());
+    db_other.insert(m->name, m);
+    return false;
+  }
+  case tInstance: {
+    SP_CAST(m, Instance, it);
+    if(!m->is_named()) {
+      G_ENV->error(m->loc, "SYN-INST-1");
+      m->set_default_name(new_IId());
+      db_instance.insert(m->name, m);
+    } else {
+      shared_ptr<Instance> mm = db_instance.find(m->name);
+      if(mm.use_count() != 0) {
+        if(mm->is_named()) {
+          G_ENV->error(m->loc, "SYN-INST-0", m->name.name, toString(mm->loc));
+          while(db_instance.find(++(m->name)).use_count() != 0) {}
+          db_instance.insert(m->name, m);
+        } else {                  // conflict with an unnamed instance
+          mm = db_instance.swap(m->name, m);
+          elab_inparse_item(mm);
+        }
+      } else {
+        db_instance.insert(m->name, m);
+      }
+    }                 
+    return false;
+  }
+  case tWhile: {
+    SP_CAST(m, WhileState, it);
+    m->set_name(new_BId());
+    db_other.insert(m->name, m);
+    return false;
+  }
+  case tVariable: {
+    SP_CAST(m, Variable, it);
+    shared_ptr<Variable> mm = find_var(m->name);
+    if(mm.use_count() != 0) {
+      G_ENV->error(m->loc, "SYN-VAR-1", m->name.name, toString(mm->loc));
+    } else {
+      switch(m->get_vtype()) {
+      case Variable::TWire:
+      case Variable::TReg: 
+      case Variable::TParam: {
+        db_var.insert(m->name, m);
+        break;
+      }
+      default:
+        G_ENV->error(m->loc, "SYN-VAR-0", m->name.name);
+      }
+    }
+    return true;
+  }
+  default:
+    G_ENV->error(it->loc, "SYN-MODULE-1");
+    return true;
+  }
+}

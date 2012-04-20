@@ -53,6 +53,14 @@ ERR_DEFINE("SYN-BLOCK-0",
            EError,   2, 
            "block \"%1%\" is renamed as another block is named the same at %2%.");
 
+ERR_DEFINE("SYN-BLOCK-1", 
+           EError,   1, 
+           "sequential block \"%1%\" has a mixed sensitive list with both edge and level triggering signals.");
+
+ERR_DEFINE("SYN-BLOCK-2", 
+           EWarning,   1, 
+           "sequential block \"%1%\" has no/auto-inferred sensitive list.");
+
 ERR_DEFINE("SYN-FILE-0",   
            EError,   0, 
            "file terminated in multi-line comments.");

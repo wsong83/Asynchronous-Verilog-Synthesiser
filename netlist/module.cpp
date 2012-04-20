@@ -212,14 +212,14 @@ void netlist::Module::init_param_list(const list<shared_ptr<Variable> >& para_li
 
 bool netlist::Module::elab_inparse_item(const shared_ptr<NetComp>& it) {
   // return true when this item should be removed from the statement list
-
+  
   switch(it->get_type()) {
-    case tAssign: {
-      SP_CAST(m, Assign, it);
-      m->set_name(new_BId());
-      db_assign.insert(m->name, m);
-      return false;
-    }
+  case tAssign: {
+    SP_CAST(m, Assign, it);
+    m->set_name(new_BId());
+    db_assign.insert(m->name, m);
+    return false;
+  }
   case tSeqBlock: {
     SP_CAST(m, SeqBlock, it);
     if(!m->is_named()) {

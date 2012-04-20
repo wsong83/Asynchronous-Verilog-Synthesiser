@@ -328,7 +328,8 @@ bool netlist::Block::elab_inparse_item(
     } else {
       switch(m->get_vtype()) {
       case Variable::TWire:
-      case Variable::TReg: {
+      case Variable::TReg: 
+      case Variable::TParam: {
         db_var.insert(m->name, m);
         break;
       }
