@@ -40,6 +40,7 @@ namespace netlist{
     // helpers
     virtual ostream& streamout(ostream&, unsigned int, bool) const;    
     virtual void elab_inparse();        /* resolve the content during parsing */
+    using Block::set_father;
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;

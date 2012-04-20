@@ -112,9 +112,20 @@ namespace netlist {
     }
 
     shared_ptr<T> swap(const K& key, const shared_ptr<T>& comp) {
-      shared_ptr<T> rv = fetch(key);
-      insert(key, comp);
-      return rv;
+      if(ORDER) {
+        typename DBTL::iterator it, end;
+        shared_ptr<T> rv;
+
+        for(it=db_list.begin(), end=db_list.end(); it!=end; it++)
+          if(it->first == key) break;
+        
+        if(it != end) { rv = it->second; it->second = comp;}
+        return rv;
+      } else {
+        shared_ptr<T> rv = fetch(key);
+        insert(key, comp);
+        return rv;
+      } 
     }
     
     unsigned int size() const {

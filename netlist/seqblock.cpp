@@ -160,3 +160,18 @@ void netlist::SeqBlock::elab_inparse() {
 
 }
       
+void netlist::SeqBlock::set_father() {
+  {
+    list<pair<bool, shared_ptr<Expression> > >::iterator it, end;
+    for(it=slist_pulse.begin(), end=slist_pulse.end(); it!=end; it++)
+      it->second->set_father(this);
+  }
+
+  {
+    list<shared_ptr<Expression> >::iterator it, end;
+    for(it=slist_level.begin(), end=slist_level.end(); it!=end; it++)
+      (*it)->set_father(this);
+  }
+
+  Block::set_father();
+}

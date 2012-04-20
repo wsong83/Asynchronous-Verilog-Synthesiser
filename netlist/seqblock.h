@@ -49,9 +49,11 @@ namespace netlist{
     // helpers
     virtual ostream& streamout(ostream&, unsigned int, bool) const;
     virtual void elab_inparse();        /* resolve the content during parsing */
+    virtual void set_father();  /* set the father pointer to all sub-elements */
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
+    using NetComp::set_father;
     
     // data
     bool sensitive;                                         /* whether this is a sensitive block, top level block */

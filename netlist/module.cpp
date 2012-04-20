@@ -192,6 +192,15 @@ void netlist::Module::elab_inparse() {
 
 }
 
+void netlist::Module::set_father() {
+  DATABASE_SET_FATHER_ORDER_FUN(db_port, PoIdentifier, Port, this);
+  DATABASE_SET_FATHER_ORDER_FUN(db_param, VIdentifier, Variable, this);
+  DATABASE_SET_FATHER_ORDER_FUN(db_genvar, VIdentifier, Variable, this);
+  DATABASE_SET_FATHER_FUN(db_seqblock, BIdentifier, SeqBlock, this);
+  DATABASE_SET_FATHER_FUN(db_assign, BIdentifier, Assign, this);
+  DATABASE_SET_FATHER_FUN(db_genblock, BIdentifier, GenBlock, this);
+  Block::set_father();
+}
 
 void netlist::Module::init_port_list(const list<PoIdentifier>& port_list) {
   list<PoIdentifier>::const_iterator it, end;

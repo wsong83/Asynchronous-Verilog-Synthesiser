@@ -51,6 +51,7 @@ namespace netlist {
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
+    using NetComp::set_father;
 
     // helpers
     virtual void set_name(const MIdentifier& nm) { name = nm; named=true;}
@@ -60,7 +61,8 @@ namespace netlist {
     shared_ptr<Block>     find_block     (const BIdentifier&) const; /* find a block */
     shared_ptr<NetComp>   find_item      (const BIdentifier&) const; /* find an item in db_other */
     virtual void elab_inparse();                           /* resolve the content in statements during parsing */
-    
+    virtual void set_father();                             /* set the father pointer to all sub-elements */
+
     // data
     MIdentifier name;
     DataBase<PoIdentifier, Port, true>     db_port;      /* input and output ports, ordered */
