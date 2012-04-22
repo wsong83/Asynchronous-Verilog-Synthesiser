@@ -60,3 +60,10 @@ bool netlist::Assign::check_inparse() {
   bool rv = true;
   return false;
 }
+
+void netlist::Assign::set_father(Block *pf) {
+  father = pf;
+  name.set_father(pf);
+  lval->set_father(pf);
+  rexp->set_father(pf);
+}

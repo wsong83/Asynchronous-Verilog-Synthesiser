@@ -54,6 +54,16 @@ ostream& netlist::CaseItem::streamout (ostream& os, unsigned int indent) const {
   return os;
 }
 
+void netlist::CaseItem::set_father(Block *pf) {
+  father = pf;
+  list<shared_ptr<Expression> >::iterator it, end;
+  for(it=exps.begin(), end=exps.end(); it!=end; it++)
+    (*it)->set_father(pf);
+
+  if(body.use_count())
+    body->set_father(pf);
+}
+
 ostream& netlist::CaseState::streamout (ostream& os, unsigned int indent) const {
   os << string(indent, ' ') << "case(" << *exp << ")" << endl;
   list<shared_ptr<CaseItem> >::const_iterator it, end;
@@ -63,4 +73,13 @@ ostream& netlist::CaseState::streamout (ostream& os, unsigned int indent) const 
   os << string(indent, ' ') << "endcase" << endl;
 
   return os;
+}
+
+void netlist::CaseState::set_father(Block *pf) {
+  father = pf;
+  name.set_father(pf);
+  exp->set_father(pf);
+  list<shared_ptr<CaseItem> >::iterator it, end;
+  for(it=cases.begin(), end=cases.end(); it!=end; it++)
+    (*it)->set_father(pf);
 }

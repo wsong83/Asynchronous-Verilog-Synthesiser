@@ -95,6 +95,10 @@ ERR_DEFINE("SYN-PARA-0",
            EError,   1, 
            "parameter \"%1%\" is declared outside a module enviornment.");
 
+ERR_DEFINE("SYN-PARA-1",   
+           EError, 2, 
+           "parameter \"%1%\" is already defined at %2%.");
+
 // a port declaration is not found. It will be inserted.
 ERR_DEFINE("SYN-PORT-0",   
            EError,   2, 

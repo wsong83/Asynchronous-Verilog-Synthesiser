@@ -40,6 +40,7 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
     NETLIST_CHECK_INPARSE_DECL;
+    NETLIST_SET_FATHER_DECL;
 
     // helpers
     //void db_register() { lval.db_register(); rexp.db_register(); }

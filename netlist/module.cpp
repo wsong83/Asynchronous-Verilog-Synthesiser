@@ -215,8 +215,13 @@ void netlist::Module::init_port_list(const list<PoIdentifier>& port_list) {
 
 void netlist::Module::init_param_list(const list<shared_ptr<Variable> >& para_list) {
   list<shared_ptr<Variable> >::const_iterator it, end;
-  for(it=para_list.begin(),end=para_list.end(); it!=end; it++)
-    db_param.insert((*it)->name, *it);  
+  for(it=para_list.begin(),end=para_list.end(); it!=end; it++) {
+    shared_ptr<Variable> m = db_param.swap((*it)->name, *it);  
+    if(m.use_count() != 0) {
+      // duplicated declaration
+      G_ENV->error((*it)->loc, "SYN-PARA-1", m->name.name, toString(m->loc));
+    }
+  }    
 }
 
 bool netlist::Module::elab_inparse_item(const shared_ptr<NetComp>& it) {

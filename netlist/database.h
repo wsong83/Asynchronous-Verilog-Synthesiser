@@ -119,7 +119,12 @@ namespace netlist {
         for(it=db_list.begin(), end=db_list.end(); it!=end; it++)
           if(it->first == key) break;
         
-        if(it != end) { rv = it->second; it->second = comp;}
+        if(it != end) { 
+          rv = it->second; 
+          it->second = comp;
+        } else {
+          db_list.push_back(DTT(key, comp));
+        }
         return rv;
       } else {
         shared_ptr<T> rv = fetch(key);
