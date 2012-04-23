@@ -347,6 +347,13 @@ ostream& netlist::Expression::streamout(ostream& os, unsigned int indent) const 
   return os;
 }
 
+void netlist::Expression::set_father(Block *pf) {
+  father = pf;
+  list<shared_ptr<Operation> >::iterator it, end;
+  for(it=eqn.begin(),end=eqn.end(); it!=end; it++)
+    (*it)->set_father(pf);
+}
+
 Expression* netlist::Expression::deep_copy() const {
   Expression* rv = new Expression();
   rv->loc = loc;

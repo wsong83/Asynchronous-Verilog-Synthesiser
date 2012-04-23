@@ -46,6 +46,7 @@ namespace netlist {
     // helpers
     int compare(const Identifier& rhs) const; /* compare two identifiers */
     NETLIST_STREAMOUT_DECL;
+    NETLIST_SET_FATHER_DECL;
     void hash_update();			   /* update the nearly unique hash id */
 
     // data
@@ -148,6 +149,7 @@ namespace netlist {
     void set_range(const vector<shared_ptr<Range> >& nr) { m_range = nr; }
     const vector<shared_ptr<Range> >& get_range() const {return m_range;}
     vector<shared_ptr<Range> >& get_range() {return m_range;}
+    NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
 
   private:
@@ -181,15 +183,16 @@ namespace netlist {
     void set_value(const Number& p) { value = p; }
     const string& get_txt_value() const { return value.get_txt_value(); }
     void db_register(shared_ptr<Variable>&, int);
-    void db_register(int);      /* light weight version when father is available */
-    void db_register();         /* light weight version when father and direction is available */
+    void db_register(int);      /* light weight version when pvar is available */
+    void db_register();         /* light weight version when pvar and direction is available */
     void db_expunge();
     bool db_registered() const { return uid != 0; }
-    void set_father(const shared_ptr<Variable>& f, int iod = 1) { assert(uid == 0); father = f; inout_t = iod;}
+    void set_variable(const shared_ptr<Variable>& f, int iod = 1) { assert(uid == 0); pvar = f; inout_t = iod;}
     void reset_uid(unsigned int id) { uid = id; } /* only used by Variable::get_id() */
     int get_inout_dir() const { return inout_t; }
 
     // inherit from NetComp
+    NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
     virtual VIdentifier* deep_copy() const;
 
@@ -198,7 +201,7 @@ namespace netlist {
     vector<shared_ptr<Range> > m_range;
     vector<shared_ptr<Range> > m_select;
     bool numbered;                 /* true when it is numbered unnamed variable */
-    shared_ptr<Variable> father;   /* the wire/reg/var in the database */
+    shared_ptr<Variable> pvar;     /* the wire/reg/var in the database */
     int inout_t;                   /* input / output type */
     unsigned int uid;              /* used as the key to search this variable as fanin or fanout */
   };

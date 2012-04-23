@@ -65,6 +65,10 @@ ostream& netlist::Identifier::streamout(ostream& os, unsigned int indent) const 
   return os;
 }
 
+void netlist::Identifier::set_father(Block *pf) {
+  father = pf;
+}
+
 void netlist::Identifier::hash_update() {
   boost::hash<string> s2i;
   hashid = s2i(name);
@@ -218,6 +222,13 @@ netlist::PoIdentifier::PoIdentifier(const averilog::avID& id)
 netlist::PoIdentifier::PoIdentifier(const location& lloc, const averilog::avID& id)
   : Identifier(tVarName, lloc, id.name) { }
 
+void netlist::PoIdentifier::set_father(Block *pf) {
+  Identifier::set_father(pf);
+  vector<shared_ptr<Range> >::iterator it, end;
+  for(it=m_range.begin(),end=m_range.end(); it!=end; it++)
+    (*it)->set_father(pf);
+}
+
 ostream& netlist::PoIdentifier::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
   
@@ -284,6 +295,15 @@ VIdentifier& netlist::VIdentifier::add_prefix(const Identifier& prefix) {
   return *this;
 }
 
+void netlist::VIdentifier::set_father(Block *pf) {
+  Identifier::set_father(pf);
+  vector<shared_ptr<Range> >::iterator it, end;
+  for(it=m_range.begin(),end=m_range.end(); it!=end; it++)
+    (*it)->set_father(pf);
+  for(it=m_select.begin(),end=m_select.end(); it!=end; it++)
+    (*it)->set_father(pf);
+}
+
 ostream& netlist::VIdentifier::streamout(ostream& os, unsigned int indent) const {
   vector<shared_ptr<Range> >::const_iterator it, end;
 
@@ -299,8 +319,8 @@ void netlist::VIdentifier::db_register(shared_ptr<Variable>& f, int iod) {
   assert(uid == 0);
   assert(iod >= 0 && iod <= 1);
 
-  // store the father and the inout direction
-  father = f;
+  // store the father variable and the inout direction
+  pvar = f;
   inout_t = iod;
 
   // generate a unique id
@@ -318,22 +338,22 @@ void netlist::VIdentifier::db_register(shared_ptr<Variable>& f, int iod) {
 }
 
 void netlist::VIdentifier::db_register(int iod) {
-  assert(father.use_count());
+  assert(pvar.use_count());
   assert(uid == 0);
-  db_register(father, iod);
+  db_register(pvar, iod);
 }
 
 void netlist::VIdentifier::db_register() {
-  assert(father.use_count());
+  assert(pvar.use_count());
   assert(uid == 0);
-  db_register(father, inout_t);
+  db_register(pvar, inout_t);
 }
 
 void netlist::VIdentifier::db_expunge() {
   assert(uid != 0);
-  assert(father.use_count());
+  assert(pvar.use_count());
   
-  int rv = father->fan[inout_t].erase(uid);
+  int rv = pvar->fan[inout_t].erase(uid);
   assert(rv == 1);
 }
 
@@ -341,7 +361,7 @@ VIdentifier* netlist::VIdentifier::deep_copy() const {
   VIdentifier* rv = new VIdentifier(this->loc, this->name);
   rv->value = this->value;
   rv->numbered = this->numbered;
-  rv->father = this->father;
+  rv->pvar = this->pvar;
   rv->inout_t = this->inout_t;
   rv->uid = 0;                  // unregistered
   vector<shared_ptr<Range> >::const_iterator it, end;
@@ -350,6 +370,7 @@ VIdentifier* netlist::VIdentifier::deep_copy() const {
   for(it=this->m_select.begin(), end=this->m_select.end(); it!=end; it++)
     rv->m_select.push_back(shared_ptr<Range>((*it)->deep_copy()));
   return rv;
+  rv->set_father(this->father);
 }
   
 

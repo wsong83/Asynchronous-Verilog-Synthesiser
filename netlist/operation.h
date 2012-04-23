@@ -95,6 +95,7 @@ namespace netlist {
     void db_expunge();
     
     // inherit from NetComp
+    NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
     virtual Operation* deep_copy() const; 
 
@@ -102,6 +103,7 @@ namespace netlist {
     operation_t otype;
     bool valuable;
     shared_ptr<NetComp> data;
+    Block* father;
   };
 
   NETLIST_STREAMOUT(Operation);

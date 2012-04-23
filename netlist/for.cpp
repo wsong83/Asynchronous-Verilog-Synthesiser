@@ -53,6 +53,15 @@ netlist::ForState::ForState(
   body->elab_inparse();
 }
 
+void netlist::ForState::set_father(Block *pf) {
+  father = pf;
+  name.set_father(pf);
+  init->set_father(pf);
+  cond->set_father(pf);
+  incr->set_father(pf);
+  body->set_father(pf);
+}
+
 ostream& netlist::ForState::streamout(ostream& os, unsigned int indent) const {
   assert(init.use_count() != 0);
 

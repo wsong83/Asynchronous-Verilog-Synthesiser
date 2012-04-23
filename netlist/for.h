@@ -52,6 +52,7 @@ namespace netlist {
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
+    NETLIST_SET_FATHER_DECL;
 
     // helpers
     void set_name(const BIdentifier& nm) { name = nm; named = true;}

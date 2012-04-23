@@ -76,6 +76,13 @@ ostream& netlist::IfState::streamout(ostream& os, unsigned int indent) const {
   return streamout(os, indent, false);
 }
 
+void netlist::IfState::set_father(Block *pf) {
+  father = pf;
+  exp->set_father(pf);
+  ifcase->set_father(pf);
+  if(elsecase.use_count() != 0) elsecase->set_father(pf);
+}
+
 ostream& netlist::IfState::streamout(ostream& os, unsigned int indent, bool fl_prefix) const {
   assert(exp.use_count() != 0);
 

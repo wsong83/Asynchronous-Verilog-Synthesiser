@@ -100,6 +100,11 @@ namespace netlist {
     bool is_in() const { return dir == -1; }
     bool is_out() const { return dir == 1; }
     bool is_inout() const { return dir == 0; }
+    void set_father(Block* pf) { 
+      pname.set_father(pf);
+      if(exp.use_count() != 0) exp->set_father(pf);
+      var.set_father(pf);
+    }
 
     ostream& streamout (ostream& os, unsigned int indent) const {
       if(named) os << "." << pname.name << "(";
@@ -156,6 +161,11 @@ namespace netlist {
     // helpers
     void reduce() { preduce<ParaConn>(this); }
     bool is_named() const { return named;}
+    void set_father(Block* pf) { 
+      pname.set_father(pf);
+      if(exp.use_count() != 0) exp->set_father(pf);
+      var.set_father(pf);
+    }
     ostream& streamout (ostream& os, unsigned int indent) const {
       if(named) os << "." << pname.name << "(";
       switch(type) {

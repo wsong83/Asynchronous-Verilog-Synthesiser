@@ -41,6 +41,7 @@ namespace netlist {
     LConcatenation(const location&, const VIdentifier&);
 
     // helpers
+    NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
     bool is_valid() const { return valid; }
     unsigned int size() const { return data.size(); }

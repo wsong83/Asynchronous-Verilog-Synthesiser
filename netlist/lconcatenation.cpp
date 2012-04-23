@@ -66,6 +66,12 @@ netlist::LConcatenation::LConcatenation(const VIdentifier& id)
 netlist::LConcatenation::LConcatenation(const location& lloc, const VIdentifier& id)
   : NetComp(tLConcatenation, lloc), valid(true) { data.push_back(id); }
 
+void netlist::LConcatenation::set_father(Block *pf) {
+  father = pf;
+  list<VIdentifier>::iterator it, end;
+  for(it=data.begin(), end=data.end(); it!=end; it++)
+    it->set_father(pf);
+}
 
 ostream& netlist::LConcatenation::streamout(ostream& os, unsigned int indent) const {
   assert(valid);

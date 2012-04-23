@@ -64,8 +64,10 @@ namespace netlist {
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
+    NETLIST_SET_FATHER_DECL;
     virtual Expression* deep_copy() const;
     
+    // data
     list<shared_ptr<Operation> > eqn;
 
   private:

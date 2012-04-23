@@ -55,6 +55,7 @@ namespace netlist {
     Instance(const location&, const list<shared_ptr<PortConn> >&, type_t);
 
     // helpers
+    NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
     void set_mname(const MIdentifier& mod_name) { mname = mod_name; }
     void set_name(const IIdentifier& nm) { name = nm; named=true; }

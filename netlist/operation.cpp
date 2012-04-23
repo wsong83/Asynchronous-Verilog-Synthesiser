@@ -128,6 +128,11 @@ void netlist::Operation::db_expunge() {
   }
 }
 
+void netlist::Operation::set_father(Block *pf) {
+  father = pf;
+  if(data.use_count() != 0) data->set_father(pf);
+}
+
 ostream& netlist::Operation::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
   switch(otype) {
