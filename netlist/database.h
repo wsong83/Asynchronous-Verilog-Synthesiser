@@ -236,5 +236,34 @@ namespace netlist {
 }                            
 #endif
 
+// macro to check the variable connections in all elements of a database during parsing
+// to keep the function of the database as pure as possible, this is defined as a macro
+// DN, the name of the data base
+// K, key type
+// T, component type
+// R, the return boolean variable
+#ifndef DATABASE_CHECK_INPARSE_FUN
+#define DATABASE_CHECK_INPARSE_FUN(DN, K, T, R)       \
+{                                                     \
+  map<K, shared_ptr<T> >::iterator it, end;           \
+  for(it=DN.begin(), end=DN.end(); it!=end; it++)     \
+    R &= it->second->check_inparse();                 \
+}
+#endif
+
+// macro to check the variable connections in all elements of a database during parsing
+// to keep the function of the database as pure as possible, this is defined as a macro
+// DN, the name of the data base
+// K, key type
+// T, component type
+// R, the return boolean variable
+#ifndef DATABASE_CHECK_INPARSE_ORDER_FUN
+#define DATABASE_CHECK_INPARSE_ORDER_FUN(DN, K, T, R)         \
+{                                                             \
+  list<pair<K, shared_ptr<T> > >::iterator it, end;           \
+  for(it=DN.begin_order(), end=DN.end_order(); it!=end; it++) \
+    R &= it->second->check_inparse();                         \
+}                            
+#endif
 
 #endif

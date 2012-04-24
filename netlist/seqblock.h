@@ -53,6 +53,7 @@ namespace netlist{
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
+    NETLIST_CHECK_INPARSE_DECL;
     using NetComp::set_father;
     
     // data

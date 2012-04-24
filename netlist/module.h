@@ -51,6 +51,7 @@ namespace netlist {
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
+    NETLIST_CHECK_INPARSE_DECL;
     using NetComp::set_father;
 
     // helpers
@@ -60,6 +61,8 @@ namespace netlist {
     shared_ptr<Variable>  find_var       (const VIdentifier&) const; /* find a variable */
     shared_ptr<Block>     find_block     (const BIdentifier&) const; /* find a block */
     shared_ptr<NetComp>   find_item      (const BIdentifier&) const; /* find an item in db_other */
+    /* find a variable in the global environment, up to the module level */
+    shared_ptr<Variable>  gfind_var      (const VIdentifier&) const; 
     virtual void elab_inparse();                           /* resolve the content in statements during parsing */
     virtual void set_father();                             /* set the father pointer to all sub-elements */
 

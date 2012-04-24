@@ -129,6 +129,8 @@ namespace netlist {
     shared_ptr<NetComp>   find_item      (const BIdentifier&) const; /* find an item in db_other */
     shared_ptr<Instance>  find_instance  (const IIdentifier&) const; /* find an instance */
     shared_ptr<Variable>  find_var       (const VIdentifier&) const; /* find a variable */
+    /* find a variable in the global environment, up to the module level */
+    shared_ptr<Variable>  gfind_var      (const VIdentifier&) const; 
     virtual ostream& streamout(ostream& os, unsigned int indent, bool fl_prefix) const;
     const shared_ptr<NetComp>& front() const { return statements.front(); }
     shared_ptr<NetComp>& front() { return statements.front(); }

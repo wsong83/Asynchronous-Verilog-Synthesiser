@@ -159,8 +159,16 @@ shared_ptr<Instance> netlist::Block::find_instance(const IIdentifier& key) const
   return db_instance.find(key);
 }
 
+/* find a variable in current block*/
 shared_ptr<Variable> netlist::Block::find_var(const VIdentifier& key) const {
   return db_var.find(key);
+}
+
+/* find a variable in the global environment, up to the module level */
+shared_ptr<Variable> netlist::Block::gfind_var(const VIdentifier& key) const {
+  shared_ptr<Variable> rv = db_var.find(key);
+  if(rv.use_count() == 0 && father != NULL) return father->gfind_var(key);
+  return rv;
 }
 
 ostream& netlist::Block::streamout(ostream& os, unsigned int indent) const {
@@ -211,10 +219,16 @@ ostream& netlist::Block::streamout(ostream& os, unsigned int indent, bool fl_pre
 }
 
 bool netlist::Block::check_inparse() {
-  return false;
+  bool rv = true;
+  // macros defined in database.h
+  DATABASE_CHECK_INPARSE_FUN(db_var, VIdentifier, Variable, rv);
+  DATABASE_CHECK_INPARSE_FUN(db_instance, IIdentifier, Instance, rv);
+  DATABASE_CHECK_INPARSE_FUN(db_other, BIdentifier, NetComp, rv);
+  return rv;
 }
 
 void netlist::Block::set_father() {
+  // macros defined in database.h
   DATABASE_SET_FATHER_FUN(db_var, VIdentifier, Variable, this);
   DATABASE_SET_FATHER_FUN(db_instance, IIdentifier, Instance, this);
   DATABASE_SET_FATHER_FUN(db_other, BIdentifier, NetComp, this);

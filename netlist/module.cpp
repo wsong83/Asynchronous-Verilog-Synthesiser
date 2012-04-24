@@ -154,11 +154,17 @@ BIdentifier& netlist::Module::new_BId() {
   return unnamed_block;
 }
 
+/* find a variable in current block*/
 shared_ptr<Variable> netlist::Module::find_var(const VIdentifier& key) const {
   shared_ptr<Variable>     rv = db_param.find(key);
   if(rv.use_count() == 0)  rv = db_genvar.find(key);
   if(rv.use_count() == 0)  rv = db_var.find(key);
   return rv;
+}
+
+/* find a variable in the global environment, up to the module level */
+shared_ptr<Variable> netlist::Module::gfind_var(const VIdentifier& key) const {
+  return find_var(key);         // for a module, it is the highest level
 }
 
 shared_ptr<Block> netlist::Module::find_block(const BIdentifier& key) const {
@@ -193,9 +199,26 @@ void netlist::Module::elab_inparse() {
 
   // set the father pointers
   set_father();
+  check_inparse();
+}
+
+bool netlist::Module::check_inparse() {
+  bool rv = true;
+  rv &= Block::check_inparse();
+
+  // macros defined in database.h
+  DATABASE_CHECK_INPARSE_ORDER_FUN(db_port, PoIdentifier, Port, rv);
+  DATABASE_CHECK_INPARSE_ORDER_FUN(db_param, VIdentifier, Variable, rv);
+  DATABASE_CHECK_INPARSE_ORDER_FUN(db_genvar, VIdentifier, Variable, rv);
+  DATABASE_CHECK_INPARSE_FUN(db_seqblock, BIdentifier, SeqBlock, rv);
+  DATABASE_CHECK_INPARSE_FUN(db_assign, BIdentifier, Assign, rv);
+  DATABASE_CHECK_INPARSE_FUN(db_genblock, BIdentifier, GenBlock, rv);
+
+  return rv;
 }
 
 void netlist::Module::set_father() {
+  // macros defined in database.h
   DATABASE_SET_FATHER_ORDER_FUN(db_port, PoIdentifier, Port, this);
   DATABASE_SET_FATHER_ORDER_FUN(db_param, VIdentifier, Variable, this);
   DATABASE_SET_FATHER_ORDER_FUN(db_genvar, VIdentifier, Variable, this);

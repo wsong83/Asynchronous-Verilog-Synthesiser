@@ -145,6 +145,26 @@ netlist::SeqBlock::SeqBlock(const location& lloc, const Block& body)
   elab_inparse();
 }
 
+bool netlist::SeqBlock::check_inparse() {
+  bool rv = true;
+  rv &= Block::check_inparse();
+
+  {
+    list<pair<bool, shared_ptr<Expression> > >::iterator it, end;
+    for(it=slist_pulse.begin(), end=slist_pulse.end(); it!=end; it++)
+      rv &= it->second->check_inparse();
+  }
+
+  {
+    list<shared_ptr<Expression> >::iterator it, end;
+    for(it=slist_level.begin(), end=slist_level.end(); it!=end; it++)
+      rv &= (*it)->check_inparse();
+  }
+
+
+  return rv;
+}
+
 void netlist::SeqBlock::elab_inparse() {
   if(!(slist_pulse.empty() || slist_level.empty())) // none list is empty
     G_ENV->error(loc, "SYN-BLOCK-1", name.name);
