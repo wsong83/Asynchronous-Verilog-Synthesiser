@@ -194,6 +194,7 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
+    NETLIST_CHECK_INPARSE_DECL;
     virtual VIdentifier* deep_copy() const;
 
   private:

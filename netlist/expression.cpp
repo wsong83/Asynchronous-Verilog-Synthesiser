@@ -355,6 +355,14 @@ void netlist::Expression::set_father(Block *pf) {
     (*it)->set_father(pf);
 }
 
+bool netlist::SeqBlock::check_inparse() {
+  bool rv = true;
+  list<shared_ptr<Operation> >::iterator it, end;
+  for(it=eqn.begin(),end=eqn.end(); it!=end; it++)
+    rv &= (*it)->check_inparse();
+  return rv;
+}
+
 Expression* netlist::Expression::deep_copy() const {
   Expression* rv = new Expression();
   rv->loc = loc;

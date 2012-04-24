@@ -36,6 +36,16 @@ netlist::Port::Port(const PoIdentifier& pid)
 netlist::Port::Port(const location& lloc, const PoIdentifier& pid)
   : NetComp(tPort, lloc), name(pid), dir(0) {}
 
+bool netlist::Port::check_inparse() {
+  shared_ptr<Variable> m = father->gfind_var(VIdentifier(name.name));
+  if(m.use_count() == 0) {      // port without wire/reg definition
+    G_ENV->error(loc, "SYN-PORT-2", name.name);
+    father->db_var.insert(VIdentifier(name.name), Variable(*this));
+  }
+  return true;
+}
+
+
 ostream& netlist::Port::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
   if(is_in())

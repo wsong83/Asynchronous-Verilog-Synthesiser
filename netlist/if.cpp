@@ -84,6 +84,14 @@ void netlist::IfState::set_father(Block *pf) {
   if(elsecase.use_count() != 0) elsecase->set_father(pf);
 }
 
+bool netlist::IfState::check_inparse() {
+  bool rv = true;
+  rv &= exp->check_inparse();
+  rv &= ifcase->check_inparse();
+  if(elsecase.use_count() != 0) rv &= elsecase->check_inparse();
+  return rv;
+}
+
 ostream& netlist::IfState::streamout(ostream& os, unsigned int indent, bool fl_prefix) const {
   assert(exp.use_count() != 0);
 

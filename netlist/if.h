@@ -66,6 +66,7 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
+    NETLIST_CHECK_INPARSE_DECL;
 
     //data
     shared_ptr<Expression> exp; /* the condition expression */

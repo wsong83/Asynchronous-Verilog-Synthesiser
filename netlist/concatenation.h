@@ -55,6 +55,7 @@ namespace netlist {
     void db_expunge();
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
+    NETLIST_CHECK_INPARSE_DECL;
     virtual ConElem* deep_copy() const;
 
     shared_ptr<Expression> exp;
@@ -81,6 +82,7 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
+    NETLIST_CHECK_INPARSE_DECL;
     virtual Concatenation* deep_copy() const;
 
     // data

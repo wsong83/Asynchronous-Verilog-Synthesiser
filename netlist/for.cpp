@@ -63,6 +63,15 @@ void netlist::ForState::set_father(Block *pf) {
   body->set_father(pf);
 }
 
+bool netlist::SeqBlock::check_inparse() {
+  bool rv = true;
+  rv &= init->check_inparse();
+  rv &= cond->check_inparse();
+  rv &= incr->check_inparse();
+  rv &= body->check_inparse();
+  return rv;
+}
+
 ostream& netlist::ForState::streamout(ostream& os, unsigned int indent) const {
   assert(init.use_count() != 0);
 

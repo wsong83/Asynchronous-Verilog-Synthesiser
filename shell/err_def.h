@@ -109,6 +109,11 @@ ERR_DEFINE("SYN-PORT-1",
            EError, 2, 
            "port \"%1%\" is already defined at %2%.");
 
+// input port without a wire declaration. A declaration is added.
+ERR_DEFINE("SYN-PORT-2",   
+           EWarning, 2, 
+           "port \"%1%\" is declared without a wire/reg declaration.");
+
 // define a reg outside a block or wire outside a module/generate. It will be ignored
 ERR_DEFINE("SYN-VAR-0",    
            EError,   1, 
@@ -122,7 +127,7 @@ ERR_DEFINE("SYN-VAR-1",
 // variable not found. It will be assumed as a 1-bit wire/reg.
 ERR_DEFINE("SYN-VAR-3",    
            EError,   1, 
-           "variable (wire/reg/parameter) \"%1%\" is not found in current block.");
+           "variable (wire/reg/parameter/genvar) \"%1%\" is not found in current block.");
 
 ERR_DEFINE("SYN-VAR-4",    
            EWarning, 1, 

@@ -96,6 +96,7 @@ namespace netlist {
     
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
+    NETLIST_CHECK_INPARSE_DECL;
     NETLIST_STREAMOUT_DECL;
     virtual Operation* deep_copy() const; 
 

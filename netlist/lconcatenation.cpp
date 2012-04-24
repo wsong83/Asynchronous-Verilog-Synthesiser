@@ -74,6 +74,14 @@ void netlist::LConcatenation::set_father(Block *pf) {
     it->set_father(pf);
 }
 
+bool netlist::VIdentifier::check_inparse() {
+  bool rv = true;
+  list<VIdentifier>::iterator it, end;
+  for(it=data.begin(), end=data.end(); it!=end; it++)
+    rv &= it->check_inparse();
+  return rv;
+}
+
 ostream& netlist::LConcatenation::streamout(ostream& os, unsigned int indent) const {
   assert(valid);
 

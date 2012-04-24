@@ -58,7 +58,9 @@ ostream& netlist::Assign::streamout(ostream& os, unsigned int indent) const {
 
 bool netlist::Assign::check_inparse() {
   bool rv = true;
-  return false;
+  rv &= lval->check_inparse();
+  rv &= rexp->check_inparse();
+  return rv;
 }
 
 void netlist::Assign::set_father(Block *pf) {

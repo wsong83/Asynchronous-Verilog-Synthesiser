@@ -31,6 +31,15 @@
 using namespace netlist;
 
 
+netlist::Variable::Variable(const Port& p)
+  : NetComp(tVariable, p.loc)
+{
+  if(p.is_in()) vtype = TWire;
+  else          vtype = TReg;
+
+  name = VIdentifier(p.name.loc, p.name.name, p.get_range());
+}
+
 void netlist::Variable::set_value(const Number& num) {
   exp.reset(new Expression(num));
   update();

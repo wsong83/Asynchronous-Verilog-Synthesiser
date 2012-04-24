@@ -195,6 +195,10 @@ ostream& netlist::Number::streamout (ostream& os, unsigned int indent) const{
   return os;
 }
 
+bool netlist::VIdentifier::check_inparse() {
+  return valid;
+}
+
 Number* netlist::Number::deep_copy() const {
   return (new Number(*this));
 }

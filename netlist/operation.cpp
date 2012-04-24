@@ -134,6 +134,11 @@ void netlist::Operation::set_father(Block *pf) {
   if(data.use_count() != 0) data->set_father(pf);
 }
 
+bool netlist::Operation::check_inparse() {
+  if(data.use_count() != 0) return data->check_inparse();
+  else return true;
+}
+
 ostream& netlist::Operation::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
   switch(otype) {

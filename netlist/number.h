@@ -58,6 +58,7 @@ namespace netlist {
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
+    NETLIST_CHECK_INPARSE_DECL;
     virtual Number* deep_copy() const;
 
     // operation

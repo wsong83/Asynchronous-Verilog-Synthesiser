@@ -96,6 +96,15 @@ void netlist::ConElem::set_father(Block *pf) {
     (*it)->set_father(pf);
 }
 
+bool netlist::ConElem::check_inparse() {
+  bool rv = true;
+  rv &= exp->check_inparse();
+  list<shared_ptr<ConElem> >::iterator it, end;
+  for(it=con.begin(), end=con.end(); it!=end; it++)
+    rv &= (*it)->check_inparse();
+  return rv;
+}
+
 ostream& netlist::Concatenation::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
   if(data.size() > 1) {
@@ -236,4 +245,13 @@ void netlist::Concatenation::set_father(Block *pf) {
   list<shared_ptr<ConElem> >::iterator it, end;
   for(it=data.begin(), end=data.end(); it!=end; it++)
     (*it)->set_father(pf);
+}
+
+bool netlist::Concatenation::check_inparse() {
+  bool rv = true;
+  list<shared_ptr<ConElem> >::iterator it, end;
+  for(it=data.begin(), end=data.end(); it!=end; it++)
+    rv &= (*it)->check_inparse();
+
+  return rv;
 }

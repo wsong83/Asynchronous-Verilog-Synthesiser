@@ -306,6 +306,24 @@ void netlist::VIdentifier::set_father(Block *pf) {
     (*it)->set_father(pf);
 }
 
+bool netlist::VIdentifier::check_inparse() {
+  bool rv = true;
+
+  // check whether the variable is declared before use
+  if((father->gfind_var(*this)).use_count() == 0) {
+    G_ENV->error(loc, "SYN-VAR-3", name);
+    rv = false;
+  }
+  
+  vector<shared_ptr<Range> >::iterator it, end;
+  for(it=m_range.begin(),end=m_range.end(); it!=end; it++)
+    rv &= (*it)->check_inparse();
+  for(it=m_select.begin(),end=m_select.end(); it!=end; it++)
+    rv &= (*it)->check_inparse();
+
+  return rv;
+}
+
 ostream& netlist::VIdentifier::streamout(ostream& os, unsigned int indent) const {
   vector<shared_ptr<Range> >::const_iterator it, end;
 
