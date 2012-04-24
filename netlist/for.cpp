@@ -63,7 +63,7 @@ void netlist::ForState::set_father(Block *pf) {
   body->set_father(pf);
 }
 
-bool netlist::SeqBlock::check_inparse() {
+bool netlist::ForState::check_inparse() {
   bool rv = true;
   rv &= init->check_inparse();
   rv &= cond->check_inparse();

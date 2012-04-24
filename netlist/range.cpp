@@ -221,6 +221,20 @@ ostream& netlist::Range::streamout(ostream& os, unsigned int indent) const {
   return os;
 }
 
+bool netlist::Range::check_inparse() {
+  bool rv = true;
+  
+  switch(rtype) {
+  case TR_Var: rv &= v->check_inparse(); return rv;
+  case TR_Range: 
+    rv &= r.first->check_inparse(); 
+    rv &= r.second->check_inparse(); 
+    return rv;
+  default: 
+    return rv;
+  }
+}
+
 Range* netlist::Range::deep_copy() const {
   Range* rv = new Range();
   switch(rtype) {

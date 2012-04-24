@@ -105,6 +105,13 @@ namespace netlist {
       if(exp.use_count() != 0) exp->set_father(pf);
       var.set_father(pf);
     }
+    bool check_inparse() {
+      switch(type) {
+      case CEXP: return exp->check_inparse();
+      case CVAR: return var.check_inparse();
+      default: return true;
+      }
+    }
 
     ostream& streamout (ostream& os, unsigned int indent) const {
       if(named) os << "." << pname.name << "(";
@@ -161,11 +168,21 @@ namespace netlist {
     // helpers
     void reduce() { preduce<ParaConn>(this); }
     bool is_named() const { return named;}
+
     void set_father(Block* pf) { 
       pname.set_father(pf);
       if(exp.use_count() != 0) exp->set_father(pf);
       var.set_father(pf);
     }
+
+    bool check_inparse() {
+      switch(type) {
+      case CEXP: return exp->check_inparse();
+      case CVAR: return var.check_inparse();
+      default: return true;
+      }
+    }
+
     ostream& streamout (ostream& os, unsigned int indent) const {
       if(named) os << "." << pname.name << "(";
       switch(type) {

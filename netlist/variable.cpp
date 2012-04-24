@@ -37,7 +37,7 @@ netlist::Variable::Variable(const Port& p)
   if(p.is_in()) vtype = TWire;
   else          vtype = TReg;
 
-  name = VIdentifier(p.name.loc, p.name.name, p.get_range());
+  name = VIdentifier(p.name.loc, p.name.name, p.name.get_range());
 }
 
 void netlist::Variable::set_value(const Number& num) {
@@ -103,6 +103,11 @@ ostream& netlist::Variable::streamout(ostream& os, unsigned int indent) const {
 
   return os;
 
+}
+
+bool netlist::Variable::check_inparse() {
+  if(exp.use_count() != 0) return exp->check_inparse();
+  else return true;
 }
 
 unsigned int netlist::Variable::get_id(int iod) {

@@ -355,7 +355,7 @@ void netlist::Expression::set_father(Block *pf) {
     (*it)->set_father(pf);
 }
 
-bool netlist::SeqBlock::check_inparse() {
+bool netlist::Expression::check_inparse() {
   bool rv = true;
   list<shared_ptr<Operation> >::iterator it, end;
   for(it=eqn.begin(),end=eqn.end(); it!=end; it++)

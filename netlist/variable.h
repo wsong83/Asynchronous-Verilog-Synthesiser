@@ -59,6 +59,7 @@ namespace netlist {
     void update();  /* recalculate the value and update all fanouts */
     NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
+    NETLIST_CHECK_INPARSE_DECL;
 
     VIdentifier name;
     map<unsigned int, VIdentifier *> fan[2]; /* fan[0] for fanin, fan[1] for fanout */

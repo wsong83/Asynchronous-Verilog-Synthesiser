@@ -195,7 +195,7 @@ ostream& netlist::Number::streamout (ostream& os, unsigned int indent) const{
   return os;
 }
 
-bool netlist::VIdentifier::check_inparse() {
+bool netlist::Number::check_inparse() {
   return valid;
 }
 

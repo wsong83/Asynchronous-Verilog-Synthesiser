@@ -57,3 +57,10 @@ ostream& netlist::WhileState::streamout(ostream& os, unsigned int indent) const 
 
   return os;
 }
+
+bool netlist::WhileState::check_inparse() {
+  bool rv = true;
+  rv &= exp->check_inparse();
+  rv &= body->check_inparse();
+  return rv;
+}

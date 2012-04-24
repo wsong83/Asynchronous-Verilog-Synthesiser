@@ -40,7 +40,7 @@ bool netlist::Port::check_inparse() {
   shared_ptr<Variable> m = father->gfind_var(VIdentifier(name.name));
   if(m.use_count() == 0) {      // port without wire/reg definition
     G_ENV->error(loc, "SYN-PORT-2", name.name);
-    father->db_var.insert(VIdentifier(name.name), Variable(*this));
+    father->db_var.insert(VIdentifier(name.name), shared_ptr<Variable>( new Variable(*this)));
   }
   return true;
 }
