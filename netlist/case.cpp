@@ -55,6 +55,7 @@ ostream& netlist::CaseItem::streamout (ostream& os, unsigned int indent) const {
 }
 
 void netlist::CaseItem::set_father(Block *pf) {
+  if(father == pf) return;
   father = pf;
   list<shared_ptr<Expression> >::iterator it, end;
   for(it=exps.begin(), end=exps.end(); it!=end; it++)
@@ -76,6 +77,7 @@ ostream& netlist::CaseState::streamout (ostream& os, unsigned int indent) const 
 }
 
 void netlist::CaseState::set_father(Block *pf) {
+  if(father == pf) return;
   father = pf;
   name.set_father(pf);
   exp->set_father(pf);

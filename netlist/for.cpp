@@ -54,6 +54,7 @@ netlist::ForState::ForState(
 }
 
 void netlist::ForState::set_father(Block *pf) {
+  if(father == pf) return;
   father = pf;
   name.set_father(pf);
   init->set_father(pf);

@@ -190,6 +190,9 @@ void netlist::Module::elab_inparse() {
   if(statements.size() == 0)
     G_ENV->error(loc, "SYN-MODULE-2", name.name);
 
+
+  // set the father pointers
+  set_father();
 }
 
 void netlist::Module::set_father() {

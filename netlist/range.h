@@ -57,6 +57,7 @@ namespace netlist {
     bool is_dim() const { return dim;}
 
     // inherit from NetComp
+    NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
     virtual Range* deep_copy() const;
     

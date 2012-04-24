@@ -47,7 +47,12 @@ void netlist::Variable::update() {
     it->second->set_value(m);
   }
 }
-  
+
+void netlist::Variable::set_father(Block *pf) {
+  if(father == pf) return;
+  father = pf;
+  if(exp.use_count() != 0) exp->set_father(pf);
+}
 
 ostream& netlist::Variable::streamout(ostream& os, unsigned int indent) const {
 

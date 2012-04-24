@@ -129,6 +129,7 @@ void netlist::Operation::db_expunge() {
 }
 
 void netlist::Operation::set_father(Block *pf) {
+  if(father == pf) return;
   father = pf;
   if(data.use_count() != 0) data->set_father(pf);
 }
@@ -186,6 +187,7 @@ Operation* netlist::Operation::deep_copy() const {
   rv->otype = this->otype;
   rv->valuable = this->valuable;
   if(data.use_count() != 0) rv->data = shared_ptr<NetComp>(data->deep_copy());
+  rv->set_father(father);
   return rv;
 }
 

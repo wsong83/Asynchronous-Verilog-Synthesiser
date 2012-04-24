@@ -77,6 +77,7 @@ ostream& netlist::IfState::streamout(ostream& os, unsigned int indent) const {
 }
 
 void netlist::IfState::set_father(Block *pf) {
+  if(father == pf) return;
   father = pf;
   exp->set_father(pf);
   ifcase->set_father(pf);

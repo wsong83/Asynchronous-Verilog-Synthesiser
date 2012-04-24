@@ -67,6 +67,7 @@ netlist::LConcatenation::LConcatenation(const location& lloc, const VIdentifier&
   : NetComp(tLConcatenation, lloc), valid(true) { data.push_back(id); }
 
 void netlist::LConcatenation::set_father(Block *pf) {
+  if(father == pf) return;
   father = pf;
   list<VIdentifier>::iterator it, end;
   for(it=data.begin(), end=data.end(); it!=end; it++)

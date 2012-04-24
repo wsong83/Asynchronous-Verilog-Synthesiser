@@ -128,6 +128,9 @@ void netlist::Block::elab_inparse() {
   // double check the size
   if(statements.size() + db_var.size() > 1)
     blocked = true;             // indicating multiple variable defintions (may happen when it is module or genblock)
+
+  // set the father pointers
+  set_father();
 }
 
 BIdentifier& netlist::Block::new_BId() {

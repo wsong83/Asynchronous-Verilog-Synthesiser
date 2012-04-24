@@ -223,6 +223,7 @@ netlist::PoIdentifier::PoIdentifier(const location& lloc, const averilog::avID& 
   : Identifier(tVarName, lloc, id.name) { }
 
 void netlist::PoIdentifier::set_father(Block *pf) {
+  if(father == pf) return;
   Identifier::set_father(pf);
   vector<shared_ptr<Range> >::iterator it, end;
   for(it=m_range.begin(),end=m_range.end(); it!=end; it++)
@@ -296,6 +297,7 @@ VIdentifier& netlist::VIdentifier::add_prefix(const Identifier& prefix) {
 }
 
 void netlist::VIdentifier::set_father(Block *pf) {
+  if(father == pf) return;
   Identifier::set_father(pf);
   vector<shared_ptr<Range> >::iterator it, end;
   for(it=m_range.begin(),end=m_range.end(); it!=end; it++)
@@ -369,8 +371,8 @@ VIdentifier* netlist::VIdentifier::deep_copy() const {
     rv->m_range.push_back(shared_ptr<Range>((*it)->deep_copy()));
   for(it=this->m_select.begin(), end=this->m_select.end(); it!=end; it++)
     rv->m_select.push_back(shared_ptr<Range>((*it)->deep_copy()));
-  return rv;
   rv->set_father(this->father);
+  return rv;
 }
   
 

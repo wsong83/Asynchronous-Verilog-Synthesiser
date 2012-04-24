@@ -88,6 +88,8 @@ void netlist::GenBlock::elab_inparse() {
   
   blocked = true;               // generate block is always blocked
 
+  // set the father pointers
+  set_father();
 }
 
 bool netlist::GenBlock::elab_inparse_item( const shared_ptr<NetComp>& it) {

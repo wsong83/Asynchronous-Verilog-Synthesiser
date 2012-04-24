@@ -88,6 +88,7 @@ ConElem* netlist::ConElem::deep_copy() const {
 }
 
 void netlist::ConElem::set_father(Block *pf) {
+  if(father == pf) return;
   father = pf;
   exp->set_father(pf);
   list<shared_ptr<ConElem> >::iterator it, end;
@@ -225,10 +226,12 @@ Concatenation* netlist::Concatenation::deep_copy() const {
   list<shared_ptr<ConElem> >::const_iterator it, end;
   for(it=data.begin(), end=data.end(); it!=end; it++)
     rv->data.push_back(shared_ptr<ConElem>((*it)->deep_copy()));
+  rv->set_father(father);
   return rv;
 }
 
 void netlist::Concatenation::set_father(Block *pf) {
+  if(father == pf) return;
   father = pf;
   list<shared_ptr<ConElem> >::iterator it, end;
   for(it=data.begin(), end=data.end(); it!=end; it++)

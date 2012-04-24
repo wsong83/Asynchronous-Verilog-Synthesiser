@@ -42,6 +42,13 @@ netlist::WhileState::WhileState(const location& lloc, const shared_ptr<Expressio
   body->elab_inparse();
 }
 
+void netlist::WhileState::set_father(Block *pf) {
+  if(father == pf) return;
+  father= pf;
+  exp->set_father(pf);
+  body->set_father(pf);
+}
+
 ostream& netlist::WhileState::streamout(ostream& os, unsigned int indent) const {
   assert(exp.use_count() != 0);
 

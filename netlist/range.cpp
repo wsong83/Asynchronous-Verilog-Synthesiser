@@ -198,6 +198,16 @@ void netlist::Range::db_register() {
   r.second->db_register(1);
 }
   
+void netlist::Range::set_father(Block *pf) {
+  if(father == pf) return;
+  father = pf;
+  switch(rtype) {
+  case TR_Var: v->set_father(pf); return;
+  case TR_Range: r.first->set_father(pf); r.second->set_father(pf); return;
+  default: return;
+  }
+}
+
 ostream& netlist::Range::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
   switch(rtype) {
@@ -223,5 +233,6 @@ Range* netlist::Range::deep_copy() const {
   }
   rv->dim = dim;
   rv->rtype = rtype;
+  rv->set_father(father);
   return rv;
 }
