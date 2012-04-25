@@ -312,6 +312,7 @@ bool netlist::VIdentifier::check_inparse() {
   // check whether the variable is declared before use
   if((father->gfind_var(*this)).use_count() == 0) {
     G_ENV->error(loc, "SYN-VAR-3", name);
+    father->get_module()->db_var.insert(*this, shared_ptr<Variable>(new Variable(loc, *this, Variable::TWire)));
     rv = false;
   }
   

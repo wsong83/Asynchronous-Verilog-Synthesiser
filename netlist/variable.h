@@ -40,10 +40,11 @@ namespace netlist {
 
     Variable() : NetComp(tVariable), uid({0,0}) {}
     Variable(const location& lloc) : NetComp(tVariable, lloc), uid({0,0}) {}
-    Variable(const VIdentifier& id): NetComp(tVariable), name(id), uid({0,0}) {}
+    Variable(const VIdentifier& id, vtype_t mtype = TVar)
+      : NetComp(tVariable), vtype(mtype), name(id), uid({0,0}) {}
     Variable(const Port& p);
-    Variable(const location& lloc, const VIdentifier& id)
-      : NetComp(tVariable, lloc), name(id), uid({0,0}) {}
+    Variable(const location& lloc, const VIdentifier& id, vtype_t mtype = TVar)
+      : NetComp(tVariable, lloc), vtype(mtype), name(id), uid({0,0}) {}
     Variable(const VIdentifier& id, const shared_ptr<Expression>& expp, vtype_t mtype = TVar)
       : NetComp(tVariable), vtype(mtype), name(id), uid({0,0}), exp(expp) {}
     Variable(const location& lloc, const VIdentifier& id, 

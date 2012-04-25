@@ -57,6 +57,11 @@ namespace netlist {
     bool is_named() const { return named; }
     bool is_blocked() const { return blocked; }
     virtual bool add(const shared_ptr<NetComp>&); /* add a general statement to this block */
+    /* return a pointer of the top-level module */
+    virtual Block* get_module() { 
+      if(father != NULL) return father->get_module();
+      else return NULL;
+    }
     
     /* a template funtion to add all sorts of netlist components */
     template<typename T>
@@ -126,11 +131,11 @@ namespace netlist {
     BIdentifier& new_BId();     /* generate an unused block id */
     IIdentifier& new_IId();     /* generate an unused instance id*/
     VIdentifier& new_VId();     /* generate an unused variable id */
-    shared_ptr<NetComp>   find_item      (const BIdentifier&) const; /* find an item in db_other */
-    shared_ptr<Instance>  find_instance  (const IIdentifier&) const; /* find an instance */
-    shared_ptr<Variable>  find_var       (const VIdentifier&) const; /* find a variable */
+    virtual shared_ptr<NetComp>   find_item      (const BIdentifier&) const; /* find an item in db_other */
+    virtual shared_ptr<Instance>  find_instance  (const IIdentifier&) const; /* find an instance */
+    virtual shared_ptr<Variable>  find_var       (const VIdentifier&) const; /* find a variable */
     /* find a variable in the global environment, up to the module level */
-    shared_ptr<Variable>  gfind_var      (const VIdentifier&) const; 
+    virtual shared_ptr<Variable>  gfind_var      (const VIdentifier&) const; 
     virtual ostream& streamout(ostream& os, unsigned int indent, bool fl_prefix) const;
     const shared_ptr<NetComp>& front() const { return statements.front(); }
     shared_ptr<NetComp>& front() { return statements.front(); }

@@ -37,7 +37,7 @@ namespace netlist {
       : Block(tModule) {}
     Module(const MIdentifier& nm)
       : Block(tModule), name(nm) { named=true; }
-  Module(const location& lloc, const MIdentifier& nm)
+    Module(const location& lloc, const MIdentifier& nm)
     : Block(tModule, lloc), name(nm) { named=true; }
     Module(const MIdentifier& nm, const shared_ptr<Block>& body);
     Module(const location& lloc, const MIdentifier& nm, const shared_ptr<Block>& body);
@@ -58,13 +58,15 @@ namespace netlist {
     virtual void set_name(const MIdentifier& nm) { name = nm; named=true;}
     VIdentifier& new_VId();
     BIdentifier& new_BId();
-    shared_ptr<Variable>  find_var       (const VIdentifier&) const; /* find a variable */
-    shared_ptr<Block>     find_block     (const BIdentifier&) const; /* find a block */
-    shared_ptr<NetComp>   find_item      (const BIdentifier&) const; /* find an item in db_other */
+    virtual shared_ptr<Variable>  find_var       (const VIdentifier&) const; /* find a variable */
+    virtual shared_ptr<Block>     find_block     (const BIdentifier&) const; /* find a block */
+    virtual shared_ptr<NetComp>   find_item      (const BIdentifier&) const; /* find an item in db_other */
     /* find a variable in the global environment, up to the module level */
-    shared_ptr<Variable>  gfind_var      (const VIdentifier&) const; 
+    virtual shared_ptr<Variable>  gfind_var      (const VIdentifier&) const; 
     virtual void elab_inparse();                           /* resolve the content in statements during parsing */
     virtual void set_father();                             /* set the father pointer to all sub-elements */
+    /* return a pointer of the top-level module */
+    virtual Block* get_module() { return this; }
 
     // data
     MIdentifier name;

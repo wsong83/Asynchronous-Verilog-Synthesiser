@@ -145,10 +145,24 @@ netlist::SeqBlock::SeqBlock(const location& lloc, const Block& body)
   elab_inparse();
 }
 
+void netlist::SeqBlock::set_father(Block *pf) {
+  if(father == pf) return;
+  father = pf;
+  {
+    list<pair<bool, shared_ptr<Expression> > >::iterator it, end;
+    for(it=slist_pulse.begin(), end=slist_pulse.end(); it!=end; it++)
+      it->second->set_father(pf);
+  }
+
+  {
+    list<shared_ptr<Expression> >::iterator it, end;
+    for(it=slist_level.begin(), end=slist_level.end(); it!=end; it++)
+      (*it)->set_father(pf);
+  }
+}
+
 bool netlist::SeqBlock::check_inparse() {
   bool rv = true;
-  rv &= Block::check_inparse();
-
   {
     list<pair<bool, shared_ptr<Expression> > >::iterator it, end;
     for(it=slist_pulse.begin(), end=slist_pulse.end(); it!=end; it++)
@@ -161,6 +175,7 @@ bool netlist::SeqBlock::check_inparse() {
       rv &= (*it)->check_inparse();
   }
 
+  rv &= Block::check_inparse();
 
   return rv;
 }
@@ -178,20 +193,4 @@ void netlist::SeqBlock::elab_inparse() {
   // make sure it is blocked
   blocked = true;
 
-}
-      
-void netlist::SeqBlock::set_father() {
-  {
-    list<pair<bool, shared_ptr<Expression> > >::iterator it, end;
-    for(it=slist_pulse.begin(), end=slist_pulse.end(); it!=end; it++)
-      it->second->set_father(this);
-  }
-
-  {
-    list<shared_ptr<Expression> >::iterator it, end;
-    for(it=slist_level.begin(), end=slist_level.end(); it!=end; it++)
-      (*it)->set_father(this);
-  }
-
-  Block::set_father();
 }

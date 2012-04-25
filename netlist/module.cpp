@@ -31,29 +31,35 @@
 using namespace netlist;
 
 netlist::Module::Module(const MIdentifier& nm, const shared_ptr<Block>& body)
-  : Block(*body), name(nm) {
+  : Block(*body), name(nm) 
+{
+  ctype = tModule;
   named=true; 
   elab_inparse();
 }
 
 netlist::Module::Module(const location& lloc, const MIdentifier& nm, const shared_ptr<Block>& body)
-  : Block(*body), name(nm) {
+  : Block(*body), name(nm) 
+{
+  ctype = tModule;
   named=true; 
   loc = lloc;
   elab_inparse();
 }
 
 netlist::Module::Module(const MIdentifier& nm, const list<PoIdentifier>& port_list, const shared_ptr<Block>& body)
-  : Block(*body), name(nm) {
-  
+  : Block(*body), name(nm) 
+{
+  ctype = tModule;
   named=true;
   init_port_list(port_list);
   elab_inparse();
 }
 
 netlist::Module::Module(const location& lloc, const MIdentifier& nm, const list<PoIdentifier>& port_list, const shared_ptr<Block>& body)
-  : Block(*body), name(nm) {
-  
+  : Block(*body), name(nm) 
+{
+  ctype = tModule;
   named=true;
   loc = lloc;
   init_port_list(port_list);
@@ -62,8 +68,9 @@ netlist::Module::Module(const location& lloc, const MIdentifier& nm, const list<
 
 netlist::Module::Module(const MIdentifier& nm, const list<shared_ptr<Variable> >& para_list,
                         const list<PoIdentifier>& port_list, const shared_ptr<Block>& body)
-  : Block(*body), name(nm) {
-  
+  : Block(*body), name(nm) 
+{
+  ctype = tModule;
   named=true;
   init_param_list(para_list);
   init_port_list(port_list);
@@ -73,8 +80,9 @@ netlist::Module::Module(const MIdentifier& nm, const list<shared_ptr<Variable> >
 netlist::Module::Module(const location& lloc, const MIdentifier& nm, 
                         const list<shared_ptr<Variable> >& para_list,
                         const list<PoIdentifier>& port_list, const shared_ptr<Block>& body)
-  : Block(*body), name(nm) {
-  
+  : Block(*body), name(nm) 
+{
+  ctype = tModule;
   named = true;
   loc = lloc;
   init_param_list(para_list);
@@ -204,7 +212,6 @@ void netlist::Module::elab_inparse() {
 
 bool netlist::Module::check_inparse() {
   bool rv = true;
-  rv &= Block::check_inparse();
 
   // macros defined in database.h
   DATABASE_CHECK_INPARSE_ORDER_FUN(db_port, PoIdentifier, Port, rv);
@@ -214,6 +221,7 @@ bool netlist::Module::check_inparse() {
   DATABASE_CHECK_INPARSE_FUN(db_assign, BIdentifier, Assign, rv);
   DATABASE_CHECK_INPARSE_FUN(db_genblock, BIdentifier, GenBlock, rv);
 
+  rv &= Block::check_inparse();
   return rv;
 }
 

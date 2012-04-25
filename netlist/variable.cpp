@@ -34,9 +34,7 @@ using namespace netlist;
 netlist::Variable::Variable(const Port& p)
   : NetComp(tVariable, p.loc)
 {
-  if(p.is_in()) vtype = TWire;
-  else          vtype = TReg;
-
+  vtype = TWire;
   name = VIdentifier(p.name.loc, p.name.name, p.name.get_range());
 }
 

@@ -111,7 +111,7 @@ ERR_DEFINE("SYN-PORT-1",
 
 // input port without a wire declaration. A declaration is added.
 ERR_DEFINE("SYN-PORT-2",   
-           EWarning, 2, 
+           EWarning, 1, 
            "port \"%1%\" is declared without a wire/reg declaration.");
 
 // define a reg outside a block or wire outside a module/generate. It will be ignored
