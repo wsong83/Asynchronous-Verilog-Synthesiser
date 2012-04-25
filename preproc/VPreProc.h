@@ -52,37 +52,39 @@
 #include <string>
 #include <map>
 #include <iostream>
-using namespace std;
+
 #include "VFileLine.h"
 
-/// Generic opaque pointer to VPreProcImp implementation class.
-struct VPreProcOpaque {
+namespace VPPreProc {
+
+  /// Generic opaque pointer to VPreProcImp implementation class.
+  struct VPreProcOpaque {
     virtual ~VPreProcOpaque() {}
-};
-class VDefine;
-
-//**********************************************************************
-// VPreProc
-/// Verilog Preprocessor.
-////
-/// This defines a preprocessor.  Functions are virtual so users can override them.
-/// After creating, call openFile(), then getline() in a loop.  The class will to the rest...
-
-class VPreProc {
-public:
+  };
+  class VDefine;
+  
+  //**********************************************************************
+  // VPreProc
+  /// Verilog Preprocessor.
+  ////
+  /// This defines a preprocessor.  Functions are virtual so users can override them.
+  /// After creating, call openFile(), then getline() in a loop.  The class will to the rest...
+  
+  class VPreProc {
+  public:
     VPreProc();
     void configure(VFileLine* filelinep);
     virtual ~VPreProc();
-
+    
     // STATE
-private:
+  private:
     int		m_keepComments;
     int		m_keepWhitespace;
     bool	m_lineDirectives;
     bool	m_pedantic;
     bool	m_synthesis;
-
-public:
+    
+  public:
     // CONSTANTS
     enum MiscConsts {
  	DEFINE_RECURSION_LEVEL_MAX = 1000,	// How many `def substitutions before an error
@@ -136,8 +138,10 @@ public:
     void error(string msg) { fileline()->error(msg); }	///< Report a error
     void fatal(string msg) { fileline()->fatal(msg); }	///< Report a fatal error
 
-private:
+  private:
     VPreProcOpaque*	m_opaquep;	///< Pointer to parser's implementation data.
-};
+  };
+
+}
 
 #endif // Guard

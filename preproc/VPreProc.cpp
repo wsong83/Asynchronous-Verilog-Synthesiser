@@ -75,17 +75,19 @@
 //#define yyFlexLexer xxFlexLexer
 //#include <FlexLexer.h>
 
-//*************************************************************************
+using namespace VPPreProc;
 
-class VPreDefRef {
+namespace VPPreProc {
+  //*************************************************************************
+  class VPreDefRef {
     // One for each pending define substitution
     string	m_name;		// Define last name being defined
     string	m_params;	// Define parameter list for next expansion
     string	m_nextarg;	// String being built for next argument
     int		m_parenLevel;	// Parenthesis counting inside def args (for PARENT not child)
-
+    
     vector<string> m_args;	// List of define arguments
-public:
+  public:
     string name() const { return m_name; }
     string params() const { return m_params; }
     string nextarg() const { return m_nextarg; }
@@ -96,27 +98,27 @@ public:
     VPreDefRef(const string& name, const string& params)
 	: m_name(name), m_params(params), m_parenLevel(0) {}
     ~VPreDefRef() {}
-};
+  };
+  
+  //*************************************************************************
+  /// Data for parsing on/off
 
-//*************************************************************************
-/// Data for parsing on/off
-
-class VPreIfEntry {
+  class VPreIfEntry {
     // One for each pending ifdef/ifndef
     bool	m_on;		// Current parse for this ifdef level is "on"
     bool	m_everOn;	// Some if term in elsif tree has been on
-public:
+  public:
     bool on() const { return m_on; }
     bool everOn() const { return m_everOn; }
     VPreIfEntry(bool on, bool everOn)
 	: m_on(on), m_everOn(everOn || on) {}  // Note everOn includes new state
     ~VPreIfEntry() {}
-};
+  };
 
-//*************************************************************************
-/// Data for a preprocessor instantiation.
+  //*************************************************************************
+  /// Data for a preprocessor instantiation.
 
-struct VPreProcImp : public VPreProcOpaque {
+  struct VPreProcImp : public VPreProcOpaque {
     typedef list<string> StrList;
 
     VPreProc*	m_preprocp;	///< Object we're holding data for
@@ -172,37 +174,37 @@ struct VPreProcImp : public VPreProcOpaque {
     string	m_lineChars;	///< Characters left for next line
 
     VPreProcImp() {
-	m_debug = 0;
-	m_states.push(ps_TOP);
-	m_off = 0;
-	m_lineChars = "";
-	m_lastSym = "";
-	m_lineAdd = 0;
-	m_lineCmtNl = false;
-	m_rawAtBol = true;
-	m_finAhead = false;
-	m_finAtBol = true;
-	m_defDepth = 0;
-	m_defPutJoin = false;
-	m_finToken = 0;
-	m_finFilelinep = NULL;
-	m_lexp = NULL;
-	m_preprocp = NULL;
+      m_debug = 0;
+      m_states.push(ps_TOP);
+      m_off = 0;
+      m_lineChars = "";
+      m_lastSym = "";
+      m_lineAdd = 0;
+      m_lineCmtNl = false;
+      m_rawAtBol = true;
+      m_finAhead = false;
+      m_finAtBol = true;
+      m_defDepth = 0;
+      m_defPutJoin = false;
+      m_finToken = 0;
+      m_finFilelinep = NULL;
+      m_lexp = NULL;
+      m_preprocp = NULL;
     }
     void configure(VFileLine* filelinep, VPreProc* preprocp) {
-	// configure() separate from constructor to avoid calling abstract functions
-	m_preprocp = preprocp;
-	m_finFilelinep = filelinep->create(1);
-	// Create lexer
-	m_lexp = new VPreLex (this, filelinep);
-	m_lexp->m_keepComments = m_preprocp->keepComments();
-	m_lexp->m_keepWhitespace = m_preprocp->keepWhitespace();
-	m_lexp->m_pedantic = m_preprocp->pedantic();
-	m_lexp->m_synthesis = m_preprocp->synthesis();
-	m_lexp->debug(debug()>=10 ? debug() : 0);  // See also VPreProc::debug() method
+      // configure() separate from constructor to avoid calling abstract functions
+      m_preprocp = preprocp;
+      m_finFilelinep = filelinep->create(1);
+      // Create lexer
+      m_lexp = new VPreLex (this, filelinep);
+      m_lexp->m_keepComments = m_preprocp->keepComments();
+      m_lexp->m_keepWhitespace = m_preprocp->keepWhitespace();
+      m_lexp->m_pedantic = m_preprocp->pedantic();
+      m_lexp->m_synthesis = m_preprocp->synthesis();
+      m_lexp->debug(debug()>=10 ? debug() : 0);  // See also VPreProc::debug() method
     }
     ~VPreProcImp() {
-	if (m_lexp) { delete m_lexp; m_lexp = NULL; }
+      if (m_lexp) { delete m_lexp; m_lexp = NULL; }
     }
     const char* tokenName(int tok);
     void debugToken(int tok, const char* cmtp);
@@ -215,7 +217,7 @@ struct VPreProcImp : public VPreProcOpaque {
     void insertUnreadback(const string& text) { m_lineCmt += text; }
     void insertUnreadbackAtBol(const string& text);
     void addLineComment(int enter_exit_level);
-private:
+  private:
     void error(string msg) { m_lexp->m_tokFilelinep->error(msg); }
     void fatal(string msg) { m_lexp->m_tokFilelinep->fatal(msg); }
     int debug() const { return m_debug; }
@@ -226,9 +228,9 @@ private:
     void unputDefrefString(const string& strg);
 
     void parsingOn() {
-	m_off--;
-	if (m_off<0) fatalSrc("Underflow of parsing cmds");
-	// addLineComment no longer needed; getFinalToken will correct.
+      m_off--;
+      if (m_off<0) fatalSrc("Underflow of parsing cmds");
+      // addLineComment no longer needed; getFinalToken will correct.
     }
     void parsingOff() { m_off++; }
 
@@ -237,25 +239,27 @@ private:
     int getFinalToken(string& buf);
 
     void statePush(ProcState state) {
-	m_states.push(state);
+      m_states.push(state);
     }
     void statePop() {
-	m_states.pop();
-	if (m_states.empty()) {
+      m_states.pop();
+      if (m_states.empty()) {
 	    error("InternalError: Pop of parser state with nothing on stack");
 	    m_states.push(ps_TOP);
-	}
+      }
     }
     void stateChange(ProcState state) {
-	statePop(); statePush(state);
+      statePop(); statePush(state);
     }
+    
+  };
 
-};
+} // namespace VPPreProc
 
 //*************************************************************************
 // Creation
 
-VPreProc::VPreProc() {
+VPPreProc::VPreProc::VPreProc() {
     VPreProcImp* idatap = new VPreProcImp();
     m_opaquep = idatap;
     // Below overridden by configure()
@@ -266,47 +270,47 @@ VPreProc::VPreProc() {
     m_synthesis = false;
 }
 
-void VPreProc::configure(VFileLine* filelinep) {
+void VPPreProc::VPreProc::configure(VFileLine* filelinep) {
     VPreProcImp* idatap = static_cast<VPreProcImp*>(m_opaquep);
     idatap->configure(filelinep, this);
 }
 
-VPreProc::~VPreProc() {
+VPPreProc::VPreProc::~VPreProc() {
     if (m_opaquep) { delete m_opaquep; m_opaquep = NULL; }
 }
 
 //*************************************************************************
 // VPreProc Methods.  Just call the implementation functions.
 
-void VPreProc::comment(string cmt) { }
-void VPreProc::openFile(string filename, VFileLine* filelinep) {
+void VPPreProc::VPreProc::comment(string cmt) { }
+void VPPreProc::VPreProc::openFile(string filename, VFileLine* filelinep) {
     VPreProcImp* idatap = static_cast<VPreProcImp*>(m_opaquep);
     idatap->openFile (filename,filelinep);
 }
-string VPreProc::getline() {
+string VPPreProc::VPreProc::getline() {
     VPreProcImp* idatap = static_cast<VPreProcImp*>(m_opaquep);
     return idatap->getparseline(true,0);
 }
-string VPreProc::getall(size_t approx_chunk) {
+string VPPreProc::VPreProc::getall(size_t approx_chunk) {
     VPreProcImp* idatap = static_cast<VPreProcImp*>(m_opaquep);
     return idatap->getparseline(false,approx_chunk);
 }
-void VPreProc::debug(int level) {
+void VPPreProc::VPreProc::debug(int level) {
     VPreProcImp* idatap = static_cast<VPreProcImp*>(m_opaquep);
     idatap->m_debug = level;
     // To see "accepting rule" debug, Makefile.PL must be changed to enable flex debug
     // export VERILOGPERL_FLEX_DEBUG=1
     idatap->m_lexp->debug(level>=10 ? level : 0);
 }
-bool VPreProc::isEof() {
+bool VPPreProc::VPreProc::isEof() {
     VPreProcImp* idatap = static_cast<VPreProcImp*>(m_opaquep);
     return idatap->isEof();
 }
-VFileLine* VPreProc::fileline() {
+VFileLine* VPPreProc::VPreProc::fileline() {
     VPreProcImp* idatap = static_cast<VPreProcImp*>(m_opaquep);
     return idatap->m_lexp->m_tokFilelinep;
 }
-void VPreProc::insertUnreadback(string text) {
+void VPPreProc::VPreProc::insertUnreadback(string text) {
     VPreProcImp* idatap = static_cast<VPreProcImp*>(m_opaquep);
     return idatap->insertUnreadback(text);
 }
@@ -314,7 +318,7 @@ void VPreProc::insertUnreadback(string text) {
 //**********************************************************************
 // Parser Utilities
 
-const char* VPreProcImp::tokenName(int tok) {
+const char* VPPreProc::VPreProcImp::tokenName(int tok) {
     switch (tok) {
     case VP_BACKQUOTE	: return("BACKQUOTE");
     case VP_COMMENT	: return("COMMENT");
@@ -346,7 +350,7 @@ const char* VPreProcImp::tokenName(int tok) {
     }
 }
 
-void VPreProcImp::unputString(const string& strg) {
+void VPPreProc::VPreProcImp::unputString(const string& strg) {
     // Note: The preliminary call in ::openFile bypasses this function
     // We used to just m_lexp->unputString(strg.c_str());
     // However this can lead to "flex scanner push-back overflow"
@@ -359,7 +363,7 @@ void VPreProcImp::unputString(const string& strg) {
     m_lexp->scanBytes(strg);
 }
 
-void VPreProcImp::unputDefrefString(const string& strg) {
+void VPPreProc::VPreProcImp::unputDefrefString(const string& strg) {
     int multiline = 0;
     for (size_t i=0; i<strg.length(); i++) {
 	if (strg[i] == '\n') multiline++;
@@ -370,7 +374,7 @@ void VPreProcImp::unputDefrefString(const string& strg) {
     m_lexp->curStreamp()->m_ignNewlines += multiline;  // Must be after unput - applies to new stream
 }
 
-string VPreProcImp::trimWhitespace(const string& strg, bool trailing) {
+string VPPreProc::VPreProcImp::trimWhitespace(const string& strg, bool trailing) {
     // Remove leading whitespace
     string out = strg;
     string::size_type leadspace = 0;
@@ -390,7 +394,7 @@ string VPreProcImp::trimWhitespace(const string& strg, bool trailing) {
     return out;
 }
 
-string VPreProcImp::defineSubst(VPreDefRef* refp) {
+string VPPreProc::VPreProcImp::defineSubst(VPreDefRef* refp) {
     // Substitute out defines in a define reference.
     // (We also need to call here on non-param defines to handle `")
     // We could push the define text back into the lexer, but that's slow
@@ -568,7 +572,7 @@ string VPreProcImp::defineSubst(VPreDefRef* refp) {
 //**********************************************************************
 // Parser routines
 
-bool VPreProcImp::readWholefile(const string& filename, StrList& outl) {
+bool VPPreProc::VPreProcImp::readWholefile(const string& filename, StrList& outl) {
     int fd = open (filename.c_str(), O_RDONLY);
     if (!fd) return false;
 
@@ -595,7 +599,7 @@ bool VPreProcImp::readWholefile(const string& filename, StrList& outl) {
     return true;
 }
 
-void VPreProcImp::openFile(string filename, VFileLine* filelinep) {
+void VPPreProc::VPreProcImp::openFile(string filename, VFileLine* filelinep) {
     // Open a new file, possibly overriding the current one which is active.
 
     // Read a list<string> with the whole file.
@@ -651,7 +655,7 @@ void VPreProcImp::openFile(string filename, VFileLine* filelinep) {
     }
 }
 
-void VPreProcImp::insertUnreadbackAtBol(const string& text) {
+void VPPreProc::VPreProcImp::insertUnreadbackAtBol(const string& text) {
     // Insert insuring we're at the beginning of line, for `line
     // We don't always add a leading newline, as it may result in extra unreadback(newlines).
     if (m_lineCmt == "") { m_lineCmtNl = true; }
@@ -661,13 +665,13 @@ void VPreProcImp::insertUnreadbackAtBol(const string& text) {
     insertUnreadback(text);
 }
 
-void VPreProcImp::addLineComment(int enter_exit_level) {
+void VPPreProc::VPreProcImp::addLineComment(int enter_exit_level) {
     if (m_preprocp->lineDirectives()) {
 	insertUnreadbackAtBol(m_lexp->curFilelinep()->lineDirectiveStrg(enter_exit_level));
     }
 }
 
-int VPreProcImp::getRawToken() {
+int VPPreProc::VPreProcImp::getRawToken() {
     // Get a token from the file, whatever it may be.
     while (1) {
       next_tok:
@@ -714,7 +718,7 @@ int VPreProcImp::getRawToken() {
     }
 }
 
-void VPreProcImp::debugToken(int tok, const char* cmtp) {
+void VPPreProc::VPreProcImp::debugToken(int tok, const char* cmtp) {
     if (debug()>=5) {
 	string buf = string (yyourtext(), yyourleng());
 	string::size_type pos;
@@ -730,7 +734,7 @@ void VPreProcImp::debugToken(int tok, const char* cmtp) {
 // Sorry, we're not using bison/yacc. It doesn't handle returning white space
 // in the middle of parsing other tokens.
 
-int VPreProcImp::getStateToken(string& buf) {
+int VPPreProc::VPreProcImp::getStateToken(string& buf) {
     // Return the next state-determined token
     while (1) {
       next_tok:
@@ -1252,7 +1256,7 @@ int VPreProcImp::getStateToken(string& buf) {
     }
 }
 
-int VPreProcImp::getFinalToken(string& buf) {
+int VPPreProc::VPreProcImp::getFinalToken(string& buf) {
     // Return the next user-visible token in the input stream.
     // Includes and such are handled here, and are never seen by the caller.
     if (!m_finAhead) {
@@ -1307,7 +1311,7 @@ int VPreProcImp::getFinalToken(string& buf) {
     return tok;
 }
 
-string VPreProcImp::getparseline(bool stop_at_eol, size_t approx_chunk) {
+string VPPreProc::VPreProcImp::getparseline(bool stop_at_eol, size_t approx_chunk) {
     // Get a single line from the parse stream.  Buffer unreturned text until the newline.
     if (isEof()) return "";
     while (1) {

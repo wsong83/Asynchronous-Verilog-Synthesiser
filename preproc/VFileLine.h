@@ -52,24 +52,28 @@
 #include <string>
 #include <iostream>
 #include <sstream>
-using namespace std;
 
-//============================================================================
-// VFileLine
-/// User information and error reporting functions
-////
-/// Users can override this class to implement their own error handling
+using std::string;
+using std::ostringstream;
 
-class VFileLine {
-private:
+namespace VPPreProc {
+
+  //============================================================================
+  // VFileLine
+  /// User information and error reporting functions
+  ////
+  /// Users can override this class to implement their own error handling
+  
+  class VFileLine {
+  private:
     int		m_lineno;		///< Line number in file
     string	m_filename;		///< File name
     static int	s_numErrors;		///< Number of errors detected
-
-protected:
+    
+  protected:
     VFileLine(int called_only_for_default) {init("",0);}
-
-public:
+    
+  public:
     // CONSTRUCTORS
     /// Create a new fileline, for a new file and/or line number.
     /// Member functions, so that if a user provides another class, a change in the
@@ -94,14 +98,16 @@ public:
 
     // Internal methods -- special use
     static const char* itoa(int i);	///< Internal: Not reentrant! - for fatalSrc() only
-};
-ostream& operator<<(ostream& os, VFileLine* fileline);
-
-/// Use this instead of fatal() to mention the source code line.
+  };
+  ostream& operator<<(ostream& os, VFileLine* fileline);
+  
+  /// Use this instead of fatal() to mention the source code line.
 #define fatalSrc(msg) fatal((string)"Internal Error: "+__FILE__+":"+VFileLine::itoa(__LINE__)+": "+(msg))
-
-template< class T> std::string cvtToStr (const T& t) {
+  
+  template< class T> std::string cvtToStr (const T& t) {
     ostringstream os; os<<t; return os.str();
+  }
+
 }
 
 #endif // Guard
