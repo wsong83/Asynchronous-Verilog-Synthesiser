@@ -1,7 +1,8 @@
-%option noyywrap align interactive
+%option noyywrap align 
+%option never-interactive
 %option stack
-%option noc++
 %option prefix="VPreLex"
+%option outfile="VPreLex.cpp"
 %{
 /*
  * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
