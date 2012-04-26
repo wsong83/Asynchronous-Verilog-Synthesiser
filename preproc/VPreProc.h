@@ -67,8 +67,10 @@ namespace VPPreProc {
   // VPreProc
   /// Verilog Preprocessor.
   ////
-  /// This defines a preprocessor.  Functions are virtual so users can override them.
-  /// After creating, call openFile(), then getline() in a loop.  The class will to the rest...
+  /// This defines a preprocessor (the top-level class).  
+  /// Functions are virtual so users can override them.
+  /// After creating, call openFile(), then getline() in a loop.  
+  /// The class will to the rest...
   
   class VPreProc {
   public:

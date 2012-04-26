@@ -62,6 +62,9 @@
 #include <cstring>
 #include <iostream>
 
+   using namespace std;
+   using namespace VPPreProc;
+
 // Flex 2.5.35 has compile warning in ECHO, so we'll default our own rule
 #define ECHO yyerrorf("Missing VPreLex.l rule: ECHO rule invoked in state %d: %s", YY_START, yytext);
 

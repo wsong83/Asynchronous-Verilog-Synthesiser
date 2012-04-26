@@ -55,6 +55,7 @@
 
 using std::string;
 using std::ostringstream;
+using std::ostream;
 
 namespace VPPreProc {
 
