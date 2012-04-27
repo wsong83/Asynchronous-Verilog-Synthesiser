@@ -20,22 +20,25 @@
  */
 
 /* 
- * Test for the Verilog preprocessor
+ * A wrapper of the Verilog-PreProcessor of Verilog Perl tool 3.314
  * 27/04/2012   Wei Song
  *
  *
  */
 
-#include "preproc/VPreProc.h"
+#ifndef AVS_PREPROC_H_
+#define AVS_PREPROC_H_
 
-using namespace VPPreProc;
+// the preprocessor core
+#include "VPreProc.h"
 
-int main(int argc, char* argv[])
-{
-  //  VFileLine* filelinep = new VFileLine();
-  VPreProc* preprocp = new VPreProc();
-  //preprocp->configure(filelinep);
-  preprocp->openFile(argv[1]);
+namespace VPPreProc {
 
-  return 1;
+  class PreProc : public VPreProc {
+    
+
+  };
+
 }
+
+#endif

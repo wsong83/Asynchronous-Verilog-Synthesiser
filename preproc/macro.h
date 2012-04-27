@@ -20,22 +20,29 @@
  */
 
 /* 
- * Test for the Verilog preprocessor
+ * Data structure to store macros
  * 27/04/2012   Wei Song
  *
  *
  */
 
-#include "preproc/VPreProc.h"
+#ifndef AVS_MACRO_H_
+#define AVS_MACRO_H_
 
-using namespace VPPreProc;
+#include<string>
+using std::string;
 
-int main(int argc, char* argv[])
-{
-  //  VFileLine* filelinep = new VFileLine();
-  VPreProc* preprocp = new VPreProc();
-  //preprocp->configure(filelinep);
-  preprocp->openFile(argv[1]);
+namespace VPPreProc {
 
-  return 1;
+  class VMacro {
+  public:
+    
+    string name;                /* the name of the macro */
+    bool   func;                /* true when it is function */
+    
+
+  };
+
 }
+
+#endif

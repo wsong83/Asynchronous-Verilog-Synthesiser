@@ -19,27 +19,24 @@
 #
 # Makefile
 # Due to be replace by autoconf tool suite
-# 26/04/2012   Wei Song
+# 27/04/2012   Wei Song
 #
 #
 
 # variables
-INCDIRS = -I./ -I../
-TARGETS = VFileLine.o VPreLex.o VPreProc.o
-HEADERS = 
+INCDIRS = -I./ -I../../
+TARGETS = preproc
+OTHER_OBJS = $(wildcard ../*.o)
+
 
 # targets
 all: $(TARGETS)
 
-$(TARGETS): %.o:%.cpp %.h $(HEADERS)
-	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
-
-VPreLex.cpp: VPreLex.l VPreLex.h
-	$(FLEX_EXE) $<
+$(TARGETS): % : %.cpp $(OTHER_OBJS)
+	$(CXX) $(INCDIRS) $(CXXFLAGS) $< $(OTHER_OBJS) $(LINKFLAGS) -o $@
 
 .PHONY: clean
 
 clean:
-	-rm *.o *.output
-	-rm VPreLex.cpp
+	-rm *.o $(TARGETS)
 

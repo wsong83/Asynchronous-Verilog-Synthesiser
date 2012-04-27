@@ -33,7 +33,7 @@ export LINKFLAGS = -lboost_regex -lgmpxx -lgmp
 
 # targets
 SUBDIRS = preproc averilog netlist shell
-TESTDIRS = averilog/test
+TESTDIRS = preproc/test averilog/test
 
 # actions
 
