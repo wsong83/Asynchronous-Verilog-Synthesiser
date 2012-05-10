@@ -20,41 +20,28 @@
  */
 
 /* 
- * Shell environment
- * 18/02/2012   Wei Song
+ * argument definitions for analyze command
+ * 10/05/2012   Wei Song
  *
  *
  */
 
-#ifndef _H_SHELL_SHELL_ENV_
-#define _H_SHELL_SHELL_ENV_
+#ifndef AV_CMD_ANALYZE_
+#define AV_CMD_ANALYZE_
 
-#include "netlist/component.h"
-using netlist::Library;
-using netlist::Module;
+namespace shell { 
+  namespace CMD {
+  
+    class CMDAnalyze {
+    public:
+      static void exec ( Env&, const vector<string>& arg = vector<string>() );
+      static void help ( Env& );
 
-namespace shell {
-
-  class Env {
-  public:
-    Env();
-
-    bool initialise();               /* set up basic environment */
-
-
-
-    // data member
-    map<string, shared_ptr<Library> >  link_lib;     /* libraries used in design elaboration */
-    map<string, shared_ptr<Library> >  target_lib;   /* libraries used in mapping */
-    ErrReport error;                                 /* the gobal level error report function */
-    shared_ptr<Library> curLib;                      /* current library */
-    shared_ptr<Module> curDgn;                       /* current design */
-    ostream stdOs;                                   /* standard output stream */
-    ostream errOs;                                   /* error output stream */
-    
-  };
-
+    private:
+      static po::options_description cmd_opt;
+      static po::positional_options_description cmd_position;
+    };
+  }
 }
-
 
 #endif

@@ -20,41 +20,41 @@
  */
 
 /* 
- * Shell environment
- * 18/02/2012   Wei Song
+ * Data structure to store macros
+ * 27/04/2012   Wei Song
  *
  *
  */
 
-#ifndef _H_SHELL_SHELL_ENV_
-#define _H_SHELL_SHELL_ENV_
+#ifndef AVS_MACRO_H_
+#define AVS_MACRO_H_
 
-#include "netlist/component.h"
-using netlist::Library;
-using netlist::Module;
+#include<string>
+#include<vector>
+#include<map>
 
-namespace shell {
+namespace VPPreProc {
 
-  class Env {
+  class VMacro {
   public:
-    Env();
+    // constructors
+    VMacro( const std::string& nm, /* macro name */
+            const std::string& mv, /* macro value */
+            const std::string& para = std::string(), /* macro argument */
+            bool pre = false                         /* forced macro by command line */
+            )
+      : m_name(nm), m_para(para), m_value(mv), m_pre(pre) {}
 
-    bool initialise();               /* set up basic environment */
-
-
-
-    // data member
-    map<string, shared_ptr<Library> >  link_lib;     /* libraries used in design elaboration */
-    map<string, shared_ptr<Library> >  target_lib;   /* libraries used in mapping */
-    ErrReport error;                                 /* the gobal level error report function */
-    shared_ptr<Library> curLib;                      /* current library */
-    shared_ptr<Module> curDgn;                       /* current design */
-    ostream stdOs;                                   /* standard output stream */
-    ostream errOs;                                   /* error output stream */
+    // helpers
+    bool is_parameterized() const { return m_para.size() > 0; }
     
+    //data
+    std::string m_name;         /* the name of the macro */
+    std::string m_para;         /* parameter list */
+    std::string m_value;        /* body definition */
+    bool m_pre;
   };
 
 }
-
 
 #endif

@@ -1,31 +1,4 @@
 // -*- C++ -*-
-/*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
- *    Advanced Processor Technologies Group, School of Computer Science
- *    University of Manchester, Manchester M13 9PL UK
- *
- *    This source code is free software; you can redistribute it
- *    and/or modify it in source code form under the terms of the GNU
- *    General Public License as published by the Free Software
- *    Foundation; either version 2 of the License, or (at your option)
- *    any later version.
- *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU General Public License for more details.
- *
- *    You should have received a copy of the GNU General Public License
- *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
- */
-
-/* 
- * Adopted from the Verilog-Perl tool 3.314
- * 25/04/2012   Wei Song
- *
- *
- */
 //*************************************************************************
 //
 // Copyright 2000-2012 by Wilson Snyder.  This program is free software;
@@ -57,20 +30,17 @@
 #include <deque>
 #include <stack>
 
-using std::deque;
-using std::stack;
-
 #include "VFileLine.h"
-  
+
 namespace VPPreProc {
-  class VPreLex;
-  class VPreProcImp;
+class VPreLex;
+class VPreProcImp;
 }
-  //======================================================================
-  // Token codes
-  // If changing, see VPreProc.cpp's VPreProcImp::tokenName()
+//======================================================================
+// Token codes
+// If changing, see VPreProc.cpp's VPreProcImp::tokenName()
 #define VP_EOF		0
-  
+
 #define VP_INCLUDE	256
 #define VP_IFDEF	257
 #define VP_IFNDEF	258
@@ -131,7 +101,7 @@ struct yy_buffer_state;
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
 # define YY_BUF_SIZE 16384
 #endif
-  
+
 extern int yylex();
 extern void yyrestart(FILE*);
 
@@ -144,18 +114,17 @@ YY_BUFFER_STATE yy_create_buffer ( FILE *file, int size );
 void yy_switch_to_buffer( YY_BUFFER_STATE new_buffer );
 void yy_delete_buffer( YY_BUFFER_STATE b );
 
-  //======================================================================
-  
+//======================================================================
+
 #define KEEPCMT_SUB 2
 #define KEEPCMT_EXP 3
-  
+
 //======================================================================
 // Entry for each file processed; a stack of entries included
 
 namespace VPPreProc {
-  
-  class VPreStream {
-  public:
+class VPreStream {
+public:
     VFileLine*		m_curFilelinep;	// Current processing point (see also m_tokFilelinep)
     VPreLex*		m_lexp;		// Lexer, for resource tracking
     deque<string>	m_buffers;	// Buffer of characters to process
@@ -164,62 +133,61 @@ namespace VPPreProc {
     bool		m_file;		// Buffer is start of new file
     int			m_termState;	// Termination fsm
     VPreStream(VFileLine* fl, VPreLex* lexp)
-      : m_curFilelinep(fl), m_lexp(lexp),
-        m_ignNewlines(0),
-        m_eof(false), m_file(false), m_termState(0) {
-      lexStreamDepthAdd(1);
+	: m_curFilelinep(fl), m_lexp(lexp),
+	  m_ignNewlines(0),
+	  m_eof(false), m_file(false), m_termState(0) {
+	lexStreamDepthAdd(1);
     }
     ~VPreStream() {
-      lexStreamDepthAdd(-1);
+	lexStreamDepthAdd(-1);
     }
-  private:
+private:
     void lexStreamDepthAdd(int delta);
-  };
-  
-  
-  //======================================================================
-  // Class entry for each per-lexer state
-  
-  class VPreLex {
+};
+
+//======================================================================
+// Class entry for each per-lexer state
+
+class VPreLex {
   public:	// Used only by VPreLex.cpp and VPreProc.cpp
     VPreProcImp*	m_preimpp;	// Preprocessor lexor belongs to
     stack<VPreStream*>	m_streampStack;	// Stack of processing files
     int			m_streamDepth;	// Depth of stream processing
     YY_BUFFER_STATE	m_bufferState;	// Flex state
     VFileLine*		m_tokFilelinep;	// Starting position of current token
-    
+
     // State to lexer
     static VPreLex* s_currentLexp;	///< Current lexing point
     int		m_keepComments;		///< Emit comments in output text
     int		m_keepWhitespace;	///< Emit all whitespace in output text
     bool	m_pedantic;	///< Obey standard; don't Substitute `error
     bool	m_synthesis;	///< Remove translate_offs
-    
+
     // State from lexer
     int		m_formalLevel;	///< Parenthesis counting inside def formals
     int		m_parenLevel;	///< Parenthesis counting inside def args
     bool	m_defCmtSlash;	///< /*...*/ comment in define had \ ending
     string	m_defValue;	///< Definition value being built.
     int		m_enterExit;	///< For VL_LINE, the enter/exit level
-  
+
     // CONSTRUCTORS
     VPreLex(VPreProcImp* preimpp, VFileLine* filelinep) {
-      m_preimpp = preimpp;
-      m_streamDepth = 0;
-      m_keepComments = 0;
-      m_keepWhitespace = 1;
-      m_pedantic = false;
-      m_synthesis = false;
-      m_formalLevel = 0;
-      m_parenLevel = 0;
-      m_defCmtSlash = false;
-      m_tokFilelinep = filelinep;
-      m_enterExit = 0;
-      initFirstBuffer(filelinep);
+	m_preimpp = preimpp;
+	m_streamDepth = 0;
+	m_keepComments = 0;
+	m_keepWhitespace = 1;
+	m_pedantic = false;
+	m_synthesis = false;
+	m_formalLevel = 0;
+	m_parenLevel = 0;
+	m_defCmtSlash = false;
+	m_tokFilelinep = filelinep;
+	m_enterExit = 0;
+	initFirstBuffer(filelinep);
     }
     ~VPreLex() {
-      while (!m_streampStack.empty()) { delete m_streampStack.top(); m_streampStack.pop(); }
-      yy_delete_buffer(m_bufferState); m_bufferState=NULL;
+	while (!m_streampStack.empty()) { delete m_streampStack.top(); m_streampStack.pop(); }
+	yy_delete_buffer(m_bufferState); m_bufferState=NULL;
     }
 
     /// Called by VPreLex.l from lexer
@@ -229,7 +197,7 @@ namespace VPPreProc {
     void appendDefValue(const char* textp, size_t len) { m_defValue.append(textp,len); }
     void lineDirective(const char* textp) { curFilelinep(curFilelinep()->lineDirective(textp, m_enterExit/*ref*/)); }
     void linenoInc() { if (curStreamp()->m_ignNewlines) curStreamp()->m_ignNewlines--;
-      else curFilelinep(curFilelinep()->create(curFilelinep()->lineno()+1)); }
+	else curFilelinep(curFilelinep()->create(curFilelinep()->lineno()+1)); }
     /// Called by VPreProc.cpp to inform lexer
     void pushStateDefArg(int level);
     void pushStateDefForm();
@@ -253,17 +221,16 @@ namespace VPPreProc {
     static int debug();
     static void debug(int level);
     static string cleanDbgStrg(const string& in);
-    
-  private:
+
+private:
     string currentUnreadChars();
     string endOfStream(bool& againr);
     void initFirstBuffer(VFileLine* filelinep);
     void scanSwitchStream(VPreStream* streamp);
-  };
+};
 
-  inline void VPreStream::lexStreamDepthAdd(int delta) { m_lexp->streamDepthAdd(delta); }
-  
+inline void VPreStream::lexStreamDepthAdd(int delta) { m_lexp->streamDepthAdd(delta); }
+
 }
 
 #endif // Guard
-  

@@ -18,19 +18,21 @@
 #    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
 #
 # Makefile
-# Due to be replace by autoconf tool suite
 # 27/04/2012   Wei Song
 #
 #
 
 # variables
-INCDIRS = -I./ -I../../
-TARGETS = preproc
-OTHER_OBJS = $(wildcard ../*.o)
+INCDIRS = -I./ -I../
+TARGETS = preproc_test
+OTHER_OBJS = $(wildcard ../src/*.o)
 
 
 # targets
-all: $(TARGETS)
+all: exec_mv
+
+exec_mv: $(TARGETS)
+	cp preproc_test ../vpreproc
 
 $(TARGETS): % : %.cpp $(OTHER_OBJS)
 	$(CXX) $(INCDIRS) $(CXXFLAGS) $< $(OTHER_OBJS) $(LINKFLAGS) -o $@

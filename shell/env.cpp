@@ -40,5 +40,10 @@ bool shell::Env::initialise() {
   // set work to be the current library
   curLib = work;
 
+  // set the ostreams
+  stdOs.rdbuf(cout.rdbuf());
+  errOs.rdbuf(cerr.rdbuf());
+  error.set_output(cerr);
+
   return true;
 }

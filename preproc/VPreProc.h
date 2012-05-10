@@ -1,31 +1,4 @@
 // -*- C++ -*-
-/*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
- *    Advanced Processor Technologies Group, School of Computer Science
- *    University of Manchester, Manchester M13 9PL UK
- *
- *    This source code is free software; you can redistribute it
- *    and/or modify it in source code form under the terms of the GNU
- *    General Public License as published by the Free Software
- *    Foundation; either version 2 of the License, or (at your option)
- *    any later version.
- *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU General Public License for more details.
- *
- *    You should have received a copy of the GNU General Public License
- *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
- */
-
-/* 
- * Adopted from the Verilog-Perl tool 3.314
- * 25/04/2012   Wei Song
- *
- *
- */
 //*************************************************************************
 //
 // Copyright 2000-2012 by Wilson Snyder.  This program is free software;
@@ -46,47 +19,46 @@
 /// Code available from: http://www.veripool.org/verilog-perl
 ///
 //*************************************************************************
+
 #ifndef _VPREPROC_H_
 #define _VPREPROC_H_ 1
 
 #include <string>
 #include <map>
 #include <iostream>
-
+using namespace std;
 #include "VFileLine.h"
 
 namespace VPPreProc {
 
-  /// Generic opaque pointer to VPreProcImp implementation class.
-  struct VPreProcOpaque {
+/// Generic opaque pointer to VPreProcImp implementation class.
+struct VPreProcOpaque {
     virtual ~VPreProcOpaque() {}
-  };
-  class VDefine;
-  
-  //**********************************************************************
-  // VPreProc
-  /// Verilog Preprocessor.
-  ////
-  /// This defines a preprocessor (the top-level class).  
-  /// Functions are virtual so users can override them.
-  /// After creating, call openFile(), then getline() in a loop.  
-  /// The class will to the rest...
-  
-  class VPreProc {
-  public:
+};
+class VDefine;
+
+//**********************************************************************
+// VPreProc
+/// Verilog Preprocessor.
+////
+/// This defines a preprocessor.  Functions are virtual so users can override them.
+/// After creating, call openFile(), then getline() in a loop.  The class will to the rest...
+
+class VPreProc {
+public:
     VPreProc();
     void configure(VFileLine* filelinep);
     virtual ~VPreProc();
-    
+
     // STATE
-  private:
+private:
     int		m_keepComments;
     int		m_keepWhitespace;
     bool	m_lineDirectives;
     bool	m_pedantic;
     bool	m_synthesis;
-    
-  public:
+
+public:
     // CONSTANTS
     enum MiscConsts {
  	DEFINE_RECURSION_LEVEL_MAX = 1000,	// How many `def substitutions before an error
@@ -140,9 +112,9 @@ namespace VPPreProc {
     void error(string msg) { fileline()->error(msg); }	///< Report a error
     void fatal(string msg) { fileline()->fatal(msg); }	///< Report a fatal error
 
-  private:
+private:
     VPreProcOpaque*	m_opaquep;	///< Pointer to parser's implementation data.
-  };
+};
 
 }
 

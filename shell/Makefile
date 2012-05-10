@@ -30,14 +30,22 @@ INCDIRS = -I./ -I../
 TARGETS = err_report.o env.o
 HEADERS = $(wildcard ./*.h)
 HEADERS += ../averilog/location.hh
+HEADERS += $(wildcard ./cmd/*.h)
 
 # actions
-all: $(TARGETS)
+all: command.o $(TARGETS)
+
+command.o: command.cc command.hh $(HEADERS)
+	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
 
 $(TARGETS): %.o:%.cpp $(HEADERS)
 	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
+
+command.cc: command.y
+	$(BISON_EXE) $< 
 
 .PHONY: clean
 
 clean:
 	-rm *.o
+	-rm command.hh command.cc location.hh position.hh stack.hh

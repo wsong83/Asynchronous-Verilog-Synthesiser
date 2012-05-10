@@ -21,28 +21,22 @@
 
 /* 
  * Data structure to store macros
- * 27/04/2012   Wei Song
+ * 30/04/2012   Wei Song
  *
  *
  */
 
-#ifndef AVS_MACRO_H_
-#define AVS_MACRO_H_
+#include "VMacro.h"
 
-#include<string>
+#include<boost/format.hpp>
+
 using std::string;
+using std::vector;
 
-namespace VPPreProc {
+#include<list>
+using std::list;
 
-  class VMacro {
-  public:
-    
-    string name;                /* the name of the macro */
-    bool   func;                /* true when it is function */
-    
+#include<cctype>
 
-  };
+using namespace VPPreProc;
 
-}
-
-#endif

@@ -1,31 +1,4 @@
 // -*- C++ -*-
-/*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
- *    Advanced Processor Technologies Group, School of Computer Science
- *    University of Manchester, Manchester M13 9PL UK
- *
- *    This source code is free software; you can redistribute it
- *    and/or modify it in source code form under the terms of the GNU
- *    General Public License as published by the Free Software
- *    Foundation; either version 2 of the License, or (at your option)
- *    any later version.
- *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU General Public License for more details.
- *
- *    You should have received a copy of the GNU General Public License
- *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
- */
-
-/* 
- * Adopted from the Verilog-Perl tool 3.314
- * 25/04/2012   Wei Song
- *
- *
- */
 //*************************************************************************
 //
 // Copyright 2000-2012 by Wilson Snyder.  This program is free software;
@@ -71,30 +44,22 @@
 #include "VPreProc.h"
 #include "VPreLex.h"
 
-using std::endl;
-using std::vector;
-using std::list;
-using std::cout;
-using std::map;
-
-
 //#undef yyFlexLexer
 //#define yyFlexLexer xxFlexLexer
 //#include <FlexLexer.h>
 
-using namespace VPPreProc;
-
 namespace VPPreProc {
-  //*************************************************************************
-  class VPreDefRef {
+//*************************************************************************
+
+class VPreDefRef {
     // One for each pending define substitution
     string	m_name;		// Define last name being defined
     string	m_params;	// Define parameter list for next expansion
     string	m_nextarg;	// String being built for next argument
     int		m_parenLevel;	// Parenthesis counting inside def args (for PARENT not child)
-    
+
     vector<string> m_args;	// List of define arguments
-  public:
+public:
     string name() const { return m_name; }
     string params() const { return m_params; }
     string nextarg() const { return m_nextarg; }
@@ -105,138 +70,114 @@ namespace VPPreProc {
     VPreDefRef(const string& name, const string& params)
 	: m_name(name), m_params(params), m_parenLevel(0) {}
     ~VPreDefRef() {}
-  };
-  
-  //*************************************************************************
-  /// Data for parsing on/off
+};
 
-  class VPreIfEntry {
+//*************************************************************************
+/// Data for parsing on/off
+
+class VPreIfEntry {
     // One for each pending ifdef/ifndef
     bool	m_on;		// Current parse for this ifdef level is "on"
     bool	m_everOn;	// Some if term in elsif tree has been on
-  public:
+public:
     bool on() const { return m_on; }
     bool everOn() const { return m_everOn; }
     VPreIfEntry(bool on, bool everOn)
 	: m_on(on), m_everOn(everOn || on) {}  // Note everOn includes new state
     ~VPreIfEntry() {}
-  };
+};
 
-  //*************************************************************************
-  /// Data for a preprocessor instantiation.
+//*************************************************************************
+/// Data for a preprocessor instantiation.
 
-  struct VPreProcImp : public VPreProcOpaque {
+struct VPreProcImp : public VPreProcOpaque {
     typedef list<string> StrList;
 
     VPreProc*	m_preprocp;	///< Object we're holding data for
-    int		    m_debug;	///< Debugging level
+    int		m_debug;	///< Debugging level
     VPreLex*	m_lexp;		///< Current lexer state (NULL = closed)
 
     enum ProcState { ps_TOP,
-                     ps_DEFNAME_UNDEF, 
-                     ps_DEFNAME_DEFINE,
-                     ps_DEFNAME_IFDEF, 
-                     ps_DEFNAME_IFNDEF, 
-                     ps_DEFNAME_ELSIF,
-                     ps_DEFFORM, 
-                     ps_DEFVALUE, 
-                     ps_DEFPAREN, 
-                     ps_DEFARG,
-                     ps_INCNAME, 
-                     ps_ERRORNAME, 
-                     ps_JOIN, 
-                     ps_STRIFY 
-    };
-    
+		     ps_DEFNAME_UNDEF, ps_DEFNAME_DEFINE,
+		     ps_DEFNAME_IFDEF, ps_DEFNAME_IFNDEF, ps_DEFNAME_ELSIF,
+		     ps_DEFFORM, ps_DEFVALUE, ps_DEFPAREN, ps_DEFARG,
+		     ps_INCNAME, ps_ERRORNAME, ps_JOIN, ps_STRIFY };
     const char* procStateName(ProcState s) {
-      static const char* states[]
+	static const char* states[]
 	    = {"ps_TOP",
-	       "ps_DEFNAME_UNDEF", 
-           "ps_DEFNAME_DEFINE",
-	       "ps_DEFNAME_IFDEF", 
-           "ps_DEFNAME_IFNDEF", 
-           "ps_DEFNAME_ELSIF",
-	       "ps_DEFFORM", 
-           "ps_DEFVALUE", 
-           "ps_DEFPAREN", 
-           "ps_DEFARG",
-	       "ps_INCNAME", 
-           "ps_ERRORNAME", 
-           "ps_JOIN", 
-           "ps_STRIFY" 
-      };
+	       "ps_DEFNAME_UNDEF", "ps_DEFNAME_DEFINE",
+	       "ps_DEFNAME_IFDEF", "ps_DEFNAME_IFNDEF", "ps_DEFNAME_ELSIF",
+	       "ps_DEFFORM", "ps_DEFVALUE", "ps_DEFPAREN", "ps_DEFARG",
+	       "ps_INCNAME", "ps_ERRORNAME", "ps_JOIN", "ps_STRIFY" };
 	return states[s];
     };
 
-    stack<ProcState>	m_states;   ///< Current state of parser
-    int		            m_off;		///< If non-zero, ifdef level is turned off, don't dump text
-    string	            m_lastSym;	///< Last symbol name found.
-    string	            m_formals;	///< Last formals found
+    stack<ProcState>	m_states; ///< Current state of parser
+    int		m_off;		///< If non-zero, ifdef level is turned off, don't dump text
+    string	m_lastSym;	///< Last symbol name found.
+    string	m_formals;	///< Last formals found
 
     // For getRawToken/ `line insertion
-    string	            m_lineCmt;	///< Line comment(s) to be returned
-    bool	            m_lineCmtNl;	///< Newline needed before inserting lineCmt
-    int		            m_lineAdd;	///< Empty lines to return to maintain line count
-    bool	            m_rawAtBol;	///< Last rawToken left us at beginning of line
+    string	m_lineCmt;	///< Line comment(s) to be returned
+    bool	m_lineCmtNl;	///< Newline needed before inserting lineCmt
+    int		m_lineAdd;	///< Empty lines to return to maintain line count
+    bool	m_rawAtBol;	///< Last rawToken left us at beginning of line
 
     // For getFinalToken
-    bool	            m_finAhead;	///< Have read a token ahead
-    int		            m_finToken;	///< Last token read
-    string	            m_finBuf;	///< Last yytext read
-    bool	            m_finAtBol;	///< Last getFinalToken left us at beginning of line
-    VFileLine*	        m_finFilelinep;	///< Location of last returned token (internal only)
+    bool	m_finAhead;	///< Have read a token ahead
+    int		m_finToken;	///< Last token read
+    string	m_finBuf;	///< Last yytext read
+    bool	m_finAtBol;	///< Last getFinalToken left us at beginning of line
+    VFileLine*	m_finFilelinep;	///< Location of last returned token (internal only)
 
     // For stringification
-    string	            m_strify;	///< Text to be stringified
+    string	m_strify;	///< Text to be stringified
 
     // For defines
-    stack<VPreDefRef>   m_defRefs; // Pending definine substitution
-    stack<VPreIfEntry>  m_ifdefStack;	///< Stack of true/false emitting evaluations
-    unsigned	        m_defDepth;	///< How many `defines deep
-    bool	            m_defPutJoin;	///< Insert `` after substitution
+    stack<VPreDefRef> m_defRefs; // Pending definine substitution
+    stack<VPreIfEntry> m_ifdefStack;	///< Stack of true/false emitting evaluations
+    unsigned	m_defDepth;	///< How many `defines deep
+    bool	m_defPutJoin;	///< Insert `` after substitution
 
     // For `` join
-    stack<string>       m_joinStack;	///< Text on lhs of join
+    stack<string> m_joinStack;	///< Text on lhs of join
 
     // For getline()
-    string	            m_lineChars;	///< Characters left for next line
+    string	m_lineChars;	///< Characters left for next line
 
     VPreProcImp() {
-      m_debug = 0; 
-      m_states.push(ps_TOP);
-      m_off = 0; 
-      m_lineChars = "";
-      m_lastSym =  "";
-      m_lineAdd = 0 ;
-      m_lineCmtNl = false;
-      m_rawAtBol = true;
-      m_finAhead = false;
-      m_finAtBol = true;
-      m_defDepth = 0;
-      m_defPutJoin = false;
-      m_finToken = 0;
-      m_finFilelinep = NULL;
-      m_lexp = NULL;
-      m_preprocp = NULL;
+	m_debug = 0;
+	m_states.push(ps_TOP);
+	m_off = 0;
+	m_lineChars = "";
+	m_lastSym = "";
+	m_lineAdd = 0;
+	m_lineCmtNl = false;
+	m_rawAtBol = true;
+	m_finAhead = false;
+	m_finAtBol = true;
+	m_defDepth = 0;
+	m_defPutJoin = false;
+	m_finToken = 0;
+	m_finFilelinep = NULL;
+	m_lexp = NULL;
+	m_preprocp = NULL;
     }
-
     void configure(VFileLine* filelinep, VPreProc* preprocp) {
-      // configure() separate from constructor to avoid calling abstract functions
-      m_preprocp = preprocp;
-      m_finFilelinep = filelinep->create(1);
-      // Create lexer
-      m_lexp = new VPreLex (this, filelinep);
-      m_lexp->m_keepComments = m_preprocp->keepComments();
-      m_lexp->m_keepWhitespace = m_preprocp->keepWhitespace();
-      m_lexp->m_pedantic = m_preprocp->pedantic();
-      m_lexp->m_synthesis = m_preprocp->synthesis();
-      m_lexp->debug(debug()>=10 ? debug() : 0);  // See also VPreProc::debug() method
+	// configure() separate from constructor to avoid calling abstract functions
+	m_preprocp = preprocp;
+	m_finFilelinep = filelinep->create(1);
+	// Create lexer
+	m_lexp = new VPreLex (this, filelinep);
+	m_lexp->m_keepComments = m_preprocp->keepComments();
+	m_lexp->m_keepWhitespace = m_preprocp->keepWhitespace();
+	m_lexp->m_pedantic = m_preprocp->pedantic();
+	m_lexp->m_synthesis = m_preprocp->synthesis();
+	m_lexp->debug(debug()>=10 ? debug() : 0);  // See also VPreProc::debug() method
     }
-
     ~VPreProcImp() {
-      if (m_lexp) { delete m_lexp; m_lexp = NULL; }
+	if (m_lexp) { delete m_lexp; m_lexp = NULL; }
     }
-
     const char* tokenName(int tok);
     void debugToken(int tok, const char* cmtp);
     void parseTop();
@@ -248,8 +189,7 @@ namespace VPPreProc {
     void insertUnreadback(const string& text) { m_lineCmt += text; }
     void insertUnreadbackAtBol(const string& text);
     void addLineComment(int enter_exit_level);
-
-  private:
+private:
     void error(string msg) { m_lexp->m_tokFilelinep->error(msg); }
     void fatal(string msg) { m_lexp->m_tokFilelinep->fatal(msg); }
     int debug() const { return m_debug; }
@@ -260,9 +200,9 @@ namespace VPPreProc {
     void unputDefrefString(const string& strg);
 
     void parsingOn() {
-      m_off--;
-      if (m_off<0) fatalSrc("Underflow of parsing cmds");
-      // addLineComment no longer needed; getFinalToken will correct.
+	m_off--;
+	if (m_off<0) fatalSrc("Underflow of parsing cmds");
+	// addLineComment no longer needed; getFinalToken will correct.
     }
     void parsingOff() { m_off++; }
 
@@ -271,22 +211,24 @@ namespace VPPreProc {
     int getFinalToken(string& buf);
 
     void statePush(ProcState state) {
-      m_states.push(state);
+	m_states.push(state);
     }
     void statePop() {
-      m_states.pop();
-      if (m_states.empty()) {
+	m_states.pop();
+	if (m_states.empty()) {
 	    error("InternalError: Pop of parser state with nothing on stack");
 	    m_states.push(ps_TOP);
-      }
+	}
     }
     void stateChange(ProcState state) {
-      statePop(); statePush(state);
+	statePop(); statePush(state);
     }
-    
-  };
 
-} // namespace VPPreProc
+};
+
+}
+
+using namespace VPPreProc;
 
 //*************************************************************************
 // Creation
@@ -315,7 +257,6 @@ VPPreProc::VPreProc::~VPreProc() {
 // VPreProc Methods.  Just call the implementation functions.
 
 void VPPreProc::VPreProc::comment(string cmt) { }
-
 void VPPreProc::VPreProc::openFile(string filename, VFileLine* filelinep) {
     VPreProcImp* idatap = static_cast<VPreProcImp*>(m_opaquep);
     idatap->openFile (filename,filelinep);
@@ -521,29 +462,31 @@ string VPPreProc::VPreProcImp::defineSubst(VPreDefRef* refp) {
 	bool backslashesc = false;  // In \.....{space} block
 	// Note we go through the loop once more at the NULL end-of-string
 	for (const char* cp=value.c_str(); (*cp) || argName!=""; cp=(*cp?cp+1:cp)) {
-	    //cout << "CH "<<*cp<<"  an "<<argName<<"\n";
-	    if (!quote && *cp == '\\') { backslashesc = true; }
-	    else if (isspace(*cp)) { backslashesc = false; }
-	    // We don't check for quotes; some simulators expand even inside quotes
-	    if ( isalpha(*cp) || *cp=='_'
-		 || *cp=='$' // Won't replace system functions, since no $ in argValueByName
-		 || (argName!="" && (isdigit(*cp) || *cp=='$'))) {
+      //cout << "CH "<<*cp<<"  an "<<argName<<"\n";
+      if (!quote && *cp == '\\') { backslashesc = true; }
+      else if (isspace(*cp)) { backslashesc = false; }
+      // We don't check for quotes; some simulators expand even inside quotes
+      if (!quote && ( isalpha(*cp) || *cp=='_'
+                      || *cp=='$' // Won't replace system functions, since no $ in argValueByName
+                      || (argName!="" && (isdigit(*cp) || *cp=='$'))
+                      )
+          ) {
 		argName += *cp;
 		continue;
-	    }
-	    if (argName != "") {
+      }
+      if (argName != "") {
 		// Found a possible variable substitution
 		map<string,string>::iterator iter = argValueByName.find(argName);
 		if (iter != argValueByName.end()) {
-		    // Substitute
-		    string subst = iter->second;
-		    out += subst;
+          // Substitute
+          string subst = iter->second;
+          out += subst;
 		} else {
-		    out += argName;
+          out += argName;
 		}
 		argName = "";
-	    }
-	    if (!quote) {
+      }
+      if (!quote) {
 		// Check for `` only after we've detected end-of-argname
 		if (cp[0]=='`' && cp[1]=='`') {
 		    if (backslashesc) {
@@ -580,21 +523,21 @@ string VPPreProc::VPreProcImp::defineSubst(VPreDefRef* refp) {
 		    cp++;
 		    continue;
 		}
-	    }
-	    if (cp[0]=='\\' && cp[1]=='\"') {
+      }
+      if (cp[0]=='\\' && cp[1]=='\"') {
 		out += cp[0]; // \{any} Put out literal next character
 		out += cp[1];
 		cp++;
 		continue;
-	    }
-	    else if (cp[0]=='\\') {
+      }
+      else if (cp[0]=='\\') {
 		// Normally \{any} would put out literal next character
 		// Instead we allow "`define A(nm) \nm" to expand, per proposed mantis1537
 		out += cp[0];
 		continue;
-	    }
-	    if (*cp=='"') quote=!quote;
-	    if (*cp) out += *cp;
+      }
+      if (*cp=='"') quote=!quote;
+      if (*cp) out += *cp;
 	}
     }
 
@@ -609,23 +552,23 @@ bool VPPreProc::VPreProcImp::readWholefile(const string& filename, StrList& outl
     int fd = open (filename.c_str(), O_RDONLY);
     if (!fd) return false;
 
-// If change this code, run a test with the below size set very small
+    // If change this code, run a test with the below size set very small
 //#define INFILTER_IPC_BUFSIZ 16
 #define INFILTER_IPC_BUFSIZ 64*1024
     char buf[INFILTER_IPC_BUFSIZ];
     bool eof = false;
     while (!eof) {
-      ssize_t todo = INFILTER_IPC_BUFSIZ;
-      ssize_t got = read (fd, buf, todo);
-      if (got>0) {
+	ssize_t todo = INFILTER_IPC_BUFSIZ;
+	ssize_t got = read (fd, buf, todo);
+	if (got>0) {
 	    outl.push_back(string(buf, got));
-      }
-      else if (errno == EINTR || errno == EAGAIN
+	}
+	else if (errno == EINTR || errno == EAGAIN
 #ifdef EWOULDBLOCK
-               || errno == EWOULDBLOCK
+		 || errno == EWOULDBLOCK
 #endif
-               ) {
-      } else { eof = true; break; }
+	    ) {
+	} else { eof = true; break; }
     }
 
     close(fd);
@@ -633,75 +576,75 @@ bool VPPreProc::VPreProcImp::readWholefile(const string& filename, StrList& outl
 }
 
 void VPPreProc::VPreProcImp::openFile(string filename, VFileLine* filelinep) {
-  // Open a new file, possibly overriding the current one which is active.
-  
-  // Read a list<string> with the whole file.
-  StrList wholefile;
-  bool ok = readWholefile(filename, wholefile/*ref*/);
-  if (!ok) {
-    error("File not found: "+filename+"\n");
-    return;
-  }
-  
-  if (!m_preprocp->isEof()) {  // IE not the first file.
-    // We allow the same include file twice, because occasionally it pops
-    // up, with guards preventing a real recursion.
-    if (m_lexp->m_streampStack.size()>VPreProc::INCLUDE_DEPTH_MAX) {
-      error("Recursive inclusion of file: "+filename);
+    // Open a new file, possibly overriding the current one which is active.
+
+    // Read a list<string> with the whole file.
+    StrList wholefile;
+    bool ok = readWholefile(filename, wholefile/*ref*/);
+    if (!ok) {
+      error("File not found: "+filename+"\n");
       return;
     }
-    // There's already a file active.  Push it to work on the new one.
-    addLineComment(0);
-  }
-  
-  // Create new stream structure
-  m_lexp->scanNewFile(m_preprocp->fileline()->create(filename, 1));
-  addLineComment(1); // Enter
-  
-  // Filter all DOS CR's en-mass.  This avoids bugs with lexing CRs in the wrong places.
-  // This will also strip them from strings, but strings aren't supposed to be multi-line without a "\"
-  for (StrList::iterator it=wholefile.begin(); it!=wholefile.end(); ++it) {
+
+    if (!m_preprocp->isEof()) {  // IE not the first file.
+      // We allow the same include file twice, because occasionally it pops
+      // up, with guards preventing a real recursion.
+      if (m_lexp->m_streampStack.size()>VPreProc::INCLUDE_DEPTH_MAX) {
+	    error("Recursive inclusion of file: "+filename);
+	    return;
+      }
+      // There's already a file active.  Push it to work on the new one.
+      addLineComment(0);
+    }
+
+    // Create new stream structure
+    m_lexp->scanNewFile(m_preprocp->fileline()->create(filename, 1));
+    addLineComment(1); // Enter
+
+    // Filter all DOS CR's en-mass.  This avoids bugs with lexing CRs in the wrong places.
+    // This will also strip them from strings, but strings aren't supposed to be multi-line without a "\"
+    for (StrList::iterator it=wholefile.begin(); it!=wholefile.end(); ++it) {
 	// We don't end-loop at \0 as we allow and strip mid-string '\0's (for now).
-    bool strip = false;
-    const char* sp = it->data();
-    const char* ep = sp + it->length();
-    // Only process if needed, as saves extra string allocations
-    for (const char* cp=sp; cp<ep; cp++) {
-      if (*cp == '\r' || *cp == '\0') {
-        strip = true; break;
-      }
+	bool strip = false;
+	const char* sp = it->data();
+	const char* ep = sp + it->length();
+	// Only process if needed, as saves extra string allocations
+	for (const char* cp=sp; cp<ep; cp++) {
+	    if (*cp == '\r' || *cp == '\0') {
+		strip = true; break;
+	    }
+	}
+	if (strip) {
+	    string out;  out.reserve(it->length());
+	    for (const char* cp=sp; cp<ep; cp++) {
+		if (!(*cp == '\r' || *cp == '\0')) {
+		    out += *cp;
+		}
+	    }
+	    *it = out;
+	}
+
+	// Push the data to an internal buffer.
+	m_lexp->scanBytesBack(*it);
+	// Reclaim memory; the push saved the string contents for us
+	*it = "";
     }
-    if (strip) {
-      string out;  out.reserve(it->length());
-      for (const char* cp=sp; cp<ep; cp++) {
-        if (!(*cp == '\r' || *cp == '\0')) {
-          out += *cp;
-        }
-      }
-      *it = out;
-    }
-    
-    // Push the data to an internal buffer.
-    m_lexp->scanBytesBack(*it);
-    // Reclaim memory; the push saved the string contents for us
-    *it = "";
-  }
 }
 
 void VPPreProc::VPreProcImp::insertUnreadbackAtBol(const string& text) {
-  // Insert insuring we're at the beginning of line, for `line
-  // We don't always add a leading newline, as it may result in extra unreadback(newlines).
-  if (m_lineCmt == "") { m_lineCmtNl = true; }
-  else if (m_lineCmt[m_lineCmt.length()-1]!='\n') {
+    // Insert insuring we're at the beginning of line, for `line
+    // We don't always add a leading newline, as it may result in extra unreadback(newlines).
+    if (m_lineCmt == "") { m_lineCmtNl = true; }
+    else if (m_lineCmt[m_lineCmt.length()-1]!='\n') {
 	insertUnreadback("\n");
-  }
-  insertUnreadback(text);
+    }
+    insertUnreadback(text);
 }
 
 void VPPreProc::VPreProcImp::addLineComment(int enter_exit_level) {
-  if (m_preprocp->lineDirectives()) {
+    if (m_preprocp->lineDirectives()) {
 	insertUnreadbackAtBol(m_lexp->curFilelinep()->lineDirectiveStrg(enter_exit_level));
-  }
+    }
 }
 
 int VPPreProc::VPreProcImp::getRawToken() {
@@ -768,109 +711,109 @@ void VPPreProc::VPreProcImp::debugToken(int tok, const char* cmtp) {
 // in the middle of parsing other tokens.
 
 int VPPreProc::VPreProcImp::getStateToken(string& buf) {
-  // Return the next state-determined token
-  while (1) {
-  next_tok:
+    // Return the next state-determined token
+    while (1) {
+      next_tok:
 	if (isEof()) {
-      buf = string (yyourtext(), yyourleng());
-      return VP_EOF;
+	    buf = string (yyourtext(), yyourleng());
+	    return VP_EOF;
 	}
 	int tok = getRawToken();
 	ProcState state = m_states.top();
-    
+
 	// Most states emit white space and comments between tokens. (Unless collecting a string)
 	if (tok==VP_WHITE && state !=ps_STRIFY) {
-      buf = string (yyourtext(), yyourleng());
-      return (tok);
+	    buf = string (yyourtext(), yyourleng());
+	    return (tok);
 	}
 	if (tok==VP_BACKQUOTE && state !=ps_STRIFY) { tok = VP_TEXT; }
 	if (tok==VP_COMMENT) {
-      if (!m_off) {
+	    if (!m_off) {
 		if (m_lexp->m_keepComments == KEEPCMT_SUB
 		    || m_lexp->m_keepComments == KEEPCMT_EXP) {
-          string rtn; rtn.assign(yyourtext(),yyourleng());
-          m_preprocp->comment(rtn);
-          // Need to insure "foo/**/bar" becomes two tokens
-          insertUnreadback (" ");
+		    string rtn; rtn.assign(yyourtext(),yyourleng());
+		    m_preprocp->comment(rtn);
+		    // Need to insure "foo/**/bar" becomes two tokens
+		    insertUnreadback (" ");
 		} else if (m_lexp->m_keepComments) {
-          buf = string (yyourtext(), yyourleng());
-          return (tok);
+		    buf = string (yyourtext(), yyourleng());
+		    return (tok);
 		} else {
-          // Need to insure "foo/**/bar" becomes two tokens
-          insertUnreadback (" ");
+		    // Need to insure "foo/**/bar" becomes two tokens
+		    insertUnreadback (" ");
 		}
-      }
-      // We're off or processed the comment specially.  If there are newlines
-      // in it, we also return the newlines as TEXT so that the linenumber
-      // count is maintained for downstream tools
-      for (size_t len=0; len<(size_t)yyourleng(); len++) { if (yyourtext()[len]=='\n') m_lineAdd++; }
-      goto next_tok;
+	    }
+	    // We're off or processed the comment specially.  If there are newlines
+	    // in it, we also return the newlines as TEXT so that the linenumber
+	    // count is maintained for downstream tools
+	    for (size_t len=0; len<(size_t)yyourleng(); len++) { if (yyourtext()[len]=='\n') m_lineAdd++; }
+	    goto next_tok;
 	}
 	if (tok==VP_LINE) {
-      addLineComment(m_lexp->m_enterExit);
-      goto next_tok;
+	    addLineComment(m_lexp->m_enterExit);
+	    goto next_tok;
 	}
-    
+
 	if (tok==VP_DEFREF_JOIN) {
-      // Here's something fun and unspecified as yet:
-      // The existance of non-existance of a base define changes `` expansion
-      //	`define QA_b zzz
-      //	`define Q1 `QA``_b
-      //	 1Q1 -> zzz
-      //	`define QA a
-      //	 `Q1 -> a_b
-      // Note parenthesis make this unambiguous
-      //	`define Q1 `QA()``_b  // -> a_b
-      // This may be a side effect of how `UNDEFINED remains as `UNDEFINED,
-      // but it screws up our method here.  So hardcode it.
-      string name (yyourtext()+1,yyourleng()-1);
-      if (m_preprocp->defExists(name)) {   // JOIN(DEFREF)
+	    // Here's something fun and unspecified as yet:
+	    // The existance of non-existance of a base define changes `` expansion
+	    //	`define QA_b zzz
+	    //	`define Q1 `QA``_b
+	    //	 1Q1 -> zzz
+	    //	`define QA a
+	    //	 `Q1 -> a_b
+	    // Note parenthesis make this unambiguous
+	    //	`define Q1 `QA()``_b  // -> a_b
+	    // This may be a side effect of how `UNDEFINED remains as `UNDEFINED,
+	    // but it screws up our method here.  So hardcode it.
+	    string name (yyourtext()+1,yyourleng()-1);
+	    if (m_preprocp->defExists(name)) {   // JOIN(DEFREF)
 		// Put back the `` and process the defref
 		if (debug()>=5) cout<<"```: define "<<name<<" exists, expand first\n";
 		m_defPutJoin = true;  // After define, unputString("``").  Not now as would loose yyourtext()
 		if (debug()>=5) cout<<"TOKEN now DEFREF\n";
 		tok = VP_DEFREF;
-      } else {  // DEFREF(JOIN)
+	    } else {  // DEFREF(JOIN)
 		if (debug()>=5) cout<<"```: define "<<name<<" doesn't exist, join first\n";
 		// FALLTHRU, handle as with VP_SYMBOL_JOIN
-      }
+	    }
 	}
 	if (tok==VP_SYMBOL_JOIN || tok==VP_DEFREF_JOIN) {  // not else if, can fallthru from above if()
-      // a`` -> string doesn't include the ``, so can just grab next and continue
-      string out (yyourtext(),yyourleng());
-      if (debug()>=5) cout<<"`` LHS:"<<out<<endl;
-      // a``b``c can have multiple joins, so we need a stack
-      m_joinStack.push(out);
-      statePush(ps_JOIN);
+	    // a`` -> string doesn't include the ``, so can just grab next and continue
+	    string out (yyourtext(),yyourleng());
+	    if (debug()>=5) cout<<"`` LHS:"<<out<<endl;
+	    // a``b``c can have multiple joins, so we need a stack
+	    m_joinStack.push(out);
+	    statePush(ps_JOIN);
 	    goto next_tok;
 	}
-    
+
 	// Deal with some special parser states
 	switch (state) {
 	case ps_TOP: {
-      break;
+	    break;
 	}
 	case ps_DEFNAME_UNDEF:	// FALLTHRU
 	case ps_DEFNAME_DEFINE:	// FALLTHRU
 	case ps_DEFNAME_IFDEF:	// FALLTHRU
 	case ps_DEFNAME_IFNDEF:	// FALLTHRU
 	case ps_DEFNAME_ELSIF: {
-      if (tok==VP_SYMBOL) {
+	    if (tok==VP_SYMBOL) {
 		m_lastSym.assign(yyourtext(),yyourleng());
 		if (state==ps_DEFNAME_IFDEF
 		    || state==ps_DEFNAME_IFNDEF) {
-          bool enable = m_preprocp->defExists(m_lastSym);
-          if (debug()>=5) cout<<"Ifdef "<<m_lastSym<<(enable?" ON":" OFF")<<endl;
-          if (state==ps_DEFNAME_IFNDEF) enable = !enable;
-          m_ifdefStack.push(VPreIfEntry(enable,false));
-          if (!enable) parsingOff();
-          statePop();
-          goto next_tok;
+		    bool enable = m_preprocp->defExists(m_lastSym);
+		    if (debug()>=5) cout<<"Ifdef "<<m_lastSym<<(enable?" ON":" OFF")<<endl;
+		    if (state==ps_DEFNAME_IFNDEF) enable = !enable;
+		    m_ifdefStack.push(VPreIfEntry(enable,false));
+		    if (!enable) parsingOff();
+		    statePop();
+		    goto next_tok;
 		}
 		else if (state==ps_DEFNAME_ELSIF) {
-          if (m_ifdefStack.empty()) {
+		    if (m_ifdefStack.empty()) {
 			error("`elsif with no matching `if\n");
-          } else {
+		    } else {
 			// Handle `else portion
 			VPreIfEntry lastIf = m_ifdefStack.top(); m_ifdefStack.pop();
 			if (!lastIf.on()) parsingOn();
@@ -879,69 +822,69 @@ int VPPreProc::VPreProcImp::getStateToken(string& buf) {
 			if (debug()>=5) cout<<"Elsif "<<m_lastSym<<(enable?" ON":" OFF")<<endl;
 			m_ifdefStack.push(VPreIfEntry(enable, lastIf.everOn()));
 			if (!enable) parsingOff();
-          }
-          statePop();
-          goto next_tok;
+		    }
+		    statePop();
+		    goto next_tok;
 		}
 		else if (state==ps_DEFNAME_UNDEF) {
-          if (!m_off) {
+		    if (!m_off) {
 			if (debug()>=5) cout<<"Undef "<<m_lastSym<<endl;
 			m_preprocp->undef(m_lastSym);
-          }
-          statePop();
-          goto next_tok;
+		    }
+		    statePop();
+		    goto next_tok;
 		}
 		else if (state==ps_DEFNAME_DEFINE) {
-          // m_lastSym already set.
-          stateChange(ps_DEFFORM);
-          m_lexp->pushStateDefForm();
-          goto next_tok;
+		    // m_lastSym already set.
+		    stateChange(ps_DEFFORM);
+		    m_lexp->pushStateDefForm();
+		    goto next_tok;
 		}
 		else fatalSrc("Bad case\n");
 		goto next_tok;
-      }
-      else if (tok==VP_TEXT) {
+	    }
+	    else if (tok==VP_TEXT) {
 		// IE, something like comment between define and symbol
 		if (!m_off) {
-          buf = string (yyourtext(), yyourleng());
-          return tok;
+		    buf = string (yyourtext(), yyourleng());
+		    return tok;
 		}
 		else goto next_tok;
-      }
-      else if (tok==VP_DEFREF) {
+	    }
+	    else if (tok==VP_DEFREF) {
 		// IE, `ifdef `MACRO(x): Substitue and come back here when state pops.
 		break;
-      }
-      else {
+	    }
+	    else {
 		error((string)"Expecting define name. Found: "+tokenName(tok)+"\n");
 		goto next_tok;
-      }
+	    }
 	}
 	case ps_DEFFORM: {
-      if (tok==VP_DEFFORM) {
+	    if (tok==VP_DEFFORM) {
 		m_formals = m_lexp->m_defValue;
 		if (debug()>=5) cout<<"DefFormals='"<<VPreLex::cleanDbgStrg(m_formals)<<"'\n";
 		stateChange(ps_DEFVALUE);
 		m_lexp->pushStateDefValue();
 		goto next_tok;
-      } else if (tok==VP_TEXT) {
+	    } else if (tok==VP_TEXT) {
 		// IE, something like comment in formals
 		if (!m_off) {
-          buf = string (yyourtext(), yyourleng());
-          return tok;
+		    buf = string (yyourtext(), yyourleng());
+		    return tok;
 		}
 		else goto next_tok;
-      } else {
+	    } else {
 		error((string)"Expecting define formal arguments. Found: "+tokenName(tok)+"\n");
 		goto next_tok;
-      }
+	    }
 	}
 	case ps_DEFVALUE: {
-      static string newlines;
-      newlines = "\n";  // Always start with trailing return
-      if (tok == VP_DEFVALUE) {
+	    static string newlines;
+	    newlines = "\n";  // Always start with trailing return
+	    if (tok == VP_DEFVALUE) {
 		if (debug()>=5) cout<<"DefValue='"<<VPreLex::cleanDbgStrg(m_lexp->m_defValue)
-                            <<"'  formals='"<<VPreLex::cleanDbgStrg(m_formals)<<"'\n";
+				    <<"'  formals='"<<VPreLex::cleanDbgStrg(m_formals)<<"'\n";
 		// Add any formals
 		string formals = m_formals;
 		string value = m_lexp->m_defValue;
@@ -951,141 +894,141 @@ int VPPreProc::VPreProcImp::getStateToken(string& buf) {
 		// 2. Substituting in " .... " with embedded returns requires \ escape.
 		//    This is very difficult in the presence of `", so we keep the \ before the newline.
 		for (size_t i=0; i<formals.length(); i++) {
-          if (formals[i] == '\n') {
+		    if (formals[i] == '\n') {
 			newlines += "\n";
-          }
+		    }
 		}
 		for (size_t i=0; i<value.length(); i++) {
-          if (value[i] == '\n') {
+		    if (value[i] == '\n') {
 			newlines += "\n";
-          }
+		    }
 		}
 		if (!m_off) {
-          // Remove leading and trailing whitespace
-          value = trimWhitespace(value, true);
-          // Define it
-          if (debug()>=5) cout<<"Define "<<m_lastSym<<" "<<formals
-                              <<" = '"<<VPreLex::cleanDbgStrg(value)<<"'"<<endl;
-          m_preprocp->define(m_lastSym, value, formals);
+		    // Remove leading and trailing whitespace
+		    value = trimWhitespace(value, true);
+		    // Define it
+		    if (debug()>=5) cout<<"Define "<<m_lastSym<<" "<<formals
+					<<" = '"<<VPreLex::cleanDbgStrg(value)<<"'"<<endl;
+		    m_preprocp->define(m_lastSym, value, formals);
 		}
-      } else {
+	    } else {
 		string msg = string("Bad define text, unexpected ")+tokenName(tok)+"\n";
 		fatalSrc(msg);
-      }
-      statePop();
-      // DEFVALUE is terminated by a return, but lex can't return both tokens.
-      // Thus, we emit a return here.
-      buf = newlines;
-      return(VP_WHITE);
+	    }
+	    statePop();
+	    // DEFVALUE is terminated by a return, but lex can't return both tokens.
+	    // Thus, we emit a return here.
+	    buf = newlines;
+	    return(VP_WHITE);
 	}
 	case ps_DEFPAREN: {
-      if (tok==VP_TEXT && yyourleng()==1 && yyourtext()[0]=='(') {
+	    if (tok==VP_TEXT && yyourleng()==1 && yyourtext()[0]=='(') {
 		stateChange(ps_DEFARG);
 		goto next_tok;
-      } else {
+	    } else {
 		if (m_defRefs.empty()) fatalSrc("Shouldn't be in DEFPAREN w/o active defref");
 		VPreDefRef* refp = &(m_defRefs.top());
 		error((string)"Expecting ( to begin argument list for define reference `"+refp->name()+"\n");
 		statePop();
 		goto next_tok;
-      }
+	    }
 	}
 	case ps_DEFARG: {
-      if (m_defRefs.empty()) fatalSrc("Shouldn't be in DEFARG w/o active defref");
-      VPreDefRef* refp = &(m_defRefs.top());
-      refp->nextarg(refp->nextarg()+m_lexp->m_defValue); m_lexp->m_defValue="";
-      if (debug()>=5) cout<<"defarg++ "<<refp->nextarg()<<endl;
-      if (tok==VP_DEFARG && yyourleng()==1 && yyourtext()[0]==',') {
+	    if (m_defRefs.empty()) fatalSrc("Shouldn't be in DEFARG w/o active defref");
+	    VPreDefRef* refp = &(m_defRefs.top());
+	    refp->nextarg(refp->nextarg()+m_lexp->m_defValue); m_lexp->m_defValue="";
+	    if (debug()>=5) cout<<"defarg++ "<<refp->nextarg()<<endl;
+	    if (tok==VP_DEFARG && yyourleng()==1 && yyourtext()[0]==',') {
 		refp->args().push_back(refp->nextarg());
 		stateChange(ps_DEFARG);
 		m_lexp->pushStateDefArg(1);
 		refp->nextarg("");
 		goto next_tok;
-      } else if (tok==VP_DEFARG && yyourleng()==1 && yyourtext()[0]==')') {
+	    } else if (tok==VP_DEFARG && yyourleng()==1 && yyourtext()[0]==')') {
 		// Substitute in and prepare for next action
 		// Similar code in non-parenthesized define (Search for END_OF_DEFARG)
 		refp->args().push_back(refp->nextarg());
 		string out;
 		if (!m_off) {
-          out = defineSubst(refp);
-          out = m_preprocp->defSubstitute(out);
+		    out = defineSubst(refp);
+		    out = m_preprocp->defSubstitute(out);
 		}
 		m_defRefs.pop();  refp=NULL;
 		if (m_defRefs.empty()) {
-          statePop();
-          if (!m_off) unputDefrefString(out);
-          m_lexp->m_parenLevel = 0;
+		    statePop();
+		    if (!m_off) unputDefrefString(out);
+		    m_lexp->m_parenLevel = 0;
 		}
 		else {  // Finished a defref inside a upper defref
-          // Can't subst now, or
-          // `define a(ign) x,y
-          // foo(`a(ign),`b)  would break because a contains comma
-          refp = &(m_defRefs.top());  // We popped, so new top
-          refp->nextarg(refp->nextarg()+m_lexp->m_defValue+out); m_lexp->m_defValue="";
-          m_lexp->m_parenLevel = refp->parenLevel();
-          statePop();  // Will go to ps_DEFARG, as we're under another define
+		    // Can't subst now, or
+		    // `define a(ign) x,y
+		    // foo(`a(ign),`b)  would break because a contains comma
+		    refp = &(m_defRefs.top());  // We popped, so new top
+		    refp->nextarg(refp->nextarg()+m_lexp->m_defValue+out); m_lexp->m_defValue="";
+		    m_lexp->m_parenLevel = refp->parenLevel();
+		    statePop();  // Will go to ps_DEFARG, as we're under another define
 		}
 		goto next_tok;
-      } else if (tok==VP_DEFREF) {
+	    } else if (tok==VP_DEFREF) {
 		// Expand it, then state will come back here
 		// Value of building argument is data before the lower defref
 		// we'll append it when we push the argument.
 		break;
-      } else if (tok==VP_SYMBOL || tok==VP_STRING || VP_TEXT || VP_WHITE || VP_PSL) {
+	    } else if (tok==VP_SYMBOL || tok==VP_STRING || VP_TEXT || VP_WHITE || VP_PSL) {
 		string rtn; rtn.assign(yyourtext(),yyourleng());
 		refp->nextarg(refp->nextarg()+rtn);
 		goto next_tok;
-      } else {
+	    } else {
 		error((string)"Expecting ) or , to end argument list for define reference. Found: "+tokenName(tok));
 		statePop();
 		goto next_tok;
-      }
+	    }
 	}
 	case ps_INCNAME: {
-      if (tok==VP_STRING) {
-		statePop();
-		m_lastSym.assign(yyourtext(),yyourleng());
-		if (debug()>=5) cout<<"Include "<<m_lastSym<<endl;
-		// Drop leading and trailing quotes.
-		m_lastSym.erase(0,1);
-		m_lastSym.erase(m_lastSym.length()-1,1);
-		m_preprocp->include(m_lastSym);
-		goto next_tok;
-      }
-      else if (tok==VP_TEXT && yyourleng()==1 && yyourtext()[0]=='<') {
-		// include <filename>
-		stateChange(ps_INCNAME);  // Still
-		m_lexp->pushStateIncFilename();
-		goto next_tok;
-      }
-      else if (tok==VP_DEFREF
-               || tok==VP_STRIFY) {
-		// Expand it, then state will come back here
-		break;
-      }
-      else {
-		statePop();
-		error((string)"Expecting include filename. Found: "+tokenName(tok)+"\n");
-		goto next_tok;
-      }
+	    if (tok==VP_STRING) {
+          statePop();
+          m_lastSym.assign(yyourtext(),yyourleng());
+          if (debug()>=5) cout<<"Include "<<m_lastSym<<endl;
+          // Drop leading and trailing quotes.
+          m_lastSym.erase(0,1);
+          m_lastSym.erase(m_lastSym.length()-1,1);
+          m_preprocp->include(m_lastSym);
+          goto next_tok;
+	    }
+	    else if (tok==VP_TEXT && yyourleng()==1 && yyourtext()[0]=='<') {
+          // include <filename>
+          stateChange(ps_INCNAME);  // Still
+          m_lexp->pushStateIncFilename();
+          goto next_tok;
+	    }
+	    else if (tok==VP_DEFREF
+                 || tok==VP_STRIFY) {
+          // Expand it, then state will come back here
+          break;
+	    }
+	    else {
+          statePop();
+          error((string)"Expecting include filename. Found: "+tokenName(tok)+"\n");
+          goto next_tok;
+	    }
 	}
 	case ps_ERRORNAME: {
-      if (tok==VP_STRING) {
+	    if (tok==VP_STRING) {
 		if (!m_off) {
-          m_lastSym.assign(yyourtext(),yyourleng());
-          error(m_lastSym);
+		    m_lastSym.assign(yyourtext(),yyourleng());
+		    error(m_lastSym);
 		}
 		statePop();
 		goto next_tok;
-      }
-      else {
+	    }
+	    else {
 		error((string)"Expecting `error string. Found: "+tokenName(tok)+"\n");
 		statePop();
 		goto next_tok;
-      }
+	    }
 	}
 	case ps_JOIN: {
-      if (tok==VP_SYMBOL || tok==VP_TEXT) {
+	    if (tok==VP_SYMBOL || tok==VP_TEXT) {
 		if (m_joinStack.empty()) fatalSrc("`` join stack empty, but in a ``");
 		string lhs = m_joinStack.top(); m_joinStack.pop();
 		if (debug()>=5) cout<<"`` LHS:"<<lhs<<endl;
@@ -1096,17 +1039,17 @@ int VPPreProc::VPreProcImp::getStateToken(string& buf) {
 		unputString(out);
 		statePop();
 		goto next_tok;
-      } else if (tok==VP_EOF || tok==VP_WHITE || tok == VP_COMMENT || tok==VP_STRING) {
+	    } else if (tok==VP_EOF || tok==VP_WHITE || tok == VP_COMMENT || tok==VP_STRING) {
 		error((string)"Expecting symbol to terminate ``; whitespace etc cannot follow ``. Found: "+tokenName(tok)+"\n");
 		statePop();
 		goto next_tok;
-      } else {
+	    } else {
 		// `define, etc, fall through and expand.  Pop back here.
 		break;
-      }
+	    }
 	}
 	case ps_STRIFY: {
-      if (tok==VP_STRIFY) {
+	    if (tok==VP_STRIFY) {
 		// Quote what's in the middle of the stringification
 		// Note a `" MACRO_WITH(`") `" doesn't need to be handled (we don't need a stack)
 		// That behavior isn't specified, and other simulators vary widely
@@ -1116,110 +1059,110 @@ int VPPreProc::VPreProcImp::getStateToken(string& buf) {
 		// The spec is silent about this either way; simulators vary
 		string::size_type pos;
 		while ((pos=out.find("\n")) != string::npos) {
-          out.replace(pos, 1, " ");
+		    out.replace(pos, 1, " ");
 		}
 		unputString((string)"\""+out+"\"");
 		statePop();
 		goto next_tok;
-      }
-      else if (tok==VP_EOF) {
+	    }
+	    else if (tok==VP_EOF) {
 		error("`\" not terminated at EOF\n");
-      }
-      else if (tok==VP_BACKQUOTE) {
+	    }
+	    else if (tok==VP_BACKQUOTE) {
 		m_strify += "\\\"";
 		goto next_tok;
-      }
-      else if (tok==VP_DEFREF) {
+	    }
+	    else if (tok==VP_DEFREF) {
 		// Spec says to expand macros inside `"
 		// Substitue it into the stream, then return here
 		break;
-      }
-      else {
+	    }
+	    else {
 		// Append token to eventual string
 		m_strify.append(yyourtext(),yyourleng());
 		goto next_tok;
-      }
+	    }
 	}
 	default: fatalSrc("Bad case\n");
 	}
 	// Default is to do top level expansion of some tokens
 	switch (tok) {
 	case VP_INCLUDE:
-      if (!m_off) {
+	    if (!m_off) {
 		statePush(ps_INCNAME);
-      }
-      goto next_tok;
+	    }
+	    goto next_tok;
 	case VP_UNDEF:
-      statePush(ps_DEFNAME_UNDEF);
-      goto next_tok;
+	    statePush(ps_DEFNAME_UNDEF);
+	    goto next_tok;
 	case VP_DEFINE:
-      // No m_off check here, as a `ifdef NEVER `define FOO(`endif)  should work
-      statePush(ps_DEFNAME_DEFINE);
-      goto next_tok;
+	    // No m_off check here, as a `ifdef NEVER `define FOO(`endif)  should work
+	    statePush(ps_DEFNAME_DEFINE);
+	    goto next_tok;
 	case VP_IFDEF:
-      statePush(ps_DEFNAME_IFDEF);
-      goto next_tok;
+	    statePush(ps_DEFNAME_IFDEF);
+	    goto next_tok;
 	case VP_IFNDEF:
-      statePush(ps_DEFNAME_IFNDEF);
-      goto next_tok;
+	    statePush(ps_DEFNAME_IFNDEF);
+	    goto next_tok;
 	case VP_ELSIF:
-      statePush(ps_DEFNAME_ELSIF);
-      goto next_tok;
+	    statePush(ps_DEFNAME_ELSIF);
+	    goto next_tok;
 	case VP_ELSE:
-      if (m_ifdefStack.empty()) {
+	    if (m_ifdefStack.empty()) {
 		error("`else with no matching `if\n");
-      } else {
+	    } else {
 		VPreIfEntry lastIf = m_ifdefStack.top(); m_ifdefStack.pop();
 		bool enable = !lastIf.everOn();
 		if (debug()>=5) cout<<"Else "<<(enable?" ON":" OFF")<<endl;
 		m_ifdefStack.push(VPreIfEntry(enable, lastIf.everOn()));
 		if (!lastIf.on()) parsingOn();
 		if (!enable) parsingOff();
-      }
-      goto next_tok;
+	    }
+	    goto next_tok;
 	case VP_ENDIF:
-      if (debug()>=5) cout<<"Endif "<<endl;
-      if (m_ifdefStack.empty()) {
+	    if (debug()>=5) cout<<"Endif "<<endl;
+	    if (m_ifdefStack.empty()) {
 		error("`endif with no matching `if\n");
-      } else {
+	    } else {
 		VPreIfEntry lastIf = m_ifdefStack.top(); m_ifdefStack.pop();
 		if (!lastIf.on()) parsingOn();
 		// parsingOn() really only enables parsing if
 		// all ifdef's above this want it on
-      }
-      goto next_tok;
+	    }
+	    goto next_tok;
 
 	case VP_DEFREF: {
-      // m_off not right here, but inside substitution, to make this work: `ifdef NEVER `DEFUN(`endif)
-      string name (yyourtext()+1,yyourleng()-1);
-      if (debug()>=5) cout<<"DefRef "<<name<<endl;
-      if (m_defPutJoin) { m_defPutJoin = false; unputString("``"); }
-      if (m_defDepth++ > VPreProc::DEFINE_RECURSION_LEVEL_MAX) {
+	    // m_off not right here, but inside substitution, to make this work: `ifdef NEVER `DEFUN(`endif)
+	    string name (yyourtext()+1,yyourleng()-1);
+	    if (debug()>=5) cout<<"DefRef "<<name<<endl;
+	    if (m_defPutJoin) { m_defPutJoin = false; unputString("``"); }
+	    if (m_defDepth++ > VPreProc::DEFINE_RECURSION_LEVEL_MAX) {
 		error("Recursive `define substitution: `"+name);
 		goto next_tok;
-      }
-      // Substitute
-      string params = m_preprocp->defParams(name);
-      if (params=="") {   // Not found, return original string as-is
+	    }
+	    // Substitute
+	    string params = m_preprocp->defParams(name);
+	    if (params=="") {   // Not found, return original string as-is
 		m_defDepth = 0;
 		if (debug()>=5) cout<<"Defref `"<<name<<" => not_defined"<<endl;
 		if (m_off) {
 		    goto next_tok;
 		} else {
-          buf = string (yyourtext(), yyourleng());
-          return (VP_TEXT);
+		    buf = string (yyourtext(), yyourleng());
+		    return (VP_TEXT);
 		}
-      }
-      else if (params=="0") {  // Found, as simple substitution
+	    }
+	    else if (params=="0") {  // Found, as simple substitution
 		if (m_off) {
-          goto next_tok;
+		    goto next_tok;
 		}
 		else {
-          VPreDefRef tempref(name, "");
-          string out = defineSubst(&tempref);
-          // Similar code in parenthesized define (Search for END_OF_DEFARG)
-          out = m_preprocp->defSubstitute(out);
-          if (m_defRefs.empty()) {
+		    VPreDefRef tempref(name, "");
+		    string out = defineSubst(&tempref);
+		    // Similar code in parenthesized define (Search for END_OF_DEFARG)
+		    out = m_preprocp->defSubstitute(out);
+		    if (m_defRefs.empty()) {
 			// Just output the substitution
 			unputDefrefString(out);
 		    } else {  // Inside another define.
@@ -1228,11 +1171,11 @@ int VPPreProc::VPreProcImp::getStateToken(string& buf) {
 			// foo(`a,`b)  would break because a contains comma
 			VPreDefRef* refp = &(m_defRefs.top());
 			refp->nextarg(refp->nextarg()+m_lexp->m_defValue+out); m_lexp->m_defValue="";
-          }
-          goto next_tok;
+		    }
+		    goto next_tok;
 		}
-      }
-      else {  // Found, with parameters
+	    }
+	    else {  // Found, with parameters
 		if (debug()>=5) cout<<"Defref `"<<name<<" => parametrized"<<endl;
 		// The CURRENT macro needs the paren saved, it's not a property of the child macro
 		if (!m_defRefs.empty()) m_defRefs.top().parenLevel(m_lexp->m_parenLevel);
@@ -1240,53 +1183,53 @@ int VPPreProc::VPreProcImp::getStateToken(string& buf) {
 		statePush(ps_DEFPAREN);
 		m_lexp->pushStateDefArg(0);
 		goto next_tok;
-      }
-      fatalSrc("Bad case\n");
+	    }
+	    fatalSrc("Bad case\n");
 	}
 	case VP_ERROR: {
-      statePush(ps_ERRORNAME);
-      goto next_tok;
+	    statePush(ps_ERRORNAME);
+	    goto next_tok;
 	}
 	case VP_EOF:
-      if (!m_ifdefStack.empty()) {
+	    if (!m_ifdefStack.empty()) {
 		error("`ifdef not terminated at EOF\n");
-      }
-      buf = string (yyourtext(), yyourleng());
-      return tok;
+	    }
+	    buf = string (yyourtext(), yyourleng());
+	    return tok;
 	case VP_UNDEFINEALL:
-      if (!m_off) {
+	    if (!m_off) {
 		if (debug()>=5) cout<<"Undefineall "<<endl;
 		m_preprocp->undefineall();
-      }
-      goto next_tok;
+	    }
+	    goto next_tok;
 	case VP_STRIFY:
-      // We must expand macros in the body of the stringification
-      // Then, when done, form a final string to return
-      // (it could be used as a include filename, for example, so need the string token)
-      statePush(ps_STRIFY);
-      goto next_tok;
+	    // We must expand macros in the body of the stringification
+	    // Then, when done, form a final string to return
+	    // (it could be used as a include filename, for example, so need the string token)
+	    statePush(ps_STRIFY);
+	    goto next_tok;
 	case VP_SYMBOL:
 	case VP_STRING:
 	case VP_PSL:
 	case VP_TEXT: {
-      m_defDepth = 0;
-      if (!m_off) {
+	    m_defDepth = 0;
+	    if (!m_off) {
 		buf = string (yyourtext(), yyourleng());
 		return tok;
-      }
-      else goto next_tok;
+	    }
+	    else goto next_tok;
 	}
 	case VP_WHITE:		// Handled at top of loop
 	case VP_COMMENT:	// Handled at top of loop
 	case VP_DEFFORM:	// Handled by state=ps_DEFFORM;
 	case VP_DEFVALUE:	// Handled by state=ps_DEFVALUE;
 	default:
-      fatalSrc((string)"Internal error: Unexpected token "+tokenName(tok)+"\n");
-      break;
+	    fatalSrc((string)"Internal error: Unexpected token "+tokenName(tok)+"\n");
+	    break;
 	}
 	buf = string (yyourtext(), yyourleng());
 	return tok;
-  }
+    }
 }
 
 int VPPreProc::VPreProcImp::getFinalToken(string& buf) {

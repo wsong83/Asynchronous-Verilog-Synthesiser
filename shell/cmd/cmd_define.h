@@ -20,22 +20,28 @@
  */
 
 /* 
- * Test for the Verilog preprocessor
- * 27/04/2012   Wei Song
+ * argument definitions
+ * 10/05/2012   Wei Song
  *
  *
  */
 
-#include "preproc/VPreProc.h"
+#ifndef AV_CMD_CMD_DEFINE_
+#define AV_CMD_CMD_DEFINE_
 
-using namespace VPPreProc;
+#include <boost/program_options.hpp>
+  namespace po = boost::program_options;
 
-int main(int argc, char* argv[])
-{
-  //  VFileLine* filelinep = new VFileLine();
-  VPreProc* preprocp = new VPreProc();
-  //preprocp->configure(filelinep);
-  preprocp->openFile(argv[1]);
-
-  return 1;
+namespace shell { 
+  namespace CMD {
+    const po::command_line_style::style_t cmd_style = 
+      po::command_line_style::style_t(
+                                      po::command_line_style::unix_style |
+                                      po::command_line_style::allow_long_disguise
+                                      );
+  }
 }
+
+#include "analyze.h"
+
+#endif

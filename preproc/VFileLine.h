@@ -1,31 +1,4 @@
 // -*- C++ -*-
-/*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
- *    Advanced Processor Technologies Group, School of Computer Science
- *    University of Manchester, Manchester M13 9PL UK
- *
- *    This source code is free software; you can redistribute it
- *    and/or modify it in source code form under the terms of the GNU
- *    General Public License as published by the Free Software
- *    Foundation; either version 2 of the License, or (at your option)
- *    any later version.
- *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU General Public License for more details.
- *
- *    You should have received a copy of the GNU General Public License
- *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
- */
-
-/* 
- * Adopted from the Verilog-Perl tool 3.314
- * 25/04/2012   Wei Song
- *
- *
- */
 //*************************************************************************
 //
 // Copyright 2000-2012 by Wilson Snyder.  This program is free software;
@@ -46,35 +19,31 @@
 /// Code available from: http://www.veripool.org/verilog-perl
 ///
 //*************************************************************************
-
+
 #ifndef _VFILELINE_H_
 #define _VFILELINE_H_ 1
 #include <string>
 #include <iostream>
 #include <sstream>
-
-using std::string;
-using std::ostringstream;
-using std::ostream;
+using namespace std;
 
 namespace VPPreProc {
+//============================================================================
+// VFileLine
+/// User information and error reporting functions
+////
+/// Users can override this class to implement their own error handling
 
-  //============================================================================
-  // VFileLine
-  /// User information and error reporting functions
-  ////
-  /// Users can override this class to implement their own error handling
-  
-  class VFileLine {
-  private:
+class VFileLine {
+private:
     int		m_lineno;		///< Line number in file
     string	m_filename;		///< File name
     static int	s_numErrors;		///< Number of errors detected
-    
-  protected:
+
+protected:
     VFileLine(int called_only_for_default) {init("",0);}
-    
-  public:
+
+public:
     // CONSTRUCTORS
     /// Create a new fileline, for a new file and/or line number.
     /// Member functions, so that if a user provides another class, a change in the
@@ -99,15 +68,15 @@ namespace VPPreProc {
 
     // Internal methods -- special use
     static const char* itoa(int i);	///< Internal: Not reentrant! - for fatalSrc() only
-  };
-  ostream& operator<<(ostream& os, VFileLine* fileline);
-  
-  /// Use this instead of fatal() to mention the source code line.
+};
+ostream& operator<<(ostream& os, VFileLine* fileline);
+
+/// Use this instead of fatal() to mention the source code line.
 #define fatalSrc(msg) fatal((string)"Internal Error: "+__FILE__+":"+VFileLine::itoa(__LINE__)+": "+(msg))
-  
-  template< class T> std::string cvtToStr (const T& t) {
+
+template< class T> std::string cvtToStr (const T& t) {
     ostringstream os; os<<t; return os.str();
-  }
+}
 
 }
 
