@@ -33,6 +33,9 @@
 using netlist::Library;
 using netlist::Module;
 
+#include "cmd_lexer.h"
+#include "err_report.h"
+
 namespace shell {
 
   class Env {
@@ -40,13 +43,13 @@ namespace shell {
     Env();
 
     bool initialise();               /* set up basic environment */
-
-
+    void show_cmd(bool first_time = false); /* show the command line prompt */
 
     // data member
     map<string, shared_ptr<Library> >  link_lib;     /* libraries used in design elaboration */
     map<string, shared_ptr<Library> >  target_lib;   /* libraries used in mapping */
     ErrReport error;                                 /* the gobal level error report function */
+    CMD::CMDLexer lexer;                             /* the command line lexer */
     shared_ptr<Library> curLib;                      /* current library */
     shared_ptr<Module> curDgn;                       /* current design */
     ostream stdOs;                                   /* standard output stream */

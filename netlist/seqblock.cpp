@@ -28,6 +28,7 @@
  */
 
 #include "component.h"
+#include "shell/env.h"
 
 using namespace netlist;
 

@@ -1,0 +1,195 @@
+/*
+ * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ *    Advanced Processor Technologies Group, School of Computer Science
+ *    University of Manchester, Manchester M13 9PL UK
+ *
+ *    This source code is free software; you can redistribute it
+ *    and/or modify it in source code form under the terms of the GNU
+ *    General Public License as published by the Free Software
+ *    Foundation; either version 2 of the License, or (at your option)
+ *    any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ */
+
+/* 
+ * Lexer for command line parser
+ * 11/05/2012   Wei Song
+ *
+ *
+ */
+
+#include "cmd_lexer.h"
+#include "command.hh"
+#include<cstring>
+#include<cctype>
+#include<utility>
+using std::pair;
+
+using namespace shell::CMD;
+
+shell::CMD::CMDLexer() 
+  : lex_buf(new char[AV_CMD_LEXER_BUF_SIZE]),
+    rp(lex_buf), fp(lex_buf)
+{ 
+  // build the token database
+  // is there any better way to do this?
+  // seems I need to modify this every time I add a new raw token
+  tDB["analyze"]        = cmd_parser::CMDAnalyze;
+  tDB["source"]         = cmd_parser::CMDSource;
+  tDB["\n"]             = cmd_parser::CMD_END;
+  tDB["simple_string"]  = cmd_parser::simple_string;
+}
+
+shell::CMD::~CMDLexer() {
+  delete[] lex_buf;
+
+  // clos all files that have not been closed
+  while(fstack.size() != 0) {
+    fstack.top()->close();
+    fstack.pop();
+  }
+}
+
+int shell::CMD::yylex(cmd_token_type * yyval) {
+ YYLEX_START:
+  
+  // return the token in the token stack if there is any
+  // lexer only return token when it is sure that a whole line is read in
+  // when \ is used to link multiple line or { is not matched
+  // lexer should read in more line before return tokens
+  // therefore the tokens read in previous read should be poped before read in new lines.
+  if(tstack.size() != 0) {
+    int rv;
+    rv = tstack.top().first;
+    *yyval = tstack.top().second;
+    tstack.pop();
+    return rv;
+  }
+  
+  // other wise read in lines for new tokens
+  unsigned int level = 0;     // increase when [, (, or { is encountered 
+  bool back_slash = false;                 // true when a back slach is encountered
+  char tbuf[AV_CMD_LEXER_MAX_STRING_SIZE]; // token buffer for string
+  unsigned int tp = 0;          // current pointer of the tbuf
+  
+  while(true) {
+    if(rp == fp || *rp == '\n') { // empty
+      
+      if(rp != lex_buf) {
+        *lex_buf = *(rp-1);     // for one back read
+        rp = lex_buf + 1;
+      }
+      
+      
+      //make sure the current istream is readable
+      while(!is_cin() && current().eof()) {           // current file is finished
+        pop();
+      }
+      
+      // now current() must be a file with content or cin
+      // read in a new line
+      current().getline(rp, AV_CMD_LEXER_BUF_SIZE - 1);
+      fp = rp + AV_CMD_LEXER_BUF_SIZE - 1;
+    }
+    
+    // the lexer process
+    while(rp != fp) {
+      if(back_slash) {          // a back slash is encountered
+        if(*rp != ' ' && *rp != '\n') { // not a blank or return, treat it as a special identifier
+          tbuf[tp++] = *rp++;
+        } else if(*(rp-1) != '\\' && *(rp-1) != ' ') { // a special string is read
+          // push a token
+          
+          cmd_token_type mtoken;
+          mtoken.tStr.assign(tbuf, tp);
+          tstack.push(pair<int,cmd_token_type> (tDB["simple_string"], mtoken));
+          tp = 0;
+          
+          // clean status
+          back_slash = false; // clear the back slash flag
+          rp++;
+        } else if(*rp == '\n') { // multi line encountered
+          back_slash = false;
+          tp = 0;
+          break;
+        } else {                // just blank
+          rp++;
+        }
+      } else {
+        if(isalnum(*rp) || *rp == '$' || *rp == '/' || *rp == '_') { // string
+          tbuf[tp++] = *rp++;
+        } else {
+          if(tp != 0) {         // a string is read
+            // push a token
+            if((tstack.size() == 0 || tstack.top().first == tDB["\n"] || tstack.top().first == '[')
+               && tDB.find(string(tbuf, tp)) != tDB.end() ) { // it is a command
+              tstack.push(pair<int,cmd_token_type> (tDB[string(tbuf, tp)], cmd_token_type()));
+            } else {            // normal string
+              cmd_token_type mtoken;
+              mtoken.tStr.assign(tbuf, tp);
+              tstack.push(pair<int,cmd_token_type> (tDB["simple_string"], mtoken));
+              tp = 0;
+            }
+          }
+          
+          if(*rp != '\n') {
+            if(*rp == '(' || *rp == '[' || *rp == '{')
+              level++;
+            else if(*rp == ')' || *rp == ']' || *rp == '}')
+              level -= (level != 0 ? 1 : 0); // the extra ), ], } are ignored
+            
+            if(*rp != ' ')    // a mark token
+              tstack.push(pair<int,cmd_token_type> (*rp, cmd_token_type()));
+            
+            rp++;
+          } else {                // '\n'
+            tstack.push(pair<int,cmd_token_type> (tDB["\n"], cmd_token_type()));
+            
+            if(level == 0) {      // a whole line is read
+              if(is_cin()) {
+                gEnv.show_cmd(); // show the command line input sign;
+              }
+              goto YYLEX_START;
+            } else {
+              break;            // read more lines
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+void shell::CMD::push(ifstream * fp) {
+  fstack.push(fp);
+}
+
+void shell::CMD::pop() {
+  if(fstack.size() != 0) {
+    fstack.top()->close0();
+    fstack.pop();
+  }
+}
+
+istream& shell::CMD::current() {
+  if(fstack.size() == 0)
+    return ;
+  else
+    return *(fstack.top());
+}
+
+bool shell::CMD::is_cin() const {
+  return fstack.size() == 0;
+}
+
+void shell::CMD::set_env(shell::Env * mEnv) {
+  gEnv = mEnv;
+}

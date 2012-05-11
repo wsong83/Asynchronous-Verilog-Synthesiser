@@ -23,16 +23,14 @@
 #
 
 # variables
-INCDIRS = -I./ -I../
+INCDIRS = -I./ -I../../
 TARGETS = preproc_test
-OTHER_OBJS = $(wildcard ../src/*.o)
+OTHER_OBJS = $(wildcard ../*.o)
+LINKFLAGS += -lboost_system -lboost_filesystem -lboost_program_options
 
 
 # targets
-all: exec_mv
-
-exec_mv: $(TARGETS)
-	cp preproc_test ../vpreproc
+all: $(TARGETS)
 
 $(TARGETS): % : %.cpp $(OTHER_OBJS)
 	$(CXX) $(INCDIRS) $(CXXFLAGS) $< $(OTHER_OBJS) $(LINKFLAGS) -o $@

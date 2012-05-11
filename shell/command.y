@@ -40,17 +40,12 @@
 #include "cmd/cmd_define.h"
   
   // as it is very simple, lex is not used
-#define yylex cmd_readin;
+#define yylex cmd_env.lexer.yylex
   
-#define YYSTYPE cmd_token_type
+#define YYSTYPE shell::CMD::cmd_token_type
 
-  struct cmd_token_type {
-    string          tStr;
-    vector<string>  tStrVec;
-  };
+#include "cmd_token.h"
 
-  
-  
 %}
 
 
@@ -144,3 +139,6 @@ string_list
 complex_string
     : simple_string                 
     ;
+
+%%
+

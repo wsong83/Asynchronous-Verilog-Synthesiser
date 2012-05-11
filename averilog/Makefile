@@ -40,6 +40,8 @@ averilog.lex.o: averilog.lex.c averilog.cc averilog_util.h $(HEADERS)
 averilog_util.o: averilog_util.cpp averilog_util.h $(HEADERS)
 	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
 
+bison: averilog.cc averilog.lex.c
+
 averilog.cc: averilog.y
 	$(BISON_EXE) $< 
 

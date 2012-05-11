@@ -170,9 +170,11 @@ namespace netlist {
 //#include "uni_name.h"
 
 // the environment
-#include "shell/err_report.h"
-#include "shell/env.h"
-extern shared_ptr<shell::Env> G_ENV;
+namespace shell {
+  class Env;
+}
+
+extern shell::Env* G_ENV;
 
 
 #include <sstream>

@@ -20,41 +20,28 @@
  */
 
 /* 
- * 
- * 06/02/2012   Wei Song
+ * Lexer for command line parserToken types for the command line parser
+ * 11/05/2012   Wei Song
  *
  *
  */
 
-#include "netlist/component.h"
-#include "shell/env.h"
-#include "averilog/averilog_util.h"
-#include "averilog/averilog.lex.h"
+#ifndef AV_CMD_TOKEN_
+#define AV_CMD_TOKEN_
 
-shell::Env* G_ENV = new shell::Env();
+#include<string>
+using std::string;
+#include<vector>
+using std::vector;
 
-int main(int argc, char*argv[])
-{
-  int tmp;
-  YYSTYPE lval;
-  yyscan_t scanner;
-  YYLTYPE yyloc;
-  FILE * sfile;
-
-  sfile = fopen(argv[1], "r");
-  string fn(argv[1]);
-  yyloc.initialize(&fn);
-  avlex_init (&scanner);
-  avset_in(sfile, scanner);
-  while((tmp = avlex(&lval, &yyloc, scanner)) != 0) {
-    cout << tmp << " ";
-    if(tmp == token::number)
-      cout << "Number:" << lval.tNumber << " ";
-  }
+namespace shell { 
+  namespace CMD {
     
-  avlex_destroy(scanner);
-  fclose(sfile);
-
-  delete G_ENV;
-  return 0;
+    struct cmd_token_type {
+      string          tStr;
+      vector<string>  tStrVec;
+    };
+    
+  }
 }
+#endif

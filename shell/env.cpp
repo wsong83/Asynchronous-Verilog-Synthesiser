@@ -30,7 +30,9 @@
 
 using namespace shell;
 
-shell::Env::Env() {}
+shell::Env::Env() 
+  : stdOs(cout.rdbuf()), errOs(cerr.rdbuf())
+{}
 
 bool shell::Env::initialise() {
   // set up the default work library and add it in the link library
@@ -40,10 +42,21 @@ bool shell::Env::initialise() {
   // set work to be the current library
   curLib = work;
 
-  // set the ostreams
-  stdOs.rdbuf(cout.rdbuf());
-  errOs.rdbuf(cerr.rdbuf());
-  error.set_output(cerr);
+  // the env pointer in lexer
+  lexer.set_env(this);
 
   return true;
 }
+
+void shell::Env::show_cmd(bool first_time) {
+  if(first_time) {
+    stdOs << "       Asynchronous Verilog Synthesis (AVS) System      " << endl;
+    stdOs << "--------------------------------------------------------" << endl;
+    stdOs << "Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk>   " << endl;
+    stdOs << "  Compilation Date: " << __DATE__ << endl;
+    stdOs << endl;
+  }
+
+  stdOs << "avs>";
+}
+

@@ -26,7 +26,7 @@
  *
  */
 
-#include "src/preproc.h"
+#include "preproc/preproc.h"
 
 #include <boost/program_options.hpp>
 #include <fstream>

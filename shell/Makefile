@@ -27,7 +27,7 @@
 INCDIRS = -I./ -I../
 
 # targets
-TARGETS = err_report.o env.o
+TARGETS = err_report.o env.o cmd_lexer.o
 HEADERS = $(wildcard ./*.h)
 HEADERS += ../averilog/location.hh
 HEADERS += $(wildcard ./cmd/*.h)
@@ -40,6 +40,8 @@ command.o: command.cc command.hh $(HEADERS)
 
 $(TARGETS): %.o:%.cpp $(HEADERS)
 	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
+
+bison: command.cc
 
 command.cc: command.y
 	$(BISON_EXE) $< 
