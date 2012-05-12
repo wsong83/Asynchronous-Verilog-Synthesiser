@@ -24,8 +24,8 @@
 #
 
 # global variables
-export BISON_EXE = ~/tool/local/bin/bison
-export FLEX_EXE = ~/tool/local/bin/flex
+export BISON_EXE = bison
+export FLEX_EXE = flex
 export CXX = g++
 
 export CXXFLAGS = -std=c++0x -Wall -g

@@ -26,7 +26,9 @@
  *
  */
 
+#include "env.h"
 #include "cmd_lexer.h"
+#define YYSTYPE shell::CMD::cmd_token_type
 #include "command.hh"
 #include<cstring>
 #include<cctype>
@@ -35,20 +37,21 @@ using std::pair;
 
 using namespace shell::CMD;
 
-shell::CMD::CMDLexer() 
+shell::CMD::CMDLexer::CMDLexer() 
   : lex_buf(new char[AV_CMD_LEXER_BUF_SIZE]),
     rp(lex_buf), fp(lex_buf)
 { 
   // build the token database
   // is there any better way to do this?
   // seems I need to modify this every time I add a new raw token
-  tDB["analyze"]        = cmd_parser::CMDAnalyze;
-  tDB["source"]         = cmd_parser::CMDSource;
-  tDB["\n"]             = cmd_parser::CMD_END;
-  tDB["simple_string"]  = cmd_parser::simple_string;
+  tDB["analyze"]        = cmd_parser::token::CMDAnalyze;
+  tDB["source"]         = cmd_parser::token::CMDSource;
+  tDB["\n"]             = cmd_parser::token::CMD_END;
+  tDB["simple_string"]  = cmd_parser::token::simple_string;
 }
 
-shell::CMD::~CMDLexer() {
+
+shell::CMD::CMDLexer::~CMDLexer() {
   delete[] lex_buf;
 
   // clos all files that have not been closed
@@ -58,7 +61,7 @@ shell::CMD::~CMDLexer() {
   }
 }
 
-int shell::CMD::yylex(cmd_token_type * yyval) {
+int shell::CMD::CMDLexer::yylex(cmd_token_type * yyval) {
  YYLEX_START:
   
   // return the token in the token stack if there is any
@@ -155,7 +158,7 @@ int shell::CMD::yylex(cmd_token_type * yyval) {
             
             if(level == 0) {      // a whole line is read
               if(is_cin()) {
-                gEnv.show_cmd(); // show the command line input sign;
+                gEnv->show_cmd(); // show the command line input sign;
               }
               goto YYLEX_START;
             } else {
@@ -168,28 +171,28 @@ int shell::CMD::yylex(cmd_token_type * yyval) {
   }
 }
 
-void shell::CMD::push(ifstream * fp) {
+void shell::CMD::CMDLexer::push(ifstream * fp) {
   fstack.push(fp);
 }
 
-void shell::CMD::pop() {
+void shell::CMD::CMDLexer::pop() {
   if(fstack.size() != 0) {
-    fstack.top()->close0();
+    fstack.top()->close();
     fstack.pop();
   }
 }
 
-istream& shell::CMD::current() {
+istream& shell::CMD::CMDLexer::current() {
   if(fstack.size() == 0)
-    return ;
+    return cin;
   else
     return *(fstack.top());
 }
 
-bool shell::CMD::is_cin() const {
+bool shell::CMD::CMDLexer::is_cin() const {
   return fstack.size() == 0;
 }
 
-void shell::CMD::set_env(shell::Env * mEnv) {
+void shell::CMD::CMDLexer::set_env(shell::Env * mEnv) {
   gEnv = mEnv;
 }

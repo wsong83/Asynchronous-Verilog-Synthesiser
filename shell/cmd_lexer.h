@@ -71,9 +71,9 @@ namespace shell {
       bool is_cin() const;      /* true if the current stream is cin */
       
       Env* gEnv;
-      stack<istream *> fstack;
+      stack<ifstream *> fstack;
       char* lex_buf;
-      char* rp, fp;      /* read pointer and full position */
+      char *rp, *fp;      /* read pointer and full position */
       stack<pair<int, cmd_token_type> > tstack;
       map<string, int> tDB;    /* token database */
 
