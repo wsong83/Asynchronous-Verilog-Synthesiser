@@ -40,7 +40,9 @@ namespace averilog {
 #include "shell/shell_top.h"
 #include "av_token.h"
 
+#define YYSTYPE av_token_type
 #include "averilog.hh"
+#undef YYSTYPE
 typedef averilog::av_parser::token token;
 typedef averilog::av_parser::semantic_type YYSTYPE;
 typedef averilog::location YYLTYPE;

@@ -29,6 +29,9 @@
 #ifndef _H_SHELL_SHELL_ENV_
 #define _H_SHELL_SHELL_ENV_
 
+#include <boost/program_options.hpp>
+namespace po = boost::program_options;
+
 #include "netlist/component.h"
 using netlist::Library;
 using netlist::Module;
@@ -38,18 +41,24 @@ using netlist::Module;
 
 namespace shell {
 
+  namespace CMD {
+    class cmd_parser;
+  }
+
   class Env {
   public:
     Env();
 
     bool initialise();               /* set up basic environment */
     void show_cmd(bool first_time = false); /* show the command line prompt */
+    void run();                             /* running the synthesiser */
 
     // data member
     map<string, shared_ptr<Library> >  link_lib;     /* libraries used in design elaboration */
     map<string, shared_ptr<Library> >  target_lib;   /* libraries used in mapping */
     ErrReport error;                                 /* the gobal level error report function */
     CMD::CMDLexer lexer;                             /* the command line lexer */
+    CMD::cmd_parser *parser;                         /* the command line parser */
     shared_ptr<Library> curLib;                      /* current library */
     shared_ptr<Module> curDgn;                       /* current design */
     ostream stdOs;                                   /* standard output stream */
@@ -58,6 +67,11 @@ namespace shell {
   };
 
 }
+
+
+// all the commands in the command environment
+#include "cmd/analyze.h"
+#include "cmd/help.h"
 
 
 #endif

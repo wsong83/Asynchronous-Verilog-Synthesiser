@@ -20,31 +20,37 @@
  */
 
 /* 
- * argument definitions for analyze command
- * 10/05/2012   Wei Song
+ * argument definitions for help command
+ * 14/05/2012   Wei Song
  *
  *
  */
 
-#ifndef AV_CMD_ANALYZE_
-#define AV_CMD_ANALYZE_
+#ifndef _AV_CMD_HELP_
+#define _AV_CMD_HELP_
+
+#include <map>
+using std::map;
 
 #include "shell/env.h"
 #include "cmd_define.h"
 
-namespace shell { 
+namespace shell {
   namespace CMD {
-  
-    class CMDAnalyze {
+    
+    class CMDHelp {
     public:
       static void exec ( Env&, const vector<string>& arg = vector<string>() );
       static void help ( Env& );
 
-      //private:
+    private:
+      typedef void (*helper) (Env&);
       static po::options_description cmd_opt;
       static po::positional_options_description cmd_position;
+      static map<string, helper> cmdDB;
     };
   }
-}
+}      
+
 
 #endif

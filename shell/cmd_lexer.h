@@ -34,6 +34,7 @@ using std::stack;
 
 #include<map>
 using std::map;
+using std::pair;
 
 #include<fstream>
 #include<iostream>
@@ -44,7 +45,7 @@ using std::ifstream;
 #include "cmd_token.h"
 
 // the initial size of the line buffer
-#define AV_CMD_LEXER_BUF_SIZE 2048
+#define AV_CMD_LEXER_BUF_SIZE 512
 
 // the maximal size of a single simple string
 #define AV_CMD_LEXER_MAX_STRING_SIZE 128

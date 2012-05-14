@@ -20,31 +20,20 @@
  */
 
 /* 
- * argument definitions for analyze command
- * 10/05/2012   Wei Song
+ * The Asynchronous Verilog Synthesis System Shell
+ * 14/05/2012   Wei Song
  *
  *
  */
 
-#ifndef AV_CMD_ANALYZE_
-#define AV_CMD_ANALYZE_
+#include "shell/shell_top.h"
 
-#include "shell/env.h"
-#include "cmd_define.h"
+shell::Env* G_ENV(new shell::Env());
 
-namespace shell { 
-  namespace CMD {
-  
-    class CMDAnalyze {
-    public:
-      static void exec ( Env&, const vector<string>& arg = vector<string>() );
-      static void help ( Env& );
-
-      //private:
-      static po::options_description cmd_opt;
-      static po::positional_options_description cmd_position;
-    };
-  }
+int main(int argc, char* argv[])
+{
+  G_ENV->initialise();
+  G_ENV->run();
+  delete G_ENV;
+  return 0;
 }
-
-#endif

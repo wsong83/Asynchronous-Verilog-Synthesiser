@@ -28,6 +28,11 @@
 
 #include "shell_top.h"
 
+#define YYSTYPE shell::CMD::cmd_token_type
+
+#include "cmd/cmd_define.h"
+#include "command.hh"
+
 using namespace shell;
 
 shell::Env::Env() 
@@ -45,6 +50,12 @@ bool shell::Env::initialise() {
   // the env pointer in lexer
   lexer.set_env(this);
 
+  // initialize the parser
+  parser = new CMD::cmd_parser(this);
+
+  // show the welcome message
+  show_cmd(true);
+
   return true;
 }
 
@@ -55,8 +66,11 @@ void shell::Env::show_cmd(bool first_time) {
     stdOs << "Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk>   " << endl;
     stdOs << "  Compilation Date: " << __DATE__ << endl;
     stdOs << endl;
+  } else {
+    stdOs << "avs>";
   }
-
-  stdOs << "avs>";
 }
 
+void shell::Env::run() {
+  parser->parse();
+}

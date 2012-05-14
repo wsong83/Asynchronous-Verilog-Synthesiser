@@ -37,8 +37,6 @@ typedef void* yyscan_t;
 
 namespace averilog {
 
-#define YYSTYPE av_token_type
-  
   struct av_token_type {
     shared_ptr<netlist::Assign>        tAssign;
     shared_ptr<netlist::Block>         tBlock;

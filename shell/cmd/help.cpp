@@ -20,42 +20,44 @@
  */
 
 /* 
- * argument definitions for analyze command
- * 10/05/2012   Wei Song
+ * argument definitions for help command
+ * 14/05/2012   Wei Song
  *
  *
  */
 
-#include "analyze.h"
+#include "help.h"
 
 using namespace shell;
 using namespace shell::CMD;
 
+// the command list
+CMDHelp::cmdDB.insert(pair<string, helper>("analyze",    &CMDAnalyze::help    ));
+CMDHelp::cmdDB.insert(pair<string, helper>("help",       &CMDHelp::help       ));
+
 po::options_description arg_opt("Options");
 arg_opt.add_options()
 ("help", "usage information.")
-("library", po::value<string>(), "set the output library (other than work).")
-("define", po::value<vector<string> >()->composing(), "macro definitions ( {MACRO0, MACRO1, ... MACRON} ).")
 ;
 
-po::options_description file_opt;
-file_opt.add_options()
-("file", po::value<vector<string> >()->composing(), "input files")
+po::options_description target_opt;
+target_opt.add_options()
+("target", po::value<vector<string> >()->composing(), "target command names")
 ;
 
-po::options_description shell::CMD::CMDAnalyze::cmd_opt;
-CMDAnalyze::cmd_opt.add(arg_opt).add(file_opt);
+po::options_description shell::CMD::cmd_opt;
+CMDHelp::cmd_opt.add(arg_opt).add(target_opt);
 
-po::positional_options_description shell::CMD::CMDAnalyze::cmd_position;
-CMDAnalyze::cmd_position.add("file", -1);
+po::positional_options_description shell::CMD::cmd_position;
+CMDHelp::cmd_position.add("target", -1);
 
-void shell::CMD::CMDAnalyze::help(Env& gEnv) {
-  gEnv.stdOs << "analyze: Read in the Verilog HDL design files." << endl;
-  gEnv.stdOs << "    analyze [options] source_files" << endl;
+void shell::CMD::CMDHelp::help(Env& gEnv) {
+  gEnv.stdOs << "help: show and list the usage of commands." << endl;
+  gEnv.stdOs << "    analyze [options] commands" << endl;
   gEnv.stdOs << arg_opt << endl;
 }
 
-void shell::CMD::CMDAnalyze::exec ( Env& gEnv, const vector<string>& arg){
+void shell::CMD::CMDHelp::exec ( Env& gEnv, const vector<string>& arg){
   
   po::variables_map vm;
 
@@ -67,6 +69,22 @@ void shell::CMD::CMDAnalyze::exec ( Env& gEnv, const vector<string>& arg){
     return;
   }
 
-  // TODO: parse the file
-
+  if(vm.count("target")) {
+    vector<string> cmd_lst = vm["target"].as<vector<string> >();
+    vector<string>::iterator it, end;
+    for(it=cmd_lst.begin(), end=cmd_lst.end(); it!=end; it++) {
+      if(cmdDB.find(*it) != cmdDB.end()) {
+        (*(cmdDB[*it]))(gEnv);
+        gEnv.stdOs << endl;
+      } else {
+        gEnv.ErrOs << "Wrong command name: " << *it << endl;
+        break;
+      }
+    }
+  } else {
+    // list all command;
+    map<string, helper>::iterator it, end;
+    for(it=cmdDB.begin(), end=cmdDB.end(); it!=end; it++)
+      (*(it->second))(gEnv);
+  }
 }

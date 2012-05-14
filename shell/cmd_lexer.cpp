@@ -45,6 +45,9 @@ shell::CMD::CMDLexer::CMDLexer()
   // is there any better way to do this?
   // seems I need to modify this every time I add a new raw token
   tDB["analyze"]        = cmd_parser::token::CMDAnalyze;
+  tDB["exit"]           = cmd_parser::token::CMDExit;
+  tDB["help"]           = cmd_parser::token::CMDHelp;
+  tDB["quit"]           = cmd_parser::token::CMDQuit;
   tDB["source"]         = cmd_parser::token::CMDSource;
   tDB["\n"]             = cmd_parser::token::CMD_END;
   tDB["simple_string"]  = cmd_parser::token::simple_string;
@@ -84,7 +87,7 @@ int shell::CMD::CMDLexer::yylex(cmd_token_type * yyval) {
   unsigned int tp = 0;          // current pointer of the tbuf
   
   while(true) {
-    if(rp == fp || *rp == '\n') { // empty
+    if(rp == fp || *rp == '\000') { // empty
       
       if(rp != lex_buf) {
         *lex_buf = *(rp-1);     // for one back read
@@ -99,14 +102,18 @@ int shell::CMD::CMDLexer::yylex(cmd_token_type * yyval) {
       
       // now current() must be a file with content or cin
       // read in a new line
+      if(is_cin()) {
+        gEnv->show_cmd(); // show the command line input sign;
+      }
       current().getline(rp, AV_CMD_LEXER_BUF_SIZE - 1);
+      cout << rp << endl;
       fp = rp + AV_CMD_LEXER_BUF_SIZE - 1;
     }
     
     // the lexer process
     while(rp != fp) {
       if(back_slash) {          // a back slash is encountered
-        if(*rp != ' ' && *rp != '\n') { // not a blank or return, treat it as a special identifier
+        if(*rp != ' ' && *rp != '\000') { // not a blank or return, treat it as a special identifier
           tbuf[tp++] = *rp++;
         } else if(*(rp-1) != '\\' && *(rp-1) != ' ') { // a special string is read
           // push a token
@@ -119,7 +126,7 @@ int shell::CMD::CMDLexer::yylex(cmd_token_type * yyval) {
           // clean status
           back_slash = false; // clear the back slash flag
           rp++;
-        } else if(*rp == '\n') { // multi line encountered
+        } else if(*rp == '\000') { // multi line encountered
           back_slash = false;
           tp = 0;
           break;
@@ -143,7 +150,7 @@ int shell::CMD::CMDLexer::yylex(cmd_token_type * yyval) {
             }
           }
           
-          if(*rp != '\n') {
+          if(*rp != '\000') {
             if(*rp == '(' || *rp == '[' || *rp == '{')
               level++;
             else if(*rp == ')' || *rp == ']' || *rp == '}')
@@ -157,9 +164,6 @@ int shell::CMD::CMDLexer::yylex(cmd_token_type * yyval) {
             tstack.push(pair<int,cmd_token_type> (tDB["\n"], cmd_token_type()));
             
             if(level == 0) {      // a whole line is read
-              if(is_cin()) {
-                gEnv->show_cmd(); // show the command line input sign;
-              }
               goto YYLEX_START;
             } else {
               break;            // read more lines

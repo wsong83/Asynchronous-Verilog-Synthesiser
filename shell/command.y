@@ -6,7 +6,7 @@
 %define parser_class_name "cmd_parser"
 %language "c++"
 %output "command.cc"
-%parse-param {shell::Env& cmd_env}
+%parse-param {shell::Env* cmd_env}
 %{
 /*
  * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
@@ -36,11 +36,10 @@
  *
  */
 
-#include "shell_top.h"
-#include "cmd/cmd_define.h"
+#include "env.h"
   
-  // as it is very simple, lex is not used
-#define yylex cmd_env.lexer.yylex
+// as it is very simple, lex is not used
+#define yylex cmd_env->lexer.yylex
   
 #define YYSTYPE shell::CMD::cmd_token_type
 
@@ -62,7 +61,10 @@
 
  // command named
 %token CMDAnalyze              "analyze"
+%token CMDHelp                 "help"
 %token CMDSource               "source"
+%token CMDExit                 "exit"
+%token CMDQuit                 "quit"
 
  // other
  /* the final return of a command line */
@@ -91,13 +93,15 @@ command_text
     ;
 
 command_list
-    : command_description
-    | command_list command_description
+    : command_description CMD_END
+    | command_list command_description CMD_END
     ;
 
 command_description
-    : "analyze" argument_list CMD_END
-    | "source"  argument_list CMD_END
+    : "analyze" argument_list
+    | "exit"                      { YYACCEPT;                                  }
+    | "quit"                      { YYACCEPT;                                  }
+    | "source"  argument_list
     | error
     ;
 

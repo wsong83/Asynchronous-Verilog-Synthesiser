@@ -17,53 +17,29 @@
 #    along with this program; if not, write to the Free Software
 #    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
 #
-# Top level Makefile
+# Makefile
 # Due to be replace by autoconf tool suite
-# 06/02/2012   Wei Song
+# 14/05/2012   Wei Song
 #
 #
 
-# global variables
-export BISON_EXE = bison
-export FLEX_EXE = flex
-export CXX = g++
+# variables
+INCDIRS = -I../../
+TARGETS = avs_shell
+OTHER_OBJS = $(wildcard ../../netlist/*.o)
+OTHER_OBJS += $(wildcard ../../shell/*.o)
+OTHER_OBJS += $(wildcard ../../shell/cmd/*.o)
+OTHER_OBJS += $(wildcard ../../averilog/*.o)
 
-export CXXFLAGS = -std=c++0x -Wall -g
-export LINKFLAGS = -lboost_regex -lgmpxx -lgmp
 
 # targets
-SUBDIRS = preproc averilog netlist shell shell/cmd
-TESTDIRS = preproc/test averilog/test shell/test
-BISONDIRS = shell.bison averilog.bison
+all: $(TARGETS)
 
-# actions
+$(TARGETS): % : %.cpp $(OTHER_OBJS)
+	$(CXX) $(INCDIRS) $(CXXFLAGS) $< $(OTHER_OBJS) $(LINKFLAGS) -o $@
 
-all: bison subdirs
-
-test: bison subdirs testdirs
-
-.PHONY: bison subdirs $(SUBDIRS) clean testdirs $(TESTDIRS)
-
-bison: $(BISONDIRS)
-
-subdirs: $(SUBDIRS)
-
-$(SUBDIRS):
-	$(MAKE) -C $@
-
-shell.bison:
-	$(MAKE) bison -C shell
-
-averilog.bison:
-	$(MAKE) bison -C averilog
-
-testdirs: $(TESTDIRS)
-
-$(TESTDIRS):
-	$(MAKE) -C $@
+.PHONY: clean
 
 clean:
-	-rm *.o
-	-for d in $(SUBDIRS); do $(MAKE) -C $$d clean; done
-	-for d in $(TESTDIRS); do $(MAKE) -C $$d clean; done
+	-rm *.o $(TARGETS)
 
