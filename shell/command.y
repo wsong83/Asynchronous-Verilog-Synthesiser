@@ -1,12 +1,12 @@
 // -*- Bison -*-
 %skeleton "lalr1.cc"
+%require "2.5"
 %defines
 %define namespace "shell::CMD"
 %define parser_class_name "cmd_parser"
 %language "c++"
 %output "command.cc"
 %parse-param {shell::Env& cmd_env}
-%debug
 %{
 /*
  * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
@@ -141,4 +141,9 @@ complex_string
     ;
 
 %%
-
+      
+    void shell::CMD::cmd_parser::error (const shell::CMD::cmd_parser::location_type& loc, const string& msg) {
+      //av_env.error(loc, "PARSER-0");
+      //cout << msg << endl;
+    }
+      
