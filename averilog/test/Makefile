@@ -28,6 +28,7 @@ INCDIRS = -I./ -I../../
 TARGETS = scanner parser
 OTHER_OBJS = $(wildcard ../../netlist/*.o)
 OTHER_OBJS += $(wildcard ../../shell/*.o)
+OTHER_OBJS += $(wildcard ../../shell/cmd/*.o)
 OTHER_OBJS += $(wildcard ../*.o)
 
 

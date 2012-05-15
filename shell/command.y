@@ -98,11 +98,20 @@ command_list
     ;
 
 command_description
-    : "analyze" argument_list
-    | "exit"                      { YYACCEPT;                                  }
-    | "quit"                      { YYACCEPT;                                  }
-    | "source"  argument_list
+    : /* empty */
+    | "analyze" argument_list     { shell::CMD::CMDAnalyze::exec(*cmd_env, $2);            }
+    | "exit"    argument_list     { if(shell::CMD::CMDQuit::exec(*cmd_env, $2)) YYACCEPT;  }
+    | "help"    argument_list     { shell::CMD::CMDHelp::exec(*cmd_env, $2);               }
+    | "quit"    argument_list     { if(shell::CMD::CMDQuit::exec(*cmd_env, $2)) YYACCEPT;  }
+    | "source"  argument_list     { }
+    | simple_string argument_list 
+    {
+      cmd_env->errOs << "Unrecognizable command \"" << $1 << "\"!" << endl;
+    }
     | error
+    {
+      cmd_env->errOs << "Unrecognizable patterns!" << endl;
+    }
     ;
 
 argument_list
@@ -113,7 +122,7 @@ argument_list
 
 argument
     : identifier                                { $$.push_back($1);                }
-    | '-' argument_name                         { $$.push_back(string("--") + $2); }
+    | '-' argument_name                         { $$.push_back(string("-") + $2);  }
     | '-' argument_name argument_parameter 
     { 
       $$.push_back(string("--") + $2);

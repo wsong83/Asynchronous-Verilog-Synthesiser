@@ -33,12 +33,13 @@ using namespace shell;
 using namespace shell::CMD;
 
 // the command list
-map<string, CMDHelp::helper> shell::CMD::CMDHelp::cmdDB;
+map<string, string> shell::CMD::CMDHelp::cmdDB;
 
-int cmdDB_init( map<string, CMDHelp::helper>& db) {
-  db.insert(pair<string, CMDHelp::helper>("analyze",    &(CMDAnalyze::help)    ));
-  db.insert(pair<string, CMDHelp::helper>("help",       &(CMDHelp::help)       ));
-
+int cmdDB_init( map<string, string>& db) {
+  db.insert(pair<string, string>("analyze",  "show and list the usage of commands."    ));
+  db.insert(pair<string, string>("exit",     "leave the AVS shell environment."        ));
+  db.insert(pair<string, string>("help",     "read in the Verilog HDL design files."   ));
+  db.insert(pair<string, string>("quit",     "leave the AVS shell environment."        ));
   return 0;
 }
 
@@ -71,25 +72,30 @@ void shell::CMD::CMDHelp::help(Env& gEnv) {
   gEnv.stdOs << arg_opt << endl;
 }
 
-void shell::CMD::CMDHelp::exec ( Env& gEnv, const vector<string>& arg){
+bool shell::CMD::CMDHelp::exec ( Env& gEnv, vector<string>& arg){
   
   po::variables_map vm;
+  //arg.insert(arg.begin(), "help");
 
   try {
     store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
     notify(vm);
   } catch(std::exception& e) {
-    gEnv.errOs << "Wrong command syntax error! See usage by analyze -help." << endl;
-    return;
+    gEnv.errOs << "Wrong command syntax error! See usage by help -help." << endl;
+    return false;
   }
 
-  if(vm.count("target")) {
+  if(vm.count("help")) {        // print help information
+    shell::CMD::CMDHelp::help(gEnv);
+  }
+  else if(vm.count("target")) {
     vector<string> cmd_lst = vm["target"].as<vector<string> >();
     vector<string>::iterator it, end;
     for(it=cmd_lst.begin(), end=cmd_lst.end(); it!=end; it++) {
       if(cmdDB.find(*it) != cmdDB.end()) {
-        (*(cmdDB[*it]))(gEnv);
-        gEnv.stdOs << endl;
+        gEnv.stdOs << *it << 
+          string(it->size() < 16 ? 16-it->size() : 1, ' ') 
+                   << ": " << cmdDB[*it] << endl;
       } else {
         gEnv.errOs << "Wrong command name: " << *it << endl;
         break;
@@ -97,8 +103,12 @@ void shell::CMD::CMDHelp::exec ( Env& gEnv, const vector<string>& arg){
     }
   } else {
     // list all command;
-    map<string, helper>::iterator it, end;
+    map<string, string>::iterator it, end;
     for(it=cmdDB.begin(), end=cmdDB.end(); it!=end; it++)
-      (*(it->second))(gEnv);
+        gEnv.stdOs << it->first << 
+          string(it->first.size() < 24 ? 24 - it->first.size() : 1, ' ')
+                   << it->second << endl;
   }
+
+  return true;
 }

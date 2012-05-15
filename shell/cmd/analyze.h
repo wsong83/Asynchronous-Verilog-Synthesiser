@@ -37,7 +37,7 @@ namespace shell {
   
     class CMDAnalyze {
     public:
-      static void exec ( Env&, const vector<string>& arg = vector<string>() );
+      static bool exec ( Env&, vector<string>&);
       static void help ( Env& );
 
       //private:

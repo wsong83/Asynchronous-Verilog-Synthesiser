@@ -72,11 +72,12 @@ int shell::CMD::CMDLexer::yylex(cmd_token_type * yyval) {
   // when \ is used to link multiple line or { is not matched
   // lexer should read in more line before return tokens
   // therefore the tokens read in previous read should be poped before read in new lines.
-  if(tstack.size() != 0) {
+  if(tfifo.size() != 0) {
     int rv;
-    rv = tstack.top().first;
-    *yyval = tstack.top().second;
-    tstack.pop();
+    rv = tfifo.front().first;
+    *yyval = tfifo.front().second;
+    tfifo.pop_front();
+    //cout << "token: " << rv << ", " << yyval->tStr << endl;
     return rv;
   }
   
@@ -106,7 +107,6 @@ int shell::CMD::CMDLexer::yylex(cmd_token_type * yyval) {
         gEnv->show_cmd(); // show the command line input sign;
       }
       current().getline(rp, AV_CMD_LEXER_BUF_SIZE - 1);
-      cout << rp << endl;
       fp = rp + AV_CMD_LEXER_BUF_SIZE - 1;
     }
     
@@ -120,7 +120,7 @@ int shell::CMD::CMDLexer::yylex(cmd_token_type * yyval) {
           
           cmd_token_type mtoken;
           mtoken.tStr.assign(tbuf, tp);
-          tstack.push(pair<int,cmd_token_type> (tDB["simple_string"], mtoken));
+          tfifo.push_back(pair<int,cmd_token_type> (tDB["simple_string"], mtoken));
           tp = 0;
           
           // clean status
@@ -139,15 +139,16 @@ int shell::CMD::CMDLexer::yylex(cmd_token_type * yyval) {
         } else {
           if(tp != 0) {         // a string is read
             // push a token
-            if((tstack.size() == 0 || tstack.top().first == tDB["\n"] || tstack.top().first == '[')
+            if((tfifo.size() == 0 || tfifo.back().first == tDB["\n"] || tfifo.back().first == '[')
                && tDB.find(string(tbuf, tp)) != tDB.end() ) { // it is a command
-              tstack.push(pair<int,cmd_token_type> (tDB[string(tbuf, tp)], cmd_token_type()));
+              tfifo.push_back(pair<int,cmd_token_type> (tDB[string(tbuf, tp)], cmd_token_type()));
             } else {            // normal string
               cmd_token_type mtoken;
               mtoken.tStr.assign(tbuf, tp);
-              tstack.push(pair<int,cmd_token_type> (tDB["simple_string"], mtoken));
-              tp = 0;
+              tfifo.push_back(pair<int,cmd_token_type> (tDB["simple_string"], mtoken));
             }
+            // clean the token buffer
+            tp = 0;
           }
           
           if(*rp != '\000') {
@@ -157,11 +158,11 @@ int shell::CMD::CMDLexer::yylex(cmd_token_type * yyval) {
               level -= (level != 0 ? 1 : 0); // the extra ), ], } are ignored
             
             if(*rp != ' ')    // a mark token
-              tstack.push(pair<int,cmd_token_type> (*rp, cmd_token_type()));
+              tfifo.push_back(pair<int,cmd_token_type> (*rp, cmd_token_type()));
             
             rp++;
           } else {                // '\n'
-            tstack.push(pair<int,cmd_token_type> (tDB["\n"], cmd_token_type()));
+            tfifo.push_back(pair<int,cmd_token_type> (tDB["\n"], cmd_token_type()));
             
             if(level == 0) {      // a whole line is read
               goto YYLEX_START;

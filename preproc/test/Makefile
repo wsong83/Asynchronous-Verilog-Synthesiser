@@ -26,8 +26,6 @@
 INCDIRS = -I./ -I../../
 TARGETS = preproc_test
 OTHER_OBJS = $(wildcard ../*.o)
-LINKFLAGS += -lboost_system -lboost_filesystem -lboost_program_options
-
 
 # targets
 all: $(TARGETS)

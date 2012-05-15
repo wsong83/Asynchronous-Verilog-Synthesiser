@@ -29,8 +29,8 @@
 #ifndef AV_CMD_LEXER_
 #define AV_CMD_LEXER_
 
-#include<stack>
-using std::stack;
+#include<deque>
+using std::deque;
 
 #include<map>
 using std::map;
@@ -75,7 +75,7 @@ namespace shell {
       stack<ifstream *> fstack;
       char* lex_buf;
       char *rp, *fp;      /* read pointer and full position */
-      stack<pair<int, cmd_token_type> > tstack;
+      deque<pair<int, cmd_token_type> > tfifo;
       map<string, int> tDB;    /* token database */
 
     };

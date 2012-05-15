@@ -29,7 +29,7 @@ export FLEX_EXE = flex
 export CXX = g++
 
 export CXXFLAGS = -std=c++0x -Wall -g
-export LINKFLAGS = -lboost_regex -lgmpxx -lgmp
+export LINKFLAGS = -lboost_regex -lgmpxx -lgmp -lboost_system -lboost_filesystem -lboost_program_options
 
 # targets
 SUBDIRS = preproc averilog netlist shell shell/cmd

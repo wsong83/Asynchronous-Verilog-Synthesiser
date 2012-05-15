@@ -20,36 +20,30 @@
  */
 
 /* 
- * argument definitions for help command
- * 14/05/2012   Wei Song
+ * argument definitions for exit/quit command
+ * 15/05/2012   Wei Song
  *
  *
  */
 
-#ifndef _AV_CMD_HELP_
-#define _AV_CMD_HELP_
-
-#include <map>
-using std::map;
+#ifndef AV_CMD_QUIT_
+#define AV_CMD_QUIT_
 
 #include "shell/env.h"
 #include "cmd_define.h"
 
-namespace shell {
+namespace shell { 
   namespace CMD {
-    
-    class CMDHelp {
+  
+    class CMDQuit {
     public:
       static bool exec ( Env&, vector<string>&);
       static void help ( Env& );
 
       //private:
       static po::options_description cmd_opt;
-      static po::positional_options_description cmd_position;
-      static map<string, string> cmdDB;
     };
   }
-}      
-
+}
 
 #endif

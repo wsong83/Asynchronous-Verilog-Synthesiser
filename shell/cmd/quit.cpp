@@ -21,12 +21,12 @@
 
 /* 
  * argument definitions for analyze command
- * 10/05/2012   Wei Song
+ * 15/05/2012   Wei Song
  *
  *
  */
 
-#include "analyze.h"
+#include "quit.h"
 
 using namespace shell;
 using namespace shell::CMD;
@@ -35,48 +35,36 @@ static po::options_description arg_opt("Options");
 po::options_description_easy_init const dummy_arg_opt =
   arg_opt.add_options()
   ("help", "usage information.")
-  ("library", po::value<string>(), "set the output library (other than work).")
-  ("define", po::value<vector<string> >()->composing(), "macro definitions ( {MACRO0, MACRO1, ... MACRON} ).")
   ;
 
-static po::options_description file_opt;
-po::options_description_easy_init const dummy_file_opt =
-  file_opt.add_options()
-  ("file", po::value<vector<string> >()->composing(), "input files")
-  ;
-
-po::options_description shell::CMD::CMDAnalyze::cmd_opt;
+po::options_description shell::CMD::CMDQuit::cmd_opt;
 po::options_description const dummy_cmd_opt =
-  CMDAnalyze::cmd_opt.add(arg_opt).add(file_opt);
+  CMDQuit::cmd_opt.add(arg_opt);
 
-po::positional_options_description shell::CMD::CMDAnalyze::cmd_position;
-po::positional_options_description const dummy_position = 
-  CMDAnalyze::cmd_position.add("file", -1);
-
-void shell::CMD::CMDAnalyze::help(Env& gEnv) {
-  gEnv.stdOs << "analyze: read in the Verilog HDL design files." << endl;
-  gEnv.stdOs << "    analyze [options] source_files" << endl;
+void shell::CMD::CMDQuit::help(Env& gEnv) {
+  gEnv.stdOs << "exit/quit: leave the AVS shell environment." << endl;
+  gEnv.stdOs << "    exit/quit [options]" << endl;
   gEnv.stdOs << arg_opt << endl;
 }
 
-bool shell::CMD::CMDAnalyze::exec ( Env& gEnv, vector<string>& arg){
+bool shell::CMD::CMDQuit::exec ( Env& gEnv, vector<string>& arg){
   
   po::variables_map vm;
 
   try {
-    store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
+    store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).run(), vm);
     notify(vm);
   } catch (std::exception& e) {
     gEnv.errOs << "Wrong command syntax error! See usage by analyze -help." << endl;
     return false;
   }
 
-  // TODO: parse the file
   if(vm.count("help")) {        // print help information
-    shell::CMD::CMDAnalyze::help(gEnv);
-    return true;
+    shell::CMD::CMDQuit::help(gEnv);
+    return false;               // do not quit when it is for help information
+  } else {
+    gEnv.stdOs << "Thank you." << endl;
+    return true;                // quit
   }
 
-
-  return true;
 }
