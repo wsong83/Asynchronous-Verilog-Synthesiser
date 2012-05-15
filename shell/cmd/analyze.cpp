@@ -31,23 +31,27 @@
 using namespace shell;
 using namespace shell::CMD;
 
-po::options_description arg_opt("Options");
-arg_opt.add_options()
-("help", "usage information.")
-("library", po::value<string>(), "set the output library (other than work).")
-("define", po::value<vector<string> >()->composing(), "macro definitions ( {MACRO0, MACRO1, ... MACRON} ).")
-;
+static po::options_description arg_opt("Options");
+po::options_description_easy_init const dummy_arg_opt =
+  arg_opt.add_options()
+  ("help", "usage information.")
+  ("library", po::value<string>(), "set the output library (other than work).")
+  ("define", po::value<vector<string> >()->composing(), "macro definitions ( {MACRO0, MACRO1, ... MACRON} ).")
+  ;
 
-po::options_description file_opt;
-file_opt.add_options()
-("file", po::value<vector<string> >()->composing(), "input files")
-;
+static po::options_description file_opt;
+po::options_description_easy_init const dummy_file_opt =
+  file_opt.add_options()
+  ("file", po::value<vector<string> >()->composing(), "input files")
+  ;
 
 po::options_description shell::CMD::CMDAnalyze::cmd_opt;
-CMDAnalyze::cmd_opt.add(arg_opt).add(file_opt);
+po::options_description const dummy_cmd_opt =
+  CMDAnalyze::cmd_opt.add(arg_opt).add(file_opt);
 
 po::positional_options_description shell::CMD::CMDAnalyze::cmd_position;
-CMDAnalyze::cmd_position.add("file", -1);
+po::positional_options_description const dummy_position = 
+  CMDAnalyze::cmd_position.add("file", -1);
 
 void shell::CMD::CMDAnalyze::help(Env& gEnv) {
   gEnv.stdOs << "analyze: Read in the Verilog HDL design files." << endl;
@@ -62,8 +66,8 @@ void shell::CMD::CMDAnalyze::exec ( Env& gEnv, const vector<string>& arg){
   try {
     store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
     notify(vm);
-  } catch(exception& e) {
-    gEnv.ErrOs << "Wrong command syntax error! See usage by analyze -help." << endl;
+  } catch (std::exception& e) {
+    gEnv.errOs << "Wrong command syntax error! See usage by analyze -help." << endl;
     return;
   }
 

@@ -43,7 +43,7 @@ namespace shell {
       static void exec ( Env&, const vector<string>& arg = vector<string>() );
       static void help ( Env& );
 
-    private:
+      //private:
       typedef void (*helper) (Env&);
       static po::options_description cmd_opt;
       static po::positional_options_description cmd_position;

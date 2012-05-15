@@ -30,7 +30,7 @@ OTHER_OBJS = $(wildcard ../../netlist/*.o)
 OTHER_OBJS += $(wildcard ../../shell/*.o)
 OTHER_OBJS += $(wildcard ../../shell/cmd/*.o)
 OTHER_OBJS += $(wildcard ../../averilog/*.o)
-
+LINKFLAGS += -lboost_system -lboost_filesystem -lboost_program_options
 
 # targets
 all: $(TARGETS)

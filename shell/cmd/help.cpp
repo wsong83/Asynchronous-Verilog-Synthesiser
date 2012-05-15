@@ -27,29 +27,43 @@
  */
 
 #include "help.h"
+#include "analyze.h"
 
 using namespace shell;
 using namespace shell::CMD;
 
 // the command list
-CMDHelp::cmdDB.insert(pair<string, helper>("analyze",    &CMDAnalyze::help    ));
-CMDHelp::cmdDB.insert(pair<string, helper>("help",       &CMDHelp::help       ));
+map<string, CMDHelp::helper> shell::CMD::CMDHelp::cmdDB;
 
-po::options_description arg_opt("Options");
-arg_opt.add_options()
-("help", "usage information.")
-;
+int cmdDB_init( map<string, CMDHelp::helper>& db) {
+  db.insert(pair<string, CMDHelp::helper>("analyze",    &(CMDAnalyze::help)    ));
+  db.insert(pair<string, CMDHelp::helper>("help",       &(CMDHelp::help)       ));
 
-po::options_description target_opt;
-target_opt.add_options()
-("target", po::value<vector<string> >()->composing(), "target command names")
-;
+  return 0;
+}
 
-po::options_description shell::CMD::cmd_opt;
-CMDHelp::cmd_opt.add(arg_opt).add(target_opt);
+// use the dummy variable to initialize the db
+static int const dummy_cmdDB = cmdDB_init(CMDHelp::cmdDB);
 
-po::positional_options_description shell::CMD::cmd_position;
-CMDHelp::cmd_position.add("target", -1);
+static po::options_description arg_opt("Options");
+po::options_description_easy_init const dummy_arg_opt =
+  arg_opt.add_options()
+  ("help", "usage information.")
+  ;
+
+static po::options_description target_opt;
+po::options_description_easy_init const dummy_target_opt =
+  target_opt.add_options()
+  ("target", po::value<vector<string> >()->composing(), "target command names")
+  ;
+
+po::options_description shell::CMD::CMDHelp::cmd_opt;
+po::options_description const dummy_cmd_opt =
+  CMDHelp::cmd_opt.add(arg_opt).add(target_opt);
+
+po::positional_options_description shell::CMD::CMDHelp::cmd_position;
+po::positional_options_description const dummy_position =
+  CMDHelp::cmd_position.add("target", -1);
 
 void shell::CMD::CMDHelp::help(Env& gEnv) {
   gEnv.stdOs << "help: show and list the usage of commands." << endl;
@@ -64,8 +78,8 @@ void shell::CMD::CMDHelp::exec ( Env& gEnv, const vector<string>& arg){
   try {
     store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
     notify(vm);
-  } catch(exception& e) {
-    gEnv.ErrOs << "Wrong command syntax error! See usage by analyze -help." << endl;
+  } catch(std::exception& e) {
+    gEnv.errOs << "Wrong command syntax error! See usage by analyze -help." << endl;
     return;
   }
 
@@ -77,7 +91,7 @@ void shell::CMD::CMDHelp::exec ( Env& gEnv, const vector<string>& arg){
         (*(cmdDB[*it]))(gEnv);
         gEnv.stdOs << endl;
       } else {
-        gEnv.ErrOs << "Wrong command name: " << *it << endl;
+        gEnv.errOs << "Wrong command name: " << *it << endl;
         break;
       }
     }
