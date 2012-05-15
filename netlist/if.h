@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef _H_AV_IF_
-#define _H_AV_IF_
+#ifndef AV_H_AV_IF_
+#define AV_H_AV_IF_
 
 namespace netlist {
 
@@ -35,31 +35,31 @@ namespace netlist {
   public:
     // constructors
     IfState(
-            const shared_ptr<Expression>& exp, 
-            const shared_ptr<Block>& m_ifcase, 
-            const shared_ptr<Block>& m_elsecase
+            const boost::shared_ptr<Expression>& exp, 
+            const boost::shared_ptr<Block>& m_ifcase, 
+            const boost::shared_ptr<Block>& m_elsecase
             );
 
     IfState(
             const location& lloc,
-            const shared_ptr<Expression>& exp, 
-            const shared_ptr<Block>& m_ifcase, 
-            const shared_ptr<Block>& m_elsecase
+            const boost::shared_ptr<Expression>& exp, 
+            const boost::shared_ptr<Block>& m_ifcase, 
+            const boost::shared_ptr<Block>& m_elsecase
             );
 
     IfState(
-            const shared_ptr<Expression>& exp, 
-            const shared_ptr<Block>& m_ifcase 
+            const boost::shared_ptr<Expression>& exp, 
+            const boost::shared_ptr<Block>& m_ifcase 
             );
 
     IfState(
             const location& lloc,
-            const shared_ptr<Expression>& exp, 
-            const shared_ptr<Block>& m_ifcase 
+            const boost::shared_ptr<Expression>& exp, 
+            const boost::shared_ptr<Block>& m_ifcase 
             );
 
     // helpers
-    virtual ostream& streamout(ostream&, unsigned int, bool) const; /* the streamout with first line prefix control */
+    virtual std::ostream& streamout(std::ostream&, unsigned int, bool) const; /* the streamout with first line prefix control */
     void set_name(const BIdentifier& nm) { name = nm; named = true;}
     bool is_named() const { return named; }
 
@@ -69,9 +69,9 @@ namespace netlist {
     NETLIST_CHECK_INPARSE_DECL;
 
     //data
-    shared_ptr<Expression> exp; /* the condition expression */
-    shared_ptr<Block> ifcase; /* the block to run when expression is true */
-    shared_ptr<Block> elsecase; /* the block to run when else is used */
+    boost::shared_ptr<Expression> exp; /* the condition expression */
+    boost::shared_ptr<Block> ifcase; /* the block to run when expression is true */
+    boost::shared_ptr<Block> elsecase; /* the block to run when else is used */
     BIdentifier name;
 
   private:

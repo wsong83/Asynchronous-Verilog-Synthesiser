@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef _H_EXPRESSION_
-#define _H_EXPRESSION_
+#ifndef AV_H_EXPRESSION_
+#define AV_H_EXPRESSION_
 
 namespace netlist {
   
@@ -40,10 +40,10 @@ namespace netlist {
     Expression(const location& lloc, const Number&);	/* a number is an expression */
     Expression(const VIdentifier&); /* a variable/parameter is an expression */
     Expression(const location& lloc, const VIdentifier&); /* a variable/parameter is an expression */
-    Expression(const shared_ptr<Concatenation>&); /* a concatenation is an expression */
-    Expression(const location& lloc, const shared_ptr<Concatenation>&); /* a concatenation is an expression */
-    Expression(const shared_ptr<LConcatenation>&); /* some times need to convert a lvalue back to expression */
-    Expression(const location& lloc, const shared_ptr<LConcatenation>&); /* some times need to convert a lvalue back to expression */
+    Expression(const boost::shared_ptr<Concatenation>&); /* a concatenation is an expression */
+    Expression(const location& lloc, const boost::shared_ptr<Concatenation>&); /* a concatenation is an expression */
+    Expression(const boost::shared_ptr<LConcatenation>&); /* some times need to convert a lvalue back to expression */
+    Expression(const location& lloc, const boost::shared_ptr<LConcatenation>&); /* some times need to convert a lvalue back to expression */
 
     // helpers
     bool is_valuable() const;    /* check valuable */
@@ -52,7 +52,7 @@ namespace netlist {
     // return the size of equation
     int size() const { return eqn.size(); }
     bool empty() const { return eqn.empty(); }
-    shared_ptr<Operation>& front() { return eqn.front(); }
+    boost::shared_ptr<Operation>& front() { return eqn.front(); }
     void db_register(int iod = 1);
     void db_expunge();
     
@@ -69,7 +69,7 @@ namespace netlist {
     virtual Expression* deep_copy() const;
     
     // data
-    list<shared_ptr<Operation> > eqn;
+    std::list<boost::shared_ptr<Operation> > eqn;
 
   private:
     bool valuable;
@@ -85,10 +85,10 @@ namespace netlist {
   // helper class
   class expression_state {
   public:
-    shared_ptr<Operation> op;   // operator
-    int ops;                    // number of operands needed
-    int opp;                    // current number of operands
-    list<shared_ptr<Operation> > d[3]; // oprands
+    boost::shared_ptr<Operation> op;               // operator
+    int ops;                                       // number of operands needed
+    int opp;                                       // current number of operands
+    std::list<boost::shared_ptr<Operation> > d[3]; // oprands
   expression_state() : opp(0) {}
   };
 

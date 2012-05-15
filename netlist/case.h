@@ -27,8 +27,8 @@
  */
 
 
-#ifndef _H_AV_CASE_
-#define _H_AV_CASE_
+#ifndef AV_H_AV_CASE_
+#define AV_H_AV_CASE_
 
 namespace netlist{
 

@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef _H_CONCATENATION_
-#define _H_CONCATENATION_
+#ifndef AV_H_CONCATENATION_
+#define AV_H_CONCATENATION_
 
 namespace netlist {
 
@@ -41,13 +41,13 @@ namespace netlist {
   public:
     ConElem() {}
     ConElem(const location& lloc) : loc(lloc) {}
-    ConElem(const shared_ptr<Expression>& expr, const list<shared_ptr<ConElem> >& elems)
+    ConElem(const boost::shared_ptr<Expression>& expr, const std::list<boost::shared_ptr<ConElem> >& elems)
       : exp(expr), con(elems) {}
-    ConElem(const location& lloc, const shared_ptr<Expression>& expr, const list<shared_ptr<ConElem> >& elems)
+    ConElem(const location& lloc, const boost::shared_ptr<Expression>& expr, const std::list<boost::shared_ptr<ConElem> >& elems)
       : exp(expr), con(elems), loc(lloc) {}
-    ConElem(const shared_ptr<Expression>& expr)
+    ConElem(const boost::shared_ptr<Expression>& expr)
       : exp(expr) {}
-    ConElem(const location& lloc, const shared_ptr<Expression>& expr)
+    ConElem(const location& lloc, const boost::shared_ptr<Expression>& expr)
       : exp(expr), loc(lloc) {}
     
     void reduce();
@@ -58,8 +58,8 @@ namespace netlist {
     NETLIST_CHECK_INPARSE_DECL;
     virtual ConElem* deep_copy() const;
 
-    shared_ptr<Expression> exp;
-    list<shared_ptr<ConElem> > con;
+    boost::shared_ptr<Expression> exp;
+    std::list<boost::shared_ptr<ConElem> > con;
     location loc;
     Block* father;
 
@@ -73,8 +73,8 @@ namespace netlist {
     NETLIST_DEFAULT_CON_WL(Concatenation, tConcatenation);
     
     // helpers
-    Concatenation& operator+ (shared_ptr<Concatenation>& rhs);
-    Concatenation& operator+ (shared_ptr<ConElem>& rhs);
+    Concatenation& operator+ (boost::shared_ptr<Concatenation>& rhs);
+    Concatenation& operator+ (boost::shared_ptr<ConElem>& rhs);
     void reduce();
     void db_register(int iod = 1);
     void db_expunge();
@@ -86,7 +86,7 @@ namespace netlist {
     virtual Concatenation* deep_copy() const;
 
     // data
-    list<shared_ptr<ConElem> > data;
+    std::list<boost::shared_ptr<ConElem> > data;
 
   };
   NETLIST_STREAMOUT(Concatenation);

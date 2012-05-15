@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef _H_VA_REGISTER_
-#define _H_VA_REGISTER_
+#ifndef AV_H_VA_REGISTER_
+#define AV_H_VA_REGISTER_
 
 namespace netlist {
   
@@ -45,10 +45,10 @@ namespace netlist {
     Variable(const Port& p);
     Variable(const location& lloc, const VIdentifier& id, vtype_t mtype = TVar)
       : NetComp(tVariable, lloc), vtype(mtype), name(id), uid({0,0}) {}
-    Variable(const VIdentifier& id, const shared_ptr<Expression>& expp, vtype_t mtype = TVar)
+    Variable(const VIdentifier& id, const boost::shared_ptr<Expression>& expp, vtype_t mtype = TVar)
       : NetComp(tVariable), vtype(mtype), name(id), uid({0,0}), exp(expp) {}
     Variable(const location& lloc, const VIdentifier& id, 
-             const shared_ptr<Expression>& expp, vtype_t mtype = TVar)
+             const boost::shared_ptr<Expression>& expp, vtype_t mtype = TVar)
     : NetComp(tVariable, lloc), vtype(mtype), name(id), uid({0,0}), exp(expp) {}
 
     void set_value(const Number&); /* reset the value of this variable */
@@ -63,12 +63,12 @@ namespace netlist {
     NETLIST_CHECK_INPARSE_DECL;
 
     VIdentifier name;
-    map<unsigned int, VIdentifier *> fan[2]; /* fan[0] for fanin, fan[1] for fanout */
+    std::map<unsigned int, VIdentifier *> fan[2]; /* fan[0] for fanin, fan[1] for fanout */
     unsigned int get_id(int);
 
   private:
     unsigned int uid[2];
-    shared_ptr<Expression> exp;
+    boost::shared_ptr<Expression> exp;
 
   };
 

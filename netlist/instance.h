@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef _H_INSTANCE_
-#define _H_INSTANCE_
+#ifndef AV_H_INSTANCE_
+#define AV_H_INSTANCE_
 
 namespace netlist {
   class Instance : public NetComp {
@@ -37,22 +37,22 @@ namespace netlist {
     Instance()
       : NetComp(tInstance), type(unknown_inst), named(false) {}
 
-    Instance(const IIdentifier& nm, const list<shared_ptr<PortConn> >& polist)
+    Instance(const IIdentifier& nm, const std::list<boost::shared_ptr<PortConn> >& polist)
       : NetComp(tInstance), name(nm), port_list(polist), type(unknown_inst), named(true) { }
 
     Instance(
             const location& lloc, 
             const IIdentifier& nm, 
-            const list<shared_ptr<PortConn> >& polist
+            const std::list<boost::shared_ptr<PortConn> >& polist
             )
       : NetComp(tInstance, lloc), name(nm), port_list(polist), 
       type(unknown_inst), named(true) { }
 
     // for primary gates in most cases
-    Instance(const IIdentifier&, const list<shared_ptr<PortConn> >&, type_t);
-    Instance(const location&, const IIdentifier&, const list<shared_ptr<PortConn> >&, type_t);
-    Instance(const list<shared_ptr<PortConn> >&, type_t);
-    Instance(const location&, const list<shared_ptr<PortConn> >&, type_t);
+    Instance(const IIdentifier&, const std::list<boost::shared_ptr<PortConn> >&, type_t);
+    Instance(const location&, const IIdentifier&, const std::list<boost::shared_ptr<PortConn> >&, type_t);
+    Instance(const std::list<boost::shared_ptr<PortConn> >&, type_t);
+    Instance(const location&, const std::list<boost::shared_ptr<PortConn> >&, type_t);
 
     // helpers
     NETLIST_SET_FATHER_DECL;
@@ -61,16 +61,16 @@ namespace netlist {
     void set_mname(const MIdentifier& mod_name) { mname = mod_name; }
     void set_name(const IIdentifier& nm) { name = nm; named=true; }
     void set_default_name(const IIdentifier& nm) {name = nm; }
-    void set_module_ptr(const shared_ptr<Module>& mp) { module_ptr = mp;}
-    void set_para(const list<shared_ptr<ParaConn> >& para ) { para_list = para; }
+    void set_module_ptr(const boost::shared_ptr<Module>& mp) { module_ptr = mp;}
+    void set_para(const std::list<boost::shared_ptr<ParaConn> >& para ) { para_list = para; }
     bool is_named() const { return named; }
 
     // data
     IIdentifier name;
     MIdentifier mname;
-    shared_ptr<Module> module_ptr;
-    list<shared_ptr<PortConn> > port_list;
-    list<shared_ptr<ParaConn> > para_list;
+    boost::shared_ptr<Module> module_ptr;
+    std::list<boost::shared_ptr<PortConn> > port_list;
+    std::list<boost::shared_ptr<ParaConn> > para_list;
     type_t type;
 
   private:

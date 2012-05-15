@@ -27,8 +27,8 @@
  *
  */
 
-#ifndef _H_AV_BLOCK_
-#define _H_AV_BLOCK_
+#ifndef AV_H_AV_BLOCK_
+#define AV_H_AV_BLOCK_
 
 namespace netlist {
 
@@ -56,7 +56,7 @@ namespace netlist {
     virtual void set_blocked() { blocked = true; }
     bool is_named() const { return named; }
     bool is_blocked() const { return blocked; }
-    virtual bool add(const shared_ptr<NetComp>&); /* add a general statement to this block */
+    virtual bool add(const boost::shared_ptr<NetComp>&); /* add a general statement to this block */
     /* return a pointer of the top-level module */
     virtual Block* get_module() { 
       if(father != NULL) return father->get_module();
@@ -65,80 +65,80 @@ namespace netlist {
     
     /* a template funtion to add all sorts of netlist components */
     template<typename T>
-      bool add_list(const list<shared_ptr<T> >& ll) {
-      typename list<shared_ptr<T> >::const_iterator it, end;
+      bool add_list(const std::list<boost::shared_ptr<T> >& ll) {
+      typename std::list<boost::shared_ptr<T> >::const_iterator it, end;
       for(it=ll.begin(), end=ll.end(); it!=end; it++)
         add(*it);
       return true;
     }
     
     /* add a general case statement */
-    bool add_case(const shared_ptr<Expression>&, 
-                          const list<shared_ptr<CaseItem> >&, const shared_ptr<CaseItem>&); 
+    bool add_case(const boost::shared_ptr<Expression>&, 
+                          const std::list<boost::shared_ptr<CaseItem> >&, const boost::shared_ptr<CaseItem>&); 
     
     /* add a general case statement */
-    bool add_case(const location& lloc, const shared_ptr<Expression>&, 
-                          const list<shared_ptr<CaseItem> >&, const shared_ptr<CaseItem>&);
+    bool add_case(const location& lloc, const boost::shared_ptr<Expression>&, 
+                          const std::list<boost::shared_ptr<CaseItem> >&, const boost::shared_ptr<CaseItem>&);
  
     /* add a case statement without default */
-    bool add_case(const shared_ptr<Expression>&, 
-                          const list<shared_ptr<CaseItem> >&);
+    bool add_case(const boost::shared_ptr<Expression>&, 
+                          const std::list<boost::shared_ptr<CaseItem> >&);
 
     /* add a case statement without default */
-    bool add_case(const location& lloc, const shared_ptr<Expression>&, 
-                          const list<shared_ptr<CaseItem> >&); 
+    bool add_case(const location& lloc, const boost::shared_ptr<Expression>&, 
+                          const std::list<boost::shared_ptr<CaseItem> >&); 
 
     /* add a case statement only with a default case, odd! */
-    bool add_case(const shared_ptr<Expression>&, 
-                          const shared_ptr<CaseItem>&);
+    bool add_case(const boost::shared_ptr<Expression>&, 
+                          const boost::shared_ptr<CaseItem>&);
 
     /* add a case statement only with a default case, odd! */
-    bool add_case(const location& lloc, const shared_ptr<Expression>&, 
-                          const shared_ptr<CaseItem>&);
+    bool add_case(const location& lloc, const boost::shared_ptr<Expression>&, 
+                          const boost::shared_ptr<CaseItem>&);
 
     /* add an if statement with else case */
-    bool add_if(const shared_ptr<Expression>&, 
-                        const shared_ptr<Block>&, const shared_ptr<Block>&); 
+    bool add_if(const boost::shared_ptr<Expression>&, 
+                        const boost::shared_ptr<Block>&, const boost::shared_ptr<Block>&); 
     
     /* add an if statement with else case */
-    bool add_if(const location& lloc, const shared_ptr<Expression>&, 
-                        const shared_ptr<Block>&, const shared_ptr<Block>&);
+    bool add_if(const location& lloc, const boost::shared_ptr<Expression>&, 
+                        const boost::shared_ptr<Block>&, const boost::shared_ptr<Block>&);
 
     /* add an if statement without else case */
-    bool add_if(const shared_ptr<Expression>&, const shared_ptr<Block>&);
+    bool add_if(const boost::shared_ptr<Expression>&, const boost::shared_ptr<Block>&);
 
     /* add an if statement without else case */
-    bool add_if(const location& lloc, const shared_ptr<Expression>&, const shared_ptr<Block>&);
+    bool add_if(const location& lloc, const boost::shared_ptr<Expression>&, const boost::shared_ptr<Block>&);
 
     /* add a while statement */
-    bool add_while(const shared_ptr<Expression>&, const shared_ptr<Block>&);
+    bool add_while(const boost::shared_ptr<Expression>&, const boost::shared_ptr<Block>&);
 
     /* add a while statement */
-    bool add_while(const location& lloc, const shared_ptr<Expression>&, const shared_ptr<Block>&);
+    bool add_while(const location& lloc, const boost::shared_ptr<Expression>&, const boost::shared_ptr<Block>&);
 
     /* add a for statement */
-    bool add_for(const shared_ptr<Assign>&, 
-                         const shared_ptr<Expression>&, const shared_ptr<Assign>&, const shared_ptr<Block>&); 
+    bool add_for(const boost::shared_ptr<Assign>&, 
+                         const boost::shared_ptr<Expression>&, const boost::shared_ptr<Assign>&, const boost::shared_ptr<Block>&); 
 
     /* add a for statement */
-    bool add_for(const location& lloc, const shared_ptr<Assign>&, 
-                         const shared_ptr<Expression>&, const shared_ptr<Assign>&, const shared_ptr<Block>&);
+    bool add_for(const location& lloc, const boost::shared_ptr<Assign>&, 
+                         const boost::shared_ptr<Expression>&, const boost::shared_ptr<Assign>&, const boost::shared_ptr<Block>&);
 
-    bool add_statements(const shared_ptr<Block>&); /* add several statements */
+    bool add_statements(const boost::shared_ptr<Block>&); /* add several statements */
     virtual void elab_inparse(); /* resolve the content in statements during parsing */
 
     // helpers
     BIdentifier& new_BId();     /* generate an unused block id */
     IIdentifier& new_IId();     /* generate an unused instance id*/
     VIdentifier& new_VId();     /* generate an unused variable id */
-    virtual shared_ptr<NetComp>   find_item      (const BIdentifier&) const; /* find an item in db_other */
-    virtual shared_ptr<Instance>  find_instance  (const IIdentifier&) const; /* find an instance */
-    virtual shared_ptr<Variable>  find_var       (const VIdentifier&) const; /* find a variable */
+    virtual boost::shared_ptr<NetComp>   find_item      (const BIdentifier&) const; /* find an item in db_other */
+    virtual boost::shared_ptr<Instance>  find_instance  (const IIdentifier&) const; /* find an instance */
+    virtual boost::shared_ptr<Variable>  find_var       (const VIdentifier&) const; /* find a variable */
     /* find a variable in the global environment, up to the module level */
-    virtual shared_ptr<Variable>  gfind_var      (const VIdentifier&) const; 
-    virtual ostream& streamout(ostream& os, unsigned int indent, bool fl_prefix) const;
-    const shared_ptr<NetComp>& front() const { return statements.front(); }
-    shared_ptr<NetComp>& front() { return statements.front(); }
+    virtual boost::shared_ptr<Variable>  gfind_var      (const VIdentifier&) const; 
+    virtual std::ostream& streamout(std::ostream& os, unsigned int indent, bool fl_prefix) const;
+    const boost::shared_ptr<NetComp>& front() const { return statements.front(); }
+    boost::shared_ptr<NetComp>& front() { return statements.front(); }
     virtual void set_father();  /* set the father pointer to all sub-elements */
     
     // inherit from NetComp
@@ -148,7 +148,7 @@ namespace netlist {
 
     // data
     BIdentifier name;
-    list<shared_ptr<NetComp> >             statements;   /* a general list to stor the statements */
+    std::list<boost::shared_ptr<NetComp> > statements;   /* a general list to stor the statements */
     DataBase<VIdentifier, Variable>        db_var;       /* variables */
     DataBase<IIdentifier, Instance>        db_instance;  /* module instances */
     DataBase<BIdentifier, NetComp>         db_other;     /* non-block statements, including assignements, if, etc. */
@@ -165,7 +165,7 @@ namespace netlist {
     bool blocked;               /* user used begin and end for this block */
     
     // helper in elab_inparse
-    bool elab_inparse_item (const shared_ptr<NetComp>&, list<shared_ptr<NetComp> >::iterator&);
+    bool elab_inparse_item (const boost::shared_ptr<NetComp>&, std::list<boost::shared_ptr<NetComp> >::iterator&);
 
   };
 

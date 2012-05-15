@@ -35,8 +35,8 @@ namespace netlist {
   public:
     // constructors
     // NETLIST_DEFAULT_CON(LConcatenation, tLConcatenation);
-    LConcatenation(shared_ptr<Concatenation>&);
-    LConcatenation(const location&, shared_ptr<Concatenation>&);
+    LConcatenation(boost::shared_ptr<Concatenation>&);
+    LConcatenation(const location&, boost::shared_ptr<Concatenation>&);
     LConcatenation(const VIdentifier&);
     LConcatenation(const location&, const VIdentifier&);
 
@@ -52,7 +52,7 @@ namespace netlist {
     void db_expunge();
 
     // data
-    list<VIdentifier> data; /* store the list of variable identifiers, wires or registers */
+    std::list<VIdentifier> data; /* store the list of variable identifiers, wires or registers */
     
   private:
     bool valid;

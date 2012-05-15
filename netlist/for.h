@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef _H_AV_FOR_
-#define _H_AV_FOR_
+#ifndef AV_H_AV_FOR_
+#define AV_H_AV_FOR_
 
 namespace netlist {
 
@@ -37,17 +37,17 @@ namespace netlist {
     ForState() : NetComp(tFor), named(false) {}
     ForState(const location& lloc) : NetComp(tFor, lloc), named(false) {}
     ForState(
-             const shared_ptr<Assign>& init, 
-             const shared_ptr<Expression>& cond, 
-             const shared_ptr<Assign>& incr, 
-             const shared_ptr<Block>& body
+             const boost::shared_ptr<Assign>& init, 
+             const boost::shared_ptr<Expression>& cond, 
+             const boost::shared_ptr<Assign>& incr, 
+             const boost::shared_ptr<Block>& body
              );
     ForState(
              const location& lloc,
-             const shared_ptr<Assign>& init, 
-             const shared_ptr<Expression>& cond, 
-             const shared_ptr<Assign>& incr, 
-             const shared_ptr<Block>& body
+             const boost::shared_ptr<Assign>& init, 
+             const boost::shared_ptr<Expression>& cond, 
+             const boost::shared_ptr<Assign>& incr, 
+             const boost::shared_ptr<Block>& body
              );
 
     // inherit from NetComp
@@ -60,10 +60,10 @@ namespace netlist {
     bool is_named() const { return named; }
 
     //data
-    shared_ptr<Assign> init;
-    shared_ptr<Expression> cond;
-    shared_ptr<Assign> incr;
-    shared_ptr<Block> body;
+    boost::shared_ptr<Assign> init;
+    boost::shared_ptr<Expression> cond;
+    boost::shared_ptr<Assign> incr;
+    boost::shared_ptr<Block> body;
 
     BIdentifier name;           /* dummy name for index search */
 

@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef _H_COMPONENT_
-#define _H_COMPONENT_
+#ifndef AV_H_COMPONENT_
+#define AV_H_COMPONENT_
 
 #include <iostream>
 #include <string>

@@ -26,66 +26,66 @@
  *
  */
 
-#ifndef _H_VA_LIBRARY_
-#define _H_VA_LIBRARY_
+#ifndef AV_H_VA_LIBRARY_
+#define AV_H_VA_LIBRARY_
 
 namespace netlist {
 
   class Library {
   public:
     Library(
-	    const string& nm = string("work"),    /* library name */
-	    const string& fn = string("work.db"), /* library file name */
-	    const string& ph = string("./")	    /* library path name */
-	    )
+            const std::string& nm = std::string("work"),    /* library name */
+            const std::string& fn = std::string("work.db"), /* library file name */
+            const std::string& ph = std::string("./")	    /* library path name */
+            )
       : name(nm), path(ph), file_name(fn) {}
 
 
     // helpers
     bool pull();		/* read in the library from disk */
     // read in with explicit path + file name
-    bool pull(const string& fn, const string& ph = string("./"));
+    bool pull(const std::string& fn, const std::string& ph = std::string("./"));
     bool push();		/* write the library to disk */
     // write with explicit path + file name
-    bool push(const string& fn, const string& ph = string("./"));
+    bool push(const std::string& fn, const std::string& ph = std::string("./"));
 
     // insert a new module by its name
     bool insert(const MIdentifier& mn) { 
-      shared_ptr<Module> mm(new Module(mn));
+      boost::shared_ptr<Module> mm(new Module(mn));
       bool rv = db.insert(mn, mm); 
       if(rv) comp_list.push_front(mm);
       return rv;
     }
     
     // insert a new module by its object
-    bool insert(shared_ptr<Module> mm) { 
+    bool insert(boost::shared_ptr<Module> mm) { 
       bool rv = db.insert(mm->name, mm); 
       //if(rv) comp_list.push_front(mm);
       return rv;
     }
     
     // find a module in the library
-    shared_ptr<Module> find(const MIdentifier& mn) { return db.find(mn); } 
+    boost::shared_ptr<Module> find(const MIdentifier& mn) { return db.find(mn); } 
     
     // return a pointer to the current netlist component
-    shared_ptr<Block> get_current_comp() { return comp_list.front(); }
+    boost::shared_ptr<Block> get_current_comp() { return comp_list.front(); }
     
     // return a iterator of the current item list
-    list<shared_ptr<Block> >::iterator get_current_it() { return comp_list.begin(); }
+    std::list<boost::shared_ptr<Block> >::iterator get_current_it() { return comp_list.begin(); }
     
     // check whether the iterator is valid in the list
-    bool it_valid(const list<shared_ptr<Block> >::iterator& it) const { return it != comp_list.end(); }
+    bool it_valid(const std::list<boost::shared_ptr<Block> >::iterator& it) const { return it != comp_list.end(); }
     
     // push one item to the process list
-    void push(shared_ptr<Block> item) { comp_list.push_front(item); }
+    void push(boost::shared_ptr<Block> item) { comp_list.push_front(item); }
     
     // pop the top item from the process list
     void pop() { comp_list.pop_front(); }
 
     // data items
-    string name;		/* the name of library */
-    string path;		/* the path for the database on disk */
-    string file_name;	/* the file name of the disk copy */
+    std::string name;		/* the name of library */
+    std::string path;		/* the path for the database on disk */
+    std::string file_name;	/* the file name of the disk copy */
 
     DataBase<MIdentifier, Module> db;	/* the practical module database */
 
@@ -95,7 +95,7 @@ namespace netlist {
        A list provide better access to father components instead
        only the direct father.
      */
-    list<shared_ptr<Block> >  comp_list; 
+    std::list<boost::shared_ptr<Block> >  comp_list; 
   };
 }
 

@@ -27,8 +27,8 @@
  *
  */
 
-#ifndef _H_AV_GEN_BLOCK_
-#define _H_AV_GEN_BLOCK_
+#ifndef AV_H_AV_GEN_BLOCK_
+#define AV_H_AV_GEN_BLOCK_
 
 namespace netlist{
   class GenBlock : public Block {
@@ -46,7 +46,7 @@ namespace netlist{
     NETLIST_STREAMOUT_DECL;
 
   private:
-    bool elab_inparse_item( const shared_ptr<NetComp>&);
+    bool elab_inparse_item( const boost::shared_ptr<NetComp>&);
 
   };
   NETLIST_STREAMOUT(GenBlock);

@@ -26,16 +26,16 @@
  *
  */
 
-#ifndef _H_ASSIGN_
-#define _H_ASSIGN_
+#ifndef AV_H_ASSIGN_
+#define AV_H_ASSIGN_
 
 namespace netlist {
 
   class Assign : public NetComp {
   public:
     // constructors
-    Assign(const shared_ptr<LConcatenation>&, const shared_ptr<Expression>&, bool);
-    Assign(const location& lloc, const shared_ptr<LConcatenation>&, const shared_ptr<Expression>&, bool);
+    Assign(const boost::shared_ptr<LConcatenation>&, const boost::shared_ptr<Expression>&, bool);
+    Assign(const location& lloc, const boost::shared_ptr<LConcatenation>&, const boost::shared_ptr<Expression>&, bool);
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
@@ -52,8 +52,8 @@ namespace netlist {
 
     // data
     BIdentifier name;                /* as a key in the database, it has no practical meaning */
-    shared_ptr<LConcatenation> lval; /* the left-value is a left-concatenation with one or multiple identifiers */
-    shared_ptr<Expression> rexp;     /* the right-side expression */
+    boost::shared_ptr<LConcatenation> lval; /* the left-value is a left-concatenation with one or multiple identifiers */
+    boost::shared_ptr<Expression> rexp;     /* the right-side expression */
 
   private:
     bool blocking;                   /* true when it is a blocking assignment */
