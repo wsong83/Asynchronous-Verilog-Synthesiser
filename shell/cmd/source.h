@@ -20,14 +20,14 @@
  */
 
 /* 
- * argument definitions for analyze command
- * 10/05/2012   Wei Song
+ * argument definitions for source command
+ * 15/05/2012   Wei Song
  *
  *
  */
 
-#ifndef AV_CMD_ANALYZE_
-#define AV_CMD_ANALYZE_
+#ifndef AV_CMD_SOURCE_
+#define AV_CMD_SOURCE_
 
 #include "shell/env.h"
 #include "cmd_define.h"
@@ -35,9 +35,9 @@
 namespace shell { 
   namespace CMD {
   
-    class CMDAnalyze {
+    class CMDSource {
     public:
-      static bool exec ( Env&, std::vector<string>&);
+      static bool exec ( Env&, vector<string>&);
       static void help ( Env& );
 
       //private:

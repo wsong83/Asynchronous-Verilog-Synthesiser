@@ -20,7 +20,7 @@
  */
 
 /* 
- * argument definitions for analyze command
+ * argument definitions for quit/exit command
  * 15/05/2012   Wei Song
  *
  *
@@ -55,7 +55,7 @@ bool shell::CMD::CMDQuit::exec ( Env& gEnv, vector<string>& arg){
     store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).run(), vm);
     notify(vm);
   } catch (std::exception& e) {
-    gEnv.errOs << "Wrong command syntax error! See usage by analyze -help." << endl;
+    gEnv.errOs << "Wrong command syntax error! See usage by quit -help." << endl;
     return false;
   }
 

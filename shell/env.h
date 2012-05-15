@@ -32,9 +32,11 @@
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
 
-#include "netlist/component.h"
-using netlist::Library;
-using netlist::Module;
+//#include "netlist/component.h"
+namespace netlist {
+  class Library;
+  class Module;
+}
 
 #include "cmd_lexer.h"
 #include "err_report.h"
@@ -54,15 +56,15 @@ namespace shell {
     void run();                             /* running the synthesiser */
 
     // data member
-    map<string, shared_ptr<Library> >  link_lib;     /* libraries used in design elaboration */
-    map<string, shared_ptr<Library> >  target_lib;   /* libraries used in mapping */
+    std::map<std::string, boost::shared_ptr<netlist::Library> >  link_lib;     /* libraries used in design elaboration */
+    std::map<std::string, boost::shared_ptr<netlist::Library> >  target_lib;   /* libraries used in mapping */
     ErrReport error;                                 /* the gobal level error report function */
     CMD::CMDLexer lexer;                             /* the command line lexer */
     CMD::cmd_parser *parser;                         /* the command line parser */
-    shared_ptr<Library> curLib;                      /* current library */
-    shared_ptr<Module> curDgn;                       /* current design */
-    ostream stdOs;                                   /* standard output stream */
-    ostream errOs;                                   /* error output stream */
+    std::shared_ptr<netlist::Library> curLib;                      /* current library */
+    std::shared_ptr<netlist::Module> curDgn;                       /* current design */
+    std::ostream stdOs;                                   /* standard output stream */
+    std::ostream errOs;                                   /* error output stream */
     
   };
 
@@ -73,6 +75,7 @@ namespace shell {
 #include "cmd/analyze.h"
 #include "cmd/help.h"
 #include "cmd/quit.h"
+#include "cmd/source.h"
 
 
 #endif

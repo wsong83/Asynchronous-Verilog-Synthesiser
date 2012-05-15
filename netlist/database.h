@@ -29,31 +29,18 @@
 #ifndef _H_DATABASE_
 #define _H_DATABASE_
 
-/*
-#include <list>
-using std::list;
-#include <map>
-using std::map;
-#include <utility>
-using std::pair;
-#include <boost/shared_ptr.hpp>
-using boost::shared_ptr;
-#include <ostream>
-using std::ostream;
-*/
-
 namespace netlist {
 
   // the database
   template <typename K, typename T, bool ORDER = false>
     class DataBase {
   public:
-    typedef map<K, shared_ptr<T> > DBTM;
-    typedef list<pair<K, shared_ptr<T> > > DBTL;
-    typedef pair<K, shared_ptr<T> > DTT;
+    typedef std::map<K, boost::shared_ptr<T> > DBTM;
+    typedef std::list<std::pair<K, boost::shared_ptr<T> > > DBTL;
+    typedef std::pair<K, boost::shared_ptr<T> > DTT;
     
     // store a component
-    bool insert(const K& key, const shared_ptr<T>& comp) {
+    bool insert(const K& key, const boost::shared_ptr<T>& comp) {
       if(ORDER) {
         if(find(key).use_count() != 0){
           return false;
@@ -67,7 +54,7 @@ namespace netlist {
       }
     }
     
-    shared_ptr<T> find(const K& key) {
+    boost::shared_ptr<T> find(const K& key) {
       if(ORDER) {
         typename DBTL::iterator it, end;
         
@@ -77,7 +64,7 @@ namespace netlist {
         if(it != end)
           return it->second;
         else
-          return shared_ptr<T>();
+          return boost::shared_ptr<T>();
 
       } else {
         typename DBTM::iterator it = db_map.find(key);
@@ -85,11 +72,11 @@ namespace netlist {
         if(it != db_map.end())
           return it->second;
         else
-          return shared_ptr<T>();
+          return boost::shared_ptr<T>();
       }
     }
 
-    shared_ptr<T> find(const K& key) const {
+    boost::shared_ptr<T> find(const K& key) const {
       if(ORDER) {
         typename DBTL::const_iterator it, end;
         
@@ -99,7 +86,7 @@ namespace netlist {
         if(it != end)
           return it->second;
         else
-          return shared_ptr<T>();
+          return boost::shared_ptr<T>();
 
       } else {
         typename DBTM::const_iterator it = db_map.find(key);
@@ -107,14 +94,14 @@ namespace netlist {
         if(it != db_map.end())
           return it->second;
         else
-          return shared_ptr<T>();
+          return boost::shared_ptr<T>();
       }
     }
 
-    shared_ptr<T> swap(const K& key, const shared_ptr<T>& comp) {
+    boost::shared_ptr<T> swap(const K& key, const boost::shared_ptr<T>& comp) {
       if(ORDER) {
         typename DBTL::iterator it, end;
-        shared_ptr<T> rv;
+        boost::shared_ptr<T> rv;
 
         for(it=db_list.begin(), end=db_list.end(); it!=end; it++)
           if(it->first == key) break;
@@ -127,7 +114,7 @@ namespace netlist {
         }
         return rv;
       } else {
-        shared_ptr<T> rv = fetch(key);
+        boost::shared_ptr<T> rv = fetch(key);
         insert(key, comp);
         return rv;
       } 
@@ -166,8 +153,8 @@ namespace netlist {
       }
     }
     
-    shared_ptr<T> fetch(const K& key) {
-      shared_ptr<T> m = find(key);
+    boost::shared_ptr<T> fetch(const K& key) {
+      boost::shared_ptr<T> m = find(key);
       if(m.use_count() != 0) erase(key);
       return m;
     }
@@ -181,7 +168,7 @@ namespace netlist {
     typename DBTL::const_iterator end_order() const   { return db_list.end();   }
     typename DBTM::const_iterator end() const         { return db_map.end();    }
 
-    ostream& streamout(ostream& os, unsigned int indent) const {
+    std::ostream& streamout(std::ostream& os, unsigned int indent) const {
       if(ORDER) {
         typename DBTL::const_iterator it, end;
         for(it=db_list.begin(), end=db_list.end(); it!=end; it++)
@@ -213,11 +200,11 @@ namespace netlist {
 // T, component type
 // F the father pointer
 #ifndef DATABASE_SET_FATHER_FUN
-#define DATABASE_SET_FATHER_FUN(DN, K, T, F)          \
-{                                                     \
-  map<K, shared_ptr<T> >::iterator it, end;           \
-  for(it=DN.begin(), end=DN.end(); it!=end; it++)     \
-    it->second->set_father(F);                        \
+#define DATABASE_SET_FATHER_FUN(DN, K, T, F)             \
+{                                                        \
+  std::map<K, boost::shared_ptr<T> >::iterator it, end;  \
+  for(it=DN.begin(), end=DN.end(); it!=end; it++)        \
+    it->second->set_father(F);                           \
 }    
 #endif
 
@@ -228,11 +215,11 @@ namespace netlist {
 // T, component type
 // F the father pointer
 #ifndef DATABASE_SET_FATHER_ORDER_FUN
-#define DATABASE_SET_FATHER_ORDER_FUN(DN, K, T, F)            \
-{                                                             \
-  list<pair<K, shared_ptr<T> > >::iterator it, end;           \
-  for(it=DN.begin_order(), end=DN.end_order(); it!=end; it++) \
-    it->second->set_father(F);                                \
+#define DATABASE_SET_FATHER_ORDER_FUN(DN, K, T, F)                    \
+{                                                                     \
+  std::list<std::pair<K, boost::shared_ptr<T> > >::iterator it, end;  \
+  for(it=DN.begin_order(), end=DN.end_order(); it!=end; it++)         \
+    it->second->set_father(F);                                        \
 }                            
 #endif
 
@@ -243,11 +230,11 @@ namespace netlist {
 // T, component type
 // R, the return boolean variable
 #ifndef DATABASE_CHECK_INPARSE_FUN
-#define DATABASE_CHECK_INPARSE_FUN(DN, K, T, R)       \
-{                                                     \
-  map<K, shared_ptr<T> >::iterator it, end;           \
-  for(it=DN.begin(), end=DN.end(); it!=end; it++)     \
-    R &= it->second->check_inparse();                 \
+#define DATABASE_CHECK_INPARSE_FUN(DN, K, T, R)          \
+{                                                        \
+  std::map<K, boost::shared_ptr<T> >::iterator it, end;  \
+  for(it=DN.begin(), end=DN.end(); it!=end; it++)        \
+    R &= it->second->check_inparse();                    \
 }
 #endif
 
@@ -258,11 +245,11 @@ namespace netlist {
 // T, component type
 // R, the return boolean variable
 #ifndef DATABASE_CHECK_INPARSE_ORDER_FUN
-#define DATABASE_CHECK_INPARSE_ORDER_FUN(DN, K, T, R)         \
-{                                                             \
-  list<pair<K, shared_ptr<T> > >::iterator it, end;           \
-  for(it=DN.begin_order(), end=DN.end_order(); it!=end; it++) \
-    R &= it->second->check_inparse();                         \
+#define DATABASE_CHECK_INPARSE_ORDER_FUN(DN, K, T, R)                 \
+{                                                                     \
+  std::list<std::pair<K, boost::shared_ptr<T> > >::iterator it, end;  \
+  for(it=DN.begin_order(), end=DN.end_order(); it!=end; it++)         \
+    R &= it->second->check_inparse();                                 \
 }                            
 #endif
 

@@ -20,17 +20,17 @@
  */
 
 /* 
- * argument definitions for analyze command
- * 10/05/2012   Wei Song
+ * argument definitions for source command
+ * 15/05/2012   Wei Song
  *
  *
  */
 
-#include "analyze.h"
+#include "source.h"
+#include<fstream>
+#include<iostream>
+using std::ifstream;
 
-using std::string;
-using std::vector;
-using std::endl;
 using namespace shell;
 using namespace shell::CMD;
 
@@ -38,31 +38,29 @@ static po::options_description arg_opt("Options");
 po::options_description_easy_init const dummy_arg_opt =
   arg_opt.add_options()
   ("help", "usage information.")
-  ("library", po::value<string>(), "set the output library (other than work).")
-  ("define", po::value<vector<string> >()->composing(), "macro definitions ( {MACRO0, MACRO1, ... MACRON} ).")
   ;
 
 static po::options_description file_opt;
 po::options_description_easy_init const dummy_file_opt =
   file_opt.add_options()
-  ("file", po::value<vector<string> >()->composing(), "input files")
+  ("file", po::value<string>(), "input files")
   ;
 
-po::options_description shell::CMD::CMDAnalyze::cmd_opt;
+po::options_description shell::CMD::CMDSource::cmd_opt;
 po::options_description const dummy_cmd_opt =
-  CMDAnalyze::cmd_opt.add(arg_opt).add(file_opt);
+  CMDSource::cmd_opt.add(arg_opt).add(file_opt);
 
-po::positional_options_description shell::CMD::CMDAnalyze::cmd_position;
+po::positional_options_description shell::CMD::CMDSource::cmd_position;
 po::positional_options_description const dummy_position = 
-  CMDAnalyze::cmd_position.add("file", -1);
+  CMDSource::cmd_position.add("file", 1);
 
-void shell::CMD::CMDAnalyze::help(Env& gEnv) {
-  gEnv.stdOs << "analyze: read in the Verilog HDL design files." << endl;
-  gEnv.stdOs << "    analyze [options] source_files" << endl;
+void shell::CMD::CMDSource::help(Env& gEnv) {
+  gEnv.stdOs << "source: read and execute another script file." << endl;
+  gEnv.stdOs << "    source [options] script_file" << endl;
   gEnv.stdOs << arg_opt << endl;
 }
 
-bool shell::CMD::CMDAnalyze::exec ( Env& gEnv, vector<string>& arg){
+bool shell::CMD::CMDSource::exec ( Env& gEnv, vector<string>& arg){
   
   po::variables_map vm;
 
@@ -70,16 +68,31 @@ bool shell::CMD::CMDAnalyze::exec ( Env& gEnv, vector<string>& arg){
     store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
     notify(vm);
   } catch (std::exception& e) {
-    gEnv.errOs << "Wrong command syntax error! See usage by analyze -help." << endl;
+    gEnv.errOs << "Wrong command syntax error! See usage by source -help." << endl;
     return false;
   }
 
   // TODO: parse the file
-  if(vm.count("help")) {        // print help information
-    shell::CMD::CMDAnalyze::help(gEnv);
+  if(vm.count("help") || vm.size() == 0) {        // print help information
+    shell::CMD::CMDSource::help(gEnv);
     return true;
   }
 
-
+  if(vm.count("file")) {
+    string fname = vm["file"].as<string>();
+    if(fname != "") {
+      ifstream * file_handler = new ifstream(fname.c_str());
+      if(file_handler->good()) { // success
+        gEnv.lexer.push(file_handler);
+      } else {
+        delete file_handler;
+        gEnv.errOs << "Cannot open script file \"" << fname << "\"!" << endl;
+        return false;
+      }
+    } else {
+      gEnv.errOs << "File name is empty!" << endl; // should not come here
+      return false;
+    }
+  }
   return true;
 }

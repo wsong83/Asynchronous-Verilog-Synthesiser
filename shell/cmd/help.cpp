@@ -108,6 +108,7 @@ bool shell::CMD::CMDHelp::exec ( Env& gEnv, vector<string>& arg){
         gEnv.stdOs << it->first << 
           string(it->first.size() < 24 ? 24 - it->first.size() : 1, ' ')
                    << it->second << endl;
+    gEnv.stdOs << endl;
   }
 
   return true;

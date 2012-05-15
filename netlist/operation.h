@@ -80,8 +80,8 @@ namespace netlist {
     Operation(operation_t);
     Operation(const Number&);
     Operation(const VIdentifier&);
-    Operation(const shared_ptr<Concatenation>&);
-    Operation(const shared_ptr<LConcatenation>&);
+    Operation(const boost::shared_ptr<Concatenation>&);
+    Operation(const boost::shared_ptr<LConcatenation>&);
 
     // helpers
     bool is_valuable() const { return valuable; }
@@ -103,52 +103,52 @@ namespace netlist {
   private:
     operation_t otype;
     bool valuable;
-    shared_ptr<NetComp> data;
+    boost::shared_ptr<NetComp> data;
     Block* father;
   };
 
   NETLIST_STREAMOUT(Operation);
 
   void execute_operation( Operation::operation_t op,
-			  list<shared_ptr<Operation> >& d1,
-			  list<shared_ptr<Operation> >& d2,
-			  list<shared_ptr<Operation> >& d3
-			  );
+                          std::list<boost::shared_ptr<Operation> >& d1,
+                          std::list<boost::shared_ptr<Operation> >& d2,
+                          std::list<boost::shared_ptr<Operation> >& d3
+                          );
 
-  void execute_UPos(list<shared_ptr<Operation> >&);
-  void execute_UNeg(list<shared_ptr<Operation> >&);
-  void execute_ULRev(list<shared_ptr<Operation> >&); /* ! */
-  void execute_URev(list<shared_ptr<Operation> >&);  /* ~ */
-  void execute_UAnd(list<shared_ptr<Operation> >&);  /* unary & */
-  void execute_UNand(list<shared_ptr<Operation> >&); /* unary ~& */
-  void execute_UOr(list<shared_ptr<Operation> >&);   /* unary | */
-  void execute_UNor(list<shared_ptr<Operation> >&);  /* unary ~| */
-  void execute_UXor(list<shared_ptr<Operation> >&);  /* unary ^ */
-  void execute_UNxor(list<shared_ptr<Operation> >&); /* unary ~^ */
-  void execute_Power(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&); /* ** */
-  void execute_Time(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);  /* * */
-  void execute_Div(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);   /* / */
-  void execute_Mode(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);  /* % */
-  void execute_Add(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);   /* + */
-  void execute_Minus(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&); /* - */
-  void execute_RS(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);    /* >> */
-  void execute_LS(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);    /* << */
-  void execute_LRS(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);   /* >>> */
-  void execute_Less(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);  /* < */
-  void execute_Le(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);    /* <= */
-  void execute_Great(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&); /* > */
-  void execute_Ge(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);    /* >= */
-  void execute_Eq(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);    /* == */
-  void execute_Neq(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);   /* != */
-  void execute_CEq(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);   /* === */
-  void execute_CNeq(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);  /* !== */
-  void execute_And(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);   /* & */
-  void execute_Xor(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);   /* ^ */
-  void execute_Nxor(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);  /* ~^ */
-  void execute_Or(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);    /* | */
-  void execute_LAnd(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);  /* && */
-  void execute_LOr(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&);   /* || */
-  void execute_Question(list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&, list<shared_ptr<Operation> >&); /* ? : */
+  void execute_UPos(std::list<boost::shared_ptr<Operation> >&);
+  void execute_UNeg(std::list<boost::shared_ptr<Operation> >&);
+  void execute_ULRev(std::list<boost::shared_ptr<Operation> >&); /* ! */
+  void execute_URev(std::list<boost::shared_ptr<Operation> >&);  /* ~ */
+  void execute_UAnd(std::list<boost::shared_ptr<Operation> >&);  /* unary & */
+  void execute_UNand(std::list<boost::shared_ptr<Operation> >&); /* unary ~& */
+  void execute_UOr(std::list<boost::shared_ptr<Operation> >&);   /* unary | */
+  void execute_UNor(std::list<boost::shared_ptr<Operation> >&);  /* unary ~| */
+  void execute_UXor(std::list<boost::shared_ptr<Operation> >&);  /* unary ^ */
+  void execute_UNxor(std::list<boost::shared_ptr<Operation> >&); /* unary ~^ */
+  void execute_Power(std::list<boost::shared_ptr<Operation> >&, std::list<boost::shared_ptr<Operation> >&); /* ** */
+  void execute_Time(std::list<boost::shared_ptr<Operation> >&, std::list<boost::shared_ptr<Operation> >&);  /* * */
+  void execute_Div(std::list<boost::shared_ptr<Operation> >&, std::list<boost::shared_ptr<Operation> >&);   /* / */
+  void execute_Mode(std::list<boost::shared_ptr<Operation> >&, std::list<boost::shared_ptr<Operation> >&);  /* % */
+  void execute_Add(std::list<boost::shared_ptr<Operation> >&, std::list<boost::shared_ptr<Operation> >&);   /* + */
+  void execute_Minus(std::list<boost::shared_ptr<Operation> >&, std::list<boost::shared_ptr<Operation> >&); /* - */
+  void execute_RS(std::list<boost::shared_ptr<Operation> >&, std::list<boost::shared_ptr<Operation> >&);    /* >> */
+  void execute_LS(std::list<boost::shared_ptr<Operation> >&, std::list<boost::shared_ptr<Operation> >&);    /* << */
+  void execute_LRS(std::list<boost::shared_ptr<Operation> >&, std::list<boost::shared_ptr<Operation> >&);   /* >>> */
+  void execute_Less(std::list<boost::shared_ptr<Operation> >&, std::list<boost::shared_ptr<Operation> >&);  /* < */
+  void execute_Le(std::list<boost::shared_ptr<Operation> >&, std::list<boost::shared_ptr<Operation> >&);    /* <= */
+  void execute_Great(std::list<boost::shared_ptr<Operation> >&, std::list<boost::shared_ptr<Operation> >&); /* > */
+  void execute_Ge(std::list<boost::shared_ptr<Operation> >&, std::list<boost::shared_ptr<Operation> >&);    /* >= */
+  void execute_Eq(std::list<boost::shared_ptr<Operation> >&, std::list<boost::shared_ptr<Operation> >&);    /* == */
+  void execute_Neq(std::list<boost::shared_ptr<Operation> >&, std::list<boost::shared_ptr<Operation> >&);   /* != */
+  void execute_CEq(std::list<boost::shared_ptr<Operation> >&, std::list<boost::shared_ptr<Operation> >&);   /* === */
+  void execute_CNeq(std::list<boost::shared_ptr<Operation> >&, std::list<boost::shared_ptr<Operation> >&);  /* !== */
+  void execute_And(std::list<boost::shared_ptr<Operation> >&, std::list<boost::shared_ptr<Operation> >&);   /* & */
+  void execute_Xor(std::list<boost::shared_ptr<Operation> >&, std::list<boost::shared_ptr<Operation> >&);   /* ^ */
+  void execute_Nxor(std::list<boost::shared_ptr<Operation> >&, std::list<boost::shared_ptr<Operation> >&);  /* ~^ */
+  void execute_Or(std::list<boost::shared_ptr<Operation> >&, std::list<boost::shared_ptr<Operation> >&);    /* | */
+  void execute_LAnd(std::list<boost::shared_ptr<Operation> >&, std::list<boost::shared_ptr<Operation> >&);  /* && */
+  void execute_LOr(std::list<boost::shared_ptr<Operation> >&, std::list<boost::shared_ptr<Operation> >&);   /* || */
+  void execute_Question(std::list<boost::shared_ptr<Operation> >&, std::list<boost::shared_ptr<Operation> >&, std::list<boost::shared_ptr<Operation> >&); /* ? : */
 
 }
 

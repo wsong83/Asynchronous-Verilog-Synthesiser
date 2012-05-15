@@ -29,19 +29,12 @@
 #ifndef AV_CMD_LEXER_
 #define AV_CMD_LEXER_
 
+#include<stack>
 #include<deque>
-using std::deque;
-
 #include<map>
-using std::map;
-using std::pair;
-
 #include<fstream>
 #include<iostream>
-using std::istream;
-using std::cin;
-using std::ifstream;
-
+#include<boost/shared_ptr.hpp>
 #include "cmd_token.h"
 
 // the initial size of the line buffer
@@ -53,30 +46,33 @@ using std::ifstream;
 namespace shell { 
   namespace CMD {
 
-    struct cmd_token_type;
-  
     class CMDLexer {
     public:
       CMDLexer();               /* constructor */
       virtual ~CMDLexer();      /* destructor */
 
       // helpers
-      int yylex (cmd_token_type *); /* the interface with the Bison parser */
-      void push (ifstream *);        /* source another file */
+      int yylex (cmd_token_type *);  /* the interface with the Bison parser */
+      void push (std::ifstream *);   /* source another file */
       void pop();                    /* pop the current istream when finished */
       void set_env(Env *);           /* set the env pointer */
 
     private:
       
-      istream& current();       /* return the current stream */
-      bool is_cin() const;      /* true if the current stream is cin */
+      std::istream& current_istream();   /* return the current stream */
+      std::deque<std::pair<int, cmd_token_type> > &
+        current_tfifo() {                 /* return the current tfifo*/
+        return *(tfstack.top());
+      }
+      bool is_cin() const;               /* true if the current stream is cin */
       
       Env* gEnv;
-      stack<ifstream *> fstack;
+      std::stack<std::ifstream *> fstack;
       char* lex_buf;
       char *rp, *fp;      /* read pointer and full position */
-      deque<pair<int, cmd_token_type> > tfifo;
-      map<string, int> tDB;    /* token database */
+      /* tfifo stack */
+      std::stack<boost::shared_ptr<std::deque<std::pair<int, cmd_token_type> > > > tfstack;
+      std::map<std::string, int> tDB;    /* token database */
 
     };
   }

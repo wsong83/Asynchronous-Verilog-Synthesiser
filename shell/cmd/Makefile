@@ -27,7 +27,7 @@
 INCDIRS = -I./ -I../../
 
 # targets
-TARGETS = analyze.o help.o quit.o
+TARGETS = analyze.o help.o quit.o source.o
 HEADERS = $(wildcard ./*.h)
 HEADERS += ../env.h
 

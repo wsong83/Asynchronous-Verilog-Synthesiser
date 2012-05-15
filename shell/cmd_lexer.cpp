@@ -28,13 +28,23 @@
 
 #include "env.h"
 #include "cmd_lexer.h"
+
 #define YYSTYPE shell::CMD::cmd_token_type
 #include "command.hh"
+#undef YYSTYPE
+
 #include<cstring>
 #include<cctype>
 #include<utility>
-using std::pair;
 
+using std::pair;
+using std::stack;
+using std::deque;
+using std::map;
+using std::istream;
+using std::cin;
+using std::ifstream;
+using boost::shared_ptr;
 using namespace shell::CMD;
 
 shell::CMD::CMDLexer::CMDLexer() 
@@ -51,6 +61,9 @@ shell::CMD::CMDLexer::CMDLexer()
   tDB["source"]         = cmd_parser::token::CMDSource;
   tDB["\n"]             = cmd_parser::token::CMD_END;
   tDB["simple_string"]  = cmd_parser::token::simple_string;
+
+  // push a fifo into the tfifo stack
+  tfstack.push(shared_ptr<deque<pair<int, cmd_token_type> > >(new deque<pair<int, cmd_token_type> >()));
 }
 
 
@@ -60,8 +73,10 @@ shell::CMD::CMDLexer::~CMDLexer() {
   // clos all files that have not been closed
   while(fstack.size() != 0) {
     fstack.top()->close();
+    delete fstack.top();
     fstack.pop();
   }
+
 }
 
 int shell::CMD::CMDLexer::yylex(cmd_token_type * yyval) {
@@ -72,11 +87,11 @@ int shell::CMD::CMDLexer::yylex(cmd_token_type * yyval) {
   // when \ is used to link multiple line or { is not matched
   // lexer should read in more line before return tokens
   // therefore the tokens read in previous read should be poped before read in new lines.
-  if(tfifo.size() != 0) {
+  if(current_tfifo().size() != 0) {
     int rv;
-    rv = tfifo.front().first;
-    *yyval = tfifo.front().second;
-    tfifo.pop_front();
+    rv = current_tfifo().front().first;
+    *yyval = current_tfifo().front().second;
+    current_tfifo().pop_front();
     //cout << "token: " << rv << ", " << yyval->tStr << endl;
     return rv;
   }
@@ -97,7 +112,7 @@ int shell::CMD::CMDLexer::yylex(cmd_token_type * yyval) {
       
       
       //make sure the current istream is readable
-      while(!is_cin() && current().eof()) {           // current file is finished
+      while(!is_cin() && current_istream().eof()) {           // current file is finished
         pop();
       }
       
@@ -106,7 +121,7 @@ int shell::CMD::CMDLexer::yylex(cmd_token_type * yyval) {
       if(is_cin()) {
         gEnv->show_cmd(); // show the command line input sign;
       }
-      current().getline(rp, AV_CMD_LEXER_BUF_SIZE - 1);
+      current_istream().getline(rp, AV_CMD_LEXER_BUF_SIZE - 1);
       fp = rp + AV_CMD_LEXER_BUF_SIZE - 1;
     }
     
@@ -120,7 +135,7 @@ int shell::CMD::CMDLexer::yylex(cmd_token_type * yyval) {
           
           cmd_token_type mtoken;
           mtoken.tStr.assign(tbuf, tp);
-          tfifo.push_back(pair<int,cmd_token_type> (tDB["simple_string"], mtoken));
+          current_tfifo().push_back(pair<int,cmd_token_type> (tDB["simple_string"], mtoken));
           tp = 0;
           
           // clean status
@@ -134,18 +149,42 @@ int shell::CMD::CMDLexer::yylex(cmd_token_type * yyval) {
           rp++;
         }
       } else {
-        if(isalnum(*rp) || *rp == '$' || *rp == '/' || *rp == '_') { // string
-          tbuf[tp++] = *rp++;
+        if(isalnum(*rp) || 
+           *rp == '$' || 
+           *rp == '/' || 
+           *rp == '_' || 
+           *rp == '.' ||
+           *rp == '(' ||
+           *rp == ')' ||
+           *rp == '[' ||
+           *rp == ']' ||
+           *rp == '{' ||
+           *rp == '}'
+           ) { // string
+          tbuf[tp++] = *rp;
+          
+          // brackets inside a string
+          if(*rp == '(' || *rp == '[' || *rp == '{')
+            level++;
+          else if(*rp == ')' || *rp == ']' || *rp == '}')
+            level -= (level != 0 ? 1 : 0); // the extra ), ], } are ignored
+
+          rp++;
+
         } else {
           if(tp != 0) {         // a string is read
             // push a token
-            if((tfifo.size() == 0 || tfifo.back().first == tDB["\n"] || tfifo.back().first == '[')
-               && tDB.find(string(tbuf, tp)) != tDB.end() ) { // it is a command
-              tfifo.push_back(pair<int,cmd_token_type> (tDB[string(tbuf, tp)], cmd_token_type()));
+            if( ( current_tfifo().size() == 0 || 
+                  current_tfifo().back().first == tDB["\n"] || 
+                  current_tfifo().back().first == '['
+                )
+                && tDB.find(string(tbuf, tp)) != tDB.end() 
+              ) { // it is a command
+              current_tfifo().push_back(pair<int,cmd_token_type> (tDB[string(tbuf, tp)], cmd_token_type()));
             } else {            // normal string
               cmd_token_type mtoken;
               mtoken.tStr.assign(tbuf, tp);
-              tfifo.push_back(pair<int,cmd_token_type> (tDB["simple_string"], mtoken));
+              current_tfifo().push_back(pair<int,cmd_token_type> (tDB["simple_string"], mtoken));
             }
             // clean the token buffer
             tp = 0;
@@ -158,11 +197,11 @@ int shell::CMD::CMDLexer::yylex(cmd_token_type * yyval) {
               level -= (level != 0 ? 1 : 0); // the extra ), ], } are ignored
             
             if(*rp != ' ')    // a mark token
-              tfifo.push_back(pair<int,cmd_token_type> (*rp, cmd_token_type()));
+              current_tfifo().push_back(pair<int,cmd_token_type> (*rp, cmd_token_type()));
             
             rp++;
           } else {                // '\n'
-            tfifo.push_back(pair<int,cmd_token_type> (tDB["\n"], cmd_token_type()));
+            current_tfifo().push_back(pair<int,cmd_token_type> (tDB["\n"], cmd_token_type()));
             
             if(level == 0) {      // a whole line is read
               goto YYLEX_START;
@@ -178,16 +217,19 @@ int shell::CMD::CMDLexer::yylex(cmd_token_type * yyval) {
 
 void shell::CMD::CMDLexer::push(ifstream * fp) {
   fstack.push(fp);
+  tfstack.push(shared_ptr<deque<pair<int, cmd_token_type> > >(new deque<pair<int, cmd_token_type> >()));
 }
 
 void shell::CMD::CMDLexer::pop() {
   if(fstack.size() != 0) {
     fstack.top()->close();
+    delete fstack.top();
     fstack.pop();
+    tfstack.pop();
   }
 }
 
-istream& shell::CMD::CMDLexer::current() {
+istream& shell::CMD::CMDLexer::current_istream() {
   if(fstack.size() == 0)
     return cin;
   else

@@ -38,36 +38,36 @@ namespace netlist{
     NETLIST_DEFAULT_CON(CaseItem, tCaseItem);
     NETLIST_DEFAULT_CON_WL(CaseItem, tCaseItem);
     // constructor with only one expression, the normal case
-    CaseItem(const shared_ptr<Expression>& exp, const shared_ptr<Block>& body) 
+    CaseItem(const boost::shared_ptr<Expression>& exp, const boost::shared_ptr<Block>& body) 
       : NetComp(tCaseItem), body(body)
     {
       exps.push_back(exp);
       body->elab_inparse();
     }
-    CaseItem(const location& lloc, const shared_ptr<Expression>& exp, const shared_ptr<Block>& body) 
+    CaseItem(const location& lloc, const boost::shared_ptr<Expression>& exp, const boost::shared_ptr<Block>& body) 
       : NetComp(tCaseItem, lloc), body(body)
     {
       exps.push_back(exp);
       body->elab_inparse();
     }
     // normal default case
-    CaseItem(const shared_ptr<Block>& body) 
+    CaseItem(const boost::shared_ptr<Block>& body) 
       : NetComp(tCaseItem), body(body)
     {
       body->elab_inparse();
     }
-    CaseItem(const location& lloc, const shared_ptr<Block>& body) 
+    CaseItem(const location& lloc, const boost::shared_ptr<Block>& body) 
       : NetComp(tCaseItem, lloc), body(body)
     {
       body->elab_inparse();
     }
     // multiple expressions
-    CaseItem(const list<shared_ptr<Expression> >& expm, const shared_ptr<Block>& body)
+    CaseItem(const std::list<boost::shared_ptr<Expression> >& expm, const boost::shared_ptr<Block>& body)
       : NetComp(tCaseItem), exps(expm), body(body)
     {
       body->elab_inparse();
     }
-    CaseItem(const location& lloc, const list<shared_ptr<Expression> >& expm, const shared_ptr<Block>& body)
+    CaseItem(const location& lloc, const std::list<boost::shared_ptr<Expression> >& expm, const boost::shared_ptr<Block>& body)
       : NetComp(tCaseItem, lloc), exps(expm), body(body)
     {
       body->elab_inparse();
@@ -80,8 +80,8 @@ namespace netlist{
     bool is_default() const {return exps.size() == 0; }
 
     // data
-    list<shared_ptr<Expression> > exps;
-    shared_ptr<Block> body;
+    std::list<boost::shared_ptr<Expression> > exps;
+    boost::shared_ptr<Block> body;
 
   };
   NETLIST_STREAMOUT(CaseItem);
@@ -89,23 +89,23 @@ namespace netlist{
   class CaseState : public NetComp {
   public:
     // constructors
-    CaseState(const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, const shared_ptr<CaseItem>& ditem)
+    CaseState(const boost::shared_ptr<Expression>& exp, const std::list<boost::shared_ptr<CaseItem> >& citems, const boost::shared_ptr<CaseItem>& ditem)
       : NetComp(tCase), exp(exp), cases(citems), named(false) {
       cases.push_back(ditem);
     }
-    CaseState(const location& lloc, const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, const shared_ptr<CaseItem>& ditem)
+    CaseState(const location& lloc, const boost::shared_ptr<Expression>& exp, const std::list<boost::shared_ptr<CaseItem> >& citems, const boost::shared_ptr<CaseItem>& ditem)
       : NetComp(tCase, lloc), exp(exp), cases(citems), named(false) {
       cases.push_back(ditem);
     }
-    CaseState(const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems)
+    CaseState(const boost::shared_ptr<Expression>& exp, const std::list<boost::shared_ptr<CaseItem> >& citems)
       : NetComp(tCase), exp(exp), cases(citems), named(false) { }
-    CaseState(const location& lloc, const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems)
+    CaseState(const location& lloc, const boost::shared_ptr<Expression>& exp, const std::list<boost::shared_ptr<CaseItem> >& citems)
       : NetComp(tCase, lloc), exp(exp), cases(citems), named(false) { }
-    CaseState(const shared_ptr<Expression>& exp, const shared_ptr<CaseItem>& ditem)
+    CaseState(const boost::shared_ptr<Expression>& exp, const boost::shared_ptr<CaseItem>& ditem)
       : NetComp(tCase), exp(exp), named(false) {
       cases.push_back(ditem);
     }
-    CaseState(const location& lloc, const shared_ptr<Expression>& exp, const shared_ptr<CaseItem>& ditem)
+    CaseState(const location& lloc, const boost::shared_ptr<Expression>& exp, const boost::shared_ptr<CaseItem>& ditem)
       : NetComp(tCase, lloc), exp(exp), named(false) {
       cases.push_back(ditem);
     }
@@ -119,8 +119,8 @@ namespace netlist{
 
     // data
     BIdentifier name;           /* dummy name for search index */
-    shared_ptr<Expression> exp;
-    list<shared_ptr<CaseItem> > cases;
+    boost::shared_ptr<Expression> exp;
+    std::list<boost::shared_ptr<CaseItem> > cases;
     
   private:
     bool named;

@@ -30,33 +30,13 @@
 #define _H_COMPONENT_
 
 #include <iostream>
-using std::cout;
-using std::endl;
-using std::ostream;
-
 #include <string>
-using std::string;
-
 #include <list>
-using std::list;
-
 #include <vector>
-using std::vector;
-
 #include <stack>
-using std::stack;
-
 #include <map>
-using std::map;
-
 #include <utility>
-using std::pair;
-
 #include <boost/shared_ptr.hpp>
-using boost::shared_ptr;
-using boost::weak_ptr;
-using boost::static_pointer_cast;
-
 #include <cassert>
 
 namespace netlist {
@@ -181,7 +161,7 @@ extern shell::Env* G_ENV;
 
 // objects to string templates
 template <typename T>
-inline string toString (const T& obj) {
+inline std::string toString (const T& obj) {
   std::ostringstream sos;
   sos << obj;
   return sos.str();
@@ -189,7 +169,7 @@ inline string toString (const T& obj) {
 
 // blocks: Block, SeqBlock, GenBlock, Module
 template <typename T>
-inline string toString (const shared_ptr<T>& obj) {
+inline std::string toString (const boost::shared_ptr<T>& obj) {
   return obj->name.name;
 }
 

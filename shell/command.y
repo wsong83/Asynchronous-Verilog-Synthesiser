@@ -103,7 +103,7 @@ command_description
     | "exit"    argument_list     { if(shell::CMD::CMDQuit::exec(*cmd_env, $2)) YYACCEPT;  }
     | "help"    argument_list     { shell::CMD::CMDHelp::exec(*cmd_env, $2);               }
     | "quit"    argument_list     { if(shell::CMD::CMDQuit::exec(*cmd_env, $2)) YYACCEPT;  }
-    | "source"  argument_list     { }
+    | "source"  argument_list     { shell::CMD::CMDSource::exec(*cmd_env, $2);             }
     | simple_string argument_list 
     {
       cmd_env->errOs << "Unrecognizable command \"" << $1 << "\"!" << endl;
