@@ -30,7 +30,7 @@
 #include<fstream>
 #include<iostream>
 using std::ifstream;
-
+using std::endl;
 using namespace shell;
 using namespace shell::CMD;
 
@@ -57,7 +57,7 @@ po::positional_options_description const dummy_position =
 void shell::CMD::CMDSource::help(Env& gEnv) {
   gEnv.stdOs << "source: read and execute another script file." << endl;
   gEnv.stdOs << "    source [options] script_file" << endl;
-  gEnv.stdOs << arg_opt << endl;
+  gEnv.stdOs << cmd_name_fix(arg_opt) << endl;
 }
 
 bool shell::CMD::CMDSource::exec ( Env& gEnv, vector<string>& arg){

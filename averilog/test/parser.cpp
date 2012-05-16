@@ -29,6 +29,8 @@
 #include "shell/shell_top.h"
 #include "averilog/averilog_util.h"
 #include "averilog/averilog.lex.h"
+using std::cout;
+using std::endl;
 
 shell::Env* G_ENV(new shell::Env());
 

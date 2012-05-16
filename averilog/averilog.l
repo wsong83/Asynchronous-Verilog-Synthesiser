@@ -38,6 +38,7 @@
 #include <cstdio>
 #include <iostream>
 #include "averilog_util.h"
+using std::string;
 
 /* handle locations */
 #define YY_USER_ACTION yylloc->step(); yylloc->columns(yyleng);

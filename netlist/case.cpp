@@ -29,6 +29,11 @@
 #include "component.h"
 
 using namespace netlist;
+using std::ostream;
+using std::endl;
+using std::string;
+using boost::shared_ptr;
+using std::list;
 
 ostream& netlist::CaseItem::streamout (ostream& os, unsigned int indent) const {
   // show the expressions

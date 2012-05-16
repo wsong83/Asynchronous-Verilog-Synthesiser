@@ -1,6 +1,5 @@
 // -*- Bison -*-
 %skeleton "lalr1.cc"
-%require "2.5"
 %defines
 %define namespace "shell::CMD"
 %define parser_class_name "cmd_parser"
@@ -36,8 +35,16 @@
  *
  */
 
+#include <string>
+#include <iostream>
+  using std::string;
+  using std::endl;
+
 #include "env.h"
-  
+  //make sure the location of command.y is included
+#undef BISON_LOCATION_HH
+#undef BISON_POSITION_HH
+ 
 // as it is very simple, lex is not used
 #define yylex cmd_env->lexer.yylex
   
@@ -127,6 +134,12 @@ argument
     { 
       $$.push_back(string("--") + $2);
       $$.insert($$.end(), $3.begin(), $3.end());
+    }
+    | '-' '-' argument_name                         { $$.push_back(string("-") + $3);  }
+    | '-' '-' argument_name argument_parameter 
+    { 
+      $$.push_back(string("-") + $3);
+      $$.insert($$.end(), $4.begin(), $4.end());
     }
     ;
 

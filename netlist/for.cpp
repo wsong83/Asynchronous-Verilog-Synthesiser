@@ -29,6 +29,10 @@
 #include "component.h"
 
 using namespace netlist;
+using std::ostream;
+using std::string;
+using boost::shared_ptr;
+using averilog::location;
 
 netlist::ForState::ForState(
                             const shared_ptr<Assign>& init, 

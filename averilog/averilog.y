@@ -46,7 +46,19 @@
 #include <stack>
 #include "averilog_util.h"
 #include "averilog.lex.h"
-  
+  using namespace netlist;
+  using namespace averilog;
+  using std::string;
+  using std::vector;
+  using boost::shared_ptr;
+  using std::list;
+  using std::endl;
+  using std::cout;
+  using std::map;
+  using std::pair;
+  using std::vector;
+
+
 #define yylex avlex
   
   yyscan_t avscanner;
@@ -56,8 +68,6 @@
     //cout << msg << endl;
   }
   
-  using namespace netlist;
-    
 #define Lib (*(av_env.curLib))
 
 %}

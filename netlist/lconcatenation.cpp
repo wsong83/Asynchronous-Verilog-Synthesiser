@@ -29,6 +29,11 @@
 #include "component.h"
 
 using namespace netlist;
+using std::ostream;
+using std::string;
+using boost::shared_ptr;
+using std::list;
+using averilog::location;
 
 netlist::LConcatenation::LConcatenation(shared_ptr<Concatenation>& con)
   : NetComp(tLConcatenation, con->loc), valid(false)

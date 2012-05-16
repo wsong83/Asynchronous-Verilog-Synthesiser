@@ -41,7 +41,7 @@ namespace netlist {
             );
 
     IfState(
-            const location& lloc,
+            const averilog::location& lloc,
             const boost::shared_ptr<Expression>& exp, 
             const boost::shared_ptr<Block>& m_ifcase, 
             const boost::shared_ptr<Block>& m_elsecase
@@ -53,7 +53,7 @@ namespace netlist {
             );
 
     IfState(
-            const location& lloc,
+            const averilog::location& lloc,
             const boost::shared_ptr<Expression>& exp, 
             const boost::shared_ptr<Block>& m_ifcase 
             );

@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef _H_PORT_
-#define _H_PORT_
+#ifndef AV_H_PORT_
+#define AV_H_PORT_
 
 namespace netlist {
 
@@ -35,7 +35,7 @@ namespace netlist {
   public:
     // constructors
     Port(const PoIdentifier&);
-    Port(const location&, const PoIdentifier&);
+    Port(const averilog::location&, const PoIdentifier&);
 
     // helpers
     void set_in() { dir = -1; }

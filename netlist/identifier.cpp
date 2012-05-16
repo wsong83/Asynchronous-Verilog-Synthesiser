@@ -39,6 +39,11 @@
 #include "shell/env.h"
 
 using namespace netlist;
+using std::ostream;
+using std::string;
+using boost::shared_ptr;
+using averilog::location;
+using std::pair;
 
 ////////////////////////////// Base class /////////////////
 netlist::Identifier::Identifier(ctype_t ctype, const string& nm)

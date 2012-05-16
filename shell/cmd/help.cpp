@@ -31,6 +31,10 @@
 
 using namespace shell;
 using namespace shell::CMD;
+using std::map;
+using std::string;
+using std::pair;
+using std::endl;
 
 // the command list
 map<string, string> shell::CMD::CMDHelp::cmdDB;
@@ -69,7 +73,7 @@ po::positional_options_description const dummy_position =
 void shell::CMD::CMDHelp::help(Env& gEnv) {
   gEnv.stdOs << "help: show and list the usage of commands." << endl;
   gEnv.stdOs << "    analyze [options] commands" << endl;
-  gEnv.stdOs << arg_opt << endl;
+  gEnv.stdOs << cmd_name_fix(arg_opt) << endl;
 }
 
 bool shell::CMD::CMDHelp::exec ( Env& gEnv, vector<string>& arg){

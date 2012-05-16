@@ -35,7 +35,7 @@ namespace netlist {
   public:
     // constructors
     ForState() : NetComp(tFor), named(false) {}
-    ForState(const location& lloc) : NetComp(tFor, lloc), named(false) {}
+    ForState(const averilog::location& lloc) : NetComp(tFor, lloc), named(false) {}
     ForState(
              const boost::shared_ptr<Assign>& init, 
              const boost::shared_ptr<Expression>& cond, 
@@ -43,7 +43,7 @@ namespace netlist {
              const boost::shared_ptr<Block>& body
              );
     ForState(
-             const location& lloc,
+             const averilog::location& lloc,
              const boost::shared_ptr<Assign>& init, 
              const boost::shared_ptr<Expression>& cond, 
              const boost::shared_ptr<Assign>& incr, 

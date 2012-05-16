@@ -26,17 +26,16 @@
  *
  */
 
-#ifndef _H_AV_COMPONENT_
-#define _H_AV_COMPONENT_
+#ifndef AV_H_AV_COMPONENT_
+#define AV_H_AV_COMPONENT_
 
 #include <string>
-using std::string;
 
 namespace averilog {
 
   class avID {  // identifier without dimension decalration
   public:
-    string name;
+    std::string name;
     avID() {}
     avID(char* text, int leng)
       : name(text,leng) {}

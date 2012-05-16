@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef _H_DEFINES_
-#define _H_DEFINES_
+#ifndef AV_H_DEFINES_
+#define AV_H_DEFINES_
 
 #define MAX_INT_IN_STREAMOUT 32
 

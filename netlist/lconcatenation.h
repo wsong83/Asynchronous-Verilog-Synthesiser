@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef _H_LCONCATENATION_
-#define _H_LCONCATENATION_
+#ifndef AV_H_LCONCATENATION_
+#define AV_H_LCONCATENATION_
 
 namespace netlist {
 
@@ -36,9 +36,9 @@ namespace netlist {
     // constructors
     // NETLIST_DEFAULT_CON(LConcatenation, tLConcatenation);
     LConcatenation(boost::shared_ptr<Concatenation>&);
-    LConcatenation(const location&, boost::shared_ptr<Concatenation>&);
+    LConcatenation(const averilog::location&, boost::shared_ptr<Concatenation>&);
     LConcatenation(const VIdentifier&);
-    LConcatenation(const location&, const VIdentifier&);
+    LConcatenation(const averilog::location&, const VIdentifier&);
 
     // helpers
     NETLIST_SET_FATHER_DECL;

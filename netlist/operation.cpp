@@ -29,6 +29,11 @@
 #include "component.h"
 
 using namespace netlist;
+using std::ostream;
+using std::string;
+using std::list;
+using boost::shared_ptr;
+using boost::static_pointer_cast;
 
 netlist::Operation::Operation()
   : otype(oNULL), valuable(false)

@@ -35,7 +35,7 @@ namespace netlist {
   public:
     // constructors
     Assign(const boost::shared_ptr<LConcatenation>&, const boost::shared_ptr<Expression>&, bool);
-    Assign(const location& lloc, const boost::shared_ptr<LConcatenation>&, const boost::shared_ptr<Expression>&, bool);
+    Assign(const averilog::location& lloc, const boost::shared_ptr<LConcatenation>&, const boost::shared_ptr<Expression>&, bool);
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;

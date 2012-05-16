@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef _H_MODULE_
-#define _H_MODULE_
+#ifndef AV_H_MODULE_
+#define AV_H_MODULE_
 
 namespace netlist {
   
@@ -37,17 +37,17 @@ namespace netlist {
       : Block(tModule) {}
     Module(const MIdentifier& nm)
       : Block(tModule), name(nm) { named=true; }
-    Module(const location& lloc, const MIdentifier& nm)
+    Module(const averilog::location& lloc, const MIdentifier& nm)
     : Block(tModule, lloc), name(nm) { named=true; }
-    Module(const MIdentifier& nm, const shared_ptr<Block>& body);
-    Module(const location& lloc, const MIdentifier& nm, const shared_ptr<Block>& body);
-    Module(const MIdentifier& nm, const list<PoIdentifier>& port_list, const shared_ptr<Block>& body);
-    Module(const location& lloc, const MIdentifier& nm, const list<PoIdentifier>& port_list, const shared_ptr<Block>& body);
-    Module(const MIdentifier& nm, const list<shared_ptr<Variable> >& para_list, 
-           const list<PoIdentifier>& port_list, const shared_ptr<Block>& body);
-    Module(const location& lloc, const MIdentifier& nm, 
-           const list<shared_ptr<Variable> >& para_list, 
-           const list<PoIdentifier>& port_list, const shared_ptr<Block>& body);
+    Module(const MIdentifier& nm, const boost::shared_ptr<Block>& body);
+    Module(const averilog::location& lloc, const MIdentifier& nm, const boost::shared_ptr<Block>& body);
+    Module(const MIdentifier& nm, const std::list<PoIdentifier>& port_list, const boost::shared_ptr<Block>& body);
+    Module(const averilog::location& lloc, const MIdentifier& nm, const std::list<PoIdentifier>& port_list, const boost::shared_ptr<Block>& body);
+    Module(const MIdentifier& nm, const std::list<boost::shared_ptr<Variable> >& para_list, 
+           const std::list<PoIdentifier>& port_list, const boost::shared_ptr<Block>& body);
+    Module(const averilog::location& lloc, const MIdentifier& nm, 
+           const std::list<boost::shared_ptr<Variable> >& para_list, 
+           const std::list<PoIdentifier>& port_list, const boost::shared_ptr<Block>& body);
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
@@ -58,11 +58,11 @@ namespace netlist {
     virtual void set_name(const MIdentifier& nm) { name = nm; named=true;}
     VIdentifier& new_VId();
     BIdentifier& new_BId();
-    virtual shared_ptr<Variable>  find_var       (const VIdentifier&) const; /* find a variable */
-    virtual shared_ptr<Block>     find_block     (const BIdentifier&) const; /* find a block */
-    virtual shared_ptr<NetComp>   find_item      (const BIdentifier&) const; /* find an item in db_other */
+    virtual boost::shared_ptr<Variable>  find_var       (const VIdentifier&) const; /* find a variable */
+    virtual boost::shared_ptr<Block>     find_block     (const BIdentifier&) const; /* find a block */
+    virtual boost::shared_ptr<NetComp>   find_item      (const BIdentifier&) const; /* find an item in db_other */
     /* find a variable in the global environment, up to the module level */
-    virtual shared_ptr<Variable>  gfind_var      (const VIdentifier&) const; 
+    virtual boost::shared_ptr<Variable>  gfind_var      (const VIdentifier&) const; 
     virtual void elab_inparse();                           /* resolve the content in statements during parsing */
     virtual void set_father();                             /* set the father pointer to all sub-elements */
     /* return a pointer of the top-level module */
@@ -79,10 +79,10 @@ namespace netlist {
 
   private:
     // only used in constructors
-    void init_port_list(const list<PoIdentifier>&);
-    void init_param_list(const list<shared_ptr<Variable> >&);
+    void init_port_list(const std::list<PoIdentifier>&);
+    void init_param_list(const std::list<boost::shared_ptr<Variable> >&);
     // helper in elab_inparse
-    bool elab_inparse_item( const shared_ptr<NetComp>&);
+    bool elab_inparse_item( const boost::shared_ptr<NetComp>&);
 
   };
 

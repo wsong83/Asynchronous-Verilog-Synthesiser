@@ -29,6 +29,13 @@
 #include "component.h"
 
 using namespace netlist;
+using std::ostream;
+using std::endl;
+using std::pair;
+using std::string;
+using boost::shared_ptr;
+using std::map;
+using std::vector;
 
 
 netlist::Variable::Variable(const Port& p)

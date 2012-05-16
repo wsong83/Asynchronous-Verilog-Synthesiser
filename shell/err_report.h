@@ -42,38 +42,38 @@ namespace shell {
       EInfo
     };
     
-    ErrorType(severe_t severe, const string& errMsg, int nopara)
+    ErrorType(severe_t severe, const std::string& errMsg, int nopara)
       : severe(severe), suppressed(false), errMsg(errMsg), num_of_para(nopara) {}
     
     ErrorType ( const ErrorType& dd)
       : severe(dd.severe), suppressed(dd.suppressed), errMsg(dd.errMsg), num_of_para(dd.num_of_para) {}
 
     const severe_t severe;      /* severe level */
-    bool suppressed;		/* whether this error message is suppressed */
-    const string errMsg;	/* error message */
-    const int num_of_para;	/* number of parameters in the error message */
+    bool suppressed;		    /* whether this error message is suppressed */
+    const std::string errMsg;	/* error message */
+    const int num_of_para;	    /* number of parameters in the error message */
 
   };
 
   class ErrReport {		/* a error report function class */
   public:
     ErrReport();
-    bool suppress(const string&);       /* try to suppress a type of error message */
-    void set_output(ostream&);		/* set the output stream */
+    bool suppress(const std::string&);       /* try to suppress a type of error message */
+    void set_output(std::ostream&);		/* set the output stream */
     bool operator() (const averilog::location& loc, /* error location */
-		     const string& errID,           /* the type of error to report */
-		     const string& p1 = "",	    /* the first parameter */
-		     const string& p2 = "",	    /* the second parameter */
-		     const string& p3 = ""	    /* the third parameter, maximum three */
-		     ) ;
-    bool failure(const string& errID) const;
+                     const std::string& errID,           /* the type of error to report */
+                     const std::string& p1 = "",	    /* the first parameter */
+                     const std::string& p2 = "",	    /* the second parameter */
+                     const std::string& p3 = ""	    /* the third parameter, maximum three */
+                     ) ;
+    bool failure(const std::string& errID) const;
     bool is_failed() const { return fail; }
     void clear() { fail = false; }
 
   private:
-    map<string, ErrorType> errList; /* a record for all kinds of errors */
-    ostream os;                     /* output stream */
-    bool fail;                      /* record the failure of current module, should be cleared for new modules */
+    std::map<std::string, ErrorType> errList;  /* a record for all kinds of errors */
+    std::ostream os;                           /* output stream */
+    bool fail;                                 /* record the failure of current module, should be cleared for new modules */
   };
 
 }

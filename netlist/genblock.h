@@ -35,10 +35,10 @@ namespace netlist{
   public:
     // constructors
     GenBlock(const Block& body);
-    GenBlock(const location& lloc, const Block& body);
+    GenBlock(const averilog::location& lloc, const Block& body);
     
     // helpers
-    virtual ostream& streamout(ostream&, unsigned int, bool) const;    
+    virtual std::ostream& streamout(std::ostream&, unsigned int, bool) const;    
     virtual void elab_inparse();        /* resolve the content during parsing */
     using Block::set_father;
 

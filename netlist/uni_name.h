@@ -26,17 +26,17 @@
  *
  */
 
-#ifndef _H_UNI_NAME_
-#define _H_UNI_NAME_
+#ifndef AV_H_UNI_NAME_
+#define AV_H_UNI_NAME_
 
 namespace netlist {
 
   class UniName {
   public:
 
-    static string uni_name ();
+    static std::string uni_name ();
     
-    static string name;
+    static std::string name;
 
   };
 

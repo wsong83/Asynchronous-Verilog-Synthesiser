@@ -31,6 +31,10 @@
 
 #include <boost/program_options.hpp>
   namespace po = boost::program_options;
+#include <boost/algorithm/string/replace.hpp>
+#include <iostream>
+#include <sstream>
+#include <string>
 
 namespace shell { 
   namespace CMD {
@@ -39,9 +43,16 @@ namespace shell {
                                       po::command_line_style::unix_style |
                                       po::command_line_style::allow_long_disguise
                                       );
+
+    // get rid of the --long-name problem
+    inline std::string cmd_name_fix(const po::options_description& opt) {
+      std::stringstream tmp;
+      tmp << opt;
+      std::string opt_str = tmp.str();
+      boost::algorithm::replace_all(opt_str, " --", "  -");
+      return opt_str;
+    }
   }
 }
-
-#include "analyze.h"
 
 #endif

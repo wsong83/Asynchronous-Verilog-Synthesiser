@@ -26,28 +26,28 @@
  *
  */
 
-#ifndef _H_RANGE_
-#define _H_RANGE_
+#ifndef AV_H_RANGE_
+#define AV_H_RANGE_
 
 namespace netlist {
 
-  typedef pair<shared_ptr<Expression>, shared_ptr<Expression> > Range_Exp;
-  typedef pair<mpz_class, mpz_class> Range_Const;
+  typedef std::pair<boost::shared_ptr<Expression>, boost::shared_ptr<Expression> > Range_Exp;
+  typedef std::pair<mpz_class, mpz_class> Range_Const;
 
   class Range : public NetComp {
   public:
     // constructors
     Range() : NetComp(tRange), dim(false), rtype(TR_Err) { }
     Range(const mpz_class&);	/* select by a fix number */
-    Range(const location&, const mpz_class&);	/* select by a fix number */
+    Range(const averilog::location&, const mpz_class&);	/* select by a fix number */
     Range(const mpz_class&, const mpz_class&);	/* select by a fix number */
-    Range(const location&, const mpz_class&, const mpz_class&);	/* select by a fix number */
-    Range(const shared_ptr<Expression>&);	/* select by an expression  */
-    Range(const location&, const shared_ptr<Expression>&);	/* select by an expression  */
+    Range(const averilog::location&, const mpz_class&, const mpz_class&);	/* select by a fix number */
+    Range(const boost::shared_ptr<Expression>&);	/* select by an expression  */
+    Range(const averilog::location&, const boost::shared_ptr<Expression>&);	/* select by an expression  */
     Range(const Range_Exp&, bool dim = false);    /* declare or select by a range expression */
-    Range(const location&, const Range_Exp&, bool dim = false);    /* declare or select by a range expression */
+    Range(const averilog::location&, const Range_Exp&, bool dim = false);    /* declare or select by a range expression */
     Range(const Range_Exp&, int); /* select by a range expression using positive or negtive colon */
-    Range(const location&, const Range_Exp&, int); /* select by a range expression using positive or negtive colon */
+    Range(const averilog::location&, const Range_Exp&, int); /* select by a range expression using positive or negtive colon */
 
     // helpers
     bool is_const() const { return rtype == TR_Const && rtype == TR_CRange; }
@@ -63,11 +63,11 @@ namespace netlist {
     virtual Range* deep_copy() const;
     
   private:
-    mpz_class c;                /* constant */
-    shared_ptr<Expression> v;   /* variable */
-    Range_Exp r;                /* range expression */
-    Range_Const cr;             /* const range */
-    bool dim;                   /* true when it is a dimension rather than range */
+    mpz_class c;                       /* constant */
+    boost::shared_ptr<Expression> v;   /* variable */
+    Range_Exp r;                       /* range expression */
+    Range_Const cr;                    /* const range */
+    bool dim;                          /* true when it is a dimension rather than range */
     
     enum rtype_t {
       TR_Err,

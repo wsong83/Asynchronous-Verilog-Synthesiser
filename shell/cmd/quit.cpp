@@ -30,6 +30,7 @@
 
 using namespace shell;
 using namespace shell::CMD;
+using std::endl;
 
 static po::options_description arg_opt("Options");
 po::options_description_easy_init const dummy_arg_opt =
@@ -44,7 +45,7 @@ po::options_description const dummy_cmd_opt =
 void shell::CMD::CMDQuit::help(Env& gEnv) {
   gEnv.stdOs << "exit/quit: leave the AVS shell environment." << endl;
   gEnv.stdOs << "    exit/quit [options]" << endl;
-  gEnv.stdOs << arg_opt << endl;
+  gEnv.stdOs << cmd_name_fix(arg_opt) << endl;
 }
 
 bool shell::CMD::CMDQuit::exec ( Env& gEnv, vector<string>& arg){

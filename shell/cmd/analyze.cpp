@@ -59,7 +59,7 @@ po::positional_options_description const dummy_position =
 void shell::CMD::CMDAnalyze::help(Env& gEnv) {
   gEnv.stdOs << "analyze: read in the Verilog HDL design files." << endl;
   gEnv.stdOs << "    analyze [options] source_files" << endl;
-  gEnv.stdOs << arg_opt << endl;
+  gEnv.stdOs << cmd_name_fix(arg_opt) << endl;
 }
 
 bool shell::CMD::CMDAnalyze::exec ( Env& gEnv, vector<string>& arg){

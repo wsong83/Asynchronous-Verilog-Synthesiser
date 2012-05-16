@@ -26,17 +26,16 @@
  *
  */
 
-#ifndef _H_AV_NETCOMP_
-#define _H_AV_NETCOMP_
+#ifndef AV_H_AV_NETCOMP_
+#define AV_H_AV_NETCOMP_
 
 #include "averilog/location.hh"
-using averilog::location;
 
 // function macro for stream out operator <<
 #ifndef NETLIST_STREAMOUT
-#define NETLIST_STREAMOUT(COMP)                                \
-  inline ostream& operator<< ( ostream& os, const COMP& rhs) { \
-    return rhs.streamout(os, (unsigned int)(0));               \
+#define NETLIST_STREAMOUT(COMP)                                          \
+  inline std::ostream& operator<< ( std::ostream& os, const COMP& rhs) { \
+    return rhs.streamout(os, (unsigned int)(0));                         \
   }
 #endif
 
@@ -45,17 +44,17 @@ using averilog::location;
 #endif
 
 #ifndef NETLIST_DEFAULT_CON_WL
-#define NETLIST_DEFAULT_CON_WL(COMP, CT) COMP(const location& lloc) : NetComp(NetComp::CT, lloc) { }
+#define NETLIST_DEFAULT_CON_WL(COMP, CT) COMP(const averilog::location& lloc) : NetComp(NetComp::CT, lloc) { }
 #endif
 
 #ifndef NETLIST_STREAMOUT_DECL
 #define NETLIST_STREAMOUT_DECL                    \
-  virtual ostream& streamout (ostream&, unsigned int) const
+  virtual std::ostream& streamout (std::ostream&, unsigned int) const
 #endif
 
 #ifndef SP_CAST
 #define SP_CAST(m, T, d)                      \
-  shared_ptr<T > m = static_pointer_cast<T >(d)
+  boost::shared_ptr<T > m = static_pointer_cast<T >(d)
 #endif
 
 #ifndef NETLIST_CHECK_INPARSE_DECL
@@ -81,27 +80,27 @@ namespace netlist{
     
     ctype_t get_type() const { return ctype; }
     ctype_t ctype;
-    location loc;
+    averilog::location loc;
     
     virtual void reduce() {}	/* many netlist component need method to reduce itself */
 
     // the internal stream out method, to avoid friend declarations
-    virtual ostream& streamout (ostream& os, unsigned int indent) const {
-      os << "ERROR!!, the streamout() of NetComp is used!!!" << endl;
+    virtual std::ostream& streamout (std::ostream& os, unsigned int indent) const {
+      os << "ERROR!!, the streamout() of NetComp is used!!!" << std::endl;
       assert(0 == "the streamout() of NetComp is used");
       return os;
     }
     
     // deep copy when the content of a shared_ptr must be duplicated
     virtual NetComp* deep_copy() const { /* deep copy a netlist component */
-      cout << "ERROR!!, the deep_copy() of NetComp is used!!!" << endl;
+      std::cerr << "ERROR!!, the deep_copy() of NetComp is used!!!" << std::endl;
       assert(0 == "the deep_copy() of NetComp is used");
       return(new NetComp());
     }
 
     // syntax check during parsing
     virtual bool check_inparse() {
-      cout << "ERROR!!, the check_inparse() of NetComp is used!!!" << endl;
+      std::cerr << "ERROR!!, the check_inparse() of NetComp is used!!!" << std::endl;
       assert(0 == "the check_inparse() of NetComp is used");
       return false;
     }

@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef _H_AV_WHILE_
-#define _H_AV_WHILE_
+#ifndef AV_H_AV_WHILE_
+#define AV_H_AV_WHILE_
 
 namespace netlist {
 
@@ -35,8 +35,8 @@ namespace netlist {
   public:
     // constructors
     WhileState() : NetComp(tWhile), named(false) {}
-    WhileState(const shared_ptr<Expression>& exp, const shared_ptr<Block>& body);
-    WhileState(const location& lloc, const shared_ptr<Expression>& exp, const shared_ptr<Block>& body);
+    WhileState(const boost::shared_ptr<Expression>& exp, const boost::shared_ptr<Block>& body);
+    WhileState(const averilog::location& lloc, const boost::shared_ptr<Expression>& exp, const boost::shared_ptr<Block>& body);
 
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
@@ -48,8 +48,8 @@ namespace netlist {
     bool is_named() const { return named; }
 
     //data
-    shared_ptr<Expression> exp;
-    shared_ptr<Block> body;
+    boost::shared_ptr<Expression> exp;
+    boost::shared_ptr<Block> body;
 
     BIdentifier name;           /* dummy name for index search */
 

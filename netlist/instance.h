@@ -41,7 +41,7 @@ namespace netlist {
       : NetComp(tInstance), name(nm), port_list(polist), type(unknown_inst), named(true) { }
 
     Instance(
-            const location& lloc, 
+            const averilog::location& lloc, 
             const IIdentifier& nm, 
             const std::list<boost::shared_ptr<PortConn> >& polist
             )
@@ -50,9 +50,9 @@ namespace netlist {
 
     // for primary gates in most cases
     Instance(const IIdentifier&, const std::list<boost::shared_ptr<PortConn> >&, type_t);
-    Instance(const location&, const IIdentifier&, const std::list<boost::shared_ptr<PortConn> >&, type_t);
+    Instance(const averilog::location&, const IIdentifier&, const std::list<boost::shared_ptr<PortConn> >&, type_t);
     Instance(const std::list<boost::shared_ptr<PortConn> >&, type_t);
-    Instance(const location&, const std::list<boost::shared_ptr<PortConn> >&, type_t);
+    Instance(const averilog::location&, const std::list<boost::shared_ptr<PortConn> >&, type_t);
 
     // helpers
     NETLIST_SET_FATHER_DECL;

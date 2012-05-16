@@ -30,6 +30,14 @@
 #include "shell/env.h"
 
 using namespace netlist;
+using std::ostream;
+using std::endl;
+using std::string;
+using boost::shared_ptr;
+using boost::static_pointer_cast;
+using std::list;
+using std::pair;
+using averilog::location;
 
 netlist::Module::Module(const MIdentifier& nm, const shared_ptr<Block>& body)
   : Block(*body), name(nm) 

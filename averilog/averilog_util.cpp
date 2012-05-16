@@ -30,6 +30,9 @@
 #include "averilog_util.h"
 
 using namespace averilog;
+using std::endl;
+using std::ostream;
+using std::string;
 
 void averilog::error_report(const string& err_msg, YYLTYPE * yyloc, ostream& os) {
   os << "\n" << *yyloc << " Scanner Error: " << err_msg << endl;

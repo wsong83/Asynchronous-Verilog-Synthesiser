@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef _H_OPERATION_
-#define _H_OPERATION_
+#ifndef AV_H_OPERATION_
+#define AV_H_OPERATION_
 
 namespace netlist {
 

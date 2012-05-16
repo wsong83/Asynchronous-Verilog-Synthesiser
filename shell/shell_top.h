@@ -30,21 +30,10 @@
 #define _H_SHELL_SHELL_TOP_
 
 #include <string>
-using std::string;
-
 #include <iostream>
-using std::ostream;
-using std::cout;
-using std::endl;
-using std::cerr;
-
 #include <utility>
-
 #include <map>
-using std::map;
-
 #include <boost/shared_ptr.hpp>
-using boost::shared_ptr;
 
 namespace shell {
   // err_report.h

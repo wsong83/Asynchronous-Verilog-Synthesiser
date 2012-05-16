@@ -29,6 +29,10 @@
 #include "component.h"
 
 using namespace netlist;
+using std::ostream;
+using std::string;
+using boost::shared_ptr;
+using averilog::location;
 
 netlist::Range::Range(const mpz_class& sel)
   : NetComp(tRange), c(sel), dim(false), rtype(TR_Const) {  }

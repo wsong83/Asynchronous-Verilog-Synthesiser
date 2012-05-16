@@ -33,7 +33,6 @@
 #include <string>
 #include <list>
 #include <vector>
-#include <stack>
 #include <map>
 #include <utility>
 #include <boost/shared_ptr.hpp>

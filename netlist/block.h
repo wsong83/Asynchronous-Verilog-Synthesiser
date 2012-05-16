@@ -36,18 +36,18 @@ namespace netlist {
   public:
     // constructors
     Block() : NetComp(tBlock), named(false), blocked(false) {}
-    Block(const location& lloc) : NetComp(tBlock, lloc), named(false), blocked(false) {}
+    Block(const averilog::location& lloc) : NetComp(tBlock, lloc), named(false), blocked(false) {}
     Block(ctype_t t, const BIdentifier& nm) 
       : NetComp(t), name(nm), named(true), blocked(true) {}
-    Block(ctype_t t, const location& lloc, const BIdentifier& nm) 
+    Block(ctype_t t, const averilog::location& lloc, const BIdentifier& nm) 
       : NetComp(t, lloc), name(nm), named(true), blocked(true) {}
     Block(const BIdentifier& nm) 
       : NetComp(tBlock), name(nm), named(true), blocked(true) {}
-    Block(const location& lloc, const BIdentifier& nm) 
+    Block(const averilog::location& lloc, const BIdentifier& nm) 
       : NetComp(tBlock, lloc), name(nm), named(true), blocked(true) {}
     Block(NetComp::ctype_t t) 
       : NetComp(t), named(false), blocked(false) {}
-    Block(NetComp::ctype_t t, const location& lloc) 
+    Block(NetComp::ctype_t t, const averilog::location& lloc) 
       : NetComp(t, lloc), named(false), blocked(false) {}
 
     // helpers
@@ -74,55 +74,55 @@ namespace netlist {
     
     /* add a general case statement */
     bool add_case(const boost::shared_ptr<Expression>&, 
-                          const std::list<boost::shared_ptr<CaseItem> >&, const boost::shared_ptr<CaseItem>&); 
+                  const std::list<boost::shared_ptr<CaseItem> >&, const boost::shared_ptr<CaseItem>&); 
     
     /* add a general case statement */
-    bool add_case(const location& lloc, const boost::shared_ptr<Expression>&, 
-                          const std::list<boost::shared_ptr<CaseItem> >&, const boost::shared_ptr<CaseItem>&);
+    bool add_case(const averilog::location& lloc, const boost::shared_ptr<Expression>&, 
+                  const std::list<boost::shared_ptr<CaseItem> >&, const boost::shared_ptr<CaseItem>&);
  
     /* add a case statement without default */
     bool add_case(const boost::shared_ptr<Expression>&, 
-                          const std::list<boost::shared_ptr<CaseItem> >&);
+                  const std::list<boost::shared_ptr<CaseItem> >&);
 
     /* add a case statement without default */
-    bool add_case(const location& lloc, const boost::shared_ptr<Expression>&, 
-                          const std::list<boost::shared_ptr<CaseItem> >&); 
+    bool add_case(const averilog::location& lloc, const boost::shared_ptr<Expression>&, 
+                  const std::list<boost::shared_ptr<CaseItem> >&); 
 
     /* add a case statement only with a default case, odd! */
     bool add_case(const boost::shared_ptr<Expression>&, 
                           const boost::shared_ptr<CaseItem>&);
 
     /* add a case statement only with a default case, odd! */
-    bool add_case(const location& lloc, const boost::shared_ptr<Expression>&, 
-                          const boost::shared_ptr<CaseItem>&);
+    bool add_case(const averilog::location& lloc, const boost::shared_ptr<Expression>&, 
+                  const boost::shared_ptr<CaseItem>&);
 
     /* add an if statement with else case */
     bool add_if(const boost::shared_ptr<Expression>&, 
-                        const boost::shared_ptr<Block>&, const boost::shared_ptr<Block>&); 
+                const boost::shared_ptr<Block>&, const boost::shared_ptr<Block>&); 
     
     /* add an if statement with else case */
-    bool add_if(const location& lloc, const boost::shared_ptr<Expression>&, 
-                        const boost::shared_ptr<Block>&, const boost::shared_ptr<Block>&);
+    bool add_if(const averilog::location& lloc, const boost::shared_ptr<Expression>&, 
+                const boost::shared_ptr<Block>&, const boost::shared_ptr<Block>&);
 
     /* add an if statement without else case */
     bool add_if(const boost::shared_ptr<Expression>&, const boost::shared_ptr<Block>&);
 
     /* add an if statement without else case */
-    bool add_if(const location& lloc, const boost::shared_ptr<Expression>&, const boost::shared_ptr<Block>&);
+    bool add_if(const averilog::location& lloc, const boost::shared_ptr<Expression>&, const boost::shared_ptr<Block>&);
 
     /* add a while statement */
     bool add_while(const boost::shared_ptr<Expression>&, const boost::shared_ptr<Block>&);
 
     /* add a while statement */
-    bool add_while(const location& lloc, const boost::shared_ptr<Expression>&, const boost::shared_ptr<Block>&);
+    bool add_while(const averilog::location& lloc, const boost::shared_ptr<Expression>&, const boost::shared_ptr<Block>&);
 
     /* add a for statement */
     bool add_for(const boost::shared_ptr<Assign>&, 
-                         const boost::shared_ptr<Expression>&, const boost::shared_ptr<Assign>&, const boost::shared_ptr<Block>&); 
+                 const boost::shared_ptr<Expression>&, const boost::shared_ptr<Assign>&, const boost::shared_ptr<Block>&); 
 
     /* add a for statement */
-    bool add_for(const location& lloc, const boost::shared_ptr<Assign>&, 
-                         const boost::shared_ptr<Expression>&, const boost::shared_ptr<Assign>&, const boost::shared_ptr<Block>&);
+    bool add_for(const averilog::location& lloc, const boost::shared_ptr<Assign>&, 
+                 const boost::shared_ptr<Expression>&, const boost::shared_ptr<Assign>&, const boost::shared_ptr<Block>&);
 
     bool add_statements(const boost::shared_ptr<Block>&); /* add several statements */
     virtual void elab_inparse(); /* resolve the content in statements during parsing */

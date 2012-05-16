@@ -31,7 +31,10 @@ using boost::format;
 
 #include "shell_top.h"
 using namespace shell;
-
+using std::cerr;
+using std::ostream;
+using std::string;
+using std::endl;
 using std::pair;
 
 

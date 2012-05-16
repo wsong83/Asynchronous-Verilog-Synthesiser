@@ -29,6 +29,12 @@
 #include "component.h"
 
 using namespace netlist;
+using std::ostream;
+using std::endl;
+using averilog::location;
+using std::string;
+using boost::shared_ptr;
+
 
 netlist::Assign::Assign( const shared_ptr<LConcatenation>& lhs,
                          const shared_ptr<Expression>& rhs,

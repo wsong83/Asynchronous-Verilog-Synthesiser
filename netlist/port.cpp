@@ -30,6 +30,11 @@
 #include "shell/env.h"
 
 using namespace netlist;
+using std::ostream;
+using std::endl;
+using std::string;
+using boost::shared_ptr;
+using averilog::location;
 
 netlist::Port::Port(const PoIdentifier& pid)
   : NetComp(tPort), name(pid), dir(0) {}

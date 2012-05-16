@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef _H_NUMBER_
-#define _H_NUMBER_
+#ifndef AV_H_NUMBER_
+#define AV_H_NUMBER_
 #include <gmpxx.h>
 
 namespace netlist {
@@ -37,14 +37,14 @@ namespace netlist {
     // constructors
     Number() : num_leng(0), valid(false), valuable(false) {};
     Number(char *text, int txt_leng); /* constructor for scanner */
-    Number(const location& lloc, char *text, int txt_leng); /* constructor for scanner */
+    Number(const averilog::location& lloc, char *text, int txt_leng); /* constructor for scanner */
     Number(int d);
-    Number(const string&);
-    Number(const location& lloc, const string&);
+    Number(const std::string&);
+    Number(const averilog::location& lloc, const std::string&);
     Number(const mpz_class&);
 
     // helpers
-    const string& get_txt_value() const { return txt_value; }
+    const std::string& get_txt_value() const { return txt_value; }
     mpz_class get_value() const { return mpz_class(txt_value, 2); }
     int get_length() const { return num_leng; }
     bool is_valuable() const { return valuable; }
@@ -66,9 +66,9 @@ namespace netlist {
 
   private:
     unsigned int num_leng;	/* the number of digits in the number */
-    string txt_value;	/* literals of the number, useful when non-deterministic */
-    bool valid;			/* true when number format is ok */
-    bool valuable;		/* true when the number is const and deterministic */
+    std::string txt_value;	/* literals of the number, useful when non-deterministic */
+    bool valid;			    /* true when number format is ok */
+    bool valuable;		    /* true when the number is const and deterministic */
 
     //helpers
 

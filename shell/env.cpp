@@ -31,9 +31,18 @@
 #define YYSTYPE shell::CMD::cmd_token_type
 
 #include "cmd/cmd_define.h"
+
+//make sure the location of command.y is included
+#undef BISON_LOCATION_HH
+#undef BISON_POSITION_HH
 #include "command.hh"
 
 using namespace shell;
+using std::endl;
+using std::cout;
+using std::cerr;
+using boost::shared_ptr;
+using netlist::Library;
 
 shell::Env::Env() 
   : stdOs(cout.rdbuf()), errOs(cerr.rdbuf())
@@ -45,7 +54,7 @@ bool shell::Env::initialise() {
   link_lib["work"] = work;
 
   // set work to be the current library
-  curLib = work;
+  this->curLib = work;
 
   // the env pointer in lexer
   lexer.set_env(this);

@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef _H_AV_TOKEN_
-#define _H_AV_TOKEN_
+#ifndef AV_H_AV_TOKEN_
+#define AV_H_AV_TOKEN_
 
 // copy from averilog.lex.h
 #ifndef YY_TYPEDEF_YY_SCANNER_T
@@ -38,40 +38,40 @@ typedef void* yyscan_t;
 namespace averilog {
 
   struct av_token_type {
-    shared_ptr<netlist::Assign>        tAssign;
-    shared_ptr<netlist::Block>         tBlock;
-    netlist::BIdentifier               tBlockName;
-    shared_ptr<netlist::CaseItem>      tCaseItem;
-    shared_ptr<netlist::Concatenation> tConcatenation;
-    shared_ptr<netlist::Expression>    tExp;
-    pair<int, shared_ptr<netlist::Expression> > tEvent;
-    netlist::FIdentifier               tFuncName;
-    shared_ptr<netlist::GenBlock>      tGenBlock;
-    avID                               tID;      
-    shared_ptr<netlist::Instance>      tInstance;
-    netlist::IIdentifier               tInstName;
-    shared_ptr<netlist::LConcatenation> tLConcatenation;
-    list<shared_ptr<netlist::Assign> > tListAssign;
-    list<shared_ptr<netlist::CaseItem> > tListCaseItem;
-    list<shared_ptr<netlist::Expression> > tListExp;
-    list<pair<int, shared_ptr<netlist::Expression> > > tListEvent;
-    list<shared_ptr<netlist::Instance> > tListInst;
-    list<netlist::PoIdentifier>        tListPort;
-    list<shared_ptr<netlist::ParaConn> > tListParaAssign;
-    list<shared_ptr<netlist::Port> >   tListPortDecl;
-    list<shared_ptr<netlist::PortConn> > tListPortConn;
-    list<pair<netlist::VIdentifier, shared_ptr<netlist::Expression> > > tListVar;
-    list<shared_ptr<netlist::Variable> > tListVarDecl;
-    netlist::MIdentifier               tModuleName;
-    shared_ptr<netlist::Module>        tModule;
-    netlist::Number                    tNumber;    
-    netlist::PoIdentifier              tPortName;
-    shared_ptr<netlist::ParaConn>      tParaAssign;
-    shared_ptr<netlist::PortConn>      tPortConn;
-    shared_ptr<netlist::Range>         tRange;
-    shared_ptr<netlist::SeqBlock>      tSeqBlock;
-    pair<netlist::VIdentifier, shared_ptr<netlist::Expression> > tVarAssign;
-    netlist::VIdentifier               tVarName;	
+    boost::shared_ptr<netlist::Assign>                                  tAssign;
+    boost::shared_ptr<netlist::Block>                                   tBlock;
+    netlist::BIdentifier                                                tBlockName;
+    boost::shared_ptr<netlist::CaseItem>                                tCaseItem;
+    boost::shared_ptr<netlist::Concatenation>                           tConcatenation;
+    boost::shared_ptr<netlist::Expression>                              tExp;
+    std::pair<int, boost::shared_ptr<netlist::Expression> >             tEvent;
+    netlist::FIdentifier                                                tFuncName;
+    boost::shared_ptr<netlist::GenBlock>                                tGenBlock;
+    averilog::avID                                                      tID;      
+    boost::shared_ptr<netlist::Instance>                                tInstance;
+    netlist::IIdentifier                                                tInstName;
+    boost::shared_ptr<netlist::LConcatenation>                          tLConcatenation;
+    std::list<boost::shared_ptr<netlist::Assign> >                      tListAssign;
+    std::list<boost::shared_ptr<netlist::CaseItem> >                    tListCaseItem;
+    std::list<boost::shared_ptr<netlist::Expression> >                  tListExp;
+    std::list<std::pair<int, boost::shared_ptr<netlist::Expression> > > tListEvent;
+    std::list<boost::shared_ptr<netlist::Instance> >                    tListInst;
+    std::list<netlist::PoIdentifier>                                    tListPort;
+    std::list<boost::shared_ptr<netlist::ParaConn> >                    tListParaAssign;
+    std::list<boost::shared_ptr<netlist::Port> >                        tListPortDecl;
+    std::list<boost::shared_ptr<netlist::PortConn> >                    tListPortConn;
+    std::list<std::pair<netlist::VIdentifier, boost::shared_ptr<netlist::Expression> > > tListVar;
+    std::list<boost::shared_ptr<netlist::Variable> >                    tListVarDecl;
+    netlist::MIdentifier                                                tModuleName;
+    boost::shared_ptr<netlist::Module>                                  tModule;
+    netlist::Number                                                     tNumber;    
+    netlist::PoIdentifier                                               tPortName;
+    boost::shared_ptr<netlist::ParaConn>                                tParaAssign;
+    boost::shared_ptr<netlist::PortConn>                                tPortConn;
+    boost::shared_ptr<netlist::Range>                                   tRange;
+    boost::shared_ptr<netlist::SeqBlock>                                tSeqBlock;
+    std::pair<netlist::VIdentifier, boost::shared_ptr<netlist::Expression> > tVarAssign;
+    netlist::VIdentifier                                                tVarName;	
   };
 }
 

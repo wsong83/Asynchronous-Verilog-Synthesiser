@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef _H_DATABASE_
-#define _H_DATABASE_
+#ifndef AV_H_DATABASE_
+#define AV_H_DATABASE_
 
 namespace netlist {
 
@@ -49,7 +49,7 @@ namespace netlist {
           return true;
         }
       } else {
-        pair<typename DBTM::iterator, bool> res = db_map.insert(DTT(key, comp));
+        std::pair<typename DBTM::iterator, bool> res = db_map.insert(DTT(key, comp));
         return res.second;
       }
     }
@@ -188,7 +188,7 @@ namespace netlist {
   };
   
   template<typename K, typename T, bool ORDER>
-    ostream& operator<< ( ostream& os, const DataBase<K,T,ORDER>& rhs) {
+    std::ostream& operator<< ( std::ostream& os, const DataBase<K,T,ORDER>& rhs) {
     return rhs.streamout(os, 0);
   }
 }

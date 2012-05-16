@@ -31,6 +31,9 @@
 #include "component.h"
 
 using namespace netlist;
+using std::ostream;
+using std::string;
+using averilog::location;
 
 // decimal or integer
 netlist::Number::Number(char *text, int txt_leng) 

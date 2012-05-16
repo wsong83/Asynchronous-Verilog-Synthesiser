@@ -31,6 +31,9 @@
 #include "averilog/averilog_util.h"
 #include "averilog/averilog.lex.h"
 
+using std::string;
+using std::cout;
+
 shell::Env* G_ENV = new shell::Env();
 
 int main(int argc, char*argv[])

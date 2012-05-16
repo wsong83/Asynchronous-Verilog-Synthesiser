@@ -27,8 +27,16 @@
  */
 
 #include "component.h"
+#include <stack>
 
 using namespace netlist;
+using std::ostream;
+using std::string;
+using boost::shared_ptr;
+using averilog::location;
+using std::pair;
+using std::stack;
+using std::list;
 
 netlist::Expression::Expression(const Number& exp) 
   : NetComp(tExp), valuable(exp.is_valuable())

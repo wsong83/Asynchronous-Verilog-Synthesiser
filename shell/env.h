@@ -32,18 +32,14 @@
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
 
-//#include "netlist/component.h"
-namespace netlist {
-  class Library;
-  class Module;
-}
-
+#include "netlist/component.h"
 #include "cmd_lexer.h"
 #include "err_report.h"
 
 namespace shell {
 
   namespace CMD {
+    // forward declaration
     class cmd_parser;
   }
 
@@ -61,10 +57,10 @@ namespace shell {
     ErrReport error;                                 /* the gobal level error report function */
     CMD::CMDLexer lexer;                             /* the command line lexer */
     CMD::cmd_parser *parser;                         /* the command line parser */
-    std::shared_ptr<netlist::Library> curLib;                      /* current library */
-    std::shared_ptr<netlist::Module> curDgn;                       /* current design */
-    std::ostream stdOs;                                   /* standard output stream */
-    std::ostream errOs;                                   /* error output stream */
+    boost::shared_ptr<netlist::Library> curLib;      /* current library */
+    boost::shared_ptr<netlist::Module> curDgn;       /* current design */
+    std::ostream stdOs;                              /* standard output stream */
+    std::ostream errOs;                              /* error output stream */
     
   };
 

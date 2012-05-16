@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef _H_AVERILOG_UTIL_
-#define _H_AVERILOG_UTIL_
+#ifndef AV_H_AVERILOG_UTIL_
+#define AV_H_AVERILOG_UTIL_
 
 #include <cstdio>
 
@@ -50,18 +50,18 @@ typedef averilog::location YYLTYPE;
 namespace averilog {
 
   // report errors in scanner
-  void error_report(const string& err_msg, YYLTYPE * yyloc, ostream& os = std::cerr);
+  void error_report(const std::string& err_msg, YYLTYPE * yyloc, std::ostream& os = std::cerr);
 
   class Parser {
   public:
-    Parser(string, shell::Env& env);	/* constructor with a file name and the design library */
+    Parser(std::string, shell::Env& env);	/* constructor with a file name and the design library */
     ~Parser();
-    bool parse();		/* the parser for user */
+    bool parse();		    /* the parser for user */
     bool initialize();		/* initialize and check all settings */
 
   private:
-    FILE * sfile;		/* the file handler of the scanner */
-    string fname;		/* the name of the file */
+    FILE * sfile;		        /* the file handler of the scanner */
+    std::string fname;		    /* the name of the file */
     av_parser bison_instance;	/* the bison parser instance */
   }; 
 

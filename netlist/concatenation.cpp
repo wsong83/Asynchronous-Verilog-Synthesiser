@@ -29,6 +29,10 @@
 #include "component.h"
 
 using namespace netlist;
+using std::ostream;
+using std::string;
+using boost::shared_ptr;
+using std::list;
 
 void netlist::ConElem::reduce() {
   exp->reduce();

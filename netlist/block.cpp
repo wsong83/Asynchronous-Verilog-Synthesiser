@@ -31,6 +31,13 @@
 #include "shell/env.h"
 
 using namespace netlist;
+using std::ostream;
+using std::endl;
+using std::string;
+using boost::shared_ptr;
+using boost::static_pointer_cast;
+using std::list;
+using averilog::location;
 
 bool netlist::Block::add(const shared_ptr<NetComp>& dd) {
   statements.push_back(dd);

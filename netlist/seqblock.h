@@ -27,8 +27,8 @@
  *
  */
 
-#ifndef _H_AV_SEQ_BLOCK_
-#define _H_AV_SEQ_BLOCK_
+#ifndef AV_H_AV_SEQ_BLOCK_
+#define AV_H_AV_SEQ_BLOCK_
 
 namespace netlist{
 
@@ -36,18 +36,18 @@ namespace netlist{
   public:
     // constructors
     SeqBlock() : Block(tSeqBlock), sensitive(false) {};
-    SeqBlock(const location& lloc) : Block(tSeqBlock, lloc), sensitive(false) {};
+    SeqBlock(const averilog::location& lloc) : Block(tSeqBlock, lloc), sensitive(false) {};
     SeqBlock(const BIdentifier& nm)
       : Block(tSeqBlock, nm), sensitive(false) {}
-    SeqBlock(const location& lloc, const BIdentifier& nm)
+    SeqBlock(const averilog::location& lloc, const BIdentifier& nm)
       : Block(tSeqBlock, lloc, nm), sensitive(false) {}
-    SeqBlock(list<pair<int, shared_ptr<Expression> > >&, const shared_ptr<Block>&);
-    SeqBlock(const location&, list<pair<int, shared_ptr<Expression> > >&, const shared_ptr<Block>&);
+    SeqBlock(std::list<std::pair<int, boost::shared_ptr<Expression> > >&, const boost::shared_ptr<Block>&);
+    SeqBlock(const averilog::location&, std::list<std::pair<int, boost::shared_ptr<Expression> > >&, const boost::shared_ptr<Block>&);
     SeqBlock(const Block&);
-    SeqBlock(const location&, const Block&);
+    SeqBlock(const averilog::location&, const Block&);
     
     // helpers
-    virtual ostream& streamout(ostream&, unsigned int, bool) const;
+    virtual std::ostream& streamout(std::ostream&, unsigned int, bool) const;
     virtual void elab_inparse();        /* resolve the content during parsing */
 
     // inherit from NetComp
@@ -58,10 +58,9 @@ namespace netlist{
     
     // data
     bool sensitive;                                         /* whether this is a sensitive block, top level block */
-    list<pair<bool, shared_ptr<Expression> > > slist_pulse; /* pulse sensitive list */
-    list<shared_ptr<Expression> > slist_level;              /* level sensitive list */
-    
-    
+    std::list<std::pair<bool, boost::shared_ptr<Expression> > > slist_pulse; /* pulse sensitive list */
+    std::list<boost::shared_ptr<Expression> > slist_level;                   /* level sensitive list */
+        
   };
 
   NETLIST_STREAMOUT(SeqBlock);
