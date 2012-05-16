@@ -61,6 +61,7 @@ namespace shell {
     boost::shared_ptr<netlist::Module> curDgn;       /* current design */
     std::ostream stdOs;                              /* standard output stream */
     std::ostream errOs;                              /* error output stream */
+    std::map<std::string, std::string> macroDB;      /* command line macros */
     
   };
 

@@ -59,8 +59,12 @@ bool shell::Env::initialise() {
   // the env pointer in lexer
   lexer.set_env(this);
 
-  // initialize the parser
+  // initialise the parser
   parser = new CMD::cmd_parser(this);
+
+  // initialise the macro database
+  // file search path
+  macroDB["search_path"] = ".";        // default only has the current directory
 
   // show the welcome message
   show_cmd(true);
