@@ -44,6 +44,8 @@ int cmdDB_init( map<string, string>& db) {
   db.insert(pair<string, string>("exit",     "leave the AVS shell environment."        ));
   db.insert(pair<string, string>("help",     "read in the Verilog HDL design files."   ));
   db.insert(pair<string, string>("quit",     "leave the AVS shell environment."        ));
+  db.insert(pair<string, string>("set",      "set the value of a variable."            ));
+  db.insert(pair<string, string>("source",   "read and execute another script file."   ));
   return 0;
 }
 

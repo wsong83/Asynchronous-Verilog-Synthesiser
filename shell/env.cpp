@@ -31,6 +31,7 @@
 #define YYSTYPE shell::CMD::cmd_token_type
 
 #include "cmd/cmd_define.h"
+#include "macro_name.h"
 
 //make sure the location of command.y is included
 #undef BISON_LOCATION_HH
@@ -64,7 +65,7 @@ bool shell::Env::initialise() {
 
   // initialise the macro database
   // file search path
-  macroDB["search_path"] = ".";        // default only has the current directory
+  macroDB[MACRO_SEARCH_PATH] = ".";        // default only has the current directory
 
   // show the welcome message
   show_cmd(true);

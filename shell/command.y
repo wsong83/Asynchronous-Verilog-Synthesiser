@@ -83,7 +83,6 @@
  // type definitions
 %type <tStr>       argument_name
 %type <tStr>       complex_string
-%type <tStr>       identifier
 %type <tStrVec>    argument
 %type <tStrVec>    argument_list
 %type <tStrVec>    argument_parameter
@@ -128,9 +127,9 @@ argument_list
     ;
 
 argument
-    : identifier                                { $$.push_back($1);                }
-    | '-' argument_name                         { $$.push_back(string("-") + $2);  }
-    | '-' argument_name argument_parameter 
+    : argument_parameter                        
+    | '-' argument_name                             { $$.push_back(string("-") + $2);  }
+    | '-' argument_name argument_parameter      
     { 
       $$.push_back(string("--") + $2);
       $$.insert($$.end(), $3.begin(), $3.end());
@@ -141,10 +140,6 @@ argument
       $$.push_back(string("-") + $3);
       $$.insert($$.end(), $4.begin(), $4.end());
     }
-    ;
-
-identifier
-    : complex_string
     ;
 
 argument_name

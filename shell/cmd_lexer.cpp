@@ -99,8 +99,10 @@ int shell::CMD::CMDLexer::yylex(cmd_token_type * yyval) {
   }
   
   // other wise read in lines for new tokens
-  unsigned int level = 0;     // increase when [, (, or { is encountered 
-  bool back_slash = false;                 // true when a back slach is encountered
+  unsigned int level = 0;         // increase when [, (, or { is encountered 
+  unsigned int level_str = 0;     // increase when [, (, or { inside a string is encountered 
+  bool back_slash = false;        // true when a back slach is encountered
+  bool quote = false;             // true when " is encountered
   char tbuf[AV_CMD_LEXER_MAX_STRING_SIZE]; // token buffer for string
   unsigned int tp = 0;          // current pointer of the tbuf
   
@@ -150,26 +152,35 @@ int shell::CMD::CMDLexer::yylex(cmd_token_type * yyval) {
         } else {                // just blank
           rp++;
         }
+      } if(quote) {
+        if(*rp != '\"') {
+          tbuf[tp++] = *rp++;
+        } else {
+          cmd_token_type mtoken;
+          mtoken.tStr.assign(tbuf, tp);
+          current_tfifo().push_back(pair<int,cmd_token_type> (tDB["simple_string"], mtoken));
+          tp = 0;
+          quote = false;
+          rp++;
+        }
       } else {
         if(isalnum(*rp) || 
            *rp == '$' || 
-           *rp == '/' || 
+           (*rp == '/' && tp != 0) || 
            *rp == '_' || 
-           *rp == '.' ||
-           *rp == '(' ||
-           *rp == ')' ||
-           *rp == '[' ||
-           *rp == ']' ||
-           *rp == '{' ||
-           *rp == '}'
+           (*rp == '.' && tp != 0) ||
+           (*rp == '[' && tp != 0) ||
+           (*rp == ']' && level_str != 0) ||
+           (*rp == '{' && tp != 0 && tbuf[tp-1] == '$')||
+           (*rp == '}' && level_str != 0)
            ) { // string
           tbuf[tp++] = *rp;
           
           // brackets inside a string
           if(*rp == '(' || *rp == '[' || *rp == '{')
-            level++;
+            level_str++;
           else if(*rp == ')' || *rp == ']' || *rp == '}')
-            level -= (level != 0 ? 1 : 0); // the extra ), ], } are ignored
+            level_str -= (level != 0 ? 1 : 0); // the extra ), ], } are ignored
 
           rp++;
 
@@ -190,15 +201,22 @@ int shell::CMD::CMDLexer::yylex(cmd_token_type * yyval) {
             }
             // clean the token buffer
             tp = 0;
-          }
+          } // if(tp != 0)
           
           if(*rp != '\000') {
-            if(*rp == '(' || *rp == '[' || *rp == '{')
+            if(*rp == '(' || *rp == '[' || *rp == '{') {
               level++;
-            else if(*rp == ')' || *rp == ']' || *rp == '}')
+              current_tfifo().push_back(pair<int,cmd_token_type> (*rp, cmd_token_type()));
+            } else if(*rp == ')' || *rp == ']' || *rp == '}') {
               level -= (level != 0 ? 1 : 0); // the extra ), ], } are ignored
-            
-            if(*rp != ' ')    // a mark token
+              current_tfifo().push_back(pair<int,cmd_token_type> (*rp, cmd_token_type()));
+            } else if(*rp == '\"') {
+              tbuf[tp++] = *rp;
+              quote = true;
+            } else if(*rp == '\\') {
+              tbuf[tp++] = *rp;
+              back_slash = true;
+            } else if(*rp != ' ')    // a mark token
               current_tfifo().push_back(pair<int,cmd_token_type> (*rp, cmd_token_type()));
             
             rp++;

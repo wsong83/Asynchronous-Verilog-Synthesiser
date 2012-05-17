@@ -1,1 +1,3 @@
-* if a port is not defined explicitly as wire or reg, it cannot be fined in databases, should add automatic infer
+* 17/05/2012   (Important)    Need to rewrite the cmd_lexer class or use flex, not all Tcl features can be supported in current structure.
+* 17/05/2012   (Non-urgent)   Support up and down button for history commands. (using getchar in a smart lexer I think)
+

@@ -111,6 +111,11 @@ namespace netlist{
       father = pf;
     }
 
+    // get the hierarchy name
+    virtual std::string get_hier_name() {
+      return "";
+    }
+
   protected:
     Block* father;              /* the pointer pointed to the father block */
       

@@ -35,6 +35,7 @@ namespace po = boost::program_options;
 #include "netlist/component.h"
 #include "cmd_lexer.h"
 #include "err_report.h"
+#include "cmd_variable.h"
 
 namespace shell {
 
@@ -61,7 +62,7 @@ namespace shell {
     boost::shared_ptr<netlist::Module> curDgn;       /* current design */
     std::ostream stdOs;                              /* standard output stream */
     std::ostream errOs;                              /* error output stream */
-    std::map<std::string, std::string> macroDB;      /* command line macros */
+    std::map<std::string, CMD::CMDVar> macroDB;      /* command line macros */
     
   };
 
