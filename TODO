@@ -1,3 +1,7 @@
-* 17/05/2012   (**Important)    Need to rewrite the cmd_lexer class or use flex, not all Tcl features can be supported in current structure.
-* 17/05/2012   (Resolved)       Support up and down button for history commands. (using getchar in a smart lexer I think) [ use rlwrap avs_shell instead of avs_shell itself.]
+* 18/05/2012   (**Urgent    )   The back_slash in cmd_lexer should be use for special char rather than complex name.
+* 18/05/2012   (**Normal    )   The list in command line env can be embedded list like concatenations in Verilog, right now only one level of strings are supported.
+* 17/05/2012   (**Important )   Need to rewrite the cmd_lexer class or use flex, not all Tcl features can be supported in current structure.
+
+=============
+* 17/05/2012   (Resolved    )   Support up and down button for history commands. (using getchar in a smart lexer I think) [ use rlwrap avs_shell instead of avs_shell itself.]
 

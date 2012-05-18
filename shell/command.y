@@ -154,13 +154,13 @@ argument_parameter
     ;
 
 string_list
-    : /* empty */                   { $$.clear();        }
+    : /* empty */                   { $$.clear();       }
     | complex_string                { $$.push_back($1); }
     | string_list complex_string    { $$.push_back($2); }
     ;
 
 complex_string
-    : simple_string                 
+    : simple_string                 { $$ = shell::CMD::cmd_variable_resolver(cmd_env->macroDB, $1); }      
     ;
 
 %%

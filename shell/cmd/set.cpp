@@ -75,7 +75,7 @@ bool shell::CMD::CMDSet::exec( Env& gEnv, vector<string>& arg) {
 
   if(vm.count("VarName")) {
     string varName = vm["VarName"].as<string>();
-    if(varName.empty()) {
+    if(varName.empty() || !cmd_variable_name_checker(varName)) {
       gEnv.errOs << "Error: A valid variable name must be provided." << endl;
       return false;
     }

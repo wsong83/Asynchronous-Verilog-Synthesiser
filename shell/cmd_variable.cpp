@@ -27,12 +27,19 @@
  */
 
 #include <netlist/component.h>
+#include <boost/regex.hpp>
 #include "cmd_variable.h"
+using boost::regex;
+using boost::regex_match;
+using boost::regex_search;
+using boost::smatch;
 using boost::shared_ptr;
 using std::ostream;
 using std::string;
 using std::list;
 using std::vector;
+
+#define CMD_VAR_RESOLVE_MAX_LEVEL 128
 
 using namespace shell;
 using namespace shell::CMD;
@@ -98,4 +105,46 @@ CMDVar& shell::CMD::CMDVar::operator= (const vector<string>& slist) {
   }
     
   return *this;
+}
+
+string shell::CMD::cmd_variable_resolver(const std::map<std::string, CMDVar>& db, const std::string& istr) {
+  string m_string = istr;
+  int level = 0;
+  regex regex_exp("\\$((\\{\\w[\\w\\d]*\\})|(\\w[\\w\\d]*))");
+  smatch mresult;
+
+  //std::cout << "the original string: " << istr << std::endl;
+
+  while(regex_search(m_string, mresult, regex_exp) && level < CMD_VAR_RESOLVE_MAX_LEVEL) {
+    string mname;
+    if(!mresult[2].str().empty()) {
+      mname = mresult[2].str();
+      assert(mname.size() >= 3);
+      mname.erase(0, 1);
+      mname.erase(mname.size()-1, 1);
+    } else {
+      mname = mresult[3].str();
+    }
+
+    //std::cout << mresult <<  " Varname: " << mname << std::endl;
+
+    if(db.count(mname) && db.find(mname)->second.is_string()) {
+      m_string = mresult.prefix().str() + db.find(mname)->second.get_string() + mresult.suffix().str();
+      //std::cout << "level" << level << " " << m_string << std::endl;
+    } else {
+      break;
+    }
+
+    level++;
+  }
+
+  return m_string;
+}
+
+bool shell::CMD::cmd_variable_name_checker(const string& vn) {
+
+  regex regex_exp("^\\w[\\w\\d]*$");
+
+  return regex_match(vn, regex_exp);
+
 }

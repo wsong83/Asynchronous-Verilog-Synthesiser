@@ -49,6 +49,9 @@ namespace shell {
       void set_string() { var_type = vString; }
       void set_list() { var_type = vList; }
       void set_collection() { var_type = vCollection; }
+      bool is_string() const { return var_type == vString; }
+      bool is_list() const { return var_type == vList; }
+      bool is_collection() const { return var_type == vCollection; }
       std::string& get_string() { return m_str; }
       std::list<std::string>& get_list() { return m_list; }
       std::list<boost::shared_ptr<netlist::NetComp> >& get_collection() { return m_collection; }
@@ -72,6 +75,15 @@ namespace shell {
       rhs.streamout(os);
       return os;
     }
+
+    // free function
+
+    // resolve the variables in a string
+    std::string cmd_variable_resolver(const std::map<std::string, CMDVar>&, const std::string&);
+
+    // check the format of a variable name
+    bool cmd_variable_name_checker(const std::string&);
+
   }
 }
 
