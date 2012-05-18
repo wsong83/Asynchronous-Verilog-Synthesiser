@@ -69,6 +69,7 @@
  // command named
 %token CMDAnalyze              "analyze"
 %token CMDHelp                 "help"
+%token CMDSet                  "set"
 %token CMDSource               "source"
 %token CMDExit                 "exit"
 %token CMDQuit                 "quit"
@@ -109,6 +110,7 @@ command_description
     | "exit"    argument_list     { if(shell::CMD::CMDQuit::exec(*cmd_env, $2)) YYACCEPT;  }
     | "help"    argument_list     { shell::CMD::CMDHelp::exec(*cmd_env, $2);               }
     | "quit"    argument_list     { if(shell::CMD::CMDQuit::exec(*cmd_env, $2)) YYACCEPT;  }
+    | "set"     argument_list     { shell::CMD::CMDSet::exec(*cmd_env, $2);                }
     | "source"  argument_list     { shell::CMD::CMDSource::exec(*cmd_env, $2);             }
     | simple_string argument_list 
     {

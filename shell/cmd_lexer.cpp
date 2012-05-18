@@ -60,6 +60,7 @@ shell::CMD::CMDLexer::CMDLexer()
   tDB["exit"]           = cmd_parser::token::CMDExit;
   tDB["help"]           = cmd_parser::token::CMDHelp;
   tDB["quit"]           = cmd_parser::token::CMDQuit;
+  tDB["set"]            = cmd_parser::token::CMDSet;
   tDB["source"]         = cmd_parser::token::CMDSource;
   tDB["\n"]             = cmd_parser::token::CMD_END;
   tDB["simple_string"]  = cmd_parser::token::simple_string;
@@ -211,7 +212,6 @@ int shell::CMD::CMDLexer::yylex(cmd_token_type * yyval) {
               level -= (level != 0 ? 1 : 0); // the extra ), ], } are ignored
               current_tfifo().push_back(pair<int,cmd_token_type> (*rp, cmd_token_type()));
             } else if(*rp == '\"') {
-              tbuf[tp++] = *rp;
               quote = true;
             } else if(*rp == '\\') {
               tbuf[tp++] = *rp;

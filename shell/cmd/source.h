@@ -40,7 +40,6 @@ namespace shell {
       static bool exec ( Env&, vector<string>&);
       static void help ( Env& );
 
-      //private:
       static po::options_description cmd_opt;
       static po::positional_options_description cmd_position;
     };

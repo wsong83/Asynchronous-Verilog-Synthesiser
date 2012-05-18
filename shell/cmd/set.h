@@ -29,15 +29,17 @@
 #ifndef AV_CMD_SET_
 #define AV_CMD_SET_
 
+#include "shell/env.h"
+#include "cmd_define.h"
+
 namespace shell {
   namespace CMD {
 
     class CMDSet {
     public:
-      static bool exec (Env&, vector<string>&);
+      static bool exec (Env&, std::vector<std::string>&);
       static void help (Env& );
 
-    private:
       static po::options_description cmd_opt;
       static po::positional_options_description cmd_position;
     };

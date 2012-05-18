@@ -35,23 +35,23 @@ using namespace shell;
 using namespace shell::CMD;
 
 static po::options_description arg_opt("Options");
-po::options_description_easy_init const dummy_arg_opt =
+static po::options_description_easy_init const dummy_arg_opt =
   arg_opt.add_options()
   ("help", "usage information.")
   ;
 
 static po::options_description file_opt;
-po::options_description_easy_init const dummy_file_opt =
+static po::options_description_easy_init const dummy_file_opt =
   file_opt.add_options()
   ("file", po::value<string>(), "input files")
   ;
 
 po::options_description shell::CMD::CMDSource::cmd_opt;
-po::options_description const dummy_cmd_opt =
+static po::options_description const dummy_cmd_opt =
   CMDSource::cmd_opt.add(arg_opt).add(file_opt);
 
 po::positional_options_description shell::CMD::CMDSource::cmd_position;
-po::positional_options_description const dummy_position = 
+static po::positional_options_description const dummy_position = 
   CMDSource::cmd_position.add("file", 1);
 
 void shell::CMD::CMDSource::help(Env& gEnv) {
@@ -68,11 +68,10 @@ bool shell::CMD::CMDSource::exec ( Env& gEnv, vector<string>& arg){
     store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
     notify(vm);
   } catch (std::exception& e) {
-    gEnv.errOs << "Wrong command syntax error! See usage by source -help." << endl;
+    gEnv.errOs << "Error: Wrong command syntax error! See usage by source -help." << endl;
     return false;
   }
 
-  // TODO: parse the file
   if(vm.count("help") || vm.size() == 0) {        // print help information
     shell::CMD::CMDSource::help(gEnv);
     return true;

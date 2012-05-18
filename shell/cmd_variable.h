@@ -59,6 +59,7 @@ namespace shell {
       std::ostream& streamout( std::ostream& os) const;
       CMDVar& operator= (const std::string& );
       CMDVar& operator= (const std::list<std::string>& );
+      CMDVar& operator= (const std::vector<std::string>& );
 
     private:
       std::string  m_str;
@@ -66,6 +67,11 @@ namespace shell {
       std::list<boost::shared_ptr<netlist::NetComp> > m_collection;
 
     };
+
+    inline std::ostream& operator << (std::ostream& os, const CMDVar& rhs) {
+      rhs.streamout(os);
+      return os;
+    }
   }
 }
 

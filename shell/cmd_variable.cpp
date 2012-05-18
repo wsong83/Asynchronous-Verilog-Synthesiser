@@ -32,6 +32,7 @@ using boost::shared_ptr;
 using std::ostream;
 using std::string;
 using std::list;
+using std::vector;
 
 using namespace shell;
 using namespace shell::CMD;
@@ -72,7 +73,29 @@ CMDVar& shell::CMD::CMDVar::operator= (const string& str) {
 }
 
 CMDVar& shell::CMD::CMDVar::operator= (const list<string>& slist) {
-  var_type = vList;
-  m_list = slist;
+  if(slist.size() > 1) {
+    var_type = vList;
+    m_list = slist;
+  } else if(slist.size() == 1) {
+    var_type = vString;
+    m_str = slist.front();
+  } else {
+    assert(0 == "slist empty!");
+  }
+    
+  return *this;
+}
+
+CMDVar& shell::CMD::CMDVar::operator= (const vector<string>& slist) {
+  if(slist.size() > 1) {
+    var_type = vList;
+    m_list.assign(slist.begin(), slist.end());
+  } else if(slist.size() == 1) {
+    var_type = vString;
+    m_str = slist.front();
+  } else {
+    assert(0 == "slist empty!");
+  }
+    
   return *this;
 }

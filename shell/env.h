@@ -74,6 +74,7 @@ namespace shell {
 #include "cmd/help.h"
 #include "cmd/quit.h"
 #include "cmd/source.h"
+#include "cmd/set.h"
 
 
 #endif
