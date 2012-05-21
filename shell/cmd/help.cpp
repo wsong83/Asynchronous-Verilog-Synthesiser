@@ -41,6 +41,7 @@ map<string, string> shell::CMD::CMDHelp::cmdDB;
 
 int cmdDB_init( map<string, string>& db) {
   db.insert(pair<string, string>("analyze",  "show and list the usage of commands."    ));
+  db.insert(pair<string, string>("echo",     "display a string with variables."        ));
   db.insert(pair<string, string>("exit",     "leave the AVS shell environment."        ));
   db.insert(pair<string, string>("help",     "read in the Verilog HDL design files."   ));
   db.insert(pair<string, string>("quit",     "leave the AVS shell environment."        ));

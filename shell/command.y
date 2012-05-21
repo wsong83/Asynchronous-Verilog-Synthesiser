@@ -68,11 +68,12 @@
 
  // command named
 %token CMDAnalyze              "analyze"
+%token CMDEcho                 "echo"
+%token CMDExit                 "exit"
 %token CMDHelp                 "help"
+%token CMDQuit                 "quit"
 %token CMDSet                  "set"
 %token CMDSource               "source"
-%token CMDExit                 "exit"
-%token CMDQuit                 "quit"
 
  // other
  /* the final return of a command line */
@@ -107,6 +108,7 @@ command_list
 command_description
     : /* empty */
     | "analyze" argument_list     { shell::CMD::CMDAnalyze::exec(*cmd_env, $2);            }
+    | "echo"    argument_list     { shell::CMD::CMDEcho::exec(*cmd_env, $2);               }
     | "exit"    argument_list     { if(shell::CMD::CMDQuit::exec(*cmd_env, $2)) YYACCEPT;  }
     | "help"    argument_list     { shell::CMD::CMDHelp::exec(*cmd_env, $2);               }
     | "quit"    argument_list     { if(shell::CMD::CMDQuit::exec(*cmd_env, $2)) YYACCEPT;  }

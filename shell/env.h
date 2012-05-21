@@ -71,6 +71,7 @@ namespace shell {
 
 // all the commands in the command environment
 #include "cmd/analyze.h"
+#include "cmd/echo.h"
 #include "cmd/help.h"
 #include "cmd/quit.h"
 #include "cmd/source.h"
