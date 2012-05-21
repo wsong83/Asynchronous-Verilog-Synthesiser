@@ -74,12 +74,16 @@ ostream& shell::CMD::CMDVar::streamout( ostream& os) const {
 }
 
 CMDVar& shell::CMD::CMDVar::operator= (const string& str) {
+  if(hook.use_count() != 0)  (*hook)(*this, CMDVar(str));
+
   var_type = vString;
   m_str = str;
   return *this;
 }
 
 CMDVar& shell::CMD::CMDVar::operator= (const list<string>& slist) {
+  if(hook.use_count() != 0)  (*hook)(*this, CMDVar(slist));
+
   if(slist.size() > 1) {
     var_type = vList;
     m_list = slist;
@@ -94,6 +98,8 @@ CMDVar& shell::CMD::CMDVar::operator= (const list<string>& slist) {
 }
 
 CMDVar& shell::CMD::CMDVar::operator= (const vector<string>& slist) {
+  if(hook.use_count() != 0)  (*hook)(*this, CMDVar(list<string>(slist.begin(), slist.end())));
+
   if(slist.size() > 1) {
     var_type = vList;
     m_list.assign(slist.begin(), slist.end());

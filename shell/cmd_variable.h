@@ -33,6 +33,9 @@
 
 namespace shell {
   namespace CMD {
+
+    class CMDVarHook;          /* the call back function when the value of a variable is changed */
+
     class CMDVar {
     public:
       enum var_t {
@@ -44,6 +47,12 @@ namespace shell {
 
       CMDVar()
         : var_type(vUnkown) {}
+      CMDVar(const std::string& rhs) 
+        : var_type(vString), m_str(rhs) {}
+      CMDVar(const std::list<std::string>& rhs) 
+        : var_type(vList), m_list(rhs) {}
+      CMDVar(const std::list<boost::shared_ptr<netlist::NetComp> >& rhs) 
+        : var_type(vCollection), m_collection(rhs) {}
 
       // helpers
       void set_string() { var_type = vString; }
@@ -52,6 +61,7 @@ namespace shell {
       bool is_string() const { return var_type == vString; }
       bool is_list() const { return var_type == vList; }
       bool is_collection() const { return var_type == vCollection; }
+      void set_hook(CMDVarHook * phook) { hook.reset(phook); }
       std::string& get_string() { return m_str; }
       std::list<std::string>& get_list() { return m_list; }
       std::list<boost::shared_ptr<netlist::NetComp> >& get_collection() { return m_collection; }
@@ -68,6 +78,7 @@ namespace shell {
       std::string  m_str;
       std::list<std::string> m_list;
       std::list<boost::shared_ptr<netlist::NetComp> > m_collection;
+      boost::shared_ptr<CMDVarHook> hook;
 
     };
 
@@ -75,6 +86,11 @@ namespace shell {
       rhs.streamout(os);
       return os;
     }
+
+    class CMDVarHook {          /* the call back function when the value of a variable is changed */
+    public:
+      virtual void operator() (CMDVar& orig, const CMDVar& newValue = CMDVar()) {}
+    };
 
     // free function
 

@@ -26,6 +26,8 @@
  *
  */
 
+#include <boost/filesystem.hpp>
+
 #include "shell_top.h"
 
 #define YYSTYPE shell::CMD::cmd_token_type
@@ -44,10 +46,47 @@ using std::cout;
 using std::cerr;
 using boost::shared_ptr;
 using netlist::Library;
+using boost::filesystem::path;
+using boost::filesystem::create_directory;
+using boost::filesystem::remove_all;
+using boost::filesystem::exists;
+
 
 shell::Env::Env() 
   : stdOs(cout.rdbuf()), errOs(cerr.rdbuf())
 {}
+
+shell::Env::~Env() {
+  delete parser;
+}
+
+// define a number of hooks used in macros
+namespace shell {
+  namespace CMD {
+    class CMDHook_TMP_PATH : public CMDVarHook {
+    public:
+      virtual void operator() (CMDVar& orig, const CMDVar& newValue = CMDVar()) {
+        // remove the old tmp directory
+        path tmp_old_path(orig.get_string());
+        path tmp_new_path(newValue.get_string());
+        try {
+          if(exists(tmp_old_path)) {
+            remove_all(tmp_old_path);
+            std::cout << "remove " << orig.get_string() << std::endl;
+          }
+          if(!exists(tmp_new_path)) {
+            std::cout << "create " << newValue.get_string() << std::endl;
+            if(!create_directory(tmp_new_path)) {
+              throw std::exception();
+            }
+          }
+        } catch (std::exception e) {
+          throw("Error! problem with removing or creating the temporary work directory.");
+        }
+      }
+    }; 
+  }
+}
 
 bool shell::Env::initialise() {
   // set up the default work library and add it in the link library
@@ -65,7 +104,21 @@ bool shell::Env::initialise() {
 
   // initialise the macro database
   // file search path
-  macroDB[MACRO_SEARCH_PATH] = ".";        // default only has the current directory
+  macroDB[MACRO_SEARCH_PATH] = MACRO_SEARCH_PATH_VALUE;
+
+  // the temporary file directory
+  macroDB[MACRO_TMP_PATH] = MACRO_TMP_PATH_VALUE;
+  path tmp_path(macroDB[MACRO_TMP_PATH].get_string());
+  try {
+    if(!exists(tmp_path)) {
+      if(!create_directory(tmp_path)) {
+        throw std::exception();
+      }
+    }
+  } catch (std::exception e) {
+    errOs << "Error! Fail to create the default temporary work directory!" << endl;
+  }
+  macroDB[MACRO_TMP_PATH].set_hook(new CMD::CMDHook_TMP_PATH());
 
   // show the welcome message
   show_cmd(true);
@@ -88,3 +141,4 @@ void shell::Env::show_cmd(bool first_time) {
 void shell::Env::run() {
   parser->parse();
 }
+

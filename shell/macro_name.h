@@ -29,9 +29,11 @@
 #ifndef AV_H_DEFAULT_MACRO_NAME_
 #define AV_H_DEFAULT_MACRO_NAME_
 
-#define MACRO_SEARCH_PATH              "search_path"
-#define MACRO_TARGET_LIB               "target_library"
 #define MACRO_LINK_LIB                 "link_library"
-
+#define MACRO_SEARCH_PATH              "search_path"
+#define MACRO_SEARCH_PATH_VALUE        "."
+#define MACRO_TARGET_LIB               "target_library"
+#define MACRO_TMP_PATH                 "tmp_path"
+#define MACRO_TMP_PATH_VALUE           "tmp"
 
 #endif

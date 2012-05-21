@@ -47,6 +47,7 @@ namespace shell {
   class Env {
   public:
     Env();
+    virtual ~Env();
 
     bool initialise();               /* set up basic environment */
     void show_cmd(bool first_time = false); /* show the command line prompt */
