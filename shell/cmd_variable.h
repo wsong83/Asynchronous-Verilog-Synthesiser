@@ -50,7 +50,12 @@ namespace shell {
       CMDVar(const std::string& rhs) 
         : var_type(vString), m_str(rhs) {}
       CMDVar(const std::list<std::string>& rhs) 
-        : var_type(vList), m_list(rhs) {}
+        : var_type(vList), m_list(rhs) {
+        if(rhs.size() == 1) {
+          var_type = vString;
+          m_str = rhs.front();
+        }
+      }
       CMDVar(const std::list<boost::shared_ptr<netlist::NetComp> >& rhs) 
         : var_type(vCollection), m_collection(rhs) {}
 

@@ -58,6 +58,13 @@ shell::Env::Env()
 
 shell::Env::~Env() {
   delete parser;
+  try {
+    if(exists(macroDB[MACRO_TMP_PATH].get_string())) {
+      remove_all(macroDB[MACRO_TMP_PATH].get_string());
+    }
+  } catch (std::exception e) {
+    throw("Error! problem with removing or creating the temporary work directory.");
+  }
 }
 
 // define a number of hooks used in macros
@@ -72,10 +79,8 @@ namespace shell {
         try {
           if(exists(tmp_old_path)) {
             remove_all(tmp_old_path);
-            std::cout << "remove " << orig.get_string() << std::endl;
           }
           if(!exists(tmp_new_path)) {
-            std::cout << "create " << newValue.get_string() << std::endl;
             if(!create_directory(tmp_new_path)) {
               throw std::exception();
             }
