@@ -26,10 +26,12 @@
  *
  */
 
+#include <fstream>
 #include "analyze.h"
 #include "preproc/preproc.h"
 #include "shell/macro_name.h"
-#include <fstream>
+#include "averilog/averilog_util.h"
+#include "averilog/averilog.lex.h"
 
 using std::string;
 using std::vector;
@@ -164,6 +166,9 @@ bool shell::CMD::CMDAnalyze::exec ( Env& gEnv, vector<string>& arg){
       delete preprocp;
 
       // call the verilog parser
+      averilog::Parser m_parser(tmp_file_name.c_str(), gEnv);
+      m_parser.initialize();
+      m_parser.parse();
     }
   }
        

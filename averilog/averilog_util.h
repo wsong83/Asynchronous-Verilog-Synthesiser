@@ -63,7 +63,9 @@ namespace averilog {
     FILE * sfile;		        /* the file handler of the scanner */
     std::string fname;		    /* the name of the file */
     av_parser bison_instance;	/* the bison parser instance */
-  }; 
+  };
+
+  extern void file_line_updater(YYLTYPE *, const std::string&);
 
 }
 

@@ -27,12 +27,17 @@
  */
 
 //#include <cstdio>
+#include <boost/regex.hpp>
+#include <boost/lexical_cast.hpp>
 #include "averilog_util.h"
 
 using namespace averilog;
 using std::endl;
 using std::ostream;
 using std::string;
+using boost::regex;
+using boost::regex_match;
+using boost::smatch;
 
 void averilog::error_report(const string& err_msg, YYLTYPE * yyloc, ostream& os) {
   os << "\n" << *yyloc << " Scanner Error: " << err_msg << endl;
@@ -61,6 +66,13 @@ bool averilog::Parser::parse() {
   return 0 == bison_instance.parse();
 }
 
-  
+void averilog::file_line_updater(YYLTYPE * yylloc, const string& mstr) {
+  regex regex_exp("`line\\s+(\\d+)\\s+\\\"([^\\\"]+)\\\".*");
+  smatch mresult;
+  regex_match(mstr, mresult, regex_exp);
+  string * newfile = new string(mresult[2].str());
+  yylloc->initialize(newfile);
+  yylloc->lines(boost::lexical_cast<unsigned int>(mresult[1].str())-1);
+}
   
 

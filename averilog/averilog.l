@@ -116,14 +116,14 @@ operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
 "buf"       { return token::pBuf;   }
 {operator}  { return yytext[0]; }
 "."         { return yytext[0]; }
-{fnum}    { 
+{fnum}      { 
               yylval->tNumber = netlist::Number(*yylloc, yytext, yyleng);
               if(!yylval->tNumber.is_valid()) {
                 yyget_extra(yyscanner)->error(*yylloc, "SYN-NUM-0", string(yytext, yyleng));
               }
               return token::number; 
             }
-{dec}    { 
+{dec}       { 
               yylval->tNumber = netlist::Number(*yylloc, yytext, yyleng);
               return token::number; 
             }
@@ -131,13 +131,19 @@ operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
                 yylval->tID = averilog::avID(yytext, yyleng);
                 return token::identifier; 
               }
-"//"[^\n]*[\n] { yylloc->lines();    }
-"/*"        { BEGIN(COMMENT);        }
-<COMMENT>[^\n] { /* do nothing */    }
-<COMMENT><<EOF>> {  yyget_extra(yyscanner)->error(*yylloc, "SYN-FILE-0"); yyterminate(); }
-<COMMENT>"\n"  { yylloc->lines();    }
-"*/"        { BEGIN(0);              } 
+
+"//"[^\n]*[\n]       { yylloc->lines();    }
+"/*"                 { BEGIN(COMMENT);     }
+<COMMENT>[^\n*]      { /* do nothing */    }
+<COMMENT>[*]+[^/]    { /* do nothing */    }
+<COMMENT><<EOF>>     {  yyget_extra(yyscanner)->error(*yylloc, "SYN-FILE-0"); yyterminate(); }
+<COMMENT>"\n"        { yylloc->lines();    }
+<COMMENT>"*/"        { BEGIN(0);           } 
+<COMMENT>[*]+"/"     { BEGIN(0);           } 
+
 {ws}        { /* white space, do nothing */ }
 "\n"        { yylloc->lines();       }
+
+"`line "[^\n]*[\n] { averilog::file_line_updater(yylloc, string(yytext, yyleng)); }
 
 %%

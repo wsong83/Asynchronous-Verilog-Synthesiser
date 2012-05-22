@@ -5,8 +5,8 @@ An Asynchronous Verilog Synthesis (AVS) System
 This software is distributed under GPL v2.0 or later licenses.
 
 This is an asynchronous synthesis software.
-It read in RTL-level Verilog HDL designs and trys to partition the design
-into a globally asynchronous and locally synchronous (GALS) design while
+It reads in RTL-level Verilog HDLs and trys to partition the design into 
+a globally asynchronous and locally synchronous (GALS) design while 
 implement the asynchronous interface between synchronous islands.
 
 What I have done:
