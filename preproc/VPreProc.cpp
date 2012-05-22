@@ -1,3 +1,30 @@
+/*
+ * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ *    Advanced Processor Technologies Group, School of Computer Science
+ *    University of Manchester, Manchester M13 9PL UK
+ *
+ *    This source code is free software; you can redistribute it
+ *    and/or modify it in source code form under the terms of the GNU
+ *    General Public License as published by the Free Software
+ *    Foundation; either version 2 of the License, or (at your option)
+ *    any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ */
+
+/* 
+ * Embed the Verilog-Perl verilog preprocessor to AVS
+ * 22/05/2012   Wei Song
+ *
+ *
+ */
 // -*- C++ -*-
 //*************************************************************************
 //
@@ -43,6 +70,8 @@
 
 #include "VPreProc.h"
 #include "VPreLex.h"
+
+using namespace std;
 
 //#undef yyFlexLexer
 //#define yyFlexLexer xxFlexLexer
@@ -185,7 +214,7 @@ struct VPreProcImp : public VPreProcOpaque {
     string getparseline(bool stop_at_eol, size_t approx_chunk);
     bool isEof() const { return m_lexp->curStreamp()->m_eof; }
     bool readWholefile(const string& filename, StrList& outl);
-    void openFile(string filename, VFileLine* filelinep);
+    bool openFile(string filename, VFileLine* filelinep);
     void insertUnreadback(const string& text) { m_lineCmt += text; }
     void insertUnreadbackAtBol(const string& text);
     void addLineComment(int enter_exit_level);
@@ -257,9 +286,9 @@ VPPreProc::VPreProc::~VPreProc() {
 // VPreProc Methods.  Just call the implementation functions.
 
 void VPPreProc::VPreProc::comment(string cmt) { }
-void VPPreProc::VPreProc::openFile(string filename, VFileLine* filelinep) {
+bool VPPreProc::VPreProc::openFile(string filename, VFileLine* filelinep) {
     VPreProcImp* idatap = static_cast<VPreProcImp*>(m_opaquep);
-    idatap->openFile (filename,filelinep);
+    return idatap->openFile (filename,filelinep);
 }
 string VPPreProc::VPreProc::getline() {
     VPreProcImp* idatap = static_cast<VPreProcImp*>(m_opaquep);
@@ -550,7 +579,7 @@ string VPPreProc::VPreProcImp::defineSubst(VPreDefRef* refp) {
 
 bool VPPreProc::VPreProcImp::readWholefile(const string& filename, StrList& outl) {
     int fd = open (filename.c_str(), O_RDONLY);
-    if (!fd) return false;
+    if (fd <= 0) return false;
 
     // If change this code, run a test with the below size set very small
 //#define INFILTER_IPC_BUFSIZ 16
@@ -575,7 +604,7 @@ bool VPPreProc::VPreProcImp::readWholefile(const string& filename, StrList& outl
     return true;
 }
 
-void VPPreProc::VPreProcImp::openFile(string filename, VFileLine* filelinep) {
+bool VPPreProc::VPreProcImp::openFile(string filename, VFileLine* filelinep) {
     // Open a new file, possibly overriding the current one which is active.
 
     // Read a list<string> with the whole file.
@@ -583,7 +612,7 @@ void VPPreProc::VPreProcImp::openFile(string filename, VFileLine* filelinep) {
     bool ok = readWholefile(filename, wholefile/*ref*/);
     if (!ok) {
       error("File not found: "+filename+"\n");
-      return;
+      return false;
     }
 
     if (!m_preprocp->isEof()) {  // IE not the first file.
@@ -591,7 +620,7 @@ void VPPreProc::VPreProcImp::openFile(string filename, VFileLine* filelinep) {
       // up, with guards preventing a real recursion.
       if (m_lexp->m_streampStack.size()>VPreProc::INCLUDE_DEPTH_MAX) {
 	    error("Recursive inclusion of file: "+filename);
-	    return;
+	    return false;
       }
       // There's already a file active.  Push it to work on the new one.
       addLineComment(0);
@@ -629,6 +658,8 @@ void VPPreProc::VPreProcImp::openFile(string filename, VFileLine* filelinep) {
 	// Reclaim memory; the push saved the string contents for us
 	*it = "";
     }
+    
+    return true;
 }
 
 void VPPreProc::VPreProcImp::insertUnreadbackAtBol(const string& text) {

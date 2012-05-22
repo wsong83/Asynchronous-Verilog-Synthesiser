@@ -127,7 +127,7 @@ class VPreStream {
 public:
     VFileLine*		m_curFilelinep;	// Current processing point (see also m_tokFilelinep)
     VPreLex*		m_lexp;		// Lexer, for resource tracking
-    deque<string>	m_buffers;	// Buffer of characters to process
+  std::deque<std::string>	m_buffers;	// Buffer of characters to process
     int			m_ignNewlines;	// Ignore multiline newlines
     bool		m_eof;		// "EOF" buffer
     bool		m_file;		// Buffer is start of new file
@@ -151,7 +151,7 @@ private:
 class VPreLex {
   public:	// Used only by VPreLex.cpp and VPreProc.cpp
     VPreProcImp*	m_preimpp;	// Preprocessor lexor belongs to
-    stack<VPreStream*>	m_streampStack;	// Stack of processing files
+  std::stack<VPreStream*>	m_streampStack;	// Stack of processing files
     int			m_streamDepth;	// Depth of stream processing
     YY_BUFFER_STATE	m_bufferState;	// Flex state
     VFileLine*		m_tokFilelinep;	// Starting position of current token
@@ -167,7 +167,7 @@ class VPreLex {
     int		m_formalLevel;	///< Parenthesis counting inside def formals
     int		m_parenLevel;	///< Parenthesis counting inside def args
     bool	m_defCmtSlash;	///< /*...*/ comment in define had \ ending
-    string	m_defValue;	///< Definition value being built.
+    std::string	m_defValue;	///< Definition value being built.
     int		m_enterExit;	///< For VL_LINE, the enter/exit level
 
     // CONSTRUCTORS
@@ -204,8 +204,8 @@ class VPreLex {
     void pushStateDefValue();
     void pushStateIncFilename();
     void scanNewFile(VFileLine* filelinep);
-    void scanBytes(const string& str);
-    void scanBytesBack(const string& str);
+    void scanBytes(const std::string& str);
+    void scanBytesBack(const std::string& str);
     size_t inputToLex(char* buf, size_t max_size);
     /// Called by VPreProc.cpp to get data from lexer
     YY_BUFFER_STATE currentBuffer();
@@ -220,11 +220,11 @@ class VPreLex {
     /// Utility
     static int debug();
     static void debug(int level);
-    static string cleanDbgStrg(const string& in);
+    static std::string cleanDbgStrg(const std::string& in);
 
 private:
-    string currentUnreadChars();
-    string endOfStream(bool& againr);
+    std::string currentUnreadChars();
+    std::string endOfStream(bool& againr);
     void initFirstBuffer(VFileLine* filelinep);
     void scanSwitchStream(VPreStream* streamp);
 };

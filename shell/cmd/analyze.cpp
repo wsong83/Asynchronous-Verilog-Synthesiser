@@ -27,10 +27,16 @@
  */
 
 #include "analyze.h"
+#include "preproc/preproc.h"
+#include "shell/macro_name.h"
+#include <fstream>
 
 using std::string;
 using std::vector;
+using std::list;
 using std::endl;
+using std::ofstream;
+using boost::shared_ptr;
 using namespace shell;
 using namespace shell::CMD;
 
@@ -70,7 +76,7 @@ bool shell::CMD::CMDAnalyze::exec ( Env& gEnv, vector<string>& arg){
     store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
     notify(vm);
   } catch (std::exception& e) {
-    gEnv.errOs << "Wrong command syntax error! See usage by analyze -help." << endl;
+    gEnv.errOs << "Error: Wrong command syntax error! See usage by analyze -help." << endl;
     return false;
   }
 
@@ -80,6 +86,86 @@ bool shell::CMD::CMDAnalyze::exec ( Env& gEnv, vector<string>& arg){
     return true;
   }
 
+  //set the target library
+  if(vm.count("library")) {
+    string lib_name = vm["library"].as<string>();
+    if(lib_name.empty()) {
+      gEnv.errOs << "Error: The target library name is empty." << endl;
+      return false;
+    } else {
+      if(!gEnv.link_lib.count(lib_name))
+        gEnv.link_lib[lib_name] = shared_ptr<netlist::Library>(new netlist::Library(lib_name, lib_name+".db"));
 
+      gEnv.curLib = gEnv.link_lib[lib_name];
+    }
+  }
+
+  // analyse the target files
+  if(vm.count("file")) {
+    vector<string> target_files = vm["file"].as<vector<string> >();
+    vector<string>::iterator it, end;
+    for(it=target_files.begin(), end=target_files.end(); it!=end; it++) {
+      // run the preprocessor first
+      gEnv.stdOs << "Read in \"" << *it << "\"" << endl;
+      VPPreProc::VFileLineXs* filelinep = new VPPreProc::VFileLineXs(NULL);
+      VPPreProc::VPreProcXs* preprocp = new VPPreProc::VPreProcXs();
+      filelinep->setPreproc(preprocp);
+      preprocp->configure(filelinep);
+      if(!preprocp->openFile(*it)) {
+        gEnv.errOs << "Error: Cannot open file \"" << *it << "\"." << endl;
+        delete preprocp;
+        return false;
+      }
+      
+      preprocp->keepComments(1);
+      preprocp->keepWhitespace(1);
+      preprocp->lineDirectives(1);
+      preprocp->pedantic(0);
+      preprocp->synthesis(1);
+
+      //set the pre-defined macros
+      if(vm.count("define")) {
+        vector<string> macro_list = vm["define"].as<vector<string> >();
+        vector<string>::const_iterator mit, mend;
+        for(mit=macro_list.begin(), mend=macro_list.end(); mit!=mend; mit++){
+          preprocp->define(*mit, "", "", true);
+        }
+      }
+
+      // set the include paths
+      if(gEnv.macroDB[MACRO_SEARCH_PATH].is_string()) {
+        preprocp->add_incr(gEnv.macroDB[MACRO_SEARCH_PATH].get_string());
+      } else if(gEnv.macroDB[MACRO_SEARCH_PATH].is_list()) {
+        list<string>::const_iterator iit, iend;
+        for( iit=gEnv.macroDB[MACRO_SEARCH_PATH].get_list().begin(), 
+               iend=gEnv.macroDB[MACRO_SEARCH_PATH].get_list().end();
+             iit!=iend; iit++) {
+          preprocp->add_incr(*iit);
+        }
+      } else {
+        assert(0 == "search_path is not a string nor a list!");
+      }
+
+      // set the output file
+      ofstream of_handle;
+      string tmp_file_name = gEnv.macroDB[MACRO_TMP_PATH].get_string() + "/verilog.preproc";
+      //gEnv.stdOs << "write to temporary file \"" << tmp_file_name << "\"." << endl;
+      of_handle.open(tmp_file_name.c_str(), std::ios::out);
+
+      // preprocess the file
+      while(true) {
+        string rt = preprocp->getline();
+        of_handle << rt;
+        if(rt.size() == 0) break;
+      }
+
+      of_handle.close();
+      //delete filelinep;
+      delete preprocp;
+
+      // call the verilog parser
+    }
+  }
+       
   return true;
 }

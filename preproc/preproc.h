@@ -37,58 +37,58 @@
 
 namespace VPPreProc {
 
-class VFileLineXs;
-
-//**********************************************************************
-// Preprocessor derived classes, so we can override the callbacks to call perl.
-
-class VPreProcXs : public VPreProc {
-public:
-  //SV* m_self;	// Class called from (the hash, not SV pointing to the hash)
-    deque<VFileLineXs*> m_filelineps;
-
-    VPreProcXs() : VPreProc() {}
+  class VFileLineXs;
+  
+  //**********************************************************************
+  // Preprocessor derived classes, so we can override the callbacks to call perl.
+  
+  class VPreProcXs : public VPreProc {
+  public:
+    //SV* m_self;	// Class called from (the hash, not SV pointing to the hash)
+    std::deque<VFileLineXs*> m_filelineps;
+    
+  VPreProcXs() : VPreProc() {}
     virtual ~VPreProcXs();
-
+    
     // Callback methods
-    virtual void comment(string filename);	// Comment for keepComments=>sub
-    virtual void include(string filename);	// Request a include file be processed
-    virtual void define(string name, string value, string params); // `define with parameters
-    virtual void undef(string name);		// Remove a definition
+    virtual void comment(std::string filename);	// Comment for keepComments=>sub
+    virtual void include(std::string filename);	// Request a include file be processed
+    virtual void define(std::string name, std::string value, std::string params); // `define with parameters
+    virtual void undef(std::string name);		// Remove a definition
     virtual void undefineall();			// Remove all non-command-line definitions
-    virtual bool defExists(string name);	// Return true if define exists
-    virtual string defParams(string name);	// Return parameter list if define exists
-    virtual string defValue(string name);	// Return value of given define (should exist)
-    virtual string defSubstitute(string substitute);	// Return value to substitute for given post-parameter value
-
+    virtual bool defExists(std::string name);	// Return true if define exists
+    virtual std::string defParams(std::string name);	// Return parameter list if define exists
+    virtual std::string defValue(std::string name);	// Return value of given define (should exist)
+    virtual std::string defSubstitute(std::string substitute);	// Return value to substitute for given post-parameter value
+    
     void unreadback(char* text);
-    void define(string name, string value, string params, bool pre); // predefine a macro
-    void add_incr(const string& m_path);
-
- private:
+    void define(std::string name, std::string value, std::string params, bool pre); // predefine a macro
+    void add_incr(const std::string& m_path);
+    
+  private:
     std::map<std::string, VMacro*>  m_macroDB;
     std::list<std::string>          m_incrList;
-};
-
-class VFileLineXs : public VFileLine {
+  };
+  
+  class VFileLineXs : public VFileLine {
     VPreProcXs*	m_vPreprocp;		// Parser handling the errors
-public:
+  public:
     VFileLineXs(VPreProcXs* pp) : VFileLine(true), m_vPreprocp(pp) { if (pp) pushFl(); }
     virtual ~VFileLineXs() { }
-    virtual VFileLine* create(const string& filename, int lineno) {
-	VFileLineXs* filelp = new VFileLineXs(m_vPreprocp);
-	filelp->init(filename, lineno);
-	return filelp;
+    virtual VFileLine* create(const std::string& filename, int lineno) {
+      VFileLineXs* filelp = new VFileLineXs(m_vPreprocp);
+      filelp->init(filename, lineno);
+      return filelp;
     }
-    virtual void error(const string& msg);	// Report a error at given location
+    virtual void error(const std::string& msg);	// Report a error at given location
     void setPreproc(VPreProcXs* pp) {
-	m_vPreprocp=pp;
-	pushFl(); // The very first construction used pp=NULL, as pp wasn't created yet so make it now
+      m_vPreprocp=pp;
+      pushFl(); // The very first construction used pp=NULL, as pp wasn't created yet so make it now
     }
     // Record the structure so we can delete it later
     void pushFl() { m_vPreprocp->m_filelineps.push_back(this); }
-};
-
+  };
+  
 }
 
 #endif

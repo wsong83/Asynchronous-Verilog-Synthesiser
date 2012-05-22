@@ -167,10 +167,11 @@ int shell::CMD::CMDLexer::yylex(cmd_token_type * yyval) {
         }
       } else {
         if(isalnum(*rp) || 
-           *rp == '$' || 
+           (*rp == '$') || 
            (*rp == '/' && tp != 0) || 
-           *rp == '_' || 
-           (*rp == '.' && tp != 0) ||
+           (*rp == '_') || 
+           (*rp == '*' && tp != 0) ||
+           (*rp == '.') ||
            (*rp == '[' && tp != 0) ||
            (*rp == ']' && level_str != 0) ||
            (*rp == '{' && tp != 0 && tbuf[tp-1] == '$')||

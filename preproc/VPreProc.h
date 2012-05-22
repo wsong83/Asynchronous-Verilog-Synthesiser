@@ -1,3 +1,30 @@
+/*
+ * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ *    Advanced Processor Technologies Group, School of Computer Science
+ *    University of Manchester, Manchester M13 9PL UK
+ *
+ *    This source code is free software; you can redistribute it
+ *    and/or modify it in source code form under the terms of the GNU
+ *    General Public License as published by the Free Software
+ *    Foundation; either version 2 of the License, or (at your option)
+ *    any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ */
+
+/* 
+ * Embed the Verilog-Perl verilog preprocessor to AVS
+ * 22/05/2012   Wei Song
+ *
+ *
+ */
 // -*- C++ -*-
 //*************************************************************************
 //
@@ -26,7 +53,6 @@
 #include <string>
 #include <map>
 #include <iostream>
-using namespace std;
 #include "VFileLine.h"
 
 namespace VPPreProc {
@@ -70,12 +96,12 @@ public:
 
     // ACCESSORS
     /// Insert given file into this point in input stream
-    void openFile(string filename, VFileLine* filelinep=NULL);
+    bool openFile(std::string filename, VFileLine* filelinep=NULL);
     void debug(int level);	///< Set debugging level
-    string getall(size_t approx_chunk);	///< Return all lines, or at least approx_chunk bytes. (Null if done.)
-    string getline();		///< Return next line/lines. (Null if done.)
+    std::string getall(size_t approx_chunk);	///< Return all lines, or at least approx_chunk bytes. (Null if done.)
+    std::string getline();		///< Return next line/lines. (Null if done.)
     bool isEof();		///< Return true on EOF.
-    void insertUnreadback(string text);
+    void insertUnreadback(std::string text);
 
     VFileLine* fileline();	///< File/Line number for last getline call
 
@@ -98,19 +124,19 @@ public:
 
     // CALLBACK METHODS
     // This probably will want to be overridden for given child users of this class.
-    virtual void comment(string cmt) = 0;		///< Comment detected (if keepComments==2)
-    virtual void include(string filename) = 0;	///< Request a include file be processed
-    virtual void define(string name, string value, string params) = 0; ///< `define without any parameters
-    virtual void undef(string name) = 0;		///< Remove a definition
+    virtual void comment(std::string cmt) = 0;		///< Comment detected (if keepComments==2)
+    virtual void include(std::string filename) = 0;	///< Request a include file be processed
+    virtual void define(std::string name, std::string value, std::string params) = 0; ///< `define without any parameters
+    virtual void undef(std::string name) = 0;		///< Remove a definition
     virtual void undefineall() = 0;			///< Remove all non-command-line definitions
-    virtual bool defExists(string name) = 0;	///< Return true if define exists
-    virtual string defParams(string name) = 0;	///< Return parameter list if define exists
-    virtual string defValue(string name) = 0;	///< Return value of given define (should exist)
-    virtual string defSubstitute(string substitute) = 0;	///< Return value to substitute for given post-parameter value
+    virtual bool defExists(std::string name) = 0;	///< Return true if define exists
+    virtual std::string defParams(std::string name) = 0;	///< Return parameter list if define exists
+    virtual std::string defValue(std::string name) = 0;	///< Return value of given define (should exist)
+    virtual std::string defSubstitute(std::string substitute) = 0;	///< Return value to substitute for given post-parameter value
 
     // UTILITIES
-    void error(string msg) { fileline()->error(msg); }	///< Report a error
-    void fatal(string msg) { fileline()->fatal(msg); }	///< Report a fatal error
+    void error(std::string msg) { fileline()->error(msg); }	///< Report a error
+    void fatal(std::string msg) { fileline()->fatal(msg); }	///< Report a fatal error
 
 private:
     VPreProcOpaque*	m_opaquep;	///< Pointer to parser's implementation data.

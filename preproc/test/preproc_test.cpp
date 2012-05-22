@@ -34,6 +34,8 @@
 namespace po = boost::program_options;
 using std::string;
 using std::vector;
+using std::endl;
+using std::cout;
 using namespace VPPreProc;
 
 int main(int argc, char** argv)
@@ -84,7 +86,7 @@ int main(int argc, char** argv)
   try {
     store(po::command_line_parser(argc, argv).options(all_opt).positional(p).run(), vm);
     notify(vm);
-  } catch(exception& e) {
+  } catch(std::exception& e) {
     cout << "Wrong command syntax! See usage using --help." << endl;
     return 1;
   }
