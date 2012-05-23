@@ -56,14 +56,11 @@ shell::ErrReport::ErrReport()
 //bool shell::ErrReport::fail = false;
 
 bool shell::ErrReport::suppress(const string& errID) {
-  map<string, ErrorType>::iterator it, end;
-  it = errList.find(errID);
-  end = errList.end();
-  
-  assert(it != end);		// make sure the error id exist
 
-  if(it->second.severe > ErrorType::EError) { // suppressible
-    return it->second.suppressed = true;
+  if(!errList.count(errID)) return false; // error id non-existed
+
+  if(errList.find(errID)->second.severe > ErrorType::EError) { // suppressible
+    return errList.find(errID)->second.suppressed = true;
   } else { return false; }
 }
 
@@ -74,17 +71,13 @@ void shell::ErrReport::set_output(ostream& new_os) {
 bool shell::ErrReport::operator () (const shell::location& loc, const string& errID,
 				     const string& p1, const string& p2, const string& p3) {
   const string rtype[4] = {"Fatal Error: ", "Error: ", "Warning: ", "Information: "}; 
-  map<string, ErrorType>::const_iterator it, end;
-  it = errList.find(errID);
-  end = errList.end();
-  
-  assert(it != end);		// make sure the error id exist
 
-  const ErrorType& eT = it->second;
+  if(!errList.count(errID)) return false; // error id non-existed
 
+  ErrorType& eT = errList.find(errID)->second;
   if(eT.suppressed) return false;
 
-  switch(it->second.num_of_para) {
+  switch(eT.num_of_para) {
   case 0: {
     os << loc << ": [" << errID << "] " << rtype[eT.severe]
        << eT.errMsg << endl; 

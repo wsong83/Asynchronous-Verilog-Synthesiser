@@ -1,4 +1,4 @@
-##### Ignore these file in the Git version control #####
+##### Ignore these files in the Git version control #####
 
 ## Compiler result
 averilog/*.o

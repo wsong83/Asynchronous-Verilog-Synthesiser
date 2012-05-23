@@ -82,7 +82,6 @@ bool shell::CMD::CMDAnalyze::exec ( Env& gEnv, vector<string>& arg){
     return false;
   }
 
-  // TODO: parse the file
   if(vm.count("help")) {        // print help information
     shell::CMD::CMDAnalyze::help(gEnv);
     return true;

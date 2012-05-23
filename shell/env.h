@@ -75,8 +75,8 @@ namespace shell {
 #include "cmd/echo.h"
 #include "cmd/help.h"
 #include "cmd/quit.h"
-#include "cmd/source.h"
 #include "cmd/set.h"
-
+#include "cmd/source.h"
+#include "cmd/suppress_message.h"
 
 #endif

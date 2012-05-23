@@ -20,31 +20,29 @@
  */
 
 /* 
- * argument definitions for analyze command
- * 10/05/2012   Wei Song
+ * suppress some warning messages
+ * 23/05/2012   Wei Song
  *
  *
  */
 
-#ifndef AV_CMD_ANALYZE_
-#define AV_CMD_ANALYZE_
+#ifndef AVS_CMD_SUPPRESS_MESSAGE_
+#define AVS_CMD_SUPPRESS_MESSAGE_
 
 #include "shell/env.h"
 #include "cmd_define.h"
 
-namespace shell { 
+namespace shell {
   namespace CMD {
-  
-    class CMDAnalyze {
+    class CMDSuppressMessage {
     public:
       static bool exec ( Env&, std::vector<std::string>&);
       static void help ( Env& );
 
-      //private:
       static po::options_description cmd_opt;
       static po::positional_options_description cmd_position;
     };
   }
-}
+}      
 
 #endif

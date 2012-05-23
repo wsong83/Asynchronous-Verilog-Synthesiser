@@ -75,6 +75,7 @@
 %token CMDQuit                 "quit"
 %token CMDSet                  "set"
 %token CMDSource               "source"
+%token CMDSuppressMessage      "suppress_message"
 
  // other
  /* the final return of a command line */
@@ -115,6 +116,7 @@ command_description
     | "quit"    argument_list     { if(shell::CMD::CMDQuit::exec(*cmd_env, $2)) YYACCEPT;  }
     | "set"     argument_list     { shell::CMD::CMDSet::exec(*cmd_env, $2);                }
     | "source"  argument_list     { shell::CMD::CMDSource::exec(*cmd_env, $2);             }
+    | "suppress_message"  argument_list     { shell::CMD::CMDSuppressMessage::exec(*cmd_env, $2); }
     | simple_string argument_list 
     {
       cmd_env->errOs << "Unrecognizable command \"" << $1 << "\"!" << endl;
