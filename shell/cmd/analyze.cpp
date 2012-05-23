@@ -46,6 +46,7 @@ static po::options_description arg_opt("Options");
 po::options_description_easy_init const dummy_arg_opt =
   arg_opt.add_options()
   ("help", "usage information.")
+  ("format", po::value<string>(), "the source file language (now only support verilog).")
   ("library", po::value<string>(), "set the output library (other than work).")
   ("define", po::value<vector<string> >()->composing(), "macro definitions.")
   ;
