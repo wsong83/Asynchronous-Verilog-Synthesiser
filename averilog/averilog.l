@@ -40,6 +40,8 @@
 #include "averilog_util.h"
 using std::string;
 
+typedef averilog::av_parser::token token;
+
 /* handle locations */
 #define YY_USER_ACTION yylloc->step(); yylloc->columns(yyleng);
 

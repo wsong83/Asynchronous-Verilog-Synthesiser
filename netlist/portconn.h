@@ -59,7 +59,7 @@ namespace netlist {
     PortConn(const boost::shared_ptr<Expression>& exp, int dir_m = 0) /* ordered connection */
       : dir(dir_m), exp(exp), type(CEXP), named(false) { reduce(); }
     
-    PortConn(const averilog::location& lloc, 
+    PortConn(const shell::location& lloc, 
              const boost::shared_ptr<Expression>& exp, 
              int dir_m = 0) /* ordered connection */
       : loc(lloc), dir(dir_m), exp(exp), type(CEXP), named(false) { reduce(); }
@@ -67,7 +67,7 @@ namespace netlist {
     PortConn(const boost::shared_ptr<LConcatenation>& lval, int dir_m = 0) /* ordered connection */
       : dir(dir_m), exp(new Expression(lval)), type(CEXP), named(false) { reduce(); }
     
-    PortConn(const averilog::location& lloc, 
+    PortConn(const shell::location& lloc, 
              const boost::shared_ptr<LConcatenation>& lval, 
              int dir_m = 0) /* ordered connection */
       : loc(lloc), dir(dir_m), exp(new Expression(lval)), type(CEXP), named(false) { reduce(); }
@@ -78,7 +78,7 @@ namespace netlist {
     PortConn(const PoIdentifier pn, const boost::shared_ptr<Expression>& exp, int dir_m = 0) /* named connection */
       : pname(pn), dir(0), exp(exp), type(CEXP), named(true) { reduce(); }
 
-    PortConn(const averilog::location& lloc, 
+    PortConn(const shell::location& lloc, 
              const PoIdentifier pn, 
              const boost::shared_ptr<Expression>& exp, int dir_m = 0) /* named connection */
       : loc(lloc), pname(pn), dir(0), exp(exp), type(CEXP), named(true) { reduce(); }
@@ -86,7 +86,7 @@ namespace netlist {
     PortConn(const PoIdentifier pn)
       : pname(pn), dir(1), type(COPEN), named(true) {}
 
-    PortConn(const averilog::location& lloc, const PoIdentifier pn)
+    PortConn(const shell::location& lloc, const PoIdentifier pn)
       : loc(lloc), pname(pn), dir(1), type(COPEN), named(true) {}
 
     // helpers
@@ -128,7 +128,7 @@ namespace netlist {
     }
 
     // date
-    averilog::location loc;               /* location in ht source file */
+    shell::location loc;               /* location in ht source file */
     PoIdentifier pname;                   /* the port name in the module definition, or parameter name */
     int dir;                              /* direction, -1 in, 0 inout, 1 out */
     boost::shared_ptr<Expression> exp;    /* used when the connection is in general expression */
@@ -150,19 +150,19 @@ namespace netlist {
     ParaConn(const boost::shared_ptr<Expression>& exp) /* ordered connection */
       : exp(exp), type(CEXP), named(false) { reduce(); }
 
-    ParaConn(const averilog::location& lloc, const boost::shared_ptr<Expression>& exp) /* ordered connection */
+    ParaConn(const shell::location& lloc, const boost::shared_ptr<Expression>& exp) /* ordered connection */
       : loc(lloc), exp(exp), type(CEXP), named(false) { reduce(); }
 
     ParaConn(const VIdentifier& pn, const boost::shared_ptr<Expression>& exp) /* named connection */
       : pname(pn), exp(exp), type(CEXP), named(true) { reduce(); }
 
-    ParaConn(const averilog::location& lloc, const VIdentifier& pn, const boost::shared_ptr<Expression>& exp) /* named connection */
+    ParaConn(const shell::location& lloc, const VIdentifier& pn, const boost::shared_ptr<Expression>& exp) /* named connection */
       : loc(lloc), pname(pn), exp(exp), type(CEXP), named(true) { reduce(); }
 
     ParaConn(const VIdentifier& pn) /* named connection */
       : pname(pn), type(COPEN), named(true) { }
 
-    ParaConn(const averilog::location& lloc, const VIdentifier& pn) /* named connection */
+    ParaConn(const shell::location& lloc, const VIdentifier& pn) /* named connection */
       : loc(lloc), pname(pn), type(COPEN), named(true) { }
 
     // helpers
@@ -198,7 +198,7 @@ namespace netlist {
     }
 
     // date
-    averilog::location loc;            /* location in ht source file */
+    shell::location loc;            /* location in ht source file */
     VIdentifier pname;                 /* the port name in the module definition, or parameter name */
     boost::shared_ptr<Expression> exp; /* used when the connection is in general expression */
     VIdentifier var;                   /* reduced to a single variable, one of the normal forms */

@@ -32,7 +32,7 @@ using namespace netlist;
 using std::ostream;
 using std::string;
 using boost::shared_ptr;
-using averilog::location;
+using shell::location;
 
 netlist::WhileState::WhileState(const shared_ptr<Expression>& exp, const shared_ptr<Block>& body)
   : NetComp(NetComp::tWhile), exp(exp), body(body), named(false)

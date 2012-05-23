@@ -37,10 +37,10 @@ namespace netlist {
     // constructors
     Number() : num_leng(0), valid(false), valuable(false) {};
     Number(char *text, int txt_leng); /* constructor for scanner */
-    Number(const averilog::location& lloc, char *text, int txt_leng); /* constructor for scanner */
+    Number(const shell::location& lloc, char *text, int txt_leng); /* constructor for scanner */
     Number(int d);
     Number(const std::string&);
-    Number(const averilog::location& lloc, const std::string&);
+    Number(const shell::location& lloc, const std::string&);
     Number(const mpz_class&);
 
     // helpers

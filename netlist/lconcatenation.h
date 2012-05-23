@@ -36,9 +36,9 @@ namespace netlist {
     // constructors
     // NETLIST_DEFAULT_CON(LConcatenation, tLConcatenation);
     LConcatenation(boost::shared_ptr<Concatenation>&);
-    LConcatenation(const averilog::location&, boost::shared_ptr<Concatenation>&);
+    LConcatenation(const shell::location&, boost::shared_ptr<Concatenation>&);
     LConcatenation(const VIdentifier&);
-    LConcatenation(const averilog::location&, const VIdentifier&);
+    LConcatenation(const shell::location&, const VIdentifier&);
 
     // helpers
     NETLIST_SET_FATHER_DECL;

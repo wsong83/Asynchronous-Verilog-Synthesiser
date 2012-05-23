@@ -44,7 +44,7 @@ namespace netlist{
       exps.push_back(exp);
       body->elab_inparse();
     }
-    CaseItem(const averilog::location& lloc, const boost::shared_ptr<Expression>& exp, const boost::shared_ptr<Block>& body) 
+    CaseItem(const shell::location& lloc, const boost::shared_ptr<Expression>& exp, const boost::shared_ptr<Block>& body) 
       : NetComp(tCaseItem, lloc), body(body)
     {
       exps.push_back(exp);
@@ -56,7 +56,7 @@ namespace netlist{
     {
       body->elab_inparse();
     }
-    CaseItem(const averilog::location& lloc, const boost::shared_ptr<Block>& body) 
+    CaseItem(const shell::location& lloc, const boost::shared_ptr<Block>& body) 
       : NetComp(tCaseItem, lloc), body(body)
     {
       body->elab_inparse();
@@ -67,7 +67,7 @@ namespace netlist{
     {
       body->elab_inparse();
     }
-    CaseItem(const averilog::location& lloc, const std::list<boost::shared_ptr<Expression> >& expm, const boost::shared_ptr<Block>& body)
+    CaseItem(const shell::location& lloc, const std::list<boost::shared_ptr<Expression> >& expm, const boost::shared_ptr<Block>& body)
       : NetComp(tCaseItem, lloc), exps(expm), body(body)
     {
       body->elab_inparse();
@@ -93,19 +93,19 @@ namespace netlist{
       : NetComp(tCase), exp(exp), cases(citems), named(false) {
       cases.push_back(ditem);
     }
-    CaseState(const averilog::location& lloc, const boost::shared_ptr<Expression>& exp, const std::list<boost::shared_ptr<CaseItem> >& citems, const boost::shared_ptr<CaseItem>& ditem)
+    CaseState(const shell::location& lloc, const boost::shared_ptr<Expression>& exp, const std::list<boost::shared_ptr<CaseItem> >& citems, const boost::shared_ptr<CaseItem>& ditem)
       : NetComp(tCase, lloc), exp(exp), cases(citems), named(false) {
       cases.push_back(ditem);
     }
     CaseState(const boost::shared_ptr<Expression>& exp, const std::list<boost::shared_ptr<CaseItem> >& citems)
       : NetComp(tCase), exp(exp), cases(citems), named(false) { }
-    CaseState(const averilog::location& lloc, const boost::shared_ptr<Expression>& exp, const std::list<boost::shared_ptr<CaseItem> >& citems)
+    CaseState(const shell::location& lloc, const boost::shared_ptr<Expression>& exp, const std::list<boost::shared_ptr<CaseItem> >& citems)
       : NetComp(tCase, lloc), exp(exp), cases(citems), named(false) { }
     CaseState(const boost::shared_ptr<Expression>& exp, const boost::shared_ptr<CaseItem>& ditem)
       : NetComp(tCase), exp(exp), named(false) {
       cases.push_back(ditem);
     }
-    CaseState(const averilog::location& lloc, const boost::shared_ptr<Expression>& exp, const boost::shared_ptr<CaseItem>& ditem)
+    CaseState(const shell::location& lloc, const boost::shared_ptr<Expression>& exp, const boost::shared_ptr<CaseItem>& ditem)
       : NetComp(tCase, lloc), exp(exp), named(false) {
       cases.push_back(ditem);
     }

@@ -39,9 +39,9 @@ namespace netlist {
     // constructors
     Identifier() {}
     Identifier(NetComp::ctype_t ctype) : NetComp(ctype) {}
-    Identifier(NetComp::ctype_t ctype, const averilog::location& lloc) : NetComp(ctype, lloc) {}
+    Identifier(NetComp::ctype_t ctype, const shell::location& lloc) : NetComp(ctype, lloc) {}
     Identifier(NetComp::ctype_t, const std::string&);
-    Identifier(NetComp::ctype_t, const averilog::location& lloc, const std::string&);
+    Identifier(NetComp::ctype_t, const shell::location& lloc, const std::string&);
 
     // helpers
     int compare(const Identifier& rhs) const; /* compare two identifiers */
@@ -65,11 +65,11 @@ namespace netlist {
   public:
     // constructors
     BIdentifier(const std::string&);
-    BIdentifier(const averilog::location& lloc, const std::string&);
+    BIdentifier(const shell::location& lloc, const std::string&);
     BIdentifier();
-    BIdentifier(const averilog::location& lloc);
+    BIdentifier(const shell::location& lloc);
     BIdentifier(const averilog::avID& );
-    BIdentifier(const averilog::location& lloc, const averilog::avID& );
+    BIdentifier(const shell::location& lloc, const averilog::avID& );
 
     // helpers
     BIdentifier& operator++ ();
@@ -86,7 +86,7 @@ namespace netlist {
     // constructors
     FIdentifier() : Identifier(NetComp::tFuncName) { }
     FIdentifier(const std::string&);
-    FIdentifier(const averilog::location& lloc, const std::string&);
+    FIdentifier(const shell::location& lloc, const std::string&);
     
     // helpers
 
@@ -98,11 +98,11 @@ namespace netlist {
   public:
     // constructors
     MIdentifier() : Identifier(tModuleName) {}
-    MIdentifier(const averilog::location& lloc) : Identifier(tModuleName, lloc) {}
+    MIdentifier(const shell::location& lloc) : Identifier(tModuleName, lloc) {}
     MIdentifier(const std::string&);
-    MIdentifier(const averilog::location& lloc, const std::string&);
+    MIdentifier(const shell::location& lloc, const std::string&);
     MIdentifier(const averilog::avID& );
-    MIdentifier(const averilog::location& lloc, const averilog::avID& );
+    MIdentifier(const shell::location& lloc, const averilog::avID& );
     
     // helpers
     MIdentifier& operator++ ();
@@ -119,11 +119,11 @@ namespace netlist {
   public:
     // constructors
     IIdentifier();
-    IIdentifier(const averilog::location&);
+    IIdentifier(const shell::location&);
     IIdentifier(const std::string&);
-    IIdentifier(const averilog::location&, const std::string&);
+    IIdentifier(const shell::location&, const std::string&);
     IIdentifier(const averilog::avID&);
-    IIdentifier(const averilog::location&, const averilog::avID&);
+    IIdentifier(const shell::location&, const averilog::avID&);
 
     // helpers
     IIdentifier& operator++ ();
@@ -139,11 +139,11 @@ namespace netlist {
   public:
     // constructors
     PoIdentifier() : Identifier(NetComp::tPortName) {}
-    PoIdentifier(const averilog::location& lloc) : Identifier(NetComp::tPortName, lloc) {}
+    PoIdentifier(const shell::location& lloc) : Identifier(NetComp::tPortName, lloc) {}
     PoIdentifier(const std::string&);
-    PoIdentifier(const averilog::location&, const std::string&);
+    PoIdentifier(const shell::location&, const std::string&);
     PoIdentifier(const averilog::avID&);
-    PoIdentifier(const averilog::location&, const averilog::avID&);
+    PoIdentifier(const shell::location&, const averilog::avID&);
 
     // helpers
     void set_range(const std::vector<boost::shared_ptr<Range> >& nr) { m_range = nr; }
@@ -163,13 +163,13 @@ namespace netlist {
   public:
     // constructors
     VIdentifier();
-    VIdentifier(const averilog::location&);
+    VIdentifier(const shell::location&);
     VIdentifier(const std::string&);
-    VIdentifier(const averilog::location&, const std::string&);
+    VIdentifier(const shell::location&, const std::string&);
     VIdentifier(const averilog::avID&);
-    VIdentifier(const averilog::location&, const averilog::avID&);
+    VIdentifier(const shell::location&, const averilog::avID&);
     VIdentifier(const std::string&, const std::vector<boost::shared_ptr<Range> >&);
-    VIdentifier(const averilog::location&, const std::string&, const std::vector<boost::shared_ptr<Range> >&);
+    VIdentifier(const shell::location&, const std::string&, const std::vector<boost::shared_ptr<Range> >&);
 
     //helpers
     VIdentifier& operator++ ();

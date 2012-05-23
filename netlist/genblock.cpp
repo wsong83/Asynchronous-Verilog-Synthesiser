@@ -37,7 +37,7 @@ using std::string;
 using boost::shared_ptr;
 using boost::static_pointer_cast;
 using std::list;
-using averilog::location;
+using shell::location;
 
 netlist::GenBlock::GenBlock(const Block& body)
   : Block(body)

@@ -37,15 +37,15 @@ namespace netlist {
       : Block(tModule) {}
     Module(const MIdentifier& nm)
       : Block(tModule), name(nm) { named=true; }
-    Module(const averilog::location& lloc, const MIdentifier& nm)
+    Module(const shell::location& lloc, const MIdentifier& nm)
     : Block(tModule, lloc), name(nm) { named=true; }
     Module(const MIdentifier& nm, const boost::shared_ptr<Block>& body);
-    Module(const averilog::location& lloc, const MIdentifier& nm, const boost::shared_ptr<Block>& body);
+    Module(const shell::location& lloc, const MIdentifier& nm, const boost::shared_ptr<Block>& body);
     Module(const MIdentifier& nm, const std::list<PoIdentifier>& port_list, const boost::shared_ptr<Block>& body);
-    Module(const averilog::location& lloc, const MIdentifier& nm, const std::list<PoIdentifier>& port_list, const boost::shared_ptr<Block>& body);
+    Module(const shell::location& lloc, const MIdentifier& nm, const std::list<PoIdentifier>& port_list, const boost::shared_ptr<Block>& body);
     Module(const MIdentifier& nm, const std::list<boost::shared_ptr<Variable> >& para_list, 
            const std::list<PoIdentifier>& port_list, const boost::shared_ptr<Block>& body);
-    Module(const averilog::location& lloc, const MIdentifier& nm, 
+    Module(const shell::location& lloc, const MIdentifier& nm, 
            const std::list<boost::shared_ptr<Variable> >& para_list, 
            const std::list<PoIdentifier>& port_list, const boost::shared_ptr<Block>& body);
 

@@ -38,14 +38,20 @@ namespace averilog {
 
 #include "av_comp.h"
 #include "shell/shell_top.h"
+#include "shell/location.h"
 #include "av_token.h"
 
-#define YYSTYPE av_token_type
+#define YYSTYPE averilog::av_token_type
+#define YYLTYPE YYLTYPE
+typedef shell::location YYLTYPE;
+
+ namespace averilog{
+   using shell::location;
+ }
+
+// disable the bison location definition
+#define BISON_LOCATION_HH
 #include "averilog.hh"
-#undef YYSTYPE
-typedef averilog::av_parser::token token;
-typedef averilog::av_parser::semantic_type YYSTYPE;
-typedef averilog::location YYLTYPE;
 
 namespace averilog {
 

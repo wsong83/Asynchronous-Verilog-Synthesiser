@@ -46,12 +46,12 @@ int main(int argc, char*argv[])
 
   sfile = fopen(argv[1], "r");
   string fn(argv[1]);
-  yyloc.initialize(&fn);
+  yyloc.initialize(fn);
   avlex_init (&scanner);
   avset_in(sfile, scanner);
   while((tmp = avlex(&lval, &yyloc, scanner)) != 0) {
     cout << tmp << " ";
-    if(tmp == token::number)
+    if(tmp == averilog::av_parser::token::number)
       cout << "Number:" << lval.tNumber << " ";
   }
     

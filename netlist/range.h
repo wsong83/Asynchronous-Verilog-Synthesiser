@@ -39,15 +39,15 @@ namespace netlist {
     // constructors
     Range() : NetComp(tRange), dim(false), rtype(TR_Err) { }
     Range(const mpz_class&);	/* select by a fix number */
-    Range(const averilog::location&, const mpz_class&);	/* select by a fix number */
+    Range(const shell::location&, const mpz_class&);	/* select by a fix number */
     Range(const mpz_class&, const mpz_class&);	/* select by a fix number */
-    Range(const averilog::location&, const mpz_class&, const mpz_class&);	/* select by a fix number */
+    Range(const shell::location&, const mpz_class&, const mpz_class&);	/* select by a fix number */
     Range(const boost::shared_ptr<Expression>&);	/* select by an expression  */
-    Range(const averilog::location&, const boost::shared_ptr<Expression>&);	/* select by an expression  */
+    Range(const shell::location&, const boost::shared_ptr<Expression>&);	/* select by an expression  */
     Range(const Range_Exp&, bool dim = false);    /* declare or select by a range expression */
-    Range(const averilog::location&, const Range_Exp&, bool dim = false);    /* declare or select by a range expression */
+    Range(const shell::location&, const Range_Exp&, bool dim = false);    /* declare or select by a range expression */
     Range(const Range_Exp&, int); /* select by a range expression using positive or negtive colon */
-    Range(const averilog::location&, const Range_Exp&, int); /* select by a range expression using positive or negtive colon */
+    Range(const shell::location&, const Range_Exp&, int); /* select by a range expression using positive or negtive colon */
 
     // helpers
     bool is_const() const { return rtype == TR_Const && rtype == TR_CRange; }

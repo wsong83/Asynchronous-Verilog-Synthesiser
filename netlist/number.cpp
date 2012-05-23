@@ -33,7 +33,7 @@
 using namespace netlist;
 using std::ostream;
 using std::string;
-using averilog::location;
+using shell::location;
 
 // decimal or integer
 netlist::Number::Number(char *text, int txt_leng) 

@@ -36,7 +36,7 @@ using std::string;
 using boost::shared_ptr;
 using std::list;
 using std::pair;
-using averilog::location;
+using shell::location;
 
 ostream& netlist::SeqBlock::streamout(ostream& os, unsigned int indent) const {
   streamout(os, indent, false);

@@ -32,6 +32,7 @@
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
 
+#include "location.h"
 #include "netlist/component.h"
 #include "cmd_lexer.h"
 #include "err_report.h"
@@ -68,7 +69,6 @@ namespace shell {
   };
 
 }
-
 
 // all the commands in the command environment
 #include "cmd/analyze.h"

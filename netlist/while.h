@@ -36,7 +36,7 @@ namespace netlist {
     // constructors
     WhileState() : NetComp(tWhile), named(false) {}
     WhileState(const boost::shared_ptr<Expression>& exp, const boost::shared_ptr<Block>& body);
-    WhileState(const averilog::location& lloc, const boost::shared_ptr<Expression>& exp, const boost::shared_ptr<Block>& body);
+    WhileState(const shell::location& lloc, const boost::shared_ptr<Expression>& exp, const boost::shared_ptr<Block>& body);
 
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;

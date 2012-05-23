@@ -71,7 +71,7 @@ void shell::ErrReport::set_output(ostream& new_os) {
   os.rdbuf(new_os.rdbuf());     // redirect the streambuf to the new_os ostream
 }
 
-bool shell::ErrReport::operator () (const averilog::location& loc, const string& errID,
+bool shell::ErrReport::operator () (const shell::location& loc, const string& errID,
 				     const string& p1, const string& p2, const string& p3) {
   const string rtype[4] = {"Fatal Error: ", "Error: ", "Warning: ", "Information: "}; 
   map<string, ErrorType>::const_iterator it, end;

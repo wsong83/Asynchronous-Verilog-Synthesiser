@@ -33,7 +33,7 @@ using std::ostream;
 using std::string;
 using boost::shared_ptr;
 using boost::static_pointer_cast;
-using averilog::location;
+using shell::location;
 
 netlist::IfState::IfState(
                           const shared_ptr<Expression>& exp, 

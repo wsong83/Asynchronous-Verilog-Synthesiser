@@ -32,7 +32,7 @@ using namespace netlist;
 using std::ostream;
 using std::string;
 using boost::shared_ptr;
-using averilog::location;
+using shell::location;
 
 netlist::ForState::ForState(
                             const shared_ptr<Assign>& init, 

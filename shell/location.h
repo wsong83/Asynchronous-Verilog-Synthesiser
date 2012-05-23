@@ -33,13 +33,13 @@
 #include <algorithm>
 #include <iostream>
 
-naspace shell {
+namespace shell {
   class position {
   public:
     position()
       : line(1), column(1) {}
 
-    void initializa(const std::string& fn) {
+    void initialize(const std::string& fn) {
       filename = fn;
       line = 1;
       column = 1;
@@ -67,7 +67,7 @@ naspace shell {
     unsigned int column;
   };
 
-  inline cont position& operator += (position& res, const int width) {
+  inline const position& operator += (position& res, const int width) {
     res.columns(width); return res;
   }
 

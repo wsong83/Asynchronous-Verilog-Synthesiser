@@ -36,15 +36,15 @@ namespace netlist{
   public:
     // constructors
     SeqBlock() : Block(tSeqBlock), sensitive(false) {};
-    SeqBlock(const averilog::location& lloc) : Block(tSeqBlock, lloc), sensitive(false) {};
+    SeqBlock(const shell::location& lloc) : Block(tSeqBlock, lloc), sensitive(false) {};
     SeqBlock(const BIdentifier& nm)
       : Block(tSeqBlock, nm), sensitive(false) {}
-    SeqBlock(const averilog::location& lloc, const BIdentifier& nm)
+    SeqBlock(const shell::location& lloc, const BIdentifier& nm)
       : Block(tSeqBlock, lloc, nm), sensitive(false) {}
     SeqBlock(std::list<std::pair<int, boost::shared_ptr<Expression> > >&, const boost::shared_ptr<Block>&);
-    SeqBlock(const averilog::location&, std::list<std::pair<int, boost::shared_ptr<Expression> > >&, const boost::shared_ptr<Block>&);
+    SeqBlock(const shell::location&, std::list<std::pair<int, boost::shared_ptr<Expression> > >&, const boost::shared_ptr<Block>&);
     SeqBlock(const Block&);
-    SeqBlock(const averilog::location&, const Block&);
+    SeqBlock(const shell::location&, const Block&);
     
     // helpers
     virtual std::ostream& streamout(std::ostream&, unsigned int, bool) const;

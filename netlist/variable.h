@@ -39,15 +39,15 @@ namespace netlist {
     } vtype;
 
     Variable() : NetComp(tVariable), uid({0,0}) {}
-    Variable(const averilog::location& lloc) : NetComp(tVariable, lloc), uid({0,0}) {}
+    Variable(const shell::location& lloc) : NetComp(tVariable, lloc), uid({0,0}) {}
     Variable(const VIdentifier& id, vtype_t mtype = TVar)
       : NetComp(tVariable), vtype(mtype), name(id), uid({0,0}) {}
     Variable(const Port& p);
-    Variable(const averilog::location& lloc, const VIdentifier& id, vtype_t mtype = TVar)
+    Variable(const shell::location& lloc, const VIdentifier& id, vtype_t mtype = TVar)
       : NetComp(tVariable, lloc), vtype(mtype), name(id), uid({0,0}) {}
     Variable(const VIdentifier& id, const boost::shared_ptr<Expression>& expp, vtype_t mtype = TVar)
       : NetComp(tVariable), vtype(mtype), name(id), uid({0,0}), exp(expp) {}
-    Variable(const averilog::location& lloc, const VIdentifier& id, 
+    Variable(const shell::location& lloc, const VIdentifier& id, 
              const boost::shared_ptr<Expression>& expp, vtype_t mtype = TVar)
     : NetComp(tVariable, lloc), vtype(mtype), name(id), uid({0,0}), exp(expp) {}
 

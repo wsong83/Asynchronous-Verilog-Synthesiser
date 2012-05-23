@@ -49,6 +49,7 @@
 #define yylex cmd_env->lexer.yylex
   
 #define YYSTYPE shell::CMD::cmd_token_type
+#define YYLTYPE shell::location
 
 #include "cmd_token.h"
 

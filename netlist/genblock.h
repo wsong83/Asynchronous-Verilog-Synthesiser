@@ -35,7 +35,7 @@ namespace netlist{
   public:
     // constructors
     GenBlock(const Block& body);
-    GenBlock(const averilog::location& lloc, const Block& body);
+    GenBlock(const shell::location& lloc, const Block& body);
     
     // helpers
     virtual std::ostream& streamout(std::ostream&, unsigned int, bool) const;    

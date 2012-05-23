@@ -75,7 +75,7 @@
 
 %initial-action
 {
-  @$.initialize(&fname);
+  @$.initialize(fname);
   avlex_init_extra(&av_env, &avscanner);
   avset_in(*sfile, avscanner);
 }

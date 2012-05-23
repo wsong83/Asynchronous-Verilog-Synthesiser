@@ -70,8 +70,7 @@ void averilog::file_line_updater(YYLTYPE * yylloc, const string& mstr) {
   regex regex_exp("`line\\s+(\\d+)\\s+\\\"([^\\\"]+)\\\".*");
   smatch mresult;
   regex_match(mstr, mresult, regex_exp);
-  string * newfile = new string(mresult[2].str());
-  yylloc->initialize(newfile);
+  yylloc->initialize(mresult[2].str());
   yylloc->lines(boost::lexical_cast<unsigned int>(mresult[1].str())-1);
 }
   

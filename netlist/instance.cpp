@@ -34,7 +34,7 @@ using std::endl;
 using std::string;
 using boost::shared_ptr;
 using std::list;
-using averilog::location;
+using shell::location;
 
 
 netlist::Instance::Instance(const IIdentifier& nm, const list<shared_ptr<PortConn> >& polist, type_t itype)

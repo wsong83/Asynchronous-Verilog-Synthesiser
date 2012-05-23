@@ -35,15 +35,15 @@ namespace netlist {
   public:
     // constructors
     Expression() : NetComp(tExp), valuable(false) {}
-    Expression(const averilog::location& lloc) : NetComp(tExp, lloc), valuable(false) {}
+    Expression(const shell::location& lloc) : NetComp(tExp, lloc), valuable(false) {}
     Expression(const Number&);	/* a number is an expression */
-    Expression(const averilog::location& lloc, const Number&);	/* a number is an expression */
+    Expression(const shell::location& lloc, const Number&);	/* a number is an expression */
     Expression(const VIdentifier&); /* a variable/parameter is an expression */
-    Expression(const averilog::location& lloc, const VIdentifier&); /* a variable/parameter is an expression */
+    Expression(const shell::location& lloc, const VIdentifier&); /* a variable/parameter is an expression */
     Expression(const boost::shared_ptr<Concatenation>&); /* a concatenation is an expression */
-    Expression(const averilog::location& lloc, const boost::shared_ptr<Concatenation>&); /* a concatenation is an expression */
+    Expression(const shell::location& lloc, const boost::shared_ptr<Concatenation>&); /* a concatenation is an expression */
     Expression(const boost::shared_ptr<LConcatenation>&); /* some times need to convert a lvalue back to expression */
-    Expression(const averilog::location& lloc, const boost::shared_ptr<LConcatenation>&); /* some times need to convert a lvalue back to expression */
+    Expression(const shell::location& lloc, const boost::shared_ptr<LConcatenation>&); /* some times need to convert a lvalue back to expression */
 
     // helpers
     bool is_valuable() const;    /* check valuable */

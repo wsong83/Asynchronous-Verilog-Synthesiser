@@ -29,7 +29,7 @@
 #ifndef _H_SHELL_ERR_REPORT_
 #define _H_SHELL_ERR_REPORT_
 
-#include "averilog/location.hh"
+#include "location.h"
 
 namespace shell {
   // error type definition
@@ -60,8 +60,8 @@ namespace shell {
     ErrReport();
     bool suppress(const std::string&);       /* try to suppress a type of error message */
     void set_output(std::ostream&);		/* set the output stream */
-    bool operator() (const averilog::location& loc, /* error location */
-                     const std::string& errID,           /* the type of error to report */
+    bool operator() (const location& loc,               /* error location */
+                     const std::string& errID,          /* the type of error to report */
                      const std::string& p1 = "",	    /* the first parameter */
                      const std::string& p2 = "",	    /* the second parameter */
                      const std::string& p3 = ""	    /* the third parameter, maximum three */

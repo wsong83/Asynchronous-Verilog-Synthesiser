@@ -40,14 +40,14 @@ namespace netlist {
      */
   public:
     ConElem() {}
-    ConElem(const averilog::location& lloc) : loc(lloc) {}
+    ConElem(const shell::location& lloc) : loc(lloc) {}
     ConElem(const boost::shared_ptr<Expression>& expr, const std::list<boost::shared_ptr<ConElem> >& elems)
       : exp(expr), con(elems) {}
-    ConElem(const averilog::location& lloc, const boost::shared_ptr<Expression>& expr, const std::list<boost::shared_ptr<ConElem> >& elems)
+    ConElem(const shell::location& lloc, const boost::shared_ptr<Expression>& expr, const std::list<boost::shared_ptr<ConElem> >& elems)
       : exp(expr), con(elems), loc(lloc) {}
     ConElem(const boost::shared_ptr<Expression>& expr)
       : exp(expr) {}
-    ConElem(const averilog::location& lloc, const boost::shared_ptr<Expression>& expr)
+    ConElem(const shell::location& lloc, const boost::shared_ptr<Expression>& expr)
       : exp(expr), loc(lloc) {}
     
     void reduce();
@@ -60,7 +60,7 @@ namespace netlist {
 
     boost::shared_ptr<Expression> exp;
     std::list<boost::shared_ptr<ConElem> > con;
-    averilog::location loc;
+    shell::location loc;
     Block* father;
 
   };

@@ -35,7 +35,7 @@ namespace netlist {
   public:
     // constructors
     Port(const PoIdentifier&);
-    Port(const averilog::location&, const PoIdentifier&);
+    Port(const shell::location&, const PoIdentifier&);
 
     // helpers
     void set_in() { dir = -1; }

@@ -31,7 +31,7 @@
 using namespace netlist;
 using std::ostream;
 using std::endl;
-using averilog::location;
+using shell::location;
 using std::string;
 using boost::shared_ptr;
 

@@ -42,7 +42,7 @@ using namespace netlist;
 using std::ostream;
 using std::string;
 using boost::shared_ptr;
-using averilog::location;
+using shell::location;
 using std::pair;
 
 ////////////////////////////// Base class /////////////////

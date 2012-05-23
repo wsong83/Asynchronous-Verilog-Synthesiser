@@ -29,6 +29,11 @@
 #ifndef AV_H_AV_TOKEN_
 #define AV_H_AV_TOKEN_
 
+#include <boost/shared_ptr.hpp>
+#include <utility>
+#include <list>
+#include "netlist/component.h"
+
 // copy from averilog.lex.h
 #ifndef YY_TYPEDEF_YY_SCANNER_T
 #define YY_TYPEDEF_YY_SCANNER_T
