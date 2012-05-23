@@ -1,0 +1,36 @@
+##### Ignore these file in the Git version control #####
+
+## Compiler result
+averilog/*.o
+netlist/*.o
+shell/*.o
+shell/cmd/*.o
+preproc/*.o
+
+## Bison files
+averilog/averilog.cc
+averilog/averilog.hh
+averilog/location.hh
+averilog/position.hh
+averilog/stack.hh
+shell/command.cc
+shell/command.hh
+shell/location.hh
+shell/position.hh
+shell/stack.hh
+
+
+## Flex files
+averilog/averilog.lex.h
+averilog/averilog.lex.c
+
+
+## Test programs
+averilog/test/parser
+averilog/test/scanner
+preproc/test/preproc_test
+shell/test/avs_shell
+
+
+## Other
+
