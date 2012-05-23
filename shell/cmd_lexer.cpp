@@ -169,8 +169,11 @@ int shell::CMD::CMDLexer::yylex(cmd_token_type * yyval) {
         }
       } else if(comment) {
         if(*rp == '\000') {
+          // push a return to the token fifo
+          current_tfifo().push_back(pair<int,cmd_token_type> (tDB["\n"], cmd_token_type()));
           comment = false;
-          break;
+          if(level == 0) goto YYLEX_START;
+          else break;
         } else {
           rp++;
         }

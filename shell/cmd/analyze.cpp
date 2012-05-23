@@ -47,7 +47,7 @@ po::options_description_easy_init const dummy_arg_opt =
   arg_opt.add_options()
   ("help", "usage information.")
   ("library", po::value<string>(), "set the output library (other than work).")
-  ("define", po::value<vector<string> >()->composing(), "macro definitions ( {MACRO0, MACRO1, ... MACRON} ).")
+  ("define", po::value<vector<string> >()->composing(), "macro definitions.")
   ;
 
 static po::options_description file_opt;
@@ -169,7 +169,9 @@ bool shell::CMD::CMDAnalyze::exec ( Env& gEnv, vector<string>& arg){
       m_parser.initialize();
       m_parser.parse();
     }
+    return true;
   }
-       
+  
+  shell::CMD::CMDAnalyze::help(gEnv);    
   return true;
 }
