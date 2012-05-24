@@ -44,6 +44,9 @@ using namespace shell;
 using std::endl;
 using std::cout;
 using std::cerr;
+using std::map;
+using std::vector;
+using std::list;
 using boost::shared_ptr;
 using netlist::Library;
 using boost::filesystem::path;
@@ -67,31 +70,8 @@ shell::Env::~Env() {
   }
 }
 
-// define a number of hooks used in macros
-namespace shell {
-  namespace CMD {
-    class CMDHook_TMP_PATH : public CMDVarHook {
-    public:
-      virtual void operator() (CMDVar& orig, const CMDVar& newValue = CMDVar()) {
-        // remove the old tmp directory
-        path tmp_old_path(orig.get_string());
-        path tmp_new_path(newValue.get_string());
-        try {
-          if(exists(tmp_old_path)) {
-            remove_all(tmp_old_path);
-          }
-          if(!exists(tmp_new_path)) {
-            if(!create_directory(tmp_new_path)) {
-              throw std::exception();
-            }
-          }
-        } catch (std::exception e) {
-          throw("Error! problem with removing or creating the temporary work directory.");
-        }
-      }
-    }; 
-  }
-}
+// the variable hooks
+#include "hook.cpp"
 
 bool shell::Env::initialise() {
   // set up the default work library and add it in the link library
@@ -122,8 +102,13 @@ bool shell::Env::initialise() {
     }
   } catch (std::exception e) {
     errOs << "Error! Fail to create the default temporary work directory!" << endl;
+    exit(0);
   }
-  macroDB[MACRO_TMP_PATH].set_hook(new CMD::CMDHook_TMP_PATH());
+  macroDB[MACRO_TMP_PATH].hook.reset(new CMD::CMDHook_TMP_PATH());
+
+  // current_design
+  macroDB[MACRO_CURRENT_DESIGN] = MACRO_CURRENT_DESIGN_VALUE;
+  macroDB[MACRO_CURRENT_DESIGN].hook.reset(new CMD::CMDHook_CURRENT_DESIGN());
 
   // show the welcome message
   show_cmd(true);

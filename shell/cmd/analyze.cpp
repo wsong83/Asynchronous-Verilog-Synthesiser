@@ -79,7 +79,7 @@ bool shell::CMD::CMDAnalyze::exec ( Env& gEnv, vector<string>& arg){
     store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
     notify(vm);
   } catch (std::exception& e) {
-    gEnv.errOs << "Error: Wrong command syntax error! See usage by analyze -help." << endl;
+    gEnv.stdOs << "Error: Wrong command syntax error! See usage by analyze -help." << endl;
     return false;
   }
 
@@ -92,7 +92,7 @@ bool shell::CMD::CMDAnalyze::exec ( Env& gEnv, vector<string>& arg){
   if(vm.count("library")) {
     string lib_name = vm["library"].as<string>();
     if(lib_name.empty()) {
-      gEnv.errOs << "Error: The target library name is empty." << endl;
+      gEnv.stdOs << "Error: The target library name is empty." << endl;
       return false;
     } else {
       if(!gEnv.link_lib.count(lib_name))
@@ -114,7 +114,7 @@ bool shell::CMD::CMDAnalyze::exec ( Env& gEnv, vector<string>& arg){
       filelinep->setPreproc(preprocp);
       preprocp->configure(filelinep);
       if(!preprocp->openFile(*it)) {
-        gEnv.errOs << "Error: Cannot open file \"" << *it << "\"." << endl;
+        gEnv.stdOs << "Error: Cannot open file \"" << *it << "\"." << endl;
         delete preprocp;
         return false;
       }

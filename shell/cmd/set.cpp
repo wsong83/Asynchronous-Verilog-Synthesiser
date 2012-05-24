@@ -26,8 +26,6 @@
  *
  */
 
-#include <list>
-#include <string>
 #include "set.h"
 
 using std::vector;
@@ -64,7 +62,7 @@ bool shell::CMD::CMDSet::exec( Env& gEnv, vector<string>& arg) {
     store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
     notify(vm);
   } catch (std::exception& e) {
-    gEnv.errOs << "Error: Wrong command syntax error! See usage by set -help." << endl;
+    gEnv.stdOs << "Error: Wrong command syntax error! See usage by set -help." << endl;
     return false;
   }
 
@@ -76,23 +74,26 @@ bool shell::CMD::CMDSet::exec( Env& gEnv, vector<string>& arg) {
   if(vm.count("VarName")) {
     string varName = vm["VarName"].as<string>();
     if(varName.empty() || !cmd_variable_name_checker(varName)) {
-      gEnv.errOs << "Error: A valid variable name must be provided." << endl;
+      gEnv.stdOs << "Error: A valid variable name must be provided." << endl;
       return false;
     }
 
+    bool rv = true;
     if(vm.count("VarValue")) {
       vector<string> varValue = vm["VarValue"].as<vector<string> >();
-      if(!varValue.empty()) {
+      if(gEnv.macroDB[varName].hook.use_count() != 0)  
+        rv = (*gEnv.macroDB[varName].hook)(gEnv, gEnv.macroDB[varName], varValue);
+      else
         gEnv.macroDB[varName] = varValue;
-      } else {
-        gEnv.macroDB[varName] = CMDVar();
-      }
     } else {
-      gEnv.macroDB[varName] = CMDVar();
+      if(gEnv.macroDB[varName].hook.use_count() != 0)  
+        rv = (*gEnv.macroDB[varName].hook)(gEnv, gEnv.macroDB[varName], vector<string>());
+      else
+        gEnv.macroDB[varName] = CMDVar();
     }
 
     gEnv.stdOs << varName << " = " << gEnv.macroDB[varName] << endl;
-    return true;
+    return rv;
   }
   
   shell::CMD::CMDSet::help(gEnv);

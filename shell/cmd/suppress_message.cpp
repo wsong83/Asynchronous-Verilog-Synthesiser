@@ -66,7 +66,7 @@ bool shell::CMD::CMDSuppressMessage::exec ( Env& gEnv, vector<string>& arg){
     store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
     notify(vm);
   } catch (std::exception& e) {
-    gEnv.errOs << "Error: Wrong command syntax error! See usage by suppress_message -help." << endl;
+    gEnv.stdOs << "Error: Wrong command syntax error! See usage by suppress_message -help." << endl;
     return false;
   }
 
@@ -80,7 +80,7 @@ bool shell::CMD::CMDSuppressMessage::exec ( Env& gEnv, vector<string>& arg){
     vector<string>::iterator it, end;
     for(it=msg_name.begin(), end=msg_name.end(); it!=end; it++) {
       if(!gEnv.error.suppress(*it)) {
-        gEnv.errOs << "Error: Error message \"" << *it << "\" does not exist or cannot be suppressed."<< endl;
+        gEnv.stdOs << "Error: Error message \"" << *it << "\" does not exist or cannot be suppressed."<< endl;
       }
     }
     return true;

@@ -66,7 +66,6 @@ namespace shell {
       bool is_string() const { return var_type == vString; }
       bool is_list() const { return var_type == vList; }
       bool is_collection() const { return var_type == vCollection; }
-      void set_hook(CMDVarHook * phook) { hook.reset(phook); }
       std::string& get_string() { return m_str; }
       std::list<std::string>& get_list() { return m_list; }
       std::list<boost::shared_ptr<netlist::NetComp> >& get_collection() { return m_collection; }
@@ -79,11 +78,12 @@ namespace shell {
       CMDVar& operator= (const std::list<std::string>& );
       CMDVar& operator= (const std::vector<std::string>& );
 
+      boost::shared_ptr<CMDVarHook> hook; /* call back function */
+
     private:
       std::string  m_str;
       std::list<std::string> m_list;
       std::list<boost::shared_ptr<netlist::NetComp> > m_collection;
-      boost::shared_ptr<CMDVarHook> hook;
 
     };
 
@@ -94,7 +94,7 @@ namespace shell {
 
     class CMDVarHook {          /* the call back function when the value of a variable is changed */
     public:
-      virtual void operator() (CMDVar& orig, const CMDVar& newValue = CMDVar()) {}
+      virtual bool operator() (Env&, CMDVar&, const std::vector<std::string>&) { return true; }
     };
 
     // free function

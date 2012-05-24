@@ -68,7 +68,7 @@ bool shell::CMD::CMDSource::exec ( Env& gEnv, vector<string>& arg){
     store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
     notify(vm);
   } catch (std::exception& e) {
-    gEnv.errOs << "Error: Wrong command syntax error! See usage by source -help." << endl;
+    gEnv.stdOs << "Error: Wrong command syntax error! See usage by source -help." << endl;
     return false;
   }
 
@@ -85,11 +85,11 @@ bool shell::CMD::CMDSource::exec ( Env& gEnv, vector<string>& arg){
         gEnv.lexer.push(file_handler);
       } else {
         delete file_handler;
-        gEnv.errOs << "Cannot open script file \"" << fname << "\"!" << endl;
+        gEnv.stdOs << "Error: Cannot open script file \"" << fname << "\"!" << endl;
         return false;
       }
     } else {
-      gEnv.errOs << "File name is empty!" << endl; // should not come here
+      gEnv.stdOs << "Error: File name is empty!" << endl; // should not come here
       return false;
     }
   }

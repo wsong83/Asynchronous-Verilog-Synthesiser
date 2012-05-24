@@ -40,14 +40,15 @@ using std::endl;
 map<string, string> shell::CMD::CMDHelp::cmdDB;
 
 int cmdDB_init( map<string, string>& db) {
-  db.insert(pair<string, string>("analyze",  "show and list the usage of commands."    ));
-  db.insert(pair<string, string>("echo",     "display a string with variables."        ));
-  db.insert(pair<string, string>("exit",     "leave the AVS shell environment."        ));
-  db.insert(pair<string, string>("help",     "read in the Verilog HDL design files."   ));
-  db.insert(pair<string, string>("quit",     "leave the AVS shell environment."        ));
-  db.insert(pair<string, string>("set",      "set the value of a variable."            ));
-  db.insert(pair<string, string>("source",   "read and execute another script file."   ));
-  db.insert(pair<string, string>("suppress_message", "suppress the report of some messages."));
+  db.insert(pair<string, string>("analyze",          "show and list the usage of commands."    ));
+  db.insert(pair<string, string>("current_design",   "set or show the current target design."  ));
+  db.insert(pair<string, string>("echo",             "display a string with variables."        ));
+  db.insert(pair<string, string>("exit",             "leave the AVS shell environment."        ));
+  db.insert(pair<string, string>("help",             "read in the Verilog HDL design files."   ));
+  db.insert(pair<string, string>("quit",             "leave the AVS shell environment."        ));
+  db.insert(pair<string, string>("set",              "set the value of a variable."            ));
+  db.insert(pair<string, string>("source",           "read and execute another script file."   ));
+  db.insert(pair<string, string>("suppress_message", "suppress the report of some messages."   ));
   return 0;
 }
 
@@ -89,7 +90,7 @@ bool shell::CMD::CMDHelp::exec ( Env& gEnv, vector<string>& arg){
     store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
     notify(vm);
   } catch(std::exception& e) {
-    gEnv.errOs << "Wrong command syntax error! See usage by help -help." << endl;
+    gEnv.stdOs << "Wrong command syntax error! See usage by help -help." << endl;
     return false;
   }
 
@@ -105,7 +106,7 @@ bool shell::CMD::CMDHelp::exec ( Env& gEnv, vector<string>& arg){
           string(it->size() < 16 ? 16-it->size() : 1, ' ') 
                    << ": " << cmdDB[*it] << endl;
       } else {
-        gEnv.errOs << "Wrong command name: " << *it << endl;
+        gEnv.stdOs << "Error: Wrong command name: " << *it << endl;
         break;
       }
     }

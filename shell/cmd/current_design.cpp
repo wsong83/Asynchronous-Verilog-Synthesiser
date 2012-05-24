@@ -20,63 +20,69 @@
  */
 
 /* 
- * echo command
- * 21/05/2012   Wei Song
+ * current_design command
+ * 24/05/2012   Wei Song
  *
  *
  */
 
-#include <list>
-#include <string>
-#include "echo.h"
+#include "current_design.h"
 
-using std::vector;
+using std::string;
 using std::endl;
+using std::vector;
+
 using namespace shell;
 using namespace shell::CMD;
 
-po::options_description shell::CMD::CMDEcho::cmd_opt;
+
+po::options_description shell::CMD::CMDCurrentDesign::cmd_opt;
 static po::options_description_easy_init dummy_cmd_opt =
-  CMDEcho::cmd_opt.add_options()
+  CMDCurrentDesign::cmd_opt.add_options()
   ("help",     "usage information.")
-  ("varStr", po::value<vector<string> >()->composing(), "variable value.")
+  ("designName",  po::value<string>(), "the taregt design name.")
   ;
 
-po::positional_options_description shell::CMD::CMDEcho::cmd_position;
+po::positional_options_description shell::CMD::CMDCurrentDesign::cmd_position;
 static po::positional_options_description const dummy_position = 
-  CMDEcho::cmd_position.add("varStr", -1);
+  CMDCurrentDesign::cmd_position.add("designName", 1);
 
 
-void shell::CMD::CMDEcho::help(Env& gEnv) {
-  gEnv.stdOs << "echo: display a string with variables." << endl;
-  gEnv.stdOs << "    echo Strings" << endl;
+void shell::CMD::CMDCurrentDesign::help(Env& gEnv) {
+  gEnv.stdOs << "current_design: set or show the current target design." << endl;
+  gEnv.stdOs << "    current_design [DesignName]" << endl;
   gEnv.stdOs << "Options:" << endl;
   gEnv.stdOs << "   -help                usage information." << endl;
   gEnv.stdOs << endl;
 }
 
-bool shell::CMD::CMDEcho::exec( Env& gEnv, vector<string>& arg) {
+bool shell::CMD::CMDCurrentDesign::exec( Env& gEnv, vector<string>& arg) {
   po::variables_map vm;
 
   try {
     store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
     notify(vm);
   } catch (std::exception& e) {
-    gEnv.stdOs << "Error: Wrong command syntax error! See usage by echo -help." << endl;
+    gEnv.stdOs << "Error: Wrong command syntax error! See usage by current_design -help." << endl;
     return false;
   }
 
   if(vm.count("help")) {        // print help information
-    shell::CMD::CMDSet::help(gEnv);
-    return true;
-  } else {
-    vector<string> varStr;
-    if(vm.count("varStr")) 
-      varStr = vm["varStr"].as<vector<string> >();
-    vector<string>::iterator it, end;
-    for(it=varStr.begin(), end=varStr.end(); it!=end; it++)
-      gEnv.stdOs << *it << " ";
-    gEnv.stdOs << endl;
+    shell::CMD::CMDCurrentDesign::help(gEnv);
     return true;
   }
+
+  if(vm.count("designName")) {
+    string designName = vm["designName"].as<string>();
+    
+    vector<string> dn;
+    dn.push_back(designName);
+    bool rv = (*gEnv.macroDB["current_design"].hook)(gEnv, gEnv.macroDB["current_design"], dn);
+    gEnv.stdOs << "current_design = " << gEnv.macroDB["current_design"] << endl;
+    return rv;
+  }
+
+  // show the current design
+  gEnv.stdOs << "current_design = " << gEnv.macroDB["current_design"] << endl;
+  return true;
 }

@@ -57,6 +57,7 @@ shell::CMD::CMDLexer::CMDLexer()
   // is there any better way to do this?
   // seems I need to modify this every time I add a new raw token
   tDB["analyze"]        = cmd_parser::token::CMDAnalyze;
+  tDB["current_design"] = cmd_parser::token::CMDCurrentDesign;
   tDB["echo"]           = cmd_parser::token::CMDEcho;
   tDB["exit"]           = cmd_parser::token::CMDExit;
   tDB["help"]           = cmd_parser::token::CMDHelp;

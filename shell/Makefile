@@ -41,6 +41,9 @@ command.o: command.cc command.hh $(HEADERS)
 $(TARGETS): %.o:%.cpp $(HEADERS)
 	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
 
+env.o: env.cpp hook.cpp $(HEADERS)
+	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
+
 bison: command.cc
 
 command.cc: command.y

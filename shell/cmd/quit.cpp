@@ -56,7 +56,7 @@ bool shell::CMD::CMDQuit::exec ( Env& gEnv, vector<string>& arg){
     store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).run(), vm);
     notify(vm);
   } catch (std::exception& e) {
-    gEnv.errOs << "Wrong command syntax error! See usage by quit -help." << endl;
+    gEnv.stdOs << "Error: Wrong command syntax error! See usage by quit -help." << endl;
     return false;
   }
 

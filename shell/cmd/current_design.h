@@ -20,22 +20,30 @@
  */
 
 /* 
- * Default macro names
- * 16/05/2012   Wei Song
+ * current_design command
+ * 24/05/2012   Wei Song
  *
  *
  */
 
-#ifndef AV_H_DEFAULT_MACRO_NAME_
-#define AV_H_DEFAULT_MACRO_NAME_
+#ifndef AV_CMD_CURRENT_DESIGN_
+#define AV_CMD_CURRENT_DESIGN_
 
-#define MACRO_CURRENT_DESIGN           "current_design"
-#define MACRO_CURRENT_DESIGN_VALUE     ""
-#define MACRO_LINK_LIB                 "link_library"
-#define MACRO_SEARCH_PATH              "search_path"
-#define MACRO_SEARCH_PATH_VALUE        "."
-#define MACRO_TARGET_LIB               "target_library"
-#define MACRO_TMP_PATH                 "tmp_path"
-#define MACRO_TMP_PATH_VALUE           "tmp"
+#include "shell/env.h"
+#include "cmd_define.h"
+
+namespace shell {
+  namespace CMD {
+
+    class CMDCurrentDesign {
+    public:
+      static bool exec (Env&, std::vector<std::string>&);
+      static void help (Env& );
+
+      static po::options_description cmd_opt;
+      static po::positional_options_description cmd_position;
+    };
+  }
+}
 
 #endif
