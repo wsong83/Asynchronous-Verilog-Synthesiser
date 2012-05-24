@@ -27,6 +27,8 @@
  */
 
 #include <fstream>
+#define BOOST_FILESYSTEM_VERSION 3
+#include <boost/filesystem.hpp>
 #include "analyze.h"
 #include "preproc/preproc.h"
 #include "shell/macro_name.h"
@@ -39,6 +41,8 @@ using std::list;
 using std::endl;
 using std::ofstream;
 using boost::shared_ptr;
+using boost::filesystem::path;
+using boost::filesystem::exists;
 using namespace shell;
 using namespace shell::CMD;
 
@@ -107,14 +111,31 @@ bool shell::CMD::CMDAnalyze::exec ( Env& gEnv, vector<string>& arg){
     vector<string> target_files = vm["file"].as<vector<string> >();
     vector<string>::iterator it, end;
     for(it=target_files.begin(), end=target_files.end(); it!=end; it++) {
+
+      //find the correct file name
+      path fname(*it);
+      if(!exists(fname)) {
+        list<string>::const_iterator sit, send;
+        for(sit=gEnv.macroDB[MACRO_SEARCH_PATH].get_list().begin(),
+              send=gEnv.macroDB[MACRO_SEARCH_PATH].get_list().end();
+            sit!=send; sit++) {
+          fname = *sit + "/" + *it;
+          if(exists(fname)) break;
+        }
+        if(sit == send) {       // fail to locate the file
+          gEnv.stdOs << "Error: Cannot open file \"" << *it << "\"." << endl;
+          return false;
+        }
+      }
+
       // run the preprocessor first
-      gEnv.stdOs << "Read in \"" << *it << "\"" << endl;
+      gEnv.stdOs << "Read in \"" << fname.string() << "\"" << endl;
       VPPreProc::VFileLineXs* filelinep = new VPPreProc::VFileLineXs(NULL);
       VPPreProc::VPreProcXs* preprocp = new VPPreProc::VPreProcXs();
       filelinep->setPreproc(preprocp);
       preprocp->configure(filelinep);
-      if(!preprocp->openFile(*it)) {
-        gEnv.stdOs << "Error: Cannot open file \"" << *it << "\"." << endl;
+      if(!preprocp->openFile(fname.string())) {
+        gEnv.stdOs << "Error: Cannot open file \"" << fname << "\"." << endl;
         delete preprocp;
         return false;
       }
@@ -123,7 +144,7 @@ bool shell::CMD::CMDAnalyze::exec ( Env& gEnv, vector<string>& arg){
       preprocp->keepWhitespace(1);
       preprocp->lineDirectives(1);
       preprocp->pedantic(0);
-      preprocp->synthesis(1);
+      preprocp->synthesis(0);     // do not parse the lines between synopsys translate off and on
 
       //set the pre-defined macros
       if(vm.count("define")) {
@@ -150,7 +171,7 @@ bool shell::CMD::CMDAnalyze::exec ( Env& gEnv, vector<string>& arg){
 
       // set the output file
       ofstream of_handle;
-      string tmp_file_name = gEnv.macroDB[MACRO_TMP_PATH].get_string() + "/verilog.preproc";
+      string tmp_file_name = gEnv.macroDB[MACRO_TMP_PATH].get_string() + "/" + fname.filename().string() + ".preproc";
       //gEnv.stdOs << "write to temporary file \"" << tmp_file_name << "\"." << endl;
       of_handle.open(tmp_file_name.c_str(), std::ios::out);
 

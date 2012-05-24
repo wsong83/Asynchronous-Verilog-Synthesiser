@@ -148,5 +148,6 @@ operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
 
 "`line "[^\n]*[\n] { averilog::file_line_updater(yylloc, string(yytext, yyleng)); }
 "`timescale"{ws}[0-9fpuns/] { /* timescale is ignored */ }
+"#"{ws}*[0-9]+(\.[0-9]*)?   { /* time delay is ignored */ }
 
 %%

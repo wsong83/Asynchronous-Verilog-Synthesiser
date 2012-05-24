@@ -106,7 +106,7 @@ bool shell::CMD::CMDHelp::exec ( Env& gEnv, vector<string>& arg){
           string(it->size() < 16 ? 16-it->size() : 1, ' ') 
                    << ": " << cmdDB[*it] << endl;
       } else {
-        gEnv.stdOs << "Error: Wrong command name: " << *it << endl;
+        gEnv.stdOs << "Error: Wrong command name: \"" << *it << "\"."<< endl;
         break;
       }
     }

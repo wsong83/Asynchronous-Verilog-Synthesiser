@@ -27,6 +27,7 @@
  */
 
 #include "current_design.h"
+#include "shell/macro_name.h"
 
 using std::string;
 using std::endl;
@@ -77,12 +78,12 @@ bool shell::CMD::CMDCurrentDesign::exec( Env& gEnv, vector<string>& arg) {
     
     vector<string> dn;
     dn.push_back(designName);
-    bool rv = (*gEnv.macroDB["current_design"].hook)(gEnv, gEnv.macroDB["current_design"], dn);
-    gEnv.stdOs << "current_design = " << gEnv.macroDB["current_design"] << endl;
+    bool rv = (*gEnv.macroDB[MACRO_CURRENT_DESIGN].hook)(gEnv, gEnv.macroDB[MACRO_CURRENT_DESIGN], dn);
+    gEnv.stdOs << "current_design = " << gEnv.macroDB[MACRO_CURRENT_DESIGN] << endl;
     return rv;
   }
 
   // show the current design
-  gEnv.stdOs << "current_design = " << gEnv.macroDB["current_design"] << endl;
+  gEnv.stdOs << "current_design = " << gEnv.macroDB[MACRO_CURRENT_DESIGN] << endl;
   return true;
 }

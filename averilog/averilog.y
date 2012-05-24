@@ -367,8 +367,8 @@ module_item
     | module_instantiation       { $$.reset(new Block()); $$->add_list<Instance>($1); }
     | always_construct           { $$.reset(new Block()); $$->add($1);                }
     | generated_instantiation    { $$.reset(new Block()); $$->add($1);                }
-    | statement                  { $$.reset(new Block()); av_env.error(@$, "SYN-MODULE-1");  }
-    | error                      { $$.reset(new Block()); av_env.error(@$, "SYN-MODULE-1");  }
+    | statement                  { $$.reset(new Block()); av_env.error(@$, "SYN-MODULE-1"); }
+    | error                      { $$.reset(new Block()); av_env.error(@$, "SYN-MODULE-1"); }
     ;
 
 module_items

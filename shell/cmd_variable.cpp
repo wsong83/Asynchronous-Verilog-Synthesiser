@@ -47,7 +47,7 @@ using namespace shell::CMD;
 ostream& shell::CMD::CMDVar::streamout( ostream& os) const {
   switch(var_type) {
   case vUnkown: return os;
-  case vString: os << "\"" << m_str << "\""; return os;
+  case vString: 
   case vList: {
     list<string>::const_iterator it, end;
     for(it=m_list.begin(), end=m_list.end(); it!=end; it++)
@@ -75,33 +75,29 @@ ostream& shell::CMD::CMDVar::streamout( ostream& os) const {
 
 CMDVar& shell::CMD::CMDVar::operator= (const string& str) {
   var_type = vString;
-  m_str = str;
+  m_list.assign(1, str);
   return *this;
 }
 
 CMDVar& shell::CMD::CMDVar::operator= (const list<string>& slist) {
-  if(slist.size() > 1) {
-    var_type = vList;
-    m_list = slist;
-  } else if(slist.size() == 1) {
+  m_list = slist;
+  var_type = vList;
+  if(slist.size() == 1) {
     var_type = vString;
-    m_str = slist.front();
   } else {
-    assert(0 == "slist empty!");
+    var_type = vUnkown;
   }
     
   return *this;
 }
 
 CMDVar& shell::CMD::CMDVar::operator= (const vector<string>& slist) {
-  if(slist.size() > 1) {
-    var_type = vList;
-    m_list.assign(slist.begin(), slist.end());
-  } else if(slist.size() == 1) {
+  m_list.assign(slist.begin(), slist.end());
+  var_type = vList;
+  if(slist.size() == 1) {
     var_type = vString;
-    m_str = slist.front();
   } else {
-    assert(0 == "slist empty!");
+    var_type = vUnkown;
   }
     
   return *this;
