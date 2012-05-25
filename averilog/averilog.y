@@ -114,7 +114,7 @@
 %token kCell           "cell"         /* not supported yet */
 %token kConfig         "config"       /* not supported yet */
 %token kDeassign       "deassign"     /* not supported yet */
-%token kDefault        "default"      /* not supported yet */
+%token kDefault        "default"      
 %token kDefparam       "defparam"     /* not supported yet */
 %token kDesign         "design"	      /* not supported yet */
 %token kDisable        "disable"      /* not supported yet */

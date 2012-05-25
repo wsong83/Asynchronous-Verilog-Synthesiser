@@ -88,6 +88,7 @@ operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
 "begin"     { return token::kBegin; }
 "case"      { return token::kCase;  }
 "casex"     { return token::kCasex; }
+"default"   { return token::kDefault; }
 "else"      { return token::kElse;  }
 "end"       { return token::kEnd;   }
 "endcase"   { return token::kEndcase; }
