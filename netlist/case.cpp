@@ -83,13 +83,14 @@ bool netlist::CaseItem::check_inparse() {
 } 
 
 ostream& netlist::CaseState::streamout (ostream& os, unsigned int indent) const {
-  os << string(indent, ' ') << "case(" << *exp << ")" << endl;
+  os << string(indent, ' ');
+  if(casex) os << "casex(" << *exp << ")" << endl;
+  else      os << "case("  << *exp << ")" << endl;
   list<shared_ptr<CaseItem> >::const_iterator it, end;
   for(it=cases.begin(), end=cases.end(); it!=end; it++) {
     (*it)->streamout(os, indent+2);
   }
   os << string(indent, ' ') << "endcase" << endl;
-
   return os;
 }
 

@@ -109,7 +109,7 @@
 %token kAutomatic      "automatic"    /* not supported yet */
 %token kBegin          "begin"
 %token kCase           "case"
-%token kCasex          "casex"        /* not supported yet */
+%token kCasex          "casex"        
 %token kCasez          "casez"        /* not supported yet */
 %token kCell           "cell"         /* not supported yet */
 %token kConfig         "config"       /* not supported yet */
@@ -788,6 +788,12 @@ generate_item
     { $$.reset(new Block()); $$->add_case(@$, $3, $5); }
     | "case" '(' expression ')' generate_case_items "default" generate_item_or_null "endcase"
     { shared_ptr<CaseItem> m(new CaseItem(@7, $7)); $$.reset(new Block()); $$->add_case(@$, $3, $5, m); }
+    | "casex" '(' expression ')' "default"  generate_item_or_null "endcase"
+    { shared_ptr<CaseItem> m(new CaseItem(@6, $6)); $$.reset(new Block()); $$->add_case(@$, $3, m, true); }
+    | "casex" '(' expression ')' generate_case_items "endcase"
+    { $$.reset(new Block()); $$->add_case(@$, $3, $5, true); }
+    | "casex" '(' expression ')' generate_case_items "default" generate_item_or_null "endcase"
+    { shared_ptr<CaseItem> m(new CaseItem(@7, $7)); $$.reset(new Block()); $$->add_case(@$, $3, $5, m, true); }
     | "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' "begin" ':' block_identifier generate_item_or_null "end"
     { $$.reset(new Block()); $12->set_name($11); $$->add_for(@$, $3, $5, $7, $12); }
     | "begin" generate_items "end" { $$.reset(new Block());  shared_ptr<GenBlock> m(new GenBlock(@$, *$2)); $$->add(m);}
@@ -870,6 +876,11 @@ statement
     | "case" '(' expression ')' case_items "endcase" { $$.reset(new Block()); $$->add_case(@$, $3, $5); }
     | "case" '(' expression ')' case_items "default" statement_or_null "endcase" 
     { shared_ptr<CaseItem> m(new CaseItem(@$, $7)); $$.reset(new Block()); $$->add_case(@$, $3, $5, m); }
+    | "casex" '(' expression ')' "default" statement_or_null "endcase" 
+    { shared_ptr<CaseItem> m(new CaseItem(@$, $6)); $$.reset(new Block()); $$->add_case(@$, $3, m, true); }
+    | "casex" '(' expression ')' case_items "endcase" { $$.reset(new Block()); $$->add_case(@$, $3, $5, true); }
+    | "casex" '(' expression ')' case_items "default" statement_or_null "endcase" 
+    { shared_ptr<CaseItem> m(new CaseItem(@$, $7)); $$.reset(new Block()); $$->add_case(@$, $3, $5, m, true); }
     | "if" '(' expression ')' statement_or_null 
     { $$.reset(new Block()); $$->add_if(@$, $3, $5); }
     | "if" '(' expression ')' statement_or_null "else" statement_or_null  

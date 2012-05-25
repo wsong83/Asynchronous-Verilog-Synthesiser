@@ -74,27 +74,33 @@ namespace netlist {
     
     /* add a general case statement */
     bool add_case(const boost::shared_ptr<Expression>&, 
-                  const std::list<boost::shared_ptr<CaseItem> >&, const boost::shared_ptr<CaseItem>&); 
+                  const std::list<boost::shared_ptr<CaseItem> >&, const boost::shared_ptr<CaseItem>&,
+                  bool m_casex = false); 
     
     /* add a general case statement */
     bool add_case(const shell::location& lloc, const boost::shared_ptr<Expression>&, 
-                  const std::list<boost::shared_ptr<CaseItem> >&, const boost::shared_ptr<CaseItem>&);
+                  const std::list<boost::shared_ptr<CaseItem> >&, const boost::shared_ptr<CaseItem>&,
+                  bool m_casex = false);
  
     /* add a case statement without default */
     bool add_case(const boost::shared_ptr<Expression>&, 
-                  const std::list<boost::shared_ptr<CaseItem> >&);
+                  const std::list<boost::shared_ptr<CaseItem> >&,
+                  bool m_casex = false);
 
     /* add a case statement without default */
     bool add_case(const shell::location& lloc, const boost::shared_ptr<Expression>&, 
-                  const std::list<boost::shared_ptr<CaseItem> >&); 
+                  const std::list<boost::shared_ptr<CaseItem> >&,
+                  bool m_casex = false); 
 
     /* add a case statement only with a default case, odd! */
     bool add_case(const boost::shared_ptr<Expression>&, 
-                          const boost::shared_ptr<CaseItem>&);
+                  const boost::shared_ptr<CaseItem>&,
+                  bool m_casex = false);
 
     /* add a case statement only with a default case, odd! */
     bool add_case(const shell::location& lloc, const boost::shared_ptr<Expression>&, 
-                  const boost::shared_ptr<CaseItem>&);
+                  const boost::shared_ptr<CaseItem>&,
+                  bool m_casex = false);
 
     /* add an if statement with else case */
     bool add_if(const boost::shared_ptr<Expression>&, 
