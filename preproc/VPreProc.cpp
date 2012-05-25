@@ -491,15 +491,13 @@ string VPPreProc::VPreProcImp::defineSubst(VPreDefRef* refp) {
 	bool backslashesc = false;  // In \.....{space} block
 	// Note we go through the loop once more at the NULL end-of-string
 	for (const char* cp=value.c_str(); (*cp) || argName!=""; cp=(*cp?cp+1:cp)) {
-      //cout << "CH "<<*cp<<"  an "<<argName<<"\n";
-      if (!quote && *cp == '\\') { backslashesc = true; }
-      else if (isspace(*cp)) { backslashesc = false; }
-      // We don't check for quotes; some simulators expand even inside quotes
-      if (!quote && ( isalpha(*cp) || *cp=='_'
-                      || *cp=='$' // Won't replace system functions, since no $ in argValueByName
-                      || (argName!="" && (isdigit(*cp) || *cp=='$'))
-                      )
-          ) {
+	    //cout << "CH "<<*cp<<"  an "<<argName<<"\n";
+	    if (!quote && *cp == '\\') { backslashesc = true; }
+	    else if (isspace(*cp)) { backslashesc = false; }
+	    // We don't check for quotes; some simulators expand even inside quotes
+	    if ( isalpha(*cp) || *cp=='_'
+		 || *cp=='$' // Won't replace system functions, since no $ in argValueByName
+		 || (argName!="" && (isdigit(*cp) || *cp=='$'))) {
 		argName += *cp;
 		continue;
       }
@@ -579,7 +577,7 @@ string VPPreProc::VPreProcImp::defineSubst(VPreDefRef* refp) {
 
 bool VPPreProc::VPreProcImp::readWholefile(const string& filename, StrList& outl) {
     int fd = open (filename.c_str(), O_RDONLY);
-    if (fd <= 0) return false;
+    if (fd<0) return false;
 
     // If change this code, run a test with the below size set very small
 //#define INFILTER_IPC_BUFSIZ 16
