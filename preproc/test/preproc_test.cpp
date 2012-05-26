@@ -113,15 +113,17 @@ int main(int argc, char** argv)
 
   VFileLineXs* filelinep = new VFileLineXs(NULL);
   VPreProcXs* preprocp = new VPreProcXs();
-  filelinep->setPreproc(preprocp);
-  preprocp->configure(filelinep);
-  preprocp->openFile(inpfile);
 
+  // set the parameters before configure the preprocessor
   preprocp->keepComments(opt_keep_comment);
   preprocp->keepWhitespace(opt_keep_white_space);
   preprocp->lineDirectives(opt_line_directive != 0);
   preprocp->pedantic(opt_pedantic != 0);
   preprocp->synthesis(opt_synthesis != 0);
+
+  filelinep->setPreproc(preprocp);
+  preprocp->configure(filelinep);
+  preprocp->openFile(inpfile);
 
   if(vm.count("macro")) {
     vector<string> mlist = vm["macro"].as<vector<string> >();

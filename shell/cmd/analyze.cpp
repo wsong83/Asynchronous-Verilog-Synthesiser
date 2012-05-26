@@ -132,6 +132,14 @@ bool shell::CMD::CMDAnalyze::exec ( Env& gEnv, vector<string>& arg){
       gEnv.stdOs << "Read in \"" << fname.string() << "\"" << endl;
       VPPreProc::VFileLineXs* filelinep = new VPPreProc::VFileLineXs(NULL);
       VPPreProc::VPreProcXs* preprocp = new VPPreProc::VPreProcXs();
+      
+      // ATTN: set parameters before configure the preprocessor
+      preprocp->keepComments(1);
+      preprocp->keepWhitespace(1);
+      preprocp->lineDirectives(1);
+      preprocp->pedantic(0);
+      preprocp->synthesis(1);     // do not parse the lines between synopsys translate off and on
+
       filelinep->setPreproc(preprocp);
       preprocp->configure(filelinep);
       if(!preprocp->openFile(fname.string())) {
@@ -140,12 +148,6 @@ bool shell::CMD::CMDAnalyze::exec ( Env& gEnv, vector<string>& arg){
         return false;
       }
       
-      preprocp->keepComments(1);
-      preprocp->keepWhitespace(1);
-      preprocp->lineDirectives(1);
-      preprocp->pedantic(0);
-      preprocp->synthesis(0);     // do not parse the lines between synopsys translate off and on
-
       //set the pre-defined macros
       if(vm.count("define")) {
         vector<string> macro_list = vm["define"].as<vector<string> >();
