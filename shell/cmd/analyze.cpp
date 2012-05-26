@@ -47,7 +47,7 @@ using namespace shell;
 using namespace shell::CMD;
 
 static po::options_description arg_opt("Options");
-po::options_description_easy_init const dummy_arg_opt =
+static po::options_description_easy_init const dummy_arg_opt =
   arg_opt.add_options()
   ("help", "usage information.")
   ("format", po::value<string>(), "the source file language (now only support verilog).")
@@ -56,17 +56,17 @@ po::options_description_easy_init const dummy_arg_opt =
   ;
 
 static po::options_description file_opt;
-po::options_description_easy_init const dummy_file_opt =
+static po::options_description_easy_init const dummy_file_opt =
   file_opt.add_options()
   ("file", po::value<vector<string> >()->composing(), "input files")
   ;
 
 po::options_description shell::CMD::CMDAnalyze::cmd_opt;
-po::options_description const dummy_cmd_opt =
+static po::options_description const dummy_cmd_opt =
   CMDAnalyze::cmd_opt.add(arg_opt).add(file_opt);
 
 po::positional_options_description shell::CMD::CMDAnalyze::cmd_position;
-po::positional_options_description const dummy_position = 
+static po::positional_options_description const dummy_position = 
   CMDAnalyze::cmd_position.add("file", -1);
 
 void shell::CMD::CMDAnalyze::help(Env& gEnv) {

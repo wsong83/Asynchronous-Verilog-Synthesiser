@@ -20,23 +20,32 @@
  */
 
 /* 
- * Default macro names
- * 16/05/2012   Wei Song
+ * elaborate command
+ * 26/05/2012   Wei Song
  *
  *
  */
 
-#ifndef AV_H_DEFAULT_MACRO_NAME_
-#define AV_H_DEFAULT_MACRO_NAME_
+#ifndef AVS_CMD_ELABORATE_
+#define AVS_CMD_ELABORATE_
 
-#define MACRO_CURRENT_DESIGN           "current_design"
-#define MACRO_CURRENT_DESIGN_VALUE     ""
-#define MACRO_DEFAULT_WORK_LIB         "work"
-#define MACRO_LINK_LIB                 "link_library"
-#define MACRO_SEARCH_PATH              "search_path"
-#define MACRO_SEARCH_PATH_VALUE        "."
-#define MACRO_TARGET_LIB               "target_library"
-#define MACRO_TMP_PATH                 "tmp_path"
-#define MACRO_TMP_PATH_VALUE           "tmp"
+#include "shell/env.h"
+#include "cmd_define.h"
+
+namespace shell { 
+  namespace CMD {
+  
+    class CMDElaborate {
+    public:
+      static bool exec ( Env&, std::vector<std::string>&);
+      static void help ( Env& );
+
+      //private:
+      static po::options_description cmd_opt;
+      static po::positional_options_description cmd_position;
+    };
+  }
+}
+
 
 #endif

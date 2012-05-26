@@ -59,6 +59,7 @@ shell::CMD::CMDLexer::CMDLexer()
   tDB["analyze"]        = cmd_parser::token::CMDAnalyze;
   tDB["current_design"] = cmd_parser::token::CMDCurrentDesign;
   tDB["echo"]           = cmd_parser::token::CMDEcho;
+  tDB["elaborate"]      = cmd_parser::token::CMDElaborate;
   tDB["exit"]           = cmd_parser::token::CMDExit;
   tDB["help"]           = cmd_parser::token::CMDHelp;
   tDB["quit"]           = cmd_parser::token::CMDQuit;

@@ -74,6 +74,7 @@ namespace shell {
 #include "cmd/analyze.h"
 #include "cmd/current_design.h"
 #include "cmd/echo.h"
+#include "cmd/elaborate.h"
 #include "cmd/help.h"
 #include "cmd/quit.h"
 #include "cmd/set.h"

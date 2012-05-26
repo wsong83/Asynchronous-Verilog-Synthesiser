@@ -71,6 +71,7 @@
 %token CMDAnalyze              "analyze"
 %token CMDCurrentDesign        "current_design"
 %token CMDEcho                 "echo"
+%token CMDElaborate            "elaborate"
 %token CMDExit                 "exit"
 %token CMDHelp                 "help"
 %token CMDQuit                 "quit"
@@ -110,15 +111,16 @@ command_list
 
 command_description
     : /* empty */
-    | "analyze" argument_list     { shell::CMD::CMDAnalyze::exec(*cmd_env, $2);            }
-    | "current_design" argument_list { shell::CMD::CMDCurrentDesign::exec(*cmd_env, $2);   }
-    | "echo"    argument_list     { shell::CMD::CMDEcho::exec(*cmd_env, $2);               }
-    | "exit"    argument_list     { if(shell::CMD::CMDQuit::exec(*cmd_env, $2)) YYACCEPT;  }
-    | "help"    argument_list     { shell::CMD::CMDHelp::exec(*cmd_env, $2);               }
-    | "quit"    argument_list     { if(shell::CMD::CMDQuit::exec(*cmd_env, $2)) YYACCEPT;  }
-    | "set"     argument_list     { shell::CMD::CMDSet::exec(*cmd_env, $2);                }
-    | "source"  argument_list     { shell::CMD::CMDSource::exec(*cmd_env, $2);             }
-    | "suppress_message" argument_list { shell::CMD::CMDSuppressMessage::exec(*cmd_env, $2); }
+    | "analyze"           argument_list     { shell::CMD::CMDAnalyze::exec(*cmd_env, $2);            }
+    | "current_design"    argument_list     { shell::CMD::CMDCurrentDesign::exec(*cmd_env, $2);      }
+    | "echo"              argument_list     { shell::CMD::CMDEcho::exec(*cmd_env, $2);               }
+    | "elaborate"         argument_list     { shell::CMD::CMDElaborate::exec(*cmd_env, $2);          }
+    | "exit"              argument_list     { if(shell::CMD::CMDQuit::exec(*cmd_env, $2)) YYACCEPT;  }
+    | "help"              argument_list     { shell::CMD::CMDHelp::exec(*cmd_env, $2);               }
+    | "quit"              argument_list     { if(shell::CMD::CMDQuit::exec(*cmd_env, $2)) YYACCEPT;  }
+    | "set"               argument_list     { shell::CMD::CMDSet::exec(*cmd_env, $2);                }
+    | "source"            argument_list     { shell::CMD::CMDSource::exec(*cmd_env, $2);             }
+    | "suppress_message"  argument_list     { shell::CMD::CMDSuppressMessage::exec(*cmd_env, $2);    }
     | simple_string argument_list 
     {
       cmd_env->stdOs << "Error: Unrecognizable command \"" << $1 << "\"!" << endl;

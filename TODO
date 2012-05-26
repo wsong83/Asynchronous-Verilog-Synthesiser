@@ -1,10 +1,10 @@
-* 24/05/2012   (**Normal    )   Figure out why the synopsys translate on and off is not working in the verilog preprocessor and maybe fix it.
+* 26/05/2012   (**Urgunt    )   Support elaborate command.
 * 18/05/2012   (**Urgent    )   The back_slash in cmd_lexer should be use for special char rather than complex name.
 * 18/05/2012   (**Normal    )   The list in command line env can be embedded list like concatenations in Verilog, right now only one level of strings are supported.
 * 17/05/2012   (**Important )   Need to rewrite the cmd_lexer class or use flex, not all Tcl features can be supported in current structure.
 
 =============
+* 24/05/2012   (Resolved    )   Figure out why the synopsys translate on and off is not working in the verilog preprocessor and maybe fix it. [26/05/2012 Parameters of VPreProc must be set up before configuration.]
 * 24/05/2012   (Resolved    )   Support casex in the verilog parser. [25/05/2012 Done]
 * 23/05/2012   (Resolved    )   The hook function for macroDB is not good enough. Re-write it. [24/05/2012 Done, now it is called by set command and has the gEnv reference at hand.]
 * 17/05/2012   (NoFixNeeded )   Support up and down button for history commands. (using getchar in a smart lexer I think) [21/05/2012 use rlwrap avs_shell instead of avs_shell itself.]
-

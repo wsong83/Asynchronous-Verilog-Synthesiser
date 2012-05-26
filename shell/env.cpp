@@ -76,8 +76,8 @@ shell::Env::~Env() {
 
 bool shell::Env::initialise() {
   // set up the default work library and add it in the link library
-  shared_ptr<Library> work(new Library("work"));
-  link_lib["work"] = work;
+  shared_ptr<Library> work(new Library(MACRO_DEFAULT_WORK_LIB));
+  link_lib[MACRO_DEFAULT_WORK_LIB] = work;
 
   // set work to be the current library
   this->curLib = work;
