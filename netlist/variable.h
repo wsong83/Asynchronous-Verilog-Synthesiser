@@ -51,6 +51,13 @@ namespace netlist {
              const boost::shared_ptr<Expression>& expp, vtype_t mtype = TVar)
     : NetComp(tVariable, lloc), vtype(mtype), name(id), uid({0,0}), exp(expp) {}
 
+    // inherit from NetComp
+    NETLIST_SET_FATHER_DECL;
+    NETLIST_STREAMOUT_DECL;
+    NETLIST_CHECK_INPARSE_DECL;
+    virtual Variable* deep_copy() const;
+
+    // helpers
     void set_value(const Number&); /* reset the value of this variable */
     void set_wire() { vtype = TWire; }
     void set_reg() { vtype = TReg; }
@@ -58,9 +65,6 @@ namespace netlist {
     void set_genvar() { vtype = TGenvar; }
     vtype_t get_vtype() const { return vtype; }
     void update();  /* recalculate the value and update all fanouts */
-    NETLIST_SET_FATHER_DECL;
-    NETLIST_STREAMOUT_DECL;
-    NETLIST_CHECK_INPARSE_DECL;
 
     VIdentifier name;
     std::map<unsigned int, VIdentifier *> fan[2]; /* fan[0] for fanin, fan[1] for fanout */

@@ -54,10 +54,13 @@ namespace netlist {
     Instance(const std::list<boost::shared_ptr<PortConn> >&, type_t);
     Instance(const shell::location&, const std::list<boost::shared_ptr<PortConn> >&, type_t);
 
-    // helpers
+    // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
     NETLIST_CHECK_INPARSE_DECL;
+    virtual Instance* deep_copy() const;
+
+    // helpers
     void set_mname(const MIdentifier& mod_name) { mname = mod_name; }
     void set_name(const IIdentifier& nm) { name = nm; named=true; }
     void set_default_name(const IIdentifier& nm) {name = nm; }

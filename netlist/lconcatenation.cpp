@@ -26,6 +26,7 @@
  *
  */
 
+#include <algorithm>
 #include "component.h"
 
 using namespace netlist;
@@ -34,6 +35,7 @@ using std::string;
 using boost::shared_ptr;
 using std::list;
 using shell::location;
+using std::for_each;
 
 netlist::LConcatenation::LConcatenation(shared_ptr<Concatenation>& con)
   : NetComp(tLConcatenation, con->loc), valid(false)
@@ -110,6 +112,20 @@ ostream& netlist::LConcatenation::streamout(ostream& os, unsigned int indent) co
     }
   }
   return os;
+}
+
+LConcatenation* netlist::LConcatenation::deep_copy() const {
+  LConcatenation* rv = new LConcatenation();
+  rv->loc = loc;
+  rv->valid = valid;
+  for_each(data.begin(), data.end(), [&rv](const VIdentifier& m) {
+      VIdentifier* mp = m.deep_copy();
+      rv->data.push_back(*mp);
+      delete mp;
+    });
+  
+  rv->set_father(father);
+  return rv;
 }
 
 void netlist::LConcatenation::db_register() {

@@ -151,6 +151,7 @@ namespace netlist {
     NETLIST_STREAMOUT_DECL;
     NETLIST_CHECK_INPARSE_DECL;
     using NetComp::set_father;
+    virtual Block* deep_copy() const;
 
     // data
     BIdentifier name;

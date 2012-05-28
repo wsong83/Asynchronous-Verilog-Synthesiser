@@ -27,6 +27,7 @@
  *
  */
 
+#include <algorithm>
 #include "component.h"
 #include "shell/env.h"
 
@@ -37,6 +38,7 @@ using boost::shared_ptr;
 using std::list;
 using std::pair;
 using shell::location;
+using std::for_each;
 
 ostream& netlist::SeqBlock::streamout(ostream& os, unsigned int indent) const {
   streamout(os, indent, false);
@@ -200,4 +202,38 @@ void netlist::SeqBlock::elab_inparse() {
   // make sure it is blocked
   blocked = true;
 
+}
+
+SeqBlock* netlist::SeqBlock::deep_copy() const {
+  SeqBlock* rv = new SeqBlock();
+  rv->loc = loc;
+  rv->name = name;
+  rv->named = named;
+  
+  // data in Block
+  // lambda expression, need C++0x support
+  for_each(statements.begin(), statements.end(),
+           [rv](const shared_ptr<NetComp>& comp) { 
+             rv->statements.push_back(shared_ptr<NetComp>(comp->deep_copy())); 
+           });
+  
+  DATABASE_DEEP_COPY_FUN(db_var,      VIdentifier, Variable,  rv->db_var       );
+  DATABASE_DEEP_COPY_FUN(db_instance, IIdentifier, Instance,  rv->db_instance  );
+  DATABASE_DEEP_COPY_FUN(db_other,    BIdentifier, NetComp,   rv->db_other     );
+  rv->unnamed_block = unnamed_block;
+  rv->unnamed_instance = unnamed_instance;
+  rv->unnamed_var = unnamed_var;
+  rv->blocked = blocked;
+
+  // data in SeqBlock
+  rv->sensitive = sensitive;
+  for_each(slist_pulse.begin(), slist_pulse.end(), [&rv](const pair<bool, shared_ptr<Expression> > m) {
+      rv->slist_pulse.push_back(pair<bool, shared_ptr<Expression> >(m.first, shared_ptr<Expression>(m.second->deep_copy())));
+    });
+  for_each(slist_level.begin(), slist_level.end(), [&rv](const shared_ptr<Expression> m) {
+      rv->slist_level.push_back(shared_ptr<Expression>(m->deep_copy()));
+    });
+
+  rv->elab_inparse();
+  return rv;
 }

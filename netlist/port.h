@@ -37,6 +37,16 @@ namespace netlist {
     Port(const PoIdentifier&);
     Port(const shell::location&, const PoIdentifier&);
 
+    // inherit from NetComp
+    NETLIST_CHECK_INPARSE_DECL;
+    NETLIST_STREAMOUT_DECL;
+    virtual Port* deep_copy() const {
+      Port *rv = new Port(loc, name);
+      rv->dir = dir;
+      rv->set_father(father);
+      return rv;
+    }      
+   
     // helpers
     void set_in() { dir = -1; }
     void set_out() { dir = 1; }
@@ -46,9 +56,7 @@ namespace netlist {
     bool is_in() const { return dir == -1; }
     bool is_out() const { return dir == 1; }
     bool is_inout() const { return dir == 0; }
-    NETLIST_CHECK_INPARSE_DECL;
-    NETLIST_STREAMOUT_DECL;
-   
+
     PoIdentifier name;
 
   private:

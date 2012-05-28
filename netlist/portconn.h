@@ -54,40 +54,40 @@ namespace netlist {
     }
   }
 
-  class PortConn {
+  class PortConn : public NetComp{
   public:
     PortConn(const boost::shared_ptr<Expression>& exp, int dir_m = 0) /* ordered connection */
-      : dir(dir_m), exp(exp), type(CEXP), named(false) { reduce(); }
+      : NetComp(tPortConn), dir(dir_m), exp(exp), type(CEXP), named(false) { reduce(); }
     
     PortConn(const shell::location& lloc, 
              const boost::shared_ptr<Expression>& exp, 
              int dir_m = 0) /* ordered connection */
-      : loc(lloc), dir(dir_m), exp(exp), type(CEXP), named(false) { reduce(); }
+      : NetComp(tPortConn, lloc), dir(dir_m), exp(exp), type(CEXP), named(false) { reduce(); }
     
     PortConn(const boost::shared_ptr<LConcatenation>& lval, int dir_m = 0) /* ordered connection */
-      : dir(dir_m), exp(new Expression(lval)), type(CEXP), named(false) { reduce(); }
+      : NetComp(tPortConn), dir(dir_m), exp(new Expression(lval)), type(CEXP), named(false) { reduce(); }
     
     PortConn(const shell::location& lloc, 
              const boost::shared_ptr<LConcatenation>& lval, 
              int dir_m = 0) /* ordered connection */
-      : loc(lloc), dir(dir_m), exp(new Expression(lval)), type(CEXP), named(false) { reduce(); }
+      : NetComp(tPortConn, lloc), dir(dir_m), exp(new Expression(lval)), type(CEXP), named(false) { reduce(); }
     
     PortConn()                  /* oredered open output connection */
-      : dir(1), type(COPEN) {}
+      : NetComp(tPortConn), dir(1), type(COPEN) {}
     
     PortConn(const PoIdentifier pn, const boost::shared_ptr<Expression>& exp, int dir_m = 0) /* named connection */
-      : pname(pn), dir(0), exp(exp), type(CEXP), named(true) { reduce(); }
+      : NetComp(tPortConn), pname(pn), dir(0), exp(exp), type(CEXP), named(true) { reduce(); }
 
     PortConn(const shell::location& lloc, 
              const PoIdentifier pn, 
              const boost::shared_ptr<Expression>& exp, int dir_m = 0) /* named connection */
-      : loc(lloc), pname(pn), dir(0), exp(exp), type(CEXP), named(true) { reduce(); }
+      : NetComp(tPortConn, lloc), pname(pn), dir(0), exp(exp), type(CEXP), named(true) { reduce(); }
 
     PortConn(const PoIdentifier pn)
-      : pname(pn), dir(1), type(COPEN), named(true) {}
+      : NetComp(tPortConn), pname(pn), dir(1), type(COPEN), named(true) {}
 
     PortConn(const shell::location& lloc, const PoIdentifier pn)
-      : loc(lloc), pname(pn), dir(1), type(COPEN), named(true) {}
+      : NetComp(tPortConn, lloc), pname(pn), dir(1), type(COPEN), named(true) {}
 
     // helpers
     void reduce() { preduce<PortConn>(this); }
@@ -101,6 +101,8 @@ namespace netlist {
     bool is_out() const { return dir == 1; }
     bool is_inout() const { return dir == 0; }
     void set_father(Block* pf) { 
+      if(father == pf) return;
+      father = pf;
       pname.set_father(pf);
       if(exp.use_count() != 0) exp->set_father(pf);
       var.set_father(pf);
@@ -112,6 +114,22 @@ namespace netlist {
       default: return true;
       }
     }
+    
+    virtual PortConn* deep_copy() const {
+      PortConn* rv = new PortConn();
+      rv->loc = loc;
+      rv->pname = pname;
+      rv->named = named;
+      rv->dir = dir;
+      rv->exp.reset(exp->deep_copy());
+      VIdentifier *pm = var.deep_copy();
+      rv->var = *pm;
+      delete pm;
+      rv->num = num;
+      rv->type = type;
+      rv->set_father(father);
+      return rv;
+    } 
 
     std::ostream& streamout (std::ostream& os, unsigned int indent) const {
       if(named) os << "." << pname.name << "(";
@@ -128,7 +146,6 @@ namespace netlist {
     }
 
     // date
-    shell::location loc;               /* location in ht source file */
     PoIdentifier pname;                   /* the port name in the module definition, or parameter name */
     int dir;                              /* direction, -1 in, 0 inout, 1 out */
     boost::shared_ptr<Expression> exp;    /* used when the connection is in general expression */
@@ -142,34 +159,36 @@ namespace netlist {
   };
   NETLIST_STREAMOUT(PortConn);
 
-  class ParaConn {
+  class ParaConn : public NetComp {
   public:
     ParaConn()
-      : type(COPEN), named(false) { }
+      : NetComp(tParaConn), type(COPEN), named(false) { }
 
     ParaConn(const boost::shared_ptr<Expression>& exp) /* ordered connection */
-      : exp(exp), type(CEXP), named(false) { reduce(); }
+      : NetComp(tParaConn), exp(exp), type(CEXP), named(false) { reduce(); }
 
     ParaConn(const shell::location& lloc, const boost::shared_ptr<Expression>& exp) /* ordered connection */
-      : loc(lloc), exp(exp), type(CEXP), named(false) { reduce(); }
+      : NetComp(tParaConn, lloc), exp(exp), type(CEXP), named(false) { reduce(); }
 
     ParaConn(const VIdentifier& pn, const boost::shared_ptr<Expression>& exp) /* named connection */
-      : pname(pn), exp(exp), type(CEXP), named(true) { reduce(); }
+      : NetComp(tParaConn), pname(pn), exp(exp), type(CEXP), named(true) { reduce(); }
 
     ParaConn(const shell::location& lloc, const VIdentifier& pn, const boost::shared_ptr<Expression>& exp) /* named connection */
-      : loc(lloc), pname(pn), exp(exp), type(CEXP), named(true) { reduce(); }
+      : NetComp(tParaConn, lloc), pname(pn), exp(exp), type(CEXP), named(true) { reduce(); }
 
     ParaConn(const VIdentifier& pn) /* named connection */
-      : pname(pn), type(COPEN), named(true) { }
+      : NetComp(tParaConn), pname(pn), type(COPEN), named(true) { }
 
     ParaConn(const shell::location& lloc, const VIdentifier& pn) /* named connection */
-      : loc(lloc), pname(pn), type(COPEN), named(true) { }
+      : NetComp(tParaConn, lloc), pname(pn), type(COPEN), named(true) { }
 
     // helpers
     void reduce() { preduce<ParaConn>(this); }
     bool is_named() const { return named;}
 
     void set_father(Block* pf) { 
+      if(father == pf) return;
+      father = pf;
       pname.set_father(pf);
       if(exp.use_count() != 0) exp->set_father(pf);
       var.set_father(pf);
@@ -182,6 +201,21 @@ namespace netlist {
       default: return true;
       }
     }
+
+    virtual ParaConn* deep_copy() const {
+      ParaConn* rv = new ParaConn();
+      rv->loc = loc;
+      rv->pname = pname;
+      rv->named = named;
+      rv->exp.reset(exp->deep_copy());
+      VIdentifier *pm = var.deep_copy();
+      rv->var = *pm;
+      delete pm;
+      rv->num = num;
+      rv->type = type;
+      rv->set_father(father);
+      return rv;
+    } 
 
     std::ostream& streamout (std::ostream& os, unsigned int indent) const {
       if(named) os << "." << pname.name << "(";
@@ -198,7 +232,6 @@ namespace netlist {
     }
 
     // date
-    shell::location loc;            /* location in ht source file */
     VIdentifier pname;                 /* the port name in the module definition, or parameter name */
     boost::shared_ptr<Expression> exp; /* used when the connection is in general expression */
     VIdentifier var;                   /* reduced to a single variable, one of the normal forms */

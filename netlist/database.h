@@ -253,4 +253,33 @@ namespace netlist {
 }                            
 #endif
 
+// macro to deep copy a data base 
+// to keep the function of the database as pure as possible, this is defined as a macro
+// DN, the name of the data base
+// K, key type
+// T, component type
+// R, the target return database
+#ifndef DATABASE_DEEP_COPY_ORDER_FUN
+#define DATABASE_DEEP_COPY_ORDER_FUN(DN, K, T, R)                           \
+{                                                                           \
+  std::list<std::pair<K, boost::shared_ptr<T> > >::const_iterator it, end;  \
+  for(it=DN.begin_order(), end=DN.end_order(); it!=end; it++)               \
+    R.insert(it->first, boost::shared_ptr<T>(it->second->deep_copy()));     \
+}
+#endif
+
+// macro to deep copy a data base 
+// to keep the function of the database as pure as possible, this is defined as a macro
+// DN, the name of the data base
+// K, key type
+// T, component type
+// R, the target return database
+#ifndef DATABASE_DEEP_COPY_FUN
+#define DATABASE_DEEP_COPY_FUN(DN, K, T, R)                              \
+{                                                                        \
+  std::map<K, boost::shared_ptr<T> >::const_iterator it, end;            \
+  for(it=DN.begin(), end=DN.end(); it!=end; it++)                        \
+    R.insert(it->first, boost::shared_ptr<T>(it->second->deep_copy()));  \
+}
+#endif
 #endif

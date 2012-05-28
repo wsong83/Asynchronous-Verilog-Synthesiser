@@ -76,3 +76,16 @@ void netlist::Assign::set_father(Block *pf) {
   lval->set_father(pf);
   rexp->set_father(pf);
 }
+
+Assign* netlist::Assign::deep_copy() const {
+  Assign* rv = new Assign( loc,
+                           shared_ptr<LConcatenation>(lval->deep_copy()),
+                           shared_ptr<Expression>(rexp->deep_copy()),
+                           blocking
+                           );
+  rv->name = name;
+  rv->named = named;
+  rv->continuous = continuous;
+  rv->set_father(father);
+  return rv;
+}

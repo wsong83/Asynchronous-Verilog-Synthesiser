@@ -27,6 +27,7 @@
  *
  */
 
+#include <algorithm>
 #include "component.h"
 #include "shell/env.h"
 
@@ -38,6 +39,7 @@ using boost::shared_ptr;
 using boost::static_pointer_cast;
 using std::list;
 using shell::location;
+using std::for_each;
 
 netlist::GenBlock::GenBlock(const Block& body)
   : Block(body)
@@ -208,4 +210,29 @@ bool netlist::GenBlock::elab_inparse_item( const shared_ptr<NetComp>& it) {
     G_ENV->error(it->loc, "SYN-MODULE-1");
     return true;
   }
+}
+
+GenBlock* netlist::GenBlock::deep_copy() const {
+  GenBlock* rv = new GenBlock();
+  rv->loc = loc;
+  rv->name = name;
+  rv->named = named;
+  
+  // data in Block
+  // lambda expression, need C++0x support
+  for_each(statements.begin(), statements.end(),
+           [rv](const shared_ptr<NetComp>& comp) { 
+             rv->statements.push_back(shared_ptr<NetComp>(comp->deep_copy())); 
+           });
+  
+  DATABASE_DEEP_COPY_FUN(db_var,      VIdentifier, Variable,  rv->db_var       );
+  DATABASE_DEEP_COPY_FUN(db_instance, IIdentifier, Instance,  rv->db_instance  );
+  DATABASE_DEEP_COPY_FUN(db_other,    BIdentifier, NetComp,   rv->db_other     );
+  rv->unnamed_block = unnamed_block;
+  rv->unnamed_instance = unnamed_instance;
+  rv->unnamed_var = unnamed_var;
+  rv->blocked = blocked;
+
+  rv->elab_inparse();
+  return rv;
 }

@@ -45,8 +45,10 @@ enum ctype_t {
   tModule,                  /* Module declaration */
   tModuleName,              /* module name */
   tNumber,                  /* number */
+  tParaConn,                /* parameter connection */
   tParaName,                /* parameter name */
   tPort,                    /* port */
+  tPortConn,                /* port connection */
   tPortName,                /* port name */
   tRegister,                /* reg */
   tRange,                   /* range */

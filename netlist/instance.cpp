@@ -229,3 +229,25 @@ ostream& netlist::Instance::streamout(ostream& os, unsigned int indent) const {
   }
   return os;
 }
+
+Instance* netlist::Instance::deep_copy() const {
+  Instance* rv = new Instance();
+  rv->loc = loc;
+  rv->mname = mname;
+  rv->name = name;
+  rv->named = named;
+  rv->type = type;
+  rv->module_ptr = module_ptr;
+
+  // lambda expression, need C++0x support
+  for_each(port_list.begin(), port_list.end(), [rv](const shared_ptr<PortConn>& comp) { 
+      rv->port_list.push_back(shared_ptr<PortConn>(comp->deep_copy())); 
+    });
+  
+  for_each(para_list.begin(), para_list.end(), [rv](const shared_ptr<ParaConn>& comp) { 
+      rv->para_list.push_back(shared_ptr<ParaConn>(comp->deep_copy())); 
+    });
+    
+  rv->set_father(father);
+  return rv;
+}

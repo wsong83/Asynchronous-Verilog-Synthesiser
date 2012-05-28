@@ -22,6 +22,7 @@ What I need to do in the future:
 Package required:
   GNU Make              ( make       )
   GNU C++ Compiler      ( g++        )
+  C++0x                 ( g++ -std=c++0x, lambda expression )
   Bison                 ( bison      )
   Flex                  ( flex       )
   GNU Boost Library     ( shared_ptr, regex, filesystem, program_options,
@@ -49,4 +50,4 @@ songw@cs.man.ac.uk
 http://apt.cs.man.ac.uk/people/wsong/
 http://wsong83.weebly.com/
 
-22/05/2012
+28/05/2012

@@ -139,3 +139,12 @@ unsigned int netlist::Variable::get_id(int iod) {
   return rv;
 }
     
+Variable* netlist::Variable::deep_copy() const {
+  Variable *rv = new Variable(loc, name, vtype);
+  rv->exp.reset(exp->deep_copy());
+
+  // every time a variable is deep copied, all fan-in and -out connections are lost and need to regenerated
+ 
+  rv->set_father(father);
+  return rv;
+}

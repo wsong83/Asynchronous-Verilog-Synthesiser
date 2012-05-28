@@ -31,6 +31,7 @@
 
 using std::string;
 using std::endl;
+using std::list;
 using boost::shared_ptr;
 using namespace shell::CMD;
 
@@ -61,6 +62,16 @@ void shell::CMD::CMDElaborate::help(Env& gEnv) {
   gEnv.stdOs << "elaborate: build up a design from a Verilog module." << endl;
   gEnv.stdOs << "    elaborate [options] design_name" << endl;
   gEnv.stdOs << cmd_name_fix(arg_opt) << endl;
+}
+
+
+namespace shell{
+  namespace CMD{
+    // some help functions
+    bool cmd_elaborate_parameter_checker(const string& mstr, list<netlist::Variable>& plist) {
+      return true;
+    }
+  }
 }
 
 bool shell::CMD::CMDElaborate::exec ( Env& gEnv, vector<string>& arg){
@@ -104,6 +115,17 @@ bool shell::CMD::CMDElaborate::exec ( Env& gEnv, vector<string>& arg){
     if(tarDesign.use_count() == 0) {
       gEnv.stdOs << "Error: Fail to find the target design \"" << designName << "\" in library \"" <<  libName << "\"."<< endl;
       return false;
+    }
+
+    // check and extract parameters
+    list<netlist::Variable> plist;
+    string pstr;
+    if(vm.count("parameters")) {
+      pstr = vm["parameters"].as<string>();
+      if(!cmd_elaborate_parameter_checker(pstr, plist)) {
+        gEnv.stdOs << "Error: Fail to resolve the parameter assignments \"" << pstr << "\" of the target design \"" << designName << "\."<< endl;
+        return false;
+      }
     }
 
     return true;

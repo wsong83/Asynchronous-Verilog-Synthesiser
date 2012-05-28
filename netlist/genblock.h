@@ -34,6 +34,7 @@ namespace netlist{
   class GenBlock : public Block {
   public:
     // constructors
+    GenBlock() : Block(tGenBlock) {}
     GenBlock(const Block& body);
     GenBlock(const shell::location& lloc, const Block& body);
     
@@ -44,6 +45,7 @@ namespace netlist{
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
+    virtual GenBlock* deep_copy() const;
 
   private:
     bool elab_inparse_item( const boost::shared_ptr<NetComp>&);

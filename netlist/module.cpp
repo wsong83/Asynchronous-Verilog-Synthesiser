@@ -26,6 +26,7 @@
  *
  */
 
+#include <algorithm>
 #include "component.h"
 #include "shell/env.h"
 
@@ -38,6 +39,7 @@ using boost::static_pointer_cast;
 using std::list;
 using std::pair;
 using shell::location;
+using std::for_each;
 
 netlist::Module::Module(const MIdentifier& nm, const shared_ptr<Block>& body)
   : Block(*body), name(nm) 
@@ -154,6 +156,38 @@ ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
   return os;
 }
 
+Module* netlist::Module::deep_copy() const {
+  Module* rv = new Module();
+  rv->loc = loc;
+  rv->set_name(name);
+  
+  // data in Block
+  // lambda expression, need C++0x support
+  for_each(statements.begin(), statements.end(),
+           [rv](const shared_ptr<NetComp>& comp) { 
+             rv->statements.push_back(shared_ptr<NetComp>(comp->deep_copy())); 
+           });
+  
+  DATABASE_DEEP_COPY_FUN(db_var,      VIdentifier, Variable,  rv->db_var       );
+  DATABASE_DEEP_COPY_FUN(db_instance, IIdentifier, Instance,  rv->db_instance  );
+  DATABASE_DEEP_COPY_FUN(db_other,    BIdentifier, NetComp,   rv->db_other     );
+  rv->unnamed_block = unnamed_block;
+  rv->unnamed_instance = unnamed_instance;
+  rv->unnamed_var = unnamed_var;
+  rv->blocked = blocked;
+
+  // data in Module;
+  DATABASE_DEEP_COPY_ORDER_FUN(db_port,      PoIdentifier, Port,      rv->db_port       );
+  DATABASE_DEEP_COPY_ORDER_FUN(db_param,     VIdentifier,  Variable,  rv->db_param      );
+  DATABASE_DEEP_COPY_ORDER_FUN(db_genvar,    VIdentifier,  Variable,  rv->db_genvar     );
+  DATABASE_DEEP_COPY_FUN(db_seqblock, BIdentifier, SeqBlock,  rv->db_seqblock  );
+  DATABASE_DEEP_COPY_FUN(db_assign,   BIdentifier, Assign,    rv->db_assign    );
+  DATABASE_DEEP_COPY_FUN(db_genblock, BIdentifier, GenBlock,  rv->db_genblock  );
+  
+  // set father
+  rv->elab_inparse();
+  return rv;
+}
 
 VIdentifier& netlist::Module::new_VId() {
   while(db_var.find(unnamed_var).use_count() +

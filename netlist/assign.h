@@ -41,6 +41,7 @@ namespace netlist {
     NETLIST_STREAMOUT_DECL;
     NETLIST_CHECK_INPARSE_DECL;
     NETLIST_SET_FATHER_DECL;
+    virtual Assign* deep_copy() const;
 
     // helpers
     //void db_register() { lval.db_register(); rexp.db_register(); }

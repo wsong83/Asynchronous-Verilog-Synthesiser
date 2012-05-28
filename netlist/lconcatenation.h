@@ -34,16 +34,19 @@ namespace netlist {
   class LConcatenation : public NetComp {
   public:
     // constructors
-    // NETLIST_DEFAULT_CON(LConcatenation, tLConcatenation);
+    NETLIST_DEFAULT_CON(LConcatenation, tLConcatenation);
     LConcatenation(boost::shared_ptr<Concatenation>&);
     LConcatenation(const shell::location&, boost::shared_ptr<Concatenation>&);
     LConcatenation(const VIdentifier&);
     LConcatenation(const shell::location&, const VIdentifier&);
 
-    // helpers
+    // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
     NETLIST_CHECK_INPARSE_DECL;
+    virtual LConcatenation* deep_copy() const;
+
+    // helpers
     bool is_valid() const { return valid; }
     unsigned int size() const { return data.size(); }
     VIdentifier& front() { return data.front(); }

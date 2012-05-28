@@ -53,6 +53,7 @@ namespace netlist {
     NETLIST_STREAMOUT_DECL;
     NETLIST_CHECK_INPARSE_DECL;
     using NetComp::set_father;
+    virtual Module* deep_copy() const;
 
     // helpers
     virtual void set_name(const MIdentifier& nm) { name = nm; named=true;}

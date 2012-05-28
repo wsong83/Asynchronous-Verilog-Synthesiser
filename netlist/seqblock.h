@@ -55,6 +55,7 @@ namespace netlist{
     NETLIST_SET_FATHER_DECL;
     NETLIST_CHECK_INPARSE_DECL;
     using Block::set_father;
+    virtual SeqBlock* deep_copy() const;
     
     // data
     bool sensitive;                                         /* whether this is a sensitive block, top level block */
