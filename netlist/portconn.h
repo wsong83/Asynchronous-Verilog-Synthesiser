@@ -121,7 +121,7 @@ namespace netlist {
       rv->pname = pname;
       rv->named = named;
       rv->dir = dir;
-      rv->exp.reset(exp->deep_copy());
+      if(exp.use_count() != 0) rv->exp.reset(exp->deep_copy());
       VIdentifier *pm = var.deep_copy();
       rv->var = *pm;
       delete pm;
@@ -207,7 +207,7 @@ namespace netlist {
       rv->loc = loc;
       rv->pname = pname;
       rv->named = named;
-      rv->exp.reset(exp->deep_copy());
+      if(exp.use_count() != 0) rv->exp.reset(exp->deep_copy());
       VIdentifier *pm = var.deep_copy();
       rv->var = *pm;
       delete pm;

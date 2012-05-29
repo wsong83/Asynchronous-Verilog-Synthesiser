@@ -36,7 +36,7 @@ using std::string;
 using shell::location;
 
 // decimal or integer
-netlist::Number::Number(char *text, int txt_leng) 
+netlist::Number::Number(const char *text, const int txt_leng) 
   : NetComp(tNumber), valid(false), valuable(false)
 {
   string m;
@@ -74,7 +74,7 @@ netlist::Number::Number(char *text, int txt_leng)
   }
 }
 
-netlist::Number::Number(const location& lloc, char *text, int txt_leng) 
+netlist::Number::Number(const location& lloc, const char *text, const int txt_leng) 
   : NetComp(tNumber, lloc), valid(false), valuable(false)
 {
   string m;
@@ -213,7 +213,7 @@ void netlist::Number::concatenate(const Number& rhs) {
 }
 
 
-bool netlist::Number::bin2num(char *text, int txt_leng, int start) {
+bool netlist::Number::bin2num(const char *text, const int txt_leng, const int start) {
   string m;
   bool v = true;
 
@@ -236,7 +236,7 @@ bool netlist::Number::bin2num(char *text, int txt_leng, int start) {
   return true;
 }
 
-bool netlist::Number::dec2num(char *text, int txt_leng, int start) {
+bool netlist::Number::dec2num(const char *text, const int txt_leng, const int start) {
   string m;
 
   for(int i=start+1; i<txt_leng; i++) {
@@ -255,7 +255,7 @@ bool netlist::Number::dec2num(char *text, int txt_leng, int start) {
   return true;
 }
 
-bool netlist::Number::oct2num(char *text, int txt_leng, int start) {
+bool netlist::Number::oct2num(const char *text, const int txt_leng, const int start) {
   string m;
   bool v = true;
 
@@ -297,7 +297,7 @@ bool netlist::Number::oct2num(char *text, int txt_leng, int start) {
   return true;
 }
 
-bool netlist::Number::hex2num(char *text, int txt_leng, int start) {
+bool netlist::Number::hex2num(const char *text, const int txt_leng, const int start) {
   string m;
   bool v = true;
 

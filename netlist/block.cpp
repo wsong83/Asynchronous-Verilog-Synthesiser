@@ -242,8 +242,6 @@ Block* netlist::Block::deep_copy() const {
            });
   
   DATABASE_DEEP_COPY_FUN(db_var,      VIdentifier, Variable,  rv->db_var       );
-  DATABASE_DEEP_COPY_FUN(db_instance, IIdentifier, Instance,  rv->db_instance  );
-  DATABASE_DEEP_COPY_FUN(db_other,    BIdentifier, NetComp,   rv->db_other     );
   rv->unnamed_block = unnamed_block;
   rv->unnamed_instance = unnamed_instance;
   rv->unnamed_var = unnamed_var;

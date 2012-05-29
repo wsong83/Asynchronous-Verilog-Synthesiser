@@ -169,20 +169,15 @@ Module* netlist::Module::deep_copy() const {
            });
   
   DATABASE_DEEP_COPY_FUN(db_var,      VIdentifier, Variable,  rv->db_var       );
-  DATABASE_DEEP_COPY_FUN(db_instance, IIdentifier, Instance,  rv->db_instance  );
-  DATABASE_DEEP_COPY_FUN(db_other,    BIdentifier, NetComp,   rv->db_other     );
   rv->unnamed_block = unnamed_block;
   rv->unnamed_instance = unnamed_instance;
   rv->unnamed_var = unnamed_var;
   rv->blocked = blocked;
 
   // data in Module;
-  DATABASE_DEEP_COPY_ORDER_FUN(db_port,      PoIdentifier, Port,      rv->db_port       );
-  DATABASE_DEEP_COPY_ORDER_FUN(db_param,     VIdentifier,  Variable,  rv->db_param      );
-  DATABASE_DEEP_COPY_ORDER_FUN(db_genvar,    VIdentifier,  Variable,  rv->db_genvar     );
-  DATABASE_DEEP_COPY_FUN(db_seqblock, BIdentifier, SeqBlock,  rv->db_seqblock  );
-  DATABASE_DEEP_COPY_FUN(db_assign,   BIdentifier, Assign,    rv->db_assign    );
-  DATABASE_DEEP_COPY_FUN(db_genblock, BIdentifier, GenBlock,  rv->db_genblock  );
+  DATABASE_DEEP_COPY_ORDER_FUN(db_port,   PoIdentifier, Port,      rv->db_port       );
+  DATABASE_DEEP_COPY_ORDER_FUN(db_param,  VIdentifier,  Variable,  rv->db_param      );
+  DATABASE_DEEP_COPY_ORDER_FUN(db_genvar, VIdentifier,  Variable,  rv->db_genvar     );
   
   // set father
   rv->elab_inparse();

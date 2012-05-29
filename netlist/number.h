@@ -36,8 +36,8 @@ namespace netlist {
   public:
     // constructors
     Number() : num_leng(0), valid(false), valuable(false) {};
-    Number(char *text, int txt_leng); /* constructor for scanner */
-    Number(const shell::location& lloc, char *text, int txt_leng); /* constructor for scanner */
+    Number(const char *text, const int txt_leng); /* constructor for scanner */
+    Number(const shell::location& lloc, const char *text, const int txt_leng); /* constructor for scanner */
     Number(int d);
     Number(const std::string&);
     Number(const shell::location& lloc, const std::string&);
@@ -73,10 +73,10 @@ namespace netlist {
     //helpers
 
     // convert the verilog fixed number field to number structure
-    bool bin2num(char *text, int txt_leng, int start);
-    bool dec2num(char *text, int txt_leng, int start);
-    bool oct2num(char *text, int txt_leng, int start);
-    bool hex2num(char *text, int txt_leng, int start);
+    bool bin2num(const char *text, int txt_leng, int start);
+    bool dec2num(const char *text, int txt_leng, int start);
+    bool oct2num(const char *text, int txt_leng, int start);
+    bool hex2num(const char *text, int txt_leng, int start);
     bool check_valuable();
   };
 
