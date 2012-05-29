@@ -68,3 +68,15 @@ bool netlist::WhileState::check_inparse() {
   rv &= body->check_inparse();
   return rv;
 }
+
+WhileState* netlist::WhileState::deep_copy() const {
+  WhileState* rv = new WhileState(loc);
+  rv->name = name;
+  rv->named = named;
+  
+  if(exp.use_count() != 0) rv->exp.reset(exp->deep_copy());
+  if(body.use_count() != 0) rv->body.reset(body->deep_copy());
+
+  rv->set_father(father);
+  return rv;
+}

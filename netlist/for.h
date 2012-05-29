@@ -54,6 +54,7 @@ namespace netlist {
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
     NETLIST_CHECK_INPARSE_DECL;
+    virtual ForState* deep_copy() const;
 
     // helpers
     void set_name(const BIdentifier& nm) { name = nm; named = true;}

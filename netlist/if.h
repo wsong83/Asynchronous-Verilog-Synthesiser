@@ -34,6 +34,8 @@ namespace netlist {
   class IfState : public NetComp {
   public:
     // constructors
+    IfState() : NetComp(tIf), named(false) {}
+    IfState(const shell::location& lloc) : NetComp(tIf, lloc), named(false) {}
     IfState(
             const boost::shared_ptr<Expression>& exp, 
             const boost::shared_ptr<Block>& m_ifcase, 
@@ -67,6 +69,7 @@ namespace netlist {
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
     NETLIST_CHECK_INPARSE_DECL;
+    virtual IfState* deep_copy() const;
 
     //data
     boost::shared_ptr<Expression> exp; /* the condition expression */

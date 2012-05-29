@@ -35,6 +35,7 @@ namespace netlist {
   public:
     // constructors
     WhileState() : NetComp(tWhile), named(false) {}
+    WhileState(const shell::location& lloc) : NetComp(tWhile, lloc), named(false) {}
     WhileState(const boost::shared_ptr<Expression>& exp, const boost::shared_ptr<Block>& body);
     WhileState(const shell::location& lloc, const boost::shared_ptr<Expression>& exp, const boost::shared_ptr<Block>& body);
 
@@ -42,6 +43,7 @@ namespace netlist {
     NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
     NETLIST_CHECK_INPARSE_DECL;
+    virtual WhileState* deep_copy() const;
 
     // helpers
     void set_name(const BIdentifier& nm) { name = nm; named = true;}

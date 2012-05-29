@@ -116,3 +116,16 @@ ostream& netlist::IfState::streamout(ostream& os, unsigned int indent, bool fl_p
   return os;
 
 }
+
+IfState* netlist::IfState::deep_copy() const {
+  IfState* rv = new IfState(loc);
+  rv->name = name;
+  rv->named = named;
+  
+  if(exp.use_count() != 0) rv->exp.reset(exp->deep_copy());
+  if(ifcase.use_count() != 0) rv->ifcase.reset(ifcase->deep_copy());
+  if(elsecase.use_count() != 0) rv->elsecase.reset(elsecase->deep_copy());
+
+  rv->set_father(father);
+  return rv;
+}

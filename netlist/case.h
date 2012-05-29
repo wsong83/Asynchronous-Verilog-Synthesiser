@@ -77,6 +77,7 @@ namespace netlist{
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
     NETLIST_CHECK_INPARSE_DECL;
+    virtual CaseItem* deep_copy() const;
     bool is_default() const {return exps.size() == 0; }
 
     // data
@@ -89,6 +90,8 @@ namespace netlist{
   class CaseState : public NetComp {
   public:
     // constructors
+    NETLIST_DEFAULT_CON(CaseState, tCase);
+    NETLIST_DEFAULT_CON_WL(CaseState, tCase);
     CaseState(const boost::shared_ptr<Expression>& exp, const std::list<boost::shared_ptr<CaseItem> >& citems, 
               const boost::shared_ptr<CaseItem>& ditem, bool mcasex = false)
       : NetComp(tCase), exp(exp), cases(citems), named(false), casex(mcasex) 
@@ -129,6 +132,7 @@ namespace netlist{
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
     NETLIST_CHECK_INPARSE_DECL;
+    virtual CaseState* deep_copy() const;
     void set_name(const BIdentifier& nm) {name = nm; named=true;}
     bool is_named() const { return named; }
     bool is_casex() const { return casex; }

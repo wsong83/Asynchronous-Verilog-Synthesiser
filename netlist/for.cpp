@@ -84,3 +84,18 @@ ostream& netlist::ForState::streamout(ostream& os, unsigned int indent) const {
 
   return os;
 }
+
+ForState* netlist::ForState::deep_copy() const {
+  ForState* rv = new ForState(loc);
+  rv->name = name;
+  rv->named = named;
+  
+  if(init.use_count() != 0) rv->init.reset(init->deep_copy());
+  if(cond.use_count() != 0) rv->cond.reset(cond->deep_copy());
+  if(incr.use_count() != 0) rv->incr.reset(incr->deep_copy());
+  if(body.use_count() != 0) rv->body.reset(body->deep_copy());
+
+  rv->set_father(father);
+  return rv;
+}
+

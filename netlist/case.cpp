@@ -26,6 +26,7 @@
  *
  */
 
+#include <algorithm>
 #include "component.h"
 
 using namespace netlist;
@@ -34,6 +35,7 @@ using std::endl;
 using std::string;
 using boost::shared_ptr;
 using std::list;
+using std::for_each;
 
 ostream& netlist::CaseItem::streamout (ostream& os, unsigned int indent) const {
   // show the expressions
@@ -82,6 +84,16 @@ bool netlist::CaseItem::check_inparse() {
   return rv;
 } 
 
+CaseItem* netlist::CaseItem::deep_copy() const {
+  CaseItem* rv = new CaseItem(loc);
+  if(body.use_count() != 0) rv->body.reset(body->deep_copy());
+  for_each(exps.begin(), exps.end(), [&rv](const shared_ptr<Expression>& m) {
+      rv->exps.push_back(shared_ptr<Expression>(m->deep_copy()));
+    });
+  rv->set_father(father);
+  return rv;
+}
+
 ostream& netlist::CaseState::streamout (ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
   if(casex) os << "casex(" << *exp << ")" << endl;
@@ -114,3 +126,15 @@ bool netlist::CaseState::check_inparse() {
   return rv;
 }
 
+CaseState* netlist::CaseState::deep_copy() const {
+  CaseState* rv = new CaseState(loc);
+  rv->name = name;
+  rv->named = named;
+  rv->casex = casex;
+  if(exp.use_count() != 0) rv->exp.reset(exp->deep_copy());
+  for_each(cases.begin(), cases.end(), [&rv](const shared_ptr<CaseItem>& m) {
+      rv->cases.push_back(shared_ptr<CaseItem>(m->deep_copy()));
+    });
+  rv->set_father(father);
+  return rv;
+}
