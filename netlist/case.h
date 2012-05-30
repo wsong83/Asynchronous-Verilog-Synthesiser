@@ -78,6 +78,8 @@ namespace netlist{
     NETLIST_SET_FATHER_DECL;
     NETLIST_CHECK_INPARSE_DECL;
     virtual CaseItem* deep_copy() const;
+    virtual void db_register(int iod = 1);
+    virtual void db_expunge();
     bool is_default() const {return exps.size() == 0; }
 
     // data
@@ -133,6 +135,8 @@ namespace netlist{
     NETLIST_SET_FATHER_DECL;
     NETLIST_CHECK_INPARSE_DECL;
     virtual CaseState* deep_copy() const;
+    virtual void db_register(int iod = 1);
+    virtual void db_expunge();
     void set_name(const BIdentifier& nm) {name = nm; named=true;}
     bool is_named() const { return named; }
     bool is_casex() const { return casex; }

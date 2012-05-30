@@ -196,12 +196,22 @@ netlist::Range::Range(const location& lloc, const Range_Exp& sel, int updown)
   }
 }
 
-void netlist::Range::db_register() {
-  v->db_register(1);
-  r.first->db_register(1);
-  r.second->db_register(1);
+void netlist::Range::db_register(int iod) {
+  switch(rtype) {
+  case TR_Var: v->db_register(1); break;
+  case TR_Range: r.first->db_register(1); r.second->db_register(1); break;
+  default: ;
+  }
 }
-  
+
+void netlist::Range::db_expunge() {
+  switch(rtype) {
+  case TR_Var: v->db_expunge(); break;
+  case TR_Range: r.first->db_expunge(); r.second->db_expunge(); break;
+  default: ;
+  }
+}
+
 void netlist::Range::set_father(Block *pf) {
   if(father == pf) return;
   father = pf;

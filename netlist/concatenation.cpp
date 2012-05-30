@@ -26,6 +26,7 @@
  *
  */
 
+#include <algorithm>
 #include "component.h"
 
 using namespace netlist;
@@ -33,6 +34,7 @@ using std::ostream;
 using std::string;
 using boost::shared_ptr;
 using std::list;
+using std::for_each;
 
 void netlist::ConElem::reduce() {
   exp->reduce();
@@ -41,22 +43,6 @@ void netlist::ConElem::reduce() {
     for(it=con.begin(), end=con.end(); it != end; it++)
       (*it)->reduce();
   }
-}
-
-void netlist::ConElem::db_register(int iod) {
-  exp->db_register(iod);
-
-  list<shared_ptr<ConElem> >::iterator it, end;
-  for(it = con.begin(), end = con.end(); it != end; it++) 
-    (*it)->db_register(iod);
-}
-
-void netlist::ConElem::db_expunge() {
-  exp->db_expunge();
-
-  list<shared_ptr<ConElem> >::iterator it, end;
-  for(it = con.begin(), end = con.end(); it != end; it++) 
-    (*it)->db_expunge();
 }
 
 ostream& netlist::ConElem::streamout(ostream& os, unsigned int indent) const {
@@ -107,6 +93,16 @@ bool netlist::ConElem::check_inparse() {
   for(it=con.begin(), end=con.end(); it!=end; it++)
     rv &= (*it)->check_inparse();
   return rv;
+}
+
+void netlist::ConElem::db_register(int iod) {
+  exp->db_register(iod);
+  for_each(con.begin(), con.end(), [&iod](shared_ptr<ConElem>& m) {m->db_register(iod);});
+}
+
+void netlist::ConElem::db_expunge() {
+  exp->db_expunge();
+  for_each(con.begin(), con.end(), [](shared_ptr<ConElem>& m) {m->db_expunge();});
 }
 
 ostream& netlist::Concatenation::streamout(ostream& os, unsigned int indent) const {
@@ -223,15 +219,11 @@ void netlist::Concatenation::reduce() {
 }
 
 void netlist::Concatenation::db_register(int iod) {
-  list<shared_ptr<ConElem> >::iterator it, end;
-  for(it = data.begin(), end = data.end(); it != end; it++) 
-    (*it)->db_register(iod);
+  for_each(data.begin(), data.end(), [&iod](shared_ptr<ConElem>& m) {m->db_register(iod);});
 }
 
 void netlist::Concatenation::db_expunge() {
-  list<shared_ptr<ConElem> >::iterator it, end;
-  for(it = data.begin(), end = data.end(); it != end; it++) 
-    (*it)->db_expunge();
+  for_each(data.begin(), data.end(), [](shared_ptr<ConElem>& m) {m->db_expunge();});
 }
 
 Concatenation* netlist::Concatenation::deep_copy() const {

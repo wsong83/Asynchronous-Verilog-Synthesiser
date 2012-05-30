@@ -343,45 +343,35 @@ ostream& netlist::VIdentifier::streamout(ostream& os, unsigned int indent) const
 }
 
 void netlist::VIdentifier::db_register(shared_ptr<Variable>& f, int iod) {
-  assert(uid == 0);
-  assert(iod >= 0 && iod <= 1);
+  if(uid == 0) {                // generate a new uid
+    uid = pvar->get_id();
+  }
 
-  // store the father variable and the inout direction
-  pvar = f;
-  inout_t = iod;
+  // store my pointer to the fan database in the variable object
+  pvar->fan[iod][uid] = this;
 
-  // generate a unique id
-  uid = f->get_id(iod);
-  
-  // insert the fanin/out
-  pair<map<unsigned int, VIdentifier*>::iterator, bool> rv;
-  rv = f->fan[iod].insert(pair<unsigned int, VIdentifier *>(uid, this));
-  assert(rv.second);
-
-  // TODO:
-  // currently variables in range are not registered or considered, supposing no variable in ranges
-  // this must be fixed when parameters are support
-  // register in range may also be supported when memory structure is supported for auot synthesis
+  // update the value
+  if(pvar->is_valuable()) value = pvar->get_value();
 }
 
 void netlist::VIdentifier::db_register(int iod) {
-  assert(pvar.use_count());
-  assert(uid == 0);
+  if(uid == 0) { // the root Variable unkown yet, need to find it out
+    pvar = father->gfind_var(*this);
+    if(pvar.use_count() == 0) { // this variable is not defined yet
+      // define the variable in the lowest block as a wire
+      shared_ptr<Variable> mvar(new Variable(*this, Variable::TWire));
+      mvar->name.db_expunge();
+      father->db_var.insert(mvar->name, mvar);
+      pvar = mvar;
+    }
+  }
   db_register(pvar, iod);
 }
 
-void netlist::VIdentifier::db_register() {
-  assert(pvar.use_count());
-  assert(uid == 0);
-  db_register(pvar, inout_t);
-}
-
 void netlist::VIdentifier::db_expunge() {
-  assert(uid != 0);
-  assert(pvar.use_count());
-  
-  int rv = pvar->fan[inout_t].erase(uid);
-  assert(rv == 1);
+  if(uid != 0) pvar->fan[inout_t].erase(uid);
+  uid = 0;
+  pvar.reset();
 }
 
 VIdentifier* netlist::VIdentifier::deep_copy() const {

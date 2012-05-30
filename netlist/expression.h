@@ -53,8 +53,6 @@ namespace netlist {
     int size() const { return eqn.size(); }
     bool empty() const { return eqn.empty(); }
     boost::shared_ptr<Operation>& front() { return eqn.front(); }
-    void db_register(int iod = 1);
-    void db_expunge();
     
     // develope the equation
     void append(Operation::operation_t);
@@ -67,6 +65,8 @@ namespace netlist {
     NETLIST_SET_FATHER_DECL;
     NETLIST_CHECK_INPARSE_DECL;
     virtual Expression* deep_copy() const;
+    virtual void db_register(int iod = 1);
+    virtual void db_expunge();
     
     // data
     std::list<boost::shared_ptr<Operation> > eqn;

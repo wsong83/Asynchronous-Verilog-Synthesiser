@@ -46,6 +46,8 @@ namespace netlist {
       rv->set_father(father);
       return rv;
     }      
+    virtual void db_register(int iod = 1) {}
+    virtual void db_expunge() {}
    
     // helpers
     void set_in() { dir = -1; }

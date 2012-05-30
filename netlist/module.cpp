@@ -184,6 +184,29 @@ Module* netlist::Module::deep_copy() const {
   return rv;
 }
 
+void netlist::Module::db_register(int iod) {
+  // The item in statements are duplicated in db_instance, db_other, db_seqblock, db_assign and db_genblock.
+  // Therefore, only statements are executed.
+  for_each(db_param.begin_order(), db_param.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
+      m.second->db_register(1);
+    });
+  for_each(db_genvar.begin_order(), db_genvar.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
+      m.second->db_register(1);
+    });
+  for_each(statements.begin(), statements.end(), [](shared_ptr<NetComp>& m) {m->db_register(1);});
+}
+
+void netlist::Module::db_expunge() {
+  for_each(db_param.begin_order(), db_param.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
+      m.second->db_expunge();
+    });
+  for_each(db_genvar.begin_order(), db_genvar.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
+      m.second->db_expunge();
+    });
+  for_each(statements.begin(), statements.end(), [](shared_ptr<NetComp>& m) {m->db_expunge();});
+}
+
+
 VIdentifier& netlist::Module::new_VId() {
   while(db_var.find(unnamed_var).use_count() +
         db_param.find(unnamed_var).use_count() +
@@ -272,6 +295,16 @@ void netlist::Module::set_father() {
   DATABASE_SET_FATHER_FUN(db_assign, BIdentifier, Assign, this);
   DATABASE_SET_FATHER_FUN(db_genblock, BIdentifier, GenBlock, this);
   Block::set_father();
+}
+
+bool netlist::Module::update_name() {
+  // resolve all parameters
+  list<pair<VIdentifier, shared_ptr<Variable> > >::iterator it, end;
+  for(it=db_param.begin_order(), end=db_param.end_order(); it!=end; it++) {
+    
+  }
+
+  return true;
 }
 
 void netlist::Module::init_port_list(const list<PoIdentifier>& port_list) {

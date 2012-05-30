@@ -183,9 +183,6 @@ namespace netlist {
     void set_value(const Number& p) { value = p; }
     const std::string& get_txt_value() const { return value.get_txt_value(); }
     void db_register(boost::shared_ptr<Variable>&, int);
-    void db_register(int);      /* light weight version when pvar is available */
-    void db_register();         /* light weight version when pvar and direction is available */
-    void db_expunge();
     bool db_registered() const { return uid != 0; }
     void set_variable(const boost::shared_ptr<Variable>& f, int iod = 1) { assert(uid == 0); pvar = f; inout_t = iod;}
     void reset_uid(unsigned int id) { uid = id; } /* only used by Variable::get_id() */
@@ -196,6 +193,8 @@ namespace netlist {
     NETLIST_STREAMOUT_DECL;
     NETLIST_CHECK_INPARSE_DECL;
     virtual VIdentifier* deep_copy() const;
+    virtual void db_register(int iod = 1);
+    virtual void db_expunge();
 
   private:
     Number value;

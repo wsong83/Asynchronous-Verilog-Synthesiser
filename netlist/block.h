@@ -50,19 +50,9 @@ namespace netlist {
     Block(NetComp::ctype_t t, const shell::location& lloc) 
       : NetComp(t, lloc), named(false), blocked(false) {}
 
-    // helpers
-    virtual void set_name(const BIdentifier& nm) { name = nm; named=true; blocked = true; }
-    void set_default_name(const BIdentifier& nm) { name = nm; }
-    virtual void set_blocked() { blocked = true; }
-    bool is_named() const { return named; }
-    bool is_blocked() const { return blocked; }
-    virtual bool add(const boost::shared_ptr<NetComp>&); /* add a general statement to this block */
-    /* return a pointer of the top-level module */
-    virtual Block* get_module() { 
-      if(father != NULL) return father->get_module();
-      else return NULL;
-    }
-    
+    /* add a general statement to this block */
+    virtual bool add(const boost::shared_ptr<NetComp>&); 
+
     /* a template funtion to add all sorts of netlist components */
     template<typename T>
       bool add_list(const std::list<boost::shared_ptr<T> >& ll) {
@@ -71,7 +61,7 @@ namespace netlist {
         add(*it);
       return true;
     }
-    
+
     /* add a general case statement */
     bool add_case(const boost::shared_ptr<Expression>&, 
                   const std::list<boost::shared_ptr<CaseItem> >&, const boost::shared_ptr<CaseItem>&,
@@ -134,6 +124,17 @@ namespace netlist {
     virtual void elab_inparse(); /* resolve the content in statements during parsing */
 
     // helpers
+    virtual void set_name(const BIdentifier& nm) { name = nm; named=true; blocked = true; }
+    void set_default_name(const BIdentifier& nm) { name = nm; }
+    virtual void set_blocked() { blocked = true; }
+    bool is_named() const { return named; }
+    bool is_blocked() const { return blocked; }
+    /* return a pointer of the top-level module */
+    virtual Block* get_module() { 
+      if(father != NULL) return father->get_module();
+      else return NULL;
+    }
+    
     BIdentifier& new_BId();     /* generate an unused block id */
     IIdentifier& new_IId();     /* generate an unused instance id*/
     VIdentifier& new_VId();     /* generate an unused variable id */
@@ -152,6 +153,8 @@ namespace netlist {
     NETLIST_CHECK_INPARSE_DECL;
     using NetComp::set_father;
     virtual Block* deep_copy() const;
+    virtual void db_register(int iod = 1);
+    virtual void db_expunge();
 
     // data
     BIdentifier name;
@@ -160,7 +163,6 @@ namespace netlist {
     DataBase<IIdentifier, Instance>        db_instance;  /* module instances */
     DataBase<BIdentifier, NetComp>         db_other;     /* non-block statements, including assignements, if, etc. */
     
-
   protected:
 
     //name for unnamed items

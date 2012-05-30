@@ -94,6 +94,16 @@ CaseItem* netlist::CaseItem::deep_copy() const {
   return rv;
 }
 
+void netlist::CaseItem::db_register(int iod) {
+  for_each(exps.begin(), exps.end(), [](shared_ptr<Expression>& m) {m->db_register(1);});
+  if(body.use_count() != 0) body->db_register(1);
+}
+
+void netlist::CaseItem::db_expunge() {
+  for_each(exps.begin(), exps.end(), [](shared_ptr<Expression>& m) {m->db_expunge();});
+  if(body.use_count() != 0) body->db_expunge();
+}
+
 ostream& netlist::CaseState::streamout (ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
   if(casex) os << "casex(" << *exp << ")" << endl;
@@ -137,4 +147,14 @@ CaseState* netlist::CaseState::deep_copy() const {
     });
   rv->set_father(father);
   return rv;
+}
+
+void netlist::CaseState::db_register(int iod) {
+  for_each(cases.begin(), cases.end(), [](shared_ptr<CaseItem>& m) {m->db_register(1);});
+  if(exp.use_count() != 0) exp->db_register(1);
+}
+
+void netlist::CaseState::db_expunge() {
+  for_each(cases.begin(), cases.end(), [](shared_ptr<CaseItem>& m) {m->db_expunge();});
+  if(exp.use_count() != 0) exp->db_expunge();
 }

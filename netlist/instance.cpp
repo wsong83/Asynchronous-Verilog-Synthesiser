@@ -251,3 +251,13 @@ Instance* netlist::Instance::deep_copy() const {
   rv->set_father(father);
   return rv;
 }
+
+void netlist::Instance::db_register(int iod) {
+  for_each(port_list.begin(), port_list.end(), [](shared_ptr<PortConn>& m) {m->db_register(1);});
+  for_each(para_list.begin(), para_list.end(), [](shared_ptr<ParaConn>& m) {m->db_register(1);});
+}
+
+void netlist::Instance::db_expunge() {
+  for_each(port_list.begin(), port_list.end(), [](shared_ptr<PortConn>& m) {m->db_expunge();});
+  for_each(para_list.begin(), para_list.end(), [](shared_ptr<ParaConn>& m) {m->db_expunge();});
+}

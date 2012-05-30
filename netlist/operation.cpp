@@ -96,41 +96,11 @@ VIdentifier& netlist::Operation::get_var(){
 }
 
 void netlist::Operation::db_register(int iod) {
-  if(data.use_count()) {
-    switch(data->get_type()) {
-    case NetComp::tVarName: {
-      shared_ptr<VIdentifier> vp = static_pointer_cast<VIdentifier>(data);
-      if(vp->db_registered()) {
-        assert(vp->get_inout_dir() == iod);
-      } else {
-        vp->db_register(iod);
-      }
-      break;
-    }
-    case NetComp::tConcatenation: {
-      (static_pointer_cast<Concatenation>(data))->db_register(iod);
-      break;
-    }
-    default:;                   // do nothing
-    }
-  }
+  if(data.use_count() != 0) data->db_register(iod);
 }
 
 void netlist::Operation::db_expunge() {
-  if(data.use_count()) {
-    switch(data->get_type()) {
-    case NetComp::tVarName: {
-      shared_ptr<VIdentifier> vp = static_pointer_cast<VIdentifier>(data);
-      vp->db_expunge();
-      break;
-    }
-    case NetComp::tConcatenation: {
-      (static_pointer_cast<Concatenation>(data))->db_expunge();
-      break;
-    }
-    default:;                   // do nothing
-    }
-  }
+  if(data.use_count() != 0) data->db_expunge();
 }
 
 void netlist::Operation::set_father(Block *pf) {

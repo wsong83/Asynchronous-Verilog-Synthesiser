@@ -38,24 +38,26 @@ namespace netlist {
       TVar, TWire, TReg, TParam, TGenvar
     } vtype;
 
-    Variable() : NetComp(tVariable), uid({0,0}) {}
-    Variable(const shell::location& lloc) : NetComp(tVariable, lloc), uid({0,0}) {}
+    Variable() : NetComp(tVariable), uid(0) {}
+    Variable(const shell::location& lloc) : NetComp(tVariable, lloc), uid(0) {}
     Variable(const VIdentifier& id, vtype_t mtype = TVar)
-      : NetComp(tVariable), vtype(mtype), name(id), uid({0,0}) {}
+      : NetComp(tVariable), vtype(mtype), name(id), uid(0) {}
     Variable(const Port& p);
     Variable(const shell::location& lloc, const VIdentifier& id, vtype_t mtype = TVar)
-      : NetComp(tVariable, lloc), vtype(mtype), name(id), uid({0,0}) {}
+      : NetComp(tVariable, lloc), vtype(mtype), name(id), uid(0) {}
     Variable(const VIdentifier& id, const boost::shared_ptr<Expression>& expp, vtype_t mtype = TVar)
-      : NetComp(tVariable), vtype(mtype), name(id), uid({0,0}), exp(expp) {}
+      : NetComp(tVariable), vtype(mtype), name(id), uid(0), exp(expp) {}
     Variable(const shell::location& lloc, const VIdentifier& id, 
              const boost::shared_ptr<Expression>& expp, vtype_t mtype = TVar)
-    : NetComp(tVariable, lloc), vtype(mtype), name(id), uid({0,0}), exp(expp) {}
+    : NetComp(tVariable, lloc), vtype(mtype), name(id), uid(0), exp(expp) {}
 
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
     NETLIST_CHECK_INPARSE_DECL;
     virtual Variable* deep_copy() const;
+    virtual void db_register(int iod = 1);
+    virtual void db_expunge();
 
     // helpers
     void set_value(const Number&); /* reset the value of this variable */
@@ -64,14 +66,16 @@ namespace netlist {
     void set_para() { vtype = TParam; }
     void set_genvar() { vtype = TGenvar; }
     vtype_t get_vtype() const { return vtype; }
-    void update();  /* recalculate the value and update all fanouts */
+    bool update();  /* recalculate the value and update all fanouts, true when it is reduced to a number */
+    bool is_valuable() const {  return (exp.use_count() != 0) ? exp->is_valuable() : false; }
+    Number get_value() const {  return (exp.use_count() != 0) ? exp->get_value() : 0; }
 
     VIdentifier name;
     std::map<unsigned int, VIdentifier *> fan[2]; /* fan[0] for fanin, fan[1] for fanout */
-    unsigned int get_id(int);
+    unsigned int get_id();
 
   private:
-    unsigned int uid[2];
+    unsigned int uid;
     boost::shared_ptr<Expression> exp;
 
   };

@@ -116,6 +116,18 @@ namespace netlist{
       return "";
     }
 
+    // register variable identifiers to the variable database
+    virtual void db_register(int iod) {
+      std::cerr << "ERROR!!, the db_register() of NetComp is used!!!" << std::endl;
+      assert(0 == "the db_register() of NetComp is used");
+    }
+
+    // expunge the variable identifier in the variable database
+    virtual void db_expunge() {
+      std::cerr << "ERROR!!, the db_expunge() of NetComp is used!!!" << std::endl;
+      assert(0 == "the db_expunge() of NetComp is used");
+    }
+
   protected:
     Block* father;              /* the pointer pointed to the father block */
       

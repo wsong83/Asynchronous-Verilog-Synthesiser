@@ -235,3 +235,14 @@ SeqBlock* netlist::SeqBlock::deep_copy() const {
   rv->elab_inparse();
   return rv;
 }
+
+void netlist::SeqBlock::db_register(int iod) {
+  // the item in statements are duplicated in db_instance and db_other, therefore, only statements are executed
+  // initialization of the variables in ablock are ignored as they are wire, reg and integers
+  // at this stage I do not think sensitive list are real fanout of any signal
+  for_each(statements.begin(), statements.end(), [](shared_ptr<NetComp>& m) {m->db_register(1);});
+}
+
+void netlist::SeqBlock::db_expunge() {
+  for_each(statements.begin(), statements.end(), [](shared_ptr<NetComp>& m) {m->db_expunge();});
+}

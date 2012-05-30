@@ -131,6 +131,24 @@ namespace netlist {
       return rv;
     } 
 
+    virtual void db_register(int iod = 1) {
+      pname.db_register(dir >= 0 ? 0 : 1);
+      switch(type) {
+      case CEXP: exp->db_register(1); break;
+      case CVAR: var.db_register(1); break;
+      default: ;
+      }
+    }
+      
+    virtual void db_expunge() {
+      pname.db_expunge();
+      switch(type) {
+      case CEXP: exp->db_expunge(); break;
+      case CVAR: var.db_expunge(); break;
+      default: ;
+      }
+    }
+
     std::ostream& streamout (std::ostream& os, unsigned int indent) const {
       if(named) os << "." << pname.name << "(";
       switch(type) {
@@ -216,6 +234,24 @@ namespace netlist {
       rv->set_father(father);
       return rv;
     } 
+
+    virtual void db_register(int iod = 1) {
+      pname.db_register(1);
+      switch(type) {
+      case CEXP: exp->db_register(1); break;
+      case CVAR: var.db_register(1); break;
+      default: ;
+      }
+    }
+      
+    virtual void db_expunge() {
+      pname.db_expunge();
+      switch(type) {
+      case CEXP: exp->db_expunge(); break;
+      case CVAR: var.db_expunge(); break;
+      default: ;
+      }
+    }
 
     std::ostream& streamout (std::ostream& os, unsigned int indent) const {
       if(named) os << "." << pname.name << "(";

@@ -60,6 +60,8 @@ namespace netlist {
     NETLIST_STREAMOUT_DECL;
     NETLIST_CHECK_INPARSE_DECL;
     virtual Number* deep_copy() const;
+    virtual void db_register(int iod) {}
+    virtual void db_expunge() {}
 
     // operation
     void negate() {}

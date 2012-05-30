@@ -42,10 +42,16 @@ namespace netlist {
     NETLIST_CHECK_INPARSE_DECL;
     NETLIST_SET_FATHER_DECL;
     virtual Assign* deep_copy() const;
+    virtual void db_register(int iod = 1) { 
+      if(lval.use_count() != 0) lval->db_register(0); 
+      if(rexp.use_count() != 0) rexp->db_register(1); 
+    }
+    virtual void db_expunge() { 
+      if(lval.use_count() != 0) lval->db_expunge(); 
+      if(rexp.use_count() != 0) rexp->db_expunge(); 
+    }
 
     // helpers
-    //void db_register() { lval.db_register(); rexp.db_register(); }
-    //void db_expunge() { lval.db_expunge(); rexp.db_expunge(); }
     void set_name(const BIdentifier& nm) {name = nm; named=true;}
     void set_continuous() { continuous = true; }
     bool is_named() const { return named; }

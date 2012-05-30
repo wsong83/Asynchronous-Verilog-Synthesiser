@@ -56,6 +56,8 @@ namespace netlist{
     NETLIST_CHECK_INPARSE_DECL;
     using Block::set_father;
     virtual SeqBlock* deep_copy() const;
+    virtual void db_register(int iod = 1);
+    virtual void db_expunge();
     
     // data
     bool sensitive;                                         /* whether this is a sensitive block, top level block */

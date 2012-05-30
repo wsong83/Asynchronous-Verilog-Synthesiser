@@ -129,3 +129,15 @@ IfState* netlist::IfState::deep_copy() const {
   rv->set_father(father);
   return rv;
 }
+
+void netlist::IfState::db_register(int iod) {
+  if(exp.use_count() != 0) exp->db_register(1);
+  if(ifcase.use_count() != 0) ifcase->db_register(1);
+  if(elsecase.use_count() != 0) elsecase->db_register(1);
+}
+
+void netlist::IfState::db_expunge() {
+  if(exp.use_count() != 0) exp->db_expunge();
+  if(ifcase.use_count() != 0) ifcase->db_expunge();
+  if(elsecase.use_count() != 0) elsecase->db_expunge();
+}

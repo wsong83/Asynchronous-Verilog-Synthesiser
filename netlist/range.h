@@ -52,7 +52,6 @@ namespace netlist {
     // helpers
     bool is_const() const { return rtype == TR_Const && rtype == TR_CRange; }
     bool is_single() const {return rtype != TR_Range && rtype != TR_CRange; }
-    void db_register();
     void set_dim() { dim = true;}
     bool is_dim() const { return dim;}
 
@@ -61,6 +60,8 @@ namespace netlist {
     NETLIST_STREAMOUT_DECL;
     NETLIST_CHECK_INPARSE_DECL;
     virtual Range* deep_copy() const;
+    virtual void db_register(int iod = 1);
+    virtual void db_expunge();
     
   private:
     mpz_class c;                       /* constant */

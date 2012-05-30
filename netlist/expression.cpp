@@ -161,15 +161,11 @@ void netlist::Expression::reduce() {
 }
 
 void netlist::Expression::db_register(int iod) {
-  list<shared_ptr<Operation> >::iterator it, end;
-  for(it = eqn.begin(), end = eqn.end(); it != end; it++)
-    (*it)->db_register(iod);
+  for_each(eqn.begin(), eqn.end(), [&iod](shared_ptr<Operation>& m) {m->db_register(iod);});
 }
 
 void netlist::Expression::db_expunge() {
-  list<shared_ptr<Operation> >::iterator it, end;
-  for(it = eqn.begin(), end = eqn.end(); it != end; it++)
-    (*it)->db_expunge();
+  for_each(eqn.begin(), eqn.end(), [](shared_ptr<Operation>& m) {m->db_expunge();});
 }
 
 void netlist::Expression::append(Operation::operation_t otype) {

@@ -54,6 +54,8 @@ namespace netlist {
     NETLIST_CHECK_INPARSE_DECL;
     using NetComp::set_father;
     virtual Module* deep_copy() const;
+    virtual void db_register(int iod = 1);
+    virtual void db_expunge();
 
     // helpers
     virtual void set_name(const MIdentifier& nm) { name = nm; named=true;}
@@ -68,6 +70,7 @@ namespace netlist {
     virtual void set_father();                             /* set the father pointer to all sub-elements */
     /* return a pointer of the top-level module */
     virtual Block* get_module() { return this; }
+    bool update_name();                                    /* check and update module name according to the parameters */
 
     // data
     MIdentifier name;

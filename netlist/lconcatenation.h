@@ -45,14 +45,14 @@ namespace netlist {
     NETLIST_STREAMOUT_DECL;
     NETLIST_CHECK_INPARSE_DECL;
     virtual LConcatenation* deep_copy() const;
+    virtual void db_register(int iod = 0);
+    virtual void db_expunge();
 
     // helpers
     bool is_valid() const { return valid; }
     unsigned int size() const { return data.size(); }
     VIdentifier& front() { return data.front(); }
     const VIdentifier& front() const { return data.front(); }
-    void db_register();
-    void db_expunge();
 
     // data
     std::list<VIdentifier> data; /* store the list of variable identifiers, wires or registers */

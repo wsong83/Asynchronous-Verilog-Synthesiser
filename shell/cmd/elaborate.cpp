@@ -36,6 +36,8 @@ using std::endl;
 using std::list;
 using std::vector;
 using boost::shared_ptr;
+using std::map;
+using std::deque;
 using namespace shell::CMD;
 
 static po::options_description arg_opt("Options");
@@ -160,6 +162,17 @@ bool shell::CMD::CMDElaborate::exec ( Env& gEnv, vector<string>& arg){
         return false;
       }
     }
+
+    // do the real elaboration
+    deque<shared_ptr<netlist::Module> >        moduleQueue; // recursive module tree
+    // avoid elaborating duplicated maps, and temporarily store the elaborated modules
+    map<string, shared_ptr<netlist::Module> >  moduleMap;   
+    
+    // do the elaboration
+    do {
+
+    } while(!moduleQueue.empty());
+
     return true;
   }
 

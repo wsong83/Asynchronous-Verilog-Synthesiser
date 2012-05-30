@@ -46,6 +46,8 @@ namespace netlist{
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
     virtual GenBlock* deep_copy() const;
+    virtual void db_register(int iod = 1);
+    virtual void db_expunge();
 
   private:
     bool elab_inparse_item( const boost::shared_ptr<NetComp>&);

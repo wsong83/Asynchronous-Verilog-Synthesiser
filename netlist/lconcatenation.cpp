@@ -128,20 +128,10 @@ LConcatenation* netlist::LConcatenation::deep_copy() const {
   return rv;
 }
 
-void netlist::LConcatenation::db_register() {
-  list<VIdentifier>::iterator it, end;
-  for(it = data.begin(), end = data.end(); it != end; it++) {
-    if(it->db_registered()) {
-      assert(it->get_inout_dir() == 0); // check it is a fanin
-    } else {
-      it->db_register(0);
-    }
-  }
+void netlist::LConcatenation::db_register(int iod) {
+  for_each(data.begin(), data.end(), [](VIdentifier& m) {m.db_register(0);});
 }
 
 void netlist::LConcatenation::db_expunge() {
-  list<VIdentifier>::iterator it, end;
-  for(it = data.begin(), end = data.end(); it != end; it++) {
-    it->db_expunge();
-  }
+  for_each(data.begin(), data.end(), [](VIdentifier& m) {m.db_expunge();});
 }

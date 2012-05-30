@@ -99,3 +99,16 @@ ForState* netlist::ForState::deep_copy() const {
   return rv;
 }
 
+void netlist::ForState::db_register(int iod) {
+  if(init.use_count() != 0) init->db_register(1);
+  if(cond.use_count() != 0) cond->db_register(1);
+  if(incr.use_count() != 0) incr->db_register(1);
+  if(body.use_count() != 0) body->db_register(1);
+}
+
+void netlist::ForState::db_expunge() {
+  if(init.use_count() != 0) init->db_expunge();
+  if(cond.use_count() != 0) cond->db_expunge();
+  if(incr.use_count() != 0) incr->db_expunge();
+  if(body.use_count() != 0) body->db_expunge();
+}
