@@ -318,8 +318,10 @@ bool netlist::Module::update_name(string& newName) {
 }
 
 bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo) {
-  
-
+  // resolve all generate variables
+  for_each(db_genvar.begin_order(), db_genvar.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
+        m.second->update();
+      });
 
   return true;
 }

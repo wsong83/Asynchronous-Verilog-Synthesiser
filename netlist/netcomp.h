@@ -128,6 +128,12 @@ namespace netlist{
       assert(0 == "the db_expunge() of NetComp is used");
     }
 
+    // elaborate and check
+    virtual bool elaborate() {
+      std::cerr << "ERROR!!, the elaborate() of NetComp is used!!!" << std::endl;
+      assert(0 == "elaborate() of NetComp is used");
+    }
+
   protected:
     Block* father;              /* the pointer pointed to the father block */
       
