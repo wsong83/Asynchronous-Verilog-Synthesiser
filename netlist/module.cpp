@@ -297,12 +297,29 @@ void netlist::Module::set_father() {
   Block::set_father();
 }
 
-bool netlist::Module::update_name() {
+bool netlist::Module::update_name(string& newName) {
   // resolve all parameters
   list<pair<VIdentifier, shared_ptr<Variable> > >::iterator it, end;
   for(it=db_param.begin_order(), end=db_param.end_order(); it!=end; it++) {
-    
+    if(!it->second->update()) {
+      G_ENV->error(it->second->loc, "ELAB-PARA-0", it->second->name.name, name.name);
+      return false;
+    }
   }
+  
+  // get the new name
+  newName = name.name;
+  for_each(db_param.begin_order(), db_param.end_order(), 
+           [&newName](pair<VIdentifier, shared_ptr<Variable> >& m) {
+             newName += string("_") + m.second->name.name + m.second->get_value().get_value().get_str();
+           });
+
+  return true;
+}
+
+bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo) {
+  
+
 
   return true;
 }

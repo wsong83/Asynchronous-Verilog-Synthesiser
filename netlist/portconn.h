@@ -132,16 +132,18 @@ namespace netlist {
     } 
 
     virtual void db_register(int iod = 1) {
-      pname.db_register(dir >= 0 ? 0 : 1);
       switch(type) {
-      case CEXP: exp->db_register(1); break;
-      case CVAR: var.db_register(1); break;
+      case CEXP: 
+        if(dir >= 0)  
+          assert(0 == "expression in a port connection when it is an output port, not support yet!");
+        exp->db_register(dir >= 0 ? 0 : 1); 
+        break;
+      case CVAR: var.db_register(dir >= 0 ? 0 : 1); break;
       default: ;
       }
     }
       
     virtual void db_expunge() {
-      pname.db_expunge();
       switch(type) {
       case CEXP: exp->db_expunge(); break;
       case CVAR: var.db_expunge(); break;
@@ -236,7 +238,6 @@ namespace netlist {
     } 
 
     virtual void db_register(int iod = 1) {
-      pname.db_register(1);
       switch(type) {
       case CEXP: exp->db_register(1); break;
       case CVAR: var.db_register(1); break;
@@ -245,7 +246,6 @@ namespace netlist {
     }
       
     virtual void db_expunge() {
-      pname.db_expunge();
       switch(type) {
       case CEXP: exp->db_expunge(); break;
       case CVAR: var.db_expunge(); break;

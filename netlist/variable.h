@@ -69,6 +69,7 @@ namespace netlist {
     bool update();  /* recalculate the value and update all fanouts, true when it is reduced to a number */
     bool is_valuable() const {  return (exp.use_count() != 0) ? exp->is_valuable() : false; }
     Number get_value() const {  return (exp.use_count() != 0) ? exp->get_value() : 0; }
+    std::string get_short_string() const;
 
     VIdentifier name;
     std::map<unsigned int, VIdentifier *> fan[2]; /* fan[0] for fanin, fan[1] for fanout */

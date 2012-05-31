@@ -38,6 +38,7 @@ using std::vector;
 using boost::shared_ptr;
 using std::map;
 using std::deque;
+using std::pair;
 using namespace shell::CMD;
 
 static po::options_description arg_opt("Options");
@@ -166,12 +167,49 @@ bool shell::CMD::CMDElaborate::exec ( Env& gEnv, vector<string>& arg){
     // do the real elaboration
     deque<shared_ptr<netlist::Module> >        moduleQueue; // recursive module tree
     // avoid elaborating duplicated maps, and temporarily store the elaborated modules
-    map<string, shared_ptr<netlist::Module> >  moduleMap;   
+    map<netlist::MIdentifier, shared_ptr<netlist::Module> >  moduleMap;
     
-    // do the elaboration
-    do {
+    // push the top level design into the module fifo
+    moduleQueue.push_back(tarDesign);
 
-    } while(!moduleQueue.empty());
+    // do the elaboration
+    while(!moduleQueue.empty()) {
+      // get a new design
+      shared_ptr<netlist::Module> curDgn = moduleQueue.front();
+      moduleQueue.pop_front();
+      
+      // get the updated module name
+      string newName;
+      if(!curDgn->update_name(newName))  return false;
+
+      // search it in the design map make sure no duplicate module is elaborated
+      if(moduleMap.count(netlist::MIdentifier(newName))) continue;
+
+      // report the behaviour to user
+      gEnv.stdOs << "elaborating module \"" << curDgn->name.name << "\"";
+      if(!curDgn->db_param.empty()) {
+        gEnv.stdOs << " with parameters \"";
+        list<pair<netlist::VIdentifier, shared_ptr<netlist::Variable> > >::const_iterator it, end;
+        it = curDgn->db_param.begin_order();
+        end = curDgn->db_param.end_order();
+        while(it!=end) {
+          gEnv.stdOs << it->second->get_short_string();
+          it++;
+          if(it!=end) gEnv.stdOs << " ";
+        }
+        gEnv.stdOs << "\"";
+      }
+      gEnv.stdOs << "." << endl;
+
+      // update the design name
+      curDgn->name.name = newName;
+
+      // elaborate it;
+      if(!curDgn->elaborate(moduleQueue)) return false;
+
+      // store it in the module map
+      moduleMap[curDgn->name] = curDgn;
+    }
 
     return true;
   }

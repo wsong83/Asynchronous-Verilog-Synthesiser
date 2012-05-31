@@ -181,3 +181,11 @@ void netlist::Variable::db_register(int iod) {
 void netlist::Variable::db_expunge() {
   if(exp.use_count() != 0) exp->db_expunge();
 }
+
+// used in shell/cmd/elaborate.cpp
+string netlist::Variable::get_short_string() const {
+  string rv = name.name;
+  rv += "=";
+  rv += toString(*exp);
+  return rv;
+}

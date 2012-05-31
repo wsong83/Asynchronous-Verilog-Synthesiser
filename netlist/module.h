@@ -29,6 +29,8 @@
 #ifndef AV_H_MODULE_
 #define AV_H_MODULE_
 
+#include <deque>
+
 namespace netlist {
   
   class Module : public Block {
@@ -70,7 +72,8 @@ namespace netlist {
     virtual void set_father();                             /* set the father pointer to all sub-elements */
     /* return a pointer of the top-level module */
     virtual Block* get_module() { return this; }
-    bool update_name();                                    /* check and update module name according to the parameters */
+    bool update_name(std::string&);                        /* check and update module name according to the parameters */
+    bool elaborate(std::deque<boost::shared_ptr<Module> >&); /* elaborate the design */
 
     // data
     MIdentifier name;

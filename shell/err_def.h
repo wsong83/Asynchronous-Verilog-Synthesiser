@@ -40,6 +40,11 @@ ERR_DEFINE("PARSER-0",
            EFatal,   0, 
            "unkown parser error. Please report to the developers.");
 
+// a parameter of a module cannot be resolved to a number when trying to elaborate it
+ERR_DEFINE("ELAB-PARA-0", 
+           EError,   2, 
+           "fail to calculate the value of parameter \"%1%\" in module \"%2%\".");
+
 /// on the left side of an assign should be a non-const variable or concatenation
 ERR_DEFINE("SYN-ASSIGN-0", 
            EError,   0, 
