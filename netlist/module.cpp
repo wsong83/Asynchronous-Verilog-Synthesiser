@@ -58,7 +58,7 @@ netlist::Module::Module(const location& lloc, const MIdentifier& nm, const share
   elab_inparse();
 }
 
-netlist::Module::Module(const MIdentifier& nm, const list<PoIdentifier>& port_list, const shared_ptr<Block>& body)
+netlist::Module::Module(const MIdentifier& nm, const list<VIdentifier>& port_list, const shared_ptr<Block>& body)
   : Block(*body), name(nm) 
 {
   ctype = tModule;
@@ -67,7 +67,7 @@ netlist::Module::Module(const MIdentifier& nm, const list<PoIdentifier>& port_li
   elab_inparse();
 }
 
-netlist::Module::Module(const location& lloc, const MIdentifier& nm, const list<PoIdentifier>& port_list, const shared_ptr<Block>& body)
+netlist::Module::Module(const location& lloc, const MIdentifier& nm, const list<VIdentifier>& port_list, const shared_ptr<Block>& body)
   : Block(*body), name(nm) 
 {
   ctype = tModule;
@@ -78,7 +78,7 @@ netlist::Module::Module(const location& lloc, const MIdentifier& nm, const list<
 }
 
 netlist::Module::Module(const MIdentifier& nm, const list<shared_ptr<Variable> >& para_list,
-                        const list<PoIdentifier>& port_list, const shared_ptr<Block>& body)
+                        const list<VIdentifier>& port_list, const shared_ptr<Block>& body)
   : Block(*body), name(nm) 
 {
   ctype = tModule;
@@ -90,7 +90,7 @@ netlist::Module::Module(const MIdentifier& nm, const list<shared_ptr<Variable> >
 
 netlist::Module::Module(const location& lloc, const MIdentifier& nm, 
                         const list<shared_ptr<Variable> >& para_list,
-                        const list<PoIdentifier>& port_list, const shared_ptr<Block>& body)
+                        const list<VIdentifier>& port_list, const shared_ptr<Block>& body)
   : Block(*body), name(nm) 
 {
   ctype = tModule;
@@ -107,7 +107,7 @@ ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
   if(db_port.empty()) os << ";" << endl;
   else {
     os << "(";
-    list<pair<PoIdentifier, shared_ptr<Port> > >::const_iterator it, end;
+    list<pair<VIdentifier, shared_ptr<Port> > >::const_iterator it, end;
     it = db_port.begin_order();
     end = db_port.end_order();
     while(it != end){
@@ -175,7 +175,7 @@ Module* netlist::Module::deep_copy() const {
   rv->blocked = blocked;
 
   // data in Module;
-  DATABASE_DEEP_COPY_ORDER_FUN(db_port,   PoIdentifier, Port,      rv->db_port       );
+  DATABASE_DEEP_COPY_ORDER_FUN(db_port,   VIdentifier, Port,      rv->db_port       );
   DATABASE_DEEP_COPY_ORDER_FUN(db_param,  VIdentifier,  Variable,  rv->db_param      );
   DATABASE_DEEP_COPY_ORDER_FUN(db_genvar, VIdentifier,  Variable,  rv->db_genvar     );
   
@@ -275,7 +275,7 @@ bool netlist::Module::check_inparse() {
   bool rv = true;
 
   // macros defined in database.h
-  DATABASE_CHECK_INPARSE_ORDER_FUN(db_port, PoIdentifier, Port, rv);
+  DATABASE_CHECK_INPARSE_ORDER_FUN(db_port, VIdentifier, Port, rv);
   DATABASE_CHECK_INPARSE_ORDER_FUN(db_param, VIdentifier, Variable, rv);
   DATABASE_CHECK_INPARSE_ORDER_FUN(db_genvar, VIdentifier, Variable, rv);
   DATABASE_CHECK_INPARSE_FUN(db_seqblock, BIdentifier, SeqBlock, rv);
@@ -288,7 +288,7 @@ bool netlist::Module::check_inparse() {
 
 void netlist::Module::set_father() {
   // macros defined in database.h
-  DATABASE_SET_FATHER_ORDER_FUN(db_port, PoIdentifier, Port, this);
+  DATABASE_SET_FATHER_ORDER_FUN(db_port, VIdentifier, Port, this);
   DATABASE_SET_FATHER_ORDER_FUN(db_param, VIdentifier, Variable, this);
   DATABASE_SET_FATHER_ORDER_FUN(db_genvar, VIdentifier, Variable, this);
   DATABASE_SET_FATHER_FUN(db_seqblock, BIdentifier, SeqBlock, this);
@@ -326,8 +326,8 @@ bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo) {
   return true;
 }
 
-void netlist::Module::init_port_list(const list<PoIdentifier>& port_list) {
-  list<PoIdentifier>::const_iterator it, end;
+void netlist::Module::init_port_list(const list<VIdentifier>& port_list) {
+  list<VIdentifier>::const_iterator it, end;
   for(it=port_list.begin(),end=port_list.end(); it!=end; it++) {
     shared_ptr<Port> m = db_port.swap(*it, shared_ptr<Port>(new Port(it->loc, *it)));
     if(m.use_count() != 0) {

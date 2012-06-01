@@ -55,7 +55,7 @@ namespace netlist {
   class FIdentifier;		/* function name */
   class MIdentifier;		/* module name */
   class IIdentifier;		/* instance name */
-  class PoIdentifier;		/* port identifier */
+  //class PoIdentifier;		/* port identifier */
   class VIdentifier;		/* variable name, including local variable, wire and reg */
 
   // concatenation.h

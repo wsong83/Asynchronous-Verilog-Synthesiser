@@ -34,8 +34,8 @@ namespace netlist {
   class Port : public NetComp {
   public:
     // constructors
-    Port(const PoIdentifier&);
-    Port(const shell::location&, const PoIdentifier&);
+    Port(const VIdentifier&);
+    Port(const shell::location&, const VIdentifier&);
 
     // inherit from NetComp
     NETLIST_CHECK_INPARSE_DECL;
@@ -59,7 +59,7 @@ namespace netlist {
     bool is_out() const { return dir == 1; }
     bool is_inout() const { return dir == 0; }
 
-    PoIdentifier name;
+    VIdentifier name;
 
   private:
     int dir;                    /* -1 in, 0 inout, 1 out */

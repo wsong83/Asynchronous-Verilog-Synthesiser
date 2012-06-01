@@ -386,7 +386,7 @@ parameter_declaration
 input_declaration 
     : "input" list_of_port_identifiers
     {      
-      list<PoIdentifier>::iterator it, end;
+      list<VIdentifier>::iterator it, end;
       for(it = $2.begin(), end = $2.end(); it != end; it++) {
         shared_ptr<Port> cp(new Port(it->loc, *it));
         cp->set_in();
@@ -396,7 +396,7 @@ input_declaration
     | "input" '[' expression ':' expression ']' list_of_port_identifiers
     {      
       
-      list<PoIdentifier>::iterator it, end;
+      list<VIdentifier>::iterator it, end;
       for(it = $7.begin(), end = $7.end(); it != end; it++) {
         shared_ptr<Port> cp( new Port(it->loc, *it));
         cp->set_in();
@@ -410,7 +410,7 @@ input_declaration
 output_declaration 
     : "output" list_of_port_identifiers
     {      
-      list<PoIdentifier>::iterator it, end;
+      list<VIdentifier>::iterator it, end;
       for(it = $2.begin(), end = $2.end(); it != end; it++) {
         shared_ptr<Port> cp( new Port(it->loc, *it));
         cp->set_out();
@@ -419,7 +419,7 @@ output_declaration
     }
     | "output" '[' expression ':' expression ']' list_of_port_identifiers
     {      
-      list<PoIdentifier>::iterator it, end;
+      list<VIdentifier>::iterator it, end;
       for(it = $7.begin(), end = $7.end(); it != end; it++) {
         shared_ptr<Port> cp( new Port(it->loc, *it));
         cp->set_out();
@@ -1075,6 +1075,6 @@ variable_identifier
     ;
 
 port_identifier
-    : identifier          { $$ = PoIdentifier(@$, $1); }             
+    : identifier          { $$ = VIdentifier(@$, $1); }             
     ;
 

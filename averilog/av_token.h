@@ -61,7 +61,7 @@ namespace averilog {
     std::list<boost::shared_ptr<netlist::Expression> >                  tListExp;
     std::list<std::pair<int, boost::shared_ptr<netlist::Expression> > > tListEvent;
     std::list<boost::shared_ptr<netlist::Instance> >                    tListInst;
-    std::list<netlist::PoIdentifier>                                    tListPort;
+    std::list<netlist::VIdentifier>                                     tListPort;
     std::list<boost::shared_ptr<netlist::ParaConn> >                    tListParaAssign;
     std::list<boost::shared_ptr<netlist::Port> >                        tListPortDecl;
     std::list<boost::shared_ptr<netlist::PortConn> >                    tListPortConn;
@@ -70,7 +70,7 @@ namespace averilog {
     netlist::MIdentifier                                                tModuleName;
     boost::shared_ptr<netlist::Module>                                  tModule;
     netlist::Number                                                     tNumber;    
-    netlist::PoIdentifier                                               tPortName;
+    netlist::VIdentifier                                                tPortName;
     boost::shared_ptr<netlist::ParaConn>                                tParaAssign;
     boost::shared_ptr<netlist::PortConn>                                tPortConn;
     boost::shared_ptr<netlist::Range>                                   tRange;

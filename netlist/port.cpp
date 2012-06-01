@@ -36,10 +36,10 @@ using std::string;
 using boost::shared_ptr;
 using shell::location;
 
-netlist::Port::Port(const PoIdentifier& pid)
+netlist::Port::Port(const VIdentifier& pid)
   : NetComp(tPort), name(pid), dir(0) {}
 
-netlist::Port::Port(const location& lloc, const PoIdentifier& pid)
+netlist::Port::Port(const location& lloc, const VIdentifier& pid)
   : NetComp(tPort, lloc), name(pid), dir(0) {}
 
 bool netlist::Port::check_inparse() {

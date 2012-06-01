@@ -43,13 +43,13 @@ namespace netlist {
     : Block(tModule, lloc), name(nm) { named=true; }
     Module(const MIdentifier& nm, const boost::shared_ptr<Block>& body);
     Module(const shell::location& lloc, const MIdentifier& nm, const boost::shared_ptr<Block>& body);
-    Module(const MIdentifier& nm, const std::list<PoIdentifier>& port_list, const boost::shared_ptr<Block>& body);
-    Module(const shell::location& lloc, const MIdentifier& nm, const std::list<PoIdentifier>& port_list, const boost::shared_ptr<Block>& body);
+    Module(const MIdentifier& nm, const std::list<VIdentifier>& port_list, const boost::shared_ptr<Block>& body);
+    Module(const shell::location& lloc, const MIdentifier& nm, const std::list<VIdentifier>& port_list, const boost::shared_ptr<Block>& body);
     Module(const MIdentifier& nm, const std::list<boost::shared_ptr<Variable> >& para_list, 
-           const std::list<PoIdentifier>& port_list, const boost::shared_ptr<Block>& body);
+           const std::list<VIdentifier>& port_list, const boost::shared_ptr<Block>& body);
     Module(const shell::location& lloc, const MIdentifier& nm, 
            const std::list<boost::shared_ptr<Variable> >& para_list, 
-           const std::list<PoIdentifier>& port_list, const boost::shared_ptr<Block>& body);
+           const std::list<VIdentifier>& port_list, const boost::shared_ptr<Block>& body);
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
@@ -77,7 +77,7 @@ namespace netlist {
 
     // data
     MIdentifier name;
-    DataBase<PoIdentifier, Port, true>     db_port;      /* input and output ports, ordered */
+    DataBase<VIdentifier, Port, true>     db_port;      /* input and output ports, ordered */
     DataBase<VIdentifier, Variable, true>  db_param;     /* parameters, ordered */
     DataBase<VIdentifier, Variable, true>  db_genvar;    /* generate variable, ordered */
     DataBase<BIdentifier, SeqBlock>        db_seqblock;  /* always blocks */
@@ -86,7 +86,7 @@ namespace netlist {
 
   private:
     // only used in constructors
-    void init_port_list(const std::list<PoIdentifier>&);
+    void init_port_list(const std::list<VIdentifier>&);
     void init_param_list(const std::list<boost::shared_ptr<Variable> >&);
     // helper in elab_inparse
     bool elab_inparse_item( const boost::shared_ptr<NetComp>&);

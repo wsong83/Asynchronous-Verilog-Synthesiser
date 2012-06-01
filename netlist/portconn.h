@@ -75,18 +75,18 @@ namespace netlist {
     PortConn()                  /* oredered open output connection */
       : NetComp(tPortConn), dir(1), type(COPEN) {}
     
-    PortConn(const PoIdentifier pn, const boost::shared_ptr<Expression>& exp, int dir_m = 0) /* named connection */
+    PortConn(const VIdentifier pn, const boost::shared_ptr<Expression>& exp, int dir_m = 0) /* named connection */
       : NetComp(tPortConn), pname(pn), dir(0), exp(exp), type(CEXP), named(true) { reduce(); }
 
     PortConn(const shell::location& lloc, 
-             const PoIdentifier pn, 
+             const VIdentifier pn, 
              const boost::shared_ptr<Expression>& exp, int dir_m = 0) /* named connection */
       : NetComp(tPortConn, lloc), pname(pn), dir(0), exp(exp), type(CEXP), named(true) { reduce(); }
 
-    PortConn(const PoIdentifier pn)
+    PortConn(const VIdentifier pn)
       : NetComp(tPortConn), pname(pn), dir(1), type(COPEN), named(true) {}
 
-    PortConn(const shell::location& lloc, const PoIdentifier pn)
+    PortConn(const shell::location& lloc, const VIdentifier pn)
       : NetComp(tPortConn, lloc), pname(pn), dir(1), type(COPEN), named(true) {}
 
     // helpers
@@ -166,7 +166,7 @@ namespace netlist {
     }
 
     // date
-    PoIdentifier pname;                   /* the port name in the module definition, or parameter name */
+    VIdentifier pname;                    /* the port name in the module definition, or parameter name */
     int dir;                              /* direction, -1 in, 0 inout, 1 out */
     boost::shared_ptr<Expression> exp;    /* used when the connection is in general expression */
     VIdentifier var;                      /* reduced to a single variable, one of the normal forms */
