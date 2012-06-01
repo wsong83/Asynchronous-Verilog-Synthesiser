@@ -168,7 +168,7 @@ Module* netlist::Module::deep_copy() const {
              rv->statements.push_back(shared_ptr<NetComp>(comp->deep_copy())); 
            });
   
-  DATABASE_DEEP_COPY_FUN(db_var,      VIdentifier, Variable,  rv->db_var       );
+  DATABASE_DEEP_COPY_ORDER_FUN(db_var,      VIdentifier, Variable,  rv->db_var       );
   rv->unnamed_block = unnamed_block;
   rv->unnamed_instance = unnamed_instance;
   rv->unnamed_var = unnamed_var;
@@ -190,6 +190,12 @@ void netlist::Module::db_register(int iod) {
   for_each(db_param.begin_order(), db_param.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
       m.second->db_register(1);
     });
+  for_each(db_port.begin_order(), db_port.end_order(), [](pair<VIdentifier, shared_ptr<Port> >& m) {
+      m.second->db_register(1);
+    });
+  for_each(db_var.begin_order(), db_var.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
+      m.second->db_register(1);
+    });
   for_each(db_genvar.begin_order(), db_genvar.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
       m.second->db_register(1);
     });
@@ -198,6 +204,12 @@ void netlist::Module::db_register(int iod) {
 
 void netlist::Module::db_expunge() {
   for_each(db_param.begin_order(), db_param.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
+      m.second->db_expunge();
+    });
+  for_each(db_port.begin_order(), db_port.end_order(), [](pair<VIdentifier, shared_ptr<Port> >& m) {
+      m.second->db_expunge();
+    });
+  for_each(db_var.begin_order(), db_var.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
       m.second->db_expunge();
     });
   for_each(db_genvar.begin_order(), db_genvar.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {

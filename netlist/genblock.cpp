@@ -38,6 +38,7 @@ using std::string;
 using boost::shared_ptr;
 using boost::static_pointer_cast;
 using std::list;
+using std::pair;
 using shell::location;
 using std::for_each;
 
@@ -225,7 +226,7 @@ GenBlock* netlist::GenBlock::deep_copy() const {
              rv->statements.push_back(shared_ptr<NetComp>(comp->deep_copy())); 
            });
   
-  DATABASE_DEEP_COPY_FUN(db_var,      VIdentifier, Variable,  rv->db_var       );
+  DATABASE_DEEP_COPY_ORDER_FUN(db_var,      VIdentifier, Variable,  rv->db_var       );
   rv->unnamed_block = unnamed_block;
   rv->unnamed_instance = unnamed_instance;
   rv->unnamed_var = unnamed_var;
@@ -238,9 +239,15 @@ GenBlock* netlist::GenBlock::deep_copy() const {
 void netlist::GenBlock::db_register(int iod) {
   // the item in statements are duplicated in db_instance and db_other, therefore, only statements are executed
   // initialization of the variables in ablock are ignored as they are wire, reg and integers
+  for_each(db_var.begin_order(), db_var.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
+      m.second->db_register(1);
+    });
   for_each(statements.begin(), statements.end(), [](shared_ptr<NetComp>& m) {m->db_register(1);});
 }
 
 void netlist::GenBlock::db_expunge() {
+  for_each(db_var.begin_order(), db_var.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
+      m.second->db_expunge();
+    });
   for_each(statements.begin(), statements.end(), [](shared_ptr<NetComp>& m) {m->db_expunge();});
 }

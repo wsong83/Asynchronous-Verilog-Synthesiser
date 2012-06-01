@@ -159,7 +159,7 @@ namespace netlist {
     // data
     BIdentifier name;
     std::list<boost::shared_ptr<NetComp> > statements;   /* a general list to stor the statements */
-    DataBase<VIdentifier, Variable>        db_var;       /* variables */
+    DataBase<VIdentifier, Variable, true>  db_var;       /* variables */
     DataBase<IIdentifier, Instance>        db_instance;  /* module instances */
     DataBase<BIdentifier, NetComp>         db_other;     /* non-block statements, including assignements, if, etc. */
     

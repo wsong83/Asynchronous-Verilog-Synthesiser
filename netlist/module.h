@@ -77,7 +77,7 @@ namespace netlist {
 
     // data
     MIdentifier name;
-    DataBase<VIdentifier, Port, true>     db_port;      /* input and output ports, ordered */
+    DataBase<VIdentifier, Port, true>      db_port;      /* input and output ports, ordered */
     DataBase<VIdentifier, Variable, true>  db_param;     /* parameters, ordered */
     DataBase<VIdentifier, Variable, true>  db_genvar;    /* generate variable, ordered */
     DataBase<BIdentifier, SeqBlock>        db_seqblock;  /* always blocks */

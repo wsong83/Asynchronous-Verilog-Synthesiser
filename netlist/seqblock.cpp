@@ -217,7 +217,7 @@ SeqBlock* netlist::SeqBlock::deep_copy() const {
              rv->statements.push_back(shared_ptr<NetComp>(comp->deep_copy())); 
            });
   
-  DATABASE_DEEP_COPY_FUN(db_var,      VIdentifier, Variable,  rv->db_var       );
+  DATABASE_DEEP_COPY_ORDER_FUN(db_var,      VIdentifier, Variable,  rv->db_var       );
   rv->unnamed_block = unnamed_block;
   rv->unnamed_instance = unnamed_instance;
   rv->unnamed_var = unnamed_var;
@@ -239,10 +239,23 @@ SeqBlock* netlist::SeqBlock::deep_copy() const {
 void netlist::SeqBlock::db_register(int iod) {
   // the item in statements are duplicated in db_instance and db_other, therefore, only statements are executed
   // initialization of the variables in ablock are ignored as they are wire, reg and integers
-  // at this stage I do not think sensitive list are real fanout of any signal
+  for_each(db_var.begin_order(), db_var.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
+      m.second->db_register(1);
+    });
   for_each(statements.begin(), statements.end(), [](shared_ptr<NetComp>& m) {m->db_register(1);});
+  for_each(slist_pulse.begin(), slist_pulse.end(), [](pair<bool, shared_ptr<Expression> >& m) {
+      m.second->db_register(1);
+    });
+  for_each(slist_level.begin(), slist_level.end(), [](shared_ptr<Expression>& m) {m->db_register(1);});
 }
 
 void netlist::SeqBlock::db_expunge() {
+  for_each(db_var.begin_order(), db_var.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
+      m.second->db_expunge();
+    });
   for_each(statements.begin(), statements.end(), [](shared_ptr<NetComp>& m) {m->db_expunge();});
+  for_each(slist_pulse.begin(), slist_pulse.end(), [](pair<bool, shared_ptr<Expression> >& m) {
+      m.second->db_expunge();
+    });
+  for_each(slist_level.begin(), slist_level.end(), [](shared_ptr<Expression>& m) {m->db_expunge();});
 }
