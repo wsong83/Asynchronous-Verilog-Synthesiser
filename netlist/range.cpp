@@ -261,6 +261,5 @@ Range* netlist::Range::deep_copy() const {
   }
   rv->dim = dim;
   rv->rtype = rtype;
-  rv->set_father(father);
   return rv;
 }

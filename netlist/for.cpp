@@ -95,7 +95,6 @@ ForState* netlist::ForState::deep_copy() const {
   if(incr.use_count() != 0) rv->incr.reset(incr->deep_copy());
   if(body.use_count() != 0) rv->body.reset(body->deep_copy());
 
-  rv->set_father(father);
   return rv;
 }
 

@@ -252,28 +252,28 @@ ostream& netlist::PoIdentifier::streamout(ostream& os, unsigned int indent) cons
 
 //////////////////////////////// variable identifier /////////////////
 netlist::VIdentifier::VIdentifier()
-  : Identifier(tVarName, "n_0"), numbered(true), inout_t(0), uid(0) {  }
+  : Identifier(tVarName, "n_0"), numbered(true), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const location& lloc)
-  : Identifier(tVarName, lloc, "n_0"), numbered(true), inout_t(0), uid(0) {  }
+  : Identifier(tVarName, lloc, "n_0"), numbered(true), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const string& nm)
-  : Identifier(tVarName, nm), numbered(false), inout_t(0), uid(0) {  }
+  : Identifier(tVarName, nm), numbered(false), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const location& lloc, const string& nm)
-  : Identifier(tVarName, lloc, nm), numbered(false), inout_t(0), uid(0) {  }
+  : Identifier(tVarName, lloc, nm), numbered(false), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const averilog::avID& id)
-  : Identifier(tVarName, id.name), numbered(false), inout_t(0), uid(0) { }
+  : Identifier(tVarName, id.name), numbered(false), uid(0) { }
 
 netlist::VIdentifier::VIdentifier(const location& lloc, const averilog::avID& id)
-  : Identifier(tVarName, lloc, id.name), numbered(false), inout_t(0), uid(0) { }
+  : Identifier(tVarName, lloc, id.name), numbered(false), uid(0) { }
 
 netlist::VIdentifier::VIdentifier(const string& nm, const vector<shared_ptr<Range> >& rg)
-  : Identifier(tVarName, nm), m_range(rg), numbered(false), inout_t(0), uid(0) {  }
+  : Identifier(tVarName, nm), m_range(rg), numbered(false), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const location& lloc, const string& nm, const vector<shared_ptr<Range> >& rg)
-  : Identifier(tVarName, lloc, nm), m_range(rg), numbered(false), inout_t(0), uid(0) {  }
+  : Identifier(tVarName, lloc, nm), m_range(rg), numbered(false), uid(0) {  }
 
 VIdentifier& netlist::VIdentifier::operator++ () {
   const boost::regex numbered_name("_(\\d+)\\z");
@@ -342,7 +342,9 @@ ostream& netlist::VIdentifier::streamout(ostream& os, unsigned int indent) const
   return os;
 }
 
-void netlist::VIdentifier::db_register(shared_ptr<Variable>& f, int iod) {
+void netlist::VIdentifier::db_register(const shared_ptr<Variable>& f, int iod) {
+  pvar = f;
+
   if(uid == 0) {                // generate a new uid
     uid = pvar->get_id();
   }
@@ -355,21 +357,27 @@ void netlist::VIdentifier::db_register(shared_ptr<Variable>& f, int iod) {
 }
 
 void netlist::VIdentifier::db_register(int iod) {
+  shared_ptr<Variable> mvar;
   if(uid == 0) { // the root Variable unkown yet, need to find it out
-    pvar = father->gfind_var(*this);
-    if(pvar.use_count() == 0) { // this variable is not defined yet
+    mvar = father->gfind_var(*this);
+    if(mvar.use_count() == 0) { // this variable is not defined yet
+      // not sure whether this is needed.
+      // so assert it 
+      assert(0 == "really need to define a new variable! Analyse this case...");
       // define the variable in the lowest block as a wire
-      shared_ptr<Variable> mvar(new Variable(*this, Variable::TWire));
+      mvar.reset(new Variable(*this, Variable::TWire));
       mvar->name.db_expunge();
       father->db_var.insert(mvar->name, mvar);
-      pvar = mvar;
     }
   }
-  db_register(pvar, iod);
+  db_register(mvar, iod);
 }
 
 void netlist::VIdentifier::db_expunge() {
-  if(uid != 0) pvar->fan[inout_t].erase(uid);
+  if(uid != 0) {
+    pvar->fan[0].erase(uid);
+    pvar->fan[1].erase(uid);
+  }
   uid = 0;
   pvar.reset();
 }
@@ -379,14 +387,12 @@ VIdentifier* netlist::VIdentifier::deep_copy() const {
   rv->value = this->value;
   rv->numbered = this->numbered;
   rv->pvar = this->pvar;
-  rv->inout_t = this->inout_t;
   rv->uid = 0;                  // unregistered
   vector<shared_ptr<Range> >::const_iterator it, end;
   for(it=this->m_range.begin(), end=this->m_range.end(); it!=end; it++)
     rv->m_range.push_back(shared_ptr<Range>((*it)->deep_copy()));
   for(it=this->m_select.begin(), end=this->m_select.end(); it!=end; it++)
     rv->m_select.push_back(shared_ptr<Range>((*it)->deep_copy()));
-  rv->set_father(this->father);
   return rv;
 }
   

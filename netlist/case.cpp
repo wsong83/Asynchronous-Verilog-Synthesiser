@@ -90,7 +90,6 @@ CaseItem* netlist::CaseItem::deep_copy() const {
   for_each(exps.begin(), exps.end(), [&rv](const shared_ptr<Expression>& m) {
       rv->exps.push_back(shared_ptr<Expression>(m->deep_copy()));
     });
-  rv->set_father(father);
   return rv;
 }
 
@@ -145,7 +144,6 @@ CaseState* netlist::CaseState::deep_copy() const {
   for_each(cases.begin(), cases.end(), [&rv](const shared_ptr<CaseItem>& m) {
       rv->cases.push_back(shared_ptr<CaseItem>(m->deep_copy()));
     });
-  rv->set_father(father);
   return rv;
 }
 

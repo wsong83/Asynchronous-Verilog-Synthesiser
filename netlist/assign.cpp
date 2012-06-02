@@ -86,6 +86,5 @@ Assign* netlist::Assign::deep_copy() const {
   rv->name = name;
   rv->named = named;
   rv->continuous = continuous;
-  rv->set_father(father);
   return rv;
 }

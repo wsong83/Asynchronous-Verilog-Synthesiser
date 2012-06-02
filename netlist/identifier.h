@@ -182,11 +182,10 @@ namespace netlist {
     mpz_class get_value() const { return value.get_value(); }
     void set_value(const Number& p) { value = p; }
     const std::string& get_txt_value() const { return value.get_txt_value(); }
-    void db_register(boost::shared_ptr<Variable>&, int);
+    void db_register(const boost::shared_ptr<Variable>&, int);
     bool db_registered() const { return uid != 0; }
-    void set_variable(const boost::shared_ptr<Variable>& f, int iod = 1) { assert(uid == 0); pvar = f; inout_t = iod;}
     void reset_uid(unsigned int id) { uid = id; } /* only used by Variable::get_id() */
-    int get_inout_dir() const { return inout_t; }
+    //int get_inout_dir() const { return inout_t; }
 
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
@@ -202,7 +201,6 @@ namespace netlist {
     std::vector<boost::shared_ptr<Range> > m_select;
     bool numbered;                 /* true when it is numbered unnamed variable */
     boost::shared_ptr<Variable> pvar;     /* the wire/reg/var in the database */
-    int inout_t;                   /* input / output type */
     unsigned int uid;              /* used as the key to search this variable as fanin or fanout */
   };
   NETLIST_STREAMOUT(VIdentifier);

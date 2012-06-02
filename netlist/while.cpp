@@ -77,7 +77,6 @@ WhileState* netlist::WhileState::deep_copy() const {
   if(exp.use_count() != 0) rv->exp.reset(exp->deep_copy());
   if(body.use_count() != 0) rv->body.reset(body->deep_copy());
 
-  rv->set_father(father);
   return rv;
 }
 

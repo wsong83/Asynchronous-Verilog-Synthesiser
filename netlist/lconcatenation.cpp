@@ -124,7 +124,6 @@ LConcatenation* netlist::LConcatenation::deep_copy() const {
       delete mp;
     });
   
-  rv->set_father(father);
   return rv;
 }
 

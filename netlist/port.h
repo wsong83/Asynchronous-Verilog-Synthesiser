@@ -40,14 +40,20 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_CHECK_INPARSE_DECL;
     NETLIST_STREAMOUT_DECL;
+    NETLIST_SET_FATHER_DECL;
     virtual Port* deep_copy() const {
       Port *rv = new Port(loc, name);
       rv->dir = dir;
-      rv->set_father(father);
       return rv;
     }      
-    virtual void db_register(int iod = 1) {}
-    virtual void db_expunge() {}
+    virtual void db_register(int iod = 1) {
+      if(dir <= 1) name.db_register(0);
+      if(dir >= 0) name.db_register(1);
+    }
+
+    virtual void db_expunge() {
+      name.db_expunge();
+    }
    
     // helpers
     void set_in() { dir = -1; }

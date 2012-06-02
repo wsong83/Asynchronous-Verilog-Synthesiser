@@ -36,30 +36,30 @@ using boost::shared_ptr;
 using boost::static_pointer_cast;
 
 netlist::Operation::Operation()
-  : otype(oNULL), valuable(false)
+  : otype(oNULL), valuable(false), father(NULL)
 {}
 
 netlist::Operation::Operation(operation_t otype)
-  : otype(otype), valuable(false)
+  : otype(otype), valuable(false), father(NULL)
 {
   // only operators do not need an operand
   assert(otype > oFun);
 }
 
 netlist::Operation::Operation(const Number& num)
-  : otype(oNum), valuable(num.is_valuable()), data(new Number(num))
+  : otype(oNum), valuable(num.is_valuable()), data(new Number(num)), father(NULL)
 { }
 
 netlist::Operation::Operation(const VIdentifier& id)
-  : otype(oVar), valuable(false), data(new VIdentifier(id))
+  : otype(oVar), valuable(false), data(new VIdentifier(id)), father(NULL)
 { }
 
 netlist::Operation::Operation(const shared_ptr<Concatenation>& con)
-  : otype(oCon), valuable(false), data(static_pointer_cast<NetComp>(con))
+  : otype(oCon), valuable(false), data(static_pointer_cast<NetComp>(con)), father(NULL)
 { }
 
 netlist::Operation::Operation(const shared_ptr<LConcatenation>& con)
-  : otype(oCon), valuable(false)
+  : otype(oCon), valuable(false), father(NULL)
 {
   if(con->size() == 1) {
     otype = oVar;
@@ -167,7 +167,6 @@ Operation* netlist::Operation::deep_copy() const {
   rv->otype = this->otype;
   rv->valuable = this->valuable;
   if(data.use_count() != 0) rv->data = shared_ptr<NetComp>(data->deep_copy());
-  rv->set_father(father);
   return rv;
 }
 

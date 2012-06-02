@@ -231,7 +231,6 @@ Concatenation* netlist::Concatenation::deep_copy() const {
   list<shared_ptr<ConElem> >::const_iterator it, end;
   for(it=data.begin(), end=data.end(); it!=end; it++)
     rv->data.push_back(shared_ptr<ConElem>((*it)->deep_copy()));
-  rv->set_father(father);
   return rv;
 }
 

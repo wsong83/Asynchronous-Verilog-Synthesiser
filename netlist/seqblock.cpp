@@ -232,6 +232,7 @@ SeqBlock* netlist::SeqBlock::deep_copy() const {
       rv->slist_level.push_back(shared_ptr<Expression>(m->deep_copy()));
     });
 
+  rv->set_father();
   rv->elab_inparse();
   return rv;
 }

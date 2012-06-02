@@ -180,6 +180,7 @@ Module* netlist::Module::deep_copy() const {
   DATABASE_DEEP_COPY_ORDER_FUN(db_genvar, VIdentifier,  Variable,  rv->db_genvar     );
   
   // set father
+  rv->set_father();
   rv->elab_inparse();
   return rv;
 }
@@ -330,6 +331,10 @@ bool netlist::Module::update_name(string& newName) {
 }
 
 bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo) {
+  // link all variables
+  db_register();
+
+
   // resolve all generate variables
   for_each(db_genvar.begin_order(), db_genvar.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
         m.second->update();

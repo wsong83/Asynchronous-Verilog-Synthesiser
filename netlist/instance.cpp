@@ -248,7 +248,6 @@ Instance* netlist::Instance::deep_copy() const {
       rv->para_list.push_back(shared_ptr<ParaConn>(comp->deep_copy())); 
     });
     
-  rv->set_father(father);
   return rv;
 }
 

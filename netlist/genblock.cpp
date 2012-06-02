@@ -232,6 +232,7 @@ GenBlock* netlist::GenBlock::deep_copy() const {
   rv->unnamed_var = unnamed_var;
   rv->blocked = blocked;
 
+  rv->set_father();
   rv->elab_inparse();
   return rv;
 }

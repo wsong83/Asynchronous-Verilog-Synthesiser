@@ -42,6 +42,12 @@ netlist::Port::Port(const VIdentifier& pid)
 netlist::Port::Port(const location& lloc, const VIdentifier& pid)
   : NetComp(tPort, lloc), name(pid), dir(0) {}
 
+void netlist::Port::set_father(Block *pf) {
+  if(father == pf) return;
+  father = pf;
+  name.set_father(pf);
+}
+
 bool netlist::Port::check_inparse() {
   shared_ptr<Variable> m = father->gfind_var(VIdentifier(name.name));
   if(m.use_count() == 0) {      // port without wire/reg definition

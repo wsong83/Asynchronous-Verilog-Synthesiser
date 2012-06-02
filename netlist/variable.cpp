@@ -170,7 +170,6 @@ Variable* netlist::Variable::deep_copy() const {
 
   // every time a variable is deep copied, all fan-in and -out connections are lost and need to regenerated
  
-  rv->set_father(father);
   return rv;
 }
 

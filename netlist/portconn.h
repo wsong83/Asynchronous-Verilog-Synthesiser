@@ -127,7 +127,6 @@ namespace netlist {
       delete pm;
       rv->num = num;
       rv->type = type;
-      rv->set_father(father);
       return rv;
     } 
 
@@ -233,7 +232,6 @@ namespace netlist {
       delete pm;
       rv->num = num;
       rv->type = type;
-      rv->set_father(father);
       return rv;
     } 
 

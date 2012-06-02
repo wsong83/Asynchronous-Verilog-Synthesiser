@@ -376,6 +376,5 @@ Expression* netlist::Expression::deep_copy() const {
   for(it=this->eqn.begin(), end=this->eqn.end(); it!=end; it++)
     rv->eqn.push_back(shared_ptr<Operation>((*it)->deep_copy()));
 
-  rv->set_father(father);
   return rv;
 }
