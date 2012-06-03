@@ -185,7 +185,7 @@ namespace netlist {
     void db_register(const boost::shared_ptr<Variable>&, int);
     bool db_registered() const { return uid != 0; }
     void reset_uid(unsigned int id) { uid = id; } /* only used by Variable::get_id() */
-    //int get_inout_dir() const { return inout_t; }
+    void set_pcomp(NetComp * p) { pcomp = p;}     /* set the linked component */
 
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
@@ -194,6 +194,7 @@ namespace netlist {
     virtual VIdentifier* deep_copy() const;
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
+    virtual bool elaborate();
 
   private:
     Number value;
@@ -201,6 +202,7 @@ namespace netlist {
     std::vector<boost::shared_ptr<Range> > m_select;
     bool numbered;                 /* true when it is numbered unnamed variable */
     boost::shared_ptr<Variable> pvar;     /* the wire/reg/var in the database */
+    NetComp*  pcomp;               /* the netlist component using this variable */
     unsigned int uid;              /* used as the key to search this variable as fanin or fanout */
   };
   NETLIST_STREAMOUT(VIdentifier);

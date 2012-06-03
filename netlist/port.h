@@ -50,10 +50,10 @@ namespace netlist {
       if(dir <= 0) name.db_register(0);
       if(dir >= 0) name.db_register(1);
     }
-
     virtual void db_expunge() {
       name.db_expunge();
     }
+    virtual bool elaborate();
    
     // helpers
     void set_in() { dir = -1; }

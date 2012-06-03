@@ -331,16 +331,31 @@ bool netlist::Module::update_name(string& newName) {
 }
 
 bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo) {
+  bool rv = true;
+
   // link all variables
   db_register();
 
+  // update the value of parameter to all variables after db_register
+  // the update during update_name is not sufficient to resolve all parameters 
+  // as db_register is run after elaboration
+  for_each(db_param.begin_order(), db_param.end_order(), [&rv](pair<VIdentifier, shared_ptr<Variable> >& m) {
+      rv &= m.second->update();
+    });
+  if(!rv) return rv;
+
+  // check ports
+  for_each(db_port.begin_order(), db_port.end_order(), [&rv](pair<VIdentifier, shared_ptr<Port> >& m) {
+      rv &= m.second->elaborate();
+    });
+  if(!rv) return rv;
 
   // resolve all generate variables
   for_each(db_genvar.begin_order(), db_genvar.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
         m.second->update();
       });
 
-  return true;
+  return rv;
 }
 
 void netlist::Module::init_port_list(const list<VIdentifier>& port_list) {

@@ -263,3 +263,14 @@ Range* netlist::Range::deep_copy() const {
   rv->rtype = rtype;
   return rv;
 }
+
+bool netlist::Range::elaborate() {
+  bool rv = true;
+  switch(rtype) {
+  case TR_Var:
+    rv = v->elaborate(); break;
+  case TR_Range:
+    rv = r.first->elaborate() && r.second->elaborate(); break;
+  }
+  return rv;
+}

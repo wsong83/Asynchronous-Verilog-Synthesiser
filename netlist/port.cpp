@@ -74,3 +74,8 @@ ostream& netlist::Port::streamout(ostream& os, unsigned int indent) const {
   return os;
 
 }
+
+bool netlist::Port::elaborate() {
+  name.set_pcomp(this);
+  return name.elaborate();
+}

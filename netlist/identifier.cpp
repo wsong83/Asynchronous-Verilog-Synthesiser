@@ -252,28 +252,28 @@ ostream& netlist::PoIdentifier::streamout(ostream& os, unsigned int indent) cons
 
 //////////////////////////////// variable identifier /////////////////
 netlist::VIdentifier::VIdentifier()
-  : Identifier(tVarName, "n_0"), numbered(true), uid(0) {  }
+  : Identifier(tVarName, "n_0"), numbered(true), pcomp(NULL), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const location& lloc)
-  : Identifier(tVarName, lloc, "n_0"), numbered(true), uid(0) {  }
+  : Identifier(tVarName, lloc, "n_0"), numbered(true), pcomp(NULL), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const string& nm)
-  : Identifier(tVarName, nm), numbered(false), uid(0) {  }
+  : Identifier(tVarName, nm), numbered(false), pcomp(NULL), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const location& lloc, const string& nm)
-  : Identifier(tVarName, lloc, nm), numbered(false), uid(0) {  }
+  : Identifier(tVarName, lloc, nm), numbered(false), pcomp(NULL), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const averilog::avID& id)
-  : Identifier(tVarName, id.name), numbered(false), uid(0) { }
+  : Identifier(tVarName, id.name), numbered(false), pcomp(NULL), uid(0) { }
 
 netlist::VIdentifier::VIdentifier(const location& lloc, const averilog::avID& id)
-  : Identifier(tVarName, lloc, id.name), numbered(false), uid(0) { }
+  : Identifier(tVarName, lloc, id.name), numbered(false), pcomp(NULL), uid(0) { }
 
 netlist::VIdentifier::VIdentifier(const string& nm, const vector<shared_ptr<Range> >& rg)
-  : Identifier(tVarName, nm), m_range(rg), numbered(false), uid(0) {  }
+  : Identifier(tVarName, nm), m_range(rg), numbered(false), pcomp(NULL), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const location& lloc, const string& nm, const vector<shared_ptr<Range> >& rg)
-  : Identifier(tVarName, lloc, nm), m_range(rg), numbered(false), uid(0) {  }
+  : Identifier(tVarName, lloc, nm), m_range(rg), numbered(false), pcomp(NULL), uid(0) {  }
 
 VIdentifier& netlist::VIdentifier::operator++ () {
   const boost::regex numbered_name("_(\\d+)\\z");
@@ -388,7 +388,6 @@ VIdentifier* netlist::VIdentifier::deep_copy() const {
   VIdentifier* rv = new VIdentifier(this->loc, this->name);
   rv->value = this->value;
   rv->numbered = this->numbered;
-  rv->pvar = this->pvar;
   rv->uid = 0;                  // unregistered
   vector<shared_ptr<Range> >::const_iterator it, end;
   for(it=this->m_range.begin(), end=this->m_range.end(); it!=end; it++)
@@ -398,4 +397,28 @@ VIdentifier* netlist::VIdentifier::deep_copy() const {
   return rv;
 }
   
+bool netlist::VIdentifier::elaborate() {
+  bool rv = true;
+  
+  // check the basic link info.
+  assert(uid != 0);
+  assert(pvar.use_count() != 0); // variable registered
+  assert(pcomp != NULL);         // linked component identified
 
+  // depending on the type of linked component, checking range and selector
+  switch(pcomp->get_type()) {
+  case tUnkown :
+    assert(0 == "the linked component should not be an unkown component!");
+    rv = false;
+    break;
+  case tPort: {
+    // for a port, range should be resolved numbers
+    
+  }
+  default:
+    assert(0 == "this type of component has not been processed here!");
+    rv=false;
+  }
+
+  return rv;
+}

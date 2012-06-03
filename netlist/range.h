@@ -54,6 +54,7 @@ namespace netlist {
     bool is_single() const {return rtype != TR_Range && rtype != TR_CRange; }
     void set_dim() { dim = true;}
     bool is_dim() const { return dim;}
+    bool is_valuable() const { return (rtype == TR_Const || rtype == TR_CRange); }
 
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
@@ -62,7 +63,8 @@ namespace netlist {
     virtual Range* deep_copy() const;
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
-    
+    virtual bool elaborate();
+
   private:
     mpz_class c;                       /* constant */
     boost::shared_ptr<Expression> v;   /* variable */
