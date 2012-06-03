@@ -42,7 +42,10 @@ namespace netlist {
     Variable(const shell::location& lloc) : NetComp(tVariable, lloc), uid(0) {}
     Variable(const VIdentifier& id, vtype_t mtype = TVar)
       : NetComp(tVariable), vtype(mtype), name(id), uid(0) {}
-    Variable(const Port& p);
+    Variable(const Port& p)
+      : NetComp(tVariable, p.loc), vtype(TWire), uid(0) {
+      name = VIdentifier(p.name.loc, p.name.name, p.name.get_range());
+    }
     Variable(const shell::location& lloc, const VIdentifier& id, vtype_t mtype = TVar)
       : NetComp(tVariable, lloc), vtype(mtype), name(id), uid(0) {}
     Variable(const VIdentifier& id, const boost::shared_ptr<Expression>& expp, vtype_t mtype = TVar)

@@ -41,13 +41,6 @@ using std::vector;
 using std::deque;
 
 
-netlist::Variable::Variable(const Port& p)
-  : NetComp(tVariable, p.loc)
-{
-  vtype = TWire;
-  name = VIdentifier(p.name.loc, p.name.name, p.name.get_range());
-}
-
 void netlist::Variable::set_value(const Number& num) {
   exp.reset(new Expression(num));
   update();
@@ -128,7 +121,7 @@ unsigned int netlist::Variable::get_id() {
     deque<unsigned int> availID;
     map<unsigned int, VIdentifier *> newFan[2];
     unsigned int i;
-    for(i=1; !fan[0].empty() | fan[1].empty(); i++) {
+    for(i=1; !fan[0].empty() | !fan[1].empty(); i++) {
       if(!fan[0].count(i) && !fan[1].count(i)) { // id available
         availID.push_back(i);
       } else if(!availID.empty()) { // replace the fan with a new id

@@ -369,6 +369,8 @@ void netlist::VIdentifier::db_register(int iod) {
       mvar->name.db_expunge();
       father->db_var.insert(mvar->name, mvar);
     }
+  } else {
+    mvar = pvar;
   }
   db_register(mvar, iod);
 }

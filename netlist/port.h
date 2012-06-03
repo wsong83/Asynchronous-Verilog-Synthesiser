@@ -47,7 +47,7 @@ namespace netlist {
       return rv;
     }      
     virtual void db_register(int iod = 1) {
-      if(dir <= 1) name.db_register(0);
+      if(dir <= 0) name.db_register(0);
       if(dir >= 0) name.db_register(1);
     }
 
