@@ -53,7 +53,7 @@ namespace netlist {
     virtual void db_expunge() {
       name.db_expunge();
     }
-    virtual bool elaborate();
+    NETLIST_ELABORATE_DECL;
    
     // helpers
     void set_in() { dir = -1; }

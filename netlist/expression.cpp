@@ -26,8 +26,9 @@
  *
  */
 
-#include "component.h"
+#include <algorithm>
 #include <stack>
+#include "component.h"
 
 using namespace netlist;
 using std::ostream;
@@ -37,6 +38,7 @@ using shell::location;
 using std::pair;
 using std::stack;
 using std::list;
+using std::for_each;
 
 netlist::Expression::Expression(const Number& exp) 
   : NetComp(tExp), valuable(exp.is_valuable())
@@ -101,6 +103,20 @@ Number netlist::Expression::get_value() const {
 }
 
 void netlist::Expression::reduce() {
+
+  // reduce all concatenations if possible
+  list<shared_ptr<Operation> >::iterator it, end;
+  for(it=eqn.begin(), end=eqn.end(); it!=end; it++) {
+    (*it)->reduce();
+    if((*it)->get_type() == Operation::oCon &&
+       (*it)->get_con().is_exp()
+       ) {                      // replace this concatenation with an embedded expression
+      eqn.insert(it, (*it)->get_con().get_exp()->eqn.begin(), (*it)->get_con().get_exp()->eqn.end());
+      eqn.erase(it);
+      it--;
+    }
+  }   
+
   // state stack
   stack<shared_ptr<expression_state> > m_stack;
 
@@ -115,13 +131,11 @@ void netlist::Expression::reduce() {
     if(m->get_type() <= Operation::oFun) {   // a prime
       if(m_stack.empty()) {     // only one element and it is a prime
         assert(eqn.empty());    // eqn should be empty
-        m->reduce();
         eqn.push_back(m);
         valuable = m->is_valuable();
         return;
       } else {
         shared_ptr<expression_state> m_state = m_stack.top();
-        m->reduce();
         m_state->d[(m_state->opp)++].push_back(m);
         while(true) {
           if(m_state->ops == m_state->opp) { // ready for execute
@@ -375,6 +389,21 @@ Expression* netlist::Expression::deep_copy() const {
   list<shared_ptr<Operation> >::const_iterator it, end;
   for(it=this->eqn.begin(), end=this->eqn.end(); it!=end; it++)
     rv->eqn.push_back(shared_ptr<Operation>((*it)->deep_copy()));
+
+  return rv;
+}
+
+bool netlist::Expression::elaborate(const ctype_t mctype) {
+  bool rv = true;
+  
+  // resolve all operation if possible
+  for_each(eqn.begin(), eqn.end(), [&rv](shared_ptr<Operation>& m) {
+      rv &= m->elaborate();
+    });
+  if(!rv) return false;
+
+  // try to reduce the expression
+  reduce();
 
   return rv;
 }

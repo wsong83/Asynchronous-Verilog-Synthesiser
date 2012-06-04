@@ -192,6 +192,29 @@ void netlist::Operation::reduce() {
   }
 }
 
+bool netlist::Operation::elaborate(const NetComp::ctype_t mctype) {
+  bool rv = true;
+  if(otype == oVar) {
+    rv &= data->elaborate(NetComp::tExp);
+    SP_CAST(m, VIdentifier, data);
+    if(m->is_valuable()) {
+      data.reset(new Number(m->get_value()));
+      otype = oNum;
+    }
+  } else if(otype == oCon) {
+    rv &= data->elaborate(NetComp::tExp);
+    SP_CAST(m, Concatenation, data);
+    if(m->is_valuable()) {
+      data.reset(new Number(m->get_value()));
+      otype = oNum;
+    } 
+  }
+
+  // a number or operator does not need to be reduced further
+  // function is not supported yet
+  return rv;   
+}
+
 // dummy yet
 void netlist::execute_operation( Operation::operation_t op,
                                  list<shared_ptr<Operation> >& d1,

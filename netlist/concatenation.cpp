@@ -28,6 +28,7 @@
 
 #include <algorithm>
 #include "component.h"
+#include "shell/env.h"
 
 using namespace netlist;
 using std::ostream;
@@ -103,6 +104,27 @@ void netlist::ConElem::db_register(int iod) {
 void netlist::ConElem::db_expunge() {
   exp->db_expunge();
   for_each(con.begin(), con.end(), [](shared_ptr<ConElem>& m) {m->db_expunge();});
+}
+
+bool netlist::ConElem::elaborate(const NetComp::ctype_t mctype) {
+  bool rv = true;
+  rv &= exp->elaborate();
+  if(!rv) return false;
+  
+  for_each(con.begin(), con.end(), [&rv](shared_ptr<ConElem>& m) {
+      rv &= m->elaborate();
+    });
+  if(!rv) return false;
+
+  reduce();
+  
+  // check
+  if(con.size() != 0 && !exp->is_valuable()) {
+    G_ENV->error(exp->loc, "ELAB-EXPRESSION-0", toString(*exp));
+    return false;
+  }
+
+  return rv;
 }
 
 ostream& netlist::Concatenation::streamout(ostream& os, unsigned int indent) const {
@@ -216,6 +238,18 @@ void netlist::Concatenation::reduce() {
       it++; 
     }
   }
+}
+
+bool netlist::Concatenation::elaborate(const ctype_t mctype) {
+  bool rv = true;
+  for_each(data.begin(), data.end(), [&rv](shared_ptr<ConElem>& m){
+      rv &= m->elaborate();
+    });
+  if(!rv) return false;
+
+  reduce();
+  
+  return rv;
 }
 
 void netlist::Concatenation::db_register(int iod) {

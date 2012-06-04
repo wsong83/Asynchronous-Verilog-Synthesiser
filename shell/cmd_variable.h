@@ -39,14 +39,14 @@ namespace shell {
     class CMDVar {
     public:
       enum var_t {
-        vUnkown,                /* probably empty, unkown yet */
+        vUnknown,                /* probably empty, unkown yet */
         vString,                /* string */
         vList,                  /* a string list */
         vCollection             /* object collection */
       } var_type;
 
       CMDVar()
-        : var_type(vUnkown) {}
+        : var_type(vUnknown) {}
       CMDVar(const std::string& rhs) 
         : var_type(vString), m_list(1, rhs) {}
       CMDVar(const std::list<std::string>& rhs) 

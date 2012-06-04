@@ -75,7 +75,7 @@ ostream& netlist::Port::streamout(ostream& os, unsigned int indent) const {
 
 }
 
-bool netlist::Port::elaborate() {
+bool netlist::Port::elaborate(ctype_t mctype) {
   name.set_pcomp(this);
-  return name.elaborate();
+  return name.elaborate(tPort);
 }

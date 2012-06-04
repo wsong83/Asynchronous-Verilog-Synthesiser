@@ -67,6 +67,7 @@ namespace netlist {
     virtual Expression* deep_copy() const;
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
+    NETLIST_ELABORATE_DECL;
     
     // data
     std::list<boost::shared_ptr<Operation> > eqn;

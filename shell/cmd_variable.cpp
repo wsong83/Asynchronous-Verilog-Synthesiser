@@ -46,7 +46,7 @@ using namespace shell::CMD;
 
 ostream& shell::CMD::CMDVar::streamout( ostream& os) const {
   switch(var_type) {
-  case vUnkown: return os;
+  case vUnknown: return os;
   case vString: 
   case vList: {
     list<string>::const_iterator it, end;
@@ -85,7 +85,7 @@ CMDVar& shell::CMD::CMDVar::operator= (const list<string>& slist) {
   if(slist.size() == 1) {
     var_type = vString;
   } else {
-    var_type = vUnkown;
+    var_type = vUnknown;
   }
     
   return *this;
@@ -97,7 +97,7 @@ CMDVar& shell::CMD::CMDVar::operator= (const vector<string>& slist) {
   if(slist.size() == 1) {
     var_type = vString;
   } else {
-    var_type = vUnkown;
+    var_type = vUnknown;
   }
     
   return *this;

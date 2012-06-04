@@ -63,7 +63,7 @@ namespace netlist {
     virtual Range* deep_copy() const;
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
-    virtual bool elaborate();
+    NETLIST_ELABORATE_DECL;
 
   private:
     mpz_class c;                       /* constant */

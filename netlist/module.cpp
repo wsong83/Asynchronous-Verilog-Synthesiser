@@ -142,7 +142,7 @@ ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
   }
 
   // statements
-  ctype_t mt = tUnkown;
+  ctype_t mt = tUnknown;
   list<shared_ptr<NetComp> >::const_iterator it, end;
   for(it=statements.begin(), end=statements.end(); it!=end; it++) {
     ctype_t mt_nxt = (*it)->get_type();

@@ -64,7 +64,12 @@
 
 #ifndef NETLIST_SET_FATHER_DECL
 #define NETLIST_SET_FATHER_DECL           \
-  virtual void set_father(Block* pf);    
+  virtual void set_father(netlist::Block* pf);    
+#endif
+
+#ifndef NETLIST_ELABORATE_DECL
+#define NETLIST_ELABORATE_DECL                             \
+  virtual bool elaborate(const netlist::NetComp::ctype_t mctype = netlist::NetComp::tUnknown);
 #endif
 
 namespace netlist{
@@ -74,7 +79,7 @@ namespace netlist{
   public:
 #include "comp_type.h"
     // no one should directly use this class
-    NetComp() : ctype(tUnkown), father(NULL) {}
+    NetComp() : ctype(tUnknown), father(NULL) {}
     NetComp(ctype_t tt) : ctype(tt), father(NULL) {}
     NetComp(ctype_t tt, const shell::location& lloc) : ctype(tt), loc(lloc), father(NULL) {}
     
@@ -129,7 +134,7 @@ namespace netlist{
     }
 
     // elaborate and check
-    virtual bool elaborate() {
+    virtual bool elaborate(const ctype_t mctype) {
       std::cerr << "ERROR!!, the elaborate() of NetComp is used!!!" << std::endl;
       assert(0 == "elaborate() of NetComp is used");
     }

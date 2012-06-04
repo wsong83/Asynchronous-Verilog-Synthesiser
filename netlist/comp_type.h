@@ -27,7 +27,7 @@
  */
 
 enum ctype_t {
-  tUnkown,                  /* type not initiated, indicate error!! */
+  tUnknown,                 /* type not initiated, indicate error!! */
   tAssign,                  /* assignment */
   tBlock,                   /* general block */
   tBlockName,               /* block name */

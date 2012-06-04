@@ -264,13 +264,14 @@ Range* netlist::Range::deep_copy() const {
   return rv;
 }
 
-bool netlist::Range::elaborate() {
+bool netlist::Range::elaborate(const ctype_t mctype) {
   bool rv = true;
   switch(rtype) {
   case TR_Var:
     rv = v->elaborate(); break;
   case TR_Range:
     rv = r.first->elaborate() && r.second->elaborate(); break;
+  default:;
   }
   return rv;
 }

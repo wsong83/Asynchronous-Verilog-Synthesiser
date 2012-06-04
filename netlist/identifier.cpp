@@ -397,7 +397,7 @@ VIdentifier* netlist::VIdentifier::deep_copy() const {
   return rv;
 }
   
-bool netlist::VIdentifier::elaborate() {
+bool netlist::VIdentifier::elaborate(const ctype_t mctype) {
   bool rv = true;
   
   // check the basic link info.
@@ -406,8 +406,8 @@ bool netlist::VIdentifier::elaborate() {
   assert(pcomp != NULL);         // linked component identified
 
   // depending on the type of linked component, checking range and selector
-  switch(pcomp->get_type()) {
-  case tUnkown :
+  switch(mctype) {
+  case tUnknown :
     assert(0 == "the linked component should not be an unkown component!");
     rv = false;
     break;

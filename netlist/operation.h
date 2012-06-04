@@ -99,6 +99,7 @@ namespace netlist {
     virtual Operation* deep_copy() const; 
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
+    NETLIST_ELABORATE_DECL;
 
   private:
     operation_t otype;

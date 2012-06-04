@@ -50,13 +50,19 @@ namespace netlist {
     ConElem(const shell::location& lloc, const boost::shared_ptr<Expression>& expr)
       : exp(expr), loc(lloc) {}
     
+    // helpers
     void reduce();
+    bool is_valuable() const { return con.size() == 0 && exp->is_valuable(); }
+    Number get_value() { return exp->get_value(); }
+
+    // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
     NETLIST_CHECK_INPARSE_DECL;
     virtual ConElem* deep_copy() const;
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
+    NETLIST_ELABORATE_DECL;
 
     boost::shared_ptr<Expression> exp;
     std::list<boost::shared_ptr<ConElem> > con;
@@ -76,6 +82,10 @@ namespace netlist {
     Concatenation& operator+ (boost::shared_ptr<Concatenation>& rhs);
     Concatenation& operator+ (boost::shared_ptr<ConElem>& rhs);
     void reduce();
+    bool is_valuable() const { return (data.size() == 1 && data.front()->is_valuable()); }
+    bool is_exp() const { return (data.size() == 1 && data.front()->con.size() == 0); }
+    boost::shared_ptr<Expression>& get_exp() { return data.front()->exp; }
+    Number get_value() { return data.front()->get_value(); }
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
@@ -84,6 +94,7 @@ namespace netlist {
     virtual Concatenation* deep_copy() const;
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
+    NETLIST_ELABORATE_DECL;
 
     // data
     std::list<boost::shared_ptr<ConElem> > data;
