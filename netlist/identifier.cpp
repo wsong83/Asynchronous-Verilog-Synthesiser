@@ -354,6 +354,15 @@ void netlist::VIdentifier::db_register(const shared_ptr<Variable>& f, int iod) {
 
   // update the value
   if(pvar->is_valuable()) value = pvar->get_value();
+
+  // register all range and selectors
+  for_each(m_range.begin(), m_range.end(), [](shared_ptr<Range>& m) {
+      m->db_register(1);
+    });
+  for_each(m_select.begin(), m_select.end(), [](shared_ptr<Range>& m) {
+      m->db_register(1);
+    });
+
 }
 
 void netlist::VIdentifier::db_register(int iod) {
@@ -382,6 +391,14 @@ void netlist::VIdentifier::db_expunge() {
   }
   uid = 0;
   pvar.reset();
+
+  // expunge all range and selectors
+  for_each(m_range.begin(), m_range.end(), [](shared_ptr<Range>& m) {
+      m->db_expunge();
+    });
+  for_each(m_select.begin(), m_select.end(), [](shared_ptr<Range>& m) {
+      m->db_expunge();
+    });
 }
 
 VIdentifier* netlist::VIdentifier::deep_copy() const {
@@ -403,17 +420,36 @@ bool netlist::VIdentifier::elaborate(const ctype_t mctype) {
   // check the basic link info.
   assert(uid != 0);
   assert(pvar.use_count() != 0); // variable registered
-  assert(pcomp != NULL);         // linked component identified
-
+  
   // depending on the type of linked component, checking range and selector
   switch(mctype) {
   case tUnknown :
     assert(0 == "the linked component should not be an unkown component!");
     rv = false;
     break;
+  case tExp: {
+    // for an expression, no range is used
+    assert(m_range.size() == 0);
+    for_each(m_range.begin(), m_range.end(), [&rv](shared_ptr<Range>& m) {
+        rv &= m->elaborate();
+        rv &= m->is_valuable();
+      });    
+    if(!rv) {
+      G_ENV->error(loc, "ELAB-RANGE-0", name);
+    }
+    break;
+  }
   case tPort: {
     // for a port, range should be resolved numbers
-    
+    assert(m_select.size() == 0);
+    for_each(m_range.begin(), m_range.end(), [&rv](shared_ptr<Range>& m) {
+        rv &= m->elaborate();
+        rv &= m->is_valuable();
+      });
+    if(!rv) {
+      G_ENV->error(loc, "ELAB-RANGE-0", name);
+    }
+    break;
   }
   default:
     assert(0 == "this type of component has not been processed here!");

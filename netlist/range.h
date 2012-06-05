@@ -32,7 +32,7 @@
 namespace netlist {
 
   typedef std::pair<boost::shared_ptr<Expression>, boost::shared_ptr<Expression> > Range_Exp;
-  typedef std::pair<mpz_class, mpz_class> Range_Const;
+  typedef std::pair<Number, Number> Range_Const;
 
   class Range : public NetComp {
   public:
@@ -50,7 +50,7 @@ namespace netlist {
     Range(const shell::location&, const Range_Exp&, int); /* select by a range expression using positive or negtive colon */
 
     // helpers
-    bool is_const() const { return rtype == TR_Const && rtype == TR_CRange; }
+    bool is_const() const { return rtype == TR_Const || rtype == TR_CRange; }
     bool is_single() const {return rtype != TR_Range && rtype != TR_CRange; }
     void set_dim() { dim = true;}
     bool is_dim() const { return dim;}
@@ -66,7 +66,7 @@ namespace netlist {
     NETLIST_ELABORATE_DECL;
 
   private:
-    mpz_class c;                       /* constant */
+    Number c;                          /* constant */
     boost::shared_ptr<Expression> v;   /* variable */
     Range_Exp r;                       /* range expression */
     Range_Const cr;                    /* const range */

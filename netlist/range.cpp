@@ -267,11 +267,32 @@ Range* netlist::Range::deep_copy() const {
 bool netlist::Range::elaborate(const ctype_t mctype) {
   bool rv = true;
   switch(rtype) {
-  case TR_Var:
-    rv = v->elaborate(); break;
-  case TR_Range:
-    rv = r.first->elaborate() && r.second->elaborate(); break;
+  case TR_Var: {
+    rv = v->elaborate(); 
+    if(v->is_valuable()) {
+      c = v->get_value();
+      rtype = TR_Const;
+      v.reset();
+    }
+    break;
+  }
+  case TR_Range: {
+    rv = r.first->elaborate() && r.second->elaborate(); 
+    if(r.first->is_valuable() && r.second->is_valuable()) {
+      if(r.first->get_value() == r.second->get_value()) {
+        c = v->get_value();
+        rtype = TR_Const;
+      } else {
+        cr.first = r.first->get_value();
+        cr.second = r.second->get_value();
+      }
+      r.first.reset();
+      r.second.reset();
+    }
+    break;
+  }
   default:;
   }
+
   return rv;
 }

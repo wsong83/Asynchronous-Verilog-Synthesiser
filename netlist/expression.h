@@ -44,6 +44,7 @@ namespace netlist {
     Expression(const shell::location& lloc, const boost::shared_ptr<Concatenation>&); /* a concatenation is an expression */
     Expression(const boost::shared_ptr<LConcatenation>&); /* some times need to convert a lvalue back to expression */
     Expression(const shell::location& lloc, const boost::shared_ptr<LConcatenation>&); /* some times need to convert a lvalue back to expression */
+    virtual ~Expression();
 
     // helpers
     bool is_valuable() const;    /* check valuable */

@@ -88,6 +88,8 @@ netlist::Expression::Expression(const location& lloc, const shared_ptr<LConcaten
   eqn.push_back(shared_ptr<Operation>(new Operation(con)));
 }
 
+netlist::Expression::~Expression() {}
+
 bool netlist::Expression::is_valuable() const {
   return valuable;
 }

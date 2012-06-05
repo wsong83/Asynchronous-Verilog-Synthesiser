@@ -75,6 +75,12 @@ netlist::Operation::Operation(const shared_ptr<LConcatenation>& con)
   }
 }
 
+netlist::Operation::~Operation() {
+  if(data.use_count() != 0) {
+    data->db_expunge();
+  }
+}
+
 Number& netlist::Operation::get_num(){
   assert(otype == oNum);
   return *(static_pointer_cast<Number>(data));

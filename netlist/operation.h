@@ -82,6 +82,7 @@ namespace netlist {
     Operation(const VIdentifier&);
     Operation(const boost::shared_ptr<Concatenation>&);
     Operation(const boost::shared_ptr<LConcatenation>&);
+    virtual ~Operation();
 
     // helpers
     bool is_valuable() const { return valuable; }
