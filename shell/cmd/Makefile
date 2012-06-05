@@ -27,7 +27,7 @@
 INCDIRS = -I./ -I../../
 
 # targets
-TARGETS = analyze.o help.o quit.o source.o set.o echo.o suppress_message.o current_design.o elaborate.o
+TARGETS = analyze.o current_design.o echo.o elaborate.o help.o quit.o report_netlist.o source.o set.o suppress_message.o 
 HEADERS = $(wildcard ./*.h)
 HEADERS += ../env.h
 

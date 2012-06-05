@@ -28,6 +28,8 @@
 
 #define BOOST_FILESYSTEM_VERSION 3
 #include <boost/filesystem.hpp>
+#include <boost/regex.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "shell_top.h"
 
@@ -133,3 +135,41 @@ void shell::Env::run() {
   parser->parse();
 }
 
+shared_ptr<netlist::NetComp> shell::Env::hierarchical_search(const string& m) {
+  vector<string> nameVector;
+  shared_ptr<netlist::NetComp> rv;
+
+  boost::split(nameVector, m, boost::is_any_of("/"), boost::token_compress_on);
+  vector<string>::iterator it, end;
+  it = nameVector.begin();
+  end = nameVector.end();
+  
+  // the first level
+  // assuming it is an item of current design
+  if(curDgn.use_count() != 0) {
+    rv = curDgn->search(*it);
+  }
+
+  if(rv.use_count() == 0) {     
+    // failed to search it in current design
+    // then search it as a module name
+    rv = curLib->find(*it);
+
+    // TODO: if failed to find it in current lib
+    // it may be necessary to find it in all link libraries
+  }
+
+  if(rv.use_count() == 0) {
+    stdOs << "Error: Failed to find item \"" << *it << "\"." << endl;
+    return rv;
+  }
+
+  while(it != end) {
+    // TODO:
+    // find the hierarchical item in this module
+    break;
+  }
+
+  return rv;
+
+}

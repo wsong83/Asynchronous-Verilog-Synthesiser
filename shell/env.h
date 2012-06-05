@@ -50,9 +50,14 @@ namespace shell {
     Env();
     virtual ~Env();
 
-    bool initialise();               /* set up basic environment */
+    // key function
+    bool initialise();                      /* set up basic environment */
     void show_cmd(bool first_time = false); /* show the command line prompt */
     void run();                             /* running the synthesiser */
+
+    // helpers
+    /* search a netlist item using hierarchical name */
+    boost::shared_ptr<netlist::NetComp> hierarchical_search(const std::string&); 
 
     // data member
     std::map<std::string, boost::shared_ptr<netlist::Library> >  link_lib;     /* libraries used in design elaboration */

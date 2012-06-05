@@ -20,64 +20,69 @@
  */
 
 /* 
- * echo command
- * 21/05/2012   Wei Song
+ * report the internal structure of a netlist
+ * 05/06/2012   Wei Song
  *
  *
  */
 
 #include <list>
+#include <vector>
 #include <string>
-#include "echo.h"
+#include "report_netlist.h"
 
+using std::string;
 using std::vector;
 using std::endl;
+using boost::shared_ptr;
 using namespace shell;
 using namespace shell::CMD;
 
-po::options_description shell::CMD::CMDEcho::cmd_opt;
+po::options_description shell::CMD::CMDReportNetlist::cmd_opt;
 static po::options_description_easy_init dummy_cmd_opt =
-  CMDEcho::cmd_opt.add_options()
+  CMDReportNetlist::cmd_opt.add_options()
   ("help",     "usage information.")
-  ("varStr", po::value<vector<string> >()->composing(), "variable value.")
+  ("net_item", po::value<string>(), "the hierarchy name of a netlist item.")
   ;
 
-po::positional_options_description shell::CMD::CMDEcho::cmd_position;
+po::positional_options_description shell::CMD::CMDReportNetlist::cmd_position;
 static po::positional_options_description const dummy_position = 
-  CMDEcho::cmd_position.add("varStr", -1);
+  CMDReportNetlist::cmd_position.add("net_item", 1);
 
 
-void shell::CMD::CMDEcho::help(Env& gEnv) {
-  gEnv.stdOs << "echo: display a string with variables." << endl;
-  gEnv.stdOs << "    echo Strings" << endl;
+void shell::CMD::CMDReportNetlist::help(Env& gEnv) {
+  gEnv.stdOs << "report_netlist: display the internal structure of a netlist item." << endl;
+  gEnv.stdOs << "    echo netlist_item" << endl;
   gEnv.stdOs << "Options:" << endl;
   gEnv.stdOs << "   -help                usage information." << endl;
   gEnv.stdOs << endl;
 }
 
-bool shell::CMD::CMDEcho::exec( Env& gEnv, vector<string>& arg) {
+bool shell::CMD::CMDReportNetlist::exec( Env& gEnv, vector<string>& arg) {
   po::variables_map vm;
 
   try {
     store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
     notify(vm);
   } catch (std::exception& e) {
-    gEnv.stdOs << "Error: Wrong command syntax error! See usage by echo -help." << endl;
+    gEnv.stdOs << "Error: Wrong command syntax error! See usage by report_netlist -help." << endl;
     return false;
   }
 
   if(vm.count("help")) {        // print help information
-    shell::CMD::CMDEcho::help(gEnv);
+    shell::CMD::CMDReportNetlist::help(gEnv);
     return true;
   } else {
-    vector<string> varStr;
-    if(vm.count("varStr")) {
-      varStr = vm["varStr"].as<vector<string> >();
-      vector<string>::iterator it, end;
-      for(it=varStr.begin(), end=varStr.end(); it!=end; it++)
-        gEnv.stdOs << *it << " ";
+    string netItem;
+    if(vm.count("net_item")) 
+      netItem = vm["net_item"].as<string>();
+    shared_ptr<netlist::NetComp> mitem = gEnv.hierarchical_search(netItem);
+    if(mitem.use_count() != 0)
+      gEnv.stdOs << *mitem << endl;
+    else {
+      gEnv.stdOs << "Fail to find any item named \"" << netItem << "\"." << endl;
+      return false;
     }
-    gEnv.stdOs << endl;
     return true;
   }
 }
