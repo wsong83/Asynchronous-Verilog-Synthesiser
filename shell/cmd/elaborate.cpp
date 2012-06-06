@@ -137,8 +137,8 @@ bool shell::CMD::CMDElaborate::exec ( Env& gEnv, vector<string>& arg){
     shared_ptr<netlist::Library> workLib;
     shared_ptr<netlist::Module>  tarDesign;
     
-    if(gEnv.link_lib.find(libName) != gEnv.link_lib.end())
-      workLib = gEnv.link_lib.find(libName)->second;
+    if(gEnv.link_lib.count(libName))
+      workLib = gEnv.link_lib[libName];
     else {
       gEnv.stdOs << "Error: Fail to find the work library \"" <<  libName << "\"."<< endl;
       return false;
@@ -201,15 +201,28 @@ bool shell::CMD::CMDElaborate::exec ( Env& gEnv, vector<string>& arg){
       gEnv.stdOs << "." << endl;
 
       // update the design name
-      curDgn->name.name = newName;
+      curDgn->name = newName;
 
       // elaborate it;
-      if(!curDgn->elaborate(moduleQueue)) return false;
+      if(!curDgn->elaborate(moduleQueue)) {
+        gEnv.stdOs << *curDgn;
+        return false;
+      }
 
       // store it in the module map
       moduleMap[curDgn->name] = curDgn;
-    }
 
+    }
+    
+    // save all elaborated module to the current work library
+    for_each(moduleMap.begin(), moduleMap.end(), [&workLib](pair<const netlist::MIdentifier, shared_ptr<netlist::Module> >& m) {
+        workLib->swap(m.second);
+      });
+
+    //set current design to this design
+    vector<string> dn;
+    dn.push_back(tarDesign->name.name);
+    (*gEnv.macroDB[MACRO_CURRENT_DESIGN].hook)(gEnv, gEnv.macroDB[MACRO_CURRENT_DESIGN], dn);
     return true;
   }
 

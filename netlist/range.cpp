@@ -275,7 +275,7 @@ bool netlist::Range::elaborate(const ctype_t mctype) {
   bool rv = true;
   switch(rtype) {
   case TR_Var: {
-    rv = v->elaborate(); 
+    rv = v->elaborate(tExp); 
     if(v->is_valuable()) {
       c = v->get_value();
       rtype = TR_Const;
@@ -292,6 +292,7 @@ bool netlist::Range::elaborate(const ctype_t mctype) {
       } else {
         cr.first = r.first->get_value();
         cr.second = r.second->get_value();
+        rtype = TR_CRange;
       }
       r.first.reset();
       r.second.reset();

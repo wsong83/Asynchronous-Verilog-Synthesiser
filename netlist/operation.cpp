@@ -206,6 +206,7 @@ bool netlist::Operation::elaborate(const NetComp::ctype_t mctype) {
     if(m->is_valuable()) {
       data.reset(new Number(m->get_value()));
       otype = oNum;
+      valuable = true;
     }
   } else if(otype == oCon) {
     rv &= data->elaborate(NetComp::tExp);
@@ -213,6 +214,7 @@ bool netlist::Operation::elaborate(const NetComp::ctype_t mctype) {
     if(m->is_valuable()) {
       data.reset(new Number(m->get_value()));
       otype = oNum;
+      valuable = true;
     } 
   }
 

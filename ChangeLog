@@ -1,4 +1,6 @@
 ##### Wed 06/06/2012
+* Store the elaborated modules to the target work library and update the current_design if elaborate successfully.
+* Fix the bug in reducing range expressions.
 * Fix a bug in the deep_copy() of netlist::Port. As VIdentifier has range definitions inside, it needs to be deep_copied.
 * Add a avs_shell command "report_netlist" to show the internals of a module or internal item.
 * Show constant numbers in a range expression in the form of plain decimal number instead of fix-width number.

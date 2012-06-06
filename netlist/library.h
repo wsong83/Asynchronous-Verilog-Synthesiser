@@ -58,10 +58,15 @@ namespace netlist {
     }
     
     // insert a new module by its object
-    bool insert(boost::shared_ptr<Module> mm) { 
+    bool insert(const boost::shared_ptr<Module>& mm) { 
       bool rv = db.insert(mm->name, mm); 
       //if(rv) comp_list.push_front(mm);
       return rv;
+    }
+    
+    // swap or insert anyway
+    boost::shared_ptr<Module> swap(const boost::shared_ptr<Module>& mm) {
+      return db.swap(mm->name, mm);
     }
     
     // find a module in the library

@@ -430,7 +430,7 @@ bool netlist::VIdentifier::elaborate(const ctype_t mctype) {
   case tExp: {
     // for an expression, no range is used
     assert(m_range.size() == 0);
-    for_each(m_range.begin(), m_range.end(), [&rv](shared_ptr<Range>& m) {
+    for_each(m_select.begin(), m_select.end(), [&rv](shared_ptr<Range>& m) {
         rv &= m->elaborate();
         rv &= m->is_valuable();
       });    
