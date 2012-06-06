@@ -35,12 +35,16 @@ using std::endl;
 using std::string;
 using boost::shared_ptr;
 using shell::location;
+using std::vector;
 
 netlist::Port::Port(const VIdentifier& pid)
   : NetComp(tPort), name(pid), dir(0) {}
 
 netlist::Port::Port(const location& lloc, const VIdentifier& pid)
   : NetComp(tPort, lloc), name(pid), dir(0) {}
+
+netlist::Port::Port(const location& lloc)
+  : NetComp(tPort, lloc), dir(0) {}
 
 void netlist::Port::set_father(Block *pf) {
   if(father == pf) return;
@@ -57,6 +61,14 @@ bool netlist::Port::check_inparse() {
   return true;
 }
 
+Port* netlist::Port::deep_copy() const {
+  Port *rv = new Port(loc);
+  VIdentifier *mname = name.deep_copy();
+  rv->name = *mname;
+  delete mname;
+  rv->dir = dir;
+  return rv;
+}      
 
 ostream& netlist::Port::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
@@ -69,7 +81,25 @@ ostream& netlist::Port::streamout(ostream& os, unsigned int indent) const {
   else
     os << "UNKOWN_port ";
 
-  os << name << ";" << endl;
+  vector<shared_ptr<Range> > rm = name.get_range();
+  vector<shared_ptr<Range> >::const_iterator it, end;
+  for(it=rm.begin(), end=rm.end(); it != end; it++) {
+    if((*it)->is_dim()) continue;
+    os << "[" << **it;
+    if((*it)->is_single())
+      os << ":" << **it;
+    os << "] ";
+  }
+  os << name.name;
+  rm = name.get_range();
+  for(it=rm.begin(), end=rm.end(); it != end; it++) {
+    if(!(*it)->is_dim()) break;
+    os << "[" << **it;
+    if((*it)->is_single())
+      os << ":" << **it;
+    os << "]";
+  }
+  os << ";" << endl;
 
   return os;
 

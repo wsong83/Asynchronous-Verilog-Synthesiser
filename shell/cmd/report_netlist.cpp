@@ -52,7 +52,7 @@ static po::positional_options_description const dummy_position =
 
 void shell::CMD::CMDReportNetlist::help(Env& gEnv) {
   gEnv.stdOs << "report_netlist: display the internal structure of a netlist item." << endl;
-  gEnv.stdOs << "    echo netlist_item" << endl;
+  gEnv.stdOs << "    report_netlist netlist_item" << endl;
   gEnv.stdOs << "Options:" << endl;
   gEnv.stdOs << "   -help                usage information." << endl;
   gEnv.stdOs << endl;
@@ -74,15 +74,18 @@ bool shell::CMD::CMDReportNetlist::exec( Env& gEnv, vector<string>& arg) {
     return true;
   } else {
     string netItem;
-    if(vm.count("net_item")) 
+    if(vm.count("net_item")) {
       netItem = vm["net_item"].as<string>();
-    shared_ptr<netlist::NetComp> mitem = gEnv.hierarchical_search(netItem);
-    if(mitem.use_count() != 0)
-      gEnv.stdOs << *mitem << endl;
-    else {
-      gEnv.stdOs << "Fail to find any item named \"" << netItem << "\"." << endl;
-      return false;
-    }
+      shared_ptr<netlist::NetComp> mitem = gEnv.hierarchical_search(netItem);
+      if(mitem.use_count() != 0)
+        gEnv.stdOs << *mitem << endl;
+      else {
+        gEnv.stdOs << "Fail to find any item named \"" << netItem << "\"." << endl;
+        return false;
+      }
+      return true;
+    } 
+    shell::CMD::CMDReportNetlist::help(gEnv);
     return true;
   }
 }

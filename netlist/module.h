@@ -68,6 +68,7 @@ namespace netlist {
     virtual boost::shared_ptr<NetComp>   find_item      (const BIdentifier&) const; /* find an item in db_other */
     /* find a variable in the global environment, up to the module level */
     virtual boost::shared_ptr<Variable>  gfind_var      (const VIdentifier&) const; 
+    virtual boost::shared_ptr<NetComp>   search         (const std::string&) const; /* find any item using its name */
     virtual void elab_inparse();                           /* resolve the content in statements during parsing */
     virtual void set_father();                             /* set the father pointer to all sub-elements */
     /* return a pointer of the top-level module */

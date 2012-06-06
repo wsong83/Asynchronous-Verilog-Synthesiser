@@ -262,6 +262,14 @@ shared_ptr<NetComp> netlist::Module::find_item(const BIdentifier& key) const {
   return rv;
 }
 
+shared_ptr<NetComp> netlist::Module::search(const string& key) const {
+  shared_ptr<NetComp> rv;
+  rv = find_var(key);
+  if(rv.use_count() == 0) rv = find_instance(key);
+  if(rv.use_count() == 0) rv = find_item(key);
+  return rv;
+}
+
 void netlist::Module::elab_inparse() {
   list<shared_ptr<NetComp> >::iterator it, end;
   for(it=statements.begin(), end=statements.end(); it!=end; it++) {

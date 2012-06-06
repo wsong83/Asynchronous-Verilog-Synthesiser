@@ -225,10 +225,17 @@ void netlist::Range::set_father(Block *pf) {
 ostream& netlist::Range::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
   switch(rtype) {
-  case TR_Const: os << c; break;
+  case TR_Const: os << c.get_value(); break;
   case TR_Var: os << *v; break;
-  case TR_Range: os << *(r.first) << ":" << *(r.second); break;
-  case TR_CRange: os << cr.first << ":" << cr.second; break;
+  case TR_Range: {
+    if(r.first->is_valuable())  os << r.first->get_value().get_value();
+    else                        os << *(r.first); 
+    os << ":"; 
+    if(r.second->is_valuable()) os << r.second->get_value().get_value();
+    else                        os << *(r.second); 
+    break;
+  }
+  case TR_CRange: os << cr.first.get_value() << ":" << cr.second.get_value(); break;
   default: // should not go here
     assert(0 == "Wrong range type");
   }

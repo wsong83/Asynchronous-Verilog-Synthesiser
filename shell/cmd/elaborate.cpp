@@ -150,9 +150,8 @@ bool shell::CMD::CMDElaborate::exec ( Env& gEnv, vector<string>& arg){
       return false;
     }
 
-    // if the design has parameters, duplicate the design
-    if(!tarDesign->db_param.empty())
-      tarDesign.reset(tarDesign->deep_copy());
+    // duplicate the design
+    tarDesign.reset(tarDesign->deep_copy());
 
     // check and extract parameters
     string pstr;

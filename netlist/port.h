@@ -36,16 +36,13 @@ namespace netlist {
     // constructors
     Port(const VIdentifier&);
     Port(const shell::location&, const VIdentifier&);
+    Port(const shell::location&);
 
     // inherit from NetComp
     NETLIST_CHECK_INPARSE_DECL;
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
-    virtual Port* deep_copy() const {
-      Port *rv = new Port(loc, name);
-      rv->dir = dir;
-      return rv;
-    }      
+    virtual Port* deep_copy() const;
     virtual void db_register(int iod = 1) {
       if(dir <= 0) name.db_register(0);
       if(dir >= 0) name.db_register(1);

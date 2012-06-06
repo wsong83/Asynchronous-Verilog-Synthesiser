@@ -1,10 +1,12 @@
-* 03/06/2012   (**Normal    )   Change the type of const value in a range to netlist::Number rather than the mpz_class alient type.
+* 06/06/2012   (**Normal    )   May be there is no need to use IIdentifier. Just using BIdentifier for instance is fine.
+* 05/06/2012   (**Important )   Set the pcomp member var for all VIdentifier and further reduce the netlist using ranges.
 * 26/05/2012   (**Urgunt    )   Support elaborate command.
-* 18/05/2012   (**Urgent    )   The back_slash in cmd_lexer should be use for special char rather than complex name.
+* 18/05/2012   (**Normal    )   The back_slash in cmd_lexer should be use for special char rather than complex name.
 * 18/05/2012   (**Normal    )   The list in command line env can be embedded list like concatenations in Verilog, right now only one level of strings are supported.
 * 17/05/2012   (**Important )   Need to rewrite the cmd_lexer class or use flex, not all Tcl features can be supported in current structure.
 
 =============
+* 03/06/2012   (Resolved    )   Change the type of const value in a range to netlist::Number rather than the mpz_class alient type. [05/06/2012 Done]
 * 24/05/2012   (Resolved    )   Figure out why the synopsys translate on and off is not working in the verilog preprocessor and maybe fix it. [26/05/2012 Parameters of VPreProc must be set up before configuration.]
 * 24/05/2012   (Resolved    )   Support casex in the verilog parser. [25/05/2012 Done]
 * 23/05/2012   (Resolved    )   The hook function for macroDB is not good enough. Re-write it. [24/05/2012 Done, now it is called by set command and has the gEnv reference at hand.]

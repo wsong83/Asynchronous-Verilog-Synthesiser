@@ -75,6 +75,7 @@
 %token CMDExit                 "exit"
 %token CMDHelp                 "help"
 %token CMDQuit                 "quit"
+%token CMDReportNetlist        "report_netlist"
 %token CMDSet                  "set"
 %token CMDSource               "source"
 %token CMDSuppressMessage      "suppress_message"
@@ -118,6 +119,7 @@ command_description
     | "exit"              argument_list     { if(shell::CMD::CMDQuit::exec(*cmd_env, $2)) YYACCEPT;  }
     | "help"              argument_list     { shell::CMD::CMDHelp::exec(*cmd_env, $2);               }
     | "quit"              argument_list     { if(shell::CMD::CMDQuit::exec(*cmd_env, $2)) YYACCEPT;  }
+    | "report_netlist"    argument_list     { shell::CMD::CMDReportNetlist::exec(*cmd_env, $2);      }
     | "set"               argument_list     { shell::CMD::CMDSet::exec(*cmd_env, $2);                }
     | "source"            argument_list     { shell::CMD::CMDSource::exec(*cmd_env, $2);             }
     | "suppress_message"  argument_list     { shell::CMD::CMDSuppressMessage::exec(*cmd_env, $2);    }

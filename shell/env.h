@@ -83,6 +83,7 @@ namespace shell {
 #include "cmd/help.h"
 #include "cmd/quit.h"
 #include "cmd/set.h"
+#include "cmd/report_netlist.h"
 #include "cmd/source.h"
 #include "cmd/suppress_message.h"
 

@@ -47,6 +47,7 @@ int cmdDB_init( map<string, string>& db) {
   db.insert(pair<string, string>("exit",             "leave the AVS shell environment."            ));
   db.insert(pair<string, string>("help",             "read in the Verilog HDL design files."       ));
   db.insert(pair<string, string>("quit",             "leave the AVS shell environment."            ));
+  db.insert(pair<string, string>("report_netlist",   "display the internal structure of a netlist item." ));
   db.insert(pair<string, string>("set",              "set the value of a variable."                ));
   db.insert(pair<string, string>("source",           "read and execute another script file."       ));
   db.insert(pair<string, string>("suppress_message", "suppress the report of some messages."       ));

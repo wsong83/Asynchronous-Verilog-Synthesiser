@@ -1,0 +1,4 @@
+##### Wed 06/06/2012
+* Fix a bug in the deep_copy() of netlist::Port. As VIdentifier has range definitions inside, it needs to be deep_copied.
+* Add a avs_shell command "report_netlist" to show the internals of a module or internal item.
+* Show constant numbers in a range expression in the form of plain decimal number instead of fix-width number.

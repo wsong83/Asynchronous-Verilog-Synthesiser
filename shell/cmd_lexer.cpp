@@ -63,6 +63,7 @@ shell::CMD::CMDLexer::CMDLexer()
   tDB["exit"]           = cmd_parser::token::CMDExit;
   tDB["help"]           = cmd_parser::token::CMDHelp;
   tDB["quit"]           = cmd_parser::token::CMDQuit;
+  tDB["report_netlist"] = cmd_parser::token::CMDReportNetlist;
   tDB["set"]            = cmd_parser::token::CMDSet;
   tDB["source"]         = cmd_parser::token::CMDSource;
   tDB["suppress_message"] = cmd_parser::token::CMDSuppressMessage;
