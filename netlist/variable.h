@@ -61,6 +61,7 @@ namespace netlist {
     virtual Variable* deep_copy() const;
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
+    NETLIST_ELABORATE_DECL;
 
     // helpers
     void set_value(const Number&); /* reset the value of this variable */

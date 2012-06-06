@@ -168,16 +168,16 @@ Module* netlist::Module::deep_copy() const {
              rv->statements.push_back(shared_ptr<NetComp>(comp->deep_copy())); 
            });
   
-  DATABASE_DEEP_COPY_ORDER_FUN(db_var,      VIdentifier, Variable,  rv->db_var       );
+  DATABASE_DEEP_COPY_FUN(db_var,      VIdentifier, Variable,  rv->db_var       );
   rv->unnamed_block = unnamed_block;
   rv->unnamed_instance = unnamed_instance;
   rv->unnamed_var = unnamed_var;
   rv->blocked = blocked;
 
   // data in Module;
-  DATABASE_DEEP_COPY_ORDER_FUN(db_port,   VIdentifier, Port,      rv->db_port       );
-  DATABASE_DEEP_COPY_ORDER_FUN(db_param,  VIdentifier,  Variable,  rv->db_param      );
-  DATABASE_DEEP_COPY_ORDER_FUN(db_genvar, VIdentifier,  Variable,  rv->db_genvar     );
+  DATABASE_DEEP_COPY_FUN(db_port,   VIdentifier, Port,      rv->db_port       );
+  DATABASE_DEEP_COPY_FUN(db_param,  VIdentifier,  Variable,  rv->db_param      );
+  DATABASE_DEEP_COPY_FUN(db_genvar, VIdentifier,  Variable,  rv->db_genvar     );
   
   // set father
   rv->set_father();
@@ -296,9 +296,9 @@ bool netlist::Module::check_inparse() {
   bool rv = true;
 
   // macros defined in database.h
-  DATABASE_CHECK_INPARSE_ORDER_FUN(db_port, VIdentifier, Port, rv);
-  DATABASE_CHECK_INPARSE_ORDER_FUN(db_param, VIdentifier, Variable, rv);
-  DATABASE_CHECK_INPARSE_ORDER_FUN(db_genvar, VIdentifier, Variable, rv);
+  DATABASE_CHECK_INPARSE_FUN(db_port, VIdentifier, Port, rv);
+  DATABASE_CHECK_INPARSE_FUN(db_param, VIdentifier, Variable, rv);
+  DATABASE_CHECK_INPARSE_FUN(db_genvar, VIdentifier, Variable, rv);
   DATABASE_CHECK_INPARSE_FUN(db_seqblock, BIdentifier, SeqBlock, rv);
   DATABASE_CHECK_INPARSE_FUN(db_assign, BIdentifier, Assign, rv);
   DATABASE_CHECK_INPARSE_FUN(db_genblock, BIdentifier, GenBlock, rv);
@@ -309,9 +309,9 @@ bool netlist::Module::check_inparse() {
 
 void netlist::Module::set_father() {
   // macros defined in database.h
-  DATABASE_SET_FATHER_ORDER_FUN(db_port, VIdentifier, Port, this);
-  DATABASE_SET_FATHER_ORDER_FUN(db_param, VIdentifier, Variable, this);
-  DATABASE_SET_FATHER_ORDER_FUN(db_genvar, VIdentifier, Variable, this);
+  DATABASE_SET_FATHER_FUN(db_port, VIdentifier, Port, this);
+  DATABASE_SET_FATHER_FUN(db_param, VIdentifier, Variable, this);
+  DATABASE_SET_FATHER_FUN(db_genvar, VIdentifier, Variable, this);
   DATABASE_SET_FATHER_FUN(db_seqblock, BIdentifier, SeqBlock, this);
   DATABASE_SET_FATHER_FUN(db_assign, BIdentifier, Assign, this);
   DATABASE_SET_FATHER_FUN(db_genblock, BIdentifier, GenBlock, this);
@@ -354,6 +354,12 @@ bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo) {
 
   // check ports
   for_each(db_port.begin_order(), db_port.end_order(), [&rv](pair<VIdentifier, shared_ptr<Port> >& m) {
+      rv &= m.second->elaborate();
+    });
+  if(!rv) return rv;
+  
+  // check all variables
+  for_each(db_var.begin_order(), db_var.end_order(), [&rv](pair<VIdentifier, shared_ptr<Variable> >& m) {
       rv &= m.second->elaborate();
     });
   if(!rv) return rv;

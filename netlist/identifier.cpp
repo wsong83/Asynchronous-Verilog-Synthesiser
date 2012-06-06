@@ -420,7 +420,7 @@ bool netlist::VIdentifier::elaborate(const ctype_t mctype) {
   // check the basic link info.
   assert(uid != 0);
   assert(pvar.use_count() != 0); // variable registered
-  
+    
   // depending on the type of linked component, checking range and selector
   switch(mctype) {
   case tUnknown :
@@ -439,7 +439,8 @@ bool netlist::VIdentifier::elaborate(const ctype_t mctype) {
     }
     break;
   }
-  case tPort: {
+  case tPort: 
+  case tVariable: {
     // for a port, range should be resolved numbers
     assert(m_select.size() == 0);
     for_each(m_range.begin(), m_range.end(), [&rv](shared_ptr<Range>& m) {

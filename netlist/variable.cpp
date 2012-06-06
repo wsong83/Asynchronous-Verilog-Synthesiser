@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <deque>
 #include "component.h"
+#include "shell/env.h"
 
 using namespace netlist;
 using std::ostream;
@@ -47,7 +48,8 @@ void netlist::Variable::set_value(const Number& num) {
 }
 
 bool netlist::Variable::update() {
-  assert(exp.use_count() != 0);
+  if(exp.use_count() == 0) return false; // no need to update
+
   exp->reduce();
   if(!exp->is_valuable()) return false;
 
@@ -62,6 +64,7 @@ bool netlist::Variable::update() {
 void netlist::Variable::set_father(Block *pf) {
   if(father == pf) return;
   father = pf;
+  name.set_father(pf);
   if(exp.use_count() != 0) exp->set_father(pf);
 }
 
@@ -167,11 +170,70 @@ Variable* netlist::Variable::deep_copy() const {
 }
 
 void netlist::Variable::db_register(int iod) {
+  name.db_register(1);
   if(exp.use_count() != 0) exp->db_register(1);
 }
 
 void netlist::Variable::db_expunge() {
+  name.db_expunge();
   if(exp.use_count() != 0) exp->db_expunge();
+}
+
+bool netlist::Variable::elaborate(const ctype_t mctype) {
+  bool rv = true;                    // the return value
+
+  // check type
+  if(vtype == TVar) {
+    rv = false;
+    assert(0 == "unknown variable type, which should not happen in practical cases.");
+  }
+
+  // elaborate the identifier
+  rv &= name.elaborate(tVariable);
+
+  // check fan-in and fan-out
+  switch(vtype) {
+  case TWire: {
+    if(fan[0].size() != 1) {
+      rv = false;
+      if(fan[0].size() == 0) G_ENV->error(loc, "ELAB-VAR-0", name.name);
+      else                   G_ENV->error(loc, "ELAB-VAR-1", name.name, 
+                                          toString(fan[0].begin()->second->loc),
+                                          toString(fan[0].rbegin()->second->loc)
+                                          );
+    } else {
+      // TODO:
+      //  check whether it is a continueous assignment,
+      //  an input port or an output port of an instance.
+    }
+    
+    if(fan[1].size() == 0) {    // no load
+      G_ENV->error(loc, "ELAB-VAR-2", name.name);
+    }
+  }
+  case TReg: {
+    if(fan[0].size() != 1) {
+      rv = false;
+      if(fan[0].size() == 0) G_ENV->error(loc, "ELAB-VAR-0", name.name);
+      else                   G_ENV->error(loc, "ELAB-VAR-1", name.name, 
+                                          toString(fan[0].begin()->second->loc),
+                                          toString(fan[0].rbegin()->second->loc)
+                                          );
+    } else {
+      // TODO:
+      //  check whether it is a blocked or non-blocked assignment in a always block.
+    }
+    
+    if(fan[1].size() == 0) {    // no load
+      G_ENV->error(loc, "ELAB-VAR-2", name.name);
+    }
+  } 
+  case TParam:
+  case TGenvar:
+  default: ;
+  }
+  
+  return rv;
 }
 
 // used in shell/cmd/elaborate.cpp

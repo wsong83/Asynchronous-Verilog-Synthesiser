@@ -55,6 +55,16 @@ ERR_DEFINE("ELAB-RANGE-0",
            EError,   1,
            "variable \"%1%\" has one or more non-constant range expressions.");
 
+// wire/reg has no driver
+ERR_DEFINE("ELAB-VAR-0",
+           EError,   1,
+           "variable \"%1%\" has no driver.");
+
+// wire/reg has no driver
+ERR_DEFINE("ELAB-VAR-1",
+           EError,   3,
+           "variable \"%1%\" has multiple driver, where two of the drivers are located at %2% and %3%.");
+
 /// on the left side of an assign should be a non-const variable or concatenation
 ERR_DEFINE("SYN-ASSIGN-0", 
            EError,   0, 

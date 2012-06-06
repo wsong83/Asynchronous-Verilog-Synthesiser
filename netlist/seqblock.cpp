@@ -217,7 +217,7 @@ SeqBlock* netlist::SeqBlock::deep_copy() const {
              rv->statements.push_back(shared_ptr<NetComp>(comp->deep_copy())); 
            });
   
-  DATABASE_DEEP_COPY_ORDER_FUN(db_var,      VIdentifier, Variable,  rv->db_var       );
+  DATABASE_DEEP_COPY_FUN(db_var,      VIdentifier, Variable,  rv->db_var       );
   rv->unnamed_block = unnamed_block;
   rv->unnamed_instance = unnamed_instance;
   rv->unnamed_var = unnamed_var;

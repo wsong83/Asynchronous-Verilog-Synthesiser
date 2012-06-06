@@ -200,27 +200,15 @@ namespace netlist {
 // T, component type
 // F the father pointer
 #ifndef DATABASE_SET_FATHER_FUN
-#define DATABASE_SET_FATHER_FUN(DN, K, T, F)             \
-{                                                        \
-  std::map<K, boost::shared_ptr<T> >::iterator it, end;  \
-  for(it=DN.begin(), end=DN.end(); it!=end; it++)        \
-    it->second->set_father(F);                           \
+#define DATABASE_SET_FATHER_FUN(DN, K, T, F)                            \
+{                                                                       \
+  std::map<K, boost::shared_ptr<T> >::iterator it, end;                 \
+  for(it=DN.begin(), end=DN.end(); it!=end; it++)                       \
+    it->second->set_father(F);                                          \
+  std::list<std::pair<K, boost::shared_ptr<T> > >::iterator oit, oend;  \
+  for(oit=DN.begin_order(), oend=DN.end_order(); oit!=oend; oit++)      \
+    oit->second->set_father(F);                                         \
 }    
-#endif
-
-// macro to set the father pointer to all elements in an ordered database
-// to keep the function of the database as pure as possible, this is defined as a macro
-// DN, the name of the data base
-// K, key type
-// T, component type
-// F the father pointer
-#ifndef DATABASE_SET_FATHER_ORDER_FUN
-#define DATABASE_SET_FATHER_ORDER_FUN(DN, K, T, F)                    \
-{                                                                     \
-  std::list<std::pair<K, boost::shared_ptr<T> > >::iterator it, end;  \
-  for(it=DN.begin_order(), end=DN.end_order(); it!=end; it++)         \
-    it->second->set_father(F);                                        \
-}                            
 #endif
 
 // macro to check the variable connections in all elements of a database during parsing
@@ -230,41 +218,14 @@ namespace netlist {
 // T, component type
 // R, the return boolean variable
 #ifndef DATABASE_CHECK_INPARSE_FUN
-#define DATABASE_CHECK_INPARSE_FUN(DN, K, T, R)          \
-{                                                        \
-  std::map<K, boost::shared_ptr<T> >::iterator it, end;  \
-  for(it=DN.begin(), end=DN.end(); it!=end; it++)        \
-    R &= it->second->check_inparse();                    \
-}
-#endif
-
-// macro to check the variable connections in all elements of a database during parsing
-// to keep the function of the database as pure as possible, this is defined as a macro
-// DN, the name of the data base
-// K, key type
-// T, component type
-// R, the return boolean variable
-#ifndef DATABASE_CHECK_INPARSE_ORDER_FUN
-#define DATABASE_CHECK_INPARSE_ORDER_FUN(DN, K, T, R)                 \
-{                                                                     \
-  std::list<std::pair<K, boost::shared_ptr<T> > >::iterator it, end;  \
-  for(it=DN.begin_order(), end=DN.end_order(); it!=end; it++)         \
-    R &= it->second->check_inparse();                                 \
-}                            
-#endif
-
-// macro to deep copy a data base 
-// to keep the function of the database as pure as possible, this is defined as a macro
-// DN, the name of the data base
-// K, key type
-// T, component type
-// R, the target return database
-#ifndef DATABASE_DEEP_COPY_ORDER_FUN
-#define DATABASE_DEEP_COPY_ORDER_FUN(DN, K, T, R)                           \
-{                                                                           \
-  std::list<std::pair<K, boost::shared_ptr<T> > >::const_iterator it, end;  \
-  for(it=DN.begin_order(), end=DN.end_order(); it!=end; it++)               \
-    R.insert(it->first, boost::shared_ptr<T>(it->second->deep_copy()));     \
+#define DATABASE_CHECK_INPARSE_FUN(DN, K, T, R)                         \
+{                                                                       \
+  std::map<K, boost::shared_ptr<T> >::iterator it, end;                 \
+  for(it=DN.begin(), end=DN.end(); it!=end; it++)                       \
+    R &= it->second->check_inparse();                                   \
+  std::list<std::pair<K, boost::shared_ptr<T> > >::iterator oit, oend;  \
+  for(oit=DN.begin_order(), oend=DN.end_order(); oit!=oend; oit++)       \
+    R &= oit->second->check_inparse();                                  \
 }
 #endif
 
@@ -275,11 +236,15 @@ namespace netlist {
 // T, component type
 // R, the target return database
 #ifndef DATABASE_DEEP_COPY_FUN
-#define DATABASE_DEEP_COPY_FUN(DN, K, T, R)                              \
-{                                                                        \
-  std::map<K, boost::shared_ptr<T> >::const_iterator it, end;            \
-  for(it=DN.begin(), end=DN.end(); it!=end; it++)                        \
-    R.insert(it->first, boost::shared_ptr<T>(it->second->deep_copy()));  \
+#define DATABASE_DEEP_COPY_FUN(DN, K, T, R)                                  \
+{                                                                            \
+  std::map<K, boost::shared_ptr<T> >::const_iterator it, end;                \
+  for(it=DN.begin(), end=DN.end(); it!=end; it++)                            \
+    R.insert(it->first, boost::shared_ptr<T>(it->second->deep_copy()));      \
+  std::list<std::pair<K, boost::shared_ptr<T> > >::const_iterator oit, oend; \
+  for(oit=DN.begin_order(), oend=DN.end_order(); oit!=oend; oit++)           \
+    R.insert(oit->first, boost::shared_ptr<T>(oit->second->deep_copy()));    \
 }
 #endif
+
 #endif
