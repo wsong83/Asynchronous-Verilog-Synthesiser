@@ -45,6 +45,14 @@ ERR_DEFINE("ELAB-EXPRESSION-0",
            EError,   1,
            "\"%1\" cannot be reduced to a constant. In concatenation {Var{exp0, exp1, ..}}, Var must be a constant: a const exp, a parameter or a generate variable.");
 
+ERR_DEFINE("ELAB-INST-0", 
+           EError,   1, 
+           "fail to find the module named \"%1%\".");
+
+ERR_DEFINE("ELAB-INST-1", 
+           EError,   2, 
+           "fail to find port \"%1%\" in module \"%2%\".");
+
 // a parameter of a module cannot be resolved to a number when trying to elaborate it
 ERR_DEFINE("ELAB-PARA-0", 
            EError,   2, 

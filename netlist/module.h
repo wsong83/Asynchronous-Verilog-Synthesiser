@@ -66,6 +66,7 @@ namespace netlist {
     virtual boost::shared_ptr<Variable>  find_var       (const VIdentifier&) const; /* find a variable */
     virtual boost::shared_ptr<Block>     find_block     (const BIdentifier&) const; /* find a block */
     virtual boost::shared_ptr<NetComp>   find_item      (const BIdentifier&) const; /* find an item in db_other */
+    virtual boost::shared_ptr<Port>      find_port      (const VIdentifier&) const; /* find an item in db_other */
     /* find a variable in the global environment, up to the module level */
     virtual boost::shared_ptr<Variable>  gfind_var      (const VIdentifier&) const; 
     virtual boost::shared_ptr<NetComp>   search         (const std::string&) const; /* find any item using its name */

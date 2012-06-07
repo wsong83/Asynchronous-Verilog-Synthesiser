@@ -69,6 +69,7 @@ namespace netlist {
     void set_module_ptr(const boost::shared_ptr<Module>& mp) { module_ptr = mp;}
     void set_para(const std::list<boost::shared_ptr<ParaConn> >& para ) { para_list = para; }
     bool is_named() const { return named; }
+    bool update_ports();   /* update port directions in elaboration */
 
     // data
     IIdentifier name;

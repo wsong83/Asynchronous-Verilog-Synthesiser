@@ -27,6 +27,7 @@
  */
 
 #include "component.h"
+#include "shell/env.h"
 
 using namespace netlist;
 using std::ostream;
@@ -259,4 +260,25 @@ void netlist::Instance::db_register(int iod) {
 void netlist::Instance::db_expunge() {
   for_each(port_list.begin(), port_list.end(), [](shared_ptr<PortConn>& m) {m->db_expunge();});
   for_each(para_list.begin(), para_list.end(), [](shared_ptr<ParaConn>& m) {m->db_expunge();});
+}
+
+bool netlist::Instance::update_ports() {
+  shared_ptr<Module> modp = G_ENV->find_module(mname);
+  if(modp.use_count() == 0) {
+    G_ENV->error(loc, "ELAB-INST-0", mname.name);
+    return false;
+  }
+
+  list<shared_ptr<PortConn> >::iterator it, end;
+  for(it=port_list.begin(), end=port_list.end(); it!=end; it++) {
+    shared_ptr<Port> portp = modp->find_port((*it)->pname);
+    if(portp.use_count() == 0) {
+      G_ENV->error(loc, "ELAB-INST-2", (*it)->pname.name, mname.name);
+      return false;
+    } else {
+      (*it)->set_dir(portp->get_dir());
+    }
+  }
+
+  return true;
 }

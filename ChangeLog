@@ -1,3 +1,8 @@
+##### Thu 07/06/2012
+* Fix the multiple driver problem, which is caused by uninitilised port directions in instances.
+* Add update_ports() in Netlist::Instance to update the ports directions before db_register() in Netlist::Module::elaborate().
+* Add find_port() in Netlist::Module.
+
 ##### Wed 06/06/2012
 * Start to elaborate wires and registers. Have no-driver and multiple-driver bugs so far.
 * Store the elaborated modules to the target work library and update the current_design if elaborate successfully.

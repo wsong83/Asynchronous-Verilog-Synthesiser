@@ -80,7 +80,7 @@ bool shell::CMD::CMDReportNetlist::exec( Env& gEnv, vector<string>& arg) {
       if(mitem.use_count() != 0)
         gEnv.stdOs << *mitem << endl;
       else {
-        gEnv.stdOs << "Fail to find any item named \"" << netItem << "\"." << endl;
+        gEnv.stdOs << "Error: Fail to find any item named \"" << netItem << "\"." << endl;
         return false;
       }
       return true;

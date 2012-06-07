@@ -135,7 +135,7 @@ void shell::Env::run() {
   parser->parse();
 }
 
-shared_ptr<netlist::NetComp> shell::Env::hierarchical_search(const string& m) {
+shared_ptr<netlist::NetComp> shell::Env::hierarchical_search(const string& m) const {
   vector<string> nameVector;
   shared_ptr<netlist::NetComp> rv;
 
@@ -159,10 +159,8 @@ shared_ptr<netlist::NetComp> shell::Env::hierarchical_search(const string& m) {
     // it may be necessary to find it in all link libraries
   }
 
-  if(rv.use_count() == 0) {
-    stdOs << "Error: Failed to find item \"" << *it << "\"." << endl;
-    return rv;
-  }
+  // if failed, return an empty pointer
+  if(rv.use_count() == 0) return rv;
 
   while(it != end) {
     // TODO:
@@ -172,4 +170,23 @@ shared_ptr<netlist::NetComp> shell::Env::hierarchical_search(const string& m) {
 
   return rv;
 
+}
+
+shared_ptr<netlist::Module> shell::Env::find_module(const netlist::MIdentifier& key) const {
+  shared_ptr<netlist::Module> rv;
+  
+  // first try to find it in the current library
+  if(curLib.use_count() != 0) {
+    rv = curLib->find(key);
+    if(rv.use_count() != 0) return rv;
+  }
+
+  // search it in all link library
+  map<string, shared_ptr<netlist::Library> >::const_iterator it, end;
+  for(it=link_lib.begin(), end=link_lib.end(); it!=end; it++) {
+    rv = it->second->find(key);
+    if(rv.use_count() != 0) return rv;
+  }
+
+  return rv;                    // return an empty pointer as failed
 }

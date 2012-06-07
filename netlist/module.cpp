@@ -262,6 +262,10 @@ shared_ptr<NetComp> netlist::Module::find_item(const BIdentifier& key) const {
   return rv;
 }
 
+shared_ptr<Port> netlist::Module::find_port(const VIdentifier& key) const {
+  return db_port.find(key);
+}
+
 shared_ptr<NetComp> netlist::Module::search(const string& key) const {
   shared_ptr<NetComp> rv;
   rv = find_var(key);
@@ -340,6 +344,13 @@ bool netlist::Module::update_name(string& newName) {
 
 bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo) {
   bool rv = true;
+  
+  // before register all variable, update the port direction of all instance
+  // as it will affect the direction of wires
+  for_each(db_instance.begin(), db_instance.end(), [&rv](pair<const IIdentifier, shared_ptr<Instance> >& m) {
+      rv &= m.second->update_ports();
+    });
+  if(!rv) return rv;
 
   // link all variables
   db_register();

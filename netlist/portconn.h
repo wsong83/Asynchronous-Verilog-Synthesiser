@@ -133,11 +133,16 @@ namespace netlist {
     virtual void db_register(int iod = 1) {
       switch(type) {
       case CEXP: 
-        if(dir >= 0)  
+        if(dir >= 0)  {
           assert(0 == "expression in a port connection when it is an output port, not support yet!");
-        exp->db_register(dir >= 0 ? 0 : 1); 
+          exp->db_register(0);
+        }
+        if(dir <= 0) exp->db_register(1);
         break;
-      case CVAR: var.db_register(dir >= 0 ? 0 : 1); break;
+      case CVAR: 
+        if(dir >= 0) var.db_register(0);
+        if(dir <= 0) var.db_register(1);
+        break;
       default: ;
       }
     }

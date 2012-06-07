@@ -57,7 +57,8 @@ namespace shell {
 
     // helpers
     /* search a netlist item using hierarchical name */
-    boost::shared_ptr<netlist::NetComp> hierarchical_search(const std::string&); 
+    boost::shared_ptr<netlist::NetComp> hierarchical_search(const std::string&) const;
+    boost::shared_ptr<netlist::Module> find_module(const netlist::MIdentifier&) const;
 
     // data member
     std::map<std::string, boost::shared_ptr<netlist::Library> >  link_lib;     /* libraries used in design elaboration */
