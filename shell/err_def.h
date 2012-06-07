@@ -68,10 +68,20 @@ ERR_DEFINE("ELAB-VAR-0",
            EError,   1,
            "variable \"%1%\" has no driver.");
 
-// wire/reg has no driver
+// wire/reg has multiple driver
 ERR_DEFINE("ELAB-VAR-1",
            EError,   3,
            "variable \"%1%\" has multiple driver, where two of the drivers are located at %2% and %3%.");
+
+// wire/reg has multiple driver
+ERR_DEFINE("ELAB-VAR-2",
+           EWarning,   1,
+           "variable \"%1%\" has no load.");
+
+// wire/reg has no driver
+ERR_DEFINE("ELAB-VAR-3",
+           EWarning,   1,
+           "variable \"%1%\" is defined but not used.");
 
 /// on the left side of an assign should be a non-const variable or concatenation
 ERR_DEFINE("SYN-ASSIGN-0", 

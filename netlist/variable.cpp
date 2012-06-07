@@ -195,39 +195,61 @@ bool netlist::Variable::elaborate(const ctype_t mctype) {
   switch(vtype) {
   case TWire: {
     if(fan[0].size() != 1) {
-      rv = false;
-      if(fan[0].size() == 0) G_ENV->error(loc, "ELAB-VAR-0", name.name);
-      else                   G_ENV->error(loc, "ELAB-VAR-1", name.name, 
-                                          toString(fan[0].begin()->second->loc),
-                                          toString(fan[0].rbegin()->second->loc)
-                                          );
+      if(fan[0].size() == 0) {
+        if(fan[1].size() == 1) {
+          G_ENV->error(loc, "ELAB-VAR-3", name.name);
+        } else {
+          G_ENV->error(loc, "ELAB-VAR-0", name.name);
+          rv = false;
+        }
+      }
+      else {
+        G_ENV->error(loc, "ELAB-VAR-1", name.name, 
+                     toString(fan[0].begin()->second->loc),
+                     toString(fan[0].rbegin()->second->loc)
+                     );
+        rv = false;
+      }
     } else {
       // TODO:
       //  check whether it is a continueous assignment,
       //  an input port or an output port of an instance.
     }
     
-    if(fan[1].size() == 0) {    // no load
+    if(fan[0].size() != 0 && fan[1].size() == 1) {    // no load
       G_ENV->error(loc, "ELAB-VAR-2", name.name);
+      rv = false;
     }
+    break;
   }
   case TReg: {
     if(fan[0].size() != 1) {
-      rv = false;
-      if(fan[0].size() == 0) G_ENV->error(loc, "ELAB-VAR-0", name.name);
-      else                   G_ENV->error(loc, "ELAB-VAR-1", name.name, 
-                                          toString(fan[0].begin()->second->loc),
-                                          toString(fan[0].rbegin()->second->loc)
-                                          );
+      if(fan[0].size() == 0) {
+        if(fan[1].size() == 1) {
+          G_ENV->error(loc, "ELAB-VAR-3", name.name);
+        } else {
+          G_ENV->error(loc, "ELAB-VAR-0", name.name);
+          rv = false;
+        }
+      }
+      else {
+        G_ENV->error(loc, "ELAB-VAR-1", name.name, 
+                     toString(fan[0].begin()->second->loc),
+                     toString(fan[0].rbegin()->second->loc)
+                     );
+        rv = false;
+      }
     } else {
       // TODO:
       //  check whether it is a blocked or non-blocked assignment in a always block.
     }
     
-    if(fan[1].size() == 0) {    // no load
+    if(fan[0].size() != 0 && fan[1].size() == 1) {    // no load
       G_ENV->error(loc, "ELAB-VAR-2", name.name);
+      rv = false;
     }
-  } 
+    break;
+  }
   case TParam:
   case TGenvar:
   default: ;
