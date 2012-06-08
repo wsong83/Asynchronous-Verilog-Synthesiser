@@ -61,6 +61,10 @@ namespace netlist {
     virtual Instance* deep_copy() const;
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
+    NETLIST_ELABORATE_DECL;
+    // used to add new module to the elaboration process
+    bool elaborate(std::deque<boost::shared_ptr<Module> >&, 
+                   std::map<MIdentifier, boost::shared_ptr<Module> > &);
 
     // helpers
     void set_mname(const MIdentifier& mod_name) { mname = mod_name; }

@@ -43,7 +43,22 @@ using std::deque;
 
 
 void netlist::Variable::set_value(const Number& num) {
+  if(exp.use_count()!=0) exp->db_expunge();
   exp.reset(new Expression(num));
+  update();
+}
+
+void netlist::Variable::set_value(const VIdentifier& var) {
+  if(exp.use_count()!=0) exp->db_expunge();
+  VIdentifier * varp = var.deep_copy();
+  exp.reset(new Expression(*varp));
+  delete varp;
+  update();
+}
+
+void netlist::Variable::set_value(const shared_ptr<Expression>& mexp) {
+  if(exp.use_count()!=0) exp->db_expunge();
+  exp.reset(mexp.deep_copy());
   update();
 }
 

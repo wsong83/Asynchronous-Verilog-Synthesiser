@@ -74,8 +74,12 @@ namespace netlist {
     virtual void set_father();                             /* set the father pointer to all sub-elements */
     /* return a pointer of the top-level module */
     virtual Block* get_module() { return this; }
-    bool update_name(std::string&);                        /* check and update module name according to the parameters */
-    bool elaborate(std::deque<boost::shared_ptr<Module> >&); /* elaborate the design */
+    /* calculate the module name according to the parameters */
+    bool calculate_name( std::string&, 
+                         const std::list<boost::shared_ptr<ParaConn> >& 
+                         mplist = std::list<boost::shared_ptr<ParaConn> >()) const;
+    bool elaborate(std::deque<boost::shared_ptr<Module> >&, 
+                   std::map<MIdentifier, boost::shared_ptr<Module> > &); /* elaborate the design */
 
     // data
     MIdentifier name;

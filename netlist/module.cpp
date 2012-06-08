@@ -322,27 +322,51 @@ void netlist::Module::set_father() {
   Block::set_father();
 }
 
-bool netlist::Module::update_name(string& newName) {
-  // resolve all parameters
-  list<pair<VIdentifier, shared_ptr<Variable> > >::iterator it, end;
-  for(it=db_param.begin_order(), end=db_param.end_order(); it!=end; it++) {
-    if(!it->second->update()) {
-      G_ENV->error(it->second->loc, "ELAB-PARA-0", it->second->name.name, name.name);
-      return false;
-    }
-  }
+bool netlist::Module::calculate_name( string& newName,
+                                      const list<shared_ptr<ParaConn> >& mplist) {
+  bool rv = true;
   
-  // get the new name
-  newName = name.name;
-  for_each(db_param.begin_order(), db_param.end_order(), 
-           [&newName](pair<VIdentifier, shared_ptr<Variable> >& m) {
-             newName += string("_") + m.second->name.name + m.second->get_value().get_value().get_str();
-           });
+  // generate a new module for name calculation
+  shared_ptr<Module> tmpMoudle(new Module());
+  DATABASE_DEEP_COPY_FUN(db_param,  VIdentifier,  Variable,  tmpModule->db_param      );
 
-  return true;
+  // set the new value
+  for_each(mplist.begin(), mplist.end(), [&rv, &tmpModule](shared_ptr<ParaConn>& m) {
+      shared_ptr<Variable> paramp = tmpModule.db_param.find(m->pname);
+      if(paramp.use_count() == 0) {
+        G_ENV->error(m->loc, "ELAB-PARA-1", m->pname.name, tmpModule->name.name);
+        rv = false;
+        return;
+      }
+      switch(m->type) {
+      case ParaConn::CEXP:
+        paramp->set_value(m->exp); break;
+      case ParaConn::CVAR:
+        paramp->set_value(m->var); break;
+      case ParaConn::CNUM:
+        paramp->set_value(m->num); break;
+      default:;
+      }
+    });
+  if(!rv) return rv;
+
+  tmpModule->db_register();
+
+  // resolve all parameters and get the new name
+  newName = tmpModule->name.name;
+  for_each(tmpModule->db_param.begin_order(), tmpModule->db_param.end_order(), 
+           [&rv, &tmpModule, &newName](pair<VIdentifier, shared_ptr<Variable> >& m) {
+               rv &= m.second->update();
+               if(!rv) 
+                 G_ENV->error(m.second->loc, "ELAB-PARA-0", m.second->name.name, tmpModule->name.name);
+               else
+                 newName += string("_") + m.second->name.name + m.second->get_value().get_value().get_str();
+             });
+  return rv;
 }
 
-bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo) {
+bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo, 
+                                std::map<MIdentifier, boost::shared_ptr<Module> > & mmap) {
   bool rv = true;
   
   // before register all variable, update the port direction of all instance
@@ -379,7 +403,19 @@ bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo) {
   for_each(db_genvar.begin_order(), db_genvar.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
         m.second->update();
       });
-
+  
+  // elaborate the internals
+  for_each(statements.begin(), statements.end(), [&rv](shared_ptr<NetComp>& m) {
+      rv &= m->elaborate();
+    });
+  if(!rv) return rv;
+  
+  // add called modules (instances) to the module queue in cmd/elaborate
+  //for_each(db_instance.begin(), db_instance.end(), 
+  //         [&mfifo, &mmap, &rv](pair<IIdentifier, shared_ptr<Instance> >& m) {
+  //           rv &= m.second->elaborate(mfifo, mmap);
+  //         });
+  
   return rv;
 }
 

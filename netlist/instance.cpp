@@ -282,3 +282,11 @@ bool netlist::Instance::update_ports() {
 
   return true;
 }
+
+bool netlist::Instance::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo, 
+                                  std::map<MIdentifier, boost::shared_ptr<Module> > & mmap) {
+  bool rv = true;
+
+  return rv;
+
+}

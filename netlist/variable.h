@@ -65,6 +65,8 @@ namespace netlist {
 
     // helpers
     void set_value(const Number&); /* reset the value of this variable */
+    void set_value(const VIdentifier&);
+    void set_value(const boost::shared_ptr<Expression>&);
     void set_wire() { vtype = TWire; }
     void set_reg() { vtype = TReg; }
     void set_para() { vtype = TParam; }

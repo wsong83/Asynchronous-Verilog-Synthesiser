@@ -1,3 +1,4 @@
+* 08/06/2012   (**Normal    )   May be there is no need to differentiate the types in ParaConn as they all go back to Netlist::Expression.
 * 06/06/2012   (**Normal    )   May be there is no need to use IIdentifier. Just using BIdentifier for instance is fine.
 * 05/06/2012   (**Important )   Set the pcomp member var for all VIdentifier and further reduce the netlist using ranges.
 * 26/05/2012   (**Urgunt    )   Support elaborate command.
@@ -7,7 +8,8 @@
 
 =============
 * 03/06/2012   (Resolved    )   Change the type of const value in a range to netlist::Number rather than the mpz_class alient type. [05/06/2012 Done]
-* 24/05/2012   (Resolved    )   Figure out why the synopsys translate on and off is not working in the verilog preprocessor and maybe fix it. [26/05/2012 Parameters of VPreProc must be set up before configuration.]
+* 24/05/2012   (Resolved    )   Figure out why the synopsys translate on and off is not working in the verilog preprocessor and maybe fix it. 
+                                [26/05/2012 Parameters of VPreProc must be set up before configuration.]
 * 24/05/2012   (Resolved    )   Support casex in the verilog parser. [25/05/2012 Done]
 * 23/05/2012   (Resolved    )   The hook function for macroDB is not good enough. Re-write it. [24/05/2012 Done, now it is called by set command and has the gEnv reference at hand.]
 * 17/05/2012   (NoFixNeeded )   Support up and down button for history commands. (using getchar in a smart lexer I think) [21/05/2012 use rlwrap avs_shell instead of avs_shell itself.]

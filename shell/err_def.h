@@ -58,6 +58,10 @@ ERR_DEFINE("ELAB-PARA-0",
            EError,   2, 
            "fail to calculate the value of parameter \"%1%\" in module \"%2%\".");
 
+ERR_DEFINE("ELAB-PARA-1", 
+           EError,   2, 
+           "fail to find parameter \"%1%\" in module \"%2%\".");
+
 // non-constant port range
 ERR_DEFINE("ELAB-RANGE-0",
            EError,   1,
