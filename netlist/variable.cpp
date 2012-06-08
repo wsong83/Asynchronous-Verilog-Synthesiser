@@ -58,7 +58,7 @@ void netlist::Variable::set_value(const VIdentifier& var) {
 
 void netlist::Variable::set_value(const shared_ptr<Expression>& mexp) {
   if(exp.use_count()!=0) exp->db_expunge();
-  exp.reset(mexp.deep_copy());
+  exp.reset(mexp->deep_copy());
   update();
 }
 
@@ -69,6 +69,7 @@ bool netlist::Variable::update() {
   if(!exp->is_valuable()) return false;
 
   Number m = exp->get_value();
+  exp.reset(new Expression(m));
   map<unsigned int, VIdentifier *>::iterator it, end;
   for(it=fan[1].begin(), end=fan[1].end(); it != end; it++) {
     it->second->set_value(m);
@@ -176,7 +177,9 @@ unsigned int netlist::Variable::get_id() {
 }
     
 Variable* netlist::Variable::deep_copy() const {
-  Variable *rv = new Variable(loc, name, vtype);
+  VIdentifier * newid = name.deep_copy();
+  Variable *rv = new Variable(loc, *newid, vtype);
+  delete newid;
   if(exp.use_count() != 0) rv->exp.reset(exp->deep_copy());
 
   // every time a variable is deep copied, all fan-in and -out connections are lost and need to regenerated

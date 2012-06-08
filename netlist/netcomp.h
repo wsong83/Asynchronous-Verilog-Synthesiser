@@ -134,7 +134,7 @@ namespace netlist{
     }
 
     // elaborate and check
-    virtual bool elaborate(const ctype_t mctype) {
+    virtual bool elaborate(const ctype_t mctype = netlist::NetComp::tUnknown) {
       std::cerr << "ERROR!!, the elaborate() of NetComp is used!!!" << std::endl;
       assert(0 == "elaborate() of NetComp is used");
     }

@@ -323,16 +323,16 @@ void netlist::Module::set_father() {
 }
 
 bool netlist::Module::calculate_name( string& newName,
-                                      const list<shared_ptr<ParaConn> >& mplist) {
+                                      const list<shared_ptr<ParaConn> >& mplist) const {
   bool rv = true;
   
   // generate a new module for name calculation
-  shared_ptr<Module> tmpMoudle(new Module());
+  shared_ptr<Module> tmpModule(new Module(name));
   DATABASE_DEEP_COPY_FUN(db_param,  VIdentifier,  Variable,  tmpModule->db_param      );
 
   // set the new value
-  for_each(mplist.begin(), mplist.end(), [&rv, &tmpModule](shared_ptr<ParaConn>& m) {
-      shared_ptr<Variable> paramp = tmpModule.db_param.find(m->pname);
+  for_each(mplist.begin(), mplist.end(), [&rv, &tmpModule](const shared_ptr<ParaConn>& m) {
+      shared_ptr<Variable> paramp = tmpModule->db_param.find(m->pname);
       if(paramp.use_count() == 0) {
         G_ENV->error(m->loc, "ELAB-PARA-1", m->pname.name, tmpModule->name.name);
         rv = false;
@@ -350,6 +350,7 @@ bool netlist::Module::calculate_name( string& newName,
     });
   if(!rv) return rv;
 
+  tmpModule->set_father();
   tmpModule->db_register();
 
   // resolve all parameters and get the new name

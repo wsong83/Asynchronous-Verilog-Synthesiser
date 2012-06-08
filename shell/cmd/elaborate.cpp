@@ -179,7 +179,8 @@ bool shell::CMD::CMDElaborate::exec ( Env& gEnv, vector<string>& arg){
       
       // get the updated module name
       string newName;
-      if(!curDgn->update_name(newName))  return false;
+      if(!curDgn->calculate_name(newName))  return false;
+      std::cout << newName << std::endl;
 
       // search it in the design map make sure no duplicate module is elaborated
       if(moduleMap.count(netlist::MIdentifier(newName))) continue;
@@ -204,7 +205,7 @@ bool shell::CMD::CMDElaborate::exec ( Env& gEnv, vector<string>& arg){
       curDgn->name = newName;
 
       // elaborate it;
-      if(!curDgn->elaborate(moduleQueue)) {
+      if(!curDgn->elaborate(moduleQueue, moduleMap)) {
         gEnv.stdOs << *curDgn;
         return false;
       }

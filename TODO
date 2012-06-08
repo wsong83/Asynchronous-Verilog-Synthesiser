@@ -1,3 +1,4 @@
+* 08/06/2012   (**Important )   Check all variables are properly expunged when not in use.
 * 08/06/2012   (**Normal    )   May be there is no need to differentiate the types in ParaConn as they all go back to Netlist::Expression.
 * 06/06/2012   (**Normal    )   May be there is no need to use IIdentifier. Just using BIdentifier for instance is fine.
 * 05/06/2012   (**Important )   Set the pcomp member var for all VIdentifier and further reduce the netlist using ranges.

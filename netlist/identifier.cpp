@@ -275,6 +275,14 @@ netlist::VIdentifier::VIdentifier(const string& nm, const vector<shared_ptr<Rang
 netlist::VIdentifier::VIdentifier(const location& lloc, const string& nm, const vector<shared_ptr<Range> >& rg)
   : Identifier(tVarName, lloc, nm), m_range(rg), numbered(false), pcomp(NULL), uid(0) {  }
 
+netlist::VIdentifier::~VIdentifier() {
+  if(uid != 0) {
+    pvar->fan[0].erase(uid);
+    pvar->fan[1].erase(uid);
+  }
+  uid = 0;
+}
+
 VIdentifier& netlist::VIdentifier::operator++ () {
   const boost::regex numbered_name("_(\\d+)\\z");
   boost::smatch mr;

@@ -170,6 +170,7 @@ namespace netlist {
     VIdentifier(const shell::location&, const averilog::avID&);
     VIdentifier(const std::string&, const std::vector<boost::shared_ptr<Range> >&);
     VIdentifier(const shell::location&, const std::string&, const std::vector<boost::shared_ptr<Range> >&);
+    virtual ~VIdentifier();
 
     //helpers
     VIdentifier& operator++ ();
