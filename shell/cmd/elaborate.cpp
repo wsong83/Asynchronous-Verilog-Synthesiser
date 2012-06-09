@@ -171,6 +171,13 @@ bool shell::CMD::CMDElaborate::exec ( Env& gEnv, vector<string>& arg){
     // push the top level design into the module fifo
     moduleQueue.push_back(tarDesign);
 
+    // get the updated module name
+    string newName;
+    if(!tarDesign->calculate_name(newName))  return false;
+
+    // store it in the module map
+    moduleMap[newName] = tarDesign;
+
     // do the elaboration
     while(!moduleQueue.empty()) {
       // get a new design
@@ -178,12 +185,7 @@ bool shell::CMD::CMDElaborate::exec ( Env& gEnv, vector<string>& arg){
       moduleQueue.pop_front();
       
       // get the updated module name
-      string newName;
-      if(!curDgn->calculate_name(newName))  return false;
-      std::cout << newName << std::endl;
-
-      // search it in the design map make sure no duplicate module is elaborated
-      if(moduleMap.count(netlist::MIdentifier(newName))) continue;
+      curDgn->calculate_name(newName);
 
       // report the behaviour to user
       gEnv.stdOs << "elaborating module \"" << curDgn->name.name << "\"";
@@ -209,9 +211,6 @@ bool shell::CMD::CMDElaborate::exec ( Env& gEnv, vector<string>& arg){
         gEnv.stdOs << *curDgn;
         return false;
       }
-
-      // store it in the module map
-      moduleMap[curDgn->name] = curDgn;
 
     }
     

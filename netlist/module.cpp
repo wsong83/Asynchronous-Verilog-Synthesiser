@@ -412,10 +412,10 @@ bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
   if(!rv) return rv;
   
   // add called modules (instances) to the module queue in cmd/elaborate
-  //for_each(db_instance.begin(), db_instance.end(), 
-  //         [&mfifo, &mmap, &rv](pair<IIdentifier, shared_ptr<Instance> >& m) {
-  //           rv &= m.second->elaborate(mfifo, mmap);
-  //         });
+  for_each(db_instance.begin(), db_instance.end(), 
+           [&mfifo, &mmap, &rv](pair<const IIdentifier, shared_ptr<Instance> >& m) {
+             rv &= m.second->elaborate(mfifo, mmap);
+           });
   
   return rv;
 }

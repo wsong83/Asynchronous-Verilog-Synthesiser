@@ -26,7 +26,7 @@ Package required:
   Bison                 ( bison      )
   Flex                  ( flex       )
   GNU Boost Library     ( shared_ptr, regex, filesystem, program_options,
-                          lexical_cast, format )
+                          lexical_cast, format, string )
   GNU MP Bignum Library ( gmp, gmpxx )
   rlwrap                ( rlwrap     )
 

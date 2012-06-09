@@ -1,3 +1,6 @@
+##### Sat 09/06/2012
+* Able to add new modules to the elaboration list automatically.
+
 ##### Fri 08/06/2012
 * Rewrite update_name() in Module to calculate_name(). Now it is a const function without any side effect in the module.
 

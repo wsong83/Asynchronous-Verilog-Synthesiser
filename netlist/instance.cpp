@@ -294,6 +294,30 @@ bool netlist::Instance::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
                                   std::map<MIdentifier, boost::shared_ptr<Module> > & mmap) {
   bool rv = true;
 
+  // find the module in library
+  shared_ptr<Module> tarModule = G_ENV->find_module(mname);
+  if(tarModule.use_count() == 0) {
+    G_ENV->error(loc,"ELAB-INST-0", mname.name);
+    return false;
+  }
+
+  // calculate the new name
+  string newName;
+  rv &= tarModule->calculate_name(newName, para_list);
+  if(!rv) {
+    G_ENV->error(loc, "ELAB-INST-2", mname.name);
+    return false;
+  }
+
+  // check the new name in module map
+  if(mmap.count(newName))
+    return true;                // the module is already elaborated or scheduled to be elaborated
+
+  // if not elaborated yet, add it to the map and the module queue
+  shared_ptr<Module> newModule(tarModule->deep_copy());
+  mfifo.push_back(newModule);
+  mmap[newName] = newModule;
+
   return rv;
 
 }

@@ -53,6 +53,10 @@ ERR_DEFINE("ELAB-INST-1",
            EError,   2, 
            "fail to find port \"%1%\" in module \"%2%\".");
 
+ERR_DEFINE("ELAB-INST-2", 
+           EError,   1, 
+           "fail to resolved the parameter assignment of module \"%1%\".");
+
 // a parameter of a module cannot be resolved to a number when trying to elaborate it
 ERR_DEFINE("ELAB-PARA-0", 
            EError,   2, 
