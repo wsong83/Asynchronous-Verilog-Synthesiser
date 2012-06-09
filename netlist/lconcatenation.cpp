@@ -134,3 +134,7 @@ void netlist::LConcatenation::db_register(int iod) {
 void netlist::LConcatenation::db_expunge() {
   for_each(data.begin(), data.end(), [](VIdentifier& m) {m.db_expunge();});
 }
+
+void netlist::LConcatenation::set_always_pointer(SeqBlock *p) {
+  for_each(data.begin(), data.end(), [&p](VIdentifier& m) {m.set_always_pointer(p); });
+}

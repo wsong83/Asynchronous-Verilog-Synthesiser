@@ -234,6 +234,7 @@ SeqBlock* netlist::SeqBlock::deep_copy() const {
 
   rv->set_father();
   rv->elab_inparse();
+  rv->set_always_pointer(rv);     // set the always pointer for multi-driver test
   return rv;
 }
 
@@ -259,4 +260,10 @@ void netlist::SeqBlock::db_expunge() {
       m.second->db_expunge();
     });
   for_each(slist_level.begin(), slist_level.end(), [](shared_ptr<Expression>& m) {m->db_expunge();});
+}
+
+void netlist::SeqBlock::set_always_pointer(SeqBlock *p) {
+  for_each(db_other.begin(), db_other.end(), [&p](pair<const BIdentifier, shared_ptr<NetComp> >& m) {
+      m.second->set_always_pointer(p);
+    });
 }

@@ -46,6 +46,7 @@ namespace netlist {
     virtual WhileState* deep_copy() const;
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
+    NETLIST_SET_ALWAYS_POINTER_DECL;
 
     // helpers
     void set_name(const BIdentifier& nm) { name = nm; named = true;}

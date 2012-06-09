@@ -222,11 +222,7 @@ bool netlist::Variable::elaborate(const ctype_t mctype) {
         }
       }
       else {
-        G_ENV->error(loc, "ELAB-VAR-1", name.name, 
-                     toString(fan[0].begin()->second->loc),
-                     toString(fan[0].rbegin()->second->loc)
-                     );
-        rv = false;
+        rv = multi_driver_checker();
       }
     } else {
       // TODO:
@@ -251,11 +247,7 @@ bool netlist::Variable::elaborate(const ctype_t mctype) {
         }
       }
       else {
-        G_ENV->error(loc, "ELAB-VAR-1", name.name, 
-                     toString(fan[0].begin()->second->loc),
-                     toString(fan[0].rbegin()->second->loc)
-                     );
-        rv = false;
+        rv = multi_driver_checker();
       }
     } else {
       // TODO:
@@ -281,5 +273,25 @@ string netlist::Variable::get_short_string() const {
   string rv = name.name;
   rv += "=";
   rv += toString(*exp);
+  return rv;
+}
+
+bool netlist::Variable::multi_driver_checker() {
+  bool rv = true;
+  map<unsigned long, pair<SeqBlock*, vector<shared_ptr<Range> > > > driverMap;
+  for_each(fan[0].begin(), fan[0].end(), [&driverMap](pair<const unsigned int, VIdentifier*>& m) {
+      assert(m.second->get_alwaysp() != NULL);
+      driverMap[(unsigned long)(m.second->get_alwaysp())] = 
+        pair<SeqBlock*, vector<shared_ptr<Range> > >(m.second->get_alwaysp(), vector<shared_ptr<Range> >());
+    });
+  
+  if(driverMap.size() > 1) {
+    G_ENV->error(loc, "ELAB-VAR-1", name.name, 
+                 toString(driverMap.begin()->second.first->loc),
+                 toString(driverMap.rbegin()->second.first->loc)
+                 );
+    rv = false;
+  }
+
   return rv;
 }

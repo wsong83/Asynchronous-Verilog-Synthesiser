@@ -140,3 +140,9 @@ void netlist::IfState::db_expunge() {
   if(ifcase.use_count() != 0) ifcase->db_expunge();
   if(elsecase.use_count() != 0) elsecase->db_expunge();
 }
+
+void netlist::IfState::set_always_pointer(SeqBlock *p) {
+  if(ifcase.use_count() != 0) ifcase->set_always_pointer(p);
+  if(elsecase.use_count() != 0) elsecase->set_always_pointer(p);
+}
+

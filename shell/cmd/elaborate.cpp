@@ -152,7 +152,7 @@ bool shell::CMD::CMDElaborate::exec ( Env& gEnv, vector<string>& arg){
 
     // duplicate the design
     tarDesign.reset(tarDesign->deep_copy());
-
+    
     // check and extract parameters
     string pstr;
     if(vm.count("parameters")) {

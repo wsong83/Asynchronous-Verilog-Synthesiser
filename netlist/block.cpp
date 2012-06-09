@@ -285,6 +285,12 @@ void netlist::Block::db_expunge() {
   for_each(statements.begin(), statements.end(), [](shared_ptr<NetComp>& m) {m->db_expunge();});
 }
 
+void netlist::Block::set_always_pointer(SeqBlock *p) {
+  for_each(db_other.begin(), db_other.end(), [&p](pair<const BIdentifier, shared_ptr<NetComp> >& m) {
+      m.second->set_always_pointer(p);
+    });
+}
+
 bool netlist::Block::elab_inparse_item(
                                        const shared_ptr<NetComp>& it,
                                        list<shared_ptr<NetComp> >::iterator& itor

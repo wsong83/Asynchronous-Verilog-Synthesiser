@@ -67,6 +67,11 @@
   virtual void set_father(netlist::Block* pf);    
 #endif
 
+#ifndef NETLIST_SET_ALWAYS_POINTER_DECL
+#define NETLIST_SET_ALWAYS_POINTER_DECL           \
+  virtual void set_always_pointer(netlist::SeqBlock* p);    
+#endif
+
 #ifndef NETLIST_ELABORATE_DECL
 #define NETLIST_ELABORATE_DECL                             \
   virtual bool elaborate(const netlist::NetComp::ctype_t mctype = netlist::NetComp::tUnknown);
@@ -114,6 +119,11 @@ namespace netlist{
     virtual void set_father(Block* pf) {
       // here a naked pointer is used because tranfer this to shared_ptr is too complicated to be employed
       father = pf;
+    }
+
+    // store the always block id in VIedntifier to detect multiple driver
+    virtual void set_always_pointer(SeqBlock* p) {
+      // only act to VIdentifier but it is defined to perform a recursive tree travel
     }
 
     // get the hierarchy name

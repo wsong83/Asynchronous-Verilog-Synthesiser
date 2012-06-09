@@ -1,4 +1,9 @@
 ##### Sat 09/06/2012
+* Add a function named multi_driver_checker() in variable to handle the multi-driver check. However, this is far from perfect. 
+  Different range select in different always blocks will cause false alarm. This must be fixed. Which means the check should be 
+  run after generation block are unfolded.
+* Add set_always_pointer() member function to all NetComp classes. It is used to set the pointer to its father netlist::SeqBlock.
+  Which will be used for multi-driver check.
 * Able to add new modules to the elaboration list automatically.
 
 ##### Fri 08/06/2012

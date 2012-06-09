@@ -89,3 +89,7 @@ void netlist::WhileState::db_expunge() {
   if(exp.use_count() != 0) exp->db_expunge();
   if(body.use_count() != 0) body->db_expunge();
 }
+
+void netlist::WhileState::set_always_pointer(SeqBlock *p) {
+  if(body.use_count() != 0) body->set_always_pointer(p);
+}

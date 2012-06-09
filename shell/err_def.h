@@ -79,7 +79,7 @@ ERR_DEFINE("ELAB-VAR-0",
 // wire/reg has multiple driver
 ERR_DEFINE("ELAB-VAR-1",
            EError,   3,
-           "variable \"%1%\" has multiple driver, where two of the drivers are located at %2% and %3%.");
+           "variable \"%1%\" has multiple drivers, where two of the drivers are located at %2% and %3%.");
 
 // wire/reg has multiple driver
 ERR_DEFINE("ELAB-VAR-2",

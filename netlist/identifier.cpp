@@ -252,28 +252,28 @@ ostream& netlist::PoIdentifier::streamout(ostream& os, unsigned int indent) cons
 
 //////////////////////////////// variable identifier /////////////////
 netlist::VIdentifier::VIdentifier()
-  : Identifier(tVarName, "n_0"), numbered(true), pcomp(NULL), uid(0) {  }
+  : Identifier(tVarName, "n_0"), numbered(true), pcomp(NULL), uid(0), alwaysp(NULL) {  }
 
 netlist::VIdentifier::VIdentifier(const location& lloc)
-  : Identifier(tVarName, lloc, "n_0"), numbered(true), pcomp(NULL), uid(0) {  }
+  : Identifier(tVarName, lloc, "n_0"), numbered(true), pcomp(NULL), uid(0), alwaysp(NULL) {  }
 
 netlist::VIdentifier::VIdentifier(const string& nm)
-  : Identifier(tVarName, nm), numbered(false), pcomp(NULL), uid(0) {  }
+  : Identifier(tVarName, nm), numbered(false), pcomp(NULL), uid(0), alwaysp(NULL) {  }
 
 netlist::VIdentifier::VIdentifier(const location& lloc, const string& nm)
-  : Identifier(tVarName, lloc, nm), numbered(false), pcomp(NULL), uid(0) {  }
+  : Identifier(tVarName, lloc, nm), numbered(false), pcomp(NULL), uid(0), alwaysp(NULL) {  }
 
 netlist::VIdentifier::VIdentifier(const averilog::avID& id)
-  : Identifier(tVarName, id.name), numbered(false), pcomp(NULL), uid(0) { }
+  : Identifier(tVarName, id.name), numbered(false), pcomp(NULL), uid(0), alwaysp(NULL) { }
 
 netlist::VIdentifier::VIdentifier(const location& lloc, const averilog::avID& id)
-  : Identifier(tVarName, lloc, id.name), numbered(false), pcomp(NULL), uid(0) { }
+  : Identifier(tVarName, lloc, id.name), numbered(false), pcomp(NULL), uid(0), alwaysp(NULL) { }
 
 netlist::VIdentifier::VIdentifier(const string& nm, const vector<shared_ptr<Range> >& rg)
-  : Identifier(tVarName, nm), m_range(rg), numbered(false), pcomp(NULL), uid(0) {  }
+  : Identifier(tVarName, nm), m_range(rg), numbered(false), pcomp(NULL), uid(0), alwaysp(NULL) {  }
 
 netlist::VIdentifier::VIdentifier(const location& lloc, const string& nm, const vector<shared_ptr<Range> >& rg)
-  : Identifier(tVarName, lloc, nm), m_range(rg), numbered(false), pcomp(NULL), uid(0) {  }
+  : Identifier(tVarName, lloc, nm), m_range(rg), numbered(false), pcomp(NULL), uid(0), alwaysp(NULL) {  }
 
 netlist::VIdentifier::~VIdentifier() {
   if(uid != 0) {
@@ -318,6 +318,10 @@ void netlist::VIdentifier::set_father(Block *pf) {
     (*it)->set_father(pf);
   for(it=m_select.begin(),end=m_select.end(); it!=end; it++)
     (*it)->set_father(pf);
+}
+
+void netlist::VIdentifier::set_always_pointer(SeqBlock* p) {
+  alwaysp = p;
 }
 
 bool netlist::VIdentifier::check_inparse() {

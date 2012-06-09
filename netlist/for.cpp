@@ -111,3 +111,7 @@ void netlist::ForState::db_expunge() {
   if(incr.use_count() != 0) incr->db_expunge();
   if(body.use_count() != 0) body->db_expunge();
 }
+
+void netlist::ForState::set_always_pointer(SeqBlock *p) {
+  if(body.use_count() != 0) body->set_always_pointer(p);
+}

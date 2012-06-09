@@ -77,6 +77,10 @@ void netlist::Assign::set_father(Block *pf) {
   rexp->set_father(pf);
 }
 
+void netlist::Assign::set_always_pointer(SeqBlock *p) {
+  if(lval.use_count() != 0) lval->set_always_pointer(p);
+}
+
 Assign* netlist::Assign::deep_copy() const {
   Assign* rv = new Assign( loc,
                            shared_ptr<LConcatenation>(lval->deep_copy()),

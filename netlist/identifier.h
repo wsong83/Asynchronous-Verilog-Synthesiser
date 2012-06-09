@@ -187,6 +187,7 @@ namespace netlist {
     bool db_registered() const { return uid != 0; }
     void reset_uid(unsigned int id) { uid = id; } /* only used by Variable::get_id() */
     void set_pcomp(NetComp * p) { pcomp = p;}     /* set the linked component */
+    SeqBlock* get_alwaysp() const { return alwaysp; } /* used in multi-driver test */
 
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
@@ -196,6 +197,7 @@ namespace netlist {
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
     NETLIST_ELABORATE_DECL;
+    NETLIST_SET_ALWAYS_POINTER_DECL;
 
   private:
     Number value;
@@ -205,6 +207,7 @@ namespace netlist {
     boost::shared_ptr<Variable> pvar;     /* the wire/reg/var in the database */
     NetComp*  pcomp;               /* the netlist component using this variable */
     unsigned int uid;              /* used as the key to search this variable as fanin or fanout */
+    SeqBlock* alwaysp;             /* pointer to the father always block, used in multi-driver check */
   };
   NETLIST_STREAMOUT(VIdentifier);
 

@@ -47,6 +47,7 @@ namespace netlist {
     virtual LConcatenation* deep_copy() const;
     virtual void db_register(int iod = 0);
     virtual void db_expunge();
+    NETLIST_SET_ALWAYS_POINTER_DECL;
 
     // helpers
     bool is_valid() const { return valid; }

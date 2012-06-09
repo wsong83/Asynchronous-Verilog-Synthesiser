@@ -1,3 +1,4 @@
+* 09/06/2012   (**Important )   The multi-driver check is far complicated than I thought. The ranges/selectors should be considered into the check.
 * 08/06/2012   (**Important )   Check all variables are properly expunged when not in use.
 * 08/06/2012   (**Normal    )   May be there is no need to differentiate the types in ParaConn as they all go back to Netlist::Expression.
 * 06/06/2012   (**Normal    )   May be there is no need to use IIdentifier. Just using BIdentifier for instance is fine.

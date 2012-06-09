@@ -50,6 +50,7 @@ namespace netlist {
       if(lval.use_count() != 0) lval->db_expunge(); 
       if(rexp.use_count() != 0) rexp->db_expunge(); 
     }
+    NETLIST_SET_ALWAYS_POINTER_DECL;
 
     // helpers
     void set_name(const BIdentifier& nm) {name = nm; named=true;}

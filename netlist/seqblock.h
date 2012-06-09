@@ -58,7 +58,8 @@ namespace netlist{
     virtual SeqBlock* deep_copy() const;
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
-    
+    NETLIST_SET_ALWAYS_POINTER_DECL;
+
     // data
     bool sensitive;                                         /* whether this is a sensitive block, top level block */
     std::list<std::pair<bool, boost::shared_ptr<Expression> > > slist_pulse; /* pulse sensitive list */

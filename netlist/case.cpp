@@ -103,6 +103,10 @@ void netlist::CaseItem::db_expunge() {
   if(body.use_count() != 0) body->db_expunge();
 }
 
+void netlist::CaseItem::set_always_pointer(SeqBlock *p) {
+  if(body.use_count() != 0) body->set_always_pointer(p);
+}
+
 ostream& netlist::CaseState::streamout (ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
   if(casex) os << "casex(" << *exp << ")" << endl;
@@ -155,4 +159,8 @@ void netlist::CaseState::db_register(int iod) {
 void netlist::CaseState::db_expunge() {
   for_each(cases.begin(), cases.end(), [](shared_ptr<CaseItem>& m) {m->db_expunge();});
   if(exp.use_count() != 0) exp->db_expunge();
+}
+
+void netlist::CaseState::set_always_pointer(SeqBlock *p) {
+  for_each(cases.begin(), cases.end(), [&p](shared_ptr<CaseItem>& m) {m->set_always_pointer(p);});
 }

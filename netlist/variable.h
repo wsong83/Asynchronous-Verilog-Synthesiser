@@ -82,6 +82,10 @@ namespace netlist {
     unsigned int get_id();
 
   private:
+
+    // helper
+    bool multi_driver_checker();
+
     unsigned int uid;
     boost::shared_ptr<Expression> exp;
 
