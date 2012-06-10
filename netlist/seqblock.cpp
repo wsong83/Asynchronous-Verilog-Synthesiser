@@ -262,6 +262,41 @@ void netlist::SeqBlock::db_expunge() {
   for_each(slist_level.begin(), slist_level.end(), [](shared_ptr<Expression>& m) {m->db_expunge();});
 }
 
+bool netlist::SeqBlock::elaborate(const ctype_t mctype, const vector<NetComp *>& fp) {
+  bool rv = true;
+  vector<NetComp *> elab_vect = fp;
+  elab_vect.push_back(this);
+
+  // check the father component
+  if(!(
+       mctype == tModule ||     // a sequential block can be defined in a module
+       mctype == tGenBlock      // a sequential block can be defined in a generate block
+       )) {
+    G_ENV->error(loc, "ELAB-BLOCK-0");
+    return false;
+  }
+
+  // elaborate all internal item
+  // check all variables
+  for_each(db_var.begin_order(), db_var.end_order(), 
+           [&rv, &elab_vect](pair<VIdentifier, shared_ptr<Variable> >& m) {
+             rv &= m.second->elaborate(tSeqBlock, elab_vect);
+           });
+  if(!rv) return rv;
+
+  // elaborate the internals
+  for_each(statements.begin(), statements.end(), 
+           [&rv, &elab_vect](shared_ptr<NetComp>& m) {
+             rv &= m->elaborate(tSeqBlock, elab_vect);
+           });
+  if(!rv) return rv;
+
+  // final check
+  // to do what?
+
+  return rv;
+}
+
 void netlist::SeqBlock::set_always_pointer(SeqBlock *p) {
   for_each(db_other.begin(), db_other.end(), [&p](pair<const BIdentifier, shared_ptr<NetComp> >& m) {
       m.second->set_always_pointer(p);

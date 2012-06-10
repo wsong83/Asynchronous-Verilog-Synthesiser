@@ -283,7 +283,7 @@ bool netlist::Instance::update_ports() {
   return true;
 }
 
-bool netlist::Instance::elaborate(const ctype_t mctype) {
+bool netlist::Instance::elaborate(const ctype_t mctype, const vector<NetComp *>& fp) {
   bool rv = true;
 
   return rv;

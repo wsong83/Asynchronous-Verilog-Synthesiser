@@ -32,6 +32,7 @@ using namespace netlist;
 using std::ostream;
 using std::string;
 using std::list;
+using std::vector;
 using boost::shared_ptr;
 using boost::static_pointer_cast;
 
@@ -198,7 +199,7 @@ void netlist::Operation::reduce() {
   }
 }
 
-bool netlist::Operation::elaborate(const NetComp::ctype_t mctype) {
+bool netlist::Operation::elaborate(const NetComp::ctype_t mctype, const vector<NetComp *>& fp) {
   bool rv = true;
   if(otype == oVar) {
     rv &= data->elaborate(NetComp::tExp);

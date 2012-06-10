@@ -73,8 +73,9 @@
 #endif
 
 #ifndef NETLIST_ELABORATE_DECL
-#define NETLIST_ELABORATE_DECL                             \
-  virtual bool elaborate(const netlist::NetComp::ctype_t mctype = netlist::NetComp::tUnknown);
+#define NETLIST_ELABORATE_DECL                                                                \
+  virtual bool elaborate(const netlist::NetComp::ctype_t mctype = netlist::NetComp::tUnknown, \
+                         const std::vector<NetComp *>& fp = std::vector<NetComp *>());
 #endif
 
 namespace netlist{
@@ -144,7 +145,8 @@ namespace netlist{
     }
 
     // elaborate and check
-    virtual bool elaborate(const ctype_t mctype = netlist::NetComp::tUnknown) {
+    virtual bool elaborate(const ctype_t mctype = netlist::NetComp::tUnknown,
+                           const std::vector<NetComp *>& fp = std::vector<NetComp *>()) {
       std::cerr << "ERROR!!, the elaborate() of NetComp is used!!!" << std::endl;
       assert(0 == "elaborate() of NetComp is used");
     }

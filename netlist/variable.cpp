@@ -197,7 +197,7 @@ void netlist::Variable::db_expunge() {
   if(exp.use_count() != 0) exp->db_expunge();
 }
 
-bool netlist::Variable::elaborate(const ctype_t mctype) {
+bool netlist::Variable::elaborate(const ctype_t mctype, const vector<NetComp *>& fp) {
   bool rv = true;                    // the return value
 
   // check type
@@ -232,7 +232,7 @@ bool netlist::Variable::elaborate(const ctype_t mctype) {
     
     if(fan[0].size() != 0 && fan[1].size() == 1) {    // no load
       G_ENV->error(loc, "ELAB-VAR-2", name.name);
-      rv = false;
+      //rv = false;    // no load is not a serious problem
     }
     break;
   }
@@ -256,7 +256,7 @@ bool netlist::Variable::elaborate(const ctype_t mctype) {
     
     if(fan[0].size() != 0 && fan[1].size() == 1) {    // no load
       G_ENV->error(loc, "ELAB-VAR-2", name.name);
-      rv = false;
+      //rv = false;    // no load is not a serious problem
     }
     break;
   }

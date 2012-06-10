@@ -387,7 +387,7 @@ void netlist::VIdentifier::db_register(int iod) {
       assert(0 == "really need to define a new variable! Analyse this case...");
       // define the variable in the lowest block as a wire
       mvar.reset(new Variable(*this, Variable::TWire));
-      mvar->name.db_expunge();
+      //mvar->name.db_expunge();  // why do I need to expunge it?
       father->db_var.insert(mvar->name, mvar);
     }
   } else {
@@ -426,7 +426,7 @@ VIdentifier* netlist::VIdentifier::deep_copy() const {
   return rv;
 }
   
-bool netlist::VIdentifier::elaborate(const ctype_t mctype) {
+bool netlist::VIdentifier::elaborate(const ctype_t mctype, const vector<NetComp *>& fp) {
   bool rv = true;
   
   // check the basic link info.

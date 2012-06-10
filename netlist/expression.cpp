@@ -38,6 +38,7 @@ using shell::location;
 using std::pair;
 using std::stack;
 using std::list;
+using std::vector;
 using std::for_each;
 
 netlist::Expression::Expression(const Number& exp) 
@@ -395,7 +396,7 @@ Expression* netlist::Expression::deep_copy() const {
   return rv;
 }
 
-bool netlist::Expression::elaborate(const ctype_t mctype) {
+bool netlist::Expression::elaborate(const ctype_t mctype, const vector<NetComp *>& fp) {
   bool rv = true;
   
   // resolve all operation if possible

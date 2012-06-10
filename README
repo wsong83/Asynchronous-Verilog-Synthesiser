@@ -14,10 +14,12 @@ What I have done:
 * Adopted a SystemVerilog preprocessor from the Verilog-Perl package to 
   handle macros.
 * A Verilog parser which can read in synthesizable Verilog features.
+* An error report system provide easy error type insertion and display.
 
 What I need to do in the future:
 * Extract static data-flow from the parsed design.
 * Try to figure out how to partition the design.
+* Petri-net based netlist optimization.
 
 Package required:
   GNU Make              ( make       )
@@ -50,4 +52,4 @@ songw@cs.man.ac.uk
 http://apt.cs.man.ac.uk/people/wsong/
 http://wsong83.weebly.com/
 
-28/05/2012
+10/06/2012

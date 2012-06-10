@@ -44,7 +44,9 @@ namespace netlist {
       : NetComp(tVariable), vtype(mtype), name(id), uid(0) {}
     Variable(const Port& p)
       : NetComp(tVariable, p.loc), vtype(TWire), uid(0) {
-      name = VIdentifier(p.name.loc, p.name.name, p.name.get_range());
+      VIdentifier *newName = p.name.deep_copy();
+      name = *newName;
+      delete newName;
     }
     Variable(const shell::location& lloc, const VIdentifier& id, vtype_t mtype = TVar)
       : NetComp(tVariable, lloc), vtype(mtype), name(id), uid(0) {}

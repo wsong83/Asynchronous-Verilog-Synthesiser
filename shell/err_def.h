@@ -40,6 +40,10 @@ ERR_DEFINE("PARSER-0",
            EFatal,   0, 
            "unkown parser error. Please report to the developers.");
 
+ERR_DEFINE("ELAB-BLOCK-0", 
+           EError,   0, 
+           "illegal place for a sequential block.");
+
 // non-constant concationation parameter
 ERR_DEFINE("ELAB-EXPRESSION-0",
            EError,   1,

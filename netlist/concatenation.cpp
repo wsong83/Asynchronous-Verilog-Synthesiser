@@ -106,7 +106,7 @@ void netlist::ConElem::db_expunge() {
   for_each(con.begin(), con.end(), [](shared_ptr<ConElem>& m) {m->db_expunge();});
 }
 
-bool netlist::ConElem::elaborate(const NetComp::ctype_t mctype) {
+bool netlist::ConElem::elaborate(const NetComp::ctype_t mctype, const vector<NetComp *>& fp) {
   bool rv = true;
   rv &= exp->elaborate();
   if(!rv) return false;
@@ -240,7 +240,7 @@ void netlist::Concatenation::reduce() {
   }
 }
 
-bool netlist::Concatenation::elaborate(const ctype_t mctype) {
+bool netlist::Concatenation::elaborate(const ctype_t mctype, const vector<NetComp *>& fp) {
   bool rv = true;
   for_each(data.begin(), data.end(), [&rv](shared_ptr<ConElem>& m){
       rv &= m->elaborate();

@@ -31,6 +31,7 @@
 using namespace netlist;
 using std::ostream;
 using std::string;
+using std::vector;
 using boost::shared_ptr;
 using shell::location;
 
@@ -271,7 +272,7 @@ Range* netlist::Range::deep_copy() const {
   return rv;
 }
 
-bool netlist::Range::elaborate(const ctype_t mctype) {
+bool netlist::Range::elaborate(const ctype_t mctype, const vector<NetComp *>& fp) {
   bool rv = true;
   switch(rtype) {
   case TR_Var: {

@@ -168,14 +168,14 @@ Module* netlist::Module::deep_copy() const {
              rv->statements.push_back(shared_ptr<NetComp>(comp->deep_copy())); 
            });
   
-  DATABASE_DEEP_COPY_FUN(db_var,      VIdentifier, Variable,  rv->db_var       );
+  DATABASE_DEEP_COPY_FUN(db_var,      VIdentifier, Variable,  rv->db_var        );
   rv->unnamed_block = unnamed_block;
   rv->unnamed_instance = unnamed_instance;
   rv->unnamed_var = unnamed_var;
   rv->blocked = blocked;
 
   // data in Module;
-  DATABASE_DEEP_COPY_FUN(db_port,   VIdentifier, Port,      rv->db_port       );
+  DATABASE_DEEP_COPY_FUN(db_port,   VIdentifier, Port,      rv->db_port        );
   DATABASE_DEEP_COPY_FUN(db_param,  VIdentifier,  Variable,  rv->db_param      );
   DATABASE_DEEP_COPY_FUN(db_genvar, VIdentifier,  Variable,  rv->db_genvar     );
   
@@ -407,7 +407,7 @@ bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
   
   // elaborate the internals
   for_each(statements.begin(), statements.end(), [&rv](shared_ptr<NetComp>& m) {
-      rv &= m->elaborate();
+      rv &= m->elaborate(tModule);
     });
   if(!rv) return rv;
   
