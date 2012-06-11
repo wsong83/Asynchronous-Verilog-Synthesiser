@@ -39,11 +39,9 @@ using std::for_each;
 
 void netlist::ConElem::reduce() {
   exp->reduce();
-  if(0 != con.size()) {
-    list<shared_ptr<ConElem> >::iterator it, end;
-    for(it=con.begin(), end=con.end(); it != end; it++)
-      (*it)->reduce();
-  }
+  for_each(con.begin(), con.end(), [](shared_ptr<ConElem>& m) {
+      m->reduce(); 
+    });
 }
 
 ostream& netlist::ConElem::streamout(ostream& os, unsigned int indent) const {
@@ -233,6 +231,7 @@ void netlist::Concatenation::reduce() {
             (*it)->exp->is_valuable()) { // both pre and it are numbers
       (*pre)->exp->concatenate(*((*it)->exp));
       it = data.erase(it);
+      std::cout << *this << std::endl;
     } else { 
       pre = it; 
       it++; 

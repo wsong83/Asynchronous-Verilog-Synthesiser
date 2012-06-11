@@ -276,7 +276,7 @@ bool netlist::SeqBlock::elaborate(const ctype_t mctype, const vector<NetComp *>&
     return false;
   }
 
-  // elaborate all internal item
+  // elaborate all internal items
   // check all variables
   for_each(db_var.begin_order(), db_var.end_order(), 
            [&rv, &elab_vect](pair<VIdentifier, shared_ptr<Variable> >& m) {

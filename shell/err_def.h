@@ -40,14 +40,30 @@ ERR_DEFINE("PARSER-0",
            EFatal,   0, 
            "unkown parser error. Please report to the developers.");
 
+ERR_DEFINE("ELAB-ASSIGN-0", 
+           EError,   0, 
+           "illegal place for a continuous assignment.");
+
+ERR_DEFINE("ELAB-ASSIGN-1", 
+           EError,   0, 
+           "illegal place for a non-continuous assignment.");
+
 ERR_DEFINE("ELAB-BLOCK-0", 
            EError,   0, 
            "illegal place for a sequential block.");
+
+ERR_DEFINE("ELAB-BLOCK-1", 
+           EError,   0, 
+           "illegal place for a block.");
 
 // non-constant concationation parameter
 ERR_DEFINE("ELAB-EXPRESSION-0",
            EError,   1,
            "\"%1\" cannot be reduced to a constant. In concatenation {Var{exp0, exp1, ..}}, Var must be a constant: a const exp, a parameter or a generate variable.");
+
+ERR_DEFINE("ELAB-IF-0", 
+           EError,   0, 
+           "illegal place for an if statement.");
 
 ERR_DEFINE("ELAB-INST-0", 
            EError,   1, 

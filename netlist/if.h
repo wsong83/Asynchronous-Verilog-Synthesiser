@@ -72,6 +72,7 @@ namespace netlist {
     virtual IfState* deep_copy() const;
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
+    NETLIST_ELABORATE_DECL;
     NETLIST_SET_ALWAYS_POINTER_DECL;
 
     //data

@@ -59,3 +59,37 @@ enum ctype_t {
   tWire                     /* wire */
 };
 
+std::string get_type_name() const {
+  std::string rv;
+  switch(ctype) {
+  case tAssign:          rv = "Assign Statement";        break;
+  case tBlock:           rv = "Block";                   break;
+  case tBlockName:       rv = "Block Name";              break;
+  case tCaseItem:        rv = "Case Item";               break;
+  case tCase:            rv = "Case Statement";          break;
+  case tConcatenation:   rv = "Concatenation";           break;
+  case tExp:             rv = "Expression";              break;
+  case tFor:             rv = "For Statement";           break;
+  case tFuncName:        rv = "Function Name";           break;
+  case tGenBlock:        rv = "Generate Block";          break;
+  case tIf:              rv = "If Statement";            break;
+  case tInstance:        rv = "Instance";                break;
+  case tInstName:        rv = "Instance Name";           break;
+  case tLConcatenation:  rv = "Left-side Concatenation"; break;
+  case tModule:          rv = "Module";                  break;
+  case tModuleName:      rv = "Module Name";             break;
+  case tNumber:          rv = "Number";                  break;
+  case tParaConn:        rv = "Parameter Connection";    break;
+  case tParaName:        rv = "Parameter Name";          break;
+  case tPort:            rv = "Port Declaration";        break;
+  case tPortConn:        rv = "Port Connection";         break;
+  case tPortName:        rv = "Port Name";               break;
+  case tRange:           rv = "Range Expression";        break;
+  case tSeqBlock:        rv = "Sequential Block";        break;
+  case tVariable:        rv = "Variable Declaration";    break;
+  case tVarName:         rv = "Variable Name";           break;
+  case tWhile:           rv = "While Statement";         break;
+  default:               rv = "Unknown Type";
+  }
+  return rv;
+}

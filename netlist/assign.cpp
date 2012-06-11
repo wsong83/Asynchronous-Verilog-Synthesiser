@@ -27,12 +27,14 @@
  */
 
 #include "component.h"
+#include "shell/env.h"
 
 using namespace netlist;
 using std::ostream;
 using std::endl;
 using shell::location;
 using std::string;
+using std::vector;
 using boost::shared_ptr;
 
 
@@ -76,6 +78,33 @@ void netlist::Assign::set_father(Block *pf) {
   lval->set_father(pf);
   rexp->set_father(pf);
 }
+
+bool netlist::Assign::elaborate(const ctype_t mctype, const vector<NetComp *>& fp) {
+  bool rv = true;
+
+  if(continuous && !( mctype == tModule ||
+                      mctype == tGenBlock
+                      )) {
+    G_ENV->error(loc, "ELAB-ASSIGN-0");
+    return false;
+  }
+
+  if(!continuous && !( mctype == tSeqBlock
+                       )) {
+    G_ENV->error(loc, "ELAB-ASSIGN-1");
+    return false;
+  }
+
+  assert(lval.use_count() != 0);
+  assert(rexp.use_count() != 0);
+
+  // check internals
+  rv &= lval->elaborate(mctype, fp);
+  rv &= rexp->elaborate(mctype, fp);
+
+  return rv;
+}
+
 
 void netlist::Assign::set_always_pointer(SeqBlock *p) {
   if(lval.use_count() != 0) lval->set_always_pointer(p);

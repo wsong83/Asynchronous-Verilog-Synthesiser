@@ -32,6 +32,7 @@
 using namespace netlist;
 using std::ostream;
 using std::string;
+using std::vector;
 using boost::shared_ptr;
 using std::list;
 using shell::location;
@@ -133,6 +134,18 @@ void netlist::LConcatenation::db_register(int iod) {
 
 void netlist::LConcatenation::db_expunge() {
   for_each(data.begin(), data.end(), [](VIdentifier& m) {m.db_expunge();});
+}
+
+bool netlist::LConcatenation::elaborate(const ctype_t mctype, const vector<NetComp *>& fp) {
+  bool rv = true;
+
+  assert(valid && data.size() > 0);
+
+  for_each(data.begin(), data.end(), [&rv, &fp](VIdentifier& m) {
+      rv &= m.elaborate(tLConcatenation, fp);
+    });
+
+  return rv;
 }
 
 void netlist::LConcatenation::set_always_pointer(SeqBlock *p) {

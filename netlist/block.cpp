@@ -285,6 +285,39 @@ void netlist::Block::db_expunge() {
   for_each(statements.begin(), statements.end(), [](shared_ptr<NetComp>& m) {m->db_expunge();});
 }
 
+bool netlist::Block::elaborate(const ctype_t mctype, const vector<NetComp *>& fp) {
+  bool rv = true;
+
+  // check the father component
+  if(!(
+       mctype == tGenBlock ||   // a general block can be defined in a generate block
+       mctype == tSeqBlock      // a general block can be defined in a generate block
+       )) {
+    G_ENV->error(loc, "ELAB-BLOCK-1");
+    return false;
+  }
+  
+  // elaborate all internal items
+  // check all variables
+  for_each(db_var.begin_order(), db_var.end_order(), 
+           [&rv, &mctype, &fp](pair<VIdentifier, shared_ptr<Variable> >& m) {
+             rv &= m.second->elaborate(mctype, fp);
+           });
+  if(!rv) return rv;
+
+  // elaborate the internals
+  for_each(statements.begin(), statements.end(), 
+           [&rv, &mctype, &fp](shared_ptr<NetComp>& m) {
+             rv &= m->elaborate(mctype, fp);
+           });
+  if(!rv) return rv;
+
+  // final check
+  // to do what?
+
+  return rv;
+}
+
 void netlist::Block::set_always_pointer(SeqBlock *p) {
   for_each(db_other.begin(), db_other.end(), [&p](pair<const BIdentifier, shared_ptr<NetComp> >& m) {
       m.second->set_always_pointer(p);

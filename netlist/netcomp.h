@@ -104,14 +104,14 @@ namespace netlist{
     
     // deep copy when the content of a shared_ptr must be duplicated
     virtual NetComp* deep_copy() const { /* deep copy a netlist component */
-      std::cerr << "ERROR!!, the deep_copy() of NetComp is used!!!" << std::endl;
+      std::cerr << "ERROR!!, the deep_copy() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
       assert(0 == "the deep_copy() of NetComp is used");
       return(new NetComp());
     }
 
     // syntax check during parsing
     virtual bool check_inparse() {
-      std::cerr << "ERROR!!, the check_inparse() of NetComp is used!!!" << std::endl;
+      std::cerr << "ERROR!!, the check_inparse() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
       assert(0 == "the check_inparse() of NetComp is used");
       return false;
     }
@@ -134,20 +134,20 @@ namespace netlist{
 
     // register variable identifiers to the variable database
     virtual void db_register(int iod) {
-      std::cerr << "ERROR!!, the db_register() of NetComp is used!!!" << std::endl;
+      std::cerr << "ERROR!!, the db_register() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
       assert(0 == "the db_register() of NetComp is used");
     }
 
     // expunge the variable identifier in the variable database
     virtual void db_expunge() {
-      std::cerr << "ERROR!!, the db_expunge() of NetComp is used!!!" << std::endl;
+      std::cerr << "ERROR!!, the db_expunge() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
       assert(0 == "the db_expunge() of NetComp is used");
     }
 
     // elaborate and check
     virtual bool elaborate(const ctype_t mctype = netlist::NetComp::tUnknown,
                            const std::vector<NetComp *>& fp = std::vector<NetComp *>()) {
-      std::cerr << "ERROR!!, the elaborate() of NetComp is used!!!" << std::endl;
+      std::cerr << "ERROR!!, the elaborate() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
       assert(0 == "elaborate() of NetComp is used");
     }
 

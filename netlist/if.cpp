@@ -27,10 +27,12 @@
  */
 
 #include "component.h"
+#include "shell/env.h"
 
 using namespace netlist;
 using std::ostream;
 using std::string;
+using std::vector;
 using boost::shared_ptr;
 using boost::static_pointer_cast;
 using shell::location;
@@ -139,6 +141,40 @@ void netlist::IfState::db_expunge() {
   if(exp.use_count() != 0) exp->db_expunge();
   if(ifcase.use_count() != 0) ifcase->db_expunge();
   if(elsecase.use_count() != 0) elsecase->db_expunge();
+}
+
+bool netlist::IfState::elaborate(const ctype_t mctype, const vector<NetComp *>& fp) {
+  bool rv = true;
+  
+  // check the father component
+  if(!(
+       mctype == tGenBlock ||      // an if statement can be defined in a generate block
+       mctype == tSeqBlock         // an if statement can be defined in a sequential block
+       )) {
+    G_ENV->error(loc, "ELAB-IF-0");
+    return false;
+  }
+
+  // elaborate the if condition expression
+  assert(exp.use_count() != 0);
+  rv &= exp->elaborate(mctype, fp);
+  if(!rv) return rv;
+
+  // check whether it is already constant
+  if(exp->is_valuable() && exp->get_value() == 0) { // false
+    ifcase.reset();
+    rv &= elsecase->elaborate(mctype, fp);
+  } else if(exp->is_valuable() && exp->get_value() != 0) { // true
+    rv &= ifcase->elaborate(mctype, fp);
+    elsecase.reset();
+  } else if(exp->is_valuable()) { // x or z
+    assert(0 == "x or z in the if condition expression!");
+  } else {
+    rv &= ifcase->elaborate(mctype, fp);
+    rv &= elsecase->elaborate(mctype, fp);
+  }
+
+  return rv;
 }
 
 void netlist::IfState::set_always_pointer(SeqBlock *p) {

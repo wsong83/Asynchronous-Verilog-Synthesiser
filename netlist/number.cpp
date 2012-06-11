@@ -385,6 +385,15 @@ bool netlist::Number::check_valuable() {
   return true;
 }
 
+static std::string trim_zeros(const std::string& str){
+  std::size_t pos = str.find_first_not_of("0");
+  if(pos == std::string::npos) {
+    return "0";
+  } else {
+    return str.substr(pos);
+  }
+}
+
 Number netlist::operator+ (const Number& lhs, const Number& rhs) {
   return lhs.addition(rhs);
 }
@@ -394,13 +403,27 @@ Number netlist::operator- (const Number& lhs, const Number& rhs) {
 }
 
 bool netlist::operator== (const Number& lhs, const Number& rhs) {
-  if(lhs.get_txt_value() == rhs.get_txt_value() && 
+  if(trim_zeros(lhs.get_txt_value()) == trim_zeros(rhs.get_txt_value()) && 
      string::npos == lhs.get_txt_value().find('x') &&
      string::npos == lhs.get_txt_value().find('z'))
     return true;
   else
     return false;
 }
+
+bool netlist::operator!= (const Number& lhs, const Number& rhs) {
+  assert(lhs.is_valuable() && rhs.is_valuable()); // the result may be wrong when x or z exists
+  if(trim_zeros(lhs.get_txt_value()) != trim_zeros(rhs.get_txt_value()) && 
+     string::npos == lhs.get_txt_value().find('x') &&
+     string::npos == lhs.get_txt_value().find('z'))
+    return true;
+  else
+    return false;
+}
+
+bool netlist::case_equal(const Number& lhs, const Number& rhs) {
+  return (trim_zeros(lhs.get_txt_value()) == trim_zeros(rhs.get_txt_value()));
+}  
 
 Number netlist::operator<< (const Number& lhs, int rhs) {
   Number dd(lhs);
