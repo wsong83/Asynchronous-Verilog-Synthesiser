@@ -136,13 +136,14 @@ void netlist::LConcatenation::db_expunge() {
   for_each(data.begin(), data.end(), [](VIdentifier& m) {m.db_expunge();});
 }
 
-bool netlist::LConcatenation::elaborate(const ctype_t mctype, const vector<NetComp *>& fp) {
+bool netlist::LConcatenation::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
   bool rv = true;
+  result = ELAB_Normal;
 
   assert(valid && data.size() > 0);
 
-  for_each(data.begin(), data.end(), [&rv, &fp](VIdentifier& m) {
-      rv &= m.elaborate(tLConcatenation, fp);
+  for_each(data.begin(), data.end(), [&rv, &fp, &result](VIdentifier& m) {
+      rv &= m.elaborate(result, tLConcatenation, fp);
     });
 
   return rv;

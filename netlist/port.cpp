@@ -105,7 +105,8 @@ ostream& netlist::Port::streamout(ostream& os, unsigned int indent) const {
 
 }
 
-bool netlist::Port::elaborate(ctype_t mctype, const vector<NetComp *>& fp) {
+bool netlist::Port::elaborate(elab_result_t &result, ctype_t mctype, const vector<NetComp *>& fp) {
+  result = ELAB_Normal;
   name.set_pcomp(this);
-  return name.elaborate(tPort);
+  return name.elaborate(result, tPort);
 }

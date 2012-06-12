@@ -143,8 +143,9 @@ void netlist::IfState::db_expunge() {
   if(elsecase.use_count() != 0) elsecase->db_expunge();
 }
 
-bool netlist::IfState::elaborate(const ctype_t mctype, const vector<NetComp *>& fp) {
+bool netlist::IfState::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
   bool rv = true;
+  result = ELAB_Normal;
   
   // check the father component
   if(!(
@@ -157,21 +158,47 @@ bool netlist::IfState::elaborate(const ctype_t mctype, const vector<NetComp *>& 
 
   // elaborate the if condition expression
   assert(exp.use_count() != 0);
-  rv &= exp->elaborate(mctype, fp);
+  rv &= exp->elaborate(result, mctype, fp);
   if(!rv) return rv;
 
   // check whether it is already constant
   if(exp->is_valuable() && exp->get_value() == 0) { // false
     ifcase.reset();
-    rv &= elsecase->elaborate(mctype, fp);
+    if(elsecase.use_count() != 0) rv &= elsecase->elaborate(result, mctype, fp);
+    if(elsecase.use_count() == 0 || result == ELAB_Empty) {
+      elsecase.reset();
+      result = ELAB_Empty;      // tell the upper-level to remove this
+    } else {
+      ifcase = elsecase;
+      elsecase.reset();
+      exp.reset(new Expression(Number(1))); // move else case to if case and reset condition
+      result = ELAB_Const_If;               // tell the upper-level to reduce it
+    }
   } else if(exp->is_valuable() && exp->get_value() != 0) { // true
-    rv &= ifcase->elaborate(mctype, fp);
     elsecase.reset();
+    if(ifcase.use_count() != 0) rv &= ifcase->elaborate(result, mctype, fp);
+    if(ifcase.use_count() == 0 || result == ELAB_Empty) {
+      ifcase.reset();
+      result = ELAB_Empty;      // tell the upper-level to remove this
+    } else {
+      exp.reset(new Expression(Number(1))); // directly set the condition to the easist form
+      result = ELAB_Const_If;               // tell the upper-level to reduce it
+    }
   } else if(exp->is_valuable()) { // x or z
     assert(0 == "x or z in the if condition expression!");
   } else {
-    rv &= ifcase->elaborate(mctype, fp);
-    rv &= elsecase->elaborate(mctype, fp);
+    elab_result_t result_if    = ELAB_Normal;
+    elab_result_t result_else  = ELAB_Normal;
+    if(ifcase.use_count() != 0)    rv &= ifcase->elaborate(result_if, mctype, fp);
+    if(elsecase.use_count() != 0)  rv &= elsecase->elaborate(result_else, mctype, fp);
+    if(rv) {                    // pose elab process
+      if(result_if == ELAB_Empty) ifcase.reset();
+      if(result_else == ELAB_Empty) elsecase.reset();
+      if(ifcase.use_count() == 0 && elsecase.use_count() == 0)
+        result = ELAB_Empty;
+      else
+        result = ELAB_Normal;
+    }
   }
 
   return rv;

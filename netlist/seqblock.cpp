@@ -262,8 +262,9 @@ void netlist::SeqBlock::db_expunge() {
   for_each(slist_level.begin(), slist_level.end(), [](shared_ptr<Expression>& m) {m->db_expunge();});
 }
 
-bool netlist::SeqBlock::elaborate(const ctype_t mctype, const vector<NetComp *>& fp) {
+bool netlist::SeqBlock::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
   bool rv = true;
+  result = ELAB_Normal;
   vector<NetComp *> elab_vect = fp;
   elab_vect.push_back(this);
 
@@ -279,15 +280,15 @@ bool netlist::SeqBlock::elaborate(const ctype_t mctype, const vector<NetComp *>&
   // elaborate all internal items
   // check all variables
   for_each(db_var.begin_order(), db_var.end_order(), 
-           [&rv, &elab_vect](pair<VIdentifier, shared_ptr<Variable> >& m) {
-             rv &= m.second->elaborate(tSeqBlock, elab_vect);
+           [&rv, &elab_vect, &result](pair<VIdentifier, shared_ptr<Variable> >& m) {
+             rv &= m.second->elaborate(result, tSeqBlock, elab_vect);
            });
   if(!rv) return rv;
 
   // elaborate the internals
   for_each(statements.begin(), statements.end(), 
-           [&rv, &elab_vect](shared_ptr<NetComp>& m) {
-             rv &= m->elaborate(tSeqBlock, elab_vect);
+           [&rv, &elab_vect, &result](shared_ptr<NetComp>& m) {
+             rv &= m->elaborate(result, tSeqBlock, elab_vect);
            });
   if(!rv) return rv;
 

@@ -199,10 +199,12 @@ void netlist::Operation::reduce() {
   }
 }
 
-bool netlist::Operation::elaborate(const NetComp::ctype_t mctype, const vector<NetComp *>& fp) {
+bool netlist::Operation::elaborate(NetComp::elab_result_t &result, const NetComp::ctype_t mctype, const vector<NetComp *>& fp) {
   bool rv = true;
+  result = NetComp::ELAB_Normal;
+
   if(otype == oVar) {
-    rv &= data->elaborate(NetComp::tExp);
+    rv &= data->elaborate(result, NetComp::tExp);
     SP_CAST(m, VIdentifier, data);
     if(m->is_valuable()) {
       data.reset(new Number(m->get_value()));
@@ -210,7 +212,7 @@ bool netlist::Operation::elaborate(const NetComp::ctype_t mctype, const vector<N
       valuable = true;
     }
   } else if(otype == oCon) {
-    rv &= data->elaborate(NetComp::tExp);
+    rv &= data->elaborate(result, NetComp::tExp);
     SP_CAST(m, Concatenation, data);
     if(m->is_valuable()) {
       data.reset(new Number(m->get_value()));

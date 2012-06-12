@@ -197,8 +197,9 @@ void netlist::Variable::db_expunge() {
   if(exp.use_count() != 0) exp->db_expunge();
 }
 
-bool netlist::Variable::elaborate(const ctype_t mctype, const vector<NetComp *>& fp) {
+bool netlist::Variable::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
   bool rv = true;                    // the return value
+  result = ELAB_Normal;
 
   // check type
   if(vtype == TVar) {
@@ -207,7 +208,7 @@ bool netlist::Variable::elaborate(const ctype_t mctype, const vector<NetComp *>&
   }
 
   // elaborate the identifier
-  rv &= name.elaborate(tVariable);
+  rv &= name.elaborate(result, tVariable);
 
   // check fan-in and fan-out
   switch(vtype) {

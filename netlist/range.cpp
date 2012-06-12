@@ -272,11 +272,13 @@ Range* netlist::Range::deep_copy() const {
   return rv;
 }
 
-bool netlist::Range::elaborate(const ctype_t mctype, const vector<NetComp *>& fp) {
+bool netlist::Range::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
   bool rv = true;
+  result = ELAB_Normal;
+
   switch(rtype) {
   case TR_Var: {
-    rv = v->elaborate(tExp); 
+    rv = v->elaborate(result, tExp); 
     if(v->is_valuable()) {
       c = v->get_value();
       rtype = TR_Const;
@@ -285,7 +287,7 @@ bool netlist::Range::elaborate(const ctype_t mctype, const vector<NetComp *>& fp
     break;
   }
   case TR_Range: {
-    rv = r.first->elaborate() && r.second->elaborate(); 
+    rv = r.first->elaborate(result) && r.second->elaborate(result); 
     if(r.first->is_valuable() && r.second->is_valuable()) {
       if(r.first->get_value() == r.second->get_value()) {
         c = v->get_value();

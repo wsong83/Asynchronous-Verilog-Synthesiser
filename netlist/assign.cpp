@@ -79,8 +79,9 @@ void netlist::Assign::set_father(Block *pf) {
   rexp->set_father(pf);
 }
 
-bool netlist::Assign::elaborate(const ctype_t mctype, const vector<NetComp *>& fp) {
+bool netlist::Assign::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
   bool rv = true;
+  result = ELAB_Normal;
 
   if(continuous && !( mctype == tModule ||
                       mctype == tGenBlock
@@ -99,8 +100,8 @@ bool netlist::Assign::elaborate(const ctype_t mctype, const vector<NetComp *>& f
   assert(rexp.use_count() != 0);
 
   // check internals
-  rv &= lval->elaborate(mctype, fp);
-  rv &= rexp->elaborate(mctype, fp);
+  rv &= lval->elaborate(result, mctype, fp);
+  rv &= rexp->elaborate(result, mctype, fp);
 
   return rv;
 }

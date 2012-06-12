@@ -285,8 +285,9 @@ void netlist::Block::db_expunge() {
   for_each(statements.begin(), statements.end(), [](shared_ptr<NetComp>& m) {m->db_expunge();});
 }
 
-bool netlist::Block::elaborate(const ctype_t mctype, const vector<NetComp *>& fp) {
+bool netlist::Block::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
   bool rv = true;
+  result = ELAB_Normal;
 
   // check the father component
   if(!(
@@ -299,18 +300,71 @@ bool netlist::Block::elaborate(const ctype_t mctype, const vector<NetComp *>& fp
   
   // elaborate all internal items
   // check all variables
-  for_each(db_var.begin_order(), db_var.end_order(), 
-           [&rv, &mctype, &fp](pair<VIdentifier, shared_ptr<Variable> >& m) {
-             rv &= m.second->elaborate(mctype, fp);
-           });
+  list<pair<VIdentifier, shared_ptr<Variable> > >::iterator vit, vend;
+  vit = db_var.begin_order();
+  vend = db_var.end_order();
+  while(vit != vend) {
+    rv &= vit->second->elaborate(result, mctype, fp);
+    if(result == ELAB_Empty) {
+      VIdentifier tname = vit->first;
+      vit++;
+      db_var.erase(tname);
+      vend = db_var.end_order();
+      result = ELAB_Normal;
+    } else
+      vit++;
+  }
   if(!rv) return rv;
 
   // elaborate the internals
-  for_each(statements.begin(), statements.end(), 
-           [&rv, &mctype, &fp](shared_ptr<NetComp>& m) {
-             rv &= m->elaborate(mctype, fp);
-           });
+  list<shared_ptr<NetComp> >::iterator cit, cend;
+  cit = statements.begin();
+  cend = statements.end();
+  while(cit != cend) {
+    rv &= (*cit)->elaborate(result, mctype, fp);
+    if(rv) {
+      switch(result) {          // need test
+      case ELAB_Empty: {
+        (*cit).reset();
+        cit = statements.erase(cit);
+        cend = statements.end();
+        break;
+      }
+      case ELAB_Const_If: {     // need test
+        SP_CAST(mif, IfState, *cit);
+        for_each(mif->ifcase->db_var.begin_order(), mif->ifcase->db_var.end_order(),
+                 [&db_var](pair<VIdentifier, shared_ptr<Variable> >& m) {
+                     bool v = db_var.insert(m.first, m.second);
+                     assert(v);
+                   } );
+        statements.insert(cit, mif->ifcase->statements.begin(), mif->ifcase->statements.end());
+        (*cit).reset();
+        cit = statements.erase(cit);
+        cend = statements.end();
+        break;
+      }
+      default:
+        cit++;
+      }
+    } else {
+      cit++;
+    }
+  }
   if(!rv) return rv;
+
+  // check the db_var again as some variables may be removed
+  vit = db_var.begin_order();
+  vend = db_var.end_order();
+  while(vit != vend) {
+    rv &= vit->second->elaborate(result, mctype, fp);
+    if(result == ELAB_Empty) {
+      VIdentifier tname = vit->first;
+      vit++;
+      db_var.erase(tname);
+      vend = db_var.end_order();
+    } else
+      vit++;
+  }
 
   // final check
   // to do what?

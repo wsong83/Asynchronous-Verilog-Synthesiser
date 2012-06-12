@@ -369,6 +369,7 @@ bool netlist::Module::calculate_name( string& newName,
 bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo, 
                                 std::map<MIdentifier, boost::shared_ptr<Module> > & mmap) {
   bool rv = true;
+  elab_result_t result;
   
   // before register all variable, update the port direction of all instance
   // as it will affect the direction of wires
@@ -389,14 +390,14 @@ bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
   if(!rv) return rv;
 
   // check ports
-  for_each(db_port.begin_order(), db_port.end_order(), [&rv](pair<VIdentifier, shared_ptr<Port> >& m) {
-      rv &= m.second->elaborate();
+  for_each(db_port.begin_order(), db_port.end_order(), [&rv, &result](pair<VIdentifier, shared_ptr<Port> >& m) {
+      rv &= m.second->elaborate(result);
     });
   if(!rv) return rv;
   
   // check all variables
-  for_each(db_var.begin_order(), db_var.end_order(), [&rv](pair<VIdentifier, shared_ptr<Variable> >& m) {
-      rv &= m.second->elaborate();
+  for_each(db_var.begin_order(), db_var.end_order(), [&rv, &result](pair<VIdentifier, shared_ptr<Variable> >& m) {
+      rv &= m.second->elaborate(result);
     });
   if(!rv) return rv;
 
@@ -406,8 +407,8 @@ bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
       });
   
   // elaborate the internals
-  for_each(statements.begin(), statements.end(), [&rv](shared_ptr<NetComp>& m) {
-      rv &= m->elaborate(tModule);
+  for_each(statements.begin(), statements.end(), [&rv, &result](shared_ptr<NetComp>& m) {
+      rv &= m->elaborate(result, tModule);
     });
   if(!rv) return rv;
   

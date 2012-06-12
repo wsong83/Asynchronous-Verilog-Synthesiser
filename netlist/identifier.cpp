@@ -426,8 +426,9 @@ VIdentifier* netlist::VIdentifier::deep_copy() const {
   return rv;
 }
   
-bool netlist::VIdentifier::elaborate(const ctype_t mctype, const vector<NetComp *>& fp) {
+bool netlist::VIdentifier::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
   bool rv = true;
+  result = ELAB_Normal;
   
   // check the basic link info.
   assert(uid != 0);
@@ -442,8 +443,8 @@ bool netlist::VIdentifier::elaborate(const ctype_t mctype, const vector<NetComp 
   case tExp: {
     // for an expression, no range is used
     assert(m_range.size() == 0);
-    for_each(m_select.begin(), m_select.end(), [&rv, &mctype, &fp](shared_ptr<Range>& m) {
-        rv &= m->elaborate(mctype, fp);
+    for_each(m_select.begin(), m_select.end(), [&rv, &mctype, &fp, &result](shared_ptr<Range>& m) {
+        rv &= m->elaborate(result, mctype, fp);
         rv &= m->is_valuable();
       });    
     if(!rv) {
@@ -455,8 +456,8 @@ bool netlist::VIdentifier::elaborate(const ctype_t mctype, const vector<NetComp 
   case tVariable: {
     // for a port, range should be resolved numbers
     assert(m_select.size() == 0);
-    for_each(m_range.begin(), m_range.end(), [&rv](shared_ptr<Range>& m) {
-        rv &= m->elaborate();
+    for_each(m_range.begin(), m_range.end(), [&rv, &result](shared_ptr<Range>& m) {
+        rv &= m->elaborate(result);
         rv &= m->is_valuable();
       });
     if(!rv) {
@@ -467,8 +468,8 @@ bool netlist::VIdentifier::elaborate(const ctype_t mctype, const vector<NetComp 
   case tLConcatenation: {
     // for a left-side concatenation, select should be resolved numbers
     assert(m_range.size() == 0);
-    for_each(m_select.begin(), m_select.end(), [&rv](shared_ptr<Range>& m) {
-        rv &= m->elaborate();
+    for_each(m_select.begin(), m_select.end(), [&rv, &result](shared_ptr<Range>& m) {
+        rv &= m->elaborate(result);
         rv &= m->is_valuable();
       });
     if(!rv) {

@@ -104,13 +104,15 @@ void netlist::ConElem::db_expunge() {
   for_each(con.begin(), con.end(), [](shared_ptr<ConElem>& m) {m->db_expunge();});
 }
 
-bool netlist::ConElem::elaborate(const NetComp::ctype_t mctype, const vector<NetComp *>& fp) {
+bool netlist::ConElem::elaborate(NetComp::elab_result_t &result, const NetComp::ctype_t mctype, const vector<NetComp *>& fp) {
   bool rv = true;
-  rv &= exp->elaborate();
+  result = NetComp::ELAB_Normal;
+
+  rv &= exp->elaborate(result);
   if(!rv) return false;
   
-  for_each(con.begin(), con.end(), [&rv](shared_ptr<ConElem>& m) {
-      rv &= m->elaborate();
+  for_each(con.begin(), con.end(), [&rv, &result](shared_ptr<ConElem>& m) {
+      rv &= m->elaborate(result);
     });
   if(!rv) return false;
 
@@ -232,7 +234,6 @@ void netlist::Concatenation::reduce() {
             (*it)->exp->is_valuable()) { // both pre and it are numbers
       (*pre)->exp->concatenate(*((*it)->exp));
       it = data.erase(it);
-      std::cout << *this << std::endl;
     } else { 
       pre = it; 
       it++; 
@@ -240,10 +241,11 @@ void netlist::Concatenation::reduce() {
   }
 }
 
-bool netlist::Concatenation::elaborate(const ctype_t mctype, const vector<NetComp *>& fp) {
+bool netlist::Concatenation::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
   bool rv = true;
-  for_each(data.begin(), data.end(), [&rv](shared_ptr<ConElem>& m){
-      rv &= m->elaborate();
+  result = ELAB_Normal;
+  for_each(data.begin(), data.end(), [&rv, &result](shared_ptr<ConElem>& m){
+      rv &= m->elaborate(result);
     });
   if(!rv) return false;
 

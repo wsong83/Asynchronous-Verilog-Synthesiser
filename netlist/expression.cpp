@@ -396,12 +396,13 @@ Expression* netlist::Expression::deep_copy() const {
   return rv;
 }
 
-bool netlist::Expression::elaborate(const ctype_t mctype, const vector<NetComp *>& fp) {
+bool netlist::Expression::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
   bool rv = true;
+  result = ELAB_Normal;
   
   // resolve all operation if possible
-  for_each(eqn.begin(), eqn.end(), [&rv](shared_ptr<Operation>& m) {
-      rv &= m->elaborate();
+  for_each(eqn.begin(), eqn.end(), [&rv, &result](shared_ptr<Operation>& m) {
+      rv &= m->elaborate(result);
     });
   if(!rv) return false;
 

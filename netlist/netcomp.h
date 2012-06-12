@@ -74,7 +74,8 @@
 
 #ifndef NETLIST_ELABORATE_DECL
 #define NETLIST_ELABORATE_DECL                                                                \
-  virtual bool elaborate(const netlist::NetComp::ctype_t mctype = netlist::NetComp::tUnknown, \
+  virtual bool elaborate(netlist::NetComp::elab_result_t &,                                   \
+                         const netlist::NetComp::ctype_t mctype = netlist::NetComp::tUnknown, \
                          const std::vector<NetComp *>& fp = std::vector<NetComp *>());
 #endif
 
@@ -145,8 +146,15 @@ namespace netlist{
     }
 
     // elaborate and check
-    virtual bool elaborate(const ctype_t mctype = netlist::NetComp::tUnknown,
-                           const std::vector<NetComp *>& fp = std::vector<NetComp *>()) {
+    enum elab_result_t {
+      ELAB_Normal,              /* normal */
+      ELAB_Empty,               /* the whole component is empty */
+      ELAB_Const_If             /* the if condition is constant and should be reduced */
+    };
+
+    virtual bool elaborate( elab_result_t& result,
+                            const ctype_t mctype = netlist::NetComp::tUnknown,
+                            const std::vector<NetComp *>& fp = std::vector<NetComp *>()) {
       std::cerr << "ERROR!!, the elaborate() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
       assert(0 == "elaborate() of NetComp is used");
     }
