@@ -200,7 +200,8 @@ void netlist::Concatenation::reduce() {
     } else {			// a {x{con}}
       if((*it)->exp->is_valuable()) { // x is a const number, repeat con for x times
         for(mpz_class i = (*it)->exp->get_value().get_value(); i!=0; i--) {
-          data.insert(it,(*it)->con.begin(), (*it)->con.end());
+          shared_ptr<ConElem> newConElem((*it)->deep_copy());
+          data.insert(it, newConElem->con.begin(), newConElem->con.end());
         }
         data.erase(it);
  
