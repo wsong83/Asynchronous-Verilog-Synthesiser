@@ -212,8 +212,8 @@ bool netlist::CaseState::elaborate(elab_result_t &result, const ctype_t mctype, 
   if(!rv) return false;
 
   // elaborate all case items
-  for_each(cases.begin(), cases.end(), [&rv, &result](shared_ptr<CaseItem>& m) {
-      rv &= m->elaborate(result);
+  for_each(cases.begin(), cases.end(), [&rv, &result, &mctype](shared_ptr<CaseItem>& m) {
+      rv &= m->elaborate(result, mctype);
     });
   if(!rv) return false;
 

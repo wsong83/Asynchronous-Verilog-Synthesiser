@@ -279,18 +279,38 @@ string netlist::Variable::get_short_string() const {
 
 bool netlist::Variable::multi_driver_checker() {
   bool rv = true;
-  map<unsigned long, pair<SeqBlock*, vector<shared_ptr<Range> > > > driverMap;
-  for_each(fan[0].begin(), fan[0].end(), [&driverMap](pair<const unsigned int, VIdentifier*>& m) {
-      assert(m.second->get_alwaysp() != NULL);
-      driverMap[(unsigned long)(m.second->get_alwaysp())] = 
-        pair<SeqBlock*, vector<shared_ptr<Range> > >(m.second->get_alwaysp(), vector<shared_ptr<Range> >());
-    });
+  map<unsigned long, pair<SeqBlock*, vector<shared_ptr<Range> > > > driverMapSeq; // seq-blocks
+  map<unsigned long, pair<VIdentifier*, vector<shared_ptr<Range> > > > driverMapAssign; // assigns
+  for_each
+    (fan[0].begin(), fan[0].end(), 
+     [&driverMapSeq, &driverMapAssign] (pair<const unsigned int, VIdentifier*>& m) 
+     {
+       if(m.second->get_alwaysp() != NULL) { // seq-blocks
+         driverMapSeq[(unsigned long)(m.second->get_alwaysp())] = 
+           pair<SeqBlock*, vector<shared_ptr<Range> > >(m.second->get_alwaysp(), vector<shared_ptr<Range> >());
+       } else {                  // assigns
+         driverMapAssign[(unsigned long)(m.second)] = 
+           pair<VIdentifier *, vector<shared_ptr<Range> > >(m.second, vector<shared_ptr<Range> >());
+       }
+     });
   
-  if(driverMap.size() > 1) {
-    G_ENV->error(loc, "ELAB-VAR-1", name.name, 
-                 toString(driverMap.begin()->second.first->loc),
-                 toString(driverMap.rbegin()->second.first->loc)
-                 );
+  if(driverMapSeq.size() +  driverMapAssign.size() > 1) {
+    if(driverMapSeq.size() > 1) { // mulitple seq-blocks
+      G_ENV->error(loc, "ELAB-VAR-1", name.name, 
+                   toString(driverMapSeq.begin()->second.first->loc),
+                   toString(driverMapSeq.rbegin()->second.first->loc)
+                   );
+    } else if(driverMapAssign.size() > 1) { // multiple assigns
+      G_ENV->error(loc, "ELAB-VAR-1", name.name, 
+                   toString(driverMapAssign.begin()->second.first->loc),
+                   toString(driverMapAssign.rbegin()->second.first->loc)
+                   );
+    } else {                    // seq-block and assign
+      G_ENV->error(loc, "ELAB-VAR-1", name.name, 
+                   toString(driverMapSeq.begin()->second.first->loc),
+                   toString(driverMapAssign.begin()->second.first->loc)
+                   );
+    }      
     rv = false;
   }
 
