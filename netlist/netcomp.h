@@ -149,7 +149,10 @@ namespace netlist{
     enum elab_result_t {
       ELAB_Normal,              /* normal */
       ELAB_Empty,               /* the whole component is empty */
-      ELAB_Const_If             /* the if condition is constant and should be reduced */
+      ELAB_Const_If,            /* the if condition is constant and should be reduced */
+      ELAB_Const_Case,          /* the case condition is constant and should be reduced */
+      ELAB_To_If_Case           /* the case statement has only 1 or 2 case items, */
+                                /*   which can be reduced to simpler if statements */
     };
 
     virtual bool elaborate( elab_result_t& result,

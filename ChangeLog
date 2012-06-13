@@ -1,3 +1,6 @@
+##### Wed 13/06/2012
+* Add elaborate() to netlist::CaseState and netlist::CaseItem. Error types and result types are added accordingly.
+
 ##### Tue 12/06/2012
 * Add removal and reduction in netlist::Block.
 * Add another return value in elaborate(), elab_result_t result, to identifier the required operation in the upper level, 

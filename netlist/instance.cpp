@@ -273,7 +273,7 @@ bool netlist::Instance::update_ports() {
   for(it=port_list.begin(), end=port_list.end(); it!=end; it++) {
     shared_ptr<Port> portp = modp->find_port((*it)->pname);
     if(portp.use_count() == 0) {
-      G_ENV->error(loc, "ELAB-INST-2", (*it)->pname.name, mname.name);
+      G_ENV->error(loc, "ELAB-INST-1", (*it)->pname.name, mname.name);
       return false;
     } else {
       (*it)->set_dir(portp->get_dir());

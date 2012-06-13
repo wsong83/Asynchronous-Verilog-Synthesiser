@@ -80,8 +80,10 @@ namespace netlist{
     virtual CaseItem* deep_copy() const;
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
+    NETLIST_ELABORATE_DECL;
     NETLIST_SET_ALWAYS_POINTER_DECL;
     bool is_default() const {return exps.size() == 0; }
+    bool is_match(const Number&) const; /* whether this case match with the number (arguement) */
 
     // data
     std::list<boost::shared_ptr<Expression> > exps;
@@ -138,6 +140,7 @@ namespace netlist{
     virtual CaseState* deep_copy() const;
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
+    NETLIST_ELABORATE_DECL;
     NETLIST_SET_ALWAYS_POINTER_DECL;
     void set_name(const BIdentifier& nm) {name = nm; named=true;}
     bool is_named() const { return named; }

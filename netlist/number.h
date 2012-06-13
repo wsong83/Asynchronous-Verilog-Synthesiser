@@ -55,6 +55,7 @@ namespace netlist {
     Number& operator+= (const Number& rhs);
     Number& lfsh (int rhs);
     void concatenate(const Number&); /* concatenate two fixed-point number */
+    static std::string trim_zeros(const std::string&);
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
