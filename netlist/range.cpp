@@ -197,6 +197,116 @@ netlist::Range::Range(const location& lloc, const Range_Exp& sel, int updown)
   }
 }
 
+Range& netlist::Range::op_and ( const Range& rhs) {
+  assert(is_valuable() && rhs.is_valuable());
+  if(is_empty()) return *this;                             // left empty
+  if(rhs.is_empty()) { rtype = TR_Empty; return *this; }   // right empty
+  if(rtype == TR_Const && rhs.rtype == TR_Const) {
+    if(c == rhs.c) return *this;                           // equal 
+    else {rtype = TR_Empty; return *this; }                // single and unequal
+  }
+  if(rtype == TR_Const) {
+    if(c <= rhs.cr.first && c >= rhs.cr.second) return *this; // left single and belong to right
+    else { rtype = TR_Empty; return *this; }                  // left single but not belong to right
+  } else if(rhs.rtype == TR_Const) {
+    if(rhs.c <= cr.first && rhs.c >= cr.second) {             // right single and belong to left
+      c = rhs.c;
+      rtype = TR_Const;
+      return *this;
+    }
+    else { rtype = TR_Empty; return *this; }                  // right single but not belong to left
+  } else {
+    cr.first  = cr.first  > rhs.cr.first  ? rhs.cr.first  : cr.first ;
+    cr.second = cr.second < rhs.cr.second ? rhs.cr.second : cr.second;
+    if(cr.first < cr.second) { rtype = TR_Empty; return *this; } // no shared area
+    if(cr.first == cr.second) { c = cr.first; rtype = TR_Const; return *this;} // only one bit
+    return *this;
+  }
+}
+
+Range& netlist::Range::op_or ( const Range& rhs) {
+  assert(is_valuable() && rhs.is_valuable());
+  if(rhs.is_empty()) return *this;                         // right empty
+  if(is_empty()) { rtype = rhs.rtype; c = rhs.c; cr=rhs.cr; return *this; }   // left empty
+  if(rtype == TR_Const && rhs.rtype == TR_Const) {
+    if(c == rhs.c) return *this;                           // equal 
+    else if(c == rhs.c + 1 || c + 1 == rhs.c) {            // adjacent
+      cr.first = c > rhs.c ? c : rhs.c;
+      cr.second = c > rhs.c ? rhs.c : c;
+      rtype = TR_CRange;
+      return *this;
+    } else {rtype = TR_Err; return *this; }                  // single and unadjacent
+  }
+  if(rtype == TR_Const) {
+    if(c <= rhs.cr.first+1 && c+1 >= rhs.cr.second) {      // left single and belong to right
+      cr.first = c > rhs.cr.first ? c : rhs.cr.first;
+      cr.second = rhs.cr.second > c ? c : rhs.cr.second;
+      rtype = TR_CRange;
+      return *this;
+    } else { rtype = TR_Err; return *this; }               // not adjacent
+  } else if(rhs.rtype == TR_Const) {
+    if(rhs.c <= cr.first+1 && rhs.c+1 >= cr.second) {      // right single and belong to left
+      cr.first = rhs.c > cr.first ? rhs.c : cr.first;
+      cr.second = cr.second > rhs.c ? rhs.c : cr.second;
+      return *this;
+    } else { rtype = TR_Err; return *this; }             // not adjacent
+  } else {
+    if(cr.second <= rhs.cr.first + 1) {
+      cr.first  = cr.first  > rhs.cr.first  ? cr.first  : rhs.cr.first ;
+      cr.second = cr.second < rhs.cr.second ? cr.second : rhs.cr.second;
+      return *this;
+    } else {rtype = TR_Err; return *this; }             // not adjacent
+  }
+}
+
+bool netlist::Range::op_equ(const Range& rhs) const {
+  switch(rtype) {
+  case TR_Empty: return rhs.rtype == TR_Empty;
+  case TR_Const: return rhs.rtype == TR_Const && c == rhs.c;
+  case TR_CRange: return rhs.rtype == TR_CRange && cr.first == rhs.cr.first && cr.second == rhs.cr.second;
+  case TR_Var: return rhs.rtype == TR_Var;
+  default: return false;
+  }
+}
+
+bool netlist::Range::op_belong_to(const Range& rhs) const {
+  assert(is_valuable() && rhs.is_valuable());
+  if(rtype == TR_Empty) return true;
+  if(rhs.rtype == TR_Empty) return false;
+  if(rtype == TR_Const && rhs.rtype == TR_Const)
+    if(c == rhs.c) return true;
+    else return false;
+  else if(rtype == TR_Const) {
+    if(c <= rhs.cr.first && c >= rhs.cr.second) return true;
+    else return false;
+  } else if(rhs.rtype == TR_Const) {
+    if(rhs.c == cr.first && rhs.c == cr.second) return true;
+    else return false;
+  } else {
+    if(cr.first <= rhs.cr.first && cr.second >= rhs.cr.second) return true;
+    else return false;
+  }
+}
+
+bool netlist::Range::op_adjacent_to(const Range& rhs) const {
+  assert(is_valuable() && rhs.is_valuable());
+  if(rtype == TR_Empty || rhs.rtype == TR_Empty) return false;
+  if(rtype == TR_Const && rhs.rtype == TR_Const) {
+    if(c <= rhs.c+1 && c+1 >= rhs.c) return true;
+    else return false;
+  }
+  if(rtype == TR_Const) {
+    if(c <= rhs.cr.first+1 && c+1 >= rhs.cr.second) return true;
+    else return false;
+  }
+  if(rhs.rtype == TR_Const) {
+    if(rhs.c <= cr.first+1 && rhs.c+1 >= cr.second) return true;
+    else return false;
+  }
+  else if(cr.second <= rhs.cr.first+1 || rhs.cr.second <= cr.first + 1) return true;
+  else return false;
+} 
+
 void netlist::Range::db_register(int iod) {
   switch(rtype) {
   case TR_Var: v->db_register(1); break;
@@ -237,6 +347,7 @@ ostream& netlist::Range::streamout(ostream& os, unsigned int indent) const {
     break;
   }
   case TR_CRange: os << cr.first.get_value() << ":" << cr.second.get_value(); break;
+  case TR_Empty: os << "empty"; break;
   default: // should not go here
     assert(0 == "Wrong range type");
   }
@@ -264,6 +375,7 @@ Range* netlist::Range::deep_copy() const {
   case TR_Var: rv->v = shared_ptr<Expression>(v->deep_copy()); break;
   case TR_Range: rv->r = Range_Exp(shared_ptr<Expression>(r.first->deep_copy()), shared_ptr<Expression>(r.second->deep_copy())); break;
   case TR_CRange: rv->cr = cr; break;
+  case TR_Empty: break;
   default: // should not go here
     assert(0 == "Wrong range type");
   }
@@ -306,4 +418,36 @@ bool netlist::Range::elaborate(elab_result_t &result, const ctype_t mctype, cons
   }
 
   return rv;
+}
+
+Range netlist::operator& ( const Range& lhs, const Range& rhs) {
+  shared_ptr<Range> rv;
+  if(!rhs.is_valuable()) {
+    rv.reset(lhs.deep_copy());
+  } else if(!lhs.is_valuable()) {
+    rv.reset(rhs.deep_copy());
+  } else {
+    rv.reset(lhs.deep_copy());
+    rv->op_and(rhs);
+  }
+  return *rv;
+}
+
+Range netlist::operator| ( const Range& lhs, const Range& rhs) {
+  shared_ptr<Range> rv;
+  if(!lhs.is_valuable()) {
+    rv.reset(lhs.deep_copy());
+  } else if(!rhs.is_valuable()) {
+    rv.reset(rhs.deep_copy());
+  } else {
+    rv.reset(lhs.deep_copy());
+    rv->op_or(rhs);
+  }
+  return *rv;
+}
+ 
+bool netlist::operator>= (const Range& lhs, const Range& rhs) {
+  if(!lhs.is_valuable()) return true;
+  if(!rhs.is_valuable()) return false;
+  return rhs.op_belong_to(lhs);
 }

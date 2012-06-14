@@ -50,11 +50,17 @@ namespace netlist {
     Range(const shell::location&, const Range_Exp&, int); /* select by a range expression using positive or negtive colon */
 
     // helpers
-    bool is_const() const { return rtype == TR_Const || rtype == TR_CRange; }
     bool is_single() const {return rtype != TR_Range && rtype != TR_CRange; }
+    bool is_empty() const { return rtype == TR_Empty; }
     void set_dim() { dim = true;}
     bool is_dim() const { return dim;}
-    bool is_valuable() const { return (rtype == TR_Const || rtype == TR_CRange); }
+    bool is_valuable() const { return (rtype == TR_Const || rtype == TR_CRange|| rtype == TR_Empty); }
+    bool is_valid() const { return rtype != TR_Err; }
+    Range& op_and(const Range&);           /* helper for operator & */
+    Range& op_or(const Range&);            /* helper for operator | */
+    bool op_equ(const Range&) const;       /* helper for operator == */
+    bool op_belong_to(const Range&) const; /* helper for >= */
+    bool op_adjacent_to(const Range&) const;
 
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
@@ -65,23 +71,30 @@ namespace netlist {
     virtual void db_expunge();
     NETLIST_ELABORATE_DECL;
 
+    std::list<boost::shared_ptr<Range> > child; /* a multi-tree structure to support range array*/
+
   private:
     Number c;                          /* constant */
     boost::shared_ptr<Expression> v;   /* variable */
     Range_Exp r;                       /* range expression */
     Range_Const cr;                    /* const range */
-    bool dim;                          /* true when it is a dimension rather than range */
+    bool dim;                          /* true when it is a dimension rather than a range */
     
     enum rtype_t {
       TR_Err,
+      TR_Empty,
       TR_Const, 
-      TR_Var, 
+      TR_Var,
       TR_Range,
       TR_CRange
     } rtype;
-    
 
   };
+
+  Range operator& ( const Range&, const Range&);
+  Range operator| ( const Range&, const Range&);
+  bool operator>= ( const Range& lhs, const Range& rhs); /* whether rhs belongs to lhs */
+  bool operator== ( const Range& lhs, const Range& rhs);
 
   NETLIST_STREAMOUT(Range)
 

@@ -421,6 +421,26 @@ bool netlist::operator!= (const Number& lhs, const Number& rhs) {
     return false;
 }
 
+bool netlist::operator< (const Number& lhs, const Number& rhs) {
+  assert(lhs.is_valuable() && rhs.is_valuable());
+  return lhs.get_value() < rhs.get_value();
+}
+
+bool netlist::operator<= (const Number& lhs, const Number& rhs) {
+  assert(lhs.is_valuable() && rhs.is_valuable());
+  return lhs.get_value() <= rhs.get_value();
+}
+
+bool netlist::operator> (const Number& lhs, const Number& rhs) {
+  assert(lhs.is_valuable() && rhs.is_valuable());
+  return lhs.get_value() > rhs.get_value();
+}
+
+bool netlist::operator>= (const Number& lhs, const Number& rhs) {
+  assert(lhs.is_valuable() && rhs.is_valuable());
+  return lhs.get_value() >= rhs.get_value();
+}
+
 bool netlist::case_equal(const Number& lhs, const Number& rhs) {
   return (Number::trim_zeros(lhs.get_txt_value()) == Number::trim_zeros(rhs.get_txt_value()));
 }  
