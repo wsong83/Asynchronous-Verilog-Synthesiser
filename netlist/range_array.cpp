@@ -27,11 +27,32 @@
  */
 
 #include "component.h"
+#include <algorithm>
 
 using namespace netlist;
 using std::ostream;
 using std::string;
 using std::vector;
+using std::for_each;
 using boost::shared_ptr;
 using shell::location;
+
+RangeArray& netlist::RangeArray::op_and(const RangeArray& rhs) {
+  return *this;
+}
+
+RangeArray* netlist::RangeArray::deep_copy() const {
+  RangeArray* rv = new RangeArray();
+  for_each(child.begin(), child.end(). [&rv](shared_ptr<Range>) {
+      rv->child.push_back(m->deep_copy());
+    });
+  rv->valuable = valuable;
+  return rv;
+}
+
+RangeArray netlist::operator& (const RangeArray& lhs, const RangeArray& rhs) {
+  shared_ptr<RangeArray> rv(lhs.deep_copy());
+  rv->op_and(rhs);
+  return *rv;
+}
 

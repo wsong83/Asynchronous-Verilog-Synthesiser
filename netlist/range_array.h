@@ -34,10 +34,14 @@ namespace netlist {
   class RangeArray : public NetComp {
   public:
     // constructors
+    RangeArray() : NetComp(tRangeArray), valuable(false) {}
+    RangeArray(const std::list<boost::shared_ptr<Range> >& rhs) 
+      : NetComp(tRangeArray), child(rhs), valuable(false) { } /* valuable needs to be calculated!! */
 
     // helpers
     bool empty() const { return child.size() == 0;}
     bool is_valuable() const { return valuable; }
+    RangeArray& op_and(const RangeArray&); /* helper for operator & */
 
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
@@ -49,7 +53,7 @@ namespace netlist {
     NETLIST_ELABORATE_DECL;
 
   private:
-    std::list<shared_ptr<Range> > child;
+    std::list<boost::shared_ptr<Range> > child;
     bool valuable;
 
   };

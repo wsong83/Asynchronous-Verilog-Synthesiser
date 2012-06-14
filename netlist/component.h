@@ -67,6 +67,9 @@ namespace netlist {
   // range.h
   class Range;			/* range expression */
 
+  // array of range expressions
+  class RangeArray;
+
   // expression.h
   class Expression;		/* expressions */
 
@@ -132,6 +135,7 @@ namespace netlist {
 #include "concatenation.h"
 #include "lconcatenation.h"
 #include "range.h"
+#include "range_array.h"
 #include "port.h"
 #include "variable.h"
 #include "assign.h"

@@ -52,6 +52,7 @@ enum ctype_t {
   tPortName,                /* port name */
   tRegister,                /* reg */
   tRange,                   /* range */
+  tRangeArray,              /* array of range expressions */
   tSeqBlock,                /* sequential block in always */
   tVariable,                /* variable, including wire, reg, and parameter */
   tVarName,                 /* variable name */
@@ -85,6 +86,7 @@ std::string get_type_name() const {
   case tPortConn:        rv = "Port Connection";         break;
   case tPortName:        rv = "Port Name";               break;
   case tRange:           rv = "Range Expression";        break;
+  case tRangeArray:      rv = "Array of Range";          break;
   case tSeqBlock:        rv = "Sequential Block";        break;
   case tVariable:        rv = "Variable Declaration";    break;
   case tVarName:         rv = "Variable Name";           break;

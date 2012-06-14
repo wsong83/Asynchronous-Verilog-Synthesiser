@@ -1,3 +1,8 @@
+##### Thu 14/06/2012
+* Add a new class namely netlist::RangeArray to handled multi-dimension range operations. In process.
+* Add &, |, >=, and - operation to netlist::Range classes.
+* Add >, >=, <, <= to netlist::Number classes.
+
 ##### Wed 13/06/2012
 * Add elaborate() to netlist::CaseState and netlist::CaseItem. Error types and result types are added accordingly.
 
