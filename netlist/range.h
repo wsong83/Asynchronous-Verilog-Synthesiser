@@ -29,12 +29,14 @@
 #ifndef AV_H_RANGE_
 #define AV_H_RANGE_
 
+#include "range_array_common.h"
+
 namespace netlist {
 
   typedef std::pair<boost::shared_ptr<Expression>, boost::shared_ptr<Expression> > Range_Exp;
   typedef std::pair<Number, Number> Range_Const;
 
-  class Range : public NetComp {
+  class Range : public NetComp , public RangeArrayCommon{
   public:
     // constructors
     Range() : NetComp(tRange), dim(false), rtype(TR_Err) { }
@@ -56,9 +58,11 @@ namespace netlist {
     bool is_dim() const { return dim;}
     bool is_valuable() const { return (rtype == TR_Const || rtype == TR_CRange|| rtype == TR_Empty); }
     bool is_valid() const { return rtype != TR_Err; }
-    Range& op_and(const Range&);           /* helper for operator & */
-    Range& op_or(const Range&);            /* helper for operator | */
+    void const_copy( const Range&);   // copy the const content to this
+    Range op_and(const Range&) const;           /* helper for operator & */
+    Range op_or(const Range&) const;            /* helper for operator | */
     bool op_equ(const Range&) const;       /* helper for operator == */
+    bool op_equ_tree(const Range&) const;  /* equal calculation in tree structure */
     bool op_belong_to(const Range&) const; /* helper for >= */
     bool op_adjacent_to(const Range&) const;
 
@@ -70,8 +74,6 @@ namespace netlist {
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
     NETLIST_ELABORATE_DECL;
-
-    std::list<boost::shared_ptr<Range> > child; /* a multi-tree structure to support range array*/
 
   private:
     Number c;                          /* constant */
@@ -91,8 +93,8 @@ namespace netlist {
 
   };
 
-  Range operator& ( const Range&, const Range&);
-  Range operator| ( const Range&, const Range&);
+  inline Range operator& ( const Range& lhs, const Range& rhs) { return lhs.op_and(rhs); }
+  inline Range operator| ( const Range& lhs, const Range& rhs) { return lhs.op_or(rhs); }
   bool operator>= ( const Range& lhs, const Range& rhs); /* whether rhs belongs to lhs */
   bool operator== ( const Range& lhs, const Range& rhs);
 
@@ -101,3 +103,7 @@ namespace netlist {
 }
 
 #endif
+
+// Local Variables:
+// mode: c++
+// End:

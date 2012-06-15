@@ -20,8 +20,8 @@
  */
 
 /* 
- * Range array
- * 14/06/2012   Wei Song
+ * The common base class shared between range array and range
+ * 15/06/2012   Wei Song
  *
  *
  */
@@ -33,26 +33,30 @@ using namespace netlist;
 using std::ostream;
 using std::string;
 using std::vector;
+using std::list;
 using std::for_each;
 using boost::shared_ptr;
 using shell::location;
 
-RangeArray& netlist::RangeArray::op_and(const RangeArray& rhs) {
-  return *this;
-}
+bool netlist::RangeArrayCommon::op_equ(const list<shared_ptr<Range> >& rhs) const {
+  bool rv = true;
+  // now it is still a naive compare, if there are multiple variable range, the comparison can fail.
+  list<shared_ptr<Range> >::const_iterator lit, lend, rit, rend;
+  lit = child.begin();
+  lend = child.end();
+  rit = rhs.begin();
+  rend = rhs.end();
 
-RangeArray* netlist::RangeArray::deep_copy() const {
-  RangeArray* rv = new RangeArray();
-  for_each(child.begin(), child.end(), [&rv](const shared_ptr<Range>& m) {
-      rv->child.push_back(shared_ptr<Range>(m->deep_copy()));
-    });
-  rv->valuable = valuable;
+  //compare all childs
+  while(lit != lend && rit != rend) {
+    rv &= (*lit)->op_equ_tree(**rit);
+    lit++;
+    rit++;
+  }
+
+  // check that both range array are travelled
+  if(lit!=lend || rit != rend) rv = false;
+
   return rv;
-}
 
-RangeArray netlist::operator& (const RangeArray& lhs, const RangeArray& rhs) {
-  shared_ptr<RangeArray> rv(lhs.deep_copy());
-  rv->op_and(rhs);
-  return *rv;
 }
-

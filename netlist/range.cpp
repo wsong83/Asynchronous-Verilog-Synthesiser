@@ -197,65 +197,93 @@ netlist::Range::Range(const location& lloc, const Range_Exp& sel, int updown)
   }
 }
 
-Range& netlist::Range::op_and ( const Range& rhs) {
-  assert(is_valuable() && rhs.is_valuable());
-  if(is_empty()) return *this;                             // left empty
-  if(rhs.is_empty()) { rtype = TR_Empty; return *this; }   // right empty
+void netlist::Range::const_copy( const Range& rhs) {
+  c = rhs.c;
+  cr = rhs.cr;
+  rtype = rhs.rtype;
+  dim = rhs.dim;
+}
+
+Range netlist::Range::op_and ( const Range& rhs) const{
+  Range rv;
+
+  if(rtype == TR_Err || rhs.rtype == TR_Err) return rv; // error
+
+  if(rtype == TR_Empty || rhs.rtype == TR_Empty)        // either empty
+    { rv.rtype = TR_Empty; return rv; }
+
+  if(!is_valuable() && !rhs.is_valuable())              // both variable, return full
+    { rv.rtype = TR_Var; return rv; }
+
+  if(!is_valuable())          { rv.const_copy(rhs);   return rv; }  // variable, return rhs
+  else if(!rhs.is_valuable()) { rv.const_copy(*this); return rv; }  // rhs variable, return this
+
+  // both const
   if(rtype == TR_Const && rhs.rtype == TR_Const) {
-    if(c == rhs.c) return *this;                           // equal 
-    else {rtype = TR_Empty; return *this; }                // single and unequal
+    if(c == rhs.c) { rv.const_copy(rhs);  return rv; }            // equal 
+    else           { rv.rtype = TR_Empty; return rv; }            // single and unequal
   }
+  
   if(rtype == TR_Const) {
-    if(c <= rhs.cr.first && c >= rhs.cr.second) return *this; // left single and belong to right
-    else { rtype = TR_Empty; return *this; }                  // left single but not belong to right
+    if(c <= rhs.cr.first && c >= rhs.cr.second) 
+           { rv.const_copy(*this); return rv; }              // left single and belong to right
+    else   { rv.rtype = TR_Empty;  return rv; }              // left single but not belong to right
   } else if(rhs.rtype == TR_Const) {
-    if(rhs.c <= cr.first && rhs.c >= cr.second) {             // right single and belong to left
-      c = rhs.c;
-      rtype = TR_Const;
-      return *this;
-    }
-    else { rtype = TR_Empty; return *this; }                  // right single but not belong to left
+    if(rhs.c <= cr.first && rhs.c >= cr.second) 
+           { rv.const_copy(rhs);   return rv; }              // right single and belong to left
+    else   { rv.rtype = TR_Empty;  return rv; }              // right single but not belong to left
   } else {
-    cr.first  = cr.first  > rhs.cr.first  ? rhs.cr.first  : cr.first ;
-    cr.second = cr.second < rhs.cr.second ? rhs.cr.second : cr.second;
-    if(cr.first < cr.second) { rtype = TR_Empty; return *this; } // no shared area
-    if(cr.first == cr.second) { c = cr.first; rtype = TR_Const; return *this;} // only one bit
-    return *this;
+    rv.cr.first  = cr.first  > rhs.cr.first  ? rhs.cr.first  : cr.first ;
+    rv.cr.second = cr.second < rhs.cr.second ? rhs.cr.second : cr.second;
+    if(rv.cr.first < rv.cr.second) 
+           { rv.rtype = TR_Empty;   return rv; }                // no shared area
+    else if(rv.cr.first == rv.cr.second) 
+           { rv.c = cr.first; rv.rtype = TR_Const; return rv;}  // only one bit
+    else   { rv.rtype = TR_CRange;  return rv; }                // const range
   }
 }
 
-Range& netlist::Range::op_or ( const Range& rhs) {
-  assert(is_valuable() && rhs.is_valuable());
-  if(rhs.is_empty()) return *this;                         // right empty
-  if(is_empty()) { rtype = rhs.rtype; c = rhs.c; cr=rhs.cr; return *this; }   // left empty
+Range netlist::Range::op_or ( const Range& rhs) const {
+  Range rv;
+
+  if(rtype == TR_Err || rhs.rtype == TR_Err) return rv; // error
+
+  if(rtype == TR_Empty && rhs.rtype == TR_Empty)        // both empty, return empty
+    { rv.rtype = TR_Empty; return rv; }
+
+  if(rtype == TR_Empty)          { rv.const_copy(rhs);   return rv; }  // empty, return rhs
+  else if(rhs.rtype == TR_Empty) { rv.const_copy(*this); return rv; }  // rhs empty, return this
+
+  if(is_valuable() || rhs.is_valuable())                // either variable
+    { rv.rtype = TR_Var; return rv; }
+
+  // both const
   if(rtype == TR_Const && rhs.rtype == TR_Const) {
-    if(c == rhs.c) return *this;                           // equal 
-    else if(c == rhs.c + 1 || c + 1 == rhs.c) {            // adjacent
-      cr.first = c > rhs.c ? c : rhs.c;
-      cr.second = c > rhs.c ? rhs.c : c;
-      rtype = TR_CRange;
-      return *this;
-    } else {rtype = TR_Err; return *this; }                  // single and unadjacent
+    if(c == rhs.c) { rv.const_copy(rhs);  return rv; }            // equal 
+    else           { rv.rtype = TR_Err;   return rv; }            // single and unequal
   }
+  
+  // both const
   if(rtype == TR_Const) {
-    if(c <= rhs.cr.first+1 && c+1 >= rhs.cr.second) {      // left single and belong to right
-      cr.first = c > rhs.cr.first ? c : rhs.cr.first;
-      cr.second = rhs.cr.second > c ? c : rhs.cr.second;
-      rtype = TR_CRange;
-      return *this;
-    } else { rtype = TR_Err; return *this; }               // not adjacent
+    if(c <= rhs.cr.first+1 && c+1 >= rhs.cr.second) {        // left single and belong to right
+      rv.const_copy(rhs);
+      rv.cr.first = c > rv.cr.first ? c : rv.cr.first;
+      rv.cr.second = c < rv.cr.second ? c : rv.cr.second;
+      return rv;
+    } else   { rv.rtype = TR_Err;  return rv; }              // left single but not belong to right
   } else if(rhs.rtype == TR_Const) {
-    if(rhs.c <= cr.first+1 && rhs.c+1 >= cr.second) {      // right single and belong to left
-      cr.first = rhs.c > cr.first ? rhs.c : cr.first;
-      cr.second = cr.second > rhs.c ? rhs.c : cr.second;
-      return *this;
-    } else { rtype = TR_Err; return *this; }             // not adjacent
+    if(rhs.c <= cr.first+1 && rhs.c+1 >= cr.second) {        // right single and belong to left
+      rv.const_copy(*this);
+      rv.cr.first = rhs.c > rv.cr.first ? rhs.c : rv.cr.first;
+      rv.cr.second = rhs.c < rv.cr.second ? rhs.c : rv.cr.second;
+      return rv;
+    } else   { rv.rtype = TR_Err;  return rv; }              // right single but not belong to left
   } else {
-    if(cr.second <= rhs.cr.first + 1) {
-      cr.first  = cr.first  > rhs.cr.first  ? cr.first  : rhs.cr.first ;
-      cr.second = cr.second < rhs.cr.second ? cr.second : rhs.cr.second;
-      return *this;
-    } else {rtype = TR_Err; return *this; }             // not adjacent
+    if(cr.second <= rhs.cr.first+1 || cr.first+1 >= rhs.cr.second) { // adjacent
+      rv.cr.first  = cr.first  > rhs.cr.first  ? cr.first  : rhs.cr.first ;
+      rv.cr.second = cr.second < rhs.cr.second ? cr.second : rhs.cr.second;
+      rv.rtype = TR_CRange; return rv;
+    } else   { rv.rtype = TR_Err;  return rv; }              // not adjacent
   }
 }
 
@@ -267,6 +295,13 @@ bool netlist::Range::op_equ(const Range& rhs) const {
   case TR_Var: return rhs.rtype == TR_Var;
   default: return false;
   }
+}
+
+bool netlist::Range::op_equ_tree(const Range& rhs) const {
+  bool rv = true;
+  rv &= op_equ(rhs);
+  if(rv) rv &= RangeArrayCommon::op_equ(rhs.child);
+  return rv;
 }
 
 bool netlist::Range::op_belong_to(const Range& rhs) const {
@@ -420,32 +455,6 @@ bool netlist::Range::elaborate(elab_result_t &result, const ctype_t mctype, cons
   return rv;
 }
 
-Range netlist::operator& ( const Range& lhs, const Range& rhs) {
-  shared_ptr<Range> rv;
-  if(!rhs.is_valuable()) {
-    rv.reset(lhs.deep_copy());
-  } else if(!lhs.is_valuable()) {
-    rv.reset(rhs.deep_copy());
-  } else {
-    rv.reset(lhs.deep_copy());
-    rv->op_and(rhs);
-  }
-  return *rv;
-}
-
-Range netlist::operator| ( const Range& lhs, const Range& rhs) {
-  shared_ptr<Range> rv;
-  if(!lhs.is_valuable()) {
-    rv.reset(lhs.deep_copy());
-  } else if(!rhs.is_valuable()) {
-    rv.reset(rhs.deep_copy());
-  } else {
-    rv.reset(lhs.deep_copy());
-    rv->op_or(rhs);
-  }
-  return *rv;
-}
- 
 bool netlist::operator>= (const Range& lhs, const Range& rhs) {
   if(!lhs.is_valuable()) return true;
   if(!rhs.is_valuable()) return false;

@@ -29,14 +29,16 @@
 #ifndef AV_H_RANGE_ARRAY_
 #define AV_H_RANGE_ARRAY_
 
+#include "range_array_common.h"
+
 namespace netlist {
 
-  class RangeArray : public NetComp {
+  class RangeArray : public NetComp, public RangeArrayCommon {
   public:
     // constructors
     RangeArray() : NetComp(tRangeArray), valuable(false) {}
     RangeArray(const std::list<boost::shared_ptr<Range> >& rhs) 
-      : NetComp(tRangeArray), child(rhs), valuable(false) { } /* valuable needs to be calculated!! */
+      : NetComp(tRangeArray), RangeArrayCommon(rhs), valuable(false) { } /* valuable needs to be calculated!! */
 
     // helpers
     bool empty() const { return child.size() == 0;}
@@ -44,16 +46,15 @@ namespace netlist {
     RangeArray& op_and(const RangeArray&); /* helper for operator & */
 
     // inherit from NetComp
-    NETLIST_SET_FATHER_DECL;
-    NETLIST_STREAMOUT_DECL;
-    NETLIST_CHECK_INPARSE_DECL;
+    //NETLIST_SET_FATHER_DECL;
+    //NETLIST_STREAMOUT_DECL;
+    //NETLIST_CHECK_INPARSE_DECL;
     virtual RangeArray* deep_copy() const;
-    virtual void db_register(int iod = 1);
-    virtual void db_expunge();
-    NETLIST_ELABORATE_DECL;
+    //virtual void db_register(int iod = 1);
+    //virtual void db_expunge();
+    //NETLIST_ELABORATE_DECL;
 
   private:
-    std::list<boost::shared_ptr<Range> > child;
     bool valuable;
 
   };
@@ -67,3 +68,7 @@ namespace netlist {
 }
 
 #endif
+
+// Local Variables:
+// mode: c++
+// End:

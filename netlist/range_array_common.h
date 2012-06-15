@@ -20,39 +20,36 @@
  */
 
 /* 
- * Range array
- * 14/06/2012   Wei Song
+ * The common base class shared between range array and range
+ * 15/06/2012   Wei Song
  *
  *
  */
 
-#include "component.h"
-#include <algorithm>
+#ifndef AVS_H_RANGE_ARRAY_COMMON_
+#define AVS_H_RANGE_ARRAY_COMMON_
 
-using namespace netlist;
-using std::ostream;
-using std::string;
-using std::vector;
-using std::for_each;
-using boost::shared_ptr;
-using shell::location;
+namespace netlist {
 
-RangeArray& netlist::RangeArray::op_and(const RangeArray& rhs) {
-  return *this;
+  class RangeArrayCommon {
+  public:
+    RangeArrayCommon() {}
+    RangeArrayCommon(const std::list<boost::shared_ptr<Range> >& rhs) : child(rhs) {}
+
+    // helpers
+    void op_and(const std::list<boost::shared_ptr<Range> >&); // get the shared range of two range arrays
+    void op_or(const std::list<boost::shared_ptr<Range> >&);  // get the combined range of two range arrays
+    bool op_equ(const std::list<boost::shared_ptr<Range> >&) const; // check whether two range arrays are equal
+    
+  protected:
+    std::list<boost::shared_ptr<Range> > child; // the range expressions of the lower dimension
+
+  };
+
 }
 
-RangeArray* netlist::RangeArray::deep_copy() const {
-  RangeArray* rv = new RangeArray();
-  for_each(child.begin(), child.end(), [&rv](const shared_ptr<Range>& m) {
-      rv->child.push_back(shared_ptr<Range>(m->deep_copy()));
-    });
-  rv->valuable = valuable;
-  return rv;
-}
+#endif /* AVS_H_RANGE_ARRAY_COMMON_ */
 
-RangeArray netlist::operator& (const RangeArray& lhs, const RangeArray& rhs) {
-  shared_ptr<RangeArray> rv(lhs.deep_copy());
-  rv->op_and(rhs);
-  return *rv;
-}
-
+// Local Variables:
+// mode: c++
+// End:

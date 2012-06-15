@@ -1,3 +1,9 @@
+##### Fri 15/06/2012
+* Rewrite the & and | operations for netlist::Range to const functions as it will be too complicated to handle range 
+  expressions with real VIdentifiers.
+* Set up a new class netlist::RangeArrayCommon as the common base class of RangeArray and Range to handled the range array
+  related operations, otherwise the same member function are to be defined twice.
+
 ##### Thu 14/06/2012
 * Add a new class namely netlist::RangeArray to handled multi-dimension range operations. In process.
 * Add &, |, >=, and - operation to netlist::Range classes.
