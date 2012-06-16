@@ -1,3 +1,6 @@
+##### Sat 16/06/2012
+* Rewrite >=, <= and == of netlist::Range.
+
 ##### Fri 15/06/2012
 * Rewrite the & and | operations for netlist::Range to const functions as it will be too complicated to handle range 
   expressions with real VIdentifiers.

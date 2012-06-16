@@ -60,10 +60,12 @@ namespace netlist {
     bool is_valid() const { return rtype != TR_Err; }
     void const_copy( const Range&);   // copy the const content to this
     Range op_and(const Range&) const;           /* helper for operator & */
+    Range op_and_tree(const Range&) const;      /* & calculation in tree structure */
     Range op_or(const Range&) const;            /* helper for operator | */
-    bool op_equ(const Range&) const;       /* helper for operator == */
-    bool op_equ_tree(const Range&) const;  /* equal calculation in tree structure */
-    bool op_belong_to(const Range&) const; /* helper for >= */
+    Range op_or_tree(const Range&) const;       /* | calculation in tree structure */
+    bool op_equ(const Range&) const;            /* helper for operator == */
+    bool op_equ_tree(const Range&) const;       /* equal calculation in tree structure */
+    bool op_belong_to(const Range&) const;      /* helper for >= */
     bool op_adjacent_to(const Range&) const;
 
     // inherit from NetComp
@@ -95,8 +97,11 @@ namespace netlist {
 
   inline Range operator& ( const Range& lhs, const Range& rhs) { return lhs.op_and(rhs); }
   inline Range operator| ( const Range& lhs, const Range& rhs) { return lhs.op_or(rhs); }
-  bool operator>= ( const Range& lhs, const Range& rhs); /* whether rhs belongs to lhs */
-  bool operator== ( const Range& lhs, const Range& rhs);
+  /* whether rhs belongs to lhs */
+  inline bool operator>= ( const Range& lhs, const Range& rhs) { return rhs.op_belong_to(lhs); }
+  /* whether lhs belongs to rhs */
+  inline bool operator<= ( const Range& lhs, const Range& rhs) { return lhs.op_belong_to(rhs); }
+  inline bool operator== ( const Range& lhs, const Range& rhs) { return lhs.op_equ(rhs); }
 
   NETLIST_STREAMOUT(Range)
 

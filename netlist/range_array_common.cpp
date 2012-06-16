@@ -38,6 +38,18 @@ using std::for_each;
 using boost::shared_ptr;
 using shell::location;
 
+list<shared_ptr<Range> > netlist::RangeArrayCommon::op_and(const list<shared_ptr<Range> >& rhs) const {
+  // (a + b) & (c + d) = ac + ad + bc + bd
+  list<shared_ptr<Range> > rv;
+  list<shared_ptr<Range> >::const_iterator lit, lend, rit, rend;
+  for(lit=child.begin(), lend=child.end(); lit!=lend; ++lit) {
+    for(rit=rhs.begin(), rend=rhs.end(); rit!=rend; ++rit) {
+      Range m = **lit & **rit;
+      assert(m.is_valid());
+      
+    }
+  }
+
 bool netlist::RangeArrayCommon::op_equ(const list<shared_ptr<Range> >& rhs) const {
   bool rv = true;
   // now it is still a naive compare, if there are multiple variable range, the comparison can fail.

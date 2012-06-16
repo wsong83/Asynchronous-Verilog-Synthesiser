@@ -243,6 +243,13 @@ Range netlist::Range::op_and ( const Range& rhs) const{
   }
 }
 
+Range netlist::Range::op_and_tree ( const Range& rhs) const{
+  Range rv(op_and(rhs));
+  if(rv.is_valid() && !rv.is_empty())
+    rv.child = RangeArrayCommon::op_and(rhs.child);
+  return rv;
+}
+
 Range netlist::Range::op_or ( const Range& rhs) const {
   Range rv;
 
@@ -254,7 +261,7 @@ Range netlist::Range::op_or ( const Range& rhs) const {
   if(rtype == TR_Empty)          { rv.const_copy(rhs);   return rv; }  // empty, return rhs
   else if(rhs.rtype == TR_Empty) { rv.const_copy(*this); return rv; }  // rhs empty, return this
 
-  if(is_valuable() || rhs.is_valuable())                // either variable
+  if(!is_valuable() || !rhs.is_valuable())                // either variable
     { rv.rtype = TR_Var; return rv; }
 
   // both const
@@ -263,7 +270,6 @@ Range netlist::Range::op_or ( const Range& rhs) const {
     else           { rv.rtype = TR_Err;   return rv; }            // single and unequal
   }
   
-  // both const
   if(rtype == TR_Const) {
     if(c <= rhs.cr.first+1 && c+1 >= rhs.cr.second) {        // left single and belong to right
       rv.const_copy(rhs);
@@ -305,41 +311,53 @@ bool netlist::Range::op_equ_tree(const Range& rhs) const {
 }
 
 bool netlist::Range::op_belong_to(const Range& rhs) const {
-  assert(is_valuable() && rhs.is_valuable());
-  if(rtype == TR_Empty) return true;
-  if(rhs.rtype == TR_Empty) return false;
-  if(rtype == TR_Const && rhs.rtype == TR_Const)
-    if(c == rhs.c) return true;
-    else return false;
-  else if(rtype == TR_Const) {
-    if(c <= rhs.cr.first && c >= rhs.cr.second) return true;
-    else return false;
+  if(rtype == TR_Err || rhs.rtype == TR_Err) return false;      // error
+  if(rtype == TR_Empty) return true;                            // empty
+  else if(rhs.rtype == TR_Empty) return false;                  // rhs empty
+
+  if(!rhs.is_valuable()) return true;                           // rhs variable
+  else if(!is_valuable())  return false;                        // variable
+
+  // both const
+  if(rtype == TR_Const && rhs.rtype == TR_Const) {
+    if(c == rhs.c) return true;                                 // equal 
+    else return false;                                          // single and unequal
+  }
+  
+  if(rtype == TR_Const) {
+    if(c <= rhs.cr.first && c >= rhs.cr.second) return true;    // left single and belong to right
+    else  return false;                                         // left single but not belong to right
   } else if(rhs.rtype == TR_Const) {
-    if(rhs.c == cr.first && rhs.c == cr.second) return true;
-    else return false;
+    if(rhs.c == cr.first+1 && rhs.c == cr.second) return true;  // equal
+    else return false;                                          // not equal
   } else {
-    if(cr.first <= rhs.cr.first && cr.second >= rhs.cr.second) return true;
-    else return false;
+    if(cr.first <= rhs.cr.first && cr.second >= rhs.cr.second)  // belong to 
+      return true;
+    else return false;                                          // not belong to 
   }
 }
 
 bool netlist::Range::op_adjacent_to(const Range& rhs) const {
-  assert(is_valuable() && rhs.is_valuable());
-  if(rtype == TR_Empty || rhs.rtype == TR_Empty) return false;
-  if(rtype == TR_Const && rhs.rtype == TR_Const) {
-    if(c <= rhs.c+1 && c+1 >= rhs.c) return true;
-    else return false;
+  if(rtype == TR_Err || rhs.rtype == TR_Err) return false;      // error
+  if(rtype == TR_Empty || rhs.rtype == TR_Empty) return false;  // either empty
+  if(!is_valuable() || !rhs.is_valuable()) return true;         // either variable
+
+  // both const
+  if(rtype == TR_Const && rhs.rtype == TR_Const) {              // both const single 
+    if(c <= rhs.c+1 && c+1 >= rhs.c) return true;               // adjacent
+    else return false;                                          // not adjacent
   }
-  if(rtype == TR_Const) {
+  if(rtype == TR_Const) {                                       // left const single
     if(c <= rhs.cr.first+1 && c+1 >= rhs.cr.second) return true;
     else return false;
-  }
-  if(rhs.rtype == TR_Const) {
+  } else if(rhs.rtype == TR_Const) {                            // right const single
     if(rhs.c <= cr.first+1 && rhs.c+1 >= cr.second) return true;
     else return false;
+  } else {                                                      // both const range 
+    if(cr.second <= rhs.cr.first+1 || rhs.cr.second <= cr.first + 1) 
+      return true;
+    else return false;
   }
-  else if(cr.second <= rhs.cr.first+1 || rhs.cr.second <= cr.first + 1) return true;
-  else return false;
 } 
 
 void netlist::Range::db_register(int iod) {
@@ -453,10 +471,4 @@ bool netlist::Range::elaborate(elab_result_t &result, const ctype_t mctype, cons
   }
 
   return rv;
-}
-
-bool netlist::operator>= (const Range& lhs, const Range& rhs) {
-  if(!lhs.is_valuable()) return true;
-  if(!rhs.is_valuable()) return false;
-  return rhs.op_belong_to(lhs);
 }
