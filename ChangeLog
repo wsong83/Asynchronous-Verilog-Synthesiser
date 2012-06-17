@@ -1,3 +1,11 @@
+##### Sun 17/06/2012
+* Finally find out that it is kind impossible (or too difficult) to do range operations with variables when the maximal 
+  range is unknown. However, when the maximal range is provided, all range expression can be reduced to const range which
+  significantly reduce all calculations. The bad news is, all operations are going to be re-write for the third time in 
+  these couple of weeks! 
+* Add op_and in netlist::RangeArrayCommon for multi-dimension & operation.
+* Add op_and_tree in netlist::Range for multi-dimension range & operation.
+
 ##### Sat 16/06/2012
 * Rewrite >=, <= and == of netlist::Range.
 

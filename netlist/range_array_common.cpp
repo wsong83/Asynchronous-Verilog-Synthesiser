@@ -38,17 +38,34 @@ using std::for_each;
 using boost::shared_ptr;
 using shell::location;
 
+list<shared_ptr<Range> > netlist::RangeArrayCommon::const_copy(const Range& maxRange) const {
+  list<shared_ptr<Range> > rv;
+  for_each(child.begin(), child.end(), [&rv, &maxRange](const shared_ptr<Range>& m) {
+      rv.push_back(shared_ptr<Range>(new Range(m->const_copy(maxRange))));
+    });
+  return rv;
+}
+
 list<shared_ptr<Range> > netlist::RangeArrayCommon::op_and(const list<shared_ptr<Range> >& rhs) const {
+  assert(child.size() + rhs.size() > 0);
+  
+  if(child.size() == 0) return rhs;
+  if(rhs.size() == 0) return child;
+  
   // (a + b) & (c + d) = ac + ad + bc + bd
   list<shared_ptr<Range> > rv;
   list<shared_ptr<Range> >::const_iterator lit, lend, rit, rend;
   for(lit=child.begin(), lend=child.end(); lit!=lend; ++lit) {
     for(rit=rhs.begin(), rend=rhs.end(); rit!=rend; ++rit) {
-      Range m = **lit & **rit;
-      assert(m.is_valid());
-      
+      Range m = (*lit)->op_and_tree(**rit);
+      assert(m.is_valid());     // & operation should not generate error range from any normal ranges
+      if(!m.is_empty()) {       // insert a new 
+        rv.push_back(shared_ptr<Range>(new Range(m)));
+      }
     }
   }
+  return rv;
+}
 
 bool netlist::RangeArrayCommon::op_equ(const list<shared_ptr<Range> >& rhs) const {
   bool rv = true;
@@ -71,4 +88,44 @@ bool netlist::RangeArrayCommon::op_equ(const list<shared_ptr<Range> >& rhs) cons
 
   return rv;
 
+}
+
+void netlist::RangeArrayCommon::const_reduce() {
+  child = const_reduce(child);
+}
+
+list<shared_ptr<Range> > netlist::RangeArrayCommon::const_reduce(const list<shared_ptr<Range> >& rhs) const {
+
+  // preprocess
+  // reduce all
+  list<shared_ptr<Range> > rlist;
+  for_each(rhs.begin(), rhs.end(), [&rlist](const shared_ptr<Range>& m) {
+      Range tmp = m->const_copy();
+      tmp.const_reduce();
+      if(tmp.is_valid() && !tmp.is_empty()) 
+        rlist.push_back(shared_ptr<Range>(new Range(tmp)));
+          });
+  
+  // do the reduction in iterations
+  bool changed;
+  do {
+    changed = false;
+    if(rlist.size() <= 1) return rlist;
+    // now all sub-ranges are reduced and non-empty
+    list<shared_ptr<Range> >::iterator it, next, end;
+    it = rlist.begin();
+    next = rlist.begin();
+    next++;
+    end = rlist.end();
+    while(next != end) {
+      if((*it)->op_adjacent_to(**next)) { // adjacent
+        if((*it)->RangeArrayCommon::op_equ((*next)->child)) { // child equal
+          **it = **it | **next;
+          (*it)->child = (*next)->child;
+          changed = true;
+        }
+      }
+    }
+  } while (changed);
+  return rlist;
 }

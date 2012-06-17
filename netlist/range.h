@@ -58,15 +58,18 @@ namespace netlist {
     bool is_dim() const { return dim;}
     bool is_valuable() const { return (rtype == TR_Const || rtype == TR_CRange|| rtype == TR_Empty); }
     bool is_valid() const { return rtype != TR_Err; }
-    void const_copy( const Range&);   // copy the const content to this
+    Range const_copy(const Range& maxRange = Range()) const; // copy the const content
     Range op_and(const Range&) const;           /* helper for operator & */
     Range op_and_tree(const Range&) const;      /* & calculation in tree structure */
     Range op_or(const Range&) const;            /* helper for operator | */
-    Range op_or_tree(const Range&) const;       /* | calculation in tree structure */
+    // normalise two Range expression which have shared areas
+    std::vector<Range> op_normalise_tree(const Range&, const Range& maxRange = Range()) const;
     bool op_equ(const Range&) const;            /* helper for operator == */
     bool op_equ_tree(const Range&) const;       /* equal calculation in tree structure */
     bool op_belong_to(const Range&) const;      /* helper for >= */
     bool op_adjacent_to(const Range&) const;
+
+    void const_reduce();        // symbolic reduce
 
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
@@ -95,6 +98,7 @@ namespace netlist {
 
   };
 
+  // all these all only available for const range expressions
   inline Range operator& ( const Range& lhs, const Range& rhs) { return lhs.op_and(rhs); }
   inline Range operator| ( const Range& lhs, const Range& rhs) { return lhs.op_or(rhs); }
   /* whether rhs belongs to lhs */
