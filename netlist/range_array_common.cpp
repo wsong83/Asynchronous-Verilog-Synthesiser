@@ -90,11 +90,11 @@ bool netlist::RangeArrayCommon::op_equ(const list<shared_ptr<Range> >& rhs) cons
 
 }
 
-void netlist::RangeArrayCommon::const_reduce() {
-  child = const_reduce(child);
+void netlist::RangeArrayCommon::const_reduce(const Range& maxRange) {
+  child = const_reduce(child, maxRange);
 }
 
-list<shared_ptr<Range> > netlist::RangeArrayCommon::const_reduce(const list<shared_ptr<Range> >& rhs) const {
+list<shared_ptr<Range> > netlist::RangeArrayCommon::const_reduce(const list<shared_ptr<Range> >& rhs, const Range& maxRange) const {
 
   // preprocess
   // reduce all

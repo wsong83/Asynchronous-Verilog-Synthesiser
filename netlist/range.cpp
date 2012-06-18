@@ -197,19 +197,19 @@ netlist::Range::Range(const location& lloc, const Range_Exp& sel, int updown)
   }
 }
 
-Range netlist::Range::const_copy(const Range& maxRange) const {
+Range netlist::Range::const_copy(bool tree, const Range& maxRange) const {
   Range rv;
   rv.loc = loc;
   rv.rtype = rtype;
   switch(rtype) {
   case TR_Err: 
   case TR_Empty: break;
-  TR_Const: rv.c = c; break;
-  TR_Var: {
+  case TR_Const: rv.c = c; break;
+  case TR_Var: {
       // maxRange is needed
       assert(maxRange.is_valid());
-      if(v.is_valuable()) {
-        rv.c = v.get_value();
+      if(v->is_valuable()) {
+        rv.c = v->get_value();
         assert(rv <= maxRange);
         rv.rtype = TR_Const;
       } else {
@@ -222,15 +222,15 @@ Range netlist::Range::const_copy(const Range& maxRange) const {
   case TR_Range: {
     // maxRange is needed
     assert(maxRange.is_valid());
-    rv.cr.first = r.first.is_valuable() ? r.first.get_value() : 
+    rv.cr.first = r.first->is_valuable() ? r.first->get_value() : 
       maxRange.rtype == TR_Const ? maxRange.c : maxRange.cr.first;
-    rv.cr.second = r.second.is_valuable() ? r.second.get_value() : 
+    rv.cr.second = r.second->is_valuable() ? r.second->get_value() : 
       maxRange.rtype == TR_Const ? maxRange.c : maxRange.cr.second;
     if(maxRange.rtype == TR_Const) {
       // out-of-range check
       assert(rv.cr.first == maxRange.c && rv.cr.second == maxRange.c);
       rv.c = maxRange.c;
-      rv.rtype = TR_const;
+      rv.rtype = TR_Const;
     } else {
       // out-of-range check
       assert(rv.cr.first <= maxRange.cr.first && 
@@ -249,7 +249,7 @@ Range netlist::Range::const_copy(const Range& maxRange) const {
   }
 
   rv.dim = dim;
-  rv.child = RangeArrayCommon::const_copy(maxRange.is_valid() ? maxRange.child.front() : Range());
+  if(tree) rv.child = RangeArrayCommon::const_copy(maxRange.is_valid() ? *(maxRange.child.front()) : Range());
   return rv;
 }
 
@@ -348,7 +348,34 @@ Range netlist::Range::op_or ( const Range& rhs) const {
   }
 }
 
-vector<Range> netlist::Range::op_normalise_tree(const Range& rhs, const Range& maxRange = Range()) const {
+Range netlist::Range::op_deduct ( const Range& rhs) const {
+  Range rv;
+  rv.rtype = TR_Empty;
+  
+  assert(is_valid() && !is_valuable() && rhs.is_valid() && rhs.is_valuable());
+  
+  if(rtype == TR_Const && rhs.rtype == TR_Const) {         // both const
+    if(c == rhs.c) return rv;                              // this == rhs
+    else return const_copy();                              // this != rhs
+  } else if(rtype == TR_Const && rhs.rtype == TR_CRange) { // rhs range
+    if(c <= rhs.cr.first && c >= rhs.cr.second) return rv; // this <= rhs
+    else return const_copy();                              // this !<= rhs
+  } else if(rtype == TR_CRange && rhs.rtype == TR_Const) { // this range
+    assert(rhs.c >= cr.first || rhs.c <= cr.second);
+    rv = const_copy();
+    rv.cr.first = rhs.c == rv.cr.first ? rv.cr.first - 1 : rv.cr.first;
+    rv.cr.second = rhs.c == rv.cr.second ? rv.cr.second + 1 : rv.cr.second;
+    if(rv.cr.first == rv.cr.second) // equal
+      { rv.c = rv.cr.first; rv.rtype = TR_Const; return rv;}
+    else if(rv.cr.first < rv.cr.second) // should not happen
+      { assert(0 = "range deduct error!"); }
+    else return rv;
+  } else {                      // both range
+    ////////////////////////////////////////////////////////////// 
+  }
+}
+
+vector<Range> netlist::Range::op_normalise_tree(const Range& rhs, const Range& maxRange) const {
   vector<Range> rv(3);
   assert(rtype != TR_Err && rtype != TR_Empty && rhs.rtype != TR_Err && rhs.rtype != TR_Empty);
   assert(op_adjacent_to(rhs));
@@ -356,9 +383,9 @@ vector<Range> netlist::Range::op_normalise_tree(const Range& rhs, const Range& m
 
   rv[1] = *this & rhs;
   if(!rv[1].is_empty()) rv[1].child = RangeArrayCommon::op_or(rhs.child);
-  rv[0] = *this - rv[1];
+  //rv[0] = *this - rv[1];
   rv[0].child = child;
-  rv[2] = rhs - rv[1];
+  //rv[2] = rhs - rv[1];
   rv[2].child = rhs.child;
 
   return rv;
@@ -431,25 +458,20 @@ bool netlist::Range::op_adjacent_to(const Range& rhs) const {
   }
 } 
 
-void netlist::Range::const_reduce() {
+void netlist::Range::const_reduce(const Range& maxRange) {
   switch(rtype) {
   case TR_Err:
   case TR_Empty: child.clear(); return;
   case TR_Range:
-    rtype = TR_Var;             // in symbolic calculation, variable and variable range are both variable ranges
+  case TR_Var: *this = const_copy(maxRange); // convert variable range to const range
   case TR_Const:
-  case TR_CRange:
-  case TR_Var: {
-    if(v.use_count()) v.reset();
-    if(r.first.use_count())  r.first.reset();
-    if(r.second.use_count()) r.second.reset();
+  case TR_CRange: 
     if(child.size()) {          // non-leaf
-      RangeArrayCommon::const_reduce();
+      RangeArrayCommon::const_reduce(maxRange.is_valid() ? *(maxRange.child.front()) : Range());
       if(child.size() == 0) {
         rtype = TR_Empty;
       }
     }
-  }
   }
 }
 

@@ -64,6 +64,9 @@ namespace netlist {
   // lconcatenation.h
   class LConcatenation;
 
+  // common base of Range and RangeArray
+  class RangeArray;
+
   // range.h
   class Range;			/* range expression */
 

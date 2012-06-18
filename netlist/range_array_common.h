@@ -38,16 +38,17 @@ namespace netlist {
     RangeArrayCommon(const std::list<boost::shared_ptr<Range> >& rhs) : child(rhs) {}
 
     // helpers
-    std::list<boost::shared_ptr<Range> > const_copy(const Range& maxRange = Range()) const;
+    std::list<boost::shared_ptr<Range> > const_copy(const Range& maxRange) const;
     // get the shared range of two range arrays
     std::list<boost::shared_ptr<Range> > op_and(const std::list<boost::shared_ptr<Range> >&) const;
     // get the combined range of two range arrays
     std::list<boost::shared_ptr<Range> > op_or(const std::list<boost::shared_ptr<Range> >&) const;  
     // check whether two range arrays are equal
     bool op_equ(const std::list<boost::shared_ptr<Range> >&) const; 
-    void const_reduce();              // try to reduce the range array using symbolic mathod
+    void const_reduce(const Range& maxRange);    // try to reduce the range array using symbolic mathod
     // the symbolic reduce function used to range list
-    std::list<boost::shared_ptr<Range> > const_reduce(const std::list<boost::shared_ptr<Range> >&) const;
+    std::list<boost::shared_ptr<Range> > const_reduce(const std::list<boost::shared_ptr<Range> >&,
+                                                      const Range& maxRange) const;
     
   protected:
     std::list<boost::shared_ptr<Range> > child; // the range expressions of the lower dimension

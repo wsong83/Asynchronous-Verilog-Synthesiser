@@ -58,18 +58,19 @@ namespace netlist {
     bool is_dim() const { return dim;}
     bool is_valuable() const { return (rtype == TR_Const || rtype == TR_CRange|| rtype == TR_Empty); }
     bool is_valid() const { return rtype != TR_Err; }
-    Range const_copy(const Range& maxRange = Range()) const; // copy the const content
+    Range const_copy(bool tree = false, const Range& maxRange = Range()) const; // copy the const content
     Range op_and(const Range&) const;           /* helper for operator & */
     Range op_and_tree(const Range&) const;      /* & calculation in tree structure */
     Range op_or(const Range&) const;            /* helper for operator | */
+    Range op_deduct(const Range&) const;        // return *this - rhs, helper for operation -
     // normalise two Range expression which have shared areas
     std::vector<Range> op_normalise_tree(const Range&, const Range& maxRange = Range()) const;
     bool op_equ(const Range&) const;            /* helper for operator == */
     bool op_equ_tree(const Range&) const;       /* equal calculation in tree structure */
     bool op_belong_to(const Range&) const;      /* helper for >= */
-    bool op_adjacent_to(const Range&) const;
+    bool op_adjacent_to(const Range&) const;    // return true if rhs and this have shared area or connected
 
-    void const_reduce();        // symbolic reduce
+    void const_reduce(const Range& maxRange = Range());   // symbolic reduce
 
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
@@ -101,6 +102,7 @@ namespace netlist {
   // all these all only available for const range expressions
   inline Range operator& ( const Range& lhs, const Range& rhs) { return lhs.op_and(rhs); }
   inline Range operator| ( const Range& lhs, const Range& rhs) { return lhs.op_or(rhs); }
+  inline Range operator- ( const Range& lhs, const Range& rhs) { return lhs.op_deduct(rhs); }
   /* whether rhs belongs to lhs */
   inline bool operator>= ( const Range& lhs, const Range& rhs) { return rhs.op_belong_to(lhs); }
   /* whether lhs belongs to rhs */
