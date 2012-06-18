@@ -175,6 +175,33 @@ list<shared_ptr<Range> > netlist::RangeArrayCommon::const_reduce(const list<shar
   return rlist;
 }
 
+void netlist::RangeArrayCommon::set_father(Block* pf) {
+  for_each(child.begin(), child.end(), [&pf](shared_ptr<Range>& m) {
+      m->set_father(pf);
+    });
+}
+
+list<shared_ptr<Range> > netlist::RangeArrayCommon::deep_copy() const {
+  list<shared_ptr<Range> > rv;
+  for_each(child.begin(), child.end(), [&rv](const shared_ptr<Range>& m) {
+      rv.push_back(shared_ptr<Range>(m->deep_copy()));
+    });
+  return rv;
+}
+
+void netlist::RangeArrayCommon::db_register(int iod) {
+  for_each(child.begin(), child.end(), [&iod](shared_ptr<Range>& m) {
+      m->db_register(iod);
+    });
+}
+
+void netlist::RangeArrayCommon::db_expunge() {
+  for_each(child.begin(), child.end(), [](shared_ptr<Range>& m) {
+      m->db_expunge();
+    });
+}
+
+
 void netlist::RangeArrayCommon::sort(list<shared_ptr<Range> >& rhs) const {
   rhs.sort([](shared_ptr<Range>& first, shared_ptr<Range>& second) -> bool {
     return *first > *second;

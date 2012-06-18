@@ -54,6 +54,12 @@ namespace netlist {
     // the symbolic reduce function used to range list
     std::list<boost::shared_ptr<Range> > const_reduce(const std::list<boost::shared_ptr<Range> >&,
                                                       const Range& maxRange) const;
+
+    // inherit from NetComp, actually not
+    void set_father(Block* pf);
+    std::list<boost::shared_ptr<Range> > deep_copy() const;
+    void db_register(int iod = 1);
+    void db_expunge();
     
   protected:
     std::list<boost::shared_ptr<Range> > child; // the range expressions of the lower dimension

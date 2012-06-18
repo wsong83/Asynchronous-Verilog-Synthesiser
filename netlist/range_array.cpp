@@ -102,4 +102,18 @@ RangeArray netlist::RangeArray::op_or(const RangeArray& rhs,
   return rv;
 }
 
+void netlist::RangeArray::db_register(int iod) {
+  RangeArrayCommon::db_register(iod);
+}
+
+void netlist::RangeArray::db_expunge() {
+  RangeArrayCommon::db_expunge();
+}
+
+void netlist::RangeArray::set_father(Block* pf) {
+  if(father == pf) return;
+  father = pf;
+  RangeArrayCommon::set_father(pf);
+}
+
 
