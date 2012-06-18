@@ -62,7 +62,7 @@ namespace netlist {
     Range op_and(const Range&) const;           /* helper for operator & */
     Range op_and_tree(const Range&) const;      /* & calculation in tree structure */
     Range op_or(const Range&) const;            /* helper for operator | */
-    Range op_deduct(const Range&) const;        // return *this - rhs, helper for operation -
+    std::vector<Range> op_deduct(const Range&) const;  // return *this - rhs
     // normalise two Range expression which have shared areas
     std::vector<Range> op_normalise_tree(const Range&, const Range& maxRange = Range()) const;
     bool op_equ(const Range&) const;            /* helper for operator == */
@@ -102,7 +102,6 @@ namespace netlist {
   // all these all only available for const range expressions
   inline Range operator& ( const Range& lhs, const Range& rhs) { return lhs.op_and(rhs); }
   inline Range operator| ( const Range& lhs, const Range& rhs) { return lhs.op_or(rhs); }
-  inline Range operator- ( const Range& lhs, const Range& rhs) { return lhs.op_deduct(rhs); }
   /* whether rhs belongs to lhs */
   inline bool operator>= ( const Range& lhs, const Range& rhs) { return rhs.op_belong_to(lhs); }
   /* whether lhs belongs to rhs */

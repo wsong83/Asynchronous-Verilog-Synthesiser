@@ -348,31 +348,54 @@ Range netlist::Range::op_or ( const Range& rhs) const {
   }
 }
 
-Range netlist::Range::op_deduct ( const Range& rhs) const {
-  Range rv;
-  rv.rtype = TR_Empty;
-  
+vector<Range> netlist::Range::op_deduct (const Range& rhs) const {
+  vector<Range> rv(2);
   assert(is_valid() && !is_valuable() && rhs.is_valid() && rhs.is_valuable());
-  
   if(rtype == TR_Const && rhs.rtype == TR_Const) {         // both const
-    if(c == rhs.c) return rv;                              // this == rhs
-    else return const_copy();                              // this != rhs
+    if(c > rhs.c)                                          
+      { rv[0].c = c; rv[0].rtype = TR_Const; rv[1].rtype = TR_Empty; }
+    else if(c == rhs.c)
+      { rv[0].rtype = TR_Empty; rv[1].rtype = TR_Empty;              }
+    else
+      { rv[0].rtype = TR_Empty; rv[1].c = c; rv[1].rtype = TR_Const; }
   } else if(rtype == TR_Const && rhs.rtype == TR_CRange) { // rhs range
-    if(c <= rhs.cr.first && c >= rhs.cr.second) return rv; // this <= rhs
-    else return const_copy();                              // this !<= rhs
+    if(c > rhs.cr.first)
+      { rv[0].c = c; rv[0].rtype = TR_Const; rv[1].rtype = TR_Empty; }
+    else if(c <= rhs.cr.first && c >= rhs.cr.second)
+      { rv[0].rtype = TR_Empty; rv[1].rtype = TR_Empty;              }
+    else
+      { rv[0].rtype = TR_Empty; rv[1].c = c; rv[1].rtype = TR_Const; }
   } else if(rtype == TR_CRange && rhs.rtype == TR_Const) { // this range
-    assert(rhs.c >= cr.first || rhs.c <= cr.second);
-    rv = const_copy();
-    rv.cr.first = rhs.c == rv.cr.first ? rv.cr.first - 1 : rv.cr.first;
-    rv.cr.second = rhs.c == rv.cr.second ? rv.cr.second + 1 : rv.cr.second;
-    if(rv.cr.first == rv.cr.second) // equal
-      { rv.c = rv.cr.first; rv.rtype = TR_Const; return rv;}
-    else if(rv.cr.first < rv.cr.second) // should not happen
-      { assert(0 = "range deduct error!"); }
-    else return rv;
-  } else {                      // both range
-    ////////////////////////////////////////////////////////////// 
+    rv[0] = const_copy(); rv[1] = const_copy();
+    rv[0].cr.second = rhs.c + 1 > cr.second ? rhs.c + 1 : cr.second;
+    rv[1].cr.first = rhs.c - 1 < cr.first ? rhs.c - 1 : cr.first;
+    if(rv[0].cr.first == rv[0].cr.second) { 
+      rv[0].c = rv[0].cr.first; rv[0].rtype = TR_Const;
+    } else if(rv[0].cr.first < rv[0].cr.second) {
+      rv[0].rtype = TR_Empty;
+    }
+    if(rv[1].cr.first == rv[1].cr.second) { 
+      rv[1].c = rv[1].cr.first; rv[1].rtype = TR_Const;
+    } else if(rv[1].cr.first < rv[1].cr.second) {
+      rv[0].rtype = TR_Empty;
+    }
+  } else {                      // both ranges
+    rv[0] = const_copy(); rv[1] = const_copy();
+    rv[0].cr.second = rhs.cr.first + 1 > cr.second ? rhs.cr.first + 1 : cr.second;
+    rv[1].cr.first = rhs.cr.second - 1 < cr.first ? rhs.cr.second - 1 : cr.first;
+    if(rv[0].cr.first == rv[0].cr.second) { 
+      rv[0].c = rv[0].cr.first; rv[0].rtype = TR_Const;
+    } else if(rv[0].cr.first < rv[0].cr.second) {
+      rv[0].rtype = TR_Empty;
+    }
+    if(rv[1].cr.first == rv[1].cr.second) { 
+      rv[1].c = rv[1].cr.first; rv[1].rtype = TR_Const;
+    } else if(rv[1].cr.first < rv[1].cr.second) {
+      rv[0].rtype = TR_Empty;
+    }
   }
+  
+  return rv;
 }
 
 vector<Range> netlist::Range::op_normalise_tree(const Range& rhs, const Range& maxRange) const {
@@ -381,12 +404,39 @@ vector<Range> netlist::Range::op_normalise_tree(const Range& rhs, const Range& m
   assert(op_adjacent_to(rhs));
   assert(is_valuable() && rhs.is_valuable());
 
+  // calculate the shared area
   rv[1] = *this & rhs;
   if(!rv[1].is_empty()) rv[1].child = RangeArrayCommon::op_or(rhs.child);
-  //rv[0] = *this - rv[1];
-  rv[0].child = child;
-  //rv[2] = rhs - rv[1];
-  rv[2].child = rhs.child;
+  
+  // get the higher area and the lower area
+  vector<Range> lhs_rhs = op_deduct(rhs);
+  vector<Range> rhs_lhs = rhs.op_deduct(*this);
+
+  // the higher area
+  if(!lhs_rhs[0].is_empty()) {
+    assert(rhs_lhs[0].is_empty());
+    rv[0] = lhs_rhs[0].const_copy();
+    rv[0].child = RangeArrayCommon::const_copy(maxRange);
+  } else if(!rhs_lhs[0].is_empty()) {
+    assert(lhs_rhs[0].is_empty());
+    rv[0] = rhs_lhs[0].const_copy();
+    rv[0].child = rhs.RangeArrayCommon::const_copy(maxRange);
+  } else {
+    rv[0].rtype = TR_Empty;
+  }
+    
+  // the lower area
+  if(!lhs_rhs[1].is_empty()) {
+    assert(rhs_lhs[1].is_empty());
+    rv[1] = lhs_rhs[1].const_copy();
+    rv[1].child = RangeArrayCommon::const_copy(maxRange);
+  } else if(!rhs_lhs[0].is_empty()) {
+    assert(lhs_rhs[0].is_empty());
+    rv[1] = rhs_lhs[0].const_copy();
+    rv[1].child = rhs.RangeArrayCommon::const_copy(maxRange);
+  } else {
+    rv[1].rtype = TR_Empty;
+  }
 
   return rv;
 }
@@ -463,7 +513,7 @@ void netlist::Range::const_reduce(const Range& maxRange) {
   case TR_Err:
   case TR_Empty: child.clear(); return;
   case TR_Range:
-  case TR_Var: *this = const_copy(maxRange); // convert variable range to const range
+  case TR_Var: *this = const_copy(true, maxRange); // convert variable range to const range
   case TR_Const:
   case TR_CRange: 
     if(child.size()) {          // non-leaf

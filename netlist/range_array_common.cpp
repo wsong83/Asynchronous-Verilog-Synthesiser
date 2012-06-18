@@ -41,7 +41,7 @@ using shell::location;
 list<shared_ptr<Range> > netlist::RangeArrayCommon::const_copy(const Range& maxRange) const {
   list<shared_ptr<Range> > rv;
   for_each(child.begin(), child.end(), [&rv, &maxRange](const shared_ptr<Range>& m) {
-      rv.push_back(shared_ptr<Range>(new Range(m->const_copy(maxRange))));
+      rv.push_back(shared_ptr<Range>(new Range(m->const_copy(true, maxRange))));
     });
   return rv;
 }
