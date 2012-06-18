@@ -38,6 +38,14 @@ using std::for_each;
 using boost::shared_ptr;
 using shell::location;
 
+bool netlist::RangeArrayCommon::is_valuable() const {
+  bool rv = true;
+  for_each(child.begin(), child.end(), [&rv](const shared_ptr<Range>& m) {
+      rv &= m->is_valuable_tree();
+    });
+  return rv;
+}
+
 list<shared_ptr<Range> > netlist::RangeArrayCommon::const_copy(const Range& maxRange) const {
   list<shared_ptr<Range> > rv;
   for_each(child.begin(), child.end(), [&rv, &maxRange](const shared_ptr<Range>& m) {
@@ -64,6 +72,14 @@ list<shared_ptr<Range> > netlist::RangeArrayCommon::op_and(const list<shared_ptr
       }
     }
   }
+  return rv;
+}
+
+list<shared_ptr<Range> > netlist::RangeArrayCommon::op_or(const list<shared_ptr<Range> >& rhs, const Range& maxRange) const {
+  list<shared_ptr<Range> > rv = const_copy(maxRange);
+  rv.insert(rv.end(), rhs.begin(), rhs.end()); // combine two lists
+  sort(rv);                     // reorder it
+  rv = const_reduce(rv, maxRange); // reduce the list
   return rv;
 }
 
@@ -99,9 +115,9 @@ list<shared_ptr<Range> > netlist::RangeArrayCommon::const_reduce(const list<shar
   // preprocess
   // reduce all
   list<shared_ptr<Range> > rlist;
-  for_each(rhs.begin(), rhs.end(), [&rlist](const shared_ptr<Range>& m) {
-      Range tmp = m->const_copy();
-      tmp.const_reduce();
+  for_each(rhs.begin(), rhs.end(), [&rlist, &maxRange](const shared_ptr<Range>& m) {
+      Range tmp = m->const_copy(true, maxRange);
+      tmp.const_reduce(maxRange);
       if(tmp.is_valid() && !tmp.is_empty()) 
         rlist.push_back(shared_ptr<Range>(new Range(tmp)));
           });
@@ -118,14 +134,50 @@ list<shared_ptr<Range> > netlist::RangeArrayCommon::const_reduce(const list<shar
     next++;
     end = rlist.end();
     while(next != end) {
+      Range tmp = (*it)->op_and(**next);
       if((*it)->op_adjacent_to(**next)) { // adjacent
         if((*it)->RangeArrayCommon::op_equ((*next)->child)) { // child equal
           **it = **it | **next;
           (*it)->child = (*next)->child;
+          next = rlist.erase(next);
           changed = true;
+        } else if(tmp.is_valid() && !tmp.is_empty()) {
+          vector<Range> normResult = (*it)->op_normalise_tree(**next, maxRange);
+          if(normResult[0].is_valid() && !normResult[0].is_empty())
+            rlist.insert(it, shared_ptr<Range>(new Range(normResult[0])));
+          if(normResult[1].is_valid() && !normResult[1].is_empty())
+            rlist.insert(it, shared_ptr<Range>(new Range(normResult[1])));
+          if(normResult[2].is_valid() && !normResult[2].is_empty())
+            rlist.insert(it, shared_ptr<Range>(new Range(normResult[2])));
+          it = rlist.erase(it);
+          it--;
+          next = rlist.erase(next);
+          changed = true;
+        } else {                // adjacent but not shared
+          it++; next++;
         }
+      } else {
+        it++; next++;
       }
     }
+    // reorder the list
+    sort(rlist);
   } while (changed);
+
+  // final check
+  assert(rlist.size() > 0);
+  if( rlist.size() == 1 && maxRange.is_valid() &&
+      *(rlist.front()) == maxRange && // full range
+      rlist.front()->child.size() == 0 // sub-ranges also full
+      )
+    rlist.clear();
+
   return rlist;
+}
+
+void netlist::RangeArrayCommon::sort(list<shared_ptr<Range> >& rhs) const {
+  rhs.sort([](shared_ptr<Range>& first, shared_ptr<Range>& second) -> bool {
+    return *first > *second;
+  });
+  
 }

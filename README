@@ -41,7 +41,13 @@ Usage info.:
   preproc/test/preproc_test   standalone Verilog preprocessor
 
 Other info.:
-  This a part of the EPSRC funded preject GAELS (EP/I038306/1).
+  This a part of the EPSRC funded project GAELS (EP/I038306/1).
+
+Download info.:
+  As this project is under continuous development, please download
+a commit with comment beginning with "(OK)" or download old versions
+in tags. The commit versions with "(Err)" are likely to fail the 
+compiler.
 
 Any question or request pls write to <wsong83@gmail.com>
 

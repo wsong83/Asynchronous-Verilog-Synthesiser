@@ -1,4 +1,5 @@
 ##### Mon 18/06/2012
+* The major construction of range operations have been finished.
 * op_deduct() in netlist::Range is rewritten along with op_normalise_tree().
 * Seems like I have finally settle down how to implement range operations. Good!
 

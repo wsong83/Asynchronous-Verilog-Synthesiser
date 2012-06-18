@@ -36,14 +36,23 @@ namespace netlist {
   class RangeArray : public NetComp, public RangeArrayCommon {
   public:
     // constructors
-    RangeArray() : NetComp(tRangeArray), valuable(false) {}
+    RangeArray() : NetComp(tRangeArray), const_reduced(false){}
     RangeArray(const std::list<boost::shared_ptr<Range> >& rhs) 
-      : NetComp(tRangeArray), RangeArrayCommon(rhs), valuable(false) { } /* valuable needs to be calculated!! */
+      : NetComp(tRangeArray), RangeArrayCommon(rhs), const_reduced(false) { } /* valuable needs to be calculated!! */
 
     // helpers
     bool empty() const { return child.size() == 0;}
-    bool is_valuable() const { return valuable; }
-    RangeArray& op_and(const RangeArray&); /* helper for operator & */
+    bool is_valuable();
+    bool is_declaration() const;
+    // copy the symbolic value of a range array to a new one
+    RangeArray const_copy(const RangeArray& mxRange) const;
+    // reduce a variable range array to a symbolic one
+    void const_reduce(const RangeArray& mxRange);
+    // return the shared area of two range arrays
+    RangeArray op_and(const RangeArray&) const;
+    // return the combined area of two range arrays
+    RangeArray op_or(const RangeArray&, 
+                     const RangeArray& maxRange = RangeArray()) const;
 
     // inherit from NetComp
     //NETLIST_SET_FATHER_DECL;
@@ -55,12 +64,12 @@ namespace netlist {
     //NETLIST_ELABORATE_DECL;
 
   private:
-    bool valuable;
+    bool const_reduced;
 
   };
 
-  RangeArray operator& ( const RangeArray&, const RangeArray&);
-  RangeArray operator| ( const RangeArray&, const RangeArray&);
+  inline RangeArray operator& ( const RangeArray& lhs, const RangeArray& rhs) {return lhs.op_and(rhs); };
+  inline RangeArray operator| ( const RangeArray& lhs, const RangeArray& rhs) { return lhs.op_or(rhs); }
   bool operator>= ( const RangeArray& lhs, const RangeArray& rhs); /* whether rhs belongs to lhs */
 
   NETLIST_STREAMOUT(RangeArray)

@@ -197,6 +197,13 @@ netlist::Range::Range(const location& lloc, const Range_Exp& sel, int updown)
   }
 }
 
+bool netlist::Range::is_valuable_tree() const {
+  bool rv = rtype == TR_Const || rtype == TR_CRange|| rtype == TR_Empty;
+  if(rv)
+    return RangeArrayCommon::is_valuable();
+  else return false;
+}
+
 Range netlist::Range::const_copy(bool tree, const Range& maxRange) const {
   Range rv;
   rv.loc = loc;
@@ -406,7 +413,7 @@ vector<Range> netlist::Range::op_normalise_tree(const Range& rhs, const Range& m
 
   // calculate the shared area
   rv[1] = *this & rhs;
-  if(!rv[1].is_empty()) rv[1].child = RangeArrayCommon::op_or(rhs.child);
+  if(!rv[1].is_empty()) rv[1].child = RangeArrayCommon::op_or(rhs.child, maxRange);
   
   // get the higher area and the lower area
   vector<Range> lhs_rhs = op_deduct(rhs);
@@ -446,7 +453,6 @@ bool netlist::Range::op_equ(const Range& rhs) const {
   case TR_Empty: return rhs.rtype == TR_Empty;
   case TR_Const: return rhs.rtype == TR_Const && c == rhs.c;
   case TR_CRange: return rhs.rtype == TR_CRange && cr.first == rhs.cr.first && cr.second == rhs.cr.second;
-  case TR_Var: return rhs.rtype == TR_Var;
   default: return false;
   }
 }
@@ -508,6 +514,16 @@ bool netlist::Range::op_adjacent_to(const Range& rhs) const {
   }
 } 
 
+bool netlist::Range::op_higher(const Range& rhs) const {
+  if(rhs.rtype == TR_Empty) return false;
+  if(rtype == TR_Empty) return true;
+  assert(is_valuable() && rhs.is_valuable());
+  Number first = rtype == TR_Const ? c : cr.first;
+  Number second = rhs.rtype == TR_Const ? rhs.c : rhs.cr.first;
+  return first > second;
+}
+
+
 void netlist::Range::const_reduce(const Range& maxRange) {
   switch(rtype) {
   case TR_Err:
@@ -518,9 +534,6 @@ void netlist::Range::const_reduce(const Range& maxRange) {
   case TR_CRange: 
     if(child.size()) {          // non-leaf
       RangeArrayCommon::const_reduce(maxRange.is_valid() ? *(maxRange.child.front()) : Range());
-      if(child.size() == 0) {
-        rtype = TR_Empty;
-      }
     }
   }
 }

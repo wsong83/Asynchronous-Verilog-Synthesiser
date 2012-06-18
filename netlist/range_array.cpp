@@ -37,8 +37,36 @@ using std::for_each;
 using boost::shared_ptr;
 using shell::location;
 
-RangeArray& netlist::RangeArray::op_and(const RangeArray& rhs) {
-  return *this;
+bool netlist::RangeArray::is_valuable() {
+  // if once const reduced, it must be valuable
+  if(const_reduced) return true;
+  
+  // other wise check it
+  bool rv = true;
+  rv = RangeArrayCommon::is_valuable();
+
+  if(rv) const_reduced = true;
+  return rv;
+}
+
+bool netlist::RangeArray::is_declaration() const {
+  if(child.size() != 1) return false;
+  else {
+    Range& m = *(child.front());
+    while(!m.RangeArrayCommon::is_empty()) {
+      if(m.RangeArrayCommon::size() != 1) return false;
+      else m = m.RangeArrayCommon::front();
+    }
+    return true;
+  }
+}
+
+RangeArray netlist::RangeArray::const_copy(const RangeArray& maxRange) const {
+  RangeArray rv;
+  assert(maxRange.child.size());
+  rv.child = RangeArrayCommon::const_copy(maxRange.RangeArrayCommon::front());
+  rv.const_reduced = const_reduced;
+  return rv;
 }
 
 RangeArray* netlist::RangeArray::deep_copy() const {
@@ -46,13 +74,32 @@ RangeArray* netlist::RangeArray::deep_copy() const {
   for_each(child.begin(), child.end(), [&rv](const shared_ptr<Range>& m) {
       rv->child.push_back(shared_ptr<Range>(m->deep_copy()));
     });
-  rv->valuable = valuable;
+  rv->const_reduced = const_reduced;
   return rv;
 }
 
-RangeArray netlist::operator& (const RangeArray& lhs, const RangeArray& rhs) {
-  shared_ptr<RangeArray> rv(lhs.deep_copy());
-  rv->op_and(rhs);
-  return *rv;
+void netlist::RangeArray::const_reduce(const RangeArray& maxRange) {
+  assert(maxRange.child.size());
+  RangeArrayCommon::const_reduce(maxRange.RangeArrayCommon::front());
+  const_reduced = true;
 }
+
+RangeArray netlist::RangeArray::op_and(const RangeArray& rhs) const {
+  RangeArray rv;
+  rv.child = RangeArrayCommon::op_and(rhs.child);
+  rv.const_reduced = const_reduced & rhs.const_reduced;
+  return rv;
+}
+
+RangeArray netlist::RangeArray::op_or(const RangeArray& rhs,
+                                      const RangeArray& maxRange) const {
+  RangeArray rv;
+  rv.child = RangeArrayCommon::op_or(rhs.child, 
+                                     maxRange.RangeArrayCommon::is_empty() ?
+                                     Range() : maxRange.front()
+                                     );
+  rv.const_reduced = const_reduced & rhs.const_reduced;
+  return rv;
+}
+
 

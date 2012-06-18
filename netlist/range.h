@@ -57,8 +57,10 @@ namespace netlist {
     void set_dim() { dim = true;}
     bool is_dim() const { return dim;}
     bool is_valuable() const { return (rtype == TR_Const || rtype == TR_CRange|| rtype == TR_Empty); }
+    bool is_valuable_tree() const;
     bool is_valid() const { return rtype != TR_Err; }
     Range const_copy(bool tree = false, const Range& maxRange = Range()) const; // copy the const content
+    void const_reduce(const Range& maxRange = Range());   // symbolic reduce
     Range op_and(const Range&) const;           /* helper for operator & */
     Range op_and_tree(const Range&) const;      /* & calculation in tree structure */
     Range op_or(const Range&) const;            /* helper for operator | */
@@ -69,9 +71,7 @@ namespace netlist {
     bool op_equ_tree(const Range&) const;       /* equal calculation in tree structure */
     bool op_belong_to(const Range&) const;      /* helper for >= */
     bool op_adjacent_to(const Range&) const;    // return true if rhs and this have shared area or connected
-
-    void const_reduce(const Range& maxRange = Range());   // symbolic reduce
-
+    bool op_higher(const Range&) const;    // return true if the range of this is higher than rhs
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
@@ -107,6 +107,7 @@ namespace netlist {
   /* whether lhs belongs to rhs */
   inline bool operator<= ( const Range& lhs, const Range& rhs) { return lhs.op_belong_to(rhs); }
   inline bool operator== ( const Range& lhs, const Range& rhs) { return lhs.op_equ(rhs); }
+  inline bool operator> ( const Range& lhs, const Range& rhs) { return lhs.op_higher(rhs); }
 
   NETLIST_STREAMOUT(Range)
 
