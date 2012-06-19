@@ -106,6 +106,13 @@ bool netlist::RangeArrayCommon::op_equ(const list<shared_ptr<Range> >& rhs) cons
 
 }
 
+ostream& netlist::RangeArrayCommon::streamout(ostream& os, unsigned int indent, const string& prefix, bool decl) const {
+  for_each(child.begin(), child.end(), [&os, &indent, &prefix, &decl](const shared_ptr<Range>& m) {
+      m->streamout(os, indent, prefix, decl);
+    });
+  return os;
+}
+
 void netlist::RangeArrayCommon::const_reduce(const Range& maxRange) {
   child = const_reduce(child, maxRange);
 }
@@ -181,6 +188,15 @@ void netlist::RangeArrayCommon::set_father(Block* pf) {
     });
 }
 
+bool netlist::RangeArrayCommon::check_inparse() {
+  bool rv = true;
+  for_each(child.begin(), child.end(), [&rv](const shared_ptr<Range>& m) {
+      rv &= m->check_inparse();
+    });
+  return rv;
+}
+
+
 list<shared_ptr<Range> > netlist::RangeArrayCommon::deep_copy() const {
   list<shared_ptr<Range> > rv;
   for_each(child.begin(), child.end(), [&rv](const shared_ptr<Range>& m) {
@@ -201,6 +217,16 @@ void netlist::RangeArrayCommon::db_expunge() {
     });
 }
 
+bool netlist::RangeArrayCommon::elaborate(NetComp::elab_result_t &result, const NetComp::ctype_t mctype, const vector<NetComp *>& fp) {
+  bool rv = true;
+  result = NetComp::ELAB_Normal;
+  
+  for_each(child.begin(), child.end(), [&result, &mctype, &fp, &rv](shared_ptr<Range>& m) {
+      rv &= m->elaborate(result, mctype, fp);
+    });
+
+  return rv;
+} 
 
 void netlist::RangeArrayCommon::sort(list<shared_ptr<Range> >& rhs) const {
   rhs.sort([](shared_ptr<Range>& first, shared_ptr<Range>& second) -> bool {

@@ -53,15 +53,16 @@ namespace netlist {
     // return the combined area of two range arrays
     RangeArray op_or(const RangeArray&, 
                      const RangeArray& maxRange = RangeArray()) const;
+    bool op_equ(const RangeArray&) const;
 
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
-    //NETLIST_STREAMOUT_DECL;
-    //NETLIST_CHECK_INPARSE_DECL;
+    NETLIST_STREAMOUT_DECL;
+    NETLIST_CHECK_INPARSE_DECL;
     virtual RangeArray* deep_copy() const;
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
-    //NETLIST_ELABORATE_DECL;
+    NETLIST_ELABORATE_DECL;
 
   private:
     bool const_reduced;
@@ -71,6 +72,9 @@ namespace netlist {
   inline RangeArray operator& ( const RangeArray& lhs, const RangeArray& rhs) {return lhs.op_and(rhs); };
   inline RangeArray operator| ( const RangeArray& lhs, const RangeArray& rhs) { return lhs.op_or(rhs); }
   bool operator>= ( const RangeArray& lhs, const RangeArray& rhs); /* whether rhs belongs to lhs */
+  inline bool operator== ( const RangeArray& lhs, const RangeArray& rhs) {
+    return lhs.op_equ(rhs);
+  }
 
   NETLIST_STREAMOUT(RangeArray)
 

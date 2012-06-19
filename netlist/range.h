@@ -72,6 +72,7 @@ namespace netlist {
     bool op_belong_to(const Range&) const;      /* helper for >= */
     bool op_adjacent_to(const Range&) const;    // return true if rhs and this have shared area or connected
     bool op_higher(const Range&) const;    // return true if the range of this is higher than rhs
+    std::ostream& streamout(std::ostream& os, unsigned int indent, const std::string& prefix, bool decl = false) const;
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;

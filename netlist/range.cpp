@@ -538,6 +538,43 @@ void netlist::Range::const_reduce(const Range& maxRange) {
   }
 }
 
+ostream& netlist::Range::streamout(ostream& os, unsigned int indent, const string& prefix, bool decl) const {
+  std::ostringstream sos;
+  sos << string(indent, ' ') << prefix << "[";
+  switch(rtype) {
+  case TR_Const: {
+    sos << c.get_value();
+    if(decl) sos << ":" << c.get_value();
+    break;
+  }
+  case TR_Var: {
+    sos << *v;
+    assert(!decl);              // this is odd, assert to check the first legal situation
+    if(decl) sos << ":" << *v;
+    break;
+  }
+  case TR_Range: {
+    if(r.first->is_valuable())  sos << r.first->get_value().get_value();
+    else                        sos << *(r.first); 
+    os << ":"; 
+    if(r.second->is_valuable()) sos << r.second->get_value().get_value();
+    else                        sos << *(r.second); 
+    break;
+  }
+  case TR_CRange: sos << cr.first.get_value() << ":" << cr.second.get_value(); break;
+  case TR_Empty: break;
+  default: // should not go here
+    assert(0 == "Wrong range type");
+  }
+  sos << "]";
+  
+  if(child.empty()) {           // the leaf node
+    os << sos.str();
+  } else {
+    RangeArrayCommon::streamout(os, 0, sos.str(), decl);
+  }
+  return os;
+}
 
 void netlist::Range::db_register(int iod) {
   switch(rtype) {
@@ -545,6 +582,7 @@ void netlist::Range::db_register(int iod) {
   case TR_Range: r.first->db_register(1); r.second->db_register(1); break;
   default: ;
   }
+  RangeArrayCommon::db_register(1);
 }
 
 void netlist::Range::db_expunge() {
@@ -553,51 +591,37 @@ void netlist::Range::db_expunge() {
   case TR_Range: r.first->db_expunge(); r.second->db_expunge(); break;
   default: ;
   }
+  RangeArrayCommon::db_expunge();
 }
 
 void netlist::Range::set_father(Block *pf) {
   if(father == pf) return;
   father = pf;
   switch(rtype) {
-  case TR_Var: v->set_father(pf); return;
-  case TR_Range: r.first->set_father(pf); r.second->set_father(pf); return;
-  default: return;
+  case TR_Var: v->set_father(pf); break;
+  case TR_Range: r.first->set_father(pf); r.second->set_father(pf); break;
+  default: ;
   }
+  RangeArrayCommon::set_father(pf);
 }
 
 ostream& netlist::Range::streamout(ostream& os, unsigned int indent) const {
-  os << string(indent, ' ');
-  switch(rtype) {
-  case TR_Const: os << c.get_value(); break;
-  case TR_Var: os << *v; break;
-  case TR_Range: {
-    if(r.first->is_valuable())  os << r.first->get_value().get_value();
-    else                        os << *(r.first); 
-    os << ":"; 
-    if(r.second->is_valuable()) os << r.second->get_value().get_value();
-    else                        os << *(r.second); 
-    break;
-  }
-  case TR_CRange: os << cr.first.get_value() << ":" << cr.second.get_value(); break;
-  case TR_Empty: os << "empty"; break;
-  default: // should not go here
-    assert(0 == "Wrong range type");
-  }
-  return os;
+  return streamout(os, indent, "");
 }
 
 bool netlist::Range::check_inparse() {
   bool rv = true;
   
   switch(rtype) {
-  case TR_Var: rv &= v->check_inparse(); return rv;
+  case TR_Var: rv &= v->check_inparse(); break;
   case TR_Range: 
     rv &= r.first->check_inparse(); 
     rv &= r.second->check_inparse(); 
-    return rv;
-  default: 
-    return rv;
+    break;
+  default:;
   }
+  rv &= RangeArrayCommon::check_inparse();
+  return rv;
 }
 
 Range* netlist::Range::deep_copy() const {
@@ -613,6 +637,7 @@ Range* netlist::Range::deep_copy() const {
   }
   rv->dim = dim;
   rv->rtype = rtype;
+  rv->child = RangeArrayCommon::deep_copy();
   return rv;
 }
 
@@ -648,6 +673,8 @@ bool netlist::Range::elaborate(elab_result_t &result, const ctype_t mctype, cons
   }
   default:;
   }
+
+  if(rv) rv &= RangeArrayCommon::elaborate(result, mctype, fp);
 
   return rv;
 }

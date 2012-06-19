@@ -50,16 +50,19 @@ namespace netlist {
     std::list<boost::shared_ptr<Range> > op_or(const std::list<boost::shared_ptr<Range> >&, const Range& maxRange) const;  
     // check whether two range arrays are equal
     bool op_equ(const std::list<boost::shared_ptr<Range> >&) const; 
+    std::ostream& streamout(std::ostream& os, unsigned int indent, const std::string& prefix, bool decl = false) const;
     void const_reduce(const Range& maxRange);    // try to reduce the range array using symbolic mathod
     // the symbolic reduce function used to range list
     std::list<boost::shared_ptr<Range> > const_reduce(const std::list<boost::shared_ptr<Range> >&,
                                                       const Range& maxRange) const;
 
     // inherit from NetComp, actually not
-    void set_father(Block* pf);
+    NETLIST_SET_FATHER_DECL;
+    NETLIST_CHECK_INPARSE_DECL;
     std::list<boost::shared_ptr<Range> > deep_copy() const;
     void db_register(int iod = 1);
     void db_expunge();
+    NETLIST_ELABORATE_DECL;
     
   protected:
     std::list<boost::shared_ptr<Range> > child; // the range expressions of the lower dimension

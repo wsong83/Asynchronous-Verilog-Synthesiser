@@ -102,12 +102,8 @@ RangeArray netlist::RangeArray::op_or(const RangeArray& rhs,
   return rv;
 }
 
-void netlist::RangeArray::db_register(int iod) {
-  RangeArrayCommon::db_register(iod);
-}
-
-void netlist::RangeArray::db_expunge() {
-  RangeArrayCommon::db_expunge();
+bool netlist::RangeArray::op_equ(const RangeArray& rhs) const {
+  return RangeArrayCommon::op_equ(rhs.child);
 }
 
 void netlist::RangeArray::set_father(Block* pf) {
@@ -116,4 +112,28 @@ void netlist::RangeArray::set_father(Block* pf) {
   RangeArrayCommon::set_father(pf);
 }
 
+ostream& RangeArray::streamout (ostream& os, unsigned int indent) const {
+  return RangeArrayCommon::streamout(os, indent, "");
+}
+
+bool netlist::RangeArray::check_inparse() {
+  return RangeArrayCommon::check_inparse();
+}
+
+void netlist::RangeArray::db_register(int iod) {
+  RangeArrayCommon::db_register(iod);
+}
+
+void netlist::RangeArray::db_expunge() {
+  RangeArrayCommon::db_expunge();
+}
+
+bool netlist::RangeArray::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
+  return RangeArrayCommon::elaborate(result, mctype, fp);
+}
+
+bool netlist::operator>= (const RangeArray& lhs, const RangeArray& rhs) {
+  RangeArray tmp = lhs & rhs;
+  return tmp == rhs;
+}
 
