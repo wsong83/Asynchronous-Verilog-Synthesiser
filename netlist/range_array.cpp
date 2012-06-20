@@ -102,6 +102,11 @@ RangeArray netlist::RangeArray::op_or(const RangeArray& rhs,
   return rv;
 }
 
+RangeArray netlist::RangeArray::op_deduct(const RangeArray& rhs,
+                                          const RangeArray& maxRange) const {
+  return this->const_copy(maxRange);
+}
+
 bool netlist::RangeArray::op_equ(const RangeArray& rhs) const {
   return RangeArrayCommon::op_equ(rhs.child);
 }

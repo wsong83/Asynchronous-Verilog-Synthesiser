@@ -1,5 +1,8 @@
 ##### Wed 20/06/2012 ( boring due to the routine work to rewrite inherited fuctions and parsers. )
-* Modifiy the streamout facilities of netlist::Range, netlist::RangeArray and netlist::RangeArrayCommon.
+* Imply complicated no-driver, multi-driver and no-load analysis on all veriable, although missing a deduction operation on RangeArray right now.
+* Provide out-of-range check to all variables.
+* Modify the parser to use the new netlist::RangeArray.
+* Modify the streamout facilities of netlist::Range, netlist::RangeArray and netlist::RangeArrayCommon.
 
 ##### Tue 19/06/2012 ( good! finaaly settled. and get a review request from IET CDT)
 * Seems all internals of range related calsses are finished. So change other classes who use range expressions.

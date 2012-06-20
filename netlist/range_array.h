@@ -55,6 +55,9 @@ namespace netlist {
     // return the combined area of two range arrays
     RangeArray op_or(const RangeArray&, 
                      const RangeArray& maxRange = RangeArray()) const;
+    // return the area in this but not rhs
+    RangeArray op_deduct(const RangeArray&, 
+                         const RangeArray& maxRange = RangeArray()) const;
     bool op_equ(const RangeArray&) const;
 
     // used in parser
@@ -79,6 +82,7 @@ namespace netlist {
 
   inline RangeArray operator& ( const RangeArray& lhs, const RangeArray& rhs) {return lhs.op_and(rhs); };
   inline RangeArray operator| ( const RangeArray& lhs, const RangeArray& rhs) { return lhs.op_or(rhs); }
+  inline RangeArray operator- ( const RangeArray& lhs, const RangeArray& rhs) { return lhs.op_deduct(rhs); }
   bool operator>= ( const RangeArray& lhs, const RangeArray& rhs); /* whether rhs belongs to lhs */
   inline bool operator== ( const RangeArray& lhs, const RangeArray& rhs) {
     return lhs.op_equ(rhs);

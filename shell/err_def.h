@@ -125,6 +125,11 @@ ERR_DEFINE("ELAB-VAR-3",
            EWarning,   1,
            "variable \"%1%\" is defined but not used.");
 
+// wire/reg has no driver
+ERR_DEFINE("ELAB-VAR-4",
+           EWarning,   2,
+           "variable \"%1%\" is out of the range definition of \"%2\".");
+
 /// on the left side of an assign should be a non-const variable or concatenation
 ERR_DEFINE("SYN-ASSIGN-0", 
            EError,   0, 

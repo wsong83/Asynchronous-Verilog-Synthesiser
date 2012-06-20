@@ -185,27 +185,32 @@ bool netlist::Variable::elaborate(elab_result_t &result, const ctype_t mctype, c
 
   // elaborate the identifier
   rv &= name.elaborate(result, tVariable);
+  rv &= name.get_range().is_valuable();
+  rv &= name.get_range().is_declaration();
+  assert(rv);
+
+  // check all fanin and fanout are not out-of-range
+  for_each(fan[0].begin(), fan[0].end(), 
+           [&rv, &name, &loc](pair<const unsigned int, VIdentifier *>& m) {
+             rv &= name.get_range() >= m.second->get_select().const_copy(name.get_range());
+             if(!rv) G_ENV->error(loc, "ELAB-VAR-4", toString(*(m.second)), toString(name));
+           });
+
+  for_each(fan[1].begin(), fan[1].end(), 
+           [&rv, &name, &loc](pair<const unsigned int, VIdentifier *>& m) {
+             rv &= name.get_range() >= m.second->get_select().const_copy(name.get_range());
+             if(!rv) G_ENV->error(loc, "ELAB-VAR-4", toString(*(m.second)), toString(name));
+           });
 
   // check fan-in and fan-out
   switch(vtype) {
   case TWire: {
-    if(fan[0].size() != 1) {
-      if(fan[0].size() == 0) {
-        if(fan[1].size() == 1) {
-          G_ENV->error(loc, "ELAB-VAR-3", name.name);
-        } else {
-          G_ENV->error(loc, "ELAB-VAR-0", name.name);
-          rv = false;
-        }
-      }
-      else {
-        rv = multi_driver_checker();
-      }
-    } else {
-      // TODO:
-      //  check whether it is a continueous assignment,
-      //  an input port or an output port of an instance.
-    }
+    rv = driver_and_load_checker();
+    if(!rv) break;
+    
+    // TODO:
+    //  check whether it is a continueous assignment,
+    //  an input port or an output port of an instance.
     
     if(fan[0].size() != 0 && fan[1].size() == 1) {    // no load
       G_ENV->error(loc, "ELAB-VAR-2", name.name);
@@ -214,22 +219,10 @@ bool netlist::Variable::elaborate(elab_result_t &result, const ctype_t mctype, c
     break;
   }
   case TReg: {
-    if(fan[0].size() != 1) {
-      if(fan[0].size() == 0) {
-        if(fan[1].size() == 1) {
-          G_ENV->error(loc, "ELAB-VAR-3", name.name);
-        } else {
-          G_ENV->error(loc, "ELAB-VAR-0", name.name);
-          rv = false;
-        }
-      }
-      else {
-        rv = multi_driver_checker();
-      }
-    } else {
-      // TODO:
-      //  check whether it is a blocked or non-blocked assignment in a always block.
-    }
+    rv = driver_and_load_checker();
+    if(!rv) break;
+    // TODO:
+    //  check whether it is a blocked or non-blocked assignment in a always block.
     
     if(fan[0].size() != 0 && fan[1].size() == 1) {    // no load
       G_ENV->error(loc, "ELAB-VAR-2", name.name);
@@ -253,42 +246,123 @@ string netlist::Variable::get_short_string() const {
   return rv;
 }
 
-bool netlist::Variable::multi_driver_checker() {
-  bool rv = true; /*
-  map<unsigned long, pair<SeqBlock*, vector<shared_ptr<Range> > > > driverMapSeq; // seq-blocks
-  map<unsigned long, pair<VIdentifier*, vector<shared_ptr<Range> > > > driverMapAssign; // assigns
+bool netlist::Variable::driver_and_load_checker() {
+  bool rv = true; 
+
+  // checking loads
+  RangeArray rangeLoad;
+  for_each(fan[1].begin(), fan[1].end(), 
+           [&rv, &name, &rangeLoad](pair<const unsigned int, VIdentifier *>& m) {
+             if(rangeLoad.is_empty()) 
+               rangeLoad.op_or(m.second->get_select().const_copy(name.get_range()));
+             else 
+               rangeLoad = m.second->get_select().const_copy(name.get_range());
+           });
+  rangeLoad = name.get_range() - rangeLoad;
+  if(!rangeLoad.is_empty()) {
+    std::ostringstream sos;
+    rangeLoad.RangeArrayCommon::streamout(sos, 0, name.name);
+    G_ENV->error(loc, "ELAB-VAR-2", sos.str());
+    // no laod is not serious problem, rv is not changed
+  }
+
+  map<unsigned long, pair<SeqBlock*, RangeArray> > driverMapSeq; // seq-blocks
+  map<unsigned long, pair<VIdentifier*, RangeArray> > driverMapAssign; // assigns
+  RangeArray assignRange;
   for_each
     (fan[0].begin(), fan[0].end(), 
-     [&driverMapSeq, &driverMapAssign] (pair<const unsigned int, VIdentifier*>& m) 
+     [&driverMapSeq, &driverMapAssign, &name, &assignRange]
+     (pair<const unsigned int, VIdentifier*>& m) 
      {
        if(m.second->get_alwaysp() != NULL) { // seq-blocks
-         driverMapSeq[(unsigned long)(m.second->get_alwaysp())] = 
-           pair<SeqBlock*, vector<shared_ptr<Range> > >(m.second->get_alwaysp(), vector<shared_ptr<Range> >());
+         unsigned long malwaysp = (unsigned long)(m.second->get_alwaysp());
+         if(driverMapSeq.count(malwaysp))
+           driverMapSeq[malwaysp].second.op_or(m.second->get_select().const_copy(name.get_range()), name.get_range());
+         else
+           driverMapSeq[malwaysp] = 
+             pair<SeqBlock*, RangeArray>(m.second->get_alwaysp(), 
+                                         m.second->get_select().const_copy(name.get_range()));
+         // add up the assign range
+         if(assignRange.is_empty()) 
+           assignRange.op_or(m.second->get_select().const_copy(name.get_range()), name.get_range());
+         else 
+           assignRange = m.second->get_select().const_copy(name.get_range());
        } else {                  // assigns
-         driverMapAssign[(unsigned long)(m.second)] = 
-           pair<VIdentifier *, vector<shared_ptr<Range> > >(m.second, vector<shared_ptr<Range> >());
+         unsigned long mvarp = (unsigned long)(m.second);
+         if(driverMapAssign.count(mvarp))
+           driverMapAssign[mvarp].second.op_or(m.second->get_select().const_copy(name.get_range()), name.get_range());
+         else
+           driverMapAssign[mvarp] = 
+             pair<VIdentifier*, RangeArray>(m.second, 
+                                            m.second->get_select().const_copy(name.get_range()));
+         // add up the assign range
+         if(assignRange.is_empty()) 
+           assignRange.op_or(m.second->get_select().const_copy(name.get_range()), name.get_range());
+         else 
+           assignRange = m.second->get_select().const_copy(name.get_range());
        }
      });
-  
-  if(driverMapSeq.size() +  driverMapAssign.size() > 1) {
-    if(driverMapSeq.size() > 1) { // mulitple seq-blocks
-      G_ENV->error(loc, "ELAB-VAR-1", name.name, 
-                   toString(driverMapSeq.begin()->second.first->loc),
-                   toString(driverMapSeq.rbegin()->second.first->loc)
-                   );
-    } else if(driverMapAssign.size() > 1) { // multiple assigns
-      G_ENV->error(loc, "ELAB-VAR-1", name.name, 
-                   toString(driverMapAssign.begin()->second.first->loc),
-                   toString(driverMapAssign.rbegin()->second.first->loc)
-                   );
-    } else {                    // seq-block and assign
-      G_ENV->error(loc, "ELAB-VAR-1", name.name, 
-                   toString(driverMapSeq.begin()->second.first->loc),
-                   toString(driverMapAssign.begin()->second.first->loc)
-                   );
-    }      
-    rv = false;
+
+  // check no driver
+  RangeArray rangeNoDriver = name.get_range() - assignRange;
+  rangeLoad = rangeNoDriver & rangeLoad; // no driver but no load range
+  rangeNoDriver = rangeNoDriver - rangeLoad; // really some useful signal but no load
+  if(!rangeNoDriver.is_empty()) {
+    std::ostringstream sos;
+    rangeNoDriver.RangeArrayCommon::streamout(sos, 0, name.name);
+    G_ENV->error(loc, "ELAB-VAR-0", sos.str());
+    return false;
   }
-                  */
+  if(!rangeLoad.is_empty()) {
+    std::ostringstream sos;
+    rangeLoad.RangeArrayCommon::streamout(sos, 0, name.name);
+    G_ENV->error(loc, "ELAB-VAR-3", sos.str());
+    return false;
+  }
+
+  // multi-driver check
+  if(driverMapSeq.size() > 0 && driverMapAssign.size() > 0) { // both seq and assign
+    G_ENV->error(loc, "ELAB-VAR-1", name.name, 
+                 toString(driverMapSeq.begin()->second.first->loc),
+                 toString(driverMapAssign.begin()->second.first->loc)
+                 );
+    return false;
+  }
+
+  
+  if(driverMapSeq.size() > 1) { // sequential
+    map<unsigned long, pair<SeqBlock*, RangeArray> >::iterator mit, mend;
+    map<unsigned long, pair<SeqBlock*, RangeArray> >::iterator nit, nend;
+    for(mit=driverMapSeq.begin(), mend=driverMapSeq.end(); mit != mend; mit++) {
+      for(nit=driverMapSeq.begin(), nend=driverMapSeq.end(); nit != nend; nit++) {
+        if(!mit->second.second.op_and(nit->second.second).is_empty()) {
+          // they have shared range
+          G_ENV->error(loc, "ELAB-VAR-1", name.name, 
+                       toString(mit->second.first->loc),
+                       toString(nit->second.first->loc)
+                       );
+          return false;
+        }
+      }
+    }
+  } // if(driverMapSeq.size() > 1)
+
+  if(driverMapAssign.size() > 1) { // continuous
+    map<unsigned long, pair<VIdentifier*, RangeArray> >::iterator mit, mend;
+    map<unsigned long, pair<VIdentifier*, RangeArray> >::iterator nit, nend;
+    for(mit=driverMapAssign.begin(), mend=driverMapAssign.end(); mit != mend; mit++) {
+      for(nit=driverMapAssign.begin(), nend=driverMapAssign.end(); nit != nend; nit++) {
+        if(!mit->second.second.op_and(nit->second.second).is_empty()) {
+          // they have shared range
+          G_ENV->error(loc, "ELAB-VAR-1", name.name, 
+                       toString(mit->second.first->loc),
+                       toString(nit->second.first->loc)
+                       );
+          return false;
+        }
+      }
+    }
+  } // if(driverMapAssign.size() > 1)
+                  
   return rv;
 }
