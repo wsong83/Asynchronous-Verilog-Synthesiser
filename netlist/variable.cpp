@@ -95,35 +95,11 @@ ostream& netlist::Variable::streamout(ostream& os, unsigned int indent) const {
   case TGenvar: os << "genvar ";    break;
   default: assert(0 == "uninitialized variable!");
   }
-
-  vector<shared_ptr<Range> >::const_iterator it, end;
-
-  vector<shared_ptr<Range> > rm = name.get_range();
-  for(it=rm.begin(), end=rm.end(); it != end; it++) {
-    if((*it)->is_dim()) continue;
-    os << "[" << **it;
-    if((*it)->is_single())
-      os << ":" << **it;
-    os << "] ";
-  }
-  os << name.name;
-  rm = name.get_range();
-  for(it=rm.begin(), end=rm.end(); it != end; it++) {
-    if(!(*it)->is_dim()) break;
-    os << "[" << **it;
-    if((*it)->is_single())
-      os << ":" << **it;
-    os << "]";
-  }
-
-  if(exp.use_count() != 0) {
-    os << " = " << *exp;
-  }
-
+  name.get_range().RangeArrayCommon::streamout(os, 0, "", true, false); // show range of declaration 
+  name.get_range().RangeArrayCommon::streamout(os, 1, name.name, true, true); // show dimension of declaration
+  if(exp.use_count() != 0) { os << " = " << *exp; }
   os << ";" << endl;
-
   return os;
-
 }
 
 bool netlist::Variable::check_inparse() {
@@ -278,7 +254,7 @@ string netlist::Variable::get_short_string() const {
 }
 
 bool netlist::Variable::multi_driver_checker() {
-  bool rv = true;
+  bool rv = true; /*
   map<unsigned long, pair<SeqBlock*, vector<shared_ptr<Range> > > > driverMapSeq; // seq-blocks
   map<unsigned long, pair<VIdentifier*, vector<shared_ptr<Range> > > > driverMapAssign; // assigns
   for_each
@@ -313,6 +289,6 @@ bool netlist::Variable::multi_driver_checker() {
     }      
     rv = false;
   }
-
+                  */
   return rv;
 }

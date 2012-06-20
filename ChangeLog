@@ -1,13 +1,16 @@
-##### Tue 19/06/2012
+##### Wed 20/06/2012 ( boring due to the routine work to rewrite inherited fuctions and parsers. )
+* Modifiy the streamout facilities of netlist::Range, netlist::RangeArray and netlist::RangeArrayCommon.
+
+##### Tue 19/06/2012 ( good! finaaly settled. and get a review request from IET CDT)
 * Seems all internals of range related calsses are finished. So change other classes who use range expressions.
 * Implement inherit methods in netlist::Range, netlist::RangeArray and netlist::RangeArrayCommon.
 
-##### Mon 18/06/2012
+##### Mon 18/06/2012 ( better as find a way to do it )
 * The major construction of range operations have been finished.
 * op_deduct() in netlist::Range is rewritten along with op_normalise_tree().
 * Seems like I have finally settle down how to implement range operations. Good!
 
-##### Sun 17/06/2012
+##### Sun 17/06/2012 ( frustrated as there is the need to rewrite the third time for ranges!)
 * Finally find out that it is kind impossible (or too difficult) to do range operations with variables when the maximal 
   range is unknown. However, when the maximal range is provided, all range expression can be reduced to const range which
   significantly reduce all calculations. The bad news is, all operations are going to be re-write for the third time in 

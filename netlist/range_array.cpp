@@ -69,7 +69,7 @@ RangeArray netlist::RangeArray::const_copy(const RangeArray& maxRange) const {
   return rv;
 }
 
-RangeArray netlist::RangeArray::deep_copy() const {
+RangeArray netlist::RangeArray::deep_object_copy() const {
   RangeArray rv;
   for_each(child.begin(), child.end(), [&rv](const shared_ptr<Range>& m) {
       rv.child.push_back(shared_ptr<Range>(m->deep_copy()));
@@ -106,6 +106,16 @@ bool netlist::RangeArray::op_equ(const RangeArray& rhs) const {
   return RangeArrayCommon::op_equ(rhs.child);
 }
 
+void netlist::RangeArray::add_range(const shared_ptr<Range>& rhs) {
+  child.push_back(rhs);
+}
+
+void netlist::RangeArray::add_dimension(const shared_ptr<Range>& rhs) {
+  rhs->set_child(child);        // set current child(lower dimensions to rhs)
+  child.clear();                // clear current top level dimension
+  child.push_back(rhs);         // store the new top level to range array
+}
+
 void netlist::RangeArray::set_father(Block* pf) {
   if(father == pf) return;
   father = pf;
@@ -118,6 +128,15 @@ ostream& RangeArray::streamout (ostream& os, unsigned int indent) const {
 
 bool netlist::RangeArray::check_inparse() {
   return RangeArrayCommon::check_inparse();
+}
+
+RangeArray* netlist::RangeArray::deep_copy() const {
+  RangeArray* rv = new RangeArray();
+  for_each(child.begin(), child.end(), [&rv](const shared_ptr<Range>& m) {
+      rv->child.push_back(shared_ptr<Range>(m->deep_copy()));
+    });
+  rv->const_reduced = const_reduced;
+  return rv;
 }
 
 void netlist::RangeArray::db_register(int iod) {

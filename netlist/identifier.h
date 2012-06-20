@@ -169,7 +169,7 @@ namespace netlist {
     VIdentifier(const averilog::avID&);
     VIdentifier(const shell::location&, const averilog::avID&);
     VIdentifier(const std::string&, const RangeArray&);
-    VIdentifier(const shell::location&, const std::string&, RangeArray&);
+    VIdentifier(const shell::location&, const std::string&, const RangeArray&);
     virtual ~VIdentifier();
 
     //helpers

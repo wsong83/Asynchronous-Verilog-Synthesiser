@@ -81,24 +81,8 @@ ostream& netlist::Port::streamout(ostream& os, unsigned int indent) const {
   else
     os << "UNKOWN_port ";
 
-  vector<shared_ptr<Range> > rm = name.get_range();
-  vector<shared_ptr<Range> >::const_iterator it, end;
-  for(it=rm.begin(), end=rm.end(); it != end; it++) {
-    if((*it)->is_dim()) continue;
-    os << "[" << **it;
-    if((*it)->is_single())
-      os << ":" << **it;
-    os << "] ";
-  }
-  os << name.name;
-  rm = name.get_range();
-  for(it=rm.begin(), end=rm.end(); it != end; it++) {
-    if(!(*it)->is_dim()) break;
-    os << "[" << **it;
-    if((*it)->is_single())
-      os << ":" << **it;
-    os << "]";
-  }
+  name.get_range().RangeArrayCommon::streamout(os, 0, "", true, false); // show range of declaration 
+  name.get_range().RangeArrayCommon::streamout(os, 1, name.name, true, true); // show dimension of declaration
   os << ";" << endl;
 
   return os;

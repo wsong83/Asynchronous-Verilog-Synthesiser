@@ -189,6 +189,7 @@ bool shell::CMD::CMDElaborate::exec ( Env& gEnv, vector<string>& arg){
 
       // report the behaviour to user
       gEnv.stdOs << "elaborating module \"" << curDgn->name.name << "\"";
+      
       if(!curDgn->db_param.empty()) {
         gEnv.stdOs << " with parameters \"";
         list<pair<netlist::VIdentifier, shared_ptr<netlist::Variable> > >::const_iterator it, end;

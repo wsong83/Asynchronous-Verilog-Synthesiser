@@ -46,6 +46,12 @@ bool netlist::RangeArrayCommon::is_valuable() const {
   return rv;
 }
 
+void netlist::RangeArrayCommon::set_dim() {
+  for_each(child.begin(), child.end(), [](const shared_ptr<Range>& m) {
+      m->set_dim(true);
+    });
+}  
+
 list<shared_ptr<Range> > netlist::RangeArrayCommon::const_copy(const Range& maxRange) const {
   list<shared_ptr<Range> > rv;
   for_each(child.begin(), child.end(), [&rv, &maxRange](const shared_ptr<Range>& m) {
@@ -106,15 +112,29 @@ bool netlist::RangeArrayCommon::op_equ(const list<shared_ptr<Range> >& rhs) cons
 
 }
 
-ostream& netlist::RangeArrayCommon::streamout(ostream& os, unsigned int indent, const string& prefix, bool decl) const {
-  for_each(child.begin(), child.end(), [&os, &indent, &prefix, &decl](const shared_ptr<Range>& m) {
-      m->streamout(os, indent, prefix, decl);
-    });
+ostream& netlist::RangeArrayCommon::streamout(ostream& os, unsigned int indent, const string& prefix, bool decl, bool dim_or_range) const {
+  if(child.empty()) os << string(indent, ' ') << prefix; // at least whoe the prefix when it is empty
+  list<shared_ptr<Range> >::const_iterator it, end;
+  it = child.begin(); end = child.end();
+  while(it != end) {
+    (*it)->streamout(os, indent, prefix, decl, dim_or_range);
+    it++;
+    if(it != end && !decl) os << ", "; // add comma when a range(select) has many sub-ranges
+  } 
   return os;
 }
 
 void netlist::RangeArrayCommon::const_reduce(const Range& maxRange) {
   child = const_reduce(child, maxRange);
+}
+
+void netlist::RangeArrayCommon::add_low_dimension(const shared_ptr<Range>& rhs) {
+  if(child.empty()) child.push_back(rhs);
+  else {
+    for_each(child.begin(), child.end(), [&rhs](shared_ptr<Range>& m) {
+        m->RangeArrayCommon::add_low_dimension(rhs);
+      });
+  }
 }
 
 list<shared_ptr<Range> > netlist::RangeArrayCommon::const_reduce(const list<shared_ptr<Range> >& rhs, const Range& maxRange) const {

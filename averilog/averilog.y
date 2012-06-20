@@ -401,7 +401,7 @@ input_declaration
         shared_ptr<Port> cp( new Port(it->loc, *it));
         cp->set_in();
         pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
-        cp->name.get_range().push_back(shared_ptr<Range>(new Range(@2+@6, m)));
+        cp->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@2+@6, m)));
         $$.push_back(cp);
       }
     }  
@@ -424,7 +424,7 @@ output_declaration
         shared_ptr<Port> cp( new Port(it->loc, *it));
         cp->set_out();
         pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
-        cp->name.get_range().push_back(shared_ptr<Range>(new Range(@2+@6,m)));
+        cp->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@2+@6,m)));
         $$.push_back(cp);
       }
     }  
@@ -440,10 +440,7 @@ variable_declaration
                                                        it->first, it->second, Variable::TWire)));
         $$.back()->name.get_range() = $$.back()->name.get_select();
         $$.back()->name.get_select().clear();
-        vector<shared_ptr<Range> >::iterator rg_it, rg_end;
-        for(rg_it = $$.back()->name.get_range().begin(), rg_end = $$.back()->name.get_range().end(); 
-            rg_it != rg_end; rg_it++ )
-          (*rg_it)->set_dim();
+        $$.back()->name.get_range().set_dim();
       }
     }
     | "wire" '[' expression ':' expression ']' list_of_variable_identifiers
@@ -454,12 +451,9 @@ variable_declaration
                                                        it->first, it->second, Variable::TWire)));
         $$.back()->name.get_range() = $$.back()->name.get_select();
         $$.back()->name.get_select().clear();
-        vector<shared_ptr<Range> >::iterator rg_it, rg_end;
-        for(rg_it = $$.back()->name.get_range().begin(), rg_end = $$.back()->name.get_range().end(); 
-            rg_it != rg_end; rg_it++ )
-          (*rg_it)->set_dim();
+        $$.back()->name.get_range().set_dim();
         pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
-        $$.back()->name.get_range().push_back(shared_ptr<Range>(new Range(@2+@6, m)));
+        $$.back()->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@2+@6, m)));
       }
     }
     | "reg" list_of_variable_identifiers 
@@ -470,10 +464,7 @@ variable_declaration
                                                        it->first, it->second, Variable::TReg)));
         $$.back()->name.get_range() = $$.back()->name.get_select();
         $$.back()->name.get_select().clear();
-        vector<shared_ptr<Range> >::iterator rg_it, rg_end;
-        for(rg_it = $$.back()->name.get_range().begin(), rg_end = $$.back()->name.get_range().end(); 
-            rg_it != rg_end; rg_it++ )
-          (*rg_it)->set_dim();
+        $$.back()->name.get_range().set_dim();
       }
     }
     | "reg" '[' expression ':' expression ']' list_of_variable_identifiers
@@ -485,11 +476,9 @@ variable_declaration
         $$.back()->name.get_range() = $$.back()->name.get_select();
         $$.back()->name.get_select().clear();
         vector<shared_ptr<Range> >::iterator rg_it, rg_end;
-        for(rg_it = $$.back()->name.get_range().begin(), rg_end = $$.back()->name.get_range().end(); 
-            rg_it != rg_end; rg_it++ )
-          (*rg_it)->set_dim();
+        $$.back()->name.get_range().set_dim();
         pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
-        $$.back()->name.get_range().push_back(shared_ptr<Range>(new Range(@2+@6, m)));
+        $$.back()->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@2+@6, m)));
       }
     }
     | "genvar" list_of_variable_identifiers
@@ -500,10 +489,7 @@ variable_declaration
                                                        it->first, it->second, Variable::TGenvar)));
         $$.back()->name.get_range() = $$.back()->name.get_select();
         $$.back()->name.get_select().clear();
-        vector<shared_ptr<Range> >::iterator rg_it, rg_end;
-        for(rg_it = $$.back()->name.get_range().begin(), rg_end = $$.back()->name.get_range().end(); 
-            rg_it != rg_end; rg_it++ )
-          (*rg_it)->set_dim();
+        $$.back()->name.get_range().set_dim();
       }
     }
     | "integer" list_of_variable_identifiers
@@ -514,11 +500,8 @@ variable_declaration
                                                        it->first, it->second, Variable::TReg)));
         $$.back()->name.get_range() = $$.back()->name.get_select();
         $$.back()->name.get_select().clear();
-        vector<shared_ptr<Range> >::iterator rg_it, rg_end;
-        for(rg_it = $$.back()->name.get_range().begin(), rg_end = $$.back()->name.get_range().end(); 
-            rg_it != rg_end; rg_it++ )
-          (*rg_it)->set_dim();
-        $$.back()->name.get_range().push_back(shared_ptr<Range>(new Range(31, 0)));
+        $$.back()->name.get_range().set_dim();
+        $$.back()->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(31, 0)));
       }
     }
     ;
@@ -1071,7 +1054,7 @@ parameter_identifier
 
 variable_identifier
     : identifier           { $$ = VIdentifier(@$, $1); }
-    | variable_identifier '[' range_expression ']' { $$ = $1; $$.get_select().push_back($3); }
+    | variable_identifier '[' range_expression ']' { $$ = $1; $$.get_select().add_low_dimension($3); }
     ;
 
 port_identifier

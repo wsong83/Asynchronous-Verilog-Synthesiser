@@ -538,40 +538,46 @@ void netlist::Range::const_reduce(const Range& maxRange) {
   }
 }
 
-ostream& netlist::Range::streamout(ostream& os, unsigned int indent, const string& prefix, bool decl) const {
+ostream& netlist::Range::streamout(ostream& os, unsigned int indent, const string& prefix, bool decl, bool dim_or_range) const {
   std::ostringstream sos;
-  sos << string(indent, ' ') << prefix << "[";
-  switch(rtype) {
-  case TR_Const: {
-    sos << c.get_value();
-    if(decl) sos << ":" << c.get_value();
-    break;
+  sos << string(indent, ' ') << prefix;
+  if( (decl && dim_or_range && dim) ||     // declaration, show dimension field 
+      (decl && !dim_or_range && !dim ) ||  // declaration, show range field
+      (!decl)                              // selector
+      ) {
+    sos << "[";
+    switch(rtype) {
+    case TR_Const: {
+      sos << c.get_value();
+      if(decl) sos << ":" << c.get_value();
+      break;
+    }
+    case TR_Var: {
+      sos << *v;
+      assert(!decl);              // this is odd, assert to check the first legal situation
+      if(decl) sos << ":" << *v;
+      break;
+    }
+    case TR_Range: {
+      if(r.first->is_valuable())  sos << r.first->get_value().get_value();
+      else                        sos << *(r.first); 
+      sos << ":"; 
+      if(r.second->is_valuable()) sos << r.second->get_value().get_value();
+      else                        sos << *(r.second); 
+      break;
+    }
+    case TR_CRange: sos << cr.first.get_value() << ":" << cr.second.get_value(); break;
+    case TR_Empty: break;
+    default: // should not go here
+      assert(0 == "Wrong range type");
+    }
+    sos << "]";
   }
-  case TR_Var: {
-    sos << *v;
-    assert(!decl);              // this is odd, assert to check the first legal situation
-    if(decl) sos << ":" << *v;
-    break;
-  }
-  case TR_Range: {
-    if(r.first->is_valuable())  sos << r.first->get_value().get_value();
-    else                        sos << *(r.first); 
-    os << ":"; 
-    if(r.second->is_valuable()) sos << r.second->get_value().get_value();
-    else                        sos << *(r.second); 
-    break;
-  }
-  case TR_CRange: sos << cr.first.get_value() << ":" << cr.second.get_value(); break;
-  case TR_Empty: break;
-  default: // should not go here
-    assert(0 == "Wrong range type");
-  }
-  sos << "]";
-  
+
   if(child.empty()) {           // the leaf node
     os << sos.str();
   } else {
-    RangeArrayCommon::streamout(os, 0, sos.str(), decl);
+    RangeArrayCommon::streamout(os, 0, sos.str(), decl, dim_or_range);
   }
   return os;
 }

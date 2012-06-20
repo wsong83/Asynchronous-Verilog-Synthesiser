@@ -329,7 +329,7 @@ bool netlist::VIdentifier::check_inparse() {
 
 ostream& netlist::VIdentifier::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
-  m_select.streamout(os, 0, name);
+  m_select.RangeArrayCommon::streamout(os, 0, name);
   return os;
 }
 
@@ -389,8 +389,8 @@ VIdentifier* netlist::VIdentifier::deep_copy() const {
   rv->value = this->value;
   rv->numbered = this->numbered;
   rv->uid = 0;                  // unregistered
-  rv->m_range = m_range.deep_copy();
-  rv->m_select = m_select.deep_copy();
+  rv->m_range = m_range.deep_object_copy();
+  rv->m_select = m_select.deep_object_copy();
   return rv;
 }
   

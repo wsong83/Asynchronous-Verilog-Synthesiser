@@ -41,8 +41,13 @@ namespace netlist {
     bool is_valuable() const;
     bool is_empty() const { return child.empty(); }
     unsigned int size() const { return child.size(); }
+    void clear() { child.clear(); }
     Range& front() { return *(child.front()); }
     const Range& front() const { return *(child.front()); }
+    const std::list<boost::shared_ptr<Range> >& get_child() const { return child; }
+    std::list<boost::shared_ptr<Range> >& get_child() { return child; }
+    void set_child(const std::list<boost::shared_ptr<Range> >& rhs) { child = rhs; }
+    void set_dim();             // set all ranges to dimension field range than range
     std::list<boost::shared_ptr<Range> > const_copy(const Range& maxRange) const;
     // get the shared range of two range arrays
     std::list<boost::shared_ptr<Range> > op_and(const std::list<boost::shared_ptr<Range> >&) const;
@@ -50,11 +55,13 @@ namespace netlist {
     std::list<boost::shared_ptr<Range> > op_or(const std::list<boost::shared_ptr<Range> >&, const Range& maxRange) const;  
     // check whether two range arrays are equal
     bool op_equ(const std::list<boost::shared_ptr<Range> >&) const; 
-    std::ostream& streamout(std::ostream& os, unsigned int indent, const std::string& prefix, bool decl = false) const;
+    std::ostream& streamout(std::ostream& os, unsigned int indent, const std::string& prefix, bool decl = false, bool dim_or_range = false) const;
     void const_reduce(const Range& maxRange);    // try to reduce the range array using symbolic mathod
     // the symbolic reduce function used to range list
     std::list<boost::shared_ptr<Range> > const_reduce(const std::list<boost::shared_ptr<Range> >&,
                                                       const Range& maxRange) const;
+    // add another level of dimension as the top level
+    void add_low_dimension(const boost::shared_ptr<Range>&);
 
     // inherit from NetComp, actually not
     NETLIST_SET_FATHER_DECL;

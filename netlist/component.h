@@ -133,12 +133,12 @@ namespace netlist {
 // NON-STL classes
 #include "operation.h"
 #include "number.h"
-#include "identifier.h"
 #include "expression.h"
 #include "concatenation.h"
 #include "lconcatenation.h"
 #include "range.h"
 #include "range_array.h"
+#include "identifier.h"
 #include "port.h"
 #include "variable.h"
 #include "assign.h"

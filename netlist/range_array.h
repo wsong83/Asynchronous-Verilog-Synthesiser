@@ -46,6 +46,8 @@ namespace netlist {
     bool is_declaration() const;
     // copy the symbolic value of a range array to a new one
     RangeArray const_copy(const RangeArray& mxRange) const;
+    // deep copy but return an object rather than a pointer 
+    RangeArray deep_object_copy() const;
     // reduce a variable range array to a symbolic one
     void const_reduce(const RangeArray& mxRange);
     // return the shared area of two range arrays
@@ -55,11 +57,17 @@ namespace netlist {
                      const RangeArray& maxRange = RangeArray()) const;
     bool op_equ(const RangeArray&) const;
 
+    // used in parser
+    // add another range area in the top dimension
+    void add_range(const boost::shared_ptr<Range>& rhs); 
+    // add another level of dimension as the top level
+    void add_dimension(const boost::shared_ptr<Range>& rhs); 
+
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
     NETLIST_CHECK_INPARSE_DECL;
-    RangeArray deep_copy() const;
+    RangeArray* deep_copy() const;
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
     NETLIST_ELABORATE_DECL;

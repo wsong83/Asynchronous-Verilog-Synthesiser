@@ -54,7 +54,7 @@ namespace netlist {
     // helpers
     bool is_single() const {return rtype != TR_Range && rtype != TR_CRange; }
     bool is_empty() const { return rtype == TR_Empty; }
-    void set_dim() { dim = true;}
+    void set_dim(bool tree = false) { dim = true; if(tree) RangeArrayCommon::set_dim(); }
     bool is_dim() const { return dim;}
     bool is_valuable() const { return (rtype == TR_Const || rtype == TR_CRange|| rtype == TR_Empty); }
     bool is_valuable_tree() const;
@@ -72,7 +72,7 @@ namespace netlist {
     bool op_belong_to(const Range&) const;      /* helper for >= */
     bool op_adjacent_to(const Range&) const;    // return true if rhs and this have shared area or connected
     bool op_higher(const Range&) const;    // return true if the range of this is higher than rhs
-    std::ostream& streamout(std::ostream& os, unsigned int indent, const std::string& prefix, bool decl = false) const;
+    std::ostream& streamout(std::ostream& os, unsigned int indent, const std::string& prefix, bool decl = false, bool dim_or_range = false) const;
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
