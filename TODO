@@ -1,3 +1,4 @@
+* 20/06/2012   (**Normal    )   Do I need range and select in identifier? May be one of them is enough?
 * 18/06/2012   (**Normal    )   Need serious test for the range array operations.
 * 13/06/2012   (**Important )   Process of reducing Case statement in Block, SeqBlock and GenBlock.
 * 12/06/2012   (**Important )   Need serious test for Elab_empty and Elab_Const_If reduction in Block, SeqBlock and GenBlock.

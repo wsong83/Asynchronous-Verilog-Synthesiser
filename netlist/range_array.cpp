@@ -69,12 +69,12 @@ RangeArray netlist::RangeArray::const_copy(const RangeArray& maxRange) const {
   return rv;
 }
 
-RangeArray* netlist::RangeArray::deep_copy() const {
-  RangeArray* rv = new RangeArray();
+RangeArray netlist::RangeArray::deep_copy() const {
+  RangeArray rv;
   for_each(child.begin(), child.end(), [&rv](const shared_ptr<Range>& m) {
-      rv->child.push_back(shared_ptr<Range>(m->deep_copy()));
+      rv.child.push_back(shared_ptr<Range>(m->deep_copy()));
     });
-  rv->const_reduced = const_reduced;
+  rv.const_reduced = const_reduced;
   return rv;
 }
 

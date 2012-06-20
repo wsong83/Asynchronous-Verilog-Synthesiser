@@ -146,14 +146,14 @@ namespace netlist {
     PoIdentifier(const shell::location&, const averilog::avID&);
 
     // helpers
-    void set_range(const std::vector<boost::shared_ptr<Range> >& nr) { m_range = nr; }
-    const std::vector<boost::shared_ptr<Range> >& get_range() const {return m_range;}
-    std::vector<boost::shared_ptr<Range> >& get_range() {return m_range;}
+    void set_range(const RangeArray& nr) { m_range = nr; }
+    const RangeArray get_range() const {return m_range;}
+    RangeArray& get_range() {return m_range;}
     NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
 
   private:
-    std::vector<boost::shared_ptr<Range> > m_range;
+    RangeArray m_range;
 
   };
   NETLIST_STREAMOUT(PoIdentifier);
@@ -168,21 +168,21 @@ namespace netlist {
     VIdentifier(const shell::location&, const std::string&);
     VIdentifier(const averilog::avID&);
     VIdentifier(const shell::location&, const averilog::avID&);
-    VIdentifier(const std::string&, const std::vector<boost::shared_ptr<Range> >&);
-    VIdentifier(const shell::location&, const std::string&, const std::vector<boost::shared_ptr<Range> >&);
+    VIdentifier(const std::string&, const RangeArray&);
+    VIdentifier(const shell::location&, const std::string&, RangeArray&);
     virtual ~VIdentifier();
 
     //helpers
     VIdentifier& operator++ ();
     VIdentifier& add_prefix (const Identifier&);
-    const std::vector<boost::shared_ptr<Range> >& get_range() const {return m_range;}
-    const std::vector<boost::shared_ptr<Range> >& get_select() const {return m_select;}
-    std::vector<boost::shared_ptr<Range> >& get_range() {return m_range;}
-    std::vector<boost::shared_ptr<Range> >& get_select() {return m_select;}
+    const RangeArray& get_range() const {return m_range;}
+    const RangeArray& get_select() const {return m_select;}
+    RangeArray& get_range() {return m_range;}
+    RangeArray& get_select() {return m_select;}
     bool is_valuable() const { return value.is_valuable(); }
     mpz_class get_value() const { return value.get_value(); }
     void set_value(const Number& p) { value = p; }
-    const std::string& get_txt_value() const { return value.get_txt_value(); }
+    //const std::string& get_txt_value() const { return value.get_txt_value(); }
     void db_register(const boost::shared_ptr<Variable>&, int);
     bool db_registered() const { return uid != 0; }
     void reset_uid(unsigned int id) { uid = id; } /* only used by Variable::get_id() */
@@ -201,8 +201,8 @@ namespace netlist {
 
   private:
     Number value;
-    std::vector<boost::shared_ptr<Range> > m_range;
-    std::vector<boost::shared_ptr<Range> > m_select;
+    RangeArray m_range;
+    RangeArray m_select;
     bool numbered;                 /* true when it is numbered unnamed variable */
     boost::shared_ptr<Variable> pvar;     /* the wire/reg/var in the database */
     NetComp*  pcomp;               /* the netlist component using this variable */

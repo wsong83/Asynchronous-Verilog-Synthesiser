@@ -231,22 +231,12 @@ netlist::PoIdentifier::PoIdentifier(const location& lloc, const averilog::avID& 
 void netlist::PoIdentifier::set_father(Block *pf) {
   if(father == pf) return;
   Identifier::set_father(pf);
-  vector<shared_ptr<Range> >::iterator it, end;
-  for(it=m_range.begin(),end=m_range.end(); it!=end; it++)
-    (*it)->set_father(pf);
+  m_range.set_father(pf);
 }
 
 ostream& netlist::PoIdentifier::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
-  
-  vector<shared_ptr<Range> >::const_iterator it, end;
-  
-  for(it=m_range.begin(), end=m_range.end(); it != end; it++) {
-    os << "[" << *(*it) << "]";
-  }
-
-  os << " " << name ;
-
+  os << m_range << " " << name ;
   return os;
 }
 
@@ -269,10 +259,10 @@ netlist::VIdentifier::VIdentifier(const averilog::avID& id)
 netlist::VIdentifier::VIdentifier(const location& lloc, const averilog::avID& id)
   : Identifier(tVarName, lloc, id.name), numbered(false), pcomp(NULL), uid(0), alwaysp(NULL) { }
 
-netlist::VIdentifier::VIdentifier(const string& nm, const vector<shared_ptr<Range> >& rg)
+netlist::VIdentifier::VIdentifier(const string& nm, const RangeArray& rg)
   : Identifier(tVarName, nm), m_range(rg), numbered(false), pcomp(NULL), uid(0), alwaysp(NULL) {  }
 
-netlist::VIdentifier::VIdentifier(const location& lloc, const string& nm, const vector<shared_ptr<Range> >& rg)
+netlist::VIdentifier::VIdentifier(const location& lloc, const string& nm, const RangeArray& rg)
   : Identifier(tVarName, lloc, nm), m_range(rg), numbered(false), pcomp(NULL), uid(0), alwaysp(NULL) {  }
 
 netlist::VIdentifier::~VIdentifier() {
@@ -313,11 +303,8 @@ VIdentifier& netlist::VIdentifier::add_prefix(const Identifier& prefix) {
 void netlist::VIdentifier::set_father(Block *pf) {
   if(father == pf) return;
   Identifier::set_father(pf);
-  vector<shared_ptr<Range> >::iterator it, end;
-  for(it=m_range.begin(),end=m_range.end(); it!=end; it++)
-    (*it)->set_father(pf);
-  for(it=m_select.begin(),end=m_select.end(); it!=end; it++)
-    (*it)->set_father(pf);
+  m_range.set_father(pf);
+  m_select.set_father(pf);
 }
 
 void netlist::VIdentifier::set_always_pointer(SeqBlock* p) {
@@ -334,23 +321,15 @@ bool netlist::VIdentifier::check_inparse() {
     rv = false;
   }
   
-  vector<shared_ptr<Range> >::iterator it, end;
-  for(it=m_range.begin(),end=m_range.end(); it!=end; it++)
-    rv &= (*it)->check_inparse();
-  for(it=m_select.begin(),end=m_select.end(); it!=end; it++)
-    rv &= (*it)->check_inparse();
+  rv &= m_range.check_inparse();
+  rv &= m_select.check_inparse();
 
   return rv;
 }
 
 ostream& netlist::VIdentifier::streamout(ostream& os, unsigned int indent) const {
-  vector<shared_ptr<Range> >::const_iterator it, end;
-
-  os << string(indent, ' ') << name;
-  for(it=m_select.begin(), end=m_select.end(); it != end; it++) {
-    os << "[" << *(*it) << "]";
-  }
-
+  os << string(indent, ' ');
+  m_select.streamout(os, 0, name);
   return os;
 }
 
@@ -368,13 +347,9 @@ void netlist::VIdentifier::db_register(const shared_ptr<Variable>& f, int iod) {
   if(pvar->is_valuable()) value = pvar->get_value();
 
   // register all range and selectors
-  for_each(m_range.begin(), m_range.end(), [](shared_ptr<Range>& m) {
-      m->db_register(1);
-    });
-  for_each(m_select.begin(), m_select.end(), [](shared_ptr<Range>& m) {
-      m->db_register(1);
-    });
-
+  m_range.db_register(1);
+  m_select.db_register(1);
+  
 }
 
 void netlist::VIdentifier::db_register(int iod) {
@@ -405,12 +380,8 @@ void netlist::VIdentifier::db_expunge() {
   pvar.reset();
 
   // expunge all range and selectors
-  for_each(m_range.begin(), m_range.end(), [](shared_ptr<Range>& m) {
-      m->db_expunge();
-    });
-  for_each(m_select.begin(), m_select.end(), [](shared_ptr<Range>& m) {
-      m->db_expunge();
-    });
+  m_range.db_expunge();
+  m_select.db_expunge();
 }
 
 VIdentifier* netlist::VIdentifier::deep_copy() const {
@@ -418,11 +389,8 @@ VIdentifier* netlist::VIdentifier::deep_copy() const {
   rv->value = this->value;
   rv->numbered = this->numbered;
   rv->uid = 0;                  // unregistered
-  vector<shared_ptr<Range> >::const_iterator it, end;
-  for(it=this->m_range.begin(), end=this->m_range.end(); it!=end; it++)
-    rv->m_range.push_back(shared_ptr<Range>((*it)->deep_copy()));
-  for(it=this->m_select.begin(), end=this->m_select.end(); it!=end; it++)
-    rv->m_select.push_back(shared_ptr<Range>((*it)->deep_copy()));
+  rv->m_range = m_range.deep_copy();
+  rv->m_select = m_select.deep_copy();
   return rv;
 }
   
@@ -443,38 +411,26 @@ bool netlist::VIdentifier::elaborate(elab_result_t &result, const ctype_t mctype
   case tExp: {
     // for an expression, no range is used
     assert(m_range.size() == 0);
-    for_each(m_select.begin(), m_select.end(), [&rv, &mctype, &fp, &result](shared_ptr<Range>& m) {
-        rv &= m->elaborate(result, mctype, fp);
-        rv &= m->is_valuable();
-      });    
-    if(!rv) {
-      G_ENV->error(loc, "ELAB-RANGE-0", name);
-    }
+    rv &= m_select.elaborate(result, mctype, fp);
+    rv &= m_select.is_valuable();
+    if(!rv) { G_ENV->error(loc, "ELAB-RANGE-0", name); }
     break;
   }
   case tPort: 
   case tVariable: {
     // for a port, range should be resolved numbers
     assert(m_select.size() == 0);
-    for_each(m_range.begin(), m_range.end(), [&rv, &result](shared_ptr<Range>& m) {
-        rv &= m->elaborate(result);
-        rv &= m->is_valuable();
-      });
-    if(!rv) {
-      G_ENV->error(loc, "ELAB-RANGE-0", name);
-    }
+    rv &= m_range.elaborate(result);
+    rv &= m_range.is_valuable();
+    if(!rv) { G_ENV->error(loc, "ELAB-RANGE-0", name); }
     break;
   }
   case tLConcatenation: {
     // for a left-side concatenation, select should be resolved numbers
     assert(m_range.size() == 0);
-    for_each(m_select.begin(), m_select.end(), [&rv, &result](shared_ptr<Range>& m) {
-        rv &= m->elaborate(result);
-        rv &= m->is_valuable();
-      });
-    if(!rv) {
-      G_ENV->error(loc, "ELAB-RANGE-0", name);
-    }
+    rv &= m_select.elaborate(result);
+    rv &= m_select.is_valuable();
+    if(!rv) { G_ENV->error(loc, "ELAB-RANGE-0", name); }
     break;
   }    
   default:
