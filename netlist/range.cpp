@@ -256,7 +256,7 @@ Range netlist::Range::const_copy(bool tree, const Range& maxRange) const {
   }
 
   rv.dim = dim;
-  if(tree) rv.child = RangeArrayCommon::const_copy(maxRange.is_valid() ? *(maxRange.child.front()) : Range());
+  if(tree) rv.child = RangeArrayCommon::const_copy(maxRange.RangeArrayCommon::is_empty() ? Range() : *(maxRange.child.front()));
   return rv;
 }
 
@@ -533,7 +533,7 @@ void netlist::Range::const_reduce(const Range& maxRange) {
   case TR_Const:
   case TR_CRange: 
     if(child.size()) {          // non-leaf
-      RangeArrayCommon::const_reduce(maxRange.is_valid() ? *(maxRange.child.front()) : Range());
+      RangeArrayCommon::const_reduce(maxRange.RangeArrayCommon::is_empty() ? Range() : *(maxRange.child.front()));
     }
   }
 }

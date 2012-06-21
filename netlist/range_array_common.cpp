@@ -60,11 +60,19 @@ list<shared_ptr<Range> > netlist::RangeArrayCommon::const_copy(const Range& maxR
   return rv;
 }
 
+list<shared_ptr<Range> > netlist::RangeArrayCommon::const_copy(const list<shared_ptr<Range> >& rhs, const Range& maxRange) const {
+  list<shared_ptr<Range> > rv;
+  for_each(rhs.begin(), rhs.end(), [&rv, &maxRange](const shared_ptr<Range>& m) {
+      rv.push_back(shared_ptr<Range>(new Range(m->const_copy(true, maxRange))));
+    });
+  return rv;
+}
+
 list<shared_ptr<Range> > netlist::RangeArrayCommon::op_and(const list<shared_ptr<Range> >& rhs) const {
-  assert(child.size() + rhs.size() > 0);
-  
-  if(child.size() == 0) return rhs;
-  if(rhs.size() == 0) return child;
+  if(child.empty() && rhs.empty()) return list<shared_ptr<Range> >();
+    
+  if(child.size() == 0) return const_copy(rhs, Range());
+  if(rhs.size() == 0) return const_copy(child, Range());
   
   // (a + b) & (c + d) = ac + ad + bc + bd
   list<shared_ptr<Range> > rv;
@@ -83,9 +91,31 @@ list<shared_ptr<Range> > netlist::RangeArrayCommon::op_and(const list<shared_ptr
 
 list<shared_ptr<Range> > netlist::RangeArrayCommon::op_or(const list<shared_ptr<Range> >& rhs, const Range& maxRange) const {
   list<shared_ptr<Range> > rv = const_copy(maxRange);
-  rv.insert(rv.end(), rhs.begin(), rhs.end()); // combine two lists
+  list<shared_ptr<Range> > mrhs = const_copy(rhs, maxRange);
+  rv.insert(rv.end(), mrhs.begin(), mrhs.end()); // combine two lists
   sort(rv);                     // reorder it
   rv = const_reduce(rv, maxRange); // reduce the list
+  return rv;
+}
+
+list<shared_ptr<Range> > netlist::RangeArrayCommon::op_deduct(const list<shared_ptr<Range> >& rhs) const {
+  list<shared_ptr<Range> >::const_iterator mit, mend, nit, nend;
+  list<shared_ptr<Range> > rv;
+  for(mit=child.begin(), mend=child.end(); mit!=mend; mit++)
+    for(nit=rhs.begin(), nend=rhs.end(); nit!=nend; nit++) {
+      Range m_r = **mit & **nit;
+      if(!m_r.is_empty()) { // do need a deduct
+        vector<Range> m_v = (*mit)->op_deduct(**nit);
+        m_r.set_child((*mit)->RangeArrayCommon::op_deduct((*nit)->get_child()));
+        for_each(m_v.begin(), m_v.end(), [&rv](Range& m){
+            rv.push_back(shared_ptr<Range>(new Range(m)));
+          });
+        rv.push_back(shared_ptr<Range>(new Range(m_r)));
+      }
+    }
+
+  // sort and reduce the range array
+  rv = const_reduce(rv, Range());
   return rv;
 }
 
@@ -151,9 +181,10 @@ list<shared_ptr<Range> > netlist::RangeArrayCommon::const_reduce(const list<shar
   
   // do the reduction in iterations
   bool changed;
+  sort(rlist);
   do {
     changed = false;
-    if(rlist.size() <= 1) return rlist;
+    if(rlist.size() <= 1) break;
     // now all sub-ranges are reduced and non-empty
     list<shared_ptr<Range> >::iterator it, next, end;
     it = rlist.begin();
@@ -192,7 +223,6 @@ list<shared_ptr<Range> > netlist::RangeArrayCommon::const_reduce(const list<shar
   } while (changed);
 
   // final check
-  assert(rlist.size() > 0);
   if( rlist.size() == 1 && maxRange.is_valid() &&
       *(rlist.front()) == maxRange && // full range
       rlist.front()->child.size() == 0 // sub-ranges also full

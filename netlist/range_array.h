@@ -49,15 +49,14 @@ namespace netlist {
     // deep copy but return an object rather than a pointer 
     RangeArray deep_object_copy() const;
     // reduce a variable range array to a symbolic one
-    void const_reduce(const RangeArray& mxRange);
+    RangeArray& const_reduce(const RangeArray& mxRange);
     // return the shared area of two range arrays
     RangeArray op_and(const RangeArray&) const;
     // return the combined area of two range arrays
     RangeArray op_or(const RangeArray&, 
                      const RangeArray& maxRange = RangeArray()) const;
     // return the area in this but not rhs
-    RangeArray op_deduct(const RangeArray&, 
-                         const RangeArray& maxRange = RangeArray()) const;
+    RangeArray op_deduct(const RangeArray&) const;
     bool op_equ(const RangeArray&) const;
 
     // used in parser

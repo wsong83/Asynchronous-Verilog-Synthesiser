@@ -191,15 +191,29 @@ bool netlist::Variable::elaborate(elab_result_t &result, const ctype_t mctype, c
 
   // check all fanin and fanout are not out-of-range
   for_each(fan[0].begin(), fan[0].end(), 
-           [&rv, &name, &loc](pair<const unsigned int, VIdentifier *>& m) {
-             rv &= name.get_range() >= m.second->get_select().const_copy(name.get_range());
-             if(!rv) G_ENV->error(loc, "ELAB-VAR-4", toString(*(m.second)), toString(name));
+           [&rv, &name, &loc, this](pair<const unsigned int, VIdentifier *>& m) {
+             rv &= 
+               name.get_range().const_copy(name.get_range()).const_reduce(name.get_range()) 
+               >= 
+               m.second->get_select().const_copy(name.get_range());
+             if(!rv) {
+               string merr = toString(*this);
+               G_ENV->error(m.second->loc, "ELAB-VAR-4", 
+                            toString(*(m.second)), merr.erase(merr.length()-2));
+             }
            });
 
   for_each(fan[1].begin(), fan[1].end(), 
-           [&rv, &name, &loc](pair<const unsigned int, VIdentifier *>& m) {
-             rv &= name.get_range() >= m.second->get_select().const_copy(name.get_range());
-             if(!rv) G_ENV->error(loc, "ELAB-VAR-4", toString(*(m.second)), toString(name));
+           [&rv, &name, &loc, this](pair<const unsigned int, VIdentifier *>& m) {
+             rv &= 
+               name.get_range().const_copy(name.get_range()).const_reduce(name.get_range()) 
+               >= 
+               m.second->get_select().const_copy(name.get_range());
+             if(!rv) {
+               string merr = toString(*this);
+               G_ENV->error(m.second->loc, "ELAB-VAR-4", 
+                            toString(*(m.second)), merr.erase(merr.length()-2));
+             }
            });
 
   // check fan-in and fan-out

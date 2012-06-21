@@ -49,10 +49,13 @@ namespace netlist {
     void set_child(const std::list<boost::shared_ptr<Range> >& rhs) { child = rhs; }
     void set_dim();             // set all ranges to dimension field range than range
     std::list<boost::shared_ptr<Range> > const_copy(const Range& maxRange) const;
+    std::list<boost::shared_ptr<Range> > const_copy(const std::list<boost::shared_ptr<Range> >&, const Range& maxRange) const;
     // get the shared range of two range arrays
     std::list<boost::shared_ptr<Range> > op_and(const std::list<boost::shared_ptr<Range> >&) const;
     // get the combined range of two range arrays
-    std::list<boost::shared_ptr<Range> > op_or(const std::list<boost::shared_ptr<Range> >&, const Range& maxRange) const;  
+    std::list<boost::shared_ptr<Range> > op_or(const std::list<boost::shared_ptr<Range> >&, const Range& maxRange) const;
+    // deduct rhs from this
+    std::list<boost::shared_ptr<Range> > op_deduct(const std::list<boost::shared_ptr<Range> >&) const;
     // check whether two range arrays are equal
     bool op_equ(const std::list<boost::shared_ptr<Range> >&) const; 
     std::ostream& streamout(std::ostream& os, unsigned int indent, const std::string& prefix, bool decl = false, bool dim_or_range = false) const;

@@ -37,7 +37,7 @@ namespace shell {
   class position {
   public:
     position()
-      : line(1), column(1) {}
+      : filename(), line(1), column(1) {}
 
     void initialize(const std::string& fn) {
       filename = fn;

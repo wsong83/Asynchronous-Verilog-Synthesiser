@@ -39,7 +39,7 @@ using shell::location;
 
 bool netlist::RangeArray::is_valuable() {
   // if once const reduced, it must be valuable
-  if(const_reduced) return true;
+  if(const_reduced || child.empty() ) return true;
   
   // other wise check it
   bool rv = true;
@@ -50,7 +50,8 @@ bool netlist::RangeArray::is_valuable() {
 }
 
 bool netlist::RangeArray::is_declaration() const {
-  if(child.size() != 1) return false;
+  if(child.empty()) return true; // no range at all means 1 bit
+  else if(child.size() > 1) return false;
   else {
     Range& m = *(child.front());
     while(!m.RangeArrayCommon::is_empty()) {
@@ -63,8 +64,9 @@ bool netlist::RangeArray::is_declaration() const {
 
 RangeArray netlist::RangeArray::const_copy(const RangeArray& maxRange) const {
   RangeArray rv;
-  assert(maxRange.child.size());
-  rv.child = RangeArrayCommon::const_copy(maxRange.RangeArrayCommon::front());
+  rv.child = RangeArrayCommon::const_copy( maxRange.child.empty() ?
+                                           Range() : maxRange.front()
+                                           );
   rv.const_reduced = const_reduced;
   return rv;
 }
@@ -78,10 +80,12 @@ RangeArray netlist::RangeArray::deep_object_copy() const {
   return rv;
 }
 
-void netlist::RangeArray::const_reduce(const RangeArray& maxRange) {
-  assert(maxRange.child.size());
+RangeArray& netlist::RangeArray::const_reduce(const RangeArray& maxRange) {
+  assert(child.empty() || maxRange.child.size());
+  if(maxRange.child.empty()) return *this;
   RangeArrayCommon::const_reduce(maxRange.RangeArrayCommon::front());
   const_reduced = true;
+  return *this;
 }
 
 RangeArray netlist::RangeArray::op_and(const RangeArray& rhs) const {
@@ -95,16 +99,18 @@ RangeArray netlist::RangeArray::op_or(const RangeArray& rhs,
                                       const RangeArray& maxRange) const {
   RangeArray rv;
   rv.child = RangeArrayCommon::op_or(rhs.child, 
-                                     maxRange.RangeArrayCommon::is_empty() ?
+                                     maxRange.child.empty() ?
                                      Range() : maxRange.front()
                                      );
   rv.const_reduced = const_reduced & rhs.const_reduced;
   return rv;
 }
 
-RangeArray netlist::RangeArray::op_deduct(const RangeArray& rhs,
-                                          const RangeArray& maxRange) const {
-  return this->const_copy(maxRange);
+RangeArray netlist::RangeArray::op_deduct(const RangeArray& rhs) const {
+  RangeArray rv;
+  rv.child = RangeArrayCommon::op_deduct(rhs.child);
+  rv.const_reduced = const_reduced & rhs.const_reduced;
+  return rv;
 }
 
 bool netlist::RangeArray::op_equ(const RangeArray& rhs) const {
