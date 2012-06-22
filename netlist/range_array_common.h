@@ -46,14 +46,14 @@ namespace netlist {
     const Range& front() const { return *(child.front()); }
     const std::list<boost::shared_ptr<Range> >& get_child() const { return child; }
     std::list<boost::shared_ptr<Range> >& get_child() { return child; }
-    void set_child(const std::list<boost::shared_ptr<Range> >& rhs) { child = rhs; }
-    void set_dim();             // set all ranges to dimension field range than range
+    void set_child(const std::list<boost::shared_ptr<Range> >& rhs) { child = rhs;}
+    void set_dim();  // set all ranges to dimension field range than range
     std::list<boost::shared_ptr<Range> > const_copy(const Range& maxRange) const;
     std::list<boost::shared_ptr<Range> > const_copy(const std::list<boost::shared_ptr<Range> >&, const Range& maxRange) const;
     // get the shared range of two range arrays
     std::list<boost::shared_ptr<Range> > op_and(const std::list<boost::shared_ptr<Range> >&) const;
     // get the combined range of two range arrays
-    std::list<boost::shared_ptr<Range> > op_or(const std::list<boost::shared_ptr<Range> >&, const Range& maxRange) const;
+    std::list<boost::shared_ptr<Range> > op_or(const std::list<boost::shared_ptr<Range> >&) const;
     // deduct rhs from this
     std::list<boost::shared_ptr<Range> > op_deduct(const std::list<boost::shared_ptr<Range> >&) const;
     // check whether two range arrays are equal
@@ -61,7 +61,7 @@ namespace netlist {
     std::ostream& streamout(std::ostream& os, unsigned int indent, const std::string& prefix, bool decl = false, bool dim_or_range = false) const;
     void const_reduce(const Range& maxRange);    // try to reduce the range array using symbolic mathod
     // the symbolic reduce function used to range list
-    std::list<boost::shared_ptr<Range> > const_reduce(const std::list<boost::shared_ptr<Range> >&,
+    std::list<boost::shared_ptr<Range> > const_reduce(std::list<boost::shared_ptr<Range> >&,
                                                       const Range& maxRange) const;
     // add another level of dimension as the top level
     void add_low_dimension(const boost::shared_ptr<Range>&);
@@ -79,7 +79,7 @@ namespace netlist {
 
   private:
     // re-order a list of range expressions
-    void sort(std::list<boost::shared_ptr<Range> >&) const; 
+    std::list<boost::shared_ptr<Range> >& sort(std::list<boost::shared_ptr<Range> >&) const; 
 
   };
 

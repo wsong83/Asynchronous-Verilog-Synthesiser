@@ -53,27 +53,27 @@ void netlist::RangeArrayCommon::set_dim() {
 }  
 
 list<shared_ptr<Range> > netlist::RangeArrayCommon::const_copy(const Range& maxRange) const {
-  list<shared_ptr<Range> > rv;
-  for_each(child.begin(), child.end(), [&rv, &maxRange](const shared_ptr<Range>& m) {
-      rv.push_back(shared_ptr<Range>(new Range(m->const_copy(true, maxRange))));
-    });
-  return rv;
+  return const_copy(child, maxRange);
 }
 
 list<shared_ptr<Range> > netlist::RangeArrayCommon::const_copy(const list<shared_ptr<Range> >& rhs, const Range& maxRange) const {
   list<shared_ptr<Range> > rv;
-  for_each(rhs.begin(), rhs.end(), [&rv, &maxRange](const shared_ptr<Range>& m) {
-      rv.push_back(shared_ptr<Range>(new Range(m->const_copy(true, maxRange))));
-    });
+  if(rhs.empty() && maxRange.is_valid()) { 
+    // when the child is empty but maxRange is valid
+    // it is actuall copy from a VIdentifier range
+    // in this case, copy the rest from maxRange to this for range calculation
+    rv.push_back(shared_ptr<Range>(maxRange.deep_copy()));
+  } else {
+    for_each(rhs.begin(), rhs.end(), [&rv, &maxRange](const shared_ptr<Range>& m) {
+        rv.push_back(shared_ptr<Range>(new Range(m->const_copy(true, maxRange))));
+      });
+  }
   return rv;
 }
 
 list<shared_ptr<Range> > netlist::RangeArrayCommon::op_and(const list<shared_ptr<Range> >& rhs) const {
-  if(child.empty() && rhs.empty()) return list<shared_ptr<Range> >();
+  if(child.empty() || rhs.empty()) return list<shared_ptr<Range> >();
     
-  if(child.size() == 0) return const_copy(rhs, Range());
-  if(rhs.size() == 0) return const_copy(child, Range());
-  
   // (a + b) & (c + d) = ac + ad + bc + bd
   list<shared_ptr<Range> > rv;
   list<shared_ptr<Range> >::const_iterator lit, lend, rit, rend;
@@ -86,64 +86,60 @@ list<shared_ptr<Range> > netlist::RangeArrayCommon::op_and(const list<shared_ptr
       }
     }
   }
+
+  // if empty, identify it explicitly
+  if(rv.empty()) {
+    rv.push_back(shared_ptr<Range>(new Range()));
+    rv.front()->set_empty();
+  }
   return rv;
 }
 
-list<shared_ptr<Range> > netlist::RangeArrayCommon::op_or(const list<shared_ptr<Range> >& rhs, const Range& maxRange) const {
-  list<shared_ptr<Range> > rv = const_copy(maxRange);
-  list<shared_ptr<Range> > mrhs = const_copy(rhs, maxRange);
+list<shared_ptr<Range> > netlist::RangeArrayCommon::op_or(const list<shared_ptr<Range> >& rhs) const {
+  list<shared_ptr<Range> > rv = const_copy(Range());
+  list<shared_ptr<Range> > mrhs = const_copy(rhs, Range());
   rv.insert(rv.end(), mrhs.begin(), mrhs.end()); // combine two lists
-  sort(rv);                     // reorder it
-  rv = const_reduce(rv, maxRange); // reduce the list
-  return rv;
+  return const_reduce(rv, Range()); // reduce the list
 }
 
 list<shared_ptr<Range> > netlist::RangeArrayCommon::op_deduct(const list<shared_ptr<Range> >& rhs) const {
   list<shared_ptr<Range> >::const_iterator mit, mend, nit, nend;
-  list<shared_ptr<Range> > rv;
-  for(mit=child.begin(), mend=child.end(); mit!=mend; mit++)
-    for(nit=rhs.begin(), nend=rhs.end(); nit!=nend; nit++) {
-      Range m_r = **mit & **nit;
+  list<shared_ptr<Range> > rv = const_copy(Range());
+  for(mit=rhs.begin(), mend=rhs.end(); mit!=mend; mit++) {
+    list<shared_ptr<Range> > tmp;
+    for(nit=rv.begin(), nend=rv.end(); nit!=nend; nit++) {
+      Range m_r = **nit & **mit;
       if(!m_r.is_empty()) { // do need a deduct
-        vector<Range> m_v = (*mit)->op_deduct(**nit);
-        m_r.set_child((*mit)->RangeArrayCommon::op_deduct((*nit)->get_child()));
-        for_each(m_v.begin(), m_v.end(), [&rv](Range& m){
-            rv.push_back(shared_ptr<Range>(new Range(m)));
+        vector<Range> m_v = (*nit)->op_deduct(**mit);
+        m_r.set_child((*nit)->RangeArrayCommon::op_deduct((*mit)->get_child()));
+        for_each(m_v.begin(), m_v.end(), [&tmp](Range& m){
+            tmp.push_back(shared_ptr<Range>(new Range(m)));
           });
-        rv.push_back(shared_ptr<Range>(new Range(m_r)));
-      }
+      } else if(!(*nit)->is_empty()) tmp.push_back(*nit); // otherwise push it back
     }
+    rv = tmp;                   // prepare the next iteration
+  }
 
   // sort and reduce the range array
-  rv = const_reduce(rv, Range());
-  return rv;
+  return const_reduce(rv, Range());
 }
 
 bool netlist::RangeArrayCommon::op_equ(const list<shared_ptr<Range> >& rhs) const {
-  bool rv = true;
-  // now it is still a naive compare, if there are multiple variable range, the comparison can fail.
-  list<shared_ptr<Range> >::const_iterator lit, lend, rit, rend;
-  lit = child.begin();
-  lend = child.end();
-  rit = rhs.begin();
-  rend = rhs.end();
-
-  //compare all childs
-  while(lit != lend && rit != rend) {
-    rv &= (*lit)->op_equ_tree(**rit);
-    lit++;
-    rit++;
-  }
-
-  // check that both range array are travelled
-  if(lit!=lend || rit != rend) rv = false;
-
-  return rv;
-
+  list<shared_ptr<Range> > mlhs = const_copy(Range()); 
+  mlhs = const_reduce(mlhs, Range());
+  list<shared_ptr<Range> > mrhs = const_copy(rhs, Range()); 
+  mrhs = const_reduce(mrhs, Range());
+  if(mlhs.size() != mrhs.size()) return false;
+  // STL algorithm and lambda expressions are fantasic!
+  return 
+    equal(mlhs.begin(), mlhs.end(), mrhs.begin(), 
+          [](shared_ptr<Range>& l, shared_ptr<Range>& r) -> bool {
+            return *l == *r;
+          });
 }
 
 ostream& netlist::RangeArrayCommon::streamout(ostream& os, unsigned int indent, const string& prefix, bool decl, bool dim_or_range) const {
-  if(child.empty()) os << string(indent, ' ') << prefix; // at least whoe the prefix when it is empty
+  if(child.empty()) os << string(indent, ' ') << prefix; // at least show the prefix when it is empty
   list<shared_ptr<Range> >::const_iterator it, end;
   it = child.begin(); end = child.end();
   while(it != end) {
@@ -167,17 +163,15 @@ void netlist::RangeArrayCommon::add_low_dimension(const shared_ptr<Range>& rhs) 
   }
 }
 
-list<shared_ptr<Range> > netlist::RangeArrayCommon::const_reduce(const list<shared_ptr<Range> >& rhs, const Range& maxRange) const {
+list<shared_ptr<Range> > netlist::RangeArrayCommon::const_reduce(list<shared_ptr<Range> >& rhs, const Range& maxRange) const {
 
   // preprocess
   // reduce all
   list<shared_ptr<Range> > rlist;
-  for_each(rhs.begin(), rhs.end(), [&rlist, &maxRange](const shared_ptr<Range>& m) {
-      Range tmp = m->const_copy(true, maxRange);
-      tmp.const_reduce(maxRange);
-      if(tmp.is_valid() && !tmp.is_empty()) 
-        rlist.push_back(shared_ptr<Range>(new Range(tmp)));
-          });
+  for_each(rhs.begin(), rhs.end(), [&rlist, &maxRange](shared_ptr<Range>& m) {
+      m->const_reduce(maxRange);
+      if(m->is_valid() && !m->is_empty()) rlist.push_back(m);
+    });
   
   // do the reduction in iterations
   bool changed;
@@ -200,7 +194,7 @@ list<shared_ptr<Range> > netlist::RangeArrayCommon::const_reduce(const list<shar
           next = rlist.erase(next);
           changed = true;
         } else if(tmp.is_valid() && !tmp.is_empty()) {
-          vector<Range> normResult = (*it)->op_normalise_tree(**next, maxRange);
+          vector<Range> normResult = (*it)->op_normalise_tree(**next);
           if(normResult[0].is_valid() && !normResult[0].is_empty())
             rlist.insert(it, shared_ptr<Range>(new Range(normResult[0])));
           if(normResult[1].is_valid() && !normResult[1].is_empty())
@@ -223,11 +217,10 @@ list<shared_ptr<Range> > netlist::RangeArrayCommon::const_reduce(const list<shar
   } while (changed);
 
   // final check
-  if( rlist.size() == 1 && maxRange.is_valid() &&
-      *(rlist.front()) == maxRange && // full range
-      rlist.front()->child.size() == 0 // sub-ranges also full
-      )
-    rlist.clear();
+  if(rlist.empty()) {
+    rlist.push_back(shared_ptr<Range>(new Range()));
+    rlist.front()->set_empty();
+  }
 
   return rlist;
 }
@@ -278,9 +271,9 @@ bool netlist::RangeArrayCommon::elaborate(NetComp::elab_result_t &result, const 
   return rv;
 } 
 
-void netlist::RangeArrayCommon::sort(list<shared_ptr<Range> >& rhs) const {
+list<shared_ptr<Range> >& netlist::RangeArrayCommon::sort(list<shared_ptr<Range> >& rhs) const {
   rhs.sort([](shared_ptr<Range>& first, shared_ptr<Range>& second) -> bool {
     return *first > *second;
   });
-  
+  return rhs;
 }

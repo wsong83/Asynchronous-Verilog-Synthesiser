@@ -260,19 +260,29 @@ string netlist::Variable::get_short_string() const {
   return rv;
 }
 
-bool netlist::Variable::driver_and_load_checker() {
+bool netlist::Variable::driver_and_load_checker() const {
   bool rv = true; 
+
+  bool debug = false;
+  if(name.name == "dcsb_sel_dc") {
+    std::cout << "the check target" << std::endl;
+    debug = true;
+  }
 
   // checking loads
   RangeArray rangeLoad;
+  rangeLoad.set_empty();
+  const VIdentifier * namep = &name;
   for_each(fan[1].begin(), fan[1].end(), 
-           [&rv, &name, &rangeLoad](pair<const unsigned int, VIdentifier *>& m) {
-             if(rangeLoad.is_empty()) 
-               rangeLoad.op_or(m.second->get_select().const_copy(name.get_range()));
-             else 
-               rangeLoad = m.second->get_select().const_copy(name.get_range());
+           [&rv, &name, &rangeLoad, &namep, &debug](const pair<const unsigned int, VIdentifier *>& m) {
+             if(m.second == namep) return; // do not count the name in variable as a fan-out
+             if (debug) std::cout << m.second->get_select() << std::endl;
+             rangeLoad = rangeLoad.op_or(m.second->get_select().const_copy(name.get_range()));
            });
+  if(debug) std::cout<< "overall " << rangeLoad << std::endl;
   rangeLoad = name.get_range() - rangeLoad;
+  if(debug) std::cout << "after minus " << rangeLoad << std::endl;
+
   if(!rangeLoad.is_empty()) {
     std::ostringstream sos;
     rangeLoad.RangeArrayCommon::streamout(sos, 0, name.name);
@@ -283,44 +293,33 @@ bool netlist::Variable::driver_and_load_checker() {
   map<unsigned long, pair<SeqBlock*, RangeArray> > driverMapSeq; // seq-blocks
   map<unsigned long, pair<VIdentifier*, RangeArray> > driverMapAssign; // assigns
   RangeArray assignRange;
+  assignRange.set_empty();
   for_each
     (fan[0].begin(), fan[0].end(), 
      [&driverMapSeq, &driverMapAssign, &name, &assignRange]
-     (pair<const unsigned int, VIdentifier*>& m) 
+     (const pair<const unsigned int, VIdentifier*>& m) 
      {
        if(m.second->get_alwaysp() != NULL) { // seq-blocks
          unsigned long malwaysp = (unsigned long)(m.second->get_alwaysp());
-         if(driverMapSeq.count(malwaysp))
-           driverMapSeq[malwaysp].second.op_or(m.second->get_select().const_copy(name.get_range()), name.get_range());
-         else
-           driverMapSeq[malwaysp] = 
-             pair<SeqBlock*, RangeArray>(m.second->get_alwaysp(), 
-                                         m.second->get_select().const_copy(name.get_range()));
+         driverMapSeq[malwaysp].second = driverMapSeq[malwaysp].second.op_or(m.second->get_select().const_copy(name.get_range()));
          // add up the assign range
-         if(assignRange.is_empty()) 
-           assignRange.op_or(m.second->get_select().const_copy(name.get_range()), name.get_range());
-         else 
-           assignRange = m.second->get_select().const_copy(name.get_range());
+         assignRange = assignRange.op_or(m.second->get_select().const_copy(name.get_range()));
        } else {                  // assigns
          unsigned long mvarp = (unsigned long)(m.second);
-         if(driverMapAssign.count(mvarp))
-           driverMapAssign[mvarp].second.op_or(m.second->get_select().const_copy(name.get_range()), name.get_range());
-         else
-           driverMapAssign[mvarp] = 
-             pair<VIdentifier*, RangeArray>(m.second, 
-                                            m.second->get_select().const_copy(name.get_range()));
+         driverMapAssign[mvarp].second = driverMapAssign[mvarp].second.op_or(m.second->get_select().const_copy(name.get_range()));
          // add up the assign range
-         if(assignRange.is_empty()) 
-           assignRange.op_or(m.second->get_select().const_copy(name.get_range()), name.get_range());
-         else 
-           assignRange = m.second->get_select().const_copy(name.get_range());
+         assignRange = assignRange.op_or(m.second->get_select().const_copy(name.get_range()));
        }
      });
 
   // check no driver
+  std::cout << "assign " << assignRange;
   RangeArray rangeNoDriver = name.get_range() - assignRange;
+  std::cout << "no driver " << rangeNoDriver;
   rangeLoad = rangeNoDriver & rangeLoad; // no driver but no load range
+  std::cout << "no driver & no load " << rangeLoad;
   rangeNoDriver = rangeNoDriver - rangeLoad; // really some useful signal but no load
+  std::cout << "pure no driver " << rangeNoDriver << std::endl;
   if(!rangeNoDriver.is_empty()) {
     std::ostringstream sos;
     rangeNoDriver.RangeArrayCommon::streamout(sos, 0, name.name);
@@ -331,7 +330,7 @@ bool netlist::Variable::driver_and_load_checker() {
     std::ostringstream sos;
     rangeLoad.RangeArrayCommon::streamout(sos, 0, name.name);
     G_ENV->error(loc, "ELAB-VAR-3", sos.str());
-    return false;
+    //return false;  // no driver but no load is not a problem
   }
 
   // multi-driver check
@@ -349,7 +348,9 @@ bool netlist::Variable::driver_and_load_checker() {
     map<unsigned long, pair<SeqBlock*, RangeArray> >::iterator nit, nend;
     for(mit=driverMapSeq.begin(), mend=driverMapSeq.end(); mit != mend; mit++) {
       for(nit=driverMapSeq.begin(), nend=driverMapSeq.end(); nit != nend; nit++) {
-        if(!mit->second.second.op_and(nit->second.second).is_empty()) {
+        if(mit->first != nit->first && // not the same sequential block
+           !mit->second.second.op_and(nit->second.second).is_empty() // have shared area
+           ) {
           // they have shared range
           G_ENV->error(loc, "ELAB-VAR-1", name.name, 
                        toString(mit->second.first->loc),
@@ -366,7 +367,9 @@ bool netlist::Variable::driver_and_load_checker() {
     map<unsigned long, pair<VIdentifier*, RangeArray> >::iterator nit, nend;
     for(mit=driverMapAssign.begin(), mend=driverMapAssign.end(); mit != mend; mit++) {
       for(nit=driverMapAssign.begin(), nend=driverMapAssign.end(); nit != nend; nit++) {
-        if(!mit->second.second.op_and(nit->second.second).is_empty()) {
+        if(mit->first != nit->first && // not the same assignment
+           !mit->second.second.op_and(nit->second.second).is_empty() // have shared area
+           ) {
           // they have shared range
           G_ENV->error(loc, "ELAB-VAR-1", name.name, 
                        toString(mit->second.first->loc),

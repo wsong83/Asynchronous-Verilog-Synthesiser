@@ -41,7 +41,7 @@ bool netlist::RangeArray::is_valuable() {
   // if once const reduced, it must be valuable
   if(const_reduced || child.empty() ) return true;
   
-  // other wise check it
+  // otherwise check it
   bool rv = true;
   rv = RangeArrayCommon::is_valuable();
 
@@ -54,9 +54,11 @@ bool netlist::RangeArray::is_declaration() const {
   else if(child.size() > 1) return false;
   else {
     Range& m = *(child.front());
-    while(!m.RangeArrayCommon::is_empty()) {
-      if(m.RangeArrayCommon::size() != 1) return false;
-      else m = m.RangeArrayCommon::front();
+    while(true) {
+      if(m.is_empty()) return false; // declaration should not have empty range expression
+      if(m.RangeArrayCommon::size() > 1) return false;
+      if(m.RangeArrayCommon::size() == 1) m = m.RangeArrayCommon::front();
+      else break;
     }
     return true;
   }
@@ -81,9 +83,8 @@ RangeArray netlist::RangeArray::deep_object_copy() const {
 }
 
 RangeArray& netlist::RangeArray::const_reduce(const RangeArray& maxRange) {
-  assert(child.empty() || maxRange.child.size());
   if(maxRange.child.empty()) return *this;
-  RangeArrayCommon::const_reduce(maxRange.RangeArrayCommon::front());
+  RangeArrayCommon::const_reduce(maxRange.front());
   const_reduced = true;
   return *this;
 }
@@ -95,14 +96,13 @@ RangeArray netlist::RangeArray::op_and(const RangeArray& rhs) const {
   return rv;
 }
 
-RangeArray netlist::RangeArray::op_or(const RangeArray& rhs,
-                                      const RangeArray& maxRange) const {
+RangeArray netlist::RangeArray::op_or(const RangeArray& rhs) const {
   RangeArray rv;
-  rv.child = RangeArrayCommon::op_or(rhs.child, 
-                                     maxRange.child.empty() ?
-                                     Range() : maxRange.front()
-                                     );
+  rv.child = RangeArrayCommon::op_or(rhs.child);
   rv.const_reduced = const_reduced & rhs.const_reduced;
+  //std::cout << *this << " | " << rhs << " = " << rv;
+  //if(!maxRange.child.empty()) std::cout << " (" << maxRange.front() << ")";
+  //std::cout << std::endl;
   return rv;
 }
 

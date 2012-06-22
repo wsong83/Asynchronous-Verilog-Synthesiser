@@ -1,4 +1,9 @@
-##### Thu 20/06/2012
+##### Fri 22/06/2012
+* Fixed some bugs and tried to differentiate empty from full by forcing all maximal range expandation before range 
+  operations.
+* Find serious flaws in the range operation as it is difficult to differentiate empty ranges from full ranges.
+
+##### Thu 21/06/2012
 * Endless debugging for the range operation although no multi-dimension ranges are actually used in OR1200 RTL.
 * Deduction of RangeArray is implemented.
 

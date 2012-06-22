@@ -41,7 +41,12 @@ namespace netlist {
       : NetComp(tRangeArray), RangeArrayCommon(rhs), const_reduced(false) { } /* valuable needs to be calculated!! */
 
     // helpers
-    bool empty() const { return child.size() == 0;}
+    bool is_empty() const { return child.size() == 1 && child.front()->is_empty(); } 
+    RangeArray& set_empty() { 
+      child.push_back(boost::shared_ptr<Range>(new Range()));
+      child.front()->set_empty();
+      return *this;
+    }
     bool is_valuable();
     bool is_declaration() const;
     // copy the symbolic value of a range array to a new one
@@ -53,8 +58,7 @@ namespace netlist {
     // return the shared area of two range arrays
     RangeArray op_and(const RangeArray&) const;
     // return the combined area of two range arrays
-    RangeArray op_or(const RangeArray&, 
-                     const RangeArray& maxRange = RangeArray()) const;
+    RangeArray op_or(const RangeArray&) const;
     // return the area in this but not rhs
     RangeArray op_deduct(const RangeArray&) const;
     bool op_equ(const RangeArray&) const;

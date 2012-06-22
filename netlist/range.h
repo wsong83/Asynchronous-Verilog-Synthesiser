@@ -54,19 +54,21 @@ namespace netlist {
     // helpers
     bool is_single() const {return rtype != TR_Range && rtype != TR_CRange; }
     bool is_empty() const { return rtype == TR_Empty; }
-    void set_dim(bool tree = false) { dim = true; if(tree) RangeArrayCommon::set_dim(); }
+    Range& set_empty() { rtype = TR_Empty; return *this; }
+    Range& set_dim(bool tree = false) 
+    { dim = true; if(tree) RangeArrayCommon::set_dim(); return *this; }
     bool is_dim() const { return dim;}
     bool is_valuable() const { return (rtype == TR_Const || rtype == TR_CRange|| rtype == TR_Empty); }
     bool is_valuable_tree() const;
     bool is_valid() const { return rtype != TR_Err; }
     Range const_copy(bool tree = false, const Range& maxRange = Range()) const; // copy the const content
-    void const_reduce(const Range& maxRange = Range());   // symbolic reduce
+    Range& const_reduce(const Range& maxRange = Range());   // symbolic reduce
     Range op_and(const Range&) const;           /* helper for operator & */
     Range op_and_tree(const Range&) const;      /* & calculation in tree structure */
     Range op_or(const Range&) const;            /* helper for operator | */
     std::vector<Range> op_deduct(const Range&) const;  // return *this - rhs
     // normalise two Range expression which have shared areas
-    std::vector<Range> op_normalise_tree(const Range&, const Range& maxRange = Range()) const;
+    std::vector<Range> op_normalise_tree(const Range&) const;
     bool op_equ(const Range&) const;            /* helper for operator == */
     bool op_equ_tree(const Range&) const;       /* equal calculation in tree structure */
     bool op_belong_to(const Range&) const;      /* helper for >= */
