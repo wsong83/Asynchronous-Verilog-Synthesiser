@@ -164,7 +164,13 @@ void netlist::RangeArrayCommon::add_low_dimension(const shared_ptr<Range>& rhs) 
 }
 
 list<shared_ptr<Range> > netlist::RangeArrayCommon::const_reduce(list<shared_ptr<Range> >& rhs, const Range& maxRange) const {
-
+  /*
+  std::cout << "before const reduce: ";
+  for_each(rhs.begin(), rhs.end(), [](shared_ptr<Range>& m) {
+      std::cout << *m << ";";
+    });
+  std::cout << std::endl;
+  */
   // preprocess
   // reduce all
   list<shared_ptr<Range> > rlist;
@@ -189,12 +195,14 @@ list<shared_ptr<Range> > netlist::RangeArrayCommon::const_reduce(list<shared_ptr
       Range tmp = (*it)->op_and(**next);
       if((*it)->op_adjacent_to(**next)) { // adjacent
         if((*it)->RangeArrayCommon::op_equ((*next)->child)) { // child equal
+          //std::cout << "combine " << **it << " and " << **next << std::endl;
           **it = **it | **next;
           (*it)->child = (*next)->child;
           rlist.erase(next);
           changed = true;
           break;
         } else if(tmp.is_valid() && !tmp.is_empty()) {
+          //std::cout << "normalize " << **it << " and " << **next << std::endl;
           vector<Range> normResult = (*it)->op_normalise_tree(**next);
           if(normResult[0].is_valid() && !normResult[0].is_empty())
             rlist.insert(it, shared_ptr<Range>(new Range(normResult[0])));
@@ -221,6 +229,13 @@ list<shared_ptr<Range> > netlist::RangeArrayCommon::const_reduce(list<shared_ptr
     rlist.front()->set_empty();
   }
 
+  /*
+  std::cout << "after const reduce: ";
+  for_each(rlist.begin(), rlist.end(), [](shared_ptr<Range>& m) {
+      std::cout << *m << ";";
+    });
+  std::cout << std::endl;
+  */
   return rlist;
 }
 
@@ -271,6 +286,7 @@ bool netlist::RangeArrayCommon::elaborate(NetComp::elab_result_t &result, const 
 } 
 
 list<shared_ptr<Range> >& netlist::RangeArrayCommon::sort(list<shared_ptr<Range> >& rhs) const {
+  if(rhs.empty()) return rhs;
   rhs.sort([](shared_ptr<Range>& first, shared_ptr<Range>& second) -> bool {
     return *first > *second;
   });

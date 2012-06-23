@@ -309,7 +309,11 @@ Range netlist::Range::op_or ( const Range& rhs) const {
 
   rv.rtype = TR_Err;
   if(rtype == TR_Const && rhs.rtype == TR_Const) {
-    if(c == rhs.c) return rhs.const_copy();             // equal 
+    if(c == rhs.c) return rhs.const_copy();             // equal
+    else if(c == rhs.c + 1)                             // adjacent
+      { rv.cr.first = c; rv.cr.second = rhs.c; rv.rtype = TR_CRange; return rv; }
+    else if(c + 1 == rhs.c)                             // adjacent
+      { rv.cr.first = rhs.c; rv.cr.second = c; rv.rtype = TR_CRange; return rv; }
     else           return rv;                           // single and unequal
   }
   
