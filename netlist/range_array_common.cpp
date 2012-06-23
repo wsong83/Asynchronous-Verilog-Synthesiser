@@ -131,7 +131,7 @@ bool netlist::RangeArrayCommon::op_equ(const list<shared_ptr<Range> >& rhs) cons
   mrhs = const_reduce(mrhs, Range());
   if(mlhs.size() != mrhs.size()) return false;
   // STL algorithm and lambda expressions are fantasic!
-  return 
+  return
     equal(mlhs.begin(), mlhs.end(), mrhs.begin(), 
           [](shared_ptr<Range>& l, shared_ptr<Range>& r) -> bool {
             return *l == *r;
@@ -174,8 +174,8 @@ list<shared_ptr<Range> > netlist::RangeArrayCommon::const_reduce(list<shared_ptr
     });
   
   // do the reduction in iterations
-  bool changed;
   sort(rlist);
+  bool changed = false;
   do {
     changed = false;
     if(rlist.size() <= 1) break;
@@ -191,8 +191,9 @@ list<shared_ptr<Range> > netlist::RangeArrayCommon::const_reduce(list<shared_ptr
         if((*it)->RangeArrayCommon::op_equ((*next)->child)) { // child equal
           **it = **it | **next;
           (*it)->child = (*next)->child;
-          next = rlist.erase(next);
+          rlist.erase(next);
           changed = true;
+          break;
         } else if(tmp.is_valid() && !tmp.is_empty()) {
           vector<Range> normResult = (*it)->op_normalise_tree(**next);
           if(normResult[0].is_valid() && !normResult[0].is_empty())
@@ -201,10 +202,8 @@ list<shared_ptr<Range> > netlist::RangeArrayCommon::const_reduce(list<shared_ptr
             rlist.insert(it, shared_ptr<Range>(new Range(normResult[1])));
           if(normResult[2].is_valid() && !normResult[2].is_empty())
             rlist.insert(it, shared_ptr<Range>(new Range(normResult[2])));
-          it = rlist.erase(it);
-          it--;
-          next = rlist.erase(next);
           changed = true;
+          break;
         } else {                // adjacent but not shared
           it++; next++;
         }

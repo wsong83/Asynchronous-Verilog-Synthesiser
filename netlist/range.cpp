@@ -364,15 +364,15 @@ vector<Range> netlist::Range::op_deduct (const Range& rhs) const {
     } else if(rv[1].cr.first < rv[1].cr.second) rv[0].set_empty(); 
   } else {                      // both ranges
     rv[0] = const_copy(); rv[1] = const_copy();
-    rv[0].cr.second = rhs.cr.first + 1 > cr.second ? rhs.cr.first + 1 : cr.second;
-    rv[1].cr.first = rhs.cr.second - 1 < cr.first ? rhs.cr.second - 1 : cr.first;
+    rv[0].cr.second = rhs.cr.first >= cr.second ? rhs.cr.first + 1 : cr.second;
+    rv[1].cr.first = rhs.cr.second <= cr.first ? rhs.cr.second - 1 : cr.first;
     if(rv[0].cr.first == rv[0].cr.second) { 
       rv[0].c = rv[0].cr.first; rv[0].rtype = TR_Const;
     } else if(rv[0].cr.first < rv[0].cr.second) rv[0].set_empty();
 
     if(rv[1].cr.first == rv[1].cr.second) { 
       rv[1].c = rv[1].cr.first; rv[1].rtype = TR_Const;
-    } else if(rv[1].cr.first < rv[1].cr.second) rv[0].set_empty();
+    } else if(rv[1].cr.first < rv[1].cr.second) rv[1].set_empty();
   }
   return rv;
 }

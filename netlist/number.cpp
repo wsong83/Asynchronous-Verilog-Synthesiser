@@ -386,6 +386,7 @@ bool netlist::Number::check_valuable() {
 }
 
 std::string netlist::Number::trim_zeros(const std::string& str){
+  if(str.empty()) return "0";
   std::size_t pos = str.find_first_not_of("0");
   if(pos == std::string::npos) {
     return "0";

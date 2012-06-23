@@ -66,8 +66,9 @@ bool netlist::RangeArray::is_declaration() const {
 
 RangeArray netlist::RangeArray::const_copy(const RangeArray& maxRange) const {
   RangeArray rv;
+  // if maxRange is empty, it is a one-bit signal
   rv.child = RangeArrayCommon::const_copy( maxRange.child.empty() ?
-                                           Range() : maxRange.front()
+                                           Range(0) : maxRange.front()
                                            );
   rv.const_reduced = const_reduced;
   return rv;

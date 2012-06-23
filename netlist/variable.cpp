@@ -189,13 +189,14 @@ bool netlist::Variable::elaborate(elab_result_t &result, const ctype_t mctype, c
   rv &= name.get_range().is_declaration();
   assert(rv);
 
+  // get the normalized max range
+  RangeArray maxRange = name.get_range().const_copy(name.get_range());
+
   // check all fanin and fanout are not out-of-range
   for_each(fan[0].begin(), fan[0].end(), 
-           [&rv, &name, &loc, this](pair<const unsigned int, VIdentifier *>& m) {
-             rv &= 
-               name.get_range().const_copy(name.get_range()).const_reduce(name.get_range()) 
-               >= 
-               m.second->get_select().const_copy(name.get_range());
+           [&rv, &maxRange, &loc, this](pair<const unsigned int, VIdentifier *>& m) {
+             rv &= maxRange >= 
+               m.second->get_select().const_copy(maxRange);
              if(!rv) {
                string merr = toString(*this);
                G_ENV->error(m.second->loc, "ELAB-VAR-4", 
@@ -204,11 +205,9 @@ bool netlist::Variable::elaborate(elab_result_t &result, const ctype_t mctype, c
            });
 
   for_each(fan[1].begin(), fan[1].end(), 
-           [&rv, &name, &loc, this](pair<const unsigned int, VIdentifier *>& m) {
-             rv &= 
-               name.get_range().const_copy(name.get_range()).const_reduce(name.get_range()) 
-               >= 
-               m.second->get_select().const_copy(name.get_range());
+           [&rv, &maxRange, &loc, this](pair<const unsigned int, VIdentifier *>& m) {
+             rv &= maxRange >= 
+               m.second->get_select().const_copy(maxRange);
              if(!rv) {
                string merr = toString(*this);
                G_ENV->error(m.second->loc, "ELAB-VAR-4", 
@@ -262,26 +261,18 @@ string netlist::Variable::get_short_string() const {
 
 bool netlist::Variable::driver_and_load_checker() const {
   bool rv = true; 
-
-  bool debug = false;
-  if(name.name == "dcsb_sel_dc") {
-    std::cout << "the check target" << std::endl;
-    debug = true;
-  }
+  RangeArray maxRange = name.get_range().const_copy(name.get_range()); // add [0:0] is 1-bit
 
   // checking loads
   RangeArray rangeLoad;
   rangeLoad.set_empty();
   const VIdentifier * namep = &name;
   for_each(fan[1].begin(), fan[1].end(), 
-           [&rv, &name, &rangeLoad, &namep, &debug](const pair<const unsigned int, VIdentifier *>& m) {
+           [&rv, &maxRange, &rangeLoad, &namep](const pair<const unsigned int, VIdentifier *>& m) {
              if(m.second == namep) return; // do not count the name in variable as a fan-out
-             if (debug) std::cout << m.second->get_select() << std::endl;
-             rangeLoad = rangeLoad.op_or(m.second->get_select().const_copy(name.get_range()));
+             rangeLoad = rangeLoad.op_or(m.second->get_select().const_copy(maxRange));
            });
-  if(debug) std::cout<< "overall " << rangeLoad << std::endl;
-  rangeLoad = name.get_range() - rangeLoad;
-  if(debug) std::cout << "after minus " << rangeLoad << std::endl;
+  rangeLoad = maxRange - rangeLoad;
 
   if(!rangeLoad.is_empty()) {
     std::ostringstream sos;
@@ -296,30 +287,26 @@ bool netlist::Variable::driver_and_load_checker() const {
   assignRange.set_empty();
   for_each
     (fan[0].begin(), fan[0].end(), 
-     [&driverMapSeq, &driverMapAssign, &name, &assignRange]
+     [&driverMapSeq, &driverMapAssign, &maxRange, &assignRange]
      (const pair<const unsigned int, VIdentifier*>& m) 
      {
        if(m.second->get_alwaysp() != NULL) { // seq-blocks
          unsigned long malwaysp = (unsigned long)(m.second->get_alwaysp());
-         driverMapSeq[malwaysp].second = driverMapSeq[malwaysp].second.op_or(m.second->get_select().const_copy(name.get_range()));
+         driverMapSeq[malwaysp].second = driverMapSeq[malwaysp].second.op_or(m.second->get_select().const_copy(maxRange));
          // add up the assign range
-         assignRange = assignRange.op_or(m.second->get_select().const_copy(name.get_range()));
+         assignRange = assignRange.op_or(m.second->get_select().const_copy(maxRange));
        } else {                  // assigns
          unsigned long mvarp = (unsigned long)(m.second);
-         driverMapAssign[mvarp].second = driverMapAssign[mvarp].second.op_or(m.second->get_select().const_copy(name.get_range()));
+         driverMapAssign[mvarp].second = driverMapAssign[mvarp].second.op_or(m.second->get_select().const_copy(maxRange));
          // add up the assign range
-         assignRange = assignRange.op_or(m.second->get_select().const_copy(name.get_range()));
+         assignRange = assignRange.op_or(m.second->get_select().const_copy(maxRange));
        }
      });
 
   // check no driver
-  std::cout << "assign " << assignRange;
-  RangeArray rangeNoDriver = name.get_range() - assignRange;
-  std::cout << "no driver " << rangeNoDriver;
+  RangeArray rangeNoDriver = maxRange - assignRange;
   rangeLoad = rangeNoDriver & rangeLoad; // no driver but no load range
-  std::cout << "no driver & no load " << rangeLoad;
   rangeNoDriver = rangeNoDriver - rangeLoad; // really some useful signal but no load
-  std::cout << "pure no driver " << rangeNoDriver << std::endl;
   if(!rangeNoDriver.is_empty()) {
     std::ostringstream sos;
     rangeNoDriver.RangeArrayCommon::streamout(sos, 0, name.name);
