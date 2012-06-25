@@ -67,6 +67,7 @@ shell::CMD::CMDLexer::CMDLexer()
   tDB["set"]            = cmd_parser::token::CMDSet;
   tDB["source"]         = cmd_parser::token::CMDSource;
   tDB["suppress_message"] = cmd_parser::token::CMDSuppressMessage;
+  tDB["write"]          = cmd_parser::token::CMDWrite;
   tDB["\n"]             = cmd_parser::token::CMD_END;
   tDB["simple_string"]  = cmd_parser::token::simple_string;
 

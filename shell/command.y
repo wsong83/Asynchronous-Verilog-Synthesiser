@@ -79,6 +79,7 @@
 %token CMDSet                  "set"
 %token CMDSource               "source"
 %token CMDSuppressMessage      "suppress_message"
+%token CMDWrite                "write"
 
  // other
  /* the final return of a command line */
@@ -123,6 +124,7 @@ command_description
     | "set"               argument_list     { shell::CMD::CMDSet::exec(*cmd_env, $2);                }
     | "source"            argument_list     { shell::CMD::CMDSource::exec(*cmd_env, $2);             }
     | "suppress_message"  argument_list     { shell::CMD::CMDSuppressMessage::exec(*cmd_env, $2);    }
+    | "write"             argument_list     { shell::CMD::CMDWrite::exec(*cmd_env, $2);              }
     | simple_string argument_list 
     {
       cmd_env->stdOs << "Error: Unrecognizable command \"" << $1 << "\"!" << endl;

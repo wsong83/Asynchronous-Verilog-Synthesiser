@@ -87,5 +87,6 @@ namespace shell {
 #include "cmd/report_netlist.h"
 #include "cmd/source.h"
 #include "cmd/suppress_message.h"
+#include "cmd/write.h"
 
 #endif
