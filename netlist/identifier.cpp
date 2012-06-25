@@ -412,8 +412,9 @@ bool netlist::VIdentifier::elaborate(elab_result_t &result, const ctype_t mctype
     // for an expression, no range is used
     assert(m_range.size() == 0);
     rv &= m_select.elaborate(result, mctype, fp);
-    rv &= m_select.is_valuable();
-    if(!rv) { G_ENV->error(loc, "ELAB-RANGE-0", name); }
+    // rv &= m_select.is_valuable();
+    // it might have variable range in always blocks and it is existed in OR1200, so let it pass
+    //if(!rv) { G_ENV->error(loc, "ELAB-RANGE-0", name); }
     break;
   }
   case tPort: 
@@ -429,8 +430,9 @@ bool netlist::VIdentifier::elaborate(elab_result_t &result, const ctype_t mctype
     // for a left-side concatenation, select should be resolved numbers
     assert(m_range.size() == 0);
     rv &= m_select.elaborate(result);
-    rv &= m_select.is_valuable();
-    if(!rv) { G_ENV->error(loc, "ELAB-RANGE-0", name); }
+    // rv &= m_select.is_valuable();
+    // it might have variable range in always blocks and it is existed in OR1200, so let it pass
+    //if(!rv) { G_ENV->error(loc, "ELAB-RANGE-0", name); }
     break;
   }    
   default:
