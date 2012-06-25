@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <stack>
 #include "component.h"
+#include "shell/env.h"
 
 using namespace netlist;
 using std::ostream;
@@ -408,6 +409,20 @@ bool netlist::Expression::elaborate(elab_result_t &result, const ctype_t mctype,
 
   // try to reduce the expression
   reduce();
+
+  // type specific check
+  switch(mctype) {
+  case tCaseItem: {
+    // for a case item, it must be const
+    if(!valuable) {
+      G_ENV->error(loc, "ELAB-CASE-3", toString(*this));
+      rv = false;
+    }
+    break;
+  }
+  default:
+    ;
+  }
 
   return rv;
 }

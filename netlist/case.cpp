@@ -233,11 +233,21 @@ bool netlist::CaseState::elaborate(elab_result_t &result, const ctype_t mctype, 
   }
 
   // check all cases have different values and remove duplicated cases
+  // #define CASE_DEBUG_CASE
+#ifdef CASE_DEBUG_CASE
+  std::cout << "beginning check case statements: " << std::endl;
+#endif
+
+  bool already_has_default = false;
   std::set<string> case_exps;
   it=cases.begin();
   end=cases.end();
   while(it!=end) {
-    if((*it)->is_default()) break;
+    if(!already_has_default && (*it)->is_default()) {
+      it++;
+      already_has_default = true;
+      continue;
+    }
 
     // check all case expressions
     list<shared_ptr<Expression> >::iterator eit, eend;
@@ -245,16 +255,26 @@ bool netlist::CaseState::elaborate(elab_result_t &result, const ctype_t mctype, 
     eend=(*it)->exps.end(); 
     while(eit!=eend) {
       if(case_exps.count(Number::trim_zeros((*eit)->get_value().get_txt_value()))) { // duplicated
+#ifdef CASE_DEBUG_CASE
+        std::cout << "duplicated " << **eit << " text: " 
+                  << Number::trim_zeros((*eit)->get_value().get_txt_value())  
+                  << std::endl;
+#endif
         G_ENV->error((*eit)->loc, "ELAB-CASE-2");
-        (*it)->exps.erase(eit);
+        eit = (*it)->exps.erase(eit);
       } else {
+#ifdef CASE_DEBUG_CASE
+        std::cout << "insert " << **eit << " text: " 
+                  << Number::trim_zeros((*eit)->get_value().get_txt_value())  
+                  << std::endl;
+#endif
         case_exps.insert(Number::trim_zeros((*eit)->get_value().get_txt_value()));
         eit++;
       }
     }
 
     if((*it)->is_default()) {
-      cases.erase(it);
+      it = cases.erase(it);
     } else {
       it++;
     }

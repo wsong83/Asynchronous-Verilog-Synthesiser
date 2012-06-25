@@ -44,8 +44,14 @@ namespace netlist {
     Number(const mpz_class&);
 
     // helpers
-    const std::string& get_txt_value() const { return txt_value; }
-    mpz_class get_value() const { return mpz_class(txt_value, 2); }
+    const std::string get_txt_value() const { 
+      if(txt_value.empty()) return "0"; 
+      else return txt_value; 
+    }
+    mpz_class get_value() const { 
+      if(txt_value.empty()) return 0; 
+      else return mpz_class(txt_value, 2); 
+    }
     int get_length() const { return num_leng; }
     bool is_valuable() const { return valuable; }
     bool is_valid() const { return valid; }

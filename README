@@ -33,12 +33,11 @@ Package required:
   rlwrap                ( rlwrap     )
 
 Install guide:
-  make test
+  make
 
 Usage info.:
-  shell/test/avs_shell        the command line environment
-  averilog/test/parser        a direct test to parse a Verilog file
-  preproc/test/preproc_test   standalone Verilog preprocessor
+  bin/avs_shell        the command line synthesis environment. 
+                       use "help" command for help information.
 
 Other info.:
   This a part of the EPSRC funded project GAELS (EP/I038306/1).

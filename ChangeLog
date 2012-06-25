@@ -1,3 +1,8 @@
+##### Mon 22/06/2012
+* Modified Makefile so there is no target test.
+* Fixed a stupid misuse of reference in netlist::RangeArray::is_declaration(). Reference assign is not pointer assignment!
+* Fixed some bugs in case expression check and now consider numbers with x/z as constant and valuable.
+
 ##### Fri 22/06/2012
 * Fixed some bugs and tried to differentiate empty from full by forcing all maximal range expandation before range 
   operations.

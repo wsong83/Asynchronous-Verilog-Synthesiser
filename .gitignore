@@ -6,6 +6,7 @@ netlist/*.o
 shell/*.o
 shell/cmd/*.o
 preproc/*.o
+bin/*
 
 ## Bison files
 averilog/averilog.cc

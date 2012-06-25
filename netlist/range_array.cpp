@@ -53,12 +53,13 @@ bool netlist::RangeArray::is_declaration() const {
   if(child.empty()) return true; // no range at all means 1 bit
   else if(child.size() > 1) return false;
   else {
-    Range& m = *(child.front());
+    Range m = *(child.front());
     while(true) {
       if(m.is_empty()) return false; // declaration should not have empty range expression
       if(m.RangeArrayCommon::size() > 1) return false;
       if(m.RangeArrayCommon::size() == 1) m = m.RangeArrayCommon::front();
-      else break;
+      else 
+        break;
     }
     return true;
   }

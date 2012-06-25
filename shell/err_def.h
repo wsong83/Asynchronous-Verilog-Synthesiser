@@ -65,10 +65,15 @@ ERR_DEFINE("ELAB-CASE-1",
            EWarning,   0, 
            "the cases after a default case will be removed.");
 
-// case items after a default case
+// duplicated case statements
 ERR_DEFINE("ELAB-CASE-2", 
            EWarning,   0, 
            "duplicated case item will be removed.");
+
+// the case expression is not constant
+ERR_DEFINE("ELAB-CASE-3", 
+           EError,   1, 
+           "the case expression %1% is not constant.");
 
 // non-constant concationation parameter
 ERR_DEFINE("ELAB-EXPRESSION-0",

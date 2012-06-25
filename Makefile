@@ -38,9 +38,8 @@ BISONDIRS = shell.bison averilog.bison
 
 # actions
 
-all: bison subdirs
-
-test: bison subdirs testdirs
+all: bison subdirs testdirs
+	cp shell/test/avs_shell bin/
 
 .PHONY: bison subdirs $(SUBDIRS) clean testdirs $(TESTDIRS)
 
@@ -66,4 +65,5 @@ clean:
 	-rm *.o
 	-for d in $(SUBDIRS); do $(MAKE) -C $$d clean; done
 	-for d in $(TESTDIRS); do $(MAKE) -C $$d clean; done
+	-rm bin/avs_shell
 

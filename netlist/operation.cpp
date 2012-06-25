@@ -48,7 +48,7 @@ netlist::Operation::Operation(operation_t otype)
 }
 
 netlist::Operation::Operation(const Number& num)
-  : otype(oNum), valuable(num.is_valuable()), data(new Number(num)), father(NULL)
+  : otype(oNum), valuable(true), data(new Number(num)), father(NULL)
 { }
 
 netlist::Operation::Operation(const VIdentifier& id)
@@ -193,6 +193,10 @@ void netlist::Operation::reduce() {
       otype = oNum;
       valuable = true;
     }
+    break;
+  }
+  case oNum: {
+    valuable = true;
     break;
   }
   default:;
