@@ -30,6 +30,7 @@
 #define AV_H_MODULE_
 
 #include <deque>
+#include <set>
 
 namespace netlist {
   
@@ -78,8 +79,12 @@ namespace netlist {
     bool calculate_name( std::string&, 
                          const std::list<boost::shared_ptr<ParaConn> >& 
                          mplist = std::list<boost::shared_ptr<ParaConn> >()) const;
+    /* elaborate the design */
     bool elaborate(std::deque<boost::shared_ptr<Module> >&, 
-                   std::map<MIdentifier, boost::shared_ptr<Module> > &); /* elaborate the design */
+                   std::map<MIdentifier, boost::shared_ptr<Module> > &); 
+    /* get a list of all the hierarchical modules using this one as the top */
+    void get_hier(std::list<boost::shared_ptr<Module> >&, 
+                  std::set<MIdentifier> &) const;
 
     // data
     MIdentifier name;

@@ -26,9 +26,9 @@
  *
  */
 
-#include <algorithm>
 #include "component.h"
 #include "shell/env.h"
+#include <algorithm>
 
 using namespace netlist;
 using std::ostream;
@@ -419,6 +419,24 @@ bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
            });
   
   return rv;
+}
+
+void netlist::Module::get_hier(list<shared_ptr<Module> >& mfifo, 
+                               std::set<MIdentifier> & mmap) const{
+  list<shared_ptr<Module> > myqueue;
+  for_each(db_instance.begin(), db_instance.end(),
+           [&mfifo, &myqueue, &mmap](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
+             shared_ptr<Module> tarModule = G_ENV->find_module(m.second->mname);
+             if(tarModule.use_count() != 0 && !mmap.count(tarModule->name.name)) {
+               mfifo.push_front(tarModule);
+               myqueue.push_front(tarModule);
+               mmap.insert(tarModule->name);
+             }
+           });
+  // breadth first
+  for_each(myqueue.begin(), myqueue.end(), [&mfifo, &mmap](shared_ptr<Module>& m) {
+      m->get_hier(mfifo, mmap);
+    });
 }
 
 void netlist::Module::init_port_list(const list<VIdentifier>& port_list) {

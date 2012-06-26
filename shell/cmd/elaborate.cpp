@@ -205,7 +205,7 @@ bool shell::CMD::CMDElaborate::exec ( Env& gEnv, vector<string>& arg){
       gEnv.stdOs << "." << endl;
 
       // update the design name
-      curDgn->name = newName;
+      curDgn->set_name(newName);
 
       // elaborate it;
       if(!curDgn->elaborate(moduleQueue, moduleMap)) {

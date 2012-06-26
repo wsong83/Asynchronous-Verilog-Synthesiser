@@ -309,6 +309,9 @@ bool netlist::Instance::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
     G_ENV->error(loc, "ELAB-INST-2", mname.name);
     return false;
   }
+  
+  // update the module name
+  set_mname(newName);
 
   // check the new name in module map
   if(mmap.count(newName))

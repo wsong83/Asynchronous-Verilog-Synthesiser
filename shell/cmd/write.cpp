@@ -29,9 +29,19 @@
 #include "write.h"
 #include "shell/macro_name.h"
 
+#define BOOST_FILESYSTEM_VERSION 3
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
+using namespace boost::filesystem;
+
+#include <algorithm>
+
 using std::string;
 using std::vector;
 using std::endl;
+using boost::shared_ptr;
+using std::list;
+using std::for_each;
 using namespace shell::CMD;
 
 static po::options_description arg_opt("Options");
@@ -83,10 +93,16 @@ bool shell::CMD::CMDWrite::exec ( Env& gEnv, vector<string>& arg){
 
   // settle the design to be written out
   string designName;
+  shared_ptr<netlist::Module> tarDesign;
   if(vm.count("design")) {
     designName = vm["design"].as<string>();
   } else {
     designName = gEnv.macroDB[MACRO_CURRENT_DESIGN].get_string();
+  }
+  tarDesign = gEnv.find_module(designName);
+  if(tarDesign.use_count() == 0) {
+    gEnv.stdOs << "Error: Failed to find the target design \"" << designName << "\"." << endl;
+    return false;
   }
 
   // whether to output the hierarchy
@@ -97,6 +113,28 @@ bool shell::CMD::CMDWrite::exec ( Env& gEnv, vector<string>& arg){
   if(vm.count("output")) outputFileName = vm["output"].as<string>();
   else outputFileName = designName + ".v";
 
-  
+  // open the file
+  ofstream fhandler;
+  fhandler.open(system_complete(outputFileName), std::ios_base::out|std::ios_base::trunc);
+
+  if(hierarchyOutPut) {         // hierarchical
+    // prepared the module map and queue
+    list<shared_ptr<netlist::Module> > moduleQueue; // recursive module tree
+    std::set<netlist::MIdentifier>  moduleMap;
+    // add the top module to the queue
+    moduleQueue.push_back(tarDesign);
+    moduleMap.insert(tarDesign->name);
+    // find all modules
+    tarDesign->get_hier(moduleQueue, moduleMap);
+    // do the write out
+    for_each(moduleQueue.begin(), moduleQueue.end(), [&fhandler](shared_ptr<netlist::Module>& m) {
+        fhandler << *m << std::endl;
+      });
+  } else {
+    fhandler << *tarDesign << std::endl;
+  } 
+
+  fhandler.close();
+
   return true;
 }
