@@ -103,11 +103,7 @@ VIdentifier& netlist::Operation::get_var(){
 }
 
 void netlist::Operation::db_register(int iod) {
-  if(data.use_count() != 0) {
-    assert(data.unique());
-    data->db_register(iod);
-    assert(data.unique());
-  }
+  if(data.use_count() != 0) data->db_register(iod);
 }
 
 void netlist::Operation::db_expunge() {

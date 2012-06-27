@@ -163,7 +163,7 @@ namespace netlist{
       assert(0 == "elaborate() of NetComp is used");
     }
 
-  //protected:
+  protected:
     Block* father;              /* the pointer pointed to the father block */
       
   };

@@ -39,16 +39,16 @@ namespace netlist {
      * So the whole structure is recursive.
      */
   public:
-    ConElem() {}
-    ConElem(const shell::location& lloc) : loc(lloc) {}
+    ConElem() : father(NULL) {}
+    ConElem(const shell::location& lloc) : loc(lloc), father(NULL){}
     ConElem(const boost::shared_ptr<Expression>& expr, const std::list<boost::shared_ptr<ConElem> >& elems)
-      : exp(expr), con(elems) {}
+      : exp(expr), con(elems), father(NULL) {}
     ConElem(const shell::location& lloc, const boost::shared_ptr<Expression>& expr, const std::list<boost::shared_ptr<ConElem> >& elems)
-      : exp(expr), con(elems), loc(lloc) {}
+      : exp(expr), con(elems), loc(lloc), father(NULL) {}
     ConElem(const boost::shared_ptr<Expression>& expr)
-      : exp(expr) {}
+      : exp(expr), father(NULL) {}
     ConElem(const shell::location& lloc, const boost::shared_ptr<Expression>& expr)
-      : exp(expr), loc(lloc) {}
+      : exp(expr), loc(lloc), father(NULL) {}
     
     // helpers
     void reduce();
@@ -104,3 +104,7 @@ namespace netlist {
 }
 
 #endif
+
+// Local Variables:
+// mode: c++
+// End:

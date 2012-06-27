@@ -50,7 +50,6 @@ namespace netlist {
     Range(const shell::location&, const Range_Exp&, bool dim = false);    /* declare or select by a range expression */
     Range(const Range_Exp&, int); /* select by a range expression using positive or negtive colon */
     Range(const shell::location&, const Range_Exp&, int); /* select by a range expression using positive or negtive colon */
-    virtual ~Range() {}
 
     // helpers
     bool is_single() const {return rtype != TR_Range && rtype != TR_CRange; }
