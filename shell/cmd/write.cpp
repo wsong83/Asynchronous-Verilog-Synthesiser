@@ -117,6 +117,10 @@ bool shell::CMD::CMDWrite::exec ( Env& gEnv, vector<string>& arg){
   ofstream fhandler;
   fhandler.open(system_complete(outputFileName), std::ios_base::out|std::ios_base::trunc);
 
+  // show an instruction
+  gEnv.stdOs << "Write out design \"" << designName << "\" to file " << system_complete(outputFileName) << "." << endl;
+
+  // do the write out
   if(hierarchyOutPut) {         // hierarchical
     // prepared the module map and queue
     list<shared_ptr<netlist::Module> > moduleQueue; // recursive module tree

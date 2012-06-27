@@ -209,7 +209,7 @@ bool shell::CMD::CMDElaborate::exec ( Env& gEnv, vector<string>& arg){
 
       // elaborate it;
       if(!curDgn->elaborate(moduleQueue, moduleMap)) {
-        gEnv.stdOs << *curDgn;
+        //gEnv.stdOs << *curDgn;
         return false;
       }
 
