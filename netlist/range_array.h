@@ -39,6 +39,7 @@ namespace netlist {
     RangeArray() : NetComp(tRangeArray), const_reduced(false){}
     RangeArray(const std::list<boost::shared_ptr<Range> >& rhs) 
       : NetComp(tRangeArray), RangeArrayCommon(rhs), const_reduced(false) { } /* valuable needs to be calculated!! */
+    virtual ~RangeArray() {}
 
     // helpers
     bool is_empty() const { return child.size() == 1 && child.front()->is_empty(); } 

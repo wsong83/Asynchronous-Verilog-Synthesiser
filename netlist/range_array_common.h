@@ -36,6 +36,7 @@ namespace netlist {
   public:
     RangeArrayCommon() {}
     RangeArrayCommon(const std::list<boost::shared_ptr<Range> >& rhs) : child(rhs) {}
+    virtual ~RangeArrayCommon() {}
 
     // helpers
     bool is_valuable() const;

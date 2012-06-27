@@ -266,11 +266,7 @@ netlist::VIdentifier::VIdentifier(const location& lloc, const string& nm, const 
   : Identifier(tVarName, lloc, nm), m_range(rg), numbered(false), pcomp(NULL), uid(0), alwaysp(NULL) {  }
 
 netlist::VIdentifier::~VIdentifier() {
-  if(uid != 0) {
-    pvar->fan[0].erase(uid);
-    pvar->fan[1].erase(uid);
-  }
-  uid = 0;
+  db_expunge();
 }
 
 VIdentifier& netlist::VIdentifier::operator++ () {
@@ -373,6 +369,7 @@ void netlist::VIdentifier::db_register(int iod) {
 
 void netlist::VIdentifier::db_expunge() {
   if(uid != 0) {
+    //std::cout << "expunge " << *this << std::endl;
     pvar->fan[0].erase(uid);
     pvar->fan[1].erase(uid);
   }

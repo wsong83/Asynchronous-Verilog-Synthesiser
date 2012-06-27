@@ -26,10 +26,11 @@
  *
  */
 
-#include <algorithm>
-#include <deque>
 #include "component.h"
 #include "shell/env.h"
+#include <algorithm>
+#include <deque>
+#include <boost/foreach.hpp>
 
 using namespace netlist;
 using std::ostream;
@@ -187,7 +188,18 @@ bool netlist::Variable::elaborate(elab_result_t &result, const ctype_t mctype, c
   rv &= name.elaborate(result, tVariable);
   rv &= name.get_range().is_valuable();
   rv &= name.get_range().is_declaration();
-  assert(rv);
+  assert(rv);                   // not sure why it can goes wrong so assert first
+
+  //for_each(fan[1].begin(), fan[1].end(), [](pair<const unsigned int, VIdentifier *>& m) {
+  //  std::cout << m.second << "(" << m.second << ") :" << *(m.second->father);
+  //  });
+
+  return rv;
+}
+
+bool netlist::Variable::check_post_elaborate() {
+
+  bool  rv = true;
 
   // get the normalized max range
   RangeArray maxRange = name.get_range().const_copy(name.get_range());
@@ -206,6 +218,7 @@ bool netlist::Variable::elaborate(elab_result_t &result, const ctype_t mctype, c
 
   for_each(fan[1].begin(), fan[1].end(), 
            [&rv, &maxRange, &loc, this](pair<const unsigned int, VIdentifier *>& m) {
+             //std::cout << m.second << "(" << m.second << ") :" << *(m.second->father);
              rv &= maxRange >= 
                m.second->get_select().const_copy(maxRange);
              if(!rv) {
@@ -225,10 +238,6 @@ bool netlist::Variable::elaborate(elab_result_t &result, const ctype_t mctype, c
     //  check whether it is a continueous assignment,
     //  an input port or an output port of an instance.
     
-    if(fan[0].size() != 0 && fan[1].size() == 1) {    // no load
-      G_ENV->error(loc, "ELAB-VAR-2", name.name);
-      //rv = false;    // no load is not a serious problem
-    }
     break;
   }
   case TReg: {
@@ -236,11 +245,6 @@ bool netlist::Variable::elaborate(elab_result_t &result, const ctype_t mctype, c
     if(!rv) break;
     // TODO:
     //  check whether it is a blocked or non-blocked assignment in a always block.
-    
-    if(fan[0].size() != 0 && fan[1].size() == 1) {    // no load
-      G_ENV->error(loc, "ELAB-VAR-2", name.name);
-      //rv = false;    // no load is not a serious problem
-    }
     break;
   }
   case TParam:

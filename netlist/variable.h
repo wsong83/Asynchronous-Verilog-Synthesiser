@@ -78,6 +78,8 @@ namespace netlist {
     bool is_valuable() const {  return (exp.use_count() != 0) ? exp->is_valuable() : false; }
     Number get_value() const {  return (exp.use_count() != 0) ? exp->get_value() : 0; }
     std::string get_short_string() const;
+    bool check_post_elaborate(); /* check fan-in/out */
+    bool is_useless() const { return fan[0].size() == 0 && fan[1].size() == 1; }
 
     VIdentifier name;
     std::map<unsigned int, VIdentifier *> fan[2]; /* fan[0] for fanin, fan[1] for fanout */

@@ -33,13 +33,14 @@ export LINKFLAGS = -lboost_regex -lgmpxx -lgmp -lboost_system -lboost_filesystem
 
 # targets
 SUBDIRS = preproc averilog netlist shell shell/cmd
-TESTDIRS = preproc/test averilog/test shell/test
+TESTDIRS = preproc/test shell/test
 BISONDIRS = shell.bison averilog.bison
 
 # actions
 
 all: bison subdirs testdirs
-	cp shell/test/avs_shell bin/
+	-mkdir bin
+	-cp shell/test/avs_shell bin/
 
 .PHONY: bison subdirs $(SUBDIRS) clean testdirs $(TESTDIRS)
 

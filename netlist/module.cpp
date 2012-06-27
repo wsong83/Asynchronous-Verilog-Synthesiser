@@ -381,6 +381,8 @@ bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
   // link all variables
   db_register();
 
+  //std::cout << "after instance port update: " << std::endl << *this;
+
   // update the value of parameter to all variables after db_register
   // the update during update_name is not sufficient to resolve all parameters 
   // as db_register is run after elaboration
@@ -389,11 +391,15 @@ bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
     });
   if(!rv) return rv;
 
+  //std::cout << "after parameter update: " << std::endl << *this;
+
   // check ports
   for_each(db_port.begin_order(), db_port.end_order(), [&rv, &result](pair<VIdentifier, shared_ptr<Port> >& m) {
       rv &= m.second->elaborate(result);
     });
   if(!rv) return rv;
+  
+  //std::cout << "after port elaboration: " << std::endl << *this;
   
   // check all variables
   for_each(db_var.begin_order(), db_var.end_order(), [&rv, &result](pair<VIdentifier, shared_ptr<Variable> >& m) {
@@ -401,10 +407,14 @@ bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
     });
   if(!rv) return rv;
 
+  //std::cout << "after var elaboration: " << std::endl << *this;
+  
   // resolve all generate variables
   for_each(db_genvar.begin_order(), db_genvar.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
         m.second->update();
       });
+  
+  //std::cout << "after genvar elaboration: " << std::endl << *this;
   
   // elaborate the internals
   for_each(statements.begin(), statements.end(), [&rv, &result](shared_ptr<NetComp>& m) {
@@ -412,6 +422,30 @@ bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
     });
   if(!rv) return rv;
   
+  //std::cout << "after statements elaboration: " << std::endl << *this;
+  
+  // check all variablescheck variable fan-in/out
+  for_each(db_var.begin_order(), db_var.end_order(), [&rv](pair<VIdentifier, shared_ptr<Variable> >& m) {
+      rv &= m.second->check_post_elaborate();
+    });
+  if(!rv) return rv;
+  /*
+  // remove useless variables
+  list<VIdentifier> var_to_be_removed;
+  for_each(db_var.begin_order(), db_var.end_order(), [&db_var, &var_to_be_removed](pair<VIdentifier, shared_ptr<Variable> >& m) {
+      if(m.second->is_useless()) var_to_be_removed.push_back(m.first);
+    });
+  for_each(var_to_be_removed.begin(), var_to_be_removed.end(), [&db_var](VIdentifier& m) {
+      db_var.erase(m);
+    });
+  var_to_be_removed.clear();
+  for_each(db_genvar.begin_order(), db_genvar.end_order(), [&db_genvar, &var_to_be_removed](pair<VIdentifier, shared_ptr<Variable> >& m) {
+      if(m.second->is_useless()) var_to_be_removed.push_back(m.first);
+    });
+  for_each(var_to_be_removed.begin(), var_to_be_removed.end(), [&db_genvar](VIdentifier& m) {
+      db_genvar.erase(m);
+    });
+  */
   // add called modules (instances) to the module queue in cmd/elaborate
   for_each(db_instance.begin(), db_instance.end(), 
            [&mfifo, &mmap, &rv](pair<const IIdentifier, shared_ptr<Instance> >& m) {

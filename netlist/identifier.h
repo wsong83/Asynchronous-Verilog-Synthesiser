@@ -42,6 +42,7 @@ namespace netlist {
     Identifier(NetComp::ctype_t ctype, const shell::location& lloc) : NetComp(ctype, lloc) {}
     Identifier(NetComp::ctype_t, const std::string&);
     Identifier(NetComp::ctype_t, const shell::location& lloc, const std::string&);
+    virtual ~Identifier() {}
 
     // helpers
     int compare(const Identifier& rhs) const; /* compare two identifiers */

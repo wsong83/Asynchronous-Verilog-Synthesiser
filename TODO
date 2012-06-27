@@ -4,7 +4,6 @@
 * 12/06/2012              (**Important )   Need serious test for Elab_empty and Elab_Const_If reduction in Block, SeqBlock and GenBlock.
 * 11/06/2012              (**Normal    )   + and - for Numbers with x or z generate asserion failures as not supported yet.
 * 11/06/2012              (**Normal    )   The != operator for netlist::Number generates wrong results when x or z exists. eg: "x1" != "0" results false.
-* 08/06/2012              (**Important )   Check all variables are properly expunged when not in use.
 * 08/06/2012              (**Normal    )   May be there is no need to differentiate the types in ParaConn as they all go back to Netlist::Expression.
 * 06/06/2012              (**Normal    )   May be there is no need to use IIdentifier. Just using BIdentifier for instance is fine.
 * 05/06/2012              (**Important )   Set the pcomp member var for all VIdentifier and further reduce the netlist using ranges.
@@ -13,6 +12,7 @@
 * 17/05/2012              (**Important )   Need to rewrite the cmd_lexer class or use flex, not all Tcl features can be supported in current structure.
 
 =============
+* 08/06/2012 [27/06/2012] (Resolved    )   Check all variables are properly expunged when not in use. [Seems so after adding a virtual destructor in NetComp. ]
 * 26/05/2012 [25/06/2012] (Resolved    )   Support elaborate command. [at least run through the first time.]
 * 09/06/2012 [25/06/2012] (Resolved    )   The multi-driver check is far complicated than I thought. The ranges/selectors should be considered into the check. 
                                            [now complicated and sort of thorough checks are performed on multi-driver, no-driver and no-load wires. Simple test passed. ]

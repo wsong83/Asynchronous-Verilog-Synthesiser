@@ -1,4 +1,6 @@
 ##### Wed 27/06/2012
+* Begin to use new BOOST_FOREACH macro.
+* Now unused VIdentifiers will automatically expunge itself.
 * Start to use a new branch for developing and only push runnable versions to master.
 
 ##### Tue 26/06/2012

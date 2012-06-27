@@ -151,13 +151,13 @@ bool shell::CMD::CMDElaborate::exec ( Env& gEnv, vector<string>& arg){
     }
 
     // duplicate the design
-    tarDesign.reset(tarDesign->deep_copy());
+    shared_ptr<netlist::Module> mDesign(tarDesign->deep_copy());
     
     // check and extract parameters
     string pstr;
     if(vm.count("parameters")) {
       pstr = vm["parameters"].as<string>();
-      if(!cmd_elaborate_parameter_checker(gEnv, pstr, tarDesign)) {
+      if(!cmd_elaborate_parameter_checker(gEnv, pstr, mDesign)) {
         gEnv.stdOs << "Error: Fail to resolve the parameter assignments \"" << pstr << "\" of the target design \"" << designName << "\"."<< endl;
         return false;
       }
@@ -169,14 +169,14 @@ bool shell::CMD::CMDElaborate::exec ( Env& gEnv, vector<string>& arg){
     map<netlist::MIdentifier, shared_ptr<netlist::Module> >  moduleMap;
     
     // push the top level design into the module fifo
-    moduleQueue.push_back(tarDesign);
+    moduleQueue.push_back(mDesign);
 
     // get the updated module name
     string newName;
-    if(!tarDesign->calculate_name(newName))  return false;
+    if(!mDesign->calculate_name(newName))  return false;
 
     // store it in the module map
-    moduleMap[newName] = tarDesign;
+    moduleMap[newName] = mDesign;
 
     // do the elaboration
     while(!moduleQueue.empty()) {
@@ -222,7 +222,7 @@ bool shell::CMD::CMDElaborate::exec ( Env& gEnv, vector<string>& arg){
 
     //set current design to this design
     vector<string> dn;
-    dn.push_back(tarDesign->name.name);
+    dn.push_back(mDesign->name.name);
     (*gEnv.macroDB[MACRO_CURRENT_DESIGN].hook)(gEnv, gEnv.macroDB[MACRO_CURRENT_DESIGN], dn);
     return true;
   }
