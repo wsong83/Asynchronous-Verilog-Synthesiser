@@ -26,10 +26,11 @@
  *
  */
 
-#include <algorithm>
-#include <stack>
 #include "component.h"
 #include "shell/env.h"
+#include <algorithm>
+#include <stack>
+#include <boost/foreach.hpp>
 
 using namespace netlist;
 using std::ostream;

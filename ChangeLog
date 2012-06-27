@@ -1,3 +1,9 @@
+##### Wed 27/06/2012
+* Initialise father of netlist::ConElem to NULL (always forget this, dam!)
+* Begin to use new BOOST_FOREACH macro.
+* Now unused VIdentifiers will automatically expunge itself.
+* Start to use a new branch for developing and only push runnable versions to master.
+
 ##### Tue 26/06/2012
 * Rename the module name in instances after the module name is re-calculated with parameters.
 * Added a write command in avs_shell to write out a design.

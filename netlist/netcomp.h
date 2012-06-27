@@ -89,7 +89,8 @@ namespace netlist{
     NetComp() : ctype(tUnknown), father(NULL) {}
     NetComp(ctype_t tt) : ctype(tt), father(NULL) {}
     NetComp(ctype_t tt, const shell::location& lloc) : ctype(tt), loc(lloc), father(NULL) {}
-    
+    virtual ~NetComp() {}
+
     ctype_t get_type() const { return ctype; }
     ctype_t ctype;
     shell::location loc;

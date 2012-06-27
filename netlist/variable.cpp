@@ -26,10 +26,11 @@
  *
  */
 
-#include <algorithm>
-#include <deque>
 #include "component.h"
 #include "shell/env.h"
+#include <algorithm>
+#include <deque>
+#include <boost/foreach.hpp>
 
 using namespace netlist;
 using std::ostream;
@@ -225,10 +226,6 @@ bool netlist::Variable::elaborate(elab_result_t &result, const ctype_t mctype, c
     //  check whether it is a continueous assignment,
     //  an input port or an output port of an instance.
     
-    if(fan[0].size() != 0 && fan[1].size() == 1) {    // no load
-      G_ENV->error(loc, "ELAB-VAR-2", name.name);
-      //rv = false;    // no load is not a serious problem
-    }
     break;
   }
   case TReg: {
@@ -236,11 +233,6 @@ bool netlist::Variable::elaborate(elab_result_t &result, const ctype_t mctype, c
     if(!rv) break;
     // TODO:
     //  check whether it is a blocked or non-blocked assignment in a always block.
-    
-    if(fan[0].size() != 0 && fan[1].size() == 1) {    // no load
-      G_ENV->error(loc, "ELAB-VAR-2", name.name);
-      //rv = false;    // no load is not a serious problem
-    }
     break;
   }
   case TParam:
