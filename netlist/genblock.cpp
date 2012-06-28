@@ -27,9 +27,10 @@
  *
  */
 
-#include <algorithm>
 #include "component.h"
 #include "shell/env.h"
+#include <algorithm>
+#include <boost/foreach.hpp>
 
 using namespace netlist;
 using std::ostream;
@@ -63,25 +64,19 @@ ostream& netlist::GenBlock::streamout(ostream& os, unsigned int indent) const {
 }
 
 ostream& netlist::GenBlock::streamout(ostream& os, unsigned int indent, bool fl_prefix) const {
-  
   if(!fl_prefix) os << string(indent, ' ');
-
   os << "generate " << endl;
-  
   // statements
   ctype_t mt = tUnknown;
-  list<shared_ptr<NetComp> >::const_iterator it, end;
-  for(it=statements.begin(), end=statements.end(); it!=end; it++) {
-    ctype_t mt_nxt = (*it)->get_type();
+  BOOST_FOREACH(const shared_ptr<NetComp>& it, statements) {
+    ctype_t mt_nxt = it->get_type();
     if(mt != mt_nxt || mt != tAssign) {
       if(mt != tUnknown) os << endl;
       mt = mt_nxt;
     } 
-    (*it)->streamout(os, indent+2);
+    it->streamout(os, indent+2);
   }
-
   os << string(indent, ' ') << "endgenerate" << endl;
-
   return os;
 }
 
@@ -220,11 +215,8 @@ GenBlock* netlist::GenBlock::deep_copy() const {
   rv->named = named;
   
   // data in Block
-  // lambda expression, need C++0x support
-  for_each(statements.begin(), statements.end(),
-           [rv](const shared_ptr<NetComp>& comp) { 
-             rv->statements.push_back(shared_ptr<NetComp>(comp->deep_copy())); 
-           });
+  BOOST_FOREACH(const shared_ptr<NetComp>& comp, statements)
+    rv->statements.push_back(shared_ptr<NetComp>(comp->deep_copy())); 
   
   DATABASE_DEEP_COPY_FUN(db_var,      VIdentifier, Variable,  rv->db_var       );
   rv->unnamed_block = unnamed_block;
@@ -243,12 +235,12 @@ void netlist::GenBlock::db_register(int iod) {
   for_each(db_var.begin_order(), db_var.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
       m.second->db_register(1);
     });
-  for_each(statements.begin(), statements.end(), [](shared_ptr<NetComp>& m) {m->db_register(1);});
+  BOOST_FOREACH(shared_ptr<NetComp>& m, statements) m->db_register(1);
 }
 
 void netlist::GenBlock::db_expunge() {
   for_each(db_var.begin_order(), db_var.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
       m.second->db_expunge();
     });
-  for_each(statements.begin(), statements.end(), [](shared_ptr<NetComp>& m) {m->db_expunge();});
+  BOOST_FOREACH(shared_ptr<NetComp>& m, statements) m->db_expunge();
 }

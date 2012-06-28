@@ -30,6 +30,7 @@
 #include "shell/env.h"
 #include <algorithm>
 #include <set>
+#include <boost/foreach.hpp>
 
 using namespace netlist;
 using std::ostream;
@@ -67,9 +68,8 @@ ostream& netlist::CaseItem::streamout (ostream& os, unsigned int indent) const {
 void netlist::CaseItem::set_father(Block *pf) {
   if(father == pf) return;
   father = pf;
-  list<shared_ptr<Expression> >::iterator it, end;
-  for(it=exps.begin(), end=exps.end(); it!=end; it++)
-    (*it)->set_father(pf);
+  BOOST_FOREACH(shared_ptr<Expression>& it, exps)
+    it->set_father(pf);
 
   if(body.use_count())
     body->set_father(pf);
@@ -77,9 +77,8 @@ void netlist::CaseItem::set_father(Block *pf) {
 
 bool netlist::CaseItem::check_inparse() {
   bool rv = true;
-  list<shared_ptr<Expression> >::iterator it, end;
-  for(it=exps.begin(), end=exps.end(); it!=end; it++)
-    rv &= (*it)->check_inparse();
+  BOOST_FOREACH(shared_ptr<Expression>& it, exps)
+    rv &= it->check_inparse();
 
   if(body.use_count())
     rv &= body->check_inparse();
@@ -90,19 +89,18 @@ bool netlist::CaseItem::check_inparse() {
 CaseItem* netlist::CaseItem::deep_copy() const {
   CaseItem* rv = new CaseItem(loc);
   if(body.use_count() != 0) rv->body.reset(body->deep_copy());
-  for_each(exps.begin(), exps.end(), [&rv](const shared_ptr<Expression>& m) {
-      rv->exps.push_back(shared_ptr<Expression>(m->deep_copy()));
-    });
+  BOOST_FOREACH(const  shared_ptr<Expression>& m, exps)
+    rv->exps.push_back(shared_ptr<Expression>(m->deep_copy()));
   return rv;
 }
 
 void netlist::CaseItem::db_register(int iod) {
-  for_each(exps.begin(), exps.end(), [](shared_ptr<Expression>& m) {m->db_register(1);});
+  BOOST_FOREACH(shared_ptr<Expression>& m, exps) m->db_register(1);
   if(body.use_count() != 0) body->db_register(1);
 }
 
 void netlist::CaseItem::db_expunge() {
-  for_each(exps.begin(), exps.end(), [](shared_ptr<Expression>& m) {m->db_expunge();});
+  BOOST_FOREACH(shared_ptr<Expression>& m, exps) m->db_expunge();
   if(body.use_count() != 0) body->db_expunge();
 }
 
@@ -111,9 +109,8 @@ bool netlist::CaseItem::elaborate(elab_result_t &result, const ctype_t mctype, c
   result = ELAB_Normal;
 
   // check all expressions are const expressions
-  for_each(exps.begin(), exps.end(), [&rv, &result](shared_ptr<Expression>& m) {
-      rv &= m->elaborate(result, tCaseItem);
-    });
+  BOOST_FOREACH(shared_ptr<Expression>& m, exps) 
+    rv &= m->elaborate(result, tCaseItem);
   if(!rv) return false;
 
   // check the case body
@@ -131,11 +128,10 @@ bool netlist::CaseItem::is_match(const Number& val) const {
   bool rv = false;
   if(exps.size() == 0) return true;                // default
 
-  for_each(exps.begin(), exps.end(), [&rv, &val](const shared_ptr<Expression>& m) {
-      assert(m->is_valuable());
-      rv |= (m->get_value() == val);
-    });
-
+  BOOST_FOREACH(const shared_ptr<Expression>& m, exps) {
+    assert(m->is_valuable());
+    rv |= (m->get_value() == val);
+  }
   return rv;
 }
 
@@ -143,10 +139,8 @@ ostream& netlist::CaseState::streamout (ostream& os, unsigned int indent) const 
   os << string(indent, ' ');
   if(casex) os << "casex(" << *exp << ")" << endl;
   else      os << "case("  << *exp << ")" << endl;
-  list<shared_ptr<CaseItem> >::const_iterator it, end;
-  for(it=cases.begin(), end=cases.end(); it!=end; it++) {
-    (*it)->streamout(os, indent+2);
-  }
+  BOOST_FOREACH(const shared_ptr<CaseItem>& it, cases)
+    it->streamout(os, indent+2);
   os << string(indent, ' ') << "endcase" << endl;
   return os;
 }
@@ -156,18 +150,15 @@ void netlist::CaseState::set_father(Block *pf) {
   father = pf;
   name.set_father(pf);
   exp->set_father(pf);
-  list<shared_ptr<CaseItem> >::iterator it, end;
-  for(it=cases.begin(), end=cases.end(); it!=end; it++)
-    (*it)->set_father(pf);
+  BOOST_FOREACH(shared_ptr<CaseItem>& it, cases)
+    it->set_father(pf);
 }
 
 bool netlist::CaseState::check_inparse() {
   bool rv = true;
   rv &= exp->check_inparse();
-  list<shared_ptr<CaseItem> >::iterator it, end;
-  for(it=cases.begin(), end=cases.end(); it!=end; it++)
-    rv &= (*it)->check_inparse();
-
+  BOOST_FOREACH(shared_ptr<CaseItem>& it, cases)
+    rv &= it->check_inparse();
   return rv;
 }
 
@@ -177,19 +168,18 @@ CaseState* netlist::CaseState::deep_copy() const {
   rv->named = named;
   rv->casex = casex;
   if(exp.use_count() != 0) rv->exp.reset(exp->deep_copy());
-  for_each(cases.begin(), cases.end(), [&rv](const shared_ptr<CaseItem>& m) {
-      rv->cases.push_back(shared_ptr<CaseItem>(m->deep_copy()));
-    });
+  BOOST_FOREACH(const shared_ptr<CaseItem>& m, cases)
+    rv->cases.push_back(shared_ptr<CaseItem>(m->deep_copy()));
   return rv;
 }
 
 void netlist::CaseState::db_register(int iod) {
-  for_each(cases.begin(), cases.end(), [](shared_ptr<CaseItem>& m) {m->db_register(1);});
+  BOOST_FOREACH(shared_ptr<CaseItem>& m, cases) m->db_register(1);
   if(exp.use_count() != 0) exp->db_register(1);
 }
 
 void netlist::CaseState::db_expunge() {
-  for_each(cases.begin(), cases.end(), [](shared_ptr<CaseItem>& m) {m->db_expunge();});
+  BOOST_FOREACH(shared_ptr<CaseItem>& m, cases) m->db_expunge();
   if(exp.use_count() != 0) exp->db_expunge();
 }
 
@@ -212,9 +202,8 @@ bool netlist::CaseState::elaborate(elab_result_t &result, const ctype_t mctype, 
   if(!rv) return false;
 
   // elaborate all case items
-  for_each(cases.begin(), cases.end(), [&rv, &result, &mctype](shared_ptr<CaseItem>& m) {
-      rv &= m->elaborate(result, mctype);
-    });
+  BOOST_FOREACH(shared_ptr<CaseItem>& m, cases)
+    rv &= m->elaborate(result, mctype);
   if(!rv) return false;
 
   // post-elaborate process
@@ -314,5 +303,5 @@ bool netlist::CaseState::elaborate(elab_result_t &result, const ctype_t mctype, 
 } 
 
 void netlist::CaseState::set_always_pointer(SeqBlock *p) {
-  for_each(cases.begin(), cases.end(), [&p](shared_ptr<CaseItem>& m) {m->set_always_pointer(p);});
+  BOOST_FOREACH(shared_ptr<CaseItem>& m, cases) m->set_always_pointer(p);
 }

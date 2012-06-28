@@ -34,6 +34,7 @@
 #include "shell/macro_name.h"
 #include "averilog/averilog_util.h"
 #include "averilog/averilog.lex.h"
+#include <boost/foreach.hpp>
 
 using std::string;
 using std::vector;
@@ -109,21 +110,17 @@ bool shell::CMD::CMDAnalyze::exec ( Env& gEnv, vector<string>& arg){
   // analyse the target files
   if(vm.count("file")) {
     vector<string> target_files = vm["file"].as<vector<string> >();
-    vector<string>::iterator it, end;
-    for(it=target_files.begin(), end=target_files.end(); it!=end; it++) {
-
+    BOOST_FOREACH(const string& it, target_files) {
       //find the correct file name
-      path fname(*it);
+      path fname(it);
       if(!exists(fname)) {
-        list<string>::const_iterator sit, send;
-        for(sit=gEnv.macroDB[MACRO_SEARCH_PATH].get_list().begin(),
-              send=gEnv.macroDB[MACRO_SEARCH_PATH].get_list().end();
-            sit!=send; sit++) {
-          fname = *sit + "/" + *it;
-          if(exists(fname)) break;
+        bool m_exist = false;
+        BOOST_FOREACH(const string& sit, gEnv.macroDB[MACRO_SEARCH_PATH].get_list()) {
+          fname = sit + "/" + it;
+          if(exists(fname)) { m_exist = true; break;}
         }
-        if(sit == send) {       // fail to locate the file
-          gEnv.stdOs << "Error: Cannot open file \"" << *it << "\"." << endl;
+        if(!m_exist) {       // fail to locate the file
+          gEnv.stdOs << "Error: Cannot open file \"" << it << "\"." << endl;
           return false;
         }
       }
@@ -151,22 +148,16 @@ bool shell::CMD::CMDAnalyze::exec ( Env& gEnv, vector<string>& arg){
       //set the pre-defined macros
       if(vm.count("define")) {
         vector<string> macro_list = vm["define"].as<vector<string> >();
-        vector<string>::const_iterator mit, mend;
-        for(mit=macro_list.begin(), mend=macro_list.end(); mit!=mend; mit++){
-          preprocp->define(*mit, "", "", true);
-        }
+        BOOST_FOREACH(const string& mit, macro_list)
+          preprocp->define(mit, "", "", true);
       }
 
       // set the include paths
       if(gEnv.macroDB[MACRO_SEARCH_PATH].is_string()) {
         preprocp->add_incr(gEnv.macroDB[MACRO_SEARCH_PATH].get_string());
       } else if(gEnv.macroDB[MACRO_SEARCH_PATH].is_list()) {
-        list<string>::const_iterator iit, iend;
-        for( iit=gEnv.macroDB[MACRO_SEARCH_PATH].get_list().begin(), 
-               iend=gEnv.macroDB[MACRO_SEARCH_PATH].get_list().end();
-             iit!=iend; iit++) {
-          preprocp->add_incr(*iit);
-        }
+        BOOST_FOREACH(const string& iit, gEnv.macroDB[MACRO_SEARCH_PATH].get_list())
+          preprocp->add_incr(iit);
       } else {
         assert(0 == "search_path is not a string nor a list!");
       }

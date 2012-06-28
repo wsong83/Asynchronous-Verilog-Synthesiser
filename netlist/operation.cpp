@@ -27,6 +27,7 @@
  */
 
 #include "component.h"
+#include <boost/foreach.hpp>
 
 using namespace netlist;
 using std::ostream;
@@ -68,9 +69,8 @@ netlist::Operation::Operation(const shared_ptr<LConcatenation>& con)
   } else {
     // copy all elements in LConcatenation to Concatenation
     shared_ptr<Concatenation> cp(new Concatenation());
-    list<VIdentifier>::const_iterator it, end;
-    for(it=con->data.begin(), end=con->data.end(); it!=end; it++) {
-      shared_ptr<ConElem> m( new ConElem(shared_ptr<Expression>(new Expression(*it))));
+    BOOST_FOREACH(const VIdentifier& it, con->data) {
+      shared_ptr<ConElem> m( new ConElem(shared_ptr<Expression>(new Expression(it))));
       *cp + m;
     }
   }

@@ -39,16 +39,14 @@ using shell::location;
 
 bool netlist::RangeArrayCommon::is_valuable() const {
   bool rv = true;
-  BOOST_FOREACH(const shared_ptr<Range>& m, child) {
+  BOOST_FOREACH(const shared_ptr<Range>& m, child)
       rv &= m->is_valuable_tree();
-  }
   return rv;
 }
 
 void netlist::RangeArrayCommon::set_dim() {
-  BOOST_FOREACH(const shared_ptr<Range>& m, child) {
+  BOOST_FOREACH(const shared_ptr<Range>& m, child)
       m->set_dim(true);
-  }
 }  
 
 list<shared_ptr<Range> > netlist::RangeArrayCommon::const_copy(const Range& maxRange) const {
@@ -76,14 +74,12 @@ list<shared_ptr<Range> > netlist::RangeArrayCommon::op_and(const list<shared_ptr
     
   // (a + b) & (c + d) = ac + ad + bc + bd
   list<shared_ptr<Range> > rv;
-  list<shared_ptr<Range> >::const_iterator lit, lend, rit, rend;
-  for(lit=child.begin(), lend=child.end(); lit!=lend; ++lit) {
-    for(rit=rhs.begin(), rend=rhs.end(); rit!=rend; ++rit) {
-      Range m = (*lit)->op_and_tree(**rit);
-      assert(m.is_valid());     // & operation should not generate error range from any normal ranges
-      if(!m.is_empty()) {       // insert a new 
-        rv.push_back(shared_ptr<Range>(new Range(m)));
-      }
+  BOOST_FOREACH(const shared_ptr<Range>& lit, child) {
+    BOOST_FOREACH(const shared_ptr<Range>& rit, rhs) { 
+      Range m = lit->op_and_tree(*rit);
+      assert(m.is_valid());
+      // save it if not empty
+      if(!m.is_empty()) rv.push_back(shared_ptr<Range>(new Range(m)));
     }
   }
 
@@ -103,17 +99,17 @@ list<shared_ptr<Range> > netlist::RangeArrayCommon::op_or(const list<shared_ptr<
 }
 
 list<shared_ptr<Range> > netlist::RangeArrayCommon::op_deduct(const list<shared_ptr<Range> >& rhs) const {
-  list<shared_ptr<Range> >::const_iterator mit, mend, nit, nend;
   list<shared_ptr<Range> > rv = const_copy(Range());
-  for(mit=rhs.begin(), mend=rhs.end(); mit!=mend; mit++) {
+  BOOST_FOREACH(const shared_ptr<Range>& mit, rhs) {
     list<shared_ptr<Range> > tmp;
-    for(nit=rv.begin(), nend=rv.end(); nit!=nend; nit++) {
-      Range m_r = **nit & **mit;
+    BOOST_FOREACH(const shared_ptr<Range>& nit, rv) {
+      Range m_r = *nit & *mit;
       if(!m_r.is_empty()) { // do need a deduct
-        vector<Range> m_v = (*nit)->op_deduct(**mit);
-        m_r.set_child((*nit)->RangeArrayCommon::op_deduct((*mit)->get_child()));
-        BOOST_FOREACH(Range& m, m_v){ tmp.push_back(shared_ptr<Range>(new Range(m))); }
-      } else if(!(*nit)->is_empty()) tmp.push_back(*nit); // otherwise push it back
+        vector<Range> m_v = nit->op_deduct(*mit);
+        m_r.set_child(nit->RangeArrayCommon::op_deduct(mit->get_child()));
+        BOOST_FOREACH(Range& m, m_v)
+          tmp.push_back(shared_ptr<Range>(new Range(m)));
+      } else if(!nit->is_empty()) tmp.push_back(nit); // otherwise push it back
     }
     rv = tmp;                   // prepare the next iteration
   }
@@ -155,24 +151,18 @@ void netlist::RangeArrayCommon::const_reduce(const Range& maxRange) {
 void netlist::RangeArrayCommon::add_low_dimension(const shared_ptr<Range>& rhs) {
   if(child.empty()) child.push_back(rhs);
   else {
-    BOOST_FOREACH(shared_ptr<Range>& m, child) { m->RangeArrayCommon::add_low_dimension(rhs); }
+    BOOST_FOREACH(shared_ptr<Range>& m, child)
+      m->RangeArrayCommon::add_low_dimension(rhs);
   }
 }
 
 list<shared_ptr<Range> > netlist::RangeArrayCommon::const_reduce(list<shared_ptr<Range> >& rhs, const Range& maxRange) const {
-  /*
-  std::cout << "before const reduce: ";
-  for_each(rhs.begin(), rhs.end(), [](shared_ptr<Range>& m) {
-      std::cout << *m << ";";
-    });
-  std::cout << std::endl;
-  */
   // preprocess
   // reduce all
   list<shared_ptr<Range> > rlist;
   BOOST_FOREACH(shared_ptr<Range>& m, rhs) {
-      m->const_reduce(maxRange);
-      if(m->is_valid() && !m->is_empty()) rlist.push_back(m);
+    m->const_reduce(maxRange);
+    if(m->is_valid() && !m->is_empty()) rlist.push_back(m);
   }
   
   // do the reduction in iterations
@@ -191,21 +181,16 @@ list<shared_ptr<Range> > netlist::RangeArrayCommon::const_reduce(list<shared_ptr
       Range tmp = (*it)->op_and(**next);
       if((*it)->op_adjacent_to(**next)) { // adjacent
         if((*it)->RangeArrayCommon::op_equ((*next)->child)) { // child equal
-          //std::cout << "combine " << **it << " and " << **next << std::endl;
           **it = **it | **next;
           (*it)->child = (*next)->child;
           rlist.erase(next);
           changed = true;
           break;
         } else if(tmp.is_valid() && !tmp.is_empty()) {
-          //std::cout << "normalize " << **it << " and " << **next << std::endl;
           vector<Range> normResult = (*it)->op_normalise_tree(**next);
-          if(normResult[0].is_valid() && !normResult[0].is_empty())
-            rlist.insert(it, shared_ptr<Range>(new Range(normResult[0])));
-          if(normResult[1].is_valid() && !normResult[1].is_empty())
-            rlist.insert(it, shared_ptr<Range>(new Range(normResult[1])));
-          if(normResult[2].is_valid() && !normResult[2].is_empty())
-            rlist.insert(it, shared_ptr<Range>(new Range(normResult[2])));
+          BOOST_FOREACH(const Range& m, normResult)
+            if(m.is_valid() && !m.is_empty()) 
+              rlist.insert(it, shared_ptr<Range>(new Range(m)));
           changed = true;
           break;
         } else {                // adjacent but not shared
@@ -224,46 +209,40 @@ list<shared_ptr<Range> > netlist::RangeArrayCommon::const_reduce(list<shared_ptr
     rlist.push_back(shared_ptr<Range>(new Range()));
     rlist.front()->set_empty();
   }
-
-  /*
-  std::cout << "after const reduce: ";
-  for_each(rlist.begin(), rlist.end(), [](shared_ptr<Range>& m) {
-      std::cout << *m << ";";
-    });
-  std::cout << std::endl;
-  */
   return rlist;
 }
 
 void netlist::RangeArrayCommon::set_father(Block* pf) {
-  BOOST_FOREACH(shared_ptr<Range>& m, child) { m->set_father(pf); }
+  BOOST_FOREACH(shared_ptr<Range>& m, child) m->set_father(pf);
 }
 
 bool netlist::RangeArrayCommon::check_inparse() {
   bool rv = true;
-  BOOST_FOREACH(const shared_ptr<Range>& m, child) { rv &= m->check_inparse(); }
+  BOOST_FOREACH(const shared_ptr<Range>& m, child) rv &= m->check_inparse();
   return rv;
 }
 
 
 list<shared_ptr<Range> > netlist::RangeArrayCommon::deep_copy() const {
   list<shared_ptr<Range> > rv;
-  BOOST_FOREACH(const shared_ptr<Range>& m, child) { rv.push_back(shared_ptr<Range>(m->deep_copy())); }
+  BOOST_FOREACH(const shared_ptr<Range>& m, child) 
+    rv.push_back(shared_ptr<Range>(m->deep_copy()));
   return rv;
 }
 
 void netlist::RangeArrayCommon::db_register(int iod) {
-  BOOST_FOREACH(const shared_ptr<Range>& m, child) { m->db_register(iod); }
+  BOOST_FOREACH(const shared_ptr<Range>& m, child) m->db_register(iod);
 }
 
 void netlist::RangeArrayCommon::db_expunge() {
-  BOOST_FOREACH(const shared_ptr<Range>& m, child) { m->db_expunge(); }
+  BOOST_FOREACH(const shared_ptr<Range>& m, child) m->db_expunge();
 }
 
 bool netlist::RangeArrayCommon::elaborate(NetComp::elab_result_t &result, const NetComp::ctype_t mctype, const vector<NetComp *>& fp) {
   bool rv = true;
   result = NetComp::ELAB_Normal;
-  BOOST_FOREACH(const shared_ptr<Range>& m, child) { rv &= m->elaborate(result, mctype, fp); }
+  BOOST_FOREACH(const shared_ptr<Range>& m, child) 
+    rv &= m->elaborate(result, mctype, fp);
   return rv;
 } 
 

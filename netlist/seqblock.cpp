@@ -27,9 +27,10 @@
  *
  */
 
-#include <algorithm>
 #include "component.h"
 #include "shell/env.h"
+#include <algorithm>
+#include <boost/foreach.hpp>
 
 using namespace netlist;
 using std::ostream;
@@ -163,11 +164,8 @@ void netlist::SeqBlock::set_father(Block *pf) {
       it->second->set_father(pf);
   }
 
-  {
-    list<shared_ptr<Expression> >::iterator it, end;
-    for(it=slist_level.begin(), end=slist_level.end(); it!=end; it++)
-      (*it)->set_father(pf);
-  }
+  BOOST_FOREACH(shared_ptr<Expression>& it, slist_level)
+    it->set_father(pf);
 }
 
 bool netlist::SeqBlock::check_inparse() {
@@ -178,11 +176,8 @@ bool netlist::SeqBlock::check_inparse() {
       rv &= it->second->check_inparse();
   }
 
-  {
-    list<shared_ptr<Expression> >::iterator it, end;
-    for(it=slist_level.begin(), end=slist_level.end(); it!=end; it++)
-      rv &= (*it)->check_inparse();
-  }
+  BOOST_FOREACH(shared_ptr<Expression>& it, slist_level)
+    rv &= it->check_inparse();
 
   rv &= Block::check_inparse();
 
@@ -211,12 +206,8 @@ SeqBlock* netlist::SeqBlock::deep_copy() const {
   rv->named = named;
   
   // data in Block
-  // lambda expression, need C++0x support
-  for_each(statements.begin(), statements.end(),
-           [rv](const shared_ptr<NetComp>& comp) { 
-             rv->statements.push_back(shared_ptr<NetComp>(comp->deep_copy())); 
-           });
-  
+  BOOST_FOREACH(const shared_ptr<NetComp>& comp, statements)
+    rv->statements.push_back(shared_ptr<NetComp>(comp->deep_copy()));
   DATABASE_DEEP_COPY_FUN(db_var,      VIdentifier, Variable,  rv->db_var       );
   rv->unnamed_block = unnamed_block;
   rv->unnamed_instance = unnamed_instance;
@@ -228,9 +219,8 @@ SeqBlock* netlist::SeqBlock::deep_copy() const {
   for_each(slist_pulse.begin(), slist_pulse.end(), [&rv](const pair<bool, shared_ptr<Expression> > m) {
       rv->slist_pulse.push_back(pair<bool, shared_ptr<Expression> >(m.first, shared_ptr<Expression>(m.second->deep_copy())));
     });
-  for_each(slist_level.begin(), slist_level.end(), [&rv](const shared_ptr<Expression> m) {
-      rv->slist_level.push_back(shared_ptr<Expression>(m->deep_copy()));
-    });
+  BOOST_FOREACH(const shared_ptr<Expression>& m, slist_level)
+    rv->slist_level.push_back(shared_ptr<Expression>(m->deep_copy()));
 
   rv->set_father();
   rv->elab_inparse();
@@ -244,22 +234,22 @@ void netlist::SeqBlock::db_register(int iod) {
   for_each(db_var.begin_order(), db_var.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
       m.second->db_register(1);
     });
-  for_each(statements.begin(), statements.end(), [](shared_ptr<NetComp>& m) {m->db_register(1);});
+  BOOST_FOREACH(shared_ptr<NetComp>& m, statements) m->db_register(1);
   for_each(slist_pulse.begin(), slist_pulse.end(), [](pair<bool, shared_ptr<Expression> >& m) {
       m.second->db_register(1);
     });
-  for_each(slist_level.begin(), slist_level.end(), [](shared_ptr<Expression>& m) {m->db_register(1);});
+  BOOST_FOREACH(shared_ptr<Expression>& m, slist_level) m->db_register(1);
 }
 
 void netlist::SeqBlock::db_expunge() {
   for_each(db_var.begin_order(), db_var.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
       m.second->db_expunge();
     });
-  for_each(statements.begin(), statements.end(), [](shared_ptr<NetComp>& m) {m->db_expunge();});
+  BOOST_FOREACH(shared_ptr<NetComp>& m, statements) m->db_expunge();
   for_each(slist_pulse.begin(), slist_pulse.end(), [](pair<bool, shared_ptr<Expression> >& m) {
       m.second->db_expunge();
     });
-  for_each(slist_level.begin(), slist_level.end(), [](shared_ptr<Expression>& m) {m->db_expunge();});
+  BOOST_FOREACH(shared_ptr<Expression>& m, slist_level) m->db_expunge();
 }
 
 bool netlist::SeqBlock::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
@@ -286,10 +276,8 @@ bool netlist::SeqBlock::elaborate(elab_result_t &result, const ctype_t mctype, c
   if(!rv) return rv;
 
   // elaborate the internals
-  for_each(statements.begin(), statements.end(), 
-           [&rv, &elab_vect, &result](shared_ptr<NetComp>& m) {
-             rv &= m->elaborate(result, tSeqBlock, elab_vect);
-           });
+  BOOST_FOREACH(shared_ptr<NetComp>& m, statements)
+    rv &= m->elaborate(result, tSeqBlock, elab_vect);
   if(!rv) return rv;
 
   // final check

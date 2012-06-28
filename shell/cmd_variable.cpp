@@ -29,6 +29,8 @@
 #include <netlist/component.h>
 #include <boost/regex.hpp>
 #include "cmd_variable.h"
+#include <boost/foreach.hpp>
+
 using boost::regex;
 using boost::regex_match;
 using boost::regex_search;
@@ -49,9 +51,8 @@ ostream& shell::CMD::CMDVar::streamout( ostream& os) const {
   case vUnknown: return os;
   case vString: 
   case vList: {
-    list<string>::const_iterator it, end;
-    for(it=m_list.begin(), end=m_list.end(); it!=end; it++)
-      os << "\"" << *it << "\" ";
+    BOOST_FOREACH(const string& it, m_list)
+      os << "\"" << it << "\" ";
     return os;
   }
   case vCollection: {
@@ -62,14 +63,12 @@ ostream& shell::CMD::CMDVar::streamout( ostream& os) const {
     while(it!=end) {
       os << (*it)->get_hier_name();
       it++;
-      if(it!=end)
-        os << ", ";
+      if(it!=end) os << ", ";
     }
     os << "}";
     return os;
   }
-  default:
-    return os;
+  default: return os;
   }
 }
 
@@ -122,11 +121,8 @@ string shell::CMD::cmd_variable_resolver(const std::map<std::string, CMDVar>& db
       mname = mresult[3].str();
     }
 
-    //std::cout << mresult <<  " Varname: " << mname << std::endl;
-
     if(db.count(mname) && db.find(mname)->second.is_string()) {
       m_string = mresult.prefix().str() + db.find(mname)->second.get_string() + mresult.suffix().str();
-      //std::cout << "level" << level << " " << m_string << std::endl;
     } else {
       break;
     }

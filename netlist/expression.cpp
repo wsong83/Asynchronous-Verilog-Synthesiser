@@ -410,16 +410,14 @@ ostream& netlist::Expression::streamout(ostream& os, unsigned int indent) const 
 void netlist::Expression::set_father(Block *pf) {
   if(father == pf) return;
   father = pf;
-  list<shared_ptr<Operation> >::iterator it, end;
-  for(it=eqn.begin(),end=eqn.end(); it!=end; it++)
-    (*it)->set_father(pf);
+  BOOST_FOREACH(shared_ptr<Operation>& it, eqn)
+    it->set_father(pf);
 }
 
 bool netlist::Expression::check_inparse() {
   bool rv = true;
-  list<shared_ptr<Operation> >::iterator it, end;
-  for(it=eqn.begin(),end=eqn.end(); it!=end; it++)
-    rv &= (*it)->check_inparse();
+  BOOST_FOREACH(shared_ptr<Operation>& it, eqn)
+    rv &= it->check_inparse();
   return rv;
 }
 
@@ -427,11 +425,8 @@ Expression* netlist::Expression::deep_copy() const {
   Expression* rv = new Expression();
   rv->loc = loc;
   rv->valuable = this->valuable;
-  
-  list<shared_ptr<Operation> >::const_iterator it, end;
-  for(it=this->eqn.begin(), end=this->eqn.end(); it!=end; it++)
-    rv->eqn.push_back(shared_ptr<Operation>((*it)->deep_copy()));
-
+  BOOST_FOREACH(const shared_ptr<Operation>& it, eqn)
+    rv->eqn.push_back(shared_ptr<Operation>(it->deep_copy()));
   return rv;
 }
 
@@ -440,9 +435,8 @@ bool netlist::Expression::elaborate(elab_result_t &result, const ctype_t mctype,
   result = ELAB_Normal;
   
   // resolve all operation if possible
-  for_each(eqn.begin(), eqn.end(), [&rv, &result](shared_ptr<Operation>& m) {
-      rv &= m->elaborate(result);
-    });
+  BOOST_FOREACH(shared_ptr<Operation>& m, eqn)
+    rv &= m->elaborate(result);
   if(!rv) return false;
 
   //std::cout << "after operation elaboration: " << std::endl << *this << std::endl;
