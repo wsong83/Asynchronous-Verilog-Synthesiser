@@ -28,6 +28,7 @@
 
 #include "help.h"
 #include "analyze.h"
+#include <boost/foreach.hpp>
 
 using namespace shell;
 using namespace shell::CMD;
@@ -56,7 +57,7 @@ int cmdDB_init( map<string, string>& db) {
 }
 
 // use the dummy variable to initialize the db
-static int const dummy_cmdDB = cmdDB_init(CMDHelp::cmdDB);
+static const int dummy_cmdDB = cmdDB_init(CMDHelp::cmdDB);
 
 static po::options_description arg_opt("Options");
 po::options_description_easy_init const dummy_arg_opt =
@@ -102,14 +103,13 @@ bool shell::CMD::CMDHelp::exec ( Env& gEnv, vector<string>& arg){
   }
   else if(vm.count("target")) {
     vector<string> cmd_lst = vm["target"].as<vector<string> >();
-    vector<string>::iterator it, end;
-    for(it=cmd_lst.begin(), end=cmd_lst.end(); it!=end; it++) {
-      if(cmdDB.find(*it) != cmdDB.end()) {
-        gEnv.stdOs << *it << 
-          string(it->size() < 16 ? 16-it->size() : 1, ' ') 
-                   << ": " << cmdDB[*it] << endl;
+    BOOST_FOREACH(const string& it, cmd_lst) {
+      if(cmdDB.count(it)) {
+        gEnv.stdOs << it << 
+          string(it.size() < 16 ? 16-it.size() : 1, ' ') 
+                   << ": " << cmdDB[it] << endl;
       } else {
-        gEnv.stdOs << "Error: Wrong command name: \"" << *it << "\"."<< endl;
+        gEnv.stdOs << "Error: Wrong command name: \"" << it << "\"."<< endl;
         break;
       }
     }

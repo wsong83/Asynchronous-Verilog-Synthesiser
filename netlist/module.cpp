@@ -29,6 +29,7 @@
 #include "component.h"
 #include "shell/env.h"
 #include <algorithm>
+#include <boost/foreach.hpp>
 
 using namespace netlist;
 using std::ostream;
@@ -143,13 +144,12 @@ ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
 
   // statements
   ctype_t mt = tUnknown;
-  list<shared_ptr<NetComp> >::const_iterator it, end;
-  for(it=statements.begin(), end=statements.end(); it!=end; it++) {
-    ctype_t mt_nxt = (*it)->get_type();
+  BOOST_FOREACH(const shared_ptr<NetComp>& it, statements) {
+    ctype_t mt_nxt = it->get_type();
     if(mt != mt_nxt || mt != tAssign) { 
       os << endl; mt = mt_nxt; 
     }
-    (*it)->streamout(os, indent+2);
+    it->streamout(os, indent+2);
   }
 
   os << endl << string(indent, ' ') << "endmodule" << endl << endl;
@@ -163,10 +163,8 @@ Module* netlist::Module::deep_copy() const {
   
   // data in Block
   // lambda expression, need C++0x support
-  for_each(statements.begin(), statements.end(),
-           [rv](const shared_ptr<NetComp>& comp) { 
-             rv->statements.push_back(shared_ptr<NetComp>(comp->deep_copy())); 
-           });
+  BOOST_FOREACH(const shared_ptr<NetComp>& comp, statements)
+    rv->statements.push_back(shared_ptr<NetComp>(comp->deep_copy())); 
   
   DATABASE_DEEP_COPY_FUN(db_var,      VIdentifier, Variable,  rv->db_var        );
   rv->unnamed_block = unnamed_block;
@@ -200,7 +198,7 @@ void netlist::Module::db_register(int iod) {
   for_each(db_genvar.begin_order(), db_genvar.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
       m.second->db_register(1);
     });
-  for_each(statements.begin(), statements.end(), [](shared_ptr<NetComp>& m) {m->db_register(1);});
+  BOOST_FOREACH(shared_ptr<NetComp>& m, statements) m->db_register(1);
 }
 
 void netlist::Module::db_expunge() {
@@ -216,7 +214,7 @@ void netlist::Module::db_expunge() {
   for_each(db_genvar.begin_order(), db_genvar.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
       m.second->db_expunge();
     });
-  for_each(statements.begin(), statements.end(), [](shared_ptr<NetComp>& m) {m->db_expunge();});
+  BOOST_FOREACH(shared_ptr<NetComp>& m, statements) m->db_expunge();
 }
 
 
@@ -331,23 +329,23 @@ bool netlist::Module::calculate_name( string& newName,
   DATABASE_DEEP_COPY_FUN(db_param,  VIdentifier,  Variable,  tmpModule->db_param      );
 
   // set the new value
-  for_each(mplist.begin(), mplist.end(), [&rv, &tmpModule](const shared_ptr<ParaConn>& m) {
-      shared_ptr<Variable> paramp = tmpModule->db_param.find(m->pname);
-      if(paramp.use_count() == 0) {
-        G_ENV->error(m->loc, "ELAB-PARA-1", m->pname.name, tmpModule->name.name);
-        rv = false;
-        return;
-      }
-      switch(m->type) {
-      case ParaConn::CEXP:
-        paramp->set_value(m->exp); break;
-      case ParaConn::CVAR:
-        paramp->set_value(m->var); break;
-      case ParaConn::CNUM:
-        paramp->set_value(m->num); break;
-      default:;
-      }
-    });
+  BOOST_FOREACH(const shared_ptr<ParaConn>& m, mplist) {
+    shared_ptr<Variable> paramp = tmpModule->db_param.find(m->pname);
+    if(paramp.use_count() == 0) {
+      G_ENV->error(m->loc, "ELAB-PARA-1", m->pname.name, tmpModule->name.name);
+      rv = false;
+      break;
+    }
+    switch(m->type) {
+    case ParaConn::CEXP:
+      paramp->set_value(m->exp); break;
+    case ParaConn::CVAR:
+      paramp->set_value(m->var); break;
+    case ParaConn::CNUM:
+      paramp->set_value(m->num); break;
+    default:;
+    }
+  }
   if(!rv) return rv;
 
   tmpModule->set_father();
@@ -357,12 +355,12 @@ bool netlist::Module::calculate_name( string& newName,
   newName = tmpModule->name.name;
   for_each(tmpModule->db_param.begin_order(), tmpModule->db_param.end_order(), 
            [&rv, &tmpModule, &newName](pair<VIdentifier, shared_ptr<Variable> >& m) {
-               rv &= m.second->update();
-               if(!rv) 
-                 G_ENV->error(m.second->loc, "ELAB-PARA-0", m.second->name.name, tmpModule->name.name);
-               else
-                 newName += string("_") + m.second->name.name + m.second->get_value().get_value().get_str();
-             });
+             rv &= m.second->update();
+             if(!rv) 
+               G_ENV->error(m.second->loc, "ELAB-PARA-0", m.second->name.name, tmpModule->name.name);
+             else
+               newName += string("_") + m.second->name.name + m.second->get_value().get_value().get_str();
+           });
   return rv;
 }
 
@@ -417,9 +415,8 @@ bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
   //std::cout << "after genvar elaboration: " << std::endl << *this;
   
   // elaborate the internals
-  for_each(statements.begin(), statements.end(), [&rv, &result](shared_ptr<NetComp>& m) {
-      rv &= m->elaborate(result, tModule);
-    });
+  BOOST_FOREACH(shared_ptr<NetComp>& m, statements) 
+    rv &= m->elaborate(result, tModule);
   if(!rv) return rv;
   
   //std::cout << "after statements elaboration: " << std::endl << *this;
@@ -429,23 +426,22 @@ bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
       rv &= m.second->check_post_elaborate();
     });
   if(!rv) return rv;
-  /*
+  
   // remove useless variables
   list<VIdentifier> var_to_be_removed;
   for_each(db_var.begin_order(), db_var.end_order(), [&db_var, &var_to_be_removed](pair<VIdentifier, shared_ptr<Variable> >& m) {
       if(m.second->is_useless()) var_to_be_removed.push_back(m.first);
     });
-  for_each(var_to_be_removed.begin(), var_to_be_removed.end(), [&db_var](VIdentifier& m) {
-      db_var.erase(m);
-    });
+  BOOST_FOREACH(const VIdentifier& m, var_to_be_removed) 
+    db_var.erase(m);
+  
   var_to_be_removed.clear();
   for_each(db_genvar.begin_order(), db_genvar.end_order(), [&db_genvar, &var_to_be_removed](pair<VIdentifier, shared_ptr<Variable> >& m) {
       if(m.second->is_useless()) var_to_be_removed.push_back(m.first);
     });
-  for_each(var_to_be_removed.begin(), var_to_be_removed.end(), [&db_genvar](VIdentifier& m) {
-      db_genvar.erase(m);
-    });
-  */
+  BOOST_FOREACH(const VIdentifier& m, var_to_be_removed) 
+    db_genvar.erase(m);
+
   // add called modules (instances) to the module queue in cmd/elaborate
   for_each(db_instance.begin(), db_instance.end(), 
            [&mfifo, &mmap, &rv](pair<const IIdentifier, shared_ptr<Instance> >& m) {
@@ -468,29 +464,26 @@ void netlist::Module::get_hier(list<shared_ptr<Module> >& mfifo,
              }
            });
   // breadth first
-  for_each(myqueue.begin(), myqueue.end(), [&mfifo, &mmap](shared_ptr<Module>& m) {
-      m->get_hier(mfifo, mmap);
-    });
+  BOOST_FOREACH(shared_ptr<Module>& m, myqueue) 
+    m->get_hier(mfifo, mmap);
 }
 
 void netlist::Module::init_port_list(const list<VIdentifier>& port_list) {
-  list<VIdentifier>::const_iterator it, end;
-  for(it=port_list.begin(),end=port_list.end(); it!=end; it++) {
-    shared_ptr<Port> m = db_port.swap(*it, shared_ptr<Port>(new Port(it->loc, *it)));
-    if(m.use_count() != 0) {
+  BOOST_FOREACH(const VIdentifier& m, port_list) {
+    shared_ptr<Port> p = db_port.swap(m, shared_ptr<Port>(new Port(m.loc, m)));
+    if(p.use_count() != 0) {
       // duplicated declaration
-      G_ENV->error(it->loc, "SYN-PORT-1", it->name, toString(m->loc));
+      G_ENV->error(m.loc, "SYN-PORT-1", m.name, toString(p->loc));
     }
   }
 }  
 
 void netlist::Module::init_param_list(const list<shared_ptr<Variable> >& para_list) {
-  list<shared_ptr<Variable> >::const_iterator it, end;
-  for(it=para_list.begin(),end=para_list.end(); it!=end; it++) {
-    shared_ptr<Variable> m = db_param.swap((*it)->name, *it);  
-    if(m.use_count() != 0) {
+  BOOST_FOREACH(const shared_ptr<Variable>& m, para_list) {
+    shared_ptr<Variable> p = db_param.swap(m->name, m);  
+    if(p.use_count() != 0) {
       // duplicated declaration
-      G_ENV->error((*it)->loc, "SYN-PARA-1", m->name.name, toString(m->loc));
+      G_ENV->error(m->loc, "SYN-PARA-1", p->name.name, toString(p->loc));
     }
   }    
 }

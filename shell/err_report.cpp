@@ -108,11 +108,7 @@ bool shell::ErrReport::operator () (const shell::location& loc, const string& er
 }
 
 bool shell::ErrReport::failure(const string& errID) const {
-  map<string, ErrorType>::const_iterator it, end;
-  it = errList.find(errID);
-  end = errList.end();
-  assert(it != end);		// make sure the error id exist
-
-  return (it->second.severe <= ErrorType::EError);
+  assert(errList.count(errID));		// make sure the error id exist
+  return (errList.find(errID)->second.severe <= ErrorType::EError);
 } 
   

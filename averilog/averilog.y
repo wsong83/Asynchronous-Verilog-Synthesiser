@@ -46,6 +46,7 @@
 #include <stack>
 #include "averilog_util.h"
 #include "averilog.lex.h"
+#include <boost/foreach.hpp>
   using namespace netlist;
   using namespace averilog;
   using std::string;
@@ -385,10 +386,9 @@ parameter_declaration
 // A.2.1.2 Port declarations
 input_declaration 
     : "input" list_of_port_identifiers
-    {      
-      list<VIdentifier>::iterator it, end;
-      for(it = $2.begin(), end = $2.end(); it != end; it++) {
-        shared_ptr<Port> cp(new Port(it->loc, *it));
+    {
+      BOOST_FOREACH(const VIdentifier& it, $2) {
+        shared_ptr<Port> cp(new Port(it.loc, it));
         cp->set_in();
         $$.push_back(cp);
       }
@@ -396,9 +396,8 @@ input_declaration
     | "input" '[' expression ':' expression ']' list_of_port_identifiers
     {      
       
-      list<VIdentifier>::iterator it, end;
-      for(it = $7.begin(), end = $7.end(); it != end; it++) {
-        shared_ptr<Port> cp( new Port(it->loc, *it));
+      BOOST_FOREACH(const VIdentifier& it, $7) {
+        shared_ptr<Port> cp( new Port(it.loc, it));
         cp->set_in();
         pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
         cp->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@2+@6, m)));
@@ -409,19 +408,17 @@ input_declaration
 
 output_declaration 
     : "output" list_of_port_identifiers
-    {      
-      list<VIdentifier>::iterator it, end;
-      for(it = $2.begin(), end = $2.end(); it != end; it++) {
-        shared_ptr<Port> cp( new Port(it->loc, *it));
+    {
+      BOOST_FOREACH(const VIdentifier& it, $2) {
+        shared_ptr<Port> cp( new Port(it.loc, it));
         cp->set_out();
         $$.push_back(cp);
       }
     }
     | "output" '[' expression ':' expression ']' list_of_port_identifiers
-    {      
-      list<VIdentifier>::iterator it, end;
-      for(it = $7.begin(), end = $7.end(); it != end; it++) {
-        shared_ptr<Port> cp( new Port(it->loc, *it));
+    {
+      BOOST_FOREACH(const VIdentifier& it, $7) {
+        shared_ptr<Port> cp( new Port(it.loc, it));
         cp->set_out();
         pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
         cp->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@2+@6,m)));
@@ -575,16 +572,14 @@ function_item_declaration
 gate_instantiation
     : n_input_gatetype n_input_gate_instances ';'
     {
-      list<shared_ptr<Instance> >::iterator it, end;
-      for(it=$2.begin(), end=$2.end(); it!=end; it++)
-        (*it)->set_mname($1);
+      BOOST_FOREACH(shared_ptr<Instance>& it, $2)
+        it->set_mname($1);
       $$ = $2;
     }
     | n_output_gatetype n_output_gate_instances ';'
     {
-      list<shared_ptr<Instance> >::iterator it, end;
-      for(it=$2.begin(), end=$2.end(); it!=end; it++)
-        (*it)->set_mname($1);
+      BOOST_FOREACH(shared_ptr<Instance>& it, $2)
+        it->set_mname($1);
       $$ = $2;
     }
     ;
@@ -662,17 +657,15 @@ n_output_gatetype
 module_instantiation 
     : module_identifier module_instances ';'
     {
-      list<shared_ptr<netlist::Instance> >::iterator it, end;
-      for(it=$2.begin(),end=$2.end(); it!=end; it++)
-        (*it)->set_mname($1);
+      BOOST_FOREACH(shared_ptr<Instance>& it, $2)
+        it->set_mname($1);
       $$ = $2;
     }
     | module_identifier '#' '(' list_of_parameter_assignments ')' module_instances ';'
     {
-      list<shared_ptr<netlist::Instance> >::iterator it, end;
-      for(it=$6.begin(),end=$6.end(); it!=end; it++) {
-        (*it)->set_mname($1);
-        (*it)->set_para($4);
+      BOOST_FOREACH(shared_ptr<Instance>& it, $6) {
+        it->set_mname($1);
+        it->set_para($4);
       }
       $$ = $6;
     }
@@ -817,9 +810,8 @@ generate_case_item
 continuous_assign 
     : "assign" list_of_net_assignments ';'
     {
-      list<shared_ptr<Assign> >::iterator it, end;
-      for(it=$2.begin(), end=$2.end(); it!=end; it++)
-        (*it)->set_continuous();
+      BOOST_FOREACH(shared_ptr<Assign>& it, $2)
+        it->set_continuous();
       $$ = $2;
     }
     ;
@@ -891,7 +883,6 @@ statement
     | "begin" ':' block_identifier list_of_variable_declarations statements "end" 
     { 
       $$.reset(new Block(@$, $3));
-      list<shared_ptr<Variable> >::iterator it, end;
       $$->add_list<Variable>($4);
       $$->add_statements($5);
       $$->elab_inparse();
@@ -935,10 +926,9 @@ expressions
 concatenation
     : '{' expressions '}'
     {
-      list<shared_ptr<Expression> >::iterator it, end;
       $$.reset( new Concatenation(@$));
-      for(it = $2.begin(), end = $2.end(); it != end; it++) {
-        shared_ptr<ConElem> m(new ConElem((*it)->loc, *it));
+      BOOST_FOREACH(const shared_ptr<Expression>& it, $2) {
+        shared_ptr<ConElem> m(new ConElem(it->loc, it));
         *$$ + m;
       }
     }

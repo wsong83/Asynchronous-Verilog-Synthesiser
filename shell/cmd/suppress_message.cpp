@@ -27,6 +27,8 @@
  */
 
 #include "suppress_message.h"
+#include <boost/foreach.hpp>
+
 using std::string;
 using std::vector;
 using std::endl;
@@ -77,12 +79,12 @@ bool shell::CMD::CMDSuppressMessage::exec ( Env& gEnv, vector<string>& arg){
 
   if(vm.count("msgName")) {
     vector<string> msg_name = vm["msgName"].as<vector<string> >();
-    vector<string>::iterator it, end;
-    for(it=msg_name.begin(), end=msg_name.end(); it!=end; it++) {
-      if(!gEnv.error.suppress(*it)) {
-        gEnv.stdOs << "Error: Error message \"" << *it << "\" does not exist or cannot be suppressed."<< endl;
-      }
-    }
+    BOOST_FOREACH(const string& it, msg_name)
+      if(!gEnv.error.suppress(it)) 
+        gEnv.stdOs << "Error: Error message \"" 
+                   << it 
+                   << "\" does not exist or cannot be suppressed."<< endl;
+
     return true;
   }
 

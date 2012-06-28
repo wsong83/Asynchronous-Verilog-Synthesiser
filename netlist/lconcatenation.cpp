@@ -26,8 +26,9 @@
  *
  */
 
-#include <algorithm>
 #include "component.h"
+#include <algorithm>
+#include <boost/foreach.hpp>
 
 using namespace netlist;
 using std::ostream;
@@ -42,30 +43,28 @@ netlist::LConcatenation::LConcatenation(shared_ptr<Concatenation>& con)
   : NetComp(tLConcatenation, con->loc), valid(false)
 {
   con->reduce();
-  list<shared_ptr<ConElem> >::iterator it, end;
-  for( it = con->data.begin(), end = con->data.end(); it != end; it++) {
-    if(0 != (*it)->con.size()) break; // the concatenation contain sub-concatenations
-    if((*it)->exp->size() != 1) break; // the expression ia still complex
-    if((*it)->exp->front()->get_type() != Operation::oVar) break; // wrong type
-    if((*it)->exp->front()->get_var().get_type() != tVarName) break; // wrong type
-    data.push_back((*it)->exp->front()->get_var());
+  BOOST_FOREACH(const shared_ptr<ConElem>& it, con->data) {
+    if( 0 != it->con.size() ||    // the concatenation contain sub-concatenations
+        it->exp->size() != 1 ||   // the expression ia still complex
+        it->exp->front()->get_type() != Operation::oVar || // wrong type
+        it->exp->front()->get_var().get_type() != tVarName) return; // wrong type
+    data.push_back(it->exp->front()->get_var());
   }
-  if(it == end) valid = true;
+  valid = true;
 }
 
 netlist::LConcatenation::LConcatenation(const location& lloc, shared_ptr<Concatenation>& con)
   : NetComp(tLConcatenation, lloc), valid(false)
 {
   con->reduce();
-  list<shared_ptr<ConElem> >::iterator it, end;
-  for( it = con->data.begin(), end = con->data.end(); it != end; it++) {
-    if(0 != (*it)->con.size()) break; // the concatenation contain sub-concatenations
-    if((*it)->exp->size() != 1) break; // the expression ia still complex
-    if((*it)->exp->front()->get_type() != Operation::oVar) break; // wrong type
-    if((*it)->exp->front()->get_var().get_type() != tVarName) break; // wrong type
-    data.push_back((*it)->exp->front()->get_var());
+  BOOST_FOREACH(const shared_ptr<ConElem>& it, con->data) {
+    if( 0 != it->con.size() ||    // the concatenation contain sub-concatenations
+        it->exp->size() != 1 ||   // the expression ia still complex
+        it->exp->front()->get_type() != Operation::oVar || // wrong type
+        it->exp->front()->get_var().get_type() != tVarName) return; // wrong type
+    data.push_back(it->exp->front()->get_var());
   }
-  if(it == end) valid = true;
+  valid = true;
 }
 
 netlist::LConcatenation::LConcatenation(const VIdentifier& id)
@@ -77,16 +76,12 @@ netlist::LConcatenation::LConcatenation(const location& lloc, const VIdentifier&
 void netlist::LConcatenation::set_father(Block *pf) {
   if(father == pf) return;
   father = pf;
-  list<VIdentifier>::iterator it, end;
-  for(it=data.begin(), end=data.end(); it!=end; it++)
-    it->set_father(pf);
+  BOOST_FOREACH(VIdentifier& it, data) it.set_father(pf);
 }
 
 bool netlist::LConcatenation::check_inparse() {
   bool rv = true;
-  list<VIdentifier>::iterator it, end;
-  for(it=data.begin(), end=data.end(); it!=end; it++)
-    rv &= it->check_inparse();
+  BOOST_FOREACH(VIdentifier& it, data) rv &= it.check_inparse();
   return rv;
 }
 
@@ -119,21 +114,20 @@ LConcatenation* netlist::LConcatenation::deep_copy() const {
   LConcatenation* rv = new LConcatenation();
   rv->loc = loc;
   rv->valid = valid;
-  for_each(data.begin(), data.end(), [&rv](const VIdentifier& m) {
-      VIdentifier* mp = m.deep_copy();
-      rv->data.push_back(*mp);
-      delete mp;
-    });
-  
+  BOOST_FOREACH(const VIdentifier& m, data) {
+    VIdentifier* mp = m.deep_copy();
+    rv->data.push_back(*mp);
+    delete mp;
+  }
   return rv;
 }
 
 void netlist::LConcatenation::db_register(int iod) {
-  for_each(data.begin(), data.end(), [](VIdentifier& m) {m.db_register(0);});
+  BOOST_FOREACH(VIdentifier& m, data) m.db_register(0);
 }
 
 void netlist::LConcatenation::db_expunge() {
-  for_each(data.begin(), data.end(), [](VIdentifier& m) {m.db_expunge();});
+  BOOST_FOREACH(VIdentifier& m, data) m.db_expunge();
 }
 
 bool netlist::LConcatenation::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
@@ -142,13 +136,12 @@ bool netlist::LConcatenation::elaborate(elab_result_t &result, const ctype_t mct
 
   assert(valid && data.size() > 0);
 
-  for_each(data.begin(), data.end(), [&rv, &fp, &result](VIdentifier& m) {
-      rv &= m.elaborate(result, tLConcatenation, fp);
-    });
+  BOOST_FOREACH(VIdentifier& m, data) 
+    rv &= m.elaborate(result, tLConcatenation, fp);
 
   return rv;
 }
 
 void netlist::LConcatenation::set_always_pointer(SeqBlock *p) {
-  for_each(data.begin(), data.end(), [&p](VIdentifier& m) {m.set_always_pointer(p); });
+  BOOST_FOREACH(VIdentifier& m, data) m.set_always_pointer(p);
 }

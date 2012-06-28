@@ -33,6 +33,8 @@
 
 #include "shell_top.h"
 
+#include <boost/foreach.hpp>
+
 #define YYSTYPE shell::CMD::cmd_token_type
 
 #include "cmd/cmd_define.h"

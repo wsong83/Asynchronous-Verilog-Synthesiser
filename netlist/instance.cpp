@@ -28,6 +28,7 @@
 
 #include "component.h"
 #include "shell/env.h"
+#include <boost/foreach.hpp>
 
 using namespace netlist;
 using std::ostream;
@@ -42,23 +43,13 @@ netlist::Instance::Instance(const IIdentifier& nm, const list<shared_ptr<PortCon
   : NetComp(tInstance), name(nm), port_list(polist), type(itype), named(true) {
   switch(itype) {
   case prim_in_inst: {
-    list<shared_ptr<PortConn> >::iterator it, end;
-    it = port_list.begin();
-    (*it)->set_out();
-    it++;
-    for(end=port_list.end(); it!=end; it++) {
-      (*it)->set_in();
-    }
+    BOOST_FOREACH(shared_ptr<PortConn>& it, port_list) it->set_in();
+    port_list.front()->set_out();
     break;
   }
   case prim_out_inst: {
-    list<shared_ptr<PortConn> >::iterator it, end;
-    it = port_list.begin();
-    for(end=port_list.end(); it!=end; it++) {
-      (*it)->set_out();
-    }
-    it--;
-    (*it)->set_in();
+    BOOST_FOREACH(shared_ptr<PortConn>& it, port_list) it->set_out();
+    port_list.back()->set_in();
     break;
   }
   default: ;

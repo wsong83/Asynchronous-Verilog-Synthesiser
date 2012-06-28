@@ -26,10 +26,11 @@
  *
  */
 
-#include <boost/regex.hpp>
-#include <boost/algorithm/string.hpp>
 #include "elaborate.h"
 #include "shell/macro_name.h"
+#include <boost/regex.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/foreach.hpp>
 
 using std::string;
 using std::endl;
@@ -77,10 +78,9 @@ namespace shell{
     bool cmd_elaborate_parameter_checker(Env& gEnv, const string& mstr, shared_ptr<netlist::Module>& pmodule) {
       vector<string> fields;
       boost::split(fields, mstr, boost::is_any_of(";,"), boost::token_compress_on);
-      vector<string>::iterator it, end;
-      for(it=fields.begin(), end=fields.end(); it!=end; it++) {
+      BOOST_FOREACH(const string& it, fields) {
         boost::smatch result;
-        if(!it->empty() && boost::regex_match(*it, result, boost::regex("(\\s*)(\\w+)(\\s*<?=>?\\s*)(\\w+)(\\s*)"))) {
+        if(!it.empty() && boost::regex_match(it, result, boost::regex("(\\s*)(\\w+)(\\s*<?=>?\\s*)(\\w+)(\\s*)"))) {
           shared_ptr<netlist::Variable> mpara = pmodule->db_param.find(result[2].str());
           if(mpara.use_count() == 0) {
             gEnv.stdOs << "Error: Fail to find parameter \"" << result[2].str() << "\" in module \"" << pmodule->name.name << "\"." << endl;
@@ -98,7 +98,7 @@ namespace shell{
             //gEnv.stdOs << *mpara;
           }
         } else {
-          gEnv.stdOs << "Error: Wrong format \"" << *it << "\"." << endl;
+          gEnv.stdOs << "Error: Wrong format \"" << it << "\"." << endl;
           return false;
         }
       }

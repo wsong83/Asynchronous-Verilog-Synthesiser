@@ -27,9 +27,10 @@
  *
  */
 
-#include <algorithm>
 #include "component.h"
 #include "shell/env.h"
+#include <algorithm>
+#include <boost/foreach.hpp>
 
 using namespace netlist;
 using std::ostream;
@@ -212,16 +213,15 @@ ostream& netlist::Block::streamout(ostream& os, unsigned int indent, bool fl_pre
 
     // statements
     ctype_t mt = tUnknown;
-    list<shared_ptr<NetComp> >::const_iterator it, end;
-    for(it=statements.begin(), end=statements.end(); it!=end; it++) {
-      ctype_t mt_nxt = (*it)->get_type();
+    BOOST_FOREACH(const shared_ptr<NetComp>& it, statements) {
+      ctype_t mt_nxt = it->get_type();
       if(mt != mt_nxt || mt != tAssign) {
         if(mt != tUnknown) os << endl;
         mt = mt_nxt;
       } 
-      (*it)->streamout(os, indent+2);
-      if((*it)->get_type() == NetComp::tAssign &&
-         !(static_pointer_cast<Assign>(*it)->is_continuous()))
+      it->streamout(os, indent+2);
+      if(it->get_type() == NetComp::tAssign &&
+         !(static_pointer_cast<Assign>(it)->is_continuous()))
         os << ";" << endl;
     }
     os << string(indent, ' ') << "end" << endl;
