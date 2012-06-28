@@ -369,6 +369,7 @@ void netlist::VIdentifier::db_register(int iod) {
 
 void netlist::VIdentifier::db_expunge() {
   if(uid != 0) {
+    //std::cout << "expunge " << *this << std::endl;
     pvar->fan[0].erase(uid);
     pvar->fan[1].erase(uid);
   }

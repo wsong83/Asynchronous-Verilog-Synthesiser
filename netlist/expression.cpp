@@ -107,7 +107,16 @@ Number netlist::Expression::get_value() const {
     return 0;
 }
 
+//#define AVS_DEBUG_EXPRESSION_REDUCE
+
 void netlist::Expression::reduce() {
+#ifdef AVS_DEBUG_EXPRESSION_REDUCE
+  std::cout << "before reduce: ";
+  BOOST_FOREACH(shared_ptr<Operation>& m, eqn) {
+    std::cout << *m << "(" << m.get() << ") ";
+  }
+  std::cout << std::endl;
+#endif
 
   // reduce all concatenations if possible
   list<shared_ptr<Operation> >::iterator it, end;
@@ -125,7 +134,16 @@ void netlist::Expression::reduce() {
   // state stack
   stack<shared_ptr<expression_state> > m_stack;
 
-  if(valuable) return;          // fast return path
+  if(valuable) {
+#ifdef AVS_DEBUG_EXPRESSION_REDUCE
+    std::cout << "after reduce: ";
+    BOOST_FOREACH(shared_ptr<Operation>& m, eqn) {
+      std::cout << *m << "(" << m.get() << ") ";
+    }
+    std::cout << std::endl;
+#endif
+    return;          // fast return path
+  }
 
   while(!eqn.empty()) {
     // fetch a new operation element
@@ -138,7 +156,16 @@ void netlist::Expression::reduce() {
         assert(eqn.empty());    // eqn should be empty
         eqn.push_back(m);
         valuable = m->is_valuable();
-        return;
+        {
+#ifdef AVS_DEBUG_EXPRESSION_REDUCE
+          std::cout << "after reduce: ";
+          BOOST_FOREACH(shared_ptr<Operation>& m, eqn) {
+            std::cout << *m << "(" << m.get() << ") ";
+          }
+          std::cout << std::endl;
+#endif
+          return;
+        }
       } else {
         shared_ptr<expression_state> m_state = m_stack.top();
         m_state->d[(m_state->opp)++].push_back(m);
@@ -151,7 +178,17 @@ void netlist::Expression::reduce() {
               assert(eqn.empty());    // eqn should be empty
               eqn.splice(eqn.end(), m_state->d[0]);
               valuable = eqn.size() == 1 && eqn.front()->is_valuable();
-              return;
+              {
+#ifdef AVS_DEBUG_EXPRESSION_REDUCE
+                std::cout << "after reduce: ";
+                BOOST_FOREACH(shared_ptr<Operation>& m, eqn) {
+                  std::cout << *m << "(" << m.get() << ") ";
+                }
+                std::cout << std::endl;
+#endif
+                return;
+              }
+
             } else {
               shared_ptr<expression_state> tmp = m_state;
               m_state = m_stack.top();
@@ -408,6 +445,8 @@ bool netlist::Expression::elaborate(elab_result_t &result, const ctype_t mctype,
     });
   if(!rv) return false;
 
+  //std::cout << "after operation elaboration: " << std::endl << *this << std::endl;
+  
   // try to reduce the expression
   reduce();
 
