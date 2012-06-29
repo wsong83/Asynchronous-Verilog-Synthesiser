@@ -35,7 +35,7 @@ namespace netlist {
   class Number : public NetComp{
   public:
     // constructors
-    Number() : num_leng(0), valid(false), valuable(false) {};
+    Number() : NetComp(tNumber), num_leng(0), valid(false), valuable(false) {};
     Number(const char *text, const int txt_leng); /* constructor for scanner */
     Number(const shell::location& lloc, const char *text, const int txt_leng); /* constructor for scanner */
     Number(int d);
@@ -90,6 +90,7 @@ namespace netlist {
   };
 
   // overload operators
+  Number operator* (const Number& lhs, const Number& rhs);
   Number operator+ (const Number& lhs, const Number& rhs);
   Number operator- (const Number& lhs, const Number& rhs);
   bool operator== (const Number& lhs, const Number& rhs);
@@ -106,3 +107,7 @@ namespace netlist {
 
 
 #endif
+
+// Local Variables:
+// mode: c++
+// End:

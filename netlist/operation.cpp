@@ -183,6 +183,15 @@ void netlist::Operation::reduce() {
 
   // change to simpler types of operation if possible
   switch(otype) {
+  case oVar: {
+    SP_CAST(m, VIdentifier, data);
+    if(m->is_valuable()) {
+      data.reset(new Number(m->get_value()));
+      otype = oNum;
+      valuable = true;
+    }
+    break;
+  }
   case oCon: {
     Concatenation& mcon = *(static_pointer_cast<Concatenation>(data));
     if(mcon.data.size() == 1 &&

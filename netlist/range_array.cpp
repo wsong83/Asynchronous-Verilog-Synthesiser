@@ -33,6 +33,7 @@ using namespace netlist;
 using std::ostream;
 using std::string;
 using std::vector;
+using std::pair;
 using std::for_each;
 using boost::shared_ptr;
 using shell::location;
@@ -47,6 +48,14 @@ bool netlist::RangeArray::is_valuable() {
 
   if(rv) const_reduced = true;
   return rv;
+}
+
+bool netlist::RangeArray::is_valuable() const {
+  // if once const reduced, it must be valuable
+  if(const_reduced || child.empty() ) return true;
+  
+  // otherwise check it
+  return RangeArrayCommon::is_valuable();
 }
 
 bool netlist::RangeArray::is_declaration() const {
@@ -117,6 +126,18 @@ RangeArray netlist::RangeArray::op_deduct(const RangeArray& rhs) const {
 
 bool netlist::RangeArray::op_equ(const RangeArray& rhs) const {
   return RangeArrayCommon::op_equ(rhs.child);
+}
+
+Range netlist::RangeArray::get_flat_range(const RangeArray& select) const {
+  if(child.empty()) return Range(0);
+  else {
+    pair<Number, Number> raw_range(0,0);
+    if(select.child.empty()) 
+      front().get_flat_range(front(), raw_range);
+    else                     
+      front().get_flat_range(select.front(), raw_range);
+    return Range(raw_range.first + 1, raw_range.second);
+  }
 }
 
 void netlist::RangeArray::add_range(const shared_ptr<Range>& rhs) {

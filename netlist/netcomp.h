@@ -172,3 +172,7 @@ namespace netlist{
 }
 
 #endif
+
+// Local Variables:
+// mode: c++
+// End:

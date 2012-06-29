@@ -296,6 +296,43 @@ VIdentifier& netlist::VIdentifier::add_prefix(const Identifier& prefix) {
   return *this;
 }
 
+bool netlist::VIdentifier::is_valuable() const {
+  return value.is_valid() && m_select.is_valuable();
+}
+
+Number netlist::VIdentifier::get_value() const {
+  assert(value.is_valid());
+  assert(m_select.RangeArrayCommon::is_empty() || // no selector
+         (pvar.use_count() != 0 && uid != 0 && m_select.is_valuable())); // otherwise the parent variable is set
+  
+  if(m_select.RangeArrayCommon::is_empty()) return value;
+
+  // otherwise need calculate the specific range
+  assert(m_select.is_declaration()); // multi-range is not supported yet, and seems not to be
+
+  string txt_value = value.get_txt_value();
+  
+  // get the range
+  pair<long, long> str_range = 
+    m_select.get_flat_range(pvar->name.get_range()).get_plain_range();
+
+  // get the range in string
+  str_range.first = (long)(txt_value.size()) - str_range.first - 1;
+  str_range.second = (long)(txt_value.size()) - str_range.second - 1;
+  
+  // remove range less than 0
+  str_range.first = str_range.first < 0 ? 0 : str_range.first;
+  str_range.second = str_range.second;
+  unsigned long str_size = 
+    str_range.second >= str_range.first ? 
+    str_range.second - str_range.first + 1 : 0;
+  
+  // get the substr
+  if(str_size == 0) return 0;
+  else return Number(txt_value.substr(str_range.first, str_size));
+}
+  
+
 void netlist::VIdentifier::set_father(Block *pf) {
   if(father == pf) return;
   Identifier::set_father(pf);

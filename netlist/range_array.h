@@ -48,6 +48,7 @@ namespace netlist {
       return *this;
     }
     bool is_valuable();
+    bool is_valuable() const;
     bool is_declaration() const;
     // copy the symbolic value of a range array to a new one
     RangeArray const_copy(const RangeArray& mxRange) const;
@@ -62,6 +63,7 @@ namespace netlist {
     // return the area in this but not rhs
     RangeArray op_deduct(const RangeArray&) const;
     bool op_equ(const RangeArray&) const;
+    Range get_flat_range(const RangeArray&) const; // get the faltten range from the selector
 
     // used in parser
     // add another range area in the top dimension
