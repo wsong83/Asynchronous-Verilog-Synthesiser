@@ -308,13 +308,14 @@ Number netlist::VIdentifier::get_value() const {
   if(m_select.RangeArrayCommon::is_empty()) return value;
 
   // otherwise need calculate the specific range
-  assert(m_select.is_declaration()); // multi-range is not supported yet, and seems not to be
+  assert(m_select.is_selection()); // multi-range is not supported yet, and seems not to be
+    
 
   string txt_value = value.get_txt_value();
   
   // get the range
   pair<long, long> str_range = 
-    m_select.get_flat_range(pvar->name.get_range()).get_plain_range();
+    pvar->name.get_range().get_flat_range(m_select).get_plain_range();
 
   // get the range in string
   str_range.first = (long)(txt_value.size()) - str_range.first - 1;
@@ -435,6 +436,18 @@ bool netlist::VIdentifier::elaborate(elab_result_t &result, const ctype_t mctype
   // check the basic link info.
   assert(uid != 0);
   assert(pvar.use_count() != 0); // variable registered
+
+  // check slection
+  if(!m_select.is_selection()) {
+    G_ENV->error(loc, "ELAB-RANGE-1", toString(m_select));
+    return false;
+  }
+
+  // check slection in range
+  if(!(pvar->name.get_range() >= m_select.const_copy(pvar->name.get_range()))) {
+    G_ENV->error(loc, "ELAB-VAR-4", toString(*this), toString(pvar->name.get_range()));
+    return false;
+  }
     
   // depending on the type of linked component, checking range and selector
   switch(mctype) {

@@ -217,6 +217,21 @@ bool netlist::Range::is_valuable_tree() const {
   else return false;
 }
 
+bool netlist::Range::is_selection(bool& m_leaf) const {
+  switch(rtype) {
+  case TR_Const:
+  case TR_Var:
+    if(m_leaf) return false;    // no further selection after a leaf node
+    else return true;
+  case TR_CRange:
+    if(m_leaf) return false;    // no further selection after a lead node
+    else { m_leaf = true; return true; } // set leaf node
+  default:
+    return false;
+  }
+}
+    
+
 Range netlist::Range::const_copy(bool tree, const Range& maxRange) const {
   Range rv;
   rv.loc = loc;
@@ -288,7 +303,7 @@ Range netlist::Range::op_and ( const Range& rhs) const{
     if(rv.cr.first < rv.cr.second) 
            return rv;                                   // no shared area
     else if(rv.cr.first == rv.cr.second) 
-           { rv.c = cr.first; rv.rtype = TR_Const; return rv;}  // only one bit
+           { rv.c = rv.cr.first; rv.rtype = TR_Const; return rv;}  // only one bit
     else   { rv.rtype = TR_CRange;  return rv; }                // const range
   }
 }
@@ -304,6 +319,7 @@ Range netlist::Range::op_and_tree ( const Range& rhs) const{
       rv.rtype = TR_Empty;
     }
   }
+  //std::cout << "Range &-tree: " << *this << "; " << rhs << "; " << rv << std::endl;
   return rv;
 }
 
@@ -664,6 +680,7 @@ Range* netlist::Range::deep_copy() const {
   rv->dim = dim;
   rv->rtype = rtype;
   rv->child = RangeArrayCommon::deep_copy();
+  rv->loc = loc;
   return rv;
 }
 

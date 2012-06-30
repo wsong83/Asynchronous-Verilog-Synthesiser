@@ -27,6 +27,7 @@
  */
 
 #include "component.h"
+#include "shell/env.h"
 #include <algorithm>
 
 using namespace netlist;
@@ -74,6 +75,25 @@ bool netlist::RangeArray::is_declaration() const {
   }
 }
 
+bool netlist::RangeArray::is_selection() const {
+  if(child.empty()) return true; // no range at all means 1 bit
+  else if(child.size() > 1) return false;
+  else {
+    Range m = *(child.front());
+    bool m_leaf = false;
+    while(true) {
+      if(!m.is_selection(m_leaf)) return false;
+      if(m.RangeArrayCommon::size() > 1) return false;
+      if(m.RangeArrayCommon::size() == 1) {
+        m = m.RangeArrayCommon::front();
+      }
+      else 
+        break;
+    }
+    return true;
+  }
+}
+
 RangeArray netlist::RangeArray::const_copy(const RangeArray& maxRange) const {
   RangeArray rv;
   // if maxRange is empty, it is a one-bit signal
@@ -104,6 +124,7 @@ RangeArray netlist::RangeArray::op_and(const RangeArray& rhs) const {
   RangeArray rv;
   rv.child = RangeArrayCommon::op_and(rhs.child);
   rv.const_reduced = const_reduced & rhs.const_reduced;
+  //std::cout << "RangeArray &: " << *this << "; " << rhs << "; " << rv << std::endl;
   return rv;
 }
 
@@ -111,9 +132,6 @@ RangeArray netlist::RangeArray::op_or(const RangeArray& rhs) const {
   RangeArray rv;
   rv.child = RangeArrayCommon::op_or(rhs.child);
   rv.const_reduced = const_reduced & rhs.const_reduced;
-  //std::cout << *this << " | " << rhs << " = " << rv;
-  //if(!maxRange.child.empty()) std::cout << " (" << maxRange.front() << ")";
-  //std::cout << std::endl;
   return rv;
 }
 
@@ -125,18 +143,26 @@ RangeArray netlist::RangeArray::op_deduct(const RangeArray& rhs) const {
 }
 
 bool netlist::RangeArray::op_equ(const RangeArray& rhs) const {
-  return RangeArrayCommon::op_equ(rhs.child);
+  RangeArray m;
+  m.child.push_back(shared_ptr<Range>(new Range(0))); // 1-bit
+  if(child.empty()) return (rhs.child.empty() || m.RangeArrayCommon::op_equ(rhs.child));
+  else if(rhs.child.empty()) return m.RangeArrayCommon::op_equ(child);
+  else return RangeArrayCommon::op_equ(rhs.child);
 }
 
 Range netlist::RangeArray::get_flat_range(const RangeArray& select) const {
-  if(child.empty()) return Range(0);
+  if(child.empty()) {
+    return Range(0);
+  }
   else {
     pair<Number, Number> raw_range(0,0);
     if(select.child.empty()) 
       front().get_flat_range(front(), raw_range);
-    else                     
+    else {
+      assert(*this >= select.const_copy(*this));
       front().get_flat_range(select.front(), raw_range);
-    return Range(raw_range.first + 1, raw_range.second);
+    }
+    return Range(raw_range.first - 1, raw_range.second);
   }
 }
 
@@ -187,6 +213,7 @@ bool netlist::RangeArray::elaborate(elab_result_t &result, const ctype_t mctype,
 
 bool netlist::operator>= (const RangeArray& lhs, const RangeArray& rhs) {
   RangeArray tmp = lhs & rhs;
+  std::cout << "RangeArray >=: " << lhs << "; " << rhs << "; " << tmp  << " -> " << (tmp == rhs) << std::endl;
   return tmp == rhs;
 }
 

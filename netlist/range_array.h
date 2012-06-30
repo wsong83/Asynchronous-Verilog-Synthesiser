@@ -50,6 +50,7 @@ namespace netlist {
     bool is_valuable();
     bool is_valuable() const;
     bool is_declaration() const;
+    bool is_selection() const;
     // copy the symbolic value of a range array to a new one
     RangeArray const_copy(const RangeArray& mxRange) const;
     // deep copy but return an object rather than a pointer 

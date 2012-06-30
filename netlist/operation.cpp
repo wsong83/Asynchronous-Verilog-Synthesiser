@@ -218,6 +218,7 @@ bool netlist::Operation::elaborate(NetComp::elab_result_t &result, const NetComp
 
   if(otype == oVar) {
     rv &= data->elaborate(result, NetComp::tExp);
+    if(!rv) return rv;
     SP_CAST(m, VIdentifier, data);
     if(m->is_valuable()) {
       data.reset(new Number(m->get_value()));
@@ -226,6 +227,7 @@ bool netlist::Operation::elaborate(NetComp::elab_result_t &result, const NetComp
     }
   } else if(otype == oCon) {
     rv &= data->elaborate(result, NetComp::tExp);
+    if(!rv) return rv;
     SP_CAST(m, Concatenation, data);
     if(m->is_valuable()) {
       data.reset(new Number(m->get_value()));

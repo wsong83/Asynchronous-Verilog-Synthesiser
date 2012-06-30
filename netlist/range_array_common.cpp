@@ -128,7 +128,7 @@ bool netlist::RangeArrayCommon::op_equ(const list<shared_ptr<Range> >& rhs) cons
   return
     equal(mlhs.begin(), mlhs.end(), mrhs.begin(), 
           [](shared_ptr<Range>& l, shared_ptr<Range>& r) -> bool {
-            return *l == *r;
+            return l->op_equ_tree(*r);
           });
 }
 
@@ -151,7 +151,7 @@ void netlist::RangeArrayCommon::const_reduce(const Range& maxRange) {
 void netlist::RangeArrayCommon::add_low_dimension(const shared_ptr<Range>& rhs) {
   if(child.empty()) child.push_back(rhs);
   else {
-    BOOST_FOREACH(shared_ptr<Range>& m, child)
+    BOOST_FOREACH(const shared_ptr<Range>& m, child)
       m->RangeArrayCommon::add_low_dimension(rhs);
   }
 }

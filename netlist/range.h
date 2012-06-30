@@ -61,6 +61,7 @@ namespace netlist {
     bool is_valuable() const { return (rtype == TR_Const || rtype == TR_CRange|| rtype == TR_Empty); }
     bool is_valuable_tree() const;
     bool is_valid() const { return rtype != TR_Err; }
+    bool is_selection(bool&) const; // only used by RangeArray
     std::pair<long, long> get_plain_range() const;
     Range const_copy(bool tree = false, const Range& maxRange = Range()) const; // copy the const content
     Range& const_reduce(const Range& maxRange = Range());   // symbolic reduce
@@ -112,6 +113,7 @@ namespace netlist {
   /* whether lhs belongs to rhs */
   inline bool operator<= ( const Range& lhs, const Range& rhs) { return lhs.op_belong_to(rhs); }
   inline bool operator== ( const Range& lhs, const Range& rhs) { return lhs.op_equ(rhs); }
+  inline bool operator!= ( const Range& lhs, const Range& rhs) { return !lhs.op_equ(rhs); }
   inline bool operator> ( const Range& lhs, const Range& rhs) { return lhs.op_higher(rhs); }
 
   NETLIST_STREAMOUT(Range)
