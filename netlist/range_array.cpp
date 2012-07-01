@@ -132,6 +132,9 @@ RangeArray netlist::RangeArray::op_or(const RangeArray& rhs) const {
   RangeArray rv;
   rv.child = RangeArrayCommon::op_or(rhs.child);
   rv.const_reduced = const_reduced & rhs.const_reduced;
+  //std::cout << *this << " | " << rhs << " = " << rv;
+  //if(!maxRange.child.empty()) std::cout << " (" << maxRange.front() << ")";
+  //std::cout << std::endl;
   return rv;
 }
 

@@ -436,7 +436,7 @@ bool netlist::VIdentifier::elaborate(elab_result_t &result, const ctype_t mctype
   // check the basic link info.
   assert(uid != 0);
   assert(pvar.use_count() != 0); // variable registered
-
+    
   // depending on the type of linked component, checking range and selector
   switch(mctype) {
   case tUnknown :
