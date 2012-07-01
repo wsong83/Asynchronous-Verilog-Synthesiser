@@ -1,3 +1,9 @@
+##### Sat 30/06/2012
+* Add selector validation and select range check in the elaboration of VIdentifier.
+
+##### Fri 29/06/2012
+* Considering the range selector when settle resolve a const value from a variable (parmaeter or genvar).
+
 ##### Thu 28/06/2012
 * Broadly exchange iterative for loop into BOOST_FOREACH macros.
 

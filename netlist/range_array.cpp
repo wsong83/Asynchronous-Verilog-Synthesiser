@@ -213,7 +213,7 @@ bool netlist::RangeArray::elaborate(elab_result_t &result, const ctype_t mctype,
 
 bool netlist::operator>= (const RangeArray& lhs, const RangeArray& rhs) {
   RangeArray tmp = lhs & rhs;
-  std::cout << "RangeArray >=: " << lhs << "; " << rhs << "; " << tmp  << " -> " << (tmp == rhs) << std::endl;
+  //std::cout << "RangeArray >=: " << lhs << "; " << rhs << "; " << tmp  << " -> " << (tmp == rhs) << std::endl;
   return tmp == rhs;
 }
 

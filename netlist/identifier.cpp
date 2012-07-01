@@ -437,18 +437,6 @@ bool netlist::VIdentifier::elaborate(elab_result_t &result, const ctype_t mctype
   assert(uid != 0);
   assert(pvar.use_count() != 0); // variable registered
 
-  // check slection
-  if(!m_select.is_selection()) {
-    G_ENV->error(loc, "ELAB-RANGE-1", toString(m_select));
-    return false;
-  }
-
-  // check slection in range
-  if(!(pvar->name.get_range() >= m_select.const_copy(pvar->name.get_range()))) {
-    G_ENV->error(loc, "ELAB-VAR-4", toString(*this), toString(pvar->name.get_range()));
-    return false;
-  }
-    
   // depending on the type of linked component, checking range and selector
   switch(mctype) {
   case tUnknown :
@@ -459,9 +447,19 @@ bool netlist::VIdentifier::elaborate(elab_result_t &result, const ctype_t mctype
     // for an expression, no range is used
     assert(m_range.size() == 0);
     rv &= m_select.elaborate(result, mctype, fp);
-    // rv &= m_select.is_valuable();
-    // it might have variable range in always blocks and it is existed in OR1200, so let it pass
-    //if(!rv) { G_ENV->error(loc, "ELAB-RANGE-0", name); }
+    if(!rv) break;
+    // check slection
+    rv &= m_select.is_selection();
+    if(!rv) {
+      G_ENV->error(loc, "ELAB-RANGE-1", toString(m_select));
+      break;
+    }
+    // check slection in range
+    rv &= pvar->name.get_range() >= m_select.const_copy(pvar->name.get_range());
+    if (!rv) {
+      G_ENV->error(loc, "ELAB-VAR-4", toString(*this), toString(pvar->name.get_range()));
+      break;
+    }
     break;
   }
   case tPort: 
@@ -477,9 +475,18 @@ bool netlist::VIdentifier::elaborate(elab_result_t &result, const ctype_t mctype
     // for a left-side concatenation, select should be resolved numbers
     assert(m_range.size() == 0);
     rv &= m_select.elaborate(result);
-    // rv &= m_select.is_valuable();
-    // it might have variable range in always blocks and it is existed in OR1200, so let it pass
-    //if(!rv) { G_ENV->error(loc, "ELAB-RANGE-0", name); }
+    // check slection
+    rv &= m_select.is_selection();
+    if(!rv) {
+      G_ENV->error(loc, "ELAB-RANGE-1", toString(m_select));
+      break;
+    }
+    // check slection in range
+    rv &= pvar->name.get_range() >= m_select.const_copy(pvar->name.get_range());
+    if (!rv) {
+      G_ENV->error(loc, "ELAB-VAR-4", toString(*this), toString(pvar->name.get_range()));
+      break;
+    }
     break;
   }    
   default:
