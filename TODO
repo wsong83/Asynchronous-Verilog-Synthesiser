@@ -1,3 +1,7 @@
+* 30/06/2012              (**Normal    )   May be port should use select instead of range?
+* 29/06/2012              (**Normal    )   Short cut effects in & and |.
+* 29/06/2012              (**Normal    )   Init value of wire and regs are to be ignored.
+* 29/06/2012              (**Normal    )   Error in module parsing should result in black box.
 * 26/06/2012              (**Important )   Set up a verification environment using Design Compiler to check the elaborated design.
 * 18/06/2012              (**Normal    )   Need serious test for the range array operations.
 * 13/06/2012              (**Important )   Process of reducing Case statement in Block, SeqBlock and GenBlock.
@@ -12,6 +16,7 @@
 * 17/05/2012              (**Important )   Need to rewrite the cmd_lexer class or use flex, not all Tcl features can be supported in current structure.
 
 =============
+* 29/06/2012 [30/06/2012] (Resolved    )   Check range operations, add selection check. [Done, at least did some simple tests of multi-dimension ranges.]
 * 08/06/2012 [27/06/2012] (Resolved    )   Check all variables are properly expunged when not in use. [Seems so after adding a virtual destructor in NetComp. ]
 * 26/05/2012 [25/06/2012] (Resolved    )   Support elaborate command. [at least run through the first time.]
 * 09/06/2012 [25/06/2012] (Resolved    )   The multi-driver check is far complicated than I thought. The ranges/selectors should be considered into the check. 

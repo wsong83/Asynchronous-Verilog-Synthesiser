@@ -110,6 +110,10 @@ ERR_DEFINE("ELAB-RANGE-0",
            EError,   1,
            "variable \"%1%\" has one or more non-constant range expressions.");
 
+ERR_DEFINE("ELAB-RANGE-1",
+           EError,   1,
+           "range \"%1%\" is not a valid range selection.");
+
 // wire/reg has no driver
 ERR_DEFINE("ELAB-VAR-0",
            EError,   1,
@@ -132,7 +136,7 @@ ERR_DEFINE("ELAB-VAR-3",
 
 // wire/reg has no driver
 ERR_DEFINE("ELAB-VAR-4",
-           EWarning,   2,
+           EError,   2,
            "variable \"%1%\" is out of the range definition of \"%2%\".");
 
 /// on the left side of an assign should be a non-const variable or concatenation

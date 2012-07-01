@@ -32,6 +32,7 @@ using namespace netlist;
 using std::ostream;
 using std::string;
 using std::vector;
+using std::pair;
 using boost::shared_ptr;
 using shell::location;
 
@@ -41,7 +42,7 @@ netlist::Range::Range(const mpz_class& sel)
 netlist::Range::Range(const location& lloc, const mpz_class& sel)
   : NetComp(tRange, lloc), c(sel), dim(false), rtype(TR_Const) {  }
 
-netlist::Range::Range(const mpz_class& rl, const mpz_class& rr)
+netlist::Range::Range(const Number& rl, const Number& rr)
   : NetComp(tRange), cr(rl,rr), dim(false), rtype(TR_CRange) {  }
 
 netlist::Range::Range(const location& lloc, const mpz_class& rl, const mpz_class& rr)
@@ -197,12 +198,39 @@ netlist::Range::Range(const location& lloc, const Range_Exp& sel, int updown)
   }
 }
 
+pair<long, long> netlist::Range::get_plain_range() const {
+  switch(rtype) {
+  case TR_Const:
+    return pair<long, long>(c.get_value().get_si(),c.get_value().get_si());
+  case TR_CRange:
+    return pair<long, long>(cr.first.get_value().get_si(), cr.second.get_value().get_si());
+  default:
+    assert(0 == "Wrong range type!");
+    return pair<long, long>();
+  }
+}
+
 bool netlist::Range::is_valuable_tree() const {
   bool rv = rtype == TR_Const || rtype == TR_CRange|| rtype == TR_Empty;
   if(rv)
     return RangeArrayCommon::is_valuable();
   else return false;
 }
+
+bool netlist::Range::is_selection(bool& m_leaf) const {
+  switch(rtype) {
+  case TR_Const:
+  case TR_Var:
+    if(m_leaf) return false;    // no further selection after a leaf node
+    else return true;
+  case TR_CRange:
+    if(m_leaf) return false;    // no further selection after a lead node
+    else { m_leaf = true; return true; } // set leaf node
+  default:
+    return false;
+  }
+}
+    
 
 Range netlist::Range::const_copy(bool tree, const Range& maxRange) const {
   Range rv;
@@ -275,7 +303,7 @@ Range netlist::Range::op_and ( const Range& rhs) const{
     if(rv.cr.first < rv.cr.second) 
            return rv;                                   // no shared area
     else if(rv.cr.first == rv.cr.second) 
-           { rv.c = cr.first; rv.rtype = TR_Const; return rv;}  // only one bit
+           { rv.c = rv.cr.first; rv.rtype = TR_Const; return rv;}  // only one bit
     else   { rv.rtype = TR_CRange;  return rv; }                // const range
   }
 }
@@ -291,6 +319,7 @@ Range netlist::Range::op_and_tree ( const Range& rhs) const{
       rv.rtype = TR_Empty;
     }
   }
+  //std::cout << "Range &-tree: " << *this << "; " << rhs << "; " << rv << std::endl;
   return rv;
 }
 
@@ -488,6 +517,47 @@ bool netlist::Range::op_higher(const Range& rhs) const {
   return first > second;
 }
 
+void netlist::Range::get_flat_range(const Range& select, pair<Number, Number>& flat_range) const {
+  // calculate the size of this dimension
+  Number dim_size;
+  Number base;
+  if(rtype == TR_CRange) {
+    base = cr.second;
+    dim_size = cr.first - cr.second + 1;
+  } else {
+    dim_size = 1;
+    base = c;
+  }
+
+  // update flat range
+  flat_range.first = flat_range.first * dim_size;
+  flat_range.second = flat_range.second * dim_size;
+  if(select.is_valid()) {
+    if(select.child.empty() || select.rtype == TR_CRange) {    // leaf
+      if(select.rtype == TR_CRange) {
+        flat_range.first = flat_range.first + select.cr.first - base + 1;
+        flat_range.second = flat_range.second + select.cr.second - base;
+      } else {
+        flat_range.first = flat_range.first + select.c - base + 1;
+        flat_range.second = flat_range.second + select.c - base;
+      }
+    } else {                    // not leaf
+      assert(select.rtype == TR_Const);
+      flat_range.first = flat_range.first + select.c - base;
+      flat_range.second = flat_range.second + select.c - base;
+    }
+  }
+  
+  if(child.empty()) return;
+  else {
+    if(!select.is_valid() || select.child.empty() || select.rtype == TR_CRange)
+      front().get_flat_range(Range(), flat_range);
+    else
+      front().get_flat_range(select.front(), flat_range);
+    return;
+  }
+}
+      
 
 Range& netlist::Range::const_reduce(const Range& maxRange) {
   switch(rtype) {
@@ -610,6 +680,7 @@ Range* netlist::Range::deep_copy() const {
   rv->dim = dim;
   rv->rtype = rtype;
   rv->child = RangeArrayCommon::deep_copy();
+  rv->loc = loc;
   return rv;
 }
 

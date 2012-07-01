@@ -179,8 +179,8 @@ namespace netlist {
     const RangeArray& get_select() const {return m_select;}
     RangeArray& get_range() {return m_range;}
     RangeArray& get_select() {return m_select;}
-    bool is_valuable() const { return value.is_valuable(); }
-    mpz_class get_value() const { return value.get_value(); }
+    bool is_valuable() const;
+    Number get_value() const;
     void set_value(const Number& p) { value = p; }
     //const std::string& get_txt_value() const { return value.get_txt_value(); }
     void db_register(const boost::shared_ptr<Variable>&, int);

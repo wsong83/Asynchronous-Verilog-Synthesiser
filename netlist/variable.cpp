@@ -210,9 +210,8 @@ bool netlist::Variable::check_post_elaborate() {
              rv &= maxRange >= 
                m.second->get_select().const_copy(maxRange);
              if(!rv) {
-               string merr = toString(*this);
                G_ENV->error(m.second->loc, "ELAB-VAR-4", 
-                            toString(*(m.second)), merr.erase(merr.length()-2));
+                            toString(*(m.second)), toString(name.get_range()));
              }
            });
 
@@ -222,9 +221,8 @@ bool netlist::Variable::check_post_elaborate() {
              rv &= maxRange >= 
                m.second->get_select().const_copy(maxRange);
              if(!rv) {
-               string merr = toString(*this);
                G_ENV->error(m.second->loc, "ELAB-VAR-4", 
-                            toString(*(m.second)), merr.erase(merr.length()-2));
+                            toString(*(m.second)), toString(name.get_range()));
              }
            });
 

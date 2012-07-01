@@ -395,6 +395,11 @@ std::string netlist::Number::trim_zeros(const std::string& str){
   }
 }
 
+Number netlist::operator* (const Number& lhs, const Number& rhs) {
+  assert(lhs.is_valuable() && rhs.is_valuable());
+  return Number(lhs.get_value() * rhs.get_value());
+}
+
 Number netlist::operator+ (const Number& lhs, const Number& rhs) {
   return lhs.addition(rhs);
 }
