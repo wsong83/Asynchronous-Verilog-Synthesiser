@@ -947,18 +947,34 @@ void netlist::execute_LAnd(list<shared_ptr<Operation> >& d1, list<shared_ptr<Ope
 // ||
 void netlist::execute_LOr(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
   if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
-    string tval1 = d1.front()->get_num().get_txt_value();
-    string tval2 = d2.front()->get_num().get_txt_value();
-    
-    if(string::npos != tval1.find('1') || string::npos != tval2.find('1') ) {
+    Number& m1 = d1.front()->get_num();
+    Number& m2 = d2.front()->get_num();
+    if(m1.is_true() || m2.is_true() )
       d1.front()->get_num() = Number("1");
-    } else if(string::npos != tval1.find('x') || 
-              string::npos != tval2.find('x') ||
-              string::npos != tval1.find('z') || 
-              string::npos != tval2.find('z') ) {
+    else if(m1.is_x() || m2.is_x() )
       d1.front()->get_num() = Number("x");
-    } else
+    else
       d1.front()->get_num() = Number("0");
+  } else if(d1.front()->get_type() == Operation::oNum) {
+    Number& m1 = d1.front()->get_num();
+    if(m1.is_true())            // 1 || x => 1
+      d1.front()->get_num() = Number("1");
+    else if (m1.is_false())     // 0 || x => x 
+      d1 = d2;
+    else {                      // personally I dont think it ever goes here
+      d1.push_front( shared_ptr<Operation>(new Operation(Operation::oLOr)));
+      d1.splice(d1.end(), d2);
+    }
+  } else if(d2.front()->get_type() == Operation::oNum) {
+    Number& m2 = d2.front()->get_num();
+    if(m2.is_true()) {          // x || 1 => 1
+      d1.clear();
+      d1.push_back(shared_ptr<Operation>( new Operation(Number("1"))));
+    } else if (m2.is_false()) { } // x || 0 => x; do nothing
+    else {                      // personally I dont think it ever goes here
+      d1.push_front( shared_ptr<Operation>(new Operation(Operation::oLOr)));
+      d1.splice(d1.end(), d2);
+    }    
   } else {
     d1.push_front( shared_ptr<Operation>(new Operation(Operation::oLOr)));
     d1.splice(d1.end(), d2);
@@ -970,7 +986,7 @@ void netlist::execute_Question(list<shared_ptr<Operation> >& d1, list<shared_ptr
   if(d1.front()->get_type() == Operation::oNum) {
     string tval1 = d1.front()->get_num().get_txt_value();
     
-    if(string::npos != tval1.find('1')) {
+    if(d1.front()->get_num().is_true()) {
       d1.clear();
       d1.splice(d1.end(), d2);
     } else {

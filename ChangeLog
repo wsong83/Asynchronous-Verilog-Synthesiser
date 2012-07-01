@@ -1,8 +1,12 @@
+##### Sun 01/07/2012
+* Add short-cut effect to || operation.
+* Add is_true(), is_false() and is_x() member function to Number to normalify the boolean check.
+
 ##### Sat 30/06/2012
 * Add selector validation and select range check in the elaboration of VIdentifier.
 
 ##### Fri 29/06/2012
-* Considering the range selector when settle resolve a const value from a variable (parmaeter or genvar).
+* Considering the range selector when settle resolve a const value from a variable (parameter or genvar).
 
 ##### Thu 28/06/2012
 * Broadly exchange iterative for loop into BOOST_FOREACH macros.

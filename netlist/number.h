@@ -55,6 +55,15 @@ namespace netlist {
     int get_length() const { return num_leng; }
     bool is_valuable() const { return valuable; }
     bool is_valid() const { return valid; }
+    bool is_true() const { return std::string::npos != txt_value.find('1'); }
+    bool is_false() const { return trim_zeros(txt_value) == "0"; }
+    bool is_x() const { 
+      return 
+        std::string::npos != txt_value.find('x') ||
+        std::string::npos != txt_value.find('X') ||
+        std::string::npos != txt_value.find('z') ||
+        std::string::npos != txt_value.find('Z');
+    }
     Number& truncate (int lhs, int rhs);
     Number addition (const Number& rhs) const;
     Number minus (const Number& rhs) const;
