@@ -31,6 +31,7 @@ Package required:
                           lexical_cast, format, string )
   GNU MP Bignum Library ( gmp, gmpxx )
   rlwrap                ( rlwrap     )
+  Tcl/Tk                ( Tcl/tk 8.4, cpptcl: already embedded )
 
 Install guide:
   make

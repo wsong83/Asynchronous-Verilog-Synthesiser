@@ -1,3 +1,6 @@
+##### Mon 02/07/2012
+* Decide to use c++/tcl to re-implement the command line environment. Exciting!
+
 ##### Sun 01/07/2012
 * Add short-cut effect to || operation.
 * Add is_true(), is_false() and is_x() member function to Number to normalify the boolean check.
