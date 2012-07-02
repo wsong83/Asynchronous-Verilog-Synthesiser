@@ -1,4 +1,5 @@
 ##### Mon 02/07/2012
+* Start a new branch "tcl" to replace the command line environment.
 * Decide to use c++/tcl to re-implement the command line environment. Exciting!
 
 ##### Sun 01/07/2012
