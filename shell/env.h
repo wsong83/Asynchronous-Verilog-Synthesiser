@@ -43,6 +43,8 @@ namespace shell {
   namespace CMD {
     // forward declaration
     class cmd_parser;
+    class CMDTclFeed;
+    class CMDTclInterp;
   }
 
   class Env {
@@ -88,5 +90,10 @@ namespace shell {
 #include "cmd/source.h"
 #include "cmd/suppress_message.h"
 #include "cmd/write.h"
+
+// new tcl interpreter
+#include "cmd_tcl_feed.h"
+#include "cmd_tcl_interp.h"
+
 
 #endif

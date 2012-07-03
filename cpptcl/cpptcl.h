@@ -10,7 +10,9 @@
 #ifndef CPPTCL_INCLUDED
 #define CPPTCL_INCLUDED
 
-#include <tcl.h>
+extern "C" {
+  #include <tcl.h>
+}
 #include <string>
 #include <stdexcept>
 #include <sstream>

@@ -1,4 +1,7 @@
 ##### Mon 02/07/2012
+* Implement the wrapper for Tcl interpreter.
+
+##### Mon 02/07/2012
 * Start a new branch "tcl" to replace the command line environment.
 * Decide to use c++/tcl to re-implement the command line environment. Exciting!
 

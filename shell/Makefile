@@ -27,7 +27,7 @@
 INCDIRS = -I./ -I../
 
 # targets
-TARGETS = err_report.o env.o cmd_lexer.o cmd_variable.o
+TARGETS = err_report.o env.o cmd_lexer.o cmd_variable.o cmd_tcl_feed.o cmd_tcl_interp.o
 HEADERS = $(wildcard ./*.h)
 HEADERS += ../averilog/location.hh
 HEADERS += $(wildcard ./cmd/*.h)

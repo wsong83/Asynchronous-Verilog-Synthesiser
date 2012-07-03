@@ -315,7 +315,7 @@ int callback_handler(ClientData, Tcl_Interp *interp,
      if (it == callbacks.end())
      {
           Tcl_SetResult(interp,
-               "Trying to invoke non-existent callback (wrong interpreter?)",
+               const_cast<char *>("Trying to invoke non-existent callback (wrong interpreter?)"),
                TCL_STATIC);
           return TCL_ERROR;
      }
@@ -325,7 +325,7 @@ int callback_handler(ClientData, Tcl_Interp *interp,
      if (iti == it->second.end())
      {
           Tcl_SetResult(interp,
-               "Trying to invoke non-existent callback (wrong cmd name?)",
+               const_cast<char *>("Trying to invoke non-existent callback (wrong cmd name?)"),
                TCL_STATIC);
           return TCL_ERROR;
      }
@@ -334,7 +334,7 @@ int callback_handler(ClientData, Tcl_Interp *interp,
      if (pit == call_policies.end())
      {
           Tcl_SetResult(interp,
-               "Trying to invoke callback with no known policies",
+               const_cast<char *>("Trying to invoke callback with no known policies"),
                TCL_STATIC);
           return TCL_ERROR;
      }
@@ -343,7 +343,7 @@ int callback_handler(ClientData, Tcl_Interp *interp,
      if (find_policies(interp, cmdName, piti) == false)
      {
           Tcl_SetResult(interp,
-               "Trying to invoke callback with no known policies",
+               const_cast<char *>("Trying to invoke callback with no known policies"),
                TCL_STATIC);
           return TCL_ERROR;
      }
@@ -363,7 +363,7 @@ int callback_handler(ClientData, Tcl_Interp *interp,
      }
      catch (...)
      {
-          Tcl_SetResult(interp, "Unknown error.", TCL_STATIC);
+          Tcl_SetResult(interp, const_cast<char *>("Unknown error."), TCL_STATIC);
           return TCL_ERROR;
      }
      
@@ -406,7 +406,7 @@ int object_handler(ClientData cd, Tcl_Interp *interp,
      }
      catch (...)
      {
-          Tcl_SetResult(interp, "Unknown error.", TCL_STATIC);
+          Tcl_SetResult(interp, const_cast<char *>("Unknown error."), TCL_STATIC);
           return TCL_ERROR;
      }
 
@@ -428,7 +428,7 @@ int constructor_handler(ClientData cd, Tcl_Interp *interp,
      if (it == constructors.end())
      {
           Tcl_SetResult(interp,
-               "Trying to invoke non-existent callback (wrong interpreter?)",
+               const_cast<char *>("Trying to invoke non-existent callback (wrong interpreter?)"),
                TCL_STATIC);
           return TCL_ERROR;
      }
@@ -438,7 +438,7 @@ int constructor_handler(ClientData cd, Tcl_Interp *interp,
      if (iti == it->second.end())
      {
           Tcl_SetResult(interp,
-               "Trying to invoke non-existent callback (wrong class name?)",
+               const_cast<char *>("Trying to invoke non-existent callback (wrong class name?)"),
                TCL_STATIC);
           return TCL_ERROR;
      }
@@ -447,7 +447,7 @@ int constructor_handler(ClientData cd, Tcl_Interp *interp,
      if (find_policies(interp, className, piti) == false)
      {
           Tcl_SetResult(interp,
-               "Trying to invoke callback with no known policies",
+               const_cast<char *>("Trying to invoke callback with no known policies"),
                TCL_STATIC);
           return TCL_ERROR;
      }
@@ -473,7 +473,7 @@ int constructor_handler(ClientData cd, Tcl_Interp *interp,
      }
      catch (...)
      {
-          Tcl_SetResult(interp, "Unknown error.", TCL_STATIC);
+          Tcl_SetResult(interp, const_cast<char *>("Unknown error."), TCL_STATIC);
           return TCL_ERROR;
      }
 

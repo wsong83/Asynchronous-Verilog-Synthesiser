@@ -20,47 +20,37 @@
  */
 
 /* 
- * Input feeder for the Tcl command line environment
- * 02/07/2012   Wei Song
+ * The wrapper for Tcl interpreter
+ * 03/07/2012   Wei Song
  *
  *
  */
 
-#ifndef _CMD_TCL_FEED_H_
-#define _CMD_TCL_FEED_H_
+#include "cmd_tcl_interp.h"
 
-#include<fstream>
-#include<iostream>
-#include "env.h"
-
-namespace shell{
-  namespace CMD {
-
-    class CMDTclFeed {
-    public:
-      CMDTclFeed();
-      virtual ~CMDTclFeed();
-
-      //helper
-      bool initialise(Env *, const std::string& fn = "");
-      std::string getline();        // read a line of Tcl command
-
-    private:
-      char* lex_buf;
-      unsigned int rp, fp;         // read pointer and full position
-      unsigned int bufsize;        // record the current buffer size
-      std::ifstream * file_stream; // the initial script file 
-      Env * gEnv;
-      std::istream& cstream(bool&);
-      void getline_priv();      // the internal get line function to fill the buffer
-      void check_buf_size();    // increase the buffer if necessary
-    };
-
-  }
+shell::CMD::CMDTclInterp::CMDTclInterp() 
+  : gEnv(NULL), cmdFeed(NULL)
+{
 }
 
-#endif /* _CMD_TCL_FEED_H_ */
+void shell::CMD::CMDTclInterp::initialise(Env * mgEnv, CMDTclFeed * mfeed) {
+  gEnv = mgEnv;
+  cmdFeed = mfeed;
 
-// Local Variables:
-// mode: c++
-// End:
+  // TODO:
+  //   add the commands defined for AVS
+}
+
+bool shell::CMD::CMDTclInterp::run() {
+
+  while(true) {
+    try {
+      interp.eval(cmdFeed->getline());
+    } catch(const Tcl::tcl_error& e) {
+      gEnv->stdOs << e.what() << std::endl;
+    } catch (const std::exception& e) {
+      gEnv->errOs << e.what() << std::endl;
+      return false;
+    }
+  }
+}
