@@ -27,6 +27,8 @@
  */
 
 #include "cmd_tcl_interp.h"
+using std::string;
+using std::endl;
 
 shell::CMD::CMDTclInterp::CMDTclInterp() 
   : gEnv(NULL), cmdFeed(NULL)
@@ -37,20 +39,26 @@ void shell::CMD::CMDTclInterp::initialise(Env * mgEnv, CMDTclFeed * mfeed) {
   gEnv = mgEnv;
   cmdFeed = mfeed;
 
+  // make "quit" an alias of "exit"
+  interp.create_alias("quit", interp, "exit");
+
   // TODO:
   //   add the commands defined for AVS
+  
 }
 
 bool shell::CMD::CMDTclInterp::run() {
 
   while(true) {
     try {
-      interp.eval(cmdFeed->getline());
+      Tcl::object result = interp.eval(cmdFeed->getline());
+      gEnv->stdOs << result.get<string>(interp) << endl;
     } catch(const Tcl::tcl_error& e) {
-      gEnv->stdOs << "[Tcl] " << e.what() << std::endl;
+      gEnv->stdOs << "[Tcl] " << e.what() << endl;
     } catch (const std::exception& e) {
-      gEnv->errOs << e.what() << std::endl;
+      assert(0 == 1);
+      gEnv->errOs << "[OS Exception] " << e.what() << endl;
       return false;
-    }
+    } 
   }
 }

@@ -123,20 +123,20 @@ string shell::CMD::CMDTclFeed::getline() {
       if(lex_buf[rp] == '\\') {
         backslash = true;
         backslash_pos = rp;
-      }
+      } else if(lex_buf[rp] != ' ' && lex_buf[rp] != '\n') 
+        backslash = false;
 
       if(lex_buf[rp] == '#') {
         lex_buf[rp++] = ' '; comment = true;
       }
 
-      if(lex_buf[rp] != ' ') backslash = false;
-
       if(lex_buf[rp] == '\"') quote = true;
 
       if(lex_buf[rp] == '\n') {
         if(backslash) {         // using backslash to continue a line
-          lex_buf[backslash_pos] = ' ';
-          rp++;
+          rp = backslash_pos;
+          fp = rp;
+          backslash = false;
           continue;
         } else if(bracket_count > 0) { // bracket not even yet
           lex_buf[rp++] = ' ';
@@ -151,18 +151,18 @@ string shell::CMD::CMDTclFeed::getline() {
       rp++;
     }
     // read more
-    getline_priv();    
+    getline_priv(false);    
   }
 }
 
-void shell::CMD::CMDTclFeed::getline_priv() {
+void shell::CMD::CMDTclFeed::getline_priv(bool m_prop) {
   bool m_cin;
   istream& m_istm = cstream(m_cin);
-  if(m_cin) gEnv->show_cmd();
+  if(m_cin && m_prop) gEnv->show_cmd();
   check_buf_size();
   m_istm.getline(lex_buf+rp, (AV_CMD_LEXER_BUF_SIZE >> 1) - 1);
   fp = rp + m_istm.gcount();    // record where buffer end
-  lex_buf[fp++] = '\n';         // add a \n as it is removed by getline()
+  lex_buf[fp-1] = '\n';         // add a \n as it is removed by getline()
 }
 
 istream& shell::CMD::CMDTclFeed::cstream(bool& m_cin) {

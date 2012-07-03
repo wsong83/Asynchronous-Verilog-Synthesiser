@@ -52,7 +52,7 @@ namespace shell{
       std::ifstream * file_stream; // the initial script file 
       Env * gEnv;
       std::istream& cstream(bool&);
-      void getline_priv();      // the internal get line function to fill the buffer
+      void getline_priv(bool m_prop = true); // the internal get line function to fill the buffer
       void check_buf_size();    // increase the buffer if necessary
     };
 
