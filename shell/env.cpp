@@ -66,7 +66,6 @@ shell::Env::Env()
 {}
 
 shell::Env::~Env() {
-  //delete parser;
   try {
     if(exists(macroDB[MACRO_TMP_PATH].get_string())) {
       remove_all(macroDB[MACRO_TMP_PATH].get_string());
@@ -86,12 +85,6 @@ bool shell::Env::initialise() {
 
   // set work to be the current library
   this->curLib = work;
-
-  // the env pointer in lexer
-  //lexer.set_env(this);
-
-  // initialise the parser
-  //parser = new CMD::cmd_parser(this);
 
   // tcl interpreter
   tclFeed.reset(new CMD::CMDTclFeed());
@@ -142,7 +135,6 @@ void shell::Env::show_cmd(bool first_time) {
 }
 
 void shell::Env::run() {
-  //parser->parse();
   tclInterp->run();
 }
 

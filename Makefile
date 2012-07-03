@@ -34,7 +34,6 @@ export LINKFLAGS = -lboost_regex -lgmpxx -lgmp -lboost_system -lboost_filesystem
 # targets
 SUBDIRS = preproc averilog netlist shell shell/cmd cpptcl
 TESTDIRS = preproc/test shell/test
-#BISONDIRS = shell.bison averilog.bison
 BISONDIRS = averilog.bison
 
 # actions

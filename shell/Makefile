@@ -27,18 +27,13 @@
 INCDIRS = -I./ -I../
 
 # targets
-#TARGETS = err_report.o env.o cmd_lexer.o cmd_variable.o cmd_tcl_feed.o cmd_tcl_interp.o
 TARGETS = err_report.o env.o cmd_variable.o cmd_tcl_feed.o cmd_tcl_interp.o
 HEADERS = $(wildcard ./*.h)
 HEADERS += ../averilog/location.hh
 HEADERS += $(wildcard ./cmd/*.h)
 
 # actions
-# all: command.o $(TARGETS)
 all: $(TARGETS)
-
-#command.o: command.cc command.hh $(HEADERS)
-#	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
 
 $(TARGETS): %.o:%.cpp $(HEADERS)
 	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
@@ -46,13 +41,8 @@ $(TARGETS): %.o:%.cpp $(HEADERS)
 env.o: env.cpp hook.cpp $(HEADERS)
 	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
 
-#bison: command.cc
-
-#command.cc: command.y
-#	$(BISON_EXE) $< 
-
 .PHONY: clean
 
 clean:
 	-rm *.o
-#	-rm command.hh command.cc location.hh position.hh stack.hh
+

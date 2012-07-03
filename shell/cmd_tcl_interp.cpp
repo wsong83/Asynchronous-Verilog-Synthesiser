@@ -47,7 +47,7 @@ bool shell::CMD::CMDTclInterp::run() {
     try {
       interp.eval(cmdFeed->getline());
     } catch(const Tcl::tcl_error& e) {
-      gEnv->stdOs << e.what() << std::endl;
+      gEnv->stdOs << "[Tcl] " << e.what() << std::endl;
     } catch (const std::exception& e) {
       gEnv->errOs << e.what() << std::endl;
       return false;

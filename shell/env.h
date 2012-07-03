@@ -34,7 +34,6 @@ namespace po = boost::program_options;
 
 #include "location.h"
 #include "netlist/component.h"
-//#include "cmd_lexer.h"
 #include "err_report.h"
 #include "cmd_variable.h"
 
@@ -42,7 +41,6 @@ namespace shell {
 
   namespace CMD {
     // forward declaration
-    //class cmd_parser;
     class CMDTclFeed;
     class CMDTclInterp;
   }
@@ -66,8 +64,6 @@ namespace shell {
     std::map<std::string, boost::shared_ptr<netlist::Library> >  link_lib;     /* libraries used in design elaboration */
     std::map<std::string, boost::shared_ptr<netlist::Library> >  target_lib;   /* libraries used in mapping */
     ErrReport error;                                 /* the gobal level error report function */
-    //CMD::CMDLexer lexer;                             /* the command line lexer */
-    //CMD::cmd_parser *parser;                         /* the command line parser */
     boost::shared_ptr<CMD::CMDTclFeed> tclFeed;        // the feed to getline from file or cin
     boost::shared_ptr<CMD::CMDTclInterp> tclInterp;    // the dynamic Tcl interpreter
     boost::shared_ptr<netlist::Library> curLib;      /* current library */
