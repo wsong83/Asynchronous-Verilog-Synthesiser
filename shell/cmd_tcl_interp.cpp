@@ -52,7 +52,9 @@ bool shell::CMD::CMDTclInterp::run() {
   while(true) {
     try {
       Tcl::object result = interp.eval(cmdFeed->getline());
-      gEnv->stdOs << result.get<string>(interp) << endl;
+      string rv = result.get<string>(interp);
+      if(!rv.empty())
+        gEnv->stdOs << rv << endl;
     } catch(const Tcl::tcl_error& e) {
       gEnv->stdOs << "[Tcl] " << e.what() << endl;
     } catch (const std::exception& e) {
