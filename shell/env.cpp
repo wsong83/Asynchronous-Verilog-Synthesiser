@@ -41,9 +41,9 @@
 #include "macro_name.h"
 
 //make sure the location of command.y is included
-#undef BISON_LOCATION_HH
-#undef BISON_POSITION_HH
-#include "command.hh"
+//#undef BISON_LOCATION_HH
+//#undef BISON_POSITION_HH
+//#include "command.hh"
 
 using namespace shell;
 using std::endl;
@@ -52,6 +52,7 @@ using std::cerr;
 using std::map;
 using std::vector;
 using std::list;
+using std::string;
 using boost::shared_ptr;
 using netlist::Library;
 using boost::filesystem::path;
@@ -65,7 +66,7 @@ shell::Env::Env()
 {}
 
 shell::Env::~Env() {
-  delete parser;
+  //delete parser;
   try {
     if(exists(macroDB[MACRO_TMP_PATH].get_string())) {
       remove_all(macroDB[MACRO_TMP_PATH].get_string());
@@ -87,10 +88,17 @@ bool shell::Env::initialise() {
   this->curLib = work;
 
   // the env pointer in lexer
-  lexer.set_env(this);
+  //lexer.set_env(this);
 
   // initialise the parser
-  parser = new CMD::cmd_parser(this);
+  //parser = new CMD::cmd_parser(this);
+
+  // tcl interpreter
+  tclFeed.reset(new CMD::CMDTclFeed());
+  tclInterp.reset(new CMD::CMDTclInterp());
+
+  tclFeed->initialise(this);
+  tclInterp->initialise(this, tclFeed.get());
 
   // initialise the macro database
   // file search path
@@ -134,7 +142,8 @@ void shell::Env::show_cmd(bool first_time) {
 }
 
 void shell::Env::run() {
-  parser->parse();
+  //parser->parse();
+  tclInterp->run();
 }
 
 shared_ptr<netlist::NetComp> shell::Env::hierarchical_search(const string& m) const {

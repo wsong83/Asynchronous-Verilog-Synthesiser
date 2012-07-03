@@ -31,6 +31,8 @@
 #include<iostream>
 using std::ifstream;
 using std::endl;
+using std::vector;
+using std::string;
 using namespace shell;
 using namespace shell::CMD;
 
@@ -82,7 +84,7 @@ bool shell::CMD::CMDSource::exec ( Env& gEnv, vector<string>& arg){
     if(fname != "") {
       ifstream * file_handler = new ifstream(fname.c_str());
       if(file_handler->good()) { // success
-        gEnv.lexer.push(file_handler);
+        //gEnv.lexer.push(file_handler);
       } else {
         delete file_handler;
         gEnv.stdOs << "Error: Cannot open script file \"" << fname << "\"!" << endl;

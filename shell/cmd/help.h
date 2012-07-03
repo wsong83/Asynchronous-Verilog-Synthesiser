@@ -30,8 +30,6 @@
 #define _AV_CMD_HELP_
 
 #include <map>
-using std::map;
-
 #include "shell/env.h"
 #include "cmd_define.h"
 
@@ -40,16 +38,19 @@ namespace shell {
     
     class CMDHelp {
     public:
-      static bool exec ( Env&, vector<string>&);
+      static bool exec ( Env&, std::vector<std::string>&);
       static void help ( Env& );
 
       //private:
       static po::options_description cmd_opt;
       static po::positional_options_description cmd_position;
-      static map<string, string> cmdDB;
+      static std::map<std::string, std::string> cmdDB;
     };
   }
 }      
 
 
 #endif
+// Local Variables:
+// mode: c++
+// End:

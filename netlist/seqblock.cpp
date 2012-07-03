@@ -35,6 +35,7 @@
 using namespace netlist;
 using std::ostream;
 using std::string;
+using std::vector;
 using boost::shared_ptr;
 using std::list;
 using std::pair;

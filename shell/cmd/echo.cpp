@@ -32,6 +32,7 @@
 
 using std::vector;
 using std::endl;
+using std::string;
 using namespace shell;
 using namespace shell::CMD;
 

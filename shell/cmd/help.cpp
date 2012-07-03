@@ -34,6 +34,7 @@ using namespace shell;
 using namespace shell::CMD;
 using std::map;
 using std::string;
+using std::vector;
 using std::pair;
 using std::endl;
 

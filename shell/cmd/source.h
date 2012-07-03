@@ -37,7 +37,7 @@ namespace shell {
   
     class CMDSource {
     public:
-      static bool exec ( Env&, vector<string>&);
+      static bool exec ( Env&, std::vector<std::string>&);
       static void help ( Env& );
 
       static po::options_description cmd_opt;
@@ -47,3 +47,6 @@ namespace shell {
 }
 
 #endif
+// Local Variables:
+// mode: c++
+// End:

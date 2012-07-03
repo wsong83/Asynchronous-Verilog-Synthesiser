@@ -31,6 +31,8 @@
 using namespace shell;
 using namespace shell::CMD;
 using std::endl;
+using std::vector;
+using std::string;
 
 static po::options_description arg_opt("Options");
 po::options_description_easy_init const dummy_arg_opt =
