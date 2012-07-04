@@ -1,4 +1,5 @@
 ##### Mon 02/07/2012
+* Seems have embedded the Tcl interpreter into my AVS environment.
 * Implement the wrapper for Tcl interpreter.
 
 ##### Mon 02/07/2012

@@ -71,6 +71,12 @@ struct tcl_cast<long>
 };
 
 template <>
+struct tcl_cast<long long>
+{
+     static long long from(Tcl_Interp *, Tcl_Obj *);
+};
+
+template <>
 struct tcl_cast<bool>
 {
      static bool from(Tcl_Interp *, Tcl_Obj *);

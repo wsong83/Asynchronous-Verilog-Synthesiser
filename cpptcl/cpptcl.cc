@@ -68,7 +68,7 @@ result::operator bool() const
           throw tcl_error(interp_);
      }
      
-     return static_cast<bool>(val);
+     return val != 0;
 }
 
 result::operator double() const
@@ -114,6 +114,21 @@ result::operator long() const
      return val;
 }
 
+result::operator long long() const
+{
+     Tcl_Obj *obj = Tcl_GetObjResult(interp_);
+     
+     long long val;
+     int cc;
+     cc = Tcl_GetWideIntFromObj(interp_, obj, &val);
+     if (cc != TCL_OK)
+     {
+          throw tcl_error(interp_);
+     }
+     
+     return val;
+}
+
 result::operator string() const
 {
      Tcl_Obj *obj = Tcl_GetObjResult(interp_);
@@ -139,6 +154,11 @@ void details::set_result(Tcl_Interp *interp, int i)
 void details::set_result(Tcl_Interp *interp, long i)
 {
      Tcl_SetObjResult(interp, Tcl_NewLongObj(i));
+}
+
+void details::set_result(Tcl_Interp *interp, long long i)
+{
+     Tcl_SetObjResult(interp, Tcl_NewWideIntObj(i));
 }
 
 void details::set_result(Tcl_Interp *interp, double d)
@@ -198,7 +218,7 @@ object details::get_var_params(Tcl_Interp *interp,
 }
 
 
-namespace // anonymous
+namespace // unnamed
 {
 
 // map of polymorphic callbacks
@@ -246,7 +266,7 @@ void post_process_policies(Tcl_Interp *interp, policies &pol,
      Tcl_Obj * CONST objv[], bool isMethod)
 {
      // check if it is a factory
-     if (!pol.factory_.empty())
+     if (pol.factory_.empty() == false)
      {
           class_handlers_map::iterator it = class_handlers.find(interp);
           if (it == class_handlers.end())
@@ -314,8 +334,9 @@ int callback_handler(ClientData, Tcl_Interp *interp,
      callback_map::iterator it = callbacks.find(interp);
      if (it == callbacks.end())
      {
+          char msg[] = "Trying to invoke non-existent callback (wrong interpreter?)";
           Tcl_SetResult(interp,
-               const_cast<char *>("Trying to invoke non-existent callback (wrong interpreter?)"),
+               msg,
                TCL_STATIC);
           return TCL_ERROR;
      }
@@ -324,8 +345,9 @@ int callback_handler(ClientData, Tcl_Interp *interp,
      callback_interp_map::iterator iti = it->second.find(cmdName);
      if (iti == it->second.end())
      {
+          char msg[] = "Trying to invoke non-existent callback (wrong cmd name?)";
           Tcl_SetResult(interp,
-               const_cast<char *>("Trying to invoke non-existent callback (wrong cmd name?)"),
+               msg,
                TCL_STATIC);
           return TCL_ERROR;
      }
@@ -333,8 +355,9 @@ int callback_handler(ClientData, Tcl_Interp *interp,
      policies_map::iterator pit = call_policies.find(interp);
      if (pit == call_policies.end())
      {
+          char msg[] = "Trying to invoke callback with no known policies";
           Tcl_SetResult(interp,
-               const_cast<char *>("Trying to invoke callback with no known policies"),
+               msg,
                TCL_STATIC);
           return TCL_ERROR;
      }
@@ -342,8 +365,9 @@ int callback_handler(ClientData, Tcl_Interp *interp,
      policies_interp_map::iterator piti;
      if (find_policies(interp, cmdName, piti) == false)
      {
+          char msg[] = "Trying to invoke callback with no known policies";
           Tcl_SetResult(interp,
-               const_cast<char *>("Trying to invoke callback with no known policies"),
+               msg,
                TCL_STATIC);
           return TCL_ERROR;
      }
@@ -356,14 +380,15 @@ int callback_handler(ClientData, Tcl_Interp *interp,
 
           post_process_policies(interp, pol, objv, false);
      }
-     catch (exception const &e)
+     catch (std::exception const &e)
      {
           Tcl_SetResult(interp, const_cast<char*>(e.what()), TCL_VOLATILE);
           return TCL_ERROR;
      }
      catch (...)
      {
-          Tcl_SetResult(interp, const_cast<char *>("Unknown error."), TCL_STATIC);
+          char msg[] = "Unknown error.";
+          Tcl_SetResult(interp, msg, TCL_STATIC);
           return TCL_ERROR;
      }
      
@@ -399,14 +424,15 @@ int object_handler(ClientData cd, Tcl_Interp *interp,
 
           post_process_policies(interp, pol, objv, true);
      }
-     catch (exception const &e)
+     catch (std::exception const &e)
      {
           Tcl_SetResult(interp, const_cast<char*>(e.what()), TCL_VOLATILE);
           return TCL_ERROR;
      }
      catch (...)
      {
-          Tcl_SetResult(interp, const_cast<char *>("Unknown error."), TCL_STATIC);
+          char msg[] = "Unknown error.";
+          Tcl_SetResult(interp, msg, TCL_STATIC);
           return TCL_ERROR;
      }
 
@@ -427,8 +453,9 @@ int constructor_handler(ClientData cd, Tcl_Interp *interp,
      callback_map::iterator it = constructors.find(interp);
      if (it == constructors.end())
      {
+          char msg[] = "Trying to invoke non-existent callback (wrong interpreter?)";
           Tcl_SetResult(interp,
-               const_cast<char *>("Trying to invoke non-existent callback (wrong interpreter?)"),
+               msg,
                TCL_STATIC);
           return TCL_ERROR;
      }
@@ -437,8 +464,9 @@ int constructor_handler(ClientData cd, Tcl_Interp *interp,
      callback_interp_map::iterator iti = it->second.find(className);
      if (iti == it->second.end())
      {
+          char msg[] = "Trying to invoke non-existent callback (wrong class name?)";
           Tcl_SetResult(interp,
-               const_cast<char *>("Trying to invoke non-existent callback (wrong class name?)"),
+               msg,
                TCL_STATIC);
           return TCL_ERROR;
      }
@@ -446,8 +474,9 @@ int constructor_handler(ClientData cd, Tcl_Interp *interp,
      policies_interp_map::iterator piti;
      if (find_policies(interp, className, piti) == false)
      {
+          char msg[] = "Trying to invoke callback with no known policies";
           Tcl_SetResult(interp,
-               const_cast<char *>("Trying to invoke callback with no known policies"),
+               msg,
                TCL_STATIC);
           return TCL_ERROR;
      }
@@ -466,21 +495,22 @@ int constructor_handler(ClientData cd, Tcl_Interp *interp,
                Tcl_GetString(Tcl_GetObjResult(interp)),
                object_handler, static_cast<ClientData>(chb), 0);
      }
-     catch (exception const &e)
+     catch (std::exception const &e)
      {
           Tcl_SetResult(interp, const_cast<char*>(e.what()), TCL_VOLATILE);
           return TCL_ERROR;
      }
      catch (...)
      {
-          Tcl_SetResult(interp, const_cast<char *>("Unknown error."), TCL_STATIC);
+          char msg[] = "Unknown error.";
+          Tcl_SetResult(interp, msg, TCL_STATIC);
           return TCL_ERROR;
      }
 
      return TCL_OK;
 }
 
-} // namespace anonymous
+} // unnamed namespace
 
 Tcl::details::no_init_type Tcl::no_init;
 
@@ -581,10 +611,17 @@ object::object(int i)
      Tcl_IncrRefCount(obj_);
 }
 
-object::object(long l)
+object::object(long i)
      : interp_(0)
 {
-     obj_ = Tcl_NewLongObj(l);
+     obj_ = Tcl_NewLongObj(i);
+     Tcl_IncrRefCount(obj_);
+}
+
+object::object(long long i)
+     : interp_(0)
+{
+     obj_ = Tcl_NewWideIntObj(i);
      Tcl_IncrRefCount(obj_);
 }
 
@@ -664,9 +701,15 @@ object & object::assign(int i)
      return *this;
 }
 
-object & object::assign(long l)
+object & object::assign(long i)
 {
-     Tcl_SetLongObj(obj_, l);
+     Tcl_SetLongObj(obj_, i);
+     return *this;
+}
+
+object & object::assign(long long i)
+{
+     Tcl_SetWideIntObj(obj_, i);
      return *this;
 }
 
@@ -711,7 +754,7 @@ bool object::get<bool>(interpreter &i) const
           throw tcl_error(i.get());
      }
 
-     return static_cast<bool>(retVal);
+     return retVal != 0;
 }
 
 template <>
@@ -754,6 +797,19 @@ long object::get<long>(interpreter &i) const
 {
      long retVal;
      int res = Tcl_GetLongFromObj(i.get(), obj_, &retVal);
+     if (res != TCL_OK)
+     {
+          throw tcl_error(i.get());
+     }
+
+     return retVal;
+}
+
+template <>
+long long object::get<long long>(interpreter &i) const
+{
+     long long retVal;
+     int res = Tcl_GetWideIntFromObj(i.get(), obj_, &retVal);
      if (res != TCL_OK)
      {
           throw tcl_error(i.get());
@@ -927,7 +983,7 @@ result interpreter::eval(string const &script)
      {
           throw tcl_error(interp_);
      }
- 
+
      return result(interp_);
 }
 
@@ -947,7 +1003,7 @@ result interpreter::eval(object const &o)
      {
           throw tcl_error(interp_);
      }
- 
+
      return result(interp_);
 }
 
@@ -1029,7 +1085,7 @@ void interpreter::add_function(string const &name,
 {
      Tcl_CreateObjCommand(interp_, name.c_str(),
           callback_handler, 0, 0);
-     
+
      callbacks[interp_][name] = cb;
      call_policies[interp_][name] = p;
 }
@@ -1068,6 +1124,18 @@ long tcl_cast<long>::from(Tcl_Interp *interp, Tcl_Obj *obj)
 {
      long res;
      int cc = Tcl_GetLongFromObj(interp, obj, &res);
+     if (cc != TCL_OK)
+     {
+          throw tcl_error(interp);
+     }
+     
+     return res;
+}
+
+long long tcl_cast<long long>::from(Tcl_Interp *interp, Tcl_Obj *obj)
+{
+     long long res;
+     int cc = Tcl_GetWideIntFromObj(interp, obj, &res);
      if (cc != TCL_OK)
      {
           throw tcl_error(interp);

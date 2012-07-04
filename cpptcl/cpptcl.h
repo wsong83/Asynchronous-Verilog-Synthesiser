@@ -76,6 +76,7 @@ public:
      operator double() const;
      operator int() const;
      operator long() const;
+     operator long long() const;
      operator std::string() const;
      operator object() const;
 
@@ -88,6 +89,7 @@ private:
 void set_result(Tcl_Interp *interp, bool b);
 void set_result(Tcl_Interp *interp, int i);
 void set_result(Tcl_Interp *interp, long i);
+void set_result(Tcl_Interp *interp, long long i);
 void set_result(Tcl_Interp *interp, double d);
 void set_result(Tcl_Interp *interp, std::string const &s);
 void set_result(Tcl_Interp *interp, void *p);
@@ -476,7 +478,7 @@ public:
      
      Tcl_Interp * get() const { return interp_; }
 
-     // free function definitions     
+     // free function definitions
      
      template <typename R>
      void def(std::string const &name, R (*f)(),
@@ -634,7 +636,7 @@ public:
           return details::class_definer<C>(ch);
      }
 
-     // free script evaluation     
+     // free script evaluation
      details::result eval(std::string const &script);
      details::result eval(std::istream &s);
 
@@ -705,6 +707,7 @@ public:
      }
 
      explicit object(long i);
+     explicit object(long long i);
      explicit object(char const *s);        // string construction
      explicit object(std::string const &s); // string construction
 
@@ -733,7 +736,8 @@ public:
           return *this;
      }
 
-     object & assign(long l);
+     object & assign(long i);
+     object & assign(long long i);
      object & assign(char const *s);        // string assignment
      object & assign(std::string const &s); // string assignment
      object & assign(object const &o);
@@ -742,7 +746,8 @@ public:
      object & operator=(bool b)               { return assign(b); }
      object & operator=(double d)             { return assign(d); }
      object & operator=(int i)                { return assign(i); }
-     object & operator=(long l)               { return assign(l); }
+     object & operator=(long i)               { return assign(i); }
+     object & operator=(long long i)          { return assign(i); }
      object & operator=(char const *s)        { return assign(s); }
      object & operator=(std::string const &s) { return assign(s); }
 
@@ -821,6 +826,7 @@ template <> bool         object::get<bool>(interpreter &i) const;
 template <> double       object::get<double>(interpreter &i) const;
 template <> int          object::get<int>(interpreter &i) const;
 template <> long         object::get<long>(interpreter &i) const;
+template <> long long    object::get<long long>(interpreter &i) const;
 template <> char const * object::get<char const *>(interpreter &i) const;
 template <> std::string  object::get<std::string>(interpreter &i) const;
 template <>
@@ -838,7 +844,7 @@ details::result interpreter::eval(InputIterator first, InputIterator last)
      {
           throw tcl_error(interp_);
      }
- 
+
      return details::result(interp_);
 }
 
