@@ -20,28 +20,30 @@
  */
 
 /* 
- * Lexer for command line parserToken types for the command line parser
- * 11/05/2012   Wei Song
+ * Utilities for Tcl command line env.
+ * 05/07/2012   Wei Song
  *
  *
  */
 
-#ifndef AV_CMD_TOKEN_
-#define AV_CMD_TOKEN_
-
-#include<string>
+#include <list>
+#include "cmd_utility.h"
 using std::string;
-#include<vector>
 using std::vector;
+using std::list;
 
-namespace shell { 
-  namespace CMD {
-    
-    struct cmd_token_type {
-      string          tStr;
-      vector<string>  tStrVec;
-    };
-    
+using namespace Tcl;
+
+vector<string> shell::CMD::argu_parse(const object& obj) {
+  string str = obj.get_string(); // fetch the string, seems no other way but read it all
+  unsigned int start = 0;        // start point for current sub string
+  unsigned int rp = 0;           // current reading point
+  unsigned int fp = str.size();  // finish point
+  list<string> argu_list;        // tmp storage
+
+  // begin the parsing
+  while(rp != fp) {
+
+    // use boost/tokenizer escaped_list_separator !!
   }
 }
-#endif

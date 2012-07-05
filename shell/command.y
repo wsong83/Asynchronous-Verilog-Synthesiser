@@ -146,7 +146,7 @@ argument
     | '-' argument_name                             { $$.push_back(string("-") + $2);  }
     | '-' argument_name argument_parameter      
     { 
-      $$.push_back(string("--") + $2);
+      $$.push_back(string("-") + $2);
       $$.insert($$.end(), $3.begin(), $3.end());
     }
     | '-' '-' argument_name                         { $$.push_back(string("-") + $3);  }

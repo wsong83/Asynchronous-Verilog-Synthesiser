@@ -826,11 +826,14 @@ char const * object::get<char const *>(interpreter &) const
 }
 
 template <>
-string object::get<string>(interpreter &) const
-{
-     int len;
-     char const *buf = Tcl_GetStringFromObj(obj_, &len);
-     return string(buf, buf + len);
+string object::get<string>(interpreter &) const {
+  return get_string();
+}
+
+string object::get_string() const {
+  int len;
+  char const *buf = Tcl_GetStringFromObj(obj_, &len);
+  return string(buf, buf + len);
 }
 
 char const * object::get() const

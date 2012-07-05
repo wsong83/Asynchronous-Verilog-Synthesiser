@@ -1,3 +1,7 @@
+##### Thu 05/07/2012
+* start further Tcl shell implementation.
+* Finished the modification of c++/Tcl, now support ClientData field. It is merged back to AVS.
+
 ##### Mon 02/07/2012
 * Seems have embedded the Tcl interpreter into my AVS environment.
 * Implement the wrapper for Tcl interpreter.
