@@ -1,3 +1,10 @@
+===========================================================================
+Any source files that are changed use GPL 2.0 or later
+    See http://www.gnu.org/licenses/gpl-2.0.html
+===========================================================================
+Any source files that are unchanged use the original License defined by 
+Maciej Sobczak, shown as follows.
+===========================================================================
 Each source file contains the following notice:
 
 //

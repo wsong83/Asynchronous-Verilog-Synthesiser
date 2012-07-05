@@ -1,6 +1,7 @@
 C++/Tcl - a C++ library for interoperability between C++ and Tcl.
 
-Copyright (C) 2004-2006, Maciej Sobczak
+Copyright (C) 2012,      Wei Song                     <wsong83@gmail.com>
+Copyright (C) 2004-2006, Maciej Sobczak             (the original author)
 
 ---
 

@@ -20,6 +20,9 @@
  */
 
 /* 
+ * Add extra argument to support client data
+ * 04/07/2012   Wei Song
+ *
  * implementation of the c++/Tcl package
  * small modification to resolve name conflicts between boost and std
  * 02/07/2012   Wei Song
@@ -43,8 +46,6 @@
 
 using namespace Tcl;
 using namespace Tcl::details;
-//using namespace std;
-//using namespace boost;
 using std::string;
 using boost::shared_ptr;
 using std::map;
@@ -328,7 +329,7 @@ void post_process_policies(Tcl_Interp *interp, policies &pol,
 
 // generic callback handler
 extern "C"
-int callback_handler(ClientData, Tcl_Interp *interp,
+int callback_handler(ClientData cData, Tcl_Interp *interp,
      int objc, Tcl_Obj * CONST objv[])
 {
      callback_map::iterator it = callbacks.find(interp);
@@ -376,7 +377,7 @@ int callback_handler(ClientData, Tcl_Interp *interp,
      
      try
      {
-          iti->second->invoke(interp, objc, objv, pol);
+       iti->second->invoke(interp, objc, objv, pol, cData);
 
           post_process_policies(interp, pol, objv, false);
      }
@@ -485,7 +486,7 @@ int constructor_handler(ClientData cd, Tcl_Interp *interp,
 
      try
      {
-          iti->second->invoke(interp, objc, objv, pol);
+       iti->second->invoke(interp, objc, objv, pol, cd);
 
           // if everything went OK, the result is the address of the
           // new object in the 'pXXX' form
@@ -1081,10 +1082,11 @@ void interpreter::clear_definitions(Tcl_Interp *interp)
 }
 
 void interpreter::add_function(string const &name,
-     shared_ptr<callback_base> cb, policies const &p)
+                               shared_ptr<callback_base> cb, policies const &p, 
+                               ClientData cData)
 {
      Tcl_CreateObjCommand(interp_, name.c_str(),
-          callback_handler, 0, 0);
+          callback_handler, cData, 0);
 
      callbacks[interp_][name] = cb;
      call_policies[interp_][name] = p;
