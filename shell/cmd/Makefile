@@ -24,10 +24,10 @@
 #
 
 # variables
-INCDIRS = -I./ -I../../
+INCDIRS = -I./ -I../../ -I../../cpptcl/
 
 # targets
-TARGETS = analyze.o current_design.o echo.o elaborate.o help.o quit.o report_netlist.o source.o set.o suppress_message.o write.o
+TARGETS = analyze.o current_design.o echo.o elaborate.o help.o report_netlist.o source.o suppress_message.o write.o
 HEADERS = $(wildcard ./*.h)
 HEADERS += ../env.h
 

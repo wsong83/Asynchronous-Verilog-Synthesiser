@@ -27,6 +27,7 @@
  */
 
 #include "cmd_tcl_interp.h"
+#include "cpptcl.h"
 
 // the commands
 #include "shell/cmd/echo.h"
@@ -43,21 +44,22 @@ shell::CMD::CMDTclInterp::CMDTclInterp()
 void shell::CMD::CMDTclInterp::initialise(Env * mgEnv, CMDTclFeed * mfeed) {
   gEnv = mgEnv;
   cmdFeed = mfeed;
+  interp.reset(new Tcl::interpreter());
 
   // make "quit" an alias of "exit"
-  interp.create_alias("quit", interp, "exit");
+  interp->create_alias("quit", *interp, "exit");
 
   //   add the commands defined for AVS
-  interp.def("echo", shell::CMD::CMDEcho::exec, gEnv, Tcl::variadic());
-  interp.def("help", shell::CMD::CMDHelp::exec, gEnv, Tcl::variadic());
+  interp->def("echo", shell::CMD::CMDEcho::exec, gEnv, Tcl::variadic());
+  interp->def("help", shell::CMD::CMDHelp::exec, gEnv, Tcl::variadic());
 }
 
 bool shell::CMD::CMDTclInterp::run() {
 
   while(true) {
     try {
-      Tcl::object result = interp.eval(cmdFeed->getline());
-      string rv = result.get<string>(interp);
+      Tcl::object result = interp->eval(cmdFeed->getline());
+      string rv = result.get_string();
       if(!rv.empty())
         gEnv->stdOs << rv << endl;
     } catch(const Tcl::tcl_error& e) {

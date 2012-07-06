@@ -24,7 +24,7 @@
 #
 
 # variables
-INCDIRS = -I./ -I../
+INCDIRS = -I./ -I../ -I../cpptcl/
 
 # targets
 TARGETS = err_report.o env.o cmd_variable.o cmd_tcl_feed.o cmd_tcl_interp.o cmd_utility.o

@@ -23,47 +23,36 @@
  * Using boost preprocessor to reduce the burden of writing templates
  * 06/07/2012   Wei Song
  *
- * Add extra argument to support client data
- * 04/07/2012   Wei Song
- *
- *
  */
-//
-// Copyright (C) 2004-2006, Maciej Sobczak
-//
-// Permission to copy, use, modify, sell and distribute this software
-// is granted provided this copyright notice appears in all copies.
-// This software is provided "as is" without express or implied
-// warranty, and with no claim as to its suitability for any purpose.
-//
 
-// Note: this file is not supposed to be a stand-alone header
+#define n BOOST_PP_ITERATION()
 
-template <typename R>
-class callback1<R, object const &> : public callback_base
+#define dispatch_print(z, n, data) \
+tcl_cast<BOOST_PP_CAT(T,n)>::from(interp, objv[BOOST_PP_ADD(n,1)])
+
+template <typename R, BOOST_PP_ENUM_PARAMS(BOOST_PP_DEC(n), typename T)>
+class BOOST_PP_CAT(callback,n)<R, BOOST_PP_ENUM_PARAMS(BOOST_PP_DEC(n), T), object const &> : public callback_base
 {
-     typedef object const & T1;
-     typedef R (*functor_type)(T1);
-     enum { var_start = 1 };
-     
+     typedef object const & BOOST_PP_CAT(T,BOOST_PP_DEC(n));
+     typedef R (*functor_type)(BOOST_PP_ENUM_PARAMS(n,T));
+     enum { var_start = n };
+
 public:
-     callback1(functor_type f) : f_(f) {}
+     BOOST_PP_CAT(callback,n)(functor_type f) : f_(f) {}
      
      virtual void invoke(Tcl_Interp *interp,
           int objc, Tcl_Obj * CONST objv[],
-                         policies const &pol, ClientData)
+          policies const &pol, ClientData)
      {
-          object t1 = get_var_params(interp, objc, objv, var_start, pol);
-          dispatch<R>::template do_dispatch<T1>(interp, f_,
-               t1);
+          object mm = get_var_params(interp, objc, objv, var_start, pol);
+          
+          dispatch<R>::template do_dispatch<BOOST_PP_ENUM_PARAMS(n,T)>(interp, f_,
+               BOOST_PP_ENUM(BOOST_PP_DEC(n), dispatch_print, ~), mm);
      }
 
 private:
      functor_type f_;
 };
 
-#define BOOST_PP_ITERATION_LIMITS (2, 9)
-#define BOOST_PP_FILENAME_1       "preproc/callbacks_v.hpp"
-#include BOOST_PP_ITERATE()
-#undef BOOST_PP_ITERATION_LIMITS
-#undef BOOST_PP_FILENAME_1
+#undef dispatch_print
+#undef n

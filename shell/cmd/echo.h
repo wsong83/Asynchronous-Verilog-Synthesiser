@@ -31,7 +31,7 @@
 
 #include "shell/env.h"
 #include "cmd_define.h"
-#include "cpptcl/cpptcl.h"
+#include "cpptcl.h"
 
 namespace shell {
   namespace CMD {

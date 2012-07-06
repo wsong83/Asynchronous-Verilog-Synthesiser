@@ -20,33 +20,37 @@
  */
 
 /* 
- * argument definitions for exit/quit command
- * 15/05/2012   Wei Song
- *
+ * Using boost preprocessor to reduce the burden of writing templates
+ * 06/07/2012   Wei Song
  *
  */
 
-#ifndef AV_CMD_QUIT_
-#define AV_CMD_QUIT_
+#define n BOOST_PP_ITERATION()
 
-#include "shell/env.h"
-#include "cmd_define.h"
+#define dispatch_print(z, n, data) \
+tcl_cast<BOOST_PP_CAT(T,n)>::from(interp, objv[BOOST_PP_INC(n)])
 
-namespace shell { 
-  namespace CMD {
-  
-    class CMDQuit {
-    public:
-      static bool exec ( Env&, std::vector<std::string>&);
-      static void help ( Env& );
+template <typename R BOOST_PP_COMMA_IF(n) BOOST_PP_ENUM_PARAMS(n, typename T)>
+class BOOST_PP_CAT(callback,n) : public callback_base
+{
+     typedef R (*functor_type)(BOOST_PP_ENUM_PARAMS(n,T));
+     
+public:
+     BOOST_PP_CAT(callback,n)(functor_type f) : f_(f) {}
+     
+     virtual void invoke(Tcl_Interp *interp,
+          int objc, Tcl_Obj * CONST objv[],
+          policies const &, ClientData)
+     {
+          check_params_no(objc, BOOST_PP_INC(n));
+          
+          dispatch<R>::template do_dispatch<BOOST_PP_ENUM_PARAMS(n,T)>(interp, f_,
+               BOOST_PP_ENUM(n, dispatch_print, ~));
+     }
 
-      //private:
-      static po::options_description cmd_opt;
-    };
-  }
-}
+private:
+     functor_type f_;
+};
 
-#endif
-// Local Variables:
-// mode: c++
-// End:
+#undef dispatch_print
+#undef n

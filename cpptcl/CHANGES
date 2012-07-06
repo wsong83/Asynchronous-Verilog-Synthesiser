@@ -1,3 +1,9 @@
+// changes before a version update
+06/07/2012  using boost preprocessor to reduce templates.
+05/07/2012  add get_string in interpreter.
+
+
+
 This file contains the history of changes in the C++/Tcl library.
 
 ---

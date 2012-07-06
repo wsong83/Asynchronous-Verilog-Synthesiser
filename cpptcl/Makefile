@@ -27,6 +27,7 @@
 INCDIRS = -I./
 HEADERS = $(wildcard ./*.h)
 HEADERS += $(wildcard ./details/*.h)
+HEADERS += $(wildcard ./preproc/*.hpp)
 
 # targets
 TARGETS = cpptcl.o

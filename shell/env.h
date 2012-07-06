@@ -77,17 +77,15 @@ namespace shell {
 }
 
 // all the commands in the command environment
-#include "cmd/analyze.h"
-#include "cmd/current_design.h"
-#include "cmd/echo.h"
-#include "cmd/elaborate.h"
-#include "cmd/help.h"
-#include "cmd/quit.h"
-#include "cmd/set.h"
-#include "cmd/report_netlist.h"
-#include "cmd/source.h"
-#include "cmd/suppress_message.h"
-#include "cmd/write.h"
+//#include "cmd/analyze.h"
+//#include "cmd/current_design.h"
+//#include "cmd/echo.h"
+//#include "cmd/elaborate.h"
+//#include "cmd/help.h"
+//#include "cmd/report_netlist.h"
+//#include "cmd/source.h"
+//#include "cmd/suppress_message.h"
+//#include "cmd/write.h"
 
 // new tcl interpreter
 #include "cmd_tcl_feed.h"

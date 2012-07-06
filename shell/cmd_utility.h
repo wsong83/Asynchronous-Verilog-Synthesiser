@@ -32,7 +32,7 @@
 #include <vector>
 #include <list>
 #include <string>
-#include "cpptcl/cpptcl.h"
+#include "cpptcl.h"
 
 namespace shell {
   namespace CMD {
