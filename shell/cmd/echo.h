@@ -31,13 +31,14 @@
 
 #include "shell/env.h"
 #include "cmd_define.h"
+#include "cpptcl/cpptcl.h"
 
 namespace shell {
   namespace CMD {
 
     class CMDEcho {
     public:
-      static bool exec (Env&, std::vector<std::string>&);
+      static std::string exec (const Tcl::object&, Env *);
       static void help (Env& );
 
       static po::options_description cmd_opt;

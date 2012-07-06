@@ -37,7 +37,7 @@ namespace shell {
   namespace CMD {
     
     // parsing the string from tcl command to function arguments
-    inline std::vector<std::string> argu_parse(const Tcl::object&); 
+    extern std::vector<std::string> argu_parse(const Tcl::object&); 
     
   }
 }

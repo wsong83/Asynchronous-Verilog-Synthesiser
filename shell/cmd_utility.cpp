@@ -27,23 +27,26 @@
  */
 
 #include <list>
+#include <boost/tokenizer.hpp>
+#include <boost/foreach.hpp>
 #include "cmd_utility.h"
+
 using std::string;
 using std::vector;
 using std::list;
+using boost::tokenizer;
+using boost::escaped_list_separator;
 
 using namespace Tcl;
 
 vector<string> shell::CMD::argu_parse(const object& obj) {
-  string str = obj.get_string(); // fetch the string, seems no other way but read it all
-  unsigned int start = 0;        // start point for current sub string
-  unsigned int rp = 0;           // current reading point
-  unsigned int fp = str.size();  // finish point
-  list<string> argu_list;        // tmp storage
-
-  // begin the parsing
-  while(rp != fp) {
-
-    // use boost/tokenizer escaped_list_separator !!
-  }
+  // use boost tokenizer to parse it
+  escaped_list_separator<char> tFunc("", " ", "\"");
+  string str = obj.get_string();
+  tokenizer<escaped_list_separator<char> > tok(str, tFunc);
+  list<string> tok_list;
+  BOOST_FOREACH(const string& m, tok) tok_list.push_back(m);
+  vector<string> rv(tok_list.size());
+  rv.assign(tok_list.begin(), tok_list.end());
+  return rv;
 }

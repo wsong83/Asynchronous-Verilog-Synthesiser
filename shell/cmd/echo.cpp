@@ -29,6 +29,8 @@
 #include <list>
 #include <string>
 #include "echo.h"
+#include "shell/cmd_utility.h"
+#include <boost/foreach.hpp>
 
 using std::vector;
 using std::endl;
@@ -56,29 +58,30 @@ void shell::CMD::CMDEcho::help(Env& gEnv) {
   gEnv.stdOs << endl;
 }
 
-bool shell::CMD::CMDEcho::exec( Env& gEnv, vector<string>& arg) {
+string shell::CMD::CMDEcho::exec(const Tcl::object& tclObj, Env * pEnv) {
   po::variables_map vm;
+  Env &gEnv = *pEnv;
+  vector<string> arg = argu_parse(tclObj);
+  string rv;
 
   try {
     store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
     notify(vm);
   } catch (std::exception& e) {
     gEnv.stdOs << "Error: Wrong command syntax error! See usage by echo -help." << endl;
-    return false;
+    return rv;
   }
 
   if(vm.count("help")) {        // print help information
     shell::CMD::CMDEcho::help(gEnv);
-    return true;
+    return rv;
   } else {
     vector<string> varStr;
     if(vm.count("varStr")) {
       varStr = vm["varStr"].as<vector<string> >();
-      vector<string>::iterator it, end;
-      for(it=varStr.begin(), end=varStr.end(); it!=end; it++)
-        gEnv.stdOs << *it << " ";
+      BOOST_FOREACH(const string& m, varStr) rv = rv + m + " ";
+      rv.erase(rv.size()-1);
     }
-    gEnv.stdOs << endl;
-    return true;
+    return rv;
   }
 }

@@ -27,6 +27,10 @@
  */
 
 #include "cmd_tcl_interp.h"
+
+// the commands
+#include "shell/cmd/echo.h"
+
 using std::string;
 using std::endl;
 
@@ -42,8 +46,8 @@ void shell::CMD::CMDTclInterp::initialise(Env * mgEnv, CMDTclFeed * mfeed) {
   // make "quit" an alias of "exit"
   interp.create_alias("quit", interp, "exit");
 
-  // TODO:
   //   add the commands defined for AVS
+  interp.def("echo", shell::CMD::CMDEcho::exec, gEnv, Tcl::variadic());
   
 }
 

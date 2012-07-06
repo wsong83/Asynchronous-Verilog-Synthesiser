@@ -884,7 +884,7 @@ public:
      T get(interpreter &i) const;
 
   // specialization for string without interpreter
-  string get_string() const;
+  std::string get_string() const;
 
      char const * get() const;             // string get
      char const * get(size_t &size) const; // byte array get
