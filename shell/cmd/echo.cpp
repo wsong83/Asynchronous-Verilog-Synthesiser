@@ -61,7 +61,7 @@ void shell::CMD::CMDEcho::help(Env& gEnv) {
 string shell::CMD::CMDEcho::exec(const Tcl::object& tclObj, Env * pEnv) {
   po::variables_map vm;
   Env &gEnv = *pEnv;
-  vector<string> arg = argu_parse(tclObj);
+  vector<string> arg = tcl_argu_parse(tclObj);
   string rv;
 
   try {
@@ -76,12 +76,7 @@ string shell::CMD::CMDEcho::exec(const Tcl::object& tclObj, Env * pEnv) {
     shell::CMD::CMDEcho::help(gEnv);
     return rv;
   } else {
-    vector<string> varStr;
-    if(vm.count("varStr")) {
-      varStr = vm["varStr"].as<vector<string> >();
-      BOOST_FOREACH(const string& m, varStr) rv = rv + m + " ";
-      rv.erase(rv.size()-1);
-    }
+    rv = tclObj.get_string();
     return rv;
   }
 }

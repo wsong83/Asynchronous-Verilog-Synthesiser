@@ -30,15 +30,24 @@
 #define _CMD_UTILITY_H_
 
 #include <vector>
+#include <list>
 #include <string>
 #include "cpptcl/cpptcl.h"
 
 namespace shell {
   namespace CMD {
+    // break string into a c++ string vector
+    extern std::vector<std::string> tcl_argu_parse(const Tcl::object&);
     
-    // parsing the string from tcl command to function arguments
-    extern std::vector<std::string> argu_parse(const Tcl::object&); 
-    
+    // break one level of Tcl list { ... }
+    extern std::list<std::string> tcl_list_break(const std::string&);
+
+    // break all levels of Tcl list { ... {  ... }  ... { ... }  }
+    extern std::list<std::string> tcl_list_break_all(const std::string&);
+
+    // true if it is a list
+    extern bool is_tcl_list(const std::string&);
+
   }
 }
 

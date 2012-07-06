@@ -32,13 +32,14 @@
 #include <map>
 #include "shell/env.h"
 #include "cmd_define.h"
+#include "cpptcl/cpptcl.h"
 
 namespace shell {
   namespace CMD {
     
     class CMDHelp {
     public:
-      static bool exec ( Env&, std::vector<std::string>&);
+      static void exec ( const Tcl::object&, Env *);
       static void help ( Env& );
 
       //private:

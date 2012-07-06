@@ -30,6 +30,7 @@
 
 // the commands
 #include "shell/cmd/echo.h"
+#include "shell/cmd/help.h"
 
 using std::string;
 using std::endl;
@@ -48,7 +49,7 @@ void shell::CMD::CMDTclInterp::initialise(Env * mgEnv, CMDTclFeed * mfeed) {
 
   //   add the commands defined for AVS
   interp.def("echo", shell::CMD::CMDEcho::exec, gEnv, Tcl::variadic());
-  
+  interp.def("help", shell::CMD::CMDHelp::exec, gEnv, Tcl::variadic());
 }
 
 bool shell::CMD::CMDTclInterp::run() {
