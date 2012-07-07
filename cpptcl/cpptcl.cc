@@ -20,12 +20,11 @@
  */
 
 /* 
+ * Add support for adding/deleting traces for a variable
+ * Using boost preprocessor to reduce the burden of writing templates
  * Add extra argument to support client data
- * 04/07/2012   Wei Song
- *
- * implementation of the c++/Tcl package
- * small modification to resolve name conflicts between boost and std
- * 02/07/2012   Wei Song
+ * Small modification to resolve name conflicts between boost and std
+ * 02/07/2012 ~ 07/07/2012   Wei Song
  *
  */
 
@@ -41,8 +40,7 @@
 #include "cpptcl.h"
 #include <map>
 #include <sstream>
-#include <iterator>
-
+#include <boost/lexical_cast.hpp>
 
 using namespace Tcl;
 using namespace Tcl::details;
@@ -1093,6 +1091,62 @@ void interpreter::add_function(string const &name,
 
      callbacks[interp_][name] = cb;
      call_policies[interp_][name] = p;
+}
+
+void interpreter::add_trace(const std::string& VarName, unsigned int *index,  
+                            boost::shared_ptr<details::trace_base> proc,
+                            void * cData, int flag) {
+  string map_name = VarName + "_";
+  if(index == NULL) {           // type 1
+    Tcl_TraceVar(interp_, VarName.c_str(), flag, trace_handler, cData);
+  } else {                      // type 2
+    string name2 = boost::lexical_cast<string>(*index);
+    Tcl_TraceVar2(interp_, VarName.c_str(), name2.c_str(), flag, trace_handler, cData);
+    map_name += name2;
+  }    
+  if(TCL_TRACE_READS & flag)
+    traces[interp_][map_name].first = proc;
+  if(TCL_TRACE_WRITES & flag)
+    traces[interp_][map_name].second = proc;
+}
+
+void interpreter::remove_trace(const std::string& VarName, unsigned int *index, 
+                               void * proc, void * cData, int flag) {
+  if(!traces.count(interp_)) return; // interpreter not found
+  
+  // get variable name
+  string map_name = VarName + "_";
+  string name2;
+  if(index != NULL) name2 = boost::lexical_cast<string>(*index);
+  map_name += name2;
+  
+  if(!traces[interp_].count(map_name)) return; // variable not found
+  
+  if((TCL_TRACE_READS & flag) && (traces[interp_][map_name].first.use_count() != 0)) {
+    if(proc == NULL)
+
+    traces[interp_][map_name].first.reset();
+    if(index == NULL) 
+      Tcl_UntraceVar(interp_, VarName.c_str(), 
+                     TCL_TRACE_READS, trace_handler, cData);
+    else
+      Tcl_TraceVar2(interp_, VarName.c_str(), name2.c_str(), 
+                    TCL_TRACE_READS, trace_handler, cData);
+  }
+
+  if((TCL_TRACE_WRITESS & flag) && (traces[interp_][map_name].second.use_count() != 0)) {
+    traces[interp_][map_name].second.reset();
+    if(index == NULL) 
+      Tcl_UntraceVar(interp_, VarName.c_str(), 
+                     TCL_TRACE_WRITES, trace_handler, cData);
+    else
+      Tcl_TraceVar2(interp_, VarName.c_str(), name2.c_str(), 
+                    TCL_TRACE_WRITES, trace_handler, cData);
+  }
+
+  if(traces[interp_][map_name].first.use_count() == 0 &&
+     traces[interp_][map_name].second.use_count() == 0)
+    traces[interp_].erase(map_name);
 }
 
 void interpreter::add_class(string const &name,

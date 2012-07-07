@@ -20,11 +20,10 @@
  */
 
 /* 
+ * Add support for adding/deleting traces for a variable
  * Using boost preprocessor to reduce the burden of writing templates
- * 06/07/2012   Wei Song
- *
  * Add extra argument to support client data
- * 04/07/2012   Wei Song
+ * 04/07/2012 ~ 07/07/2012   Wei Song
  *
  *
  */
@@ -238,6 +237,9 @@ public:
 #include "details/callbacks.h"
 #include "details/callbacks_cd.h"
 
+// trace functions
+#include "details/trace.h"
+
 // actual method envelopes
 #include "details/methods.h"
 
@@ -376,6 +378,118 @@ public:
      // helper for cleaning up callbacks in non-managed interpreters
      static void clear_definitions(Tcl_Interp *);
 
+  // create a trace to a variable
+  // a read trace using variable name
+  template<typename VT, typename CDT = void>
+  void def_read_trace(const std::string& VarName, // variable name
+                      VT (*proc)(CDT *), // callback function
+                      CDT *cData = NULL) {  // the data passed to the callback function
+    add_trace(VarName, NULL, 
+              boost::shared_ptr<details::trace_base>
+              (new details::trace<VT, CDT>(proc)), 
+              cData, TCL_TRACE_READS);
+  }
+
+  // a read trace using array name and its index
+  template<typename VT, typename CDT = void>
+  void def_read_trace(const std::string& VarName, // variable name
+                      unsigned int index,         // the index of a array element
+                      VT (*proc)(CDT *), // callback
+                      CDT *cData = NULL) {  // the data passed to the callback function
+    add_trace(VarName, &index, 
+              boost::shared_ptr<details::trace_base>
+              (new details::trace<VT, CDT>(proc)), 
+              cData, TCL_TRACE_READS);
+  }
+    
+  // a read trace using variable name
+  template<typename VT, typename CDT = void>
+  void def_write_trace(const std::string& VarName, // variable name
+                       VT (*proc)(CDT *), // callback function
+                       CDT *cData = NULL) {  // the data passed to the callback function
+    add_trace(VarName, NULL,  
+              boost::shared_ptr<details::trace_base>
+              (new details::trace<VT, CDT>(proc)), 
+              cData, TCL_TRACE_WRITES);
+  }
+
+  // a read trace using array name and its index
+  template<typename VT, typename CDT = void>
+  void def_write_trace(const std::string& VarName, // variable name
+                       unsigned int index,         // the index of a array element
+                       VT (*proc)(CDT *), // callback
+                       CDT *cData = NULL) {  // the data passed to the callback function
+    add_trace(VarName, &index,  
+              boost::shared_ptr<details::trace_base>
+              (new details::trace<VT, CDT>(proc)), 
+              cData, TCL_TRACE_WRITES);
+  }
+
+  // delete a read trace using variable name
+  void undef_read_trace(const std::string& VarName, // variable name
+                        void *proc, // callback function
+                        void *cData = NULL) {  // the data passed to the callback function
+    remove_trace(VarName, NULL, proc, cData, TCL_TRACE_READS);
+  }
+  
+  // delete all read traces using variable name
+  void undef_all_read_trace(const std::string& VarName) { // variable name
+    remove_trace(VarName, NULL, NULL, NULL, TCL_TRACE_READS);
+  }
+
+  // delete a read trace using array name and its index
+  void undef_read_trace(const std::string& VarName, // variable name
+                        unsigned int index,         // the index of a array element
+                        void *proc, // callback function
+                        void *cData = NULL) {  // the data passed to the callback function
+    remove_trace(VarName, &index, proc, cData, TCL_TRACE_READS);
+  }
+  
+  // delete all read traces using array name and its index
+  void undef_all_read_trace(const std::string& VarName, // variable name
+                            unsigned int index) { // the index of a array element
+    remove_trace(VarName, &index, NULL, NULL, TCL_TRACE_READS);
+  }
+
+  // delete a write trace using variable name
+  void undef_write_trace(const std::string& VarName, // variable name
+                         void *proc, // callback function
+                         void *cData = NULL) {  // the data passed to the callback function
+    remove_trace(VarName, NULL, proc, cData, TCL_TRACE_WRITES);
+  }
+  
+  // delete all write traces using variable name
+  void undef_all_write_trace(const std::string& VarName) { // variable name
+    remove_trace(VarName, NULL, NULL, NULL, TCL_TRACE_WRITES);
+  }
+
+  // delete a write trace using array name and its index
+  template<typename VT, typename CDT = void>
+  void undef_write_trace(const std::string& VarName, // variable name
+                         unsigned int index,         // the index of a array element
+                         VT (*proc)(const std::string&, CDT *), // callback function
+                         CDT *cData = NULL) {  // the data passed to the callback function
+    remove_trace(VarName, &index, proc, cData, TCL_TRACE_WRITES);
+  }
+  
+  // delete all write traces using array name and its index
+  void undef_all_write_trace(const std::string& VarName, // variable name
+                             unsigned int index) { // the index of a array element
+    remove_trace(VarName, NULL, NULL, NULL, TCL_TRACE_WRITES);
+  }
+
+  // delete all traces using variable name
+  void undef_all_trace(const std::string& VarName) { // variable name
+    remove_trace(VarName, NULL, NULL, NULL, TCL_TRACE_WRITES|TCL_TRACE_READS);
+  }
+
+  // delete all traces using array name and its index
+  void undef_all_trace(const std::string& VarName, // variable name
+                       unsigned int index) { // the index of a array element
+    remove_trace(VarName, &index, NULL, NULL, TCL_TRACE_WRITES|TCL_TRACE_READS);
+  }
+
+
 private:
 
      // copy not supported
@@ -385,6 +499,13 @@ private:
      void add_function(std::string const &name,
           boost::shared_ptr<details::callback_base> cb,
           policies const &p = policies(), ClientData cData = NULL);
+
+  void add_trace(const std::string& VarName, unsigned int *index,  
+                 boost::shared_ptr<details::trace_base> proc,
+                 void * cData, int flag);
+
+  void remove_trace(const std::string& VarName, unsigned int *index, 
+                    void * proc, void * cData, int flag);
 
      void add_class(std::string const &name,
           boost::shared_ptr<details::class_handler_base> chb);
