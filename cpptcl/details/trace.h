@@ -33,20 +33,31 @@ public:
   
   virtual void invoke(Tcl_Interp *interp,
                       ClientData) = 0;
+  virtual void * get_functor() const = 0;
+  virtual void * get_client_data() const = 0;
 };
 
 template <typename VT, typename CDT>
 class trace : public trace_base {
   typedef VT (*functor_type) (CDT *);
 public:
-  trace(functor_type f) : f_(f) {}
+  trace(functor_type f, CDT * cd) : f_(f), cd_(cd) {}
   virtual ~trace() {}
   
   virtual void invoke(Tcl_Interp *interp, ClientData cData) {
     // TODO: do what?
   }
+
+  virtual void * get_functor() const {
+    return f_;
+  }
+
+  virtual void * get_client_data() const {
+    return cd_;
+  }
 private:
   functor_type f_;
+  CDT * cd_;
 };
 
 // Local Variables:

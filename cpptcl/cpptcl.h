@@ -386,7 +386,7 @@ public:
                       CDT *cData = NULL) {  // the data passed to the callback function
     add_trace(VarName, NULL, 
               boost::shared_ptr<details::trace_base>
-              (new details::trace<VT, CDT>(proc)), 
+              (new details::trace<VT, CDT>(proc, cData)), 
               cData, TCL_TRACE_READS);
   }
 
@@ -398,7 +398,7 @@ public:
                       CDT *cData = NULL) {  // the data passed to the callback function
     add_trace(VarName, &index, 
               boost::shared_ptr<details::trace_base>
-              (new details::trace<VT, CDT>(proc)), 
+              (new details::trace<VT, CDT>(proc, cData)), 
               cData, TCL_TRACE_READS);
   }
     
@@ -409,7 +409,7 @@ public:
                        CDT *cData = NULL) {  // the data passed to the callback function
     add_trace(VarName, NULL,  
               boost::shared_ptr<details::trace_base>
-              (new details::trace<VT, CDT>(proc)), 
+              (new details::trace<VT, CDT>(proc, cData)), 
               cData, TCL_TRACE_WRITES);
   }
 
@@ -421,7 +421,7 @@ public:
                        CDT *cData = NULL) {  // the data passed to the callback function
     add_trace(VarName, &index,  
               boost::shared_ptr<details::trace_base>
-              (new details::trace<VT, CDT>(proc)), 
+              (new details::trace<VT, CDT>(proc, cData)), 
               cData, TCL_TRACE_WRITES);
   }
 
