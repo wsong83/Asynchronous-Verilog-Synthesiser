@@ -32,22 +32,18 @@ public:
   virtual ~trace_base() {}
   
   virtual void invoke(Tcl_Interp *interp,
-                      ClientData) = 0;
+                      ClientData, const char *, const char *, int) = 0;
   virtual void * get_functor() const = 0;
   virtual void * get_client_data() const = 0;
 };
 
 template <typename VT, typename CDT>
 class trace : public trace_base {
-  typedef VT (*functor_type) (CDT *);
+  typedef VT (*functor_type) (VT const &, CDT *);
 public:
   trace(functor_type f, CDT * cd) : f_(f), cd_(cd) {}
   virtual ~trace() {}
   
-  virtual void invoke(Tcl_Interp *interp, ClientData cData) {
-    // TODO: do what?
-  }
-
   virtual void * get_functor() const {
     return f_;
   }
@@ -55,6 +51,21 @@ public:
   virtual void * get_client_data() const {
     return cd_;
   }
+
+  virtual void invoke(Tcl_Interp *interp, ClientData cData,
+                      const char * VarName, const char *index, int flag) {
+    interpreter i(interp, false);
+    // fetch the variable
+    Tcl_Obj *var = Tcl_GetVar2Ex(interp, VarName, index, flag);
+    // run the trace
+    VT rv = f_(tcl_cast<VT>::from(interp, var), static_cast<CDT *>(cData));
+    // reset the variable
+    var = tcl_cast<VT>::to(interp, rv);
+    Tcl_Obj *prv = Tcl_SetVar2Ex(interp, VarName, index, var, flag);
+    assert(prv != var);
+    delete var;                 // delete the tmp var
+  }
+
 private:
   functor_type f_;
   CDT * cd_;

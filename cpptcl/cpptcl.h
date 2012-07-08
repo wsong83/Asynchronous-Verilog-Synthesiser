@@ -394,7 +394,7 @@ public:
   template<typename VT, typename CDT = void>
   void def_read_trace(const std::string& VarName, // variable name
                       unsigned int index,         // the index of a array element
-                      VT (*proc)(CDT *), // callback
+                      VT (*proc)(VT const &, CDT *), // callback
                       CDT *cData = NULL) {  // the data passed to the callback function
     add_trace(VarName, &index, 
               boost::shared_ptr<details::trace_base>
@@ -405,7 +405,7 @@ public:
   // a read trace using variable name
   template<typename VT, typename CDT = void>
   void def_write_trace(const std::string& VarName, // variable name
-                       VT (*proc)(CDT *), // callback function
+                       VT (*proc)(VT const &, CDT *), // callback function
                        CDT *cData = NULL) {  // the data passed to the callback function
     add_trace(VarName, NULL,  
               boost::shared_ptr<details::trace_base>
@@ -417,7 +417,7 @@ public:
   template<typename VT, typename CDT = void>
   void def_write_trace(const std::string& VarName, // variable name
                        unsigned int index,         // the index of a array element
-                       VT (*proc)(CDT *), // callback
+                       VT (*proc)(VT const &, CDT *), // callback
                        CDT *cData = NULL) {  // the data passed to the callback function
     add_trace(VarName, &index,  
               boost::shared_ptr<details::trace_base>

@@ -429,7 +429,7 @@ char * trace_handler(ClientData cData, Tcl_Interp *interp,
   BOOST_FOREACH(trace_record& m, traces[interp][map_name]) {
     if(m.second.second & flags) {
       try {
-        m.second.first->invoke(interp, cData);
+        m.second.first->invoke(interp, cData, VarName, index, flags);
       } catch (...) {           // the return type of char * is painfully difficult to cope with
         return err_msg_trace_unknown;
       }
@@ -1241,6 +1241,10 @@ int tcl_cast<int>::from(Tcl_Interp *interp, Tcl_Obj *obj)
      return res;
 }
 
+Tcl_Obj * tcl_cast<int>::to(Tcl_Interp *, int const & v) {
+  return Tcl_NewIntObj(v);
+}
+
 long tcl_cast<long>::from(Tcl_Interp *interp, Tcl_Obj *obj)
 {
      long res;
@@ -1251,6 +1255,10 @@ long tcl_cast<long>::from(Tcl_Interp *interp, Tcl_Obj *obj)
      }
      
      return res;
+}
+
+Tcl_Obj * tcl_cast<long>::to(Tcl_Interp *, long const & v) {
+  return Tcl_NewLongObj(v);
 }
 
 long long tcl_cast<long long>::from(Tcl_Interp *interp, Tcl_Obj *obj)
@@ -1265,6 +1273,10 @@ long long tcl_cast<long long>::from(Tcl_Interp *interp, Tcl_Obj *obj)
      return res;
 }
 
+Tcl_Obj * tcl_cast<long long>::to(Tcl_Interp *, long long const & v) {
+  return Tcl_NewWideIntObj(v);
+}
+
 bool tcl_cast<bool>::from(Tcl_Interp *interp, Tcl_Obj *obj)
 {
      int res;
@@ -1275,6 +1287,10 @@ bool tcl_cast<bool>::from(Tcl_Interp *interp, Tcl_Obj *obj)
      }
      
      return res != 0;
+}
+
+Tcl_Obj * tcl_cast<bool>::to(Tcl_Interp *, bool const & v) {
+  return Tcl_NewBooleanObj(v);
 }
 
 double tcl_cast<double>::from(Tcl_Interp *interp, Tcl_Obj *obj)
@@ -1289,14 +1305,26 @@ double tcl_cast<double>::from(Tcl_Interp *interp, Tcl_Obj *obj)
      return res;
 }
 
+Tcl_Obj * tcl_cast<double>::to(Tcl_Interp *, double const & v) {
+  return Tcl_NewDoubleObj(v);
+}
+
 string tcl_cast<string>::from(Tcl_Interp *, Tcl_Obj *obj)
 {
      return Tcl_GetString(obj);
 }
 
+Tcl_Obj * tcl_cast<string>::to(Tcl_Interp *, string const & v) {
+  return Tcl_NewStringObj(v.c_str(), -1);
+}
+
 char const * tcl_cast<char const *>::from(Tcl_Interp *, Tcl_Obj *obj)
 {
      return Tcl_GetString(obj);
+}
+
+Tcl_Obj * tcl_cast<char const *>::to(Tcl_Interp *, char const * const & v) {
+  return Tcl_NewStringObj(v, -1);
 }
 
 object tcl_cast<object>::from(Tcl_Interp *interp, Tcl_Obj *obj)
@@ -1305,4 +1333,8 @@ object tcl_cast<object>::from(Tcl_Interp *interp, Tcl_Obj *obj)
      o.set_interp(interp);
 
      return o;
+}
+
+Tcl_Obj * tcl_cast<object>::to(Tcl_Interp *, object const & v) {
+  return Tcl_DuplicateObj(v.get_object());
 }
