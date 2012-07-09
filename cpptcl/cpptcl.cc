@@ -42,11 +42,13 @@
 #include <sstream>
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
+#include <boost/tuple/tuple.hpp>
 
 using namespace Tcl;
 using namespace Tcl::details;
 using std::string;
 using boost::shared_ptr;
+using boost::tuple;
 using std::map;
 using std::pair;
 using std::vector;
@@ -230,7 +232,8 @@ callback_map callbacks;
 callback_map constructors;
 
   // map of polymorphic variable traces
-  typedef map<void *, pair<shared_ptr<trace_base>, int > > trace_record_map;
+  typedef pair<const string, tuple<shared_ptr<trace_base>, int, void *> > trace_record;
+  typedef map<const string, tuple<shared_ptr<trace_base>, int, void *> > trace_record_map;
   typedef map<string, trace_record_map> trace_interp_map;
   typedef map<Tcl_Interp *, trace_interp_map> trace_map;
 
@@ -425,11 +428,11 @@ char * trace_handler(ClientData cData, Tcl_Interp *interp,
     return err_msg_trace_no_var;
   }
   
-  typedef pair<void * const, pair<shared_ptr<details::trace_base>, int> > trace_record;
   BOOST_FOREACH(trace_record& m, traces[interp][map_name]) {
-    if(m.second.second & flags) {
+    if((static_cast<void **>(cData) == &(m.second.get<2>())) && (m.second.get<1>() & flags)) {
       try {
-        m.second.first->invoke(interp, cData, VarName, index, flags);
+        // covert the pointer
+        m.second.get<0>()->invoke(interp, m.second.get<2>(), VarName, index, flags);
       } catch (...) {           // the return type of char * is painfully difficult to cope with
         return err_msg_trace_unknown;
       }
@@ -1140,28 +1143,44 @@ void interpreter::add_function(string const &name,
 }
 
 void interpreter::add_trace(const string& VarName, unsigned int *index,  
+                            const std::string& FunName,
                             shared_ptr<trace_base> proc,
                             void * cData, int flag) {
+  // empty function name is not allowed. 
+  // Due to the standard result, no return or error is indicated. 
+  // This is at user's risk.
+  if(FunName.empty()) return;   
+  
   string map_name = VarName + "_";
-  if(index == NULL) {           // type 1
-    Tcl_TraceVar(interp_, VarName.c_str(), flag, trace_handler, cData);
-  } else {                      // type 2
-    string name2 = boost::lexical_cast<string>(*index);
-    Tcl_TraceVar2(interp_, VarName.c_str(), name2.c_str(), flag, trace_handler, cData);
+  string name2;
+  if(index != NULL) {
+    name2 = boost::lexical_cast<string>(*index);
     map_name += name2;
   }
-  
   // record it in our own maps
-  if(traces[interp_][map_name].count(proc->get_functor())) { // already recorded
-    traces[interp_][map_name][proc->get_functor()].second |= flag;
+  if(traces[interp_][map_name].count(FunName)) { // already recorded
+    if(cData != traces[interp_][map_name][FunName].get<2>()) {
+      // user error, define the same trace function with the same variable 
+      // but with different cData is not supported
+      assert(0 == "Fail to add a trace on the same variable using the same function name but with different client data!");
+      return;
+    }
+    traces[interp_][map_name][FunName].get<1>() |= flag;
   } else {                        // new
-    traces[interp_][map_name][proc->get_functor()].second = flag;
-    traces[interp_][map_name][proc->get_functor()].first = proc;
+    traces[interp_][map_name][FunName].get<0>() = proc;
+    traces[interp_][map_name][FunName].get<1>() = flag;
+    traces[interp_][map_name][FunName].get<2>() = cData;
   }
+  if(index == NULL)
+    Tcl_TraceVar(interp_, VarName.c_str(), flag, 
+                 trace_handler, &(traces[interp_][map_name][FunName].get<2>()));
+  else
+    Tcl_TraceVar2(interp_, VarName.c_str(), name2.c_str(), flag, 
+                  trace_handler, &(traces[interp_][map_name][FunName].get<2>()));
 }
 
 void interpreter::remove_trace(const string& VarName, unsigned int *index, 
-                               void * proc, void * cData, int flag) {
+                               const std::string& FunName, int flag) {
   if(!traces.count(interp_)) return; // interpreter not found
   
   // get variable name
@@ -1172,40 +1191,58 @@ void interpreter::remove_trace(const string& VarName, unsigned int *index,
   
   if(!traces[interp_].count(map_name)) return; // variable not found
   
-  if(proc == NULL) {            // all
-    typedef pair<void * const, pair<shared_ptr<trace_base>, int> > trace_record;
+  if(FunName == "") {            // all
     BOOST_FOREACH(trace_record& m, traces[interp_][map_name]) {
-      if(m.second.second & flag) { // need a untrace operation
-        if(index == NULL) 
-          Tcl_UntraceVar(interp_, VarName.c_str(), flag, 
-                         trace_handler, m.second.first->get_client_data());
-        else 
-          Tcl_UntraceVar2(interp_, VarName.c_str(), name2.c_str(), flag, 
-                         trace_handler, m.second.first->get_client_data());
+      if(m.second.get<1>() & flag) { // need a untrace operation
+        // stupid tcl cannot untrace read and write traces at the same time if they are defined separately
+        if(index == NULL) {
+          if(m.second.get<1>() & flag & TCL_TRACE_READS)
+            Tcl_UntraceVar(interp_, VarName.c_str(), TCL_TRACE_READS, 
+                           trace_handler, &(m.second.get<2>()));
+          if(m.second.get<1>() & flag &TCL_TRACE_WRITES)
+            Tcl_UntraceVar(interp_, VarName.c_str(), TCL_TRACE_WRITES, 
+                           trace_handler, &(m.second.get<2>()));
+        }
+        else { 
+          if(m.second.get<1>() & flag & TCL_TRACE_READS)
+            Tcl_UntraceVar2(interp_, VarName.c_str(),  name2.c_str(), TCL_TRACE_READS, 
+                            trace_handler, &(m.second.get<2>()));
+          if(m.second.get<1>() & flag & TCL_TRACE_WRITES)
+            Tcl_UntraceVar2(interp_, VarName.c_str(),  name2.c_str(), TCL_TRACE_WRITES, 
+                            trace_handler, &(m.second.get<2>()));
+        }
       }
-      m.second.second &= (~flag);
+      m.second.get<1>() &= (~flag);
     }
     trace_record_map::iterator it, end;
     for(it = traces[interp_][map_name].begin(), end = traces[interp_][map_name].end();
         it != end; ) {
-      if(it->second.second == 0) traces[interp_][map_name].erase(it++);
+      if(it->second.get<1>() == 0) traces[interp_][map_name].erase(it++);
       else it++;
     }
   } else {                       // a specific trace
-    if(!traces[interp_][map_name].count(proc)) return; // function not found
-    shared_ptr<details::trace_base>& m = traces[interp_][map_name][proc].first;
-    if(m->get_client_data() != cData) return; // ClientData does not match
-    if(traces[interp_][map_name][proc].second & flag) { // need a untrace operation
-      if(index == NULL) 
-        Tcl_UntraceVar(interp_, VarName.c_str(), flag, 
-                       trace_handler, m->get_client_data());
-      else 
-        Tcl_UntraceVar2(interp_, VarName.c_str(), name2.c_str(), flag, 
-                       trace_handler, m->get_client_data());
+    if(!traces[interp_][map_name].count(FunName)) return; // function not found
+    if(traces[interp_][map_name][FunName].get<1>() & flag) { // need a untrace operation
+        if(index == NULL) {
+          if(traces[interp_][map_name][FunName].get<1>() & flag & TCL_TRACE_READS)
+            Tcl_UntraceVar(interp_, VarName.c_str(), TCL_TRACE_READS, 
+                           trace_handler, &(traces[interp_][map_name][FunName].get<2>()));
+          if(traces[interp_][map_name][FunName].get<1>() & flag & TCL_TRACE_WRITES)
+            Tcl_UntraceVar(interp_, VarName.c_str(), TCL_TRACE_WRITES, 
+                           trace_handler, &(traces[interp_][map_name][FunName].get<2>()));
+        }
+        else { 
+          if(traces[interp_][map_name][FunName].get<1>() & flag & TCL_TRACE_READS)
+            Tcl_UntraceVar2(interp_, VarName.c_str(),  name2.c_str(), TCL_TRACE_READS, 
+                            trace_handler, &(traces[interp_][map_name][FunName].get<2>()));
+          if(traces[interp_][map_name][FunName].get<1>() & flag & TCL_TRACE_WRITES)
+            Tcl_UntraceVar2(interp_, VarName.c_str(),  name2.c_str(), TCL_TRACE_WRITES, 
+                            trace_handler, &(traces[interp_][map_name][FunName].get<2>()));
+        }
     }
-    traces[interp_][map_name][proc].second &= (~flag);
-    if(traces[interp_][map_name][proc].second == 0)
-      traces[interp_][map_name].erase(proc);
+    traces[interp_][map_name][FunName].get<1>() &= (~flag);
+    if(traces[interp_][map_name][FunName].get<1>() == 0)
+      traces[interp_][map_name].erase(FunName);
   }
 
   if(traces[interp_][map_name].empty()) traces[interp_].erase(map_name);
