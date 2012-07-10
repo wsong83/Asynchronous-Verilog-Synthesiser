@@ -26,12 +26,8 @@
  *
  */
 
+#include "cmd_tcl_feed.h"
 #include "cmd_tcl_interp.h"
-#include "cpptcl.h"
-
-// the commands
-#include "shell/cmd/echo.h"
-#include "shell/cmd/help.h"
 
 using std::string;
 using std::endl;
@@ -41,31 +37,29 @@ shell::CMD::CMDTclInterp::CMDTclInterp()
 {
 }
 
+shell::CMD::CMDTclInterp::~CMDTclInterp() {
+  gEnv->stdOs << "Release the embedded Tcl interpreter..." << endl;
+}
+
 void shell::CMD::CMDTclInterp::initialise(Env * mgEnv, CMDTclFeed * mfeed) {
   gEnv = mgEnv;
   cmdFeed = mfeed;
-  interp.reset(new Tcl::interpreter());
-
-  // make "quit" an alias of "exit"
-  interp->create_alias("quit", *interp, "exit");
-
-  //   add the commands defined for AVS
-  interp->def("echo", shell::CMD::CMDEcho::exec, gEnv, Tcl::variadic());
-  interp->def("help", shell::CMD::CMDHelp::exec, gEnv, Tcl::variadic());
 }
 
 bool shell::CMD::CMDTclInterp::run() {
 
   while(true) {
     try {
-      Tcl::object result = interp->eval(cmdFeed->getline());
-      string rv = result.get_string();
+      string rv = tcli.eval(cmdFeed->getline());
       if(!rv.empty())
         gEnv->stdOs << rv << endl;
     } catch(const Tcl::tcl_error& e) {
+      if("CMD_TCL_EXIT" == string(e.what())) { // special exit message
+        gEnv->stdOs << "\nThank you!" << endl;
+        return true;
+      }
       gEnv->stdOs << "[Tcl] " << e.what() << endl;
     } catch (const std::exception& e) {
-      assert(0 == 1);
       gEnv->errOs << "[OS Exception] " << e.what() << endl;
       return false;
     } 

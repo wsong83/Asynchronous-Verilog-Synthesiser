@@ -29,6 +29,7 @@
 #include "help.h"
 #include <boost/foreach.hpp>
 #include "shell/cmd_utility.h"
+#include "cmd_define.h"
 
 using namespace shell;
 using namespace shell::CMD;

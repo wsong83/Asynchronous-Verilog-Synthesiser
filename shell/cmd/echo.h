@@ -29,11 +29,12 @@
 #ifndef AV_CMD_ECHO_
 #define AV_CMD_ECHO_
 
-#include "shell/env.h"
 #include "cmd_define.h"
 #include "cpptcl.h"
 
 namespace shell {
+  class Env;
+
   namespace CMD {
 
     class CMDEcho {

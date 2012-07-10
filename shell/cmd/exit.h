@@ -20,25 +20,32 @@
  */
 
 /* 
- * Default macro names
- * 16/05/2012   Wei Song
+ * exit command
+ * 10/07/2012   Wei Song
  *
  *
  */
 
-#ifndef AV_H_DEFAULT_MACRO_NAME_
-#define AV_H_DEFAULT_MACRO_NAME_
+#ifndef AV_CMD_EXIT_
+#define AV_CMD_EXIT_
 
-#include <string>
+#include "cmd_define.h"
+#include "cpptcl.h"
 
-#define MACRO_CURRENT_DESIGN           (std::string("current_design"    ))
-#define MACRO_CURRENT_DESIGN_VALUE     (std::string(""                  ))
-#define MACRO_DEFAULT_WORK_LIB         (std::string("work"              ))
-#define MACRO_LINK_LIB                 (std::string("link_library"      ))
-#define MACRO_SEARCH_PATH              (std::string("search_path"       ))
-#define MACRO_SEARCH_PATH_VALUE        (std::string("."                 ))
-#define MACRO_TARGET_LIB               (std::string("target_library"    ))
-#define MACRO_TMP_PATH                 (std::string("tmp_path"          ))
-#define MACRO_TMP_PATH_VALUE           (std::string("tmp"               ))
+namespace shell {
+  class Env;
+
+  namespace CMD {
+
+    class CMDExit {
+    public:
+      static void exec (const Tcl::object&, Env *);
+      static void help (Env& );
+
+      static po::options_description cmd_opt;
+      static po::positional_options_description cmd_position;
+    };
+  }
+}
 
 #endif

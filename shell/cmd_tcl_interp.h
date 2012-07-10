@@ -30,7 +30,7 @@
 #define _CMD_TCL_INTERP_H_
 
 #include "env.h"
-//#include "cpptcl/cpptcl.h"
+#include "cpptcl/cpptcl.h"
 
 namespace Tcl {
   class interpreter;            // forward declaration
@@ -42,15 +42,18 @@ namespace shell {
     class CMDTclInterp {
     public:
       CMDTclInterp();
+      virtual ~CMDTclInterp();
 
       // helper
       void initialise(Env *, CMDTclFeed *);
       bool run();               // execute the interpreter
 
+      // the interpreter
+      Tcl::interpreter tcli;       // the tcl interpreter
+
     private:
       Env * gEnv;
       CMDTclFeed * cmdFeed;
-      boost::shared_ptr<Tcl::interpreter> interp;  // the dynamic Tcl interpreter
     };
   }
 }

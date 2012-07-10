@@ -76,7 +76,8 @@ namespace shell {
       CMDVar& operator= (const std::string& );
       CMDVar& operator= (const std::list<std::string>& );
       CMDVar& operator= (const std::vector<std::string>& );
-
+      operator std::string() const {return m_list.front();}
+      
       boost::shared_ptr<CMDVarHook> hook; /* call back function */
 
     private:

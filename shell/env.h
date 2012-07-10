@@ -71,25 +71,15 @@ namespace shell {
     std::ostream stdOs;                              /* standard output stream */
     std::ostream errOs;                              /* error output stream */
     std::map<std::string, CMD::CMDVar> macroDB;      /* command line macros */
-    
   };
 
 }
 
 // all the commands in the command environment
-//#include "cmd/analyze.h"
-//#include "cmd/current_design.h"
-//#include "cmd/echo.h"
-//#include "cmd/elaborate.h"
-//#include "cmd/help.h"
-//#include "cmd/report_netlist.h"
-//#include "cmd/source.h"
-//#include "cmd/suppress_message.h"
-//#include "cmd/write.h"
 
 // new tcl interpreter
-#include "cmd_tcl_feed.h"
-#include "cmd_tcl_interp.h"
+//#include "cmd_tcl_feed.h"
+//#include "cmd_tcl_interp.h"
 
 
 #endif

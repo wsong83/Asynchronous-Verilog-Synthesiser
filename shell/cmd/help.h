@@ -31,7 +31,6 @@
 
 #include <map>
 #include "shell/env.h"
-#include "cmd_define.h"
 #include "cpptcl.h"
 
 namespace shell {

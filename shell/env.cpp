@@ -32,18 +32,19 @@
 #include <boost/algorithm/string.hpp>
 
 #include "shell_top.h"
+#include "cmd_tcl_feed.h"
+#include "cmd_tcl_interp.h"
 
 #include <boost/foreach.hpp>
 
 #define YYSTYPE shell::CMD::cmd_token_type
 
-#include "cmd/cmd_define.h"
-#include "macro_name.h"
+// the commands
+#include "cmd/echo.h"
+#include "cmd/exit.h"
+#include "cmd/help.h"
 
-//make sure the location of command.y is included
-//#undef BISON_LOCATION_HH
-//#undef BISON_POSITION_HH
-//#include "command.hh"
+#include "macro_name.h"
 
 using namespace shell;
 using std::endl;
@@ -66,9 +67,10 @@ shell::Env::Env()
 {}
 
 shell::Env::~Env() {
+  stdOs << "Release the Asynchronous Verilog Synthesis system..." << endl;
   try {
-    if(exists(macroDB[MACRO_TMP_PATH].get_string())) {
-      remove_all(macroDB[MACRO_TMP_PATH].get_string());
+    if(exists(tclInterp->tcli.read_variable<string>(MACRO_TMP_PATH))) {
+      remove_all(tclInterp->tcli.read_variable<string>(MACRO_TMP_PATH));
     }
   } catch (std::exception e) {
     throw("Error! problem with removing or creating the temporary work directory.");
@@ -93,28 +95,35 @@ bool shell::Env::initialise() {
   tclFeed->initialise(this);
   tclInterp->initialise(this, tclFeed.get());
 
+  Tcl::interpreter& i = tclInterp->tcli;
+
   // initialise the macro database
   // file search path
-  macroDB[MACRO_SEARCH_PATH] = MACRO_SEARCH_PATH_VALUE;
+  i.set_variable(MACRO_SEARCH_PATH, MACRO_SEARCH_PATH_VALUE);
 
   // the temporary file directory
+  i.set_variable(MACRO_TMP_PATH, MACRO_TMP_PATH_VALUE);
+  path tmp_path(MACRO_TMP_PATH_VALUE);
+  cmd_create_tmp_path(tmp_path, this, true);
+  // also save it in AVS's own variable db
   macroDB[MACRO_TMP_PATH] = MACRO_TMP_PATH_VALUE;
-  path tmp_path(macroDB[MACRO_TMP_PATH].get_string());
-  try {
-    if(!exists(tmp_path)) {
-      if(!create_directory(tmp_path)) {
-        throw std::exception();
-      }
-    }
-  } catch (std::exception e) {
-    errOs << "Error! Fail to create the default temporary work directory!" << endl;
-    exit(0);
-  }
-  macroDB[MACRO_TMP_PATH].hook.reset(new CMD::CMDHook_TMP_PATH());
-
+  // trace the variable
+  i.def_write_trace(MACRO_TMP_PATH, MACRO_TMP_PATH, CMDHook_TMP_PATH, this);
+  
   // current_design
+  i.set_variable(MACRO_CURRENT_DESIGN, MACRO_CURRENT_DESIGN_VALUE);
   macroDB[MACRO_CURRENT_DESIGN] = MACRO_CURRENT_DESIGN_VALUE;
-  macroDB[MACRO_CURRENT_DESIGN].hook.reset(new CMD::CMDHook_CURRENT_DESIGN());
+  i.def_write_trace(MACRO_CURRENT_DESIGN, MACRO_CURRENT_DESIGN, 
+                    CMDHook_CURRENT_DESIGN, this);
+
+  // overload the tcl exit command
+  i.def("exit", shell::CMD::CMDExit::exec, this, Tcl::variadic());
+  // make "quit" an alias of "exit"
+  i.create_alias("quit", i, "exit");
+
+  //   add the commands defined for AVS
+  i.def("echo", shell::CMD::CMDEcho::exec, this, Tcl::variadic());
+  i.def("help", shell::CMD::CMDHelp::exec, this, Tcl::variadic());
 
   // show the welcome message
   show_cmd(true);
