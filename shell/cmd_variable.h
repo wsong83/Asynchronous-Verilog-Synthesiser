@@ -65,9 +65,6 @@ namespace shell {
       bool is_string() const { return var_type == vString; }
       bool is_list() const { return var_type == vList; }
       bool is_collection() const { return var_type == vCollection; }
-      std::string& get_string() { return m_list.front(); }
-      std::list<std::string>& get_list() { return m_list; }
-      std::list<boost::shared_ptr<netlist::NetComp> >& get_collection() { return m_collection; }
       const std::string& get_string() const { return m_list.front(); }
       const std::list<std::string>& get_list() const { return m_list; }
       const std::list<boost::shared_ptr<netlist::NetComp> >& get_collection() const { return m_collection; }

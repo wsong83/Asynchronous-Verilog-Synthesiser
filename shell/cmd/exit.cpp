@@ -55,7 +55,7 @@ void shell::CMD::CMDExit::exec(const Tcl::object& tclObj, Env * pEnv) {
   string rv;
 
   try {
-    store(po::command_line_parser(arg).options(cmd_opt).run(), vm);
+    store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).run(), vm);
     notify(vm);
   } catch (std::exception& e) {
     gEnv.stdOs << "Error: Wrong command syntax error! See usage by exit -help." << endl;

@@ -30,6 +30,8 @@
 #define BOOST_FILESYSTEM_VERSION 3
 #include <boost/filesystem.hpp>
 #include "analyze.h"
+#include "shell/env.h"
+#include "shell/cmd_utility.h"
 #include "preproc/preproc.h"
 #include "shell/macro_name.h"
 #include "averilog/averilog_util.h"
@@ -76,9 +78,12 @@ void shell::CMD::CMDAnalyze::help(Env& gEnv) {
   gEnv.stdOs << cmd_name_fix(arg_opt) << endl;
 }
 
-bool shell::CMD::CMDAnalyze::exec ( Env& gEnv, vector<string>& arg){
-  
+bool shell::CMD::CMDAnalyze::exec (const Tcl::object& tclObj, Env * pEnv){
   po::variables_map vm;
+  Env &gEnv = *pEnv;
+  vector<string> arg = tcl_argu_parse(tclObj);
+  string rv;
+  Tcl::interpreter& interp = gEnv.tclInterp->tcli;
 
   try {
     store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
@@ -115,7 +120,8 @@ bool shell::CMD::CMDAnalyze::exec ( Env& gEnv, vector<string>& arg){
       path fname(it);
       if(!exists(fname)) {
         bool m_exist = false;
-        BOOST_FOREACH(const string& sit, gEnv.macroDB[MACRO_SEARCH_PATH].get_list()) {
+        BOOST_FOREACH(const string& sit, 
+                      interp.read_variable<list<string> >(MACRO_SEARCH_PATH)) {
           fname = sit + "/" + it;
           if(exists(fname)) { m_exist = true; break;}
         }
@@ -153,15 +159,10 @@ bool shell::CMD::CMDAnalyze::exec ( Env& gEnv, vector<string>& arg){
       }
 
       // set the include paths
-      if(gEnv.macroDB[MACRO_SEARCH_PATH].is_string()) {
-        preprocp->add_incr(gEnv.macroDB[MACRO_SEARCH_PATH].get_string());
-      } else if(gEnv.macroDB[MACRO_SEARCH_PATH].is_list()) {
-        BOOST_FOREACH(const string& iit, gEnv.macroDB[MACRO_SEARCH_PATH].get_list())
-          preprocp->add_incr(iit);
-      } else {
-        assert(0 == "search_path is not a string nor a list!");
-      }
-
+      BOOST_FOREACH(const string& iit, 
+                    interp.read_variable<list<string> >(MACRO_SEARCH_PATH))
+        preprocp->add_incr(iit);
+      
       // set the output file
       ofstream of_handle;
       string tmp_file_name = gEnv.macroDB[MACRO_TMP_PATH].get_string() + "/" + fname.filename().string() + ".preproc";

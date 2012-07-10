@@ -40,6 +40,7 @@
 #define YYSTYPE shell::CMD::cmd_token_type
 
 // the commands
+#include "cmd/analyze.h"
 #include "cmd/echo.h"
 #include "cmd/exit.h"
 #include "cmd/help.h"
