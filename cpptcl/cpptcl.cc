@@ -40,7 +40,6 @@
 #include "cpptcl.h"
 #include <map>
 #include <sstream>
-#include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
 #include <boost/tuple/tuple.hpp>
 
@@ -234,7 +233,7 @@ callback_map constructors;
   // map of polymorphic variable traces
   typedef pair<const string, tuple<shared_ptr<trace_base>, int, void *> > trace_record;
   typedef map<const string, tuple<shared_ptr<trace_base>, int, void *> > trace_record_map;
-  typedef map<string, trace_record_map> trace_interp_map;
+  typedef map<pair<string, string>, trace_record_map> trace_interp_map;
   typedef map<Tcl_Interp *, trace_interp_map> trace_map;
 
   trace_map traces;
@@ -418,11 +417,8 @@ char * trace_handler(ClientData cData, Tcl_Interp *interp,
     return err_msg_trace_no_interp;
   }
      
-  string map_name(VarName);
-  string name2;
-  if(index != NULL) name2 = string(index);
-  map_name += "_";
-  map_name += name2;
+  pair<string, string> map_name(VarName, "");
+  if(index != NULL) map_name.second = boost::lexical_cast<string>(*index);
 
   if(!traces[interp].count(map_name)) {
     return err_msg_trace_no_var;
@@ -1080,55 +1076,46 @@ void interpreter::create_alias(string const &cmd,
 
 void interpreter::clear_definitions(Tcl_Interp *interp)
 {
-     // delete all callbacks that were registered for given interpreter
+  // delete all callbacks that were registered for given interpreter
+  if(callbacks.count(interp)) {
+    callback_interp_map &imap = callbacks[interp];
+    for (callback_interp_map::iterator it2 = imap.begin();
+         it2 != imap.end(); ++it2) {
+      Tcl_DeleteCommand(interp, it2->first.c_str());
+    }
+    callbacks.erase(interp);
+  }
 
-     {
-          callback_map::iterator it = callbacks.find(interp);
-          if (it == callbacks.end())
-          {
-               // no callbacks defined for this interpreter
-               return;
-          }
+  // delete all trace functions
+  if(traces.count(interp)) {
+    trace_interp_map &tmap = traces[interp];
+    trace_interp_map::iterator it, end;
+    for(it=tmap.begin(), end=tmap.end(); it!=end; it++) {
+      if(it->first.second == "")
+        undef_all_trace(it->first.first);
+      else
+        undef_all_trace(it->first.first, std::atoi(it->first.second.c_str()));
+    }
+    traces.erase(interp);
+  }
 
-          callback_interp_map &imap = it->second;
-          for (callback_interp_map::iterator it2 = imap.begin();
-               it2 != imap.end(); ++it2)
-          {
-               Tcl_DeleteCommand(interp, it2->first.c_str());
-          }
+  // delete all constructors
+  if(constructors.count(interp)) {
+    callback_interp_map &imap = constructors[interp];
+    for (callback_interp_map::iterator it2 = imap.begin();
+         it2 != imap.end(); ++it2) {
+      Tcl_DeleteCommand(interp, it2->first.c_str());
+    }
+    callbacks.erase(interp);
+  }
 
-          callbacks.erase(interp);
-     }
+  // delete all call policies
+  call_policies.erase(interp);
 
-     // delete all constructors
-
-     {
-          callback_map::iterator it = constructors.find(interp);
-          if (it == constructors.end())
-          {
-               // no callbacks defined for this interpreter
-               return;
-          }
-
-          callback_interp_map &imap = it->second;
-          for (callback_interp_map::iterator it2 = imap.begin();
-               it2 != imap.end(); ++it2)
-          {
-               Tcl_DeleteCommand(interp, it2->first.c_str());
-          }
-
-          callbacks.erase(interp);
-     }
-
-     // delete all call policies
-
-     call_policies.erase(interp);
-
-     // delete all object handlers
-     // (we have to assume that all living objects were destroyed,
-     // otherwise Bad Things will happen)
-
-     class_handlers.erase(interp);
+  // delete all object handlers
+  // (we have to assume that all living objects were destroyed,
+  // otherwise Bad Things will happen)
+  class_handlers.erase(interp);
 }
 
 void interpreter::add_function(string const &name,
@@ -1151,12 +1138,10 @@ void interpreter::add_trace(const string& VarName, unsigned int *index,
   // This is at user's risk.
   if(FunName.empty()) return;   
   
-  string map_name = VarName + "_";
-  string name2;
-  if(index != NULL) {
-    name2 = boost::lexical_cast<string>(*index);
-    map_name += name2;
-  }
+  // record the variable name and index into the map name
+  pair<string, string> map_name(VarName, "");
+  if(index != NULL) map_name.second = boost::lexical_cast<string>(*index);
+
   // record it in our own maps
   if(traces[interp_][map_name].count(FunName)) { // already recorded
     if(cData != traces[interp_][map_name][FunName].get<2>()) {
@@ -1175,7 +1160,7 @@ void interpreter::add_trace(const string& VarName, unsigned int *index,
     Tcl_TraceVar(interp_, VarName.c_str(), flag, 
                  trace_handler, &(traces[interp_][map_name][FunName].get<2>()));
   else
-    Tcl_TraceVar2(interp_, VarName.c_str(), name2.c_str(), flag, 
+    Tcl_TraceVar2(interp_, VarName.c_str(), map_name.second.c_str(), flag, 
                   trace_handler, &(traces[interp_][map_name][FunName].get<2>()));
 }
 
@@ -1184,10 +1169,8 @@ void interpreter::remove_trace(const string& VarName, unsigned int *index,
   if(!traces.count(interp_)) return; // interpreter not found
   
   // get variable name
-  string map_name = VarName + "_";
-  string name2;
-  if(index != NULL) name2 = boost::lexical_cast<string>(*index);
-  map_name += name2;
+  pair<string, string> map_name(VarName, "");
+  if(index != NULL) map_name.second = boost::lexical_cast<string>(*index);
   
   if(!traces[interp_].count(map_name)) return; // variable not found
   
@@ -1205,10 +1188,10 @@ void interpreter::remove_trace(const string& VarName, unsigned int *index,
         }
         else { 
           if(m.second.get<1>() & flag & TCL_TRACE_READS)
-            Tcl_UntraceVar2(interp_, VarName.c_str(),  name2.c_str(), TCL_TRACE_READS, 
+            Tcl_UntraceVar2(interp_, VarName.c_str(), map_name.second.c_str(), TCL_TRACE_READS, 
                             trace_handler, &(m.second.get<2>()));
           if(m.second.get<1>() & flag & TCL_TRACE_WRITES)
-            Tcl_UntraceVar2(interp_, VarName.c_str(),  name2.c_str(), TCL_TRACE_WRITES, 
+            Tcl_UntraceVar2(interp_, VarName.c_str(), map_name.second.c_str(), TCL_TRACE_WRITES, 
                             trace_handler, &(m.second.get<2>()));
         }
       }
@@ -1233,10 +1216,10 @@ void interpreter::remove_trace(const string& VarName, unsigned int *index,
         }
         else { 
           if(traces[interp_][map_name][FunName].get<1>() & flag & TCL_TRACE_READS)
-            Tcl_UntraceVar2(interp_, VarName.c_str(),  name2.c_str(), TCL_TRACE_READS, 
+            Tcl_UntraceVar2(interp_, VarName.c_str(), map_name.second.c_str(), TCL_TRACE_READS, 
                             trace_handler, &(traces[interp_][map_name][FunName].get<2>()));
           if(traces[interp_][map_name][FunName].get<1>() & flag & TCL_TRACE_WRITES)
-            Tcl_UntraceVar2(interp_, VarName.c_str(),  name2.c_str(), TCL_TRACE_WRITES, 
+            Tcl_UntraceVar2(interp_, VarName.c_str(), map_name.second.c_str(), TCL_TRACE_WRITES, 
                             trace_handler, &(traces[interp_][map_name][FunName].get<2>()));
         }
     }

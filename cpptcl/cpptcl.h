@@ -53,6 +53,7 @@ extern "C" {
 #include <boost/preprocessor/arithmetic/sub.hpp>
 #include <boost/preprocessor/punctuation/comma_if.hpp>
 #include <boost/preprocessor/iteration/iterate.hpp>
+#include <boost/lexical_cast.hpp>
 
 namespace Tcl
 {
@@ -288,7 +289,7 @@ class interpreter
 public:
      interpreter();
      interpreter(Tcl_Interp *, bool owner = true);
-     ~interpreter();
+     virtual ~interpreter();
      
      void make_safe();
      
@@ -375,7 +376,9 @@ public:
      void pkg_provide(std::string const &name, std::string const &version);
 
      // helper for cleaning up callbacks in non-managed interpreters
-     static void clear_definitions(Tcl_Interp *);
+  // the original static is removed as I need call member function
+  // see no reason why this must be a static
+     void clear_definitions(Tcl_Interp *);
 
   // create a trace to a variable
   // a read trace using variable name
@@ -465,6 +468,48 @@ public:
     remove_trace(VarName, &index, "", TCL_TRACE_WRITES|TCL_TRACE_READS);
   }
 
+  // add Tcl variables
+  template<typename VT>
+  void set_variable(const std::string& VarName, VT const & var) {
+    Tcl_SetVar2Ex(interp_, VarName.c_str(), 
+                  NULL, 
+                  details::tcl_cast<VT>::to(interp_, var), 0);
+  }
+
+  template<typename VT>
+  void set_variable(const std::string& VarName, unsigned int index, VT const & var) {
+    Tcl_SetVar2Ex(interp_, VarName.c_str(), 
+                  boost::lexical_cast<std::string>(index).c_str(), 
+                  details::tcl_cast<VT>::to(interp_, var), 0);
+  }
+
+  // remove Tcl variables
+  void remove_variable(const std::string& VarName) {
+    Tcl_UnsetVar(interp_, VarName.c_str(), 0);
+  }
+  
+  void remove_variable(const std::string& VarName, unsigned int index) {
+    Tcl_UnsetVar2(interp_, VarName.c_str(), 
+                  boost::lexical_cast<std::string>(index).c_str(), 0);
+  }
+
+  // read Tcl variables
+  template<typename VT>
+  VT read_variable(const std::string& VarName) {
+    return 
+      details::tcl_cast<VT>::
+      from(interp_, Tcl_GetVar2Ex(interp_, VarName.c_str(), 
+                                  NULL, 0));
+  }
+  
+  template<typename VT>
+  VT read_variable(const std::string& VarName, unsigned int index) {
+    return 
+      details::tcl_cast<VT>::
+      from(interp_, Tcl_GetVar2Ex(interp_, VarName.c_str(),
+                                  boost::lexical_cast<std::string>(index).c_str(), 0));
+  }
+  
 
 private:
 

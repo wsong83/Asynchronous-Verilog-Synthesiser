@@ -44,7 +44,6 @@ public:
   
   virtual void invoke(Tcl_Interp *interp, ClientData cData,
                       const char * VarName, const char *index, int flag) {
-    interpreter i(interp, false);
     // fetch the variable
     Tcl_Obj *var = Tcl_GetVar2Ex(interp, VarName, index, flag);
     VT orig = tcl_cast<VT>::from(interp, var);
