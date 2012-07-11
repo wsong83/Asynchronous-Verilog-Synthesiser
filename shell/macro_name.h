@@ -31,14 +31,14 @@
 
 #include <string>
 
-#define MACRO_CURRENT_DESIGN           (std::string("current_design"    ))
-#define MACRO_CURRENT_DESIGN_VALUE     (std::string(""                  ))
-#define MACRO_DEFAULT_WORK_LIB         (std::string("work"              ))
-#define MACRO_LINK_LIB                 (std::string("link_library"      ))
-#define MACRO_SEARCH_PATH              (std::string("search_path"       ))
-#define MACRO_SEARCH_PATH_VALUE        (std::string("."                 ))
-#define MACRO_TARGET_LIB               (std::string("target_library"    ))
-#define MACRO_TMP_PATH                 (std::string("tmp_path"          ))
-#define MACRO_TMP_PATH_VALUE           (std::string("tmp"               ))
+#define MACRO_CURRENT_DESIGN           (std::string("current_design"       ))
+#define MACRO_CURRENT_DESIGN_VALUE     (std::string(""                     ))
+#define MACRO_DEFAULT_WORK_LIB         (std::string("work"                 ))
+#define MACRO_LINK_LIB                 (std::string("link_library"         ))
+#define MACRO_SEARCH_PATH              (std::string("search_path"          ))
+#define MACRO_SEARCH_PATH_VALUE        (std::vector<std::string>(1, "."    ))
+#define MACRO_TARGET_LIB               (std::string("target_library"       ))
+#define MACRO_TMP_PATH                 (std::string("tmp_path"             ))
+#define MACRO_TMP_PATH_VALUE           (std::string("tmp"                  ))
 
 #endif

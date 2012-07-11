@@ -683,6 +683,16 @@ object::object(string const &s)
      Tcl_IncrRefCount(obj_);
 }
 
+object::object(std::vector<std::string> const &v)
+     : interp_(0)
+{
+  std::vector<Tcl_Obj*> tv(v.size());
+  for(unsigned int i=0; i<v.size(); i++)
+    tv[i] = Tcl_NewStringObj(v[i].c_str(), -1);
+  obj_ = Tcl_NewListObj(v.size(), v.empty() ? NULL : &tv[0]);
+  Tcl_IncrRefCount(obj_);
+}
+
 object::object(Tcl_Obj *o, bool shared)
      : interp_(0)
 {
@@ -767,6 +777,11 @@ object & object::assign(string const &s)
 {
      Tcl_SetStringObj(obj_, s.data(), static_cast<int>(s.size()));
      return *this;
+}
+
+object & object::assign(std::vector<std::string> const &s) {
+  object(s).swap(*this);
+  return *this;
 }
 
 object & object::assign(object const &other)
@@ -871,6 +886,24 @@ char const * object::get<char const *>(interpreter &) const
 template <>
 string object::get<string>(interpreter &) const {
   return get_string();
+}
+
+template <>
+vector<string> object::get<vector<string> >(interpreter &i) const {
+  int len;
+  int res = Tcl_ListObjLength(i.get(), obj_, &len);
+  
+  if (res != TCL_OK) throw tcl_error(i.get());
+
+  vector<string> rv(len);
+  for(int index = 0; index < len; index++) {
+    Tcl_Obj *o;
+    Tcl_ListObjIndex(i.get(), obj_, index, &o);
+    rv[index] = string(Tcl_GetString(o));
+  }
+
+  return rv;
+
 }
 
 string object::get_string() const {
@@ -1345,6 +1378,30 @@ char const * tcl_cast<char const *>::from(Tcl_Interp *, Tcl_Obj *obj)
 
 Tcl_Obj * tcl_cast<char const *>::to(Tcl_Interp *, char const * const & v) {
   return Tcl_NewStringObj(v, -1);
+}
+
+vector<string> tcl_cast<vector<string> >::from(Tcl_Interp * interp, Tcl_Obj *obj)
+{
+  int len;
+  int res = Tcl_ListObjLength(interp, obj, &len);
+  
+  if (res != TCL_OK) throw tcl_error(interp);
+
+  vector<string> rv(len);
+  for(int index = 0; index < len; index++) {
+    Tcl_Obj *o;
+    Tcl_ListObjIndex(interp, obj, index, &o);
+    rv[index] = string(Tcl_GetString(o));
+  }
+
+  return rv;
+}
+
+Tcl_Obj * tcl_cast<vector<string> >::to(Tcl_Interp *, vector<string> const & v) {
+  std::vector<Tcl_Obj*> tv(v.size());
+  for(unsigned int i=0; i<v.size(); i++)
+    tv[i] = Tcl_NewStringObj(v[i].c_str(), -1);
+  return Tcl_NewListObj(v.size(), v.empty() ? NULL : &tv[0]);
 }
 
 object tcl_cast<object>::from(Tcl_Interp *interp, Tcl_Obj *obj)

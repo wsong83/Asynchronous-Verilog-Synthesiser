@@ -32,14 +32,18 @@ static bool cmd_create_tmp_path(const path& p, Env * pEnv, bool init = false ) {
   try {
     if(!exists(p)) {
       if(!create_directory(p)) {
-        throw "Error! Fail to create the temporary work directory \"" + p.string() + "\".";
+        throw Tcl::tcl_error("Error! Fail to create the temporary work directory \"" + p.string() + "\".");
       }
     } else if(!init && !is_empty(p)) {
-      throw "Error! The temporary work directory \"" + p.string() + "\" already exists and is not empty.";
-    }
-  } catch (std::exception e) {
+      throw Tcl::tcl_error("Error! The temporary work directory \"" + p.string() + "\" already exists and is not empty.");
+    } else if(init)
+      remove_all(p);
+  } catch (Tcl::tcl_error& e) {
     if(init) throw e;           // if it is init, no old tmp path exist, just throw
-    pEnv->errOs << e.what() << std::endl;
+    pEnv->stdOs << "[Tcl] " << e.what() << std::endl;
+    return false;
+  } catch (const std::exception& e) {
+    pEnv->errOs << "[OS Exception] " << e.what() << endl;
     return false;
   }
   return true;
@@ -62,9 +66,9 @@ static string CMDHook_TMP_PATH(const string& new_path, Env * pEnv ) {
     if(exists(tmp_old_path)) {
       remove_all(tmp_old_path);
     }
-  } catch (std::exception e) {
+  } catch (std::exception& e) {
     pEnv->errOs << e.what() << std::endl;
-    pEnv->errOs << "Error! Fail to remove the current temporary work directory\"" + old_path + "\"." << std::endl;
+    pEnv->errOs << "[Tcl] Error! Fail to remove the current temporary work directory\"" + old_path + "\"." << std::endl;
     remove_all(tmp_new_path);
     return old_path;
   }

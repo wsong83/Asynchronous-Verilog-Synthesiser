@@ -146,6 +146,13 @@ struct tcl_cast<char const *>
 };
 
 template <>
+struct tcl_cast<std::vector<std::string> >
+{
+     static std::vector<std::string> from(Tcl_Interp *, Tcl_Obj *);
+     static Tcl_Obj * to(Tcl_Interp *, std::vector<std::string> const &);
+};
+
+template <>
 struct tcl_cast<object>
 {
      static object from(Tcl_Interp *, Tcl_Obj *);

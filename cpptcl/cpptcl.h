@@ -573,7 +573,7 @@ public:
      explicit object(long long i);
      explicit object(char const *s);        // string construction
      explicit object(std::string const &s); // string construction
-
+     explicit object(std::vector<std::string> const &s);
      explicit object(Tcl_Obj *o, bool shared = false);
 
      object(object const &other, bool shared = false);
@@ -603,6 +603,7 @@ public:
      object & assign(long long i);
      object & assign(char const *s);        // string assignment
      object & assign(std::string const &s); // string assignment
+     object & assign(std::vector<std::string> const &s);
      object & assign(object const &o);
      object & assign(Tcl_Obj *o);
 
@@ -613,6 +614,7 @@ public:
      object & operator=(long long i)          { return assign(i); }
      object & operator=(char const *s)        { return assign(s); }
      object & operator=(std::string const &s) { return assign(s); }
+     object & operator=(std::vector<std::string> const &s) { return assign(s); }
 
      object & operator=(object const &o)      { return assign(o); }
      object & swap(object &other);
@@ -696,7 +698,9 @@ template <> long long    object::get<long long>(interpreter &i) const;
 template <> char const * object::get<char const *>(interpreter &i) const;
 template <> std::string  object::get<std::string>(interpreter &i) const;
 template <>
-std::vector<char> object::get<std::vector<char> >(interpreter &i) const;
+std::vector<char>        object::get<std::vector<char> >(interpreter &i) const;
+template <>
+std::vector<std::string> object::get<std::vector<std::string> >(interpreter &i) const;
 
 // the InputIterator should give object& or Tcl_Obj* when dereferenced
 template <class InputIterator>

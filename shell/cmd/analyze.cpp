@@ -32,6 +32,7 @@
 #include "analyze.h"
 #include "shell/env.h"
 #include "shell/cmd_utility.h"
+#include "shell/cmd_tcl_interp.h"
 #include "preproc/preproc.h"
 #include "shell/macro_name.h"
 #include "averilog/averilog_util.h"
@@ -121,7 +122,7 @@ bool shell::CMD::CMDAnalyze::exec (const Tcl::object& tclObj, Env * pEnv){
       if(!exists(fname)) {
         bool m_exist = false;
         BOOST_FOREACH(const string& sit, 
-                      interp.read_variable<list<string> >(MACRO_SEARCH_PATH)) {
+                      interp.read_variable<vector<string> >(MACRO_SEARCH_PATH)) {
           fname = sit + "/" + it;
           if(exists(fname)) { m_exist = true; break;}
         }
@@ -160,7 +161,7 @@ bool shell::CMD::CMDAnalyze::exec (const Tcl::object& tclObj, Env * pEnv){
 
       // set the include paths
       BOOST_FOREACH(const string& iit, 
-                    interp.read_variable<list<string> >(MACRO_SEARCH_PATH))
+                    interp.read_variable<vector<string> >(MACRO_SEARCH_PATH))
         preprocp->add_incr(iit);
       
       // set the output file

@@ -1,5 +1,7 @@
 C++/Tcl - a C++ library for interoperability between C++ and Tcl.
 
+Version 1.1.4.001 July 9, 2012
+
 Copyright (C) 2012,      Wei Song                     <wsong83@gmail.com>
 Copyright (C) 2004-2006, Maciej Sobczak             (the original author)
 
@@ -8,6 +10,7 @@ Copyright (C) 2004-2006, Maciej Sobczak             (the original author)
 You should see the following directories here:
 
 - doc      - contains a short documentation for the library
+             or see http://wsong83.github.com/cpptcl
 - examples - some simple examples to show C++/Tcl basics
 - test     - tests used for development - use them for regression testing
              if you want to modify the library

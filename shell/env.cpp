@@ -123,8 +123,9 @@ bool shell::Env::initialise() {
   i.create_alias("quit", i, "exit");
 
   //   add the commands defined for AVS
-  i.def("echo", shell::CMD::CMDEcho::exec, this, Tcl::variadic());
-  i.def("help", shell::CMD::CMDHelp::exec, this, Tcl::variadic());
+  i.def("analyze",   shell::CMD::CMDAnalyze::exec,   this, Tcl::variadic());
+  i.def("echo",      shell::CMD::CMDEcho::exec,      this, Tcl::variadic());
+  i.def("help",      shell::CMD::CMDHelp::exec,      this, Tcl::variadic());
 
   // show the welcome message
   show_cmd(true);
