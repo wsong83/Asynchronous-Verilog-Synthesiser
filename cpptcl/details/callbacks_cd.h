@@ -48,7 +48,7 @@ public:
      callback1_cd(functor_type f) : f_(f) {}
      
      virtual void invoke(Tcl_Interp *interp,
-                         int objc, Tcl_Obj * CONST objv[],
+                         int objc, Tcl_Obj * CONST [],
                          policies const &, ClientData cd)
      {
           check_params_no(objc, 1);

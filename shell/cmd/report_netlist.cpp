@@ -26,10 +26,10 @@
  *
  */
 
-#include <list>
-#include <vector>
-#include <string>
 #include "report_netlist.h"
+#include "shell/env.h"
+#include "shell/macro_name.h"
+#include "shell/cmd_tcl_interp.h"
 
 using std::string;
 using std::vector;
@@ -58,8 +58,11 @@ void shell::CMD::CMDReportNetlist::help(Env& gEnv) {
   gEnv.stdOs << endl;
 }
 
-bool shell::CMD::CMDReportNetlist::exec( Env& gEnv, vector<string>& arg) {
+bool shell::CMD::CMDReportNetlist::exec(const Tcl::object& tclObj, Env * pEnv) {
   po::variables_map vm;
+  Tcl::interpreter& interp = pEnv->tclInterp->tcli;
+  Env &gEnv = *pEnv;
+  vector<string> arg = tclObj.get<vector<string> >(interp);
 
   try {
     store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);

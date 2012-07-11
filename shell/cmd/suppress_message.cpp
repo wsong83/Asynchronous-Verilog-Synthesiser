@@ -27,6 +27,9 @@
  */
 
 #include "suppress_message.h"
+#include "shell/env.h"
+#include "shell/macro_name.h"
+#include "shell/cmd_tcl_interp.h"
 #include <boost/foreach.hpp>
 
 using std::string;
@@ -60,9 +63,11 @@ void shell::CMD::CMDSuppressMessage::help(Env& gEnv) {
   gEnv.stdOs << cmd_name_fix(arg_opt) << endl;
 }
 
-bool shell::CMD::CMDSuppressMessage::exec ( Env& gEnv, vector<string>& arg){
-
+bool shell::CMD::CMDSuppressMessage::exec (const Tcl::object& tclObj, Env * pEnv){
   po::variables_map vm;
+  Tcl::interpreter& interp = pEnv->tclInterp->tcli;
+  Env &gEnv = *pEnv;
+  vector<string> arg = tclObj.get<vector<string> >(interp);
 
   try {
     store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);

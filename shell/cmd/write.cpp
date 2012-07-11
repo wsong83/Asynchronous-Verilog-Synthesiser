@@ -27,6 +27,9 @@
  */
 
 #include "write.h"
+#include "shell/env.h"
+#include "shell/macro_name.h"
+#include "shell/cmd_tcl_interp.h"
 #include "shell/macro_name.h"
 
 #define BOOST_FILESYSTEM_VERSION 3
@@ -74,9 +77,11 @@ void shell::CMD::CMDWrite::help(Env& gEnv) {
   gEnv.stdOs << "                        design)." << endl << endl;
 }
 
-bool shell::CMD::CMDWrite::exec ( Env& gEnv, vector<string>& arg){
-  
+bool shell::CMD::CMDWrite::exec ( const Tcl::object& tclObj, Env * pEnv){
   po::variables_map vm;
+  Tcl::interpreter& interp = pEnv->tclInterp->tcli;
+  Env &gEnv = *pEnv;
+  vector<string> arg = tclObj.get<vector<string> >(interp);
 
   try {
     store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);

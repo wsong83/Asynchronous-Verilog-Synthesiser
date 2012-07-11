@@ -41,9 +41,14 @@
 
 // the commands
 #include "cmd/analyze.h"
+#include "cmd/current_design.h"
 #include "cmd/echo.h"
+#include "cmd/elaborate.h"
 #include "cmd/exit.h"
 #include "cmd/help.h"
+#include "cmd/report_netlist.h"
+#include "cmd/suppress_message.h"
+#include "cmd/write.h"
 
 #include "macro_name.h"
 
@@ -117,15 +122,20 @@ bool shell::Env::initialise() {
   i.def_write_trace(MACRO_CURRENT_DESIGN, MACRO_CURRENT_DESIGN, 
                     CMDHook_CURRENT_DESIGN, this);
 
-  // overload the tcl exit command
-  i.def("exit", shell::CMD::CMDExit::exec, this, Tcl::variadic());
+  // add the commands defined for AVS
+  i.def("analyze",        shell::CMD::CMDAnalyze::exec,        this, Tcl::variadic());
+  i.def("current_design", shell::CMD::CMDCurrentDesign::exec,  this, Tcl::variadic());
+  i.def("echo",           shell::CMD::CMDEcho::exec,           this, Tcl::variadic());
+  i.def("elaborate",      shell::CMD::CMDElaborate::exec,      this, Tcl::variadic());
+  i.def("exit",           shell::CMD::CMDExit::exec,           this, Tcl::variadic());
+  i.def("help",           shell::CMD::CMDHelp::exec,           this, Tcl::variadic());
+  i.def("report_netlist", shell::CMD::CMDReportNetlist::exec,  this, Tcl::variadic());
+  i.def("suppress_message", 
+                          shell::CMD::CMDSuppressMessage::exec,this, Tcl::variadic());
+  i.def("write",          shell::CMD::CMDWrite::exec,          this, Tcl::variadic());
+
   // make "quit" an alias of "exit"
   i.create_alias("quit", i, "exit");
-
-  //   add the commands defined for AVS
-  i.def("analyze",   shell::CMD::CMDAnalyze::exec,   this, Tcl::variadic());
-  i.def("echo",      shell::CMD::CMDEcho::exec,      this, Tcl::variadic());
-  i.def("help",      shell::CMD::CMDHelp::exec,      this, Tcl::variadic());
 
   // show the welcome message
   show_cmd(true);

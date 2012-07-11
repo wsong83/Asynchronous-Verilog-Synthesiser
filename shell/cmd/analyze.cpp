@@ -31,7 +31,6 @@
 #include <boost/filesystem.hpp>
 #include "analyze.h"
 #include "shell/env.h"
-#include "shell/cmd_utility.h"
 #include "shell/cmd_tcl_interp.h"
 #include "preproc/preproc.h"
 #include "shell/macro_name.h"
@@ -82,9 +81,8 @@ void shell::CMD::CMDAnalyze::help(Env& gEnv) {
 bool shell::CMD::CMDAnalyze::exec (const Tcl::object& tclObj, Env * pEnv){
   po::variables_map vm;
   Env &gEnv = *pEnv;
-  vector<string> arg = tcl_argu_parse(tclObj);
-  string rv;
   Tcl::interpreter& interp = gEnv.tclInterp->tcli;
+  vector<string> arg = tclObj.get<vector<string> >(interp);
 
   try {
     store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);

@@ -28,7 +28,7 @@
 
 #include "exit.h"
 #include "shell/env.h"
-#include "shell/cmd_utility.h"
+#include "shell/cmd_tcl_interp.h"
 
 using std::vector;
 using std::endl;
@@ -51,7 +51,7 @@ void shell::CMD::CMDExit::help(Env& gEnv) {
 void shell::CMD::CMDExit::exec(const Tcl::object& tclObj, Env * pEnv) {
   po::variables_map vm;
   Env& gEnv = *pEnv;
-  vector<string> arg = tcl_argu_parse(tclObj);
+  vector<string> arg = tclObj.get<vector<string> >(gEnv.tclInterp->tcli);
   string rv;
 
   try {

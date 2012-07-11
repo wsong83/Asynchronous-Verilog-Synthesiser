@@ -28,6 +28,8 @@
 
 #include "elaborate.h"
 #include "shell/macro_name.h"
+#include "shell/env.h"
+#include "shell/cmd_tcl_interp.h"
 #include <boost/regex.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
@@ -107,9 +109,11 @@ namespace shell{
   }
 }
 
-bool shell::CMD::CMDElaborate::exec ( Env& gEnv, vector<string>& arg){
-  
+bool shell::CMD::CMDElaborate::exec (const Tcl::object& tclObj, Env * pEnv){
   po::variables_map vm;
+  Env &gEnv = *pEnv;
+  Tcl::interpreter& interp = gEnv.tclInterp->tcli;
+  vector<string> arg = tclObj.get<vector<string> >(interp);
 
   try {
     store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
@@ -221,9 +225,8 @@ bool shell::CMD::CMDElaborate::exec ( Env& gEnv, vector<string>& arg){
       });
 
     //set current design to this design
-    vector<string> dn;
-    dn.push_back(mDesign->name.name);
-    (*gEnv.macroDB[MACRO_CURRENT_DESIGN].hook)(gEnv, gEnv.macroDB[MACRO_CURRENT_DESIGN], dn);
+    interp.set_variable(MACRO_CURRENT_DESIGN, mDesign->name.name);
+    gEnv.macroDB[MACRO_CURRENT_DESIGN] = interp.read_variable<string>(MACRO_CURRENT_DESIGN);
     return true;
   }
 

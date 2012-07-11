@@ -29,15 +29,16 @@
 #ifndef AV_CMD_CURRENT_DESIGN_
 #define AV_CMD_CURRENT_DESIGN_
 
-#include "shell/env.h"
 #include "cmd_define.h"
+#include "cpptcl.h"
 
 namespace shell {
+  class Env;
   namespace CMD {
 
     class CMDCurrentDesign {
     public:
-      static bool exec (Env&, std::vector<std::string>&);
+      static void exec (const Tcl::object&, Env *);
       static void help (Env& );
 
       static po::options_description cmd_opt;
