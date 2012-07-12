@@ -20,42 +20,32 @@
  */
 
 /* 
- * Utilities for Tcl command line env.
- * 05/07/2012   Wei Song
+ * shell command
+ * 12/07/2012   Wei Song
  *
  *
  */
 
-#ifndef _CMD_UTILITY_H_
-#define _CMD_UTILITY_H_
+#ifndef AV_CMD_SHELL_
+#define AV_CMD_SHELL_
 
-#include <vector>
-#include <list>
-#include <string>
+#include "cmd_define.h"
 #include "cpptcl.h"
 
 namespace shell {
+  class Env;
+
   namespace CMD {
-    // break string into a c++ string vector
-    extern std::vector<std::string> tcl_argu_parse(const Tcl::object&);
-    
-    // break one level of Tcl list { ... }
-    extern std::list<std::string> tcl_list_break(const std::string&);
 
-    // break all levels of Tcl list { ... {  ... }  ... { ... }  }
-    extern std::list<std::string> tcl_list_break_all(const std::string&);
+    class CMDShell {
+    public:
+      static std::string exec (const Tcl::object&, Env *);
+      static void help (Env& );
 
-    // true if it is a list
-    extern bool is_tcl_list(const std::string&);
-
-    // excute a shell command
-    extern std::string shell_exec(const std::string&);
-
+      static po::options_description cmd_opt;
+      static po::positional_options_description cmd_position;
+    };
   }
 }
 
-#endif /* _CMD_UTILITY_H_ */
-
-// Local Variables:
-// mode: c++
-// End:
+#endif

@@ -34,6 +34,10 @@
 
 #include <iostream>
 
+extern "C" {
+#include <stdio.h>
+}
+
 using std::string;
 using std::vector;
 using std::list;
@@ -146,6 +150,23 @@ list<string> shell::CMD::tcl_list_break_all(const string& org_str) {
   return rv;
 }
 
-bool shell::CMD::is_tcl_list(const std::string& str) {
+bool shell::CMD::is_tcl_list(const string& str) {
   return str.size() >= 2 && str[0] == '{' && str[str.size()-1] == '}';
 }
+
+#define CMD_SHELL_EXEC_READ_BUF_SIZE 1024
+string shell::CMD::shell_exec(const string& commands) {
+  char buffer[CMD_SHELL_EXEC_READ_BUF_SIZE];
+  string rv;
+  FILE *cmd_rv = popen(commands.c_str(), "r");
+  if(cmd_rv != NULL) {
+    while(!feof(cmd_rv)) {
+      if(fgets(buffer, CMD_SHELL_EXEC_READ_BUF_SIZE, cmd_rv) != NULL) {
+        rv += string(buffer);
+      } else break;
+    }
+  }
+  pclose(cmd_rv);
+  return rv;
+}
+#undef CMD_SHELL_EXEC_READ_BUF_SIZE

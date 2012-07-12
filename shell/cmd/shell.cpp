@@ -20,16 +20,16 @@
  */
 
 /* 
- * echo command
- * 21/05/2012   Wei Song
+ * shell command
+ * 12/07/2012   Wei Song
  *
  *
  */
 
-#include <list>
 #include <string>
-#include "echo.h"
+#include "shell.h"
 #include "shell/env.h"
+#include "shell/cmd_tcl_interp.h"
 #include "shell/cmd_utility.h"
 #include <boost/foreach.hpp>
 
@@ -39,46 +39,39 @@ using std::string;
 using namespace shell;
 using namespace shell::CMD;
 
-po::options_description shell::CMD::CMDEcho::cmd_opt;
+po::options_description shell::CMD::CMDShell::cmd_opt;
 static po::options_description_easy_init dummy_cmd_opt =
-  CMDEcho::cmd_opt.add_options()
+  CMDShell::cmd_opt.add_options()
   ("help",     "usage information.")
-  ("varStr", po::value<vector<string> >()->composing(), "variable value.")
+  ("command",  po::value<vector<string> >()->composing(), "shell command.")
   ;
 
-po::positional_options_description shell::CMD::CMDEcho::cmd_position;
+po::positional_options_description shell::CMD::CMDShell::cmd_position;
 static po::positional_options_description const dummy_position = 
-  CMDEcho::cmd_position.add("varStr", -1);
+  CMDShell::cmd_position.add("varStr", -1);
 
 
-void shell::CMD::CMDEcho::help(Env& gEnv) {
-  gEnv.stdOs << "echo: display a string with variables." << endl;
-  gEnv.stdOs << "    echo Strings" << endl;
+void shell::CMD::CMDShell::help(Env& gEnv) {
+  gEnv.stdOs << "shell: run a shell command." << endl;
+  gEnv.stdOs << "    shell command" << endl;
   gEnv.stdOs << "Options:" << endl;
   gEnv.stdOs << "   -help                usage information." << endl;
   gEnv.stdOs << endl;
 }
 
-string shell::CMD::CMDEcho::exec(const Tcl::object& tclObj, Env * pEnv) {
-  po::variables_map vm;
+string shell::CMD::CMDShell::exec(const Tcl::object& tclObj, Env * pEnv) {
   Env &gEnv = *pEnv;
-  vector<string> arg = tcl_argu_parse(tclObj);
-  string rv;
-
-  try {
-    store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
-    notify(vm);
-  } catch (std::exception& e) {
-    gEnv.stdOs << "Error: Wrong command syntax error! See usage by echo -help." << endl;
-    return rv;
-  }
-
-  if(vm.count("help")) {        // print help information
-    shell::CMD::CMDEcho::help(gEnv);
-    return rv;
+  vector<string> arg = tclObj.get<vector<string> >(gEnv.tclInterp->tcli);
+  
+  if(arg.size()>0 && arg[0] == "-help") {        // print help information
+    shell::CMD::CMDShell::help(gEnv);
+    return "";
   } else {
-    rv = tclObj.get_string();
-    if(is_tcl_list(rv)) rv = rv.substr(1, rv.size()-2);
+    string command = tclObj.get_string();
+    if(is_tcl_list(command)) command = command.substr(1, command.size()-2);
+    string rv = shell_exec(command);
+    if(rv.size() > 0 && rv[rv.size()-1] == '\n')
+      rv.erase(rv.size()-1);
     return rv;
   }
 }

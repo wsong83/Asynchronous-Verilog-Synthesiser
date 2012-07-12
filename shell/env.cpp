@@ -47,6 +47,7 @@
 #include "cmd/exit.h"
 #include "cmd/help.h"
 #include "cmd/report_netlist.h"
+#include "cmd/shell.h"
 #include "cmd/suppress_message.h"
 #include "cmd/write.h"
 
@@ -130,6 +131,7 @@ bool shell::Env::initialise() {
   i.def("exit",           shell::CMD::CMDExit::exec,           this, Tcl::variadic());
   i.def("help",           shell::CMD::CMDHelp::exec,           this, Tcl::variadic());
   i.def("report_netlist", shell::CMD::CMDReportNetlist::exec,  this, Tcl::variadic());
+  i.def("shell",          shell::CMD::CMDShell::exec,          this, Tcl::variadic());
   i.def("suppress_message", 
                           shell::CMD::CMDSuppressMessage::exec,this, Tcl::variadic());
   i.def("write",          shell::CMD::CMDWrite::exec,          this, Tcl::variadic());
