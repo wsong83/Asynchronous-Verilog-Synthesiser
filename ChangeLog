@@ -1,8 +1,12 @@
-##### Fri 10/07/2012
+##### Thu 12/07/2012
+* Merge dev back to master.
+* Re-write some netlist::Number operations for more general supports of Number operation.
+
+##### Wed 11/07/2012
 * merge brach tcl to dev.
 * Reimplement all commands using the new C++/Tcl library and the AVS shell env goes back to normal.
 
-##### Fri 10/07/2012
+##### Tue 10/07/2012
 * Expand the C++/Tcl library with extra support of user data, data type vector<string>, read & write Tcl variables.
 
 ##### Fri 06/07/2012

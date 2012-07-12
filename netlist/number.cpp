@@ -28,6 +28,7 @@
 
 #include <cctype>
 #include <algorithm>
+#include <boost/foreach.hpp>
 #include "component.h"
 
 using namespace netlist;
@@ -395,6 +396,57 @@ std::string netlist::Number::trim_zeros(const std::string& str){
   }
 }
 
+Number netlist::op_uor (const Number& lhs) {
+  if(lhs.is_true()) return Number("1");
+  if(lhs.is_false()) return Number("0");
+  return Number("x");
+}
+
+Number netlist::op_uand (const Number& lhs) {
+  string lstr = Number::trim_zeros(lhs.get_txt_value());
+  if(lhs.get_length() > lstr.size()) return Number("0");
+  if(lhs.is_x()) return Number("x");
+  if(lstr.size() > 0 && string::npos == lstr.find('0')) return  Number("1");
+  else return Number("0");
+}
+
+Number netlist::op_uxor (const Number& lhs) {
+  string lstr = Number::trim_zeros(lhs.get_txt_value());
+  if(lstr.empty()) return Number("0");
+  if(lstr.size() == 1) return Number(lstr);
+  else {
+    char b = '0';
+    BOOST_FOREACH(const char& m, lstr) {
+      if(m == '1') {
+        if(b == '0') b = '1';
+        if(b == '1') b = '0';
+      } else if(m != '0') {
+        b = 'x';
+        break;
+      }
+    }
+    return Number(string(1, b));
+  }
+}
+
+Number netlist::operator! (const Number& lhs) {
+  if(lhs.is_true()) return Number("0");
+  if(lhs.is_false()) return Number("1");
+  return Number("x");
+}
+
+Number netlist::operator~ (const Number& lhs) {
+  string lstr = lhs.get_txt_value();
+  if(lstr.size() < lhs.get_length())
+    lstr.insert(lstr.begin(), lhs.get_length() - lstr.size(), '0');
+  BOOST_FOREACH(char& m, lstr) {
+    if(m == '0') m = '1';
+    else if(m == '1') m = '0';
+    else m = 'x';
+  }
+  return Number(lstr);
+}
+
 Number netlist::operator* (const Number& lhs, const Number& rhs) {
   assert(lhs.is_valuable() && rhs.is_valuable());
   return Number(lhs.get_value() * rhs.get_value());
@@ -406,6 +458,78 @@ Number netlist::operator+ (const Number& lhs, const Number& rhs) {
 
 Number netlist::operator- (const Number& lhs, const Number& rhs) {
   return lhs.minus(rhs);
+}
+
+Number netlist::operator& (const Number& lhs, const Number& rhs) {
+  string lstr = Number::trim_zeros(lhs.get_txt_value());
+  string rstr = Number::trim_zeros(rhs.get_txt_value());
+  if(lstr.size() > rstr.size())
+    rstr.insert(rstr.begin(), lstr.size() - rstr.size(), '0');
+  else 
+    lstr.insert(lstr.begin(), rstr.size() - lstr.size(), '0');
+  string rv(lstr.size(), '0');
+  for(unsigned int i=0; i<lstr.size(); i++) {
+    if(lstr[i] == '1' && rstr[i] == '1') rv[i] = '1';
+    else if(lstr[i] == '0' || rstr[i] == '0') rv[i] = '0';
+    else rv[i] = 'x';
+  }
+  return Number(rv);
+}
+  
+Number netlist::operator| (const Number& lhs, const Number& rhs) {
+  string lstr = Number::trim_zeros(lhs.get_txt_value());
+  string rstr = Number::trim_zeros(rhs.get_txt_value());
+  if(lstr.size() > rstr.size())
+    rstr.insert(rstr.begin(), lstr.size() - rstr.size(), '0');
+  else 
+    lstr.insert(lstr.begin(), rstr.size() - lstr.size(), '0');
+  string rv(lstr.size(), '0');
+  for(unsigned int i=0; i<lstr.size(); i++) {
+    if(lstr[i] == '0' && rstr[i] == '0') rv[i] = '0';
+    else if(lstr[i] == '1' || rstr[i] == '1') rv[i] = '1';
+    else rv[i] = 'x';
+  }
+  return Number(rv);
+}
+  
+
+Number netlist::operator^ (const Number& lhs, const Number& rhs) {
+  string lstr = Number::trim_zeros(lhs.get_txt_value());
+  string rstr = Number::trim_zeros(rhs.get_txt_value());
+  if(lstr.size() > rstr.size())
+    rstr.insert(rstr.begin(), lstr.size() - rstr.size(), '0');
+  else 
+    lstr.insert(lstr.begin(), rstr.size() - lstr.size(), '0');
+  string rv(lstr.size(), '0');
+  for(unsigned int i=0; i<lstr.size(); i++) {
+    if(lstr[i] == rstr[i]) {
+      if(rstr[i] == '0' || rstr[i] == '1') rv[i] = '0';
+      else rv[i] = 'x';
+    } else if(lstr[i] != rstr[i]) {
+      if((rstr[i] == '0' || rstr[i] == '1') && (lstr[i] == '0' || lstr[i] == '1'))
+        rv[i] = '1';
+      else rv[i] = 'x';
+    }
+  }
+  return Number(rv);
+}
+
+Number netlist::operator&& (const Number& lhs, const Number& rhs) {
+  if(lhs.is_false() || rhs.is_false() )
+    return Number("0");
+  else if(lhs.is_x() || rhs.is_x() )
+    return Number("x");
+  else
+    return Number("1");
+}
+
+Number netlist::operator|| (const Number& lhs, const Number& rhs) {
+  if(lhs.is_true() || rhs.is_true() )
+    return Number("1");
+  else if(lhs.is_x() || rhs.is_x() )
+    return Number("x");
+  else
+    return Number("0");
 }
 
 bool netlist::operator== (const Number& lhs, const Number& rhs) {
@@ -449,7 +573,7 @@ bool netlist::operator>= (const Number& lhs, const Number& rhs) {
 
 bool netlist::case_equal(const Number& lhs, const Number& rhs) {
   return (Number::trim_zeros(lhs.get_txt_value()) == Number::trim_zeros(rhs.get_txt_value()));
-}  
+}
 
 Number netlist::operator<< (const Number& lhs, int rhs) {
   Number dd(lhs);

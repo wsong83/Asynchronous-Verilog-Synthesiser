@@ -314,19 +314,7 @@ void netlist::execute_UNeg(list<shared_ptr<Operation> >& d1) {
 // unary !
 void netlist::execute_ULRev(list<shared_ptr<Operation> >& d1) {
   if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
-    string tval = d1.front()->get_num().get_txt_value();
-    bool one = false;
-    bool x = false;
-    for(unsigned int i=0; i<tval.size(); i++) {
-      one = tval[i] == '1' ? true : one;
-      x = (tval[i] == 'x' || tval[i] == 'z') ? true : x;
-    }
-    if(one)
-      d1.front()->get_num() = Number(0);
-    else if(x)
-      d1.front()->get_num() = Number("x");
-    else
-      d1.front()->get_num() = Number(1);
+    d1.front()->get_num() = !(d1.front()->get_num());
   } else {
     d1.push_front(shared_ptr<Operation>(new Operation(Operation::oULRev)));
   }
@@ -335,17 +323,7 @@ void netlist::execute_ULRev(list<shared_ptr<Operation> >& d1) {
 // unary ~
 void netlist::execute_URev(list<shared_ptr<Operation> >& d1) {
   if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
-    string tval = d1.front()->get_num().get_txt_value();
-    for(unsigned int i=0; i<tval.size(); i++) {
-      switch(tval[i]) {
-      case '0': tval[i] = '1'; break;
-      case '1': tval[i] = '0'; break;
-      case 'x':
-      case 'z': tval[i] = 'x'; break;
-      default: assert(0 == "unkown value");
-      } 
-    }
-    d1.front()->get_num() = Number(tval);
+    d1.front()->get_num() = ~(d1.front()->get_num());
   } else {
     d1.push_front(shared_ptr<Operation>(new Operation(Operation::oURev)));
   }
@@ -354,18 +332,7 @@ void netlist::execute_URev(list<shared_ptr<Operation> >& d1) {
 // unary &
 void netlist::execute_UAnd(list<shared_ptr<Operation> >& d1) {
   if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
-    string tval = d1.front()->get_num().get_txt_value();
-    char m = '1';
-    for(unsigned int i=0; i<tval.size(); i++) {
-      switch(tval[i]) {
-      case '0': m = '0'; break;
-      case '1': break;
-      case 'x':
-      case 'z': if (m == '1') m = 'x'; break;
-      default: assert(0 == "unkown value");
-      } 
-    }
-    d1.front()->get_num() = Number(string(1, m));
+    d1.front()->get_num() = op_uand(d1.front()->get_num());
   } else {
     d1.push_front(shared_ptr<Operation>(new Operation(Operation::oUAnd)));
   }
@@ -374,19 +341,7 @@ void netlist::execute_UAnd(list<shared_ptr<Operation> >& d1) {
 // unary ~&
 void netlist::execute_UNand(list<shared_ptr<Operation> >& d1) {
   if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
-    string tval = d1.front()->get_num().get_txt_value();
-    char m = '1';
-    for(unsigned int i=0; i<tval.size(); i++) {
-      switch(tval[i]) {
-      case '0': m = '0'; break;
-      case '1': break;
-      case 'x':
-      case 'z': if(m == '1') m = 'x'; break;
-      default: assert(0 == "unkown value");
-      } 
-    }
-    if(m == '0') m = '1'; else if(m == '1') m = '0';
-    d1.front()->get_num() = Number(string(1, m));
+    d1.front()->get_num() = ~(op_uand(d1.front()->get_num()));
   } else {
     d1.push_front( shared_ptr<Operation>(new Operation(Operation::oUNand)));
   }
@@ -395,18 +350,7 @@ void netlist::execute_UNand(list<shared_ptr<Operation> >& d1) {
 // unary |
 void netlist::execute_UOr(list<shared_ptr<Operation> >& d1) {
   if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
-    string tval = d1.front()->get_num().get_txt_value();
-    char m = '0';
-    for(unsigned int i=0; i<tval.size(); i++) {
-      switch(tval[i]) {
-      case '0': break;
-      case '1': m = '1'; break;
-      case 'x':
-      case 'z': if(m == '0') m = 'x'; break;
-      default: assert(0 == "unkown value");
-      } 
-    }
-    d1.front()->get_num() = Number(string(1, m));
+    d1.front()->get_num() = op_uor(d1.front()->get_num());
   } else {
     d1.push_front(shared_ptr<Operation>( new Operation(Operation::oUOr)));
   }
@@ -415,19 +359,7 @@ void netlist::execute_UOr(list<shared_ptr<Operation> >& d1) {
 // unary ~|
 void netlist::execute_UNor(list<shared_ptr<Operation> >& d1) {
   if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
-    string tval = d1.front()->get_num().get_txt_value();
-    char m = '0';
-    for(unsigned int i=0; i<tval.size(); i++) {
-      switch(tval[i]) {
-      case '0': break;
-      case '1': m = '1'; break;
-      case 'x':
-      case 'z': if(m == '0') m = 'x'; break;
-      default: assert(0 == "unkown value");
-      } 
-    }
-    if(m == '0') m = '1'; else if(m == '1') m = '0';
-    d1.front()->get_num() = Number(string(1, m));
+    d1.front()->get_num() = ~op_uor(d1.front()->get_num());
   } else {
     d1.push_front( shared_ptr<Operation>(new Operation(Operation::oUNor)));
   }
@@ -436,18 +368,7 @@ void netlist::execute_UNor(list<shared_ptr<Operation> >& d1) {
 // unary ^
 void netlist::execute_UXor(list<shared_ptr<Operation> >& d1) {
   if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
-    string tval = d1.front()->get_num().get_txt_value();
-    char m = tval[0];
-    for(unsigned int i=1; i<tval.size(); i++) {
-      switch(tval[i]) {
-      case '0': if(m == '0') m = '0'; else if(m == '1') m = '1'; break;
-      case '1': if(m == '0') m = '1'; else if(m == '1') m = '0'; break;
-      case 'x':
-      case 'z': m = 'x'; break;
-      default: assert(0 == "unkown value");
-      } 
-    }
-    d1.front()->get_num() = Number(string(1, m));
+    d1.front()->get_num() = op_uxor(d1.front()->get_num());
   } else {
     d1.push_front( shared_ptr<Operation>(new Operation(Operation::oUXor)));
   }
@@ -456,19 +377,7 @@ void netlist::execute_UXor(list<shared_ptr<Operation> >& d1) {
 // unary ~^
 void netlist::execute_UNxor(list<shared_ptr<Operation> >& d1) {
   if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
-    string tval = d1.front()->get_num().get_txt_value();
-    char m = tval[0];
-    for(unsigned int i=1; i<tval.size(); i++) {
-      switch(tval[i]) {
-      case '0': if(m == '0') m = '0'; else if(m == '1') m = '1'; break;
-      case '1': if(m == '0') m = '1'; else if(m == '1') m = '0'; break;
-      case 'x':
-      case 'z': m = 'x'; break;
-      default: assert(0 == "unkown value");
-      } 
-    }
-    if(m == '0') m = '1'; else if(m == '1') m = '0';
-    d1.front()->get_num() = Number(string(1, m));
+    d1.front()->get_num() = ~op_uxor(d1.front()->get_num());
   } else {
     d1.push_front( shared_ptr<Operation>(new Operation(Operation::oUNxor)));
   }
@@ -808,23 +717,7 @@ void netlist::execute_CNeq(list<shared_ptr<Operation> >& d1, list<shared_ptr<Ope
 // &
 void netlist::execute_And(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
   if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
-    string tval1 = d1.front()->get_num().get_txt_value();
-    string tval2 = d2.front()->get_num().get_txt_value();
-    if(tval1.size() > tval2.size())
-      tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
-    else if(tval1.size() < tval2.size())
-      tval1.insert(tval1.begin(), tval2.size() - tval1.size(), '0');
-
-    for(unsigned int i=0; i<tval1.size(); i++) {
-      if(tval1[i] != '0' && tval2[i] != '0') {
-        if(tval1[i] == '1' && tval2[i] == '1')
-          tval1[i] = '1';
-        else
-          tval1[i] = 'x';
-      } else {
-        tval1[i] = '0';
-      } 
-    }
+    d1.front()->get_num() = d1.front()->get_num() & d2.front()->get_num();
   } else {
     d1.push_front( shared_ptr<Operation>(new Operation(Operation::oAnd)));
     d1.splice(d1.end(), d2);
@@ -834,31 +727,7 @@ void netlist::execute_And(list<shared_ptr<Operation> >& d1, list<shared_ptr<Oper
 // ^
 void netlist::execute_Xor(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
   if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
-    string tval1 = d1.front()->get_num().get_txt_value();
-    string tval2 = d2.front()->get_num().get_txt_value();
-    if(tval1.size() > tval2.size())
-      tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
-    else if(tval1.size() < tval2.size())
-      tval1.insert(tval1.begin(), tval2.size() - tval1.size(), '0');
-
-    for(unsigned int i=0; i<tval1.size(); i++) {
-      if(tval1[i] == '0') {
-        if(tval2[i] == '1')
-          tval1[i] = '1';
-        else if(tval2[i] == '0')
-          tval1[i] = '0';
-        else
-          tval1[i] = 'x';
-      } else if(tval1[i] == '1') {
-        if(tval2[i] == '1')
-          tval1[i] = '0';
-        else if(tval2[i] == '0')
-          tval1[i] = '1';
-        else
-          tval1[i] = 'x';
-      } else
-        tval1[i] = 'x';        
-    }
+    d1.front()->get_num() = d1.front()->get_num() ^ d2.front()->get_num();
   } else {
     d1.push_front( shared_ptr<Operation>(new Operation(Operation::oXor)));
     d1.splice(d1.end(), d2);
@@ -868,31 +737,7 @@ void netlist::execute_Xor(list<shared_ptr<Operation> >& d1, list<shared_ptr<Oper
 // ~^
 void netlist::execute_Nxor(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
   if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
-    string tval1 = d1.front()->get_num().get_txt_value();
-    string tval2 = d2.front()->get_num().get_txt_value();
-    if(tval1.size() > tval2.size())
-      tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
-    else if(tval1.size() < tval2.size())
-      tval1.insert(tval1.begin(), tval2.size() - tval1.size(), '0');
-
-    for(unsigned int i=0; i<tval1.size(); i++) {
-      if(tval1[i] == '0') {
-        if(tval2[i] == '1')
-          tval1[i] = '0';
-        else if(tval2[i] == '0')
-          tval1[i] = '1';
-        else
-          tval1[i] = 'x';
-      } else if(tval1[i] == '1') {
-        if(tval2[i] == '1')
-          tval1[i] = '1';
-        else if(tval2[i] == '0')
-          tval1[i] = '0';
-        else
-          tval1[i] = 'x';
-      } else
-        tval1[i] = 'x';        
-    }
+    d1.front()->get_num() = ~(d1.front()->get_num() ^ d2.front()->get_num());
   } else {
     d1.push_front( shared_ptr<Operation>(new Operation(Operation::oNxor)));
     d1.splice(d1.end(), d2);
@@ -902,21 +747,7 @@ void netlist::execute_Nxor(list<shared_ptr<Operation> >& d1, list<shared_ptr<Ope
 // |
 void netlist::execute_Or(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
   if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
-    string tval1 = d1.front()->get_num().get_txt_value();
-    string tval2 = d2.front()->get_num().get_txt_value();
-    if(tval1.size() > tval2.size())
-      tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
-    else if(tval1.size() < tval2.size())
-      tval1.insert(tval1.begin(), tval2.size() - tval1.size(), '0');
-
-    for(unsigned int i=0; i<tval1.size(); i++) {
-      if(tval1[i] == '1' || tval2[i] == '1') {
-        tval1[i] = '1';
-      } else if(tval1[i] == '0' && tval2[i] == '0') {
-        tval1[i] = '0';
-      } else
-        tval1[i] = 'x';        
-    }
+    d1.front()->get_num() = d1.front()->get_num() | d2.front()->get_num();
   } else {
     d1.push_front( shared_ptr<Operation>(new Operation(Operation::oOr)));
     d1.splice(d1.end(), d2);
@@ -926,18 +757,27 @@ void netlist::execute_Or(list<shared_ptr<Operation> >& d1, list<shared_ptr<Opera
 // &&
 void netlist::execute_LAnd(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
   if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
-    string tval1 = d1.front()->get_num().get_txt_value();
-    string tval2 = d2.front()->get_num().get_txt_value();
-    
-    if(string::npos != tval1.find('1') && string::npos != tval2.find('1') ) {
-      d1.front()->get_num() = Number("1");
-    } else if(string::npos != tval1.find('x') || 
-              string::npos != tval2.find('x') ||
-              string::npos != tval1.find('z') || 
-              string::npos != tval2.find('z') ) {
-      d1.front()->get_num() = Number("x");
-    } else
+    d1.front()->get_num() = d1.front()->get_num() && d2.front()->get_num();
+  } else if(d1.front()->get_type() == Operation::oNum) {
+    Number& m1 = d1.front()->get_num();
+    if(m1.is_false())            // 0 && x => 0
       d1.front()->get_num() = Number("0");
+    else if (m1.is_true())     // 1 && x => x 
+      d1 = d2;
+    else {                      // personally I dont think it ever goes here
+      d1.push_front( shared_ptr<Operation>(new Operation(Operation::oLAnd)));
+      d1.splice(d1.end(), d2);
+    }
+  } else if(d2.front()->get_type() == Operation::oNum) {
+    Number& m2 = d2.front()->get_num();
+    if(m2.is_false()) {          // x && 0 => 0
+      d1.clear();
+      d1.push_back(shared_ptr<Operation>( new Operation(Number("0"))));
+    } else if (m2.is_true()) { } // x && 1 => x; do nothing
+    else {                      // personally I dont think it ever goes here
+      d1.push_front( shared_ptr<Operation>(new Operation(Operation::oLAnd)));
+      d1.splice(d1.end(), d2);
+    }    
   } else {
     d1.push_front( shared_ptr<Operation>(new Operation(Operation::oLAnd)));
     d1.splice(d1.end(), d2);
@@ -947,14 +787,7 @@ void netlist::execute_LAnd(list<shared_ptr<Operation> >& d1, list<shared_ptr<Ope
 // ||
 void netlist::execute_LOr(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
   if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
-    Number& m1 = d1.front()->get_num();
-    Number& m2 = d2.front()->get_num();
-    if(m1.is_true() || m2.is_true() )
-      d1.front()->get_num() = Number("1");
-    else if(m1.is_x() || m2.is_x() )
-      d1.front()->get_num() = Number("x");
-    else
-      d1.front()->get_num() = Number("0");
+    d1.front()->get_num() = d1.front()->get_num() || d2.front()->get_num();
   } else if(d1.front()->get_type() == Operation::oNum) {
     Number& m1 = d1.front()->get_num();
     if(m1.is_true())            // 1 || x => 1
