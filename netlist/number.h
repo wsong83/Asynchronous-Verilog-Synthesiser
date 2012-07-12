@@ -52,14 +52,24 @@ namespace netlist {
       if(txt_value.empty()) return 0; 
       else return mpz_class(txt_value, 2); 
     }
-    int get_length() const { return num_leng; }
+    unsigned int get_length() const { return num_leng; }
     bool is_valuable() const { return valuable; }
     bool is_valid() const { return valid; }
+    bool is_true() const { return std::string::npos != txt_value.find('1'); }
+    bool is_false() const { return trim_zeros(txt_value) == "0"; }
+    bool is_x() const { 
+      return 
+        std::string::npos != txt_value.find('x') ||
+        std::string::npos != txt_value.find('X') ||
+        std::string::npos != txt_value.find('z') ||
+        std::string::npos != txt_value.find('Z');
+    }
     Number& truncate (int lhs, int rhs);
     Number addition (const Number& rhs) const;
     Number minus (const Number& rhs) const;
     Number& operator+= (const Number& rhs);
     Number& lfsh (int rhs);
+    
     void concatenate(const Number&); /* concatenate two fixed-point number */
     static std::string trim_zeros(const std::string&);
 
@@ -90,9 +100,19 @@ namespace netlist {
   };
 
   // overload operators
+  Number op_uor    (const Number& lhs);
+  Number op_uand   (const Number& lhs);
+  Number op_uxor   (const Number& lhs);
+  Number operator! (const Number& lhs);
+  Number operator~ (const Number& lhs);
   Number operator* (const Number& lhs, const Number& rhs);
   Number operator+ (const Number& lhs, const Number& rhs);
   Number operator- (const Number& lhs, const Number& rhs);
+  Number operator& (const Number& lhs, const Number& rhs);
+  Number operator| (const Number& lhs, const Number& rhs);
+  Number operator^ (const Number& lhs, const Number& rhs);
+  Number operator&& (const Number& lhs, const Number& rhs);
+  Number operator|| (const Number& lhs, const Number& rhs);
   bool operator== (const Number& lhs, const Number& rhs);
   bool operator!= (const Number& lhs, const Number& rhs);
   bool operator< (const Number& lhs, const Number& rhs);
@@ -107,3 +127,7 @@ namespace netlist {
 
 
 #endif
+
+// Local Variables:
+// mode: c++
+// End:

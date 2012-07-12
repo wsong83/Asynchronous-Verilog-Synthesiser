@@ -28,75 +28,76 @@
 
 // no guard needed as this file is only included in env.cpp
 
-namespace shell {
-  namespace CMD {
-    class CMDHook_TMP_PATH : public CMDVarHook {
-    public:
-      virtual bool operator() (Env& gEnv, CMDVar& var, const vector<string>& val) {
-        if(val.size() < 1 || val.front().empty()) {
-          gEnv.stdOs << "Error: Empty temporary path name." << endl;
-          return false;
-        }
-
-        if(var.get_string() == val.front()) {
-          // already set, nothing to do
-          return true;
-        }
-
-        // remove the old tmp directory
-        path tmp_old_path(var.get_string());
-        path tmp_new_path(val.front());
-        try {
-          if(exists(tmp_old_path)) {
-            remove_all(tmp_old_path);
-          }
-          if(!exists(tmp_new_path)) {
-            if(!create_directory(tmp_new_path)) {
-              throw std::exception();
-            }
-          }
-        } catch (std::exception e) {
-          throw("Error! problem with removing or creating the temporary work directory.");
-        }
-        
-        var = val.front();
-        return true;
+static bool cmd_create_tmp_path(const path& p, Env * pEnv, bool init = false ) {
+  try {
+    if(!exists(p)) {
+      if(!create_directory(p)) {
+        throw Tcl::tcl_error("Error! Fail to create the temporary work directory \"" + p.string() + "\".");
       }
-    }; 
+    } else if(!init && !is_empty(p)) {
+      throw Tcl::tcl_error("Error! The temporary work directory \"" + p.string() + "\" already exists and is not empty.");
+    } else if(init)
+      remove_all(p);
+  } catch (Tcl::tcl_error& e) {
+    if(init) throw e;           // if it is init, no old tmp path exist, just throw
+    pEnv->stdOs << "[Tcl] " << e.what() << std::endl;
+    return false;
+  } catch (const std::exception& e) {
+    pEnv->errOs << "[OS Exception] " << e.what() << endl;
+    return false;
+  }
+  return true;
+}
+  
 
-    class CMDHook_CURRENT_DESIGN : public CMDVarHook {
-    public:
-      virtual bool operator() (Env& gEnv, CMDVar& var, const vector<string>& val) {
-        if(val.size() < 1 || val.front().empty()) {
-          gEnv.stdOs << "Error: design name empty." << endl;
-          return false;
-        }
+static string CMDHook_TMP_PATH(const string& new_path, Env * pEnv ) {
+  string old_path = pEnv->macroDB[MACRO_TMP_PATH];
+  if(new_path == old_path) return new_path; // same, nothing to do
+  
+  path tmp_old_path(old_path);
+  path tmp_new_path(new_path);
+  
+  // create new path
+  if(!cmd_create_tmp_path(tmp_new_path, pEnv))
+    return old_path;
 
-        if(var.get_string() == val.front()) {
-          // already set, nothing to do
-          return true;
-        }
+  // remove old path
+  try {
+    if(exists(tmp_old_path)) {
+      remove_all(tmp_old_path);
+    }
+  } catch (std::exception& e) {
+    pEnv->errOs << e.what() << std::endl;
+    pEnv->errOs << "[Tcl] Error! Fail to remove the current temporary work directory\"" + old_path + "\"." << std::endl;
+    remove_all(tmp_new_path);
+    return old_path;
+  }
+  
+  // run to here means ok
+  pEnv->macroDB[MACRO_TMP_PATH] = new_path;
+  return new_path;
+}
 
-        string designName = val.front();
+static string CMDHook_CURRENT_DESIGN(const string& new_design, Env * pEnv ) {
+  string old_design = pEnv->macroDB[MACRO_CURRENT_DESIGN];
+  if(new_design == old_design) return new_design; // same, nothing to do
 
-        // try to locate the module in all link libraries
-        map<string, shared_ptr<netlist::Library> >::iterator it, end;
-        shared_ptr<netlist::Module> tarModule;
-        netlist::MIdentifier mName(designName); // convert the string to MIdentifier first
-        for(it=gEnv.link_lib.begin(), end=gEnv.link_lib.end(); it!=end; it++) {
-          tarModule = it->second->find(mName);
-          if(tarModule.use_count() != 0) break;
-        }
-        
-        if(tarModule.use_count() == 0) { // fail to find the design
-          gEnv.stdOs << "Error: target design \"" << designName << "\" not found." << endl;
-          return false;
-        } else { //change the current design
-          var = designName;
-          gEnv.curDgn = tarModule;
-          return true;
-        }
-      }
-    }; 
+  // try to locate the module in all link libraries
+  map<string, shared_ptr<netlist::Library> >::iterator it, end;
+  shared_ptr<netlist::Module> tarModule;
+  netlist::MIdentifier mName(new_design); // convert the string to MIdentifier first
+  for(it=pEnv->link_lib.begin(), end=pEnv->link_lib.end(); it!=end; it++) {
+    tarModule = it->second->find(mName);
+    if(tarModule.use_count() != 0) break;
+  }
+  
+  if(tarModule.use_count() == 0) { // fail to find the design
+    pEnv->stdOs << "Error: target design \"" << new_design << "\" not found." << endl;
+    return old_design;
+  } else { //change the current design
+    pEnv->curDgn = tarModule;
+    pEnv->macroDB[MACRO_CURRENT_DESIGN] = new_design;
+    return new_design;
   }
 }
+

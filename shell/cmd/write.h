@@ -29,15 +29,16 @@
 #ifndef AVS_CMD_WRITE_
 #define AVS_CMD_WRITE_
 
-#include "shell/env.h"
 #include "cmd_define.h"
+#include "cpptcl.h"
 
 namespace shell {
+  class Env;
   namespace CMD {
 
     class CMDWrite {
     public:
-      static bool exec ( Env&, std::vector<std::string>&);
+      static bool exec ( const Tcl::object&, Env *);
       static void help ( Env& );
 
       //private:

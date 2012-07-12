@@ -27,13 +27,16 @@
  */
 
 #include "help.h"
-#include "analyze.h"
 #include <boost/foreach.hpp>
+#include "shell/cmd_utility.h"
+#include "cmd_define.h"
 
 using namespace shell;
 using namespace shell::CMD;
 using std::map;
 using std::string;
+using std::vector;
+using std::list;
 using std::pair;
 using std::endl;
 
@@ -45,11 +48,8 @@ int cmdDB_init( map<string, string>& db) {
   db.insert(pair<string, string>("current_design",   "set or show the current target design."      ));
   db.insert(pair<string, string>("echo",             "display a string with variables."            ));
   db.insert(pair<string, string>("elaborate",        "build up a design from a Verilog module."    ));
-  db.insert(pair<string, string>("exit",             "leave the AVS shell environment."            ));
   db.insert(pair<string, string>("help",             "read in the Verilog HDL design files."       ));
-  db.insert(pair<string, string>("quit",             "leave the AVS shell environment."            ));
   db.insert(pair<string, string>("report_netlist",   "display the internal structure of a netlist item." ));
-  db.insert(pair<string, string>("set",              "set the value of a variable."                ));
   db.insert(pair<string, string>("source",           "read and execute another script file."       ));
   db.insert(pair<string, string>("suppress_message", "suppress the report of some messages."       ));
   db.insert(pair<string, string>("write",            "write out a design to a file."               ));
@@ -85,17 +85,19 @@ void shell::CMD::CMDHelp::help(Env& gEnv) {
   gEnv.stdOs << cmd_name_fix(arg_opt) << endl;
 }
 
-bool shell::CMD::CMDHelp::exec ( Env& gEnv, vector<string>& arg){
+void shell::CMD::CMDHelp::exec (const Tcl::object& tclObj, Env * pEnv){
   
+  Env& gEnv = *pEnv;
+  vector<string> arg = tcl_argu_parse(tclObj);
+
   po::variables_map vm;
-  //arg.insert(arg.begin(), "help");
 
   try {
     store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
     notify(vm);
   } catch(std::exception& e) {
     gEnv.stdOs << "Wrong command syntax error! See usage by help -help." << endl;
-    return false;
+    return;
   }
 
   if(vm.count("help")) {        // print help information
@@ -104,13 +106,25 @@ bool shell::CMD::CMDHelp::exec ( Env& gEnv, vector<string>& arg){
   else if(vm.count("target")) {
     vector<string> cmd_lst = vm["target"].as<vector<string> >();
     BOOST_FOREACH(const string& it, cmd_lst) {
-      if(cmdDB.count(it)) {
+      if(is_tcl_list(it)) {     // tcl list
+        list<string> clist = tcl_list_break_all(it);
+        BOOST_FOREACH(const string& cm, clist) {
+          if(cmdDB.count(cm)) { // should be a single command name
+            gEnv.stdOs << cm << 
+              string(cm.size() < 16 ? 16-cm.size() : 1, ' ') 
+                       << ": " << cmdDB[cm] << endl;
+          } else {
+            gEnv.stdOs << "Error: Wrong command name: \"" << cm << "\"."<< endl;
+            continue;
+          }
+        }
+      } else if(cmdDB.count(it)) { // should be a single command name
         gEnv.stdOs << it << 
           string(it.size() < 16 ? 16-it.size() : 1, ' ') 
                    << ": " << cmdDB[it] << endl;
       } else {
         gEnv.stdOs << "Error: Wrong command name: \"" << it << "\"."<< endl;
-        break;
+        continue;
       }
     }
   } else {
@@ -122,6 +136,4 @@ bool shell::CMD::CMDHelp::exec ( Env& gEnv, vector<string>& arg){
                    << it->second << endl;
     gEnv.stdOs << endl;
   }
-
-  return true;
 }

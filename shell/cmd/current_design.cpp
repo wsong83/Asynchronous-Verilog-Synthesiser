@@ -27,7 +27,9 @@
  */
 
 #include "current_design.h"
+#include "shell/env.h"
 #include "shell/macro_name.h"
+#include "shell/cmd_tcl_interp.h"
 
 using std::string;
 using std::endl;
@@ -57,33 +59,31 @@ void shell::CMD::CMDCurrentDesign::help(Env& gEnv) {
   gEnv.stdOs << endl;
 }
 
-bool shell::CMD::CMDCurrentDesign::exec( Env& gEnv, vector<string>& arg) {
+void shell::CMD::CMDCurrentDesign::exec(const Tcl::object& tclObj, Env * pEnv) {
   po::variables_map vm;
+  Tcl::interpreter& interp = pEnv->tclInterp->tcli;
+  Env &gEnv = *pEnv;
+  vector<string> arg = tclObj.get<vector<string> >(interp);
 
   try {
     store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
     notify(vm);
   } catch (std::exception& e) {
     gEnv.stdOs << "Error: Wrong command syntax error! See usage by current_design -help." << endl;
-    return false;
+    return;
   }
 
   if(vm.count("help")) {        // print help information
     shell::CMD::CMDCurrentDesign::help(gEnv);
-    return true;
+    return;
   }
 
   if(vm.count("designName")) {
     string designName = vm["designName"].as<string>();
-    
-    vector<string> dn;
-    dn.push_back(designName);
-    bool rv = (*gEnv.macroDB[MACRO_CURRENT_DESIGN].hook)(gEnv, gEnv.macroDB[MACRO_CURRENT_DESIGN], dn);
-    gEnv.stdOs << "current_design = " << gEnv.macroDB[MACRO_CURRENT_DESIGN] << endl;
-    return rv;
+    interp.set_variable(MACRO_CURRENT_DESIGN, designName);
+    gEnv.macroDB[MACRO_CURRENT_DESIGN] = interp.read_variable<string>(MACRO_CURRENT_DESIGN);
   }
 
   // show the current design
   gEnv.stdOs << "current_design = " << gEnv.macroDB[MACRO_CURRENT_DESIGN] << endl;
-  return true;
 }

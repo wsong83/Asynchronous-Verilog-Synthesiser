@@ -34,7 +34,6 @@ namespace po = boost::program_options;
 
 #include "location.h"
 #include "netlist/component.h"
-#include "cmd_lexer.h"
 #include "err_report.h"
 #include "cmd_variable.h"
 
@@ -42,7 +41,8 @@ namespace shell {
 
   namespace CMD {
     // forward declaration
-    class cmd_parser;
+    class CMDTclFeed;
+    class CMDTclInterp;
   }
 
   class Env {
@@ -64,29 +64,25 @@ namespace shell {
     std::map<std::string, boost::shared_ptr<netlist::Library> >  link_lib;     /* libraries used in design elaboration */
     std::map<std::string, boost::shared_ptr<netlist::Library> >  target_lib;   /* libraries used in mapping */
     ErrReport error;                                 /* the gobal level error report function */
-    CMD::CMDLexer lexer;                             /* the command line lexer */
-    CMD::cmd_parser *parser;                         /* the command line parser */
+    boost::shared_ptr<CMD::CMDTclFeed> tclFeed;        // the feed to getline from file or cin
+    boost::shared_ptr<CMD::CMDTclInterp> tclInterp;    // the dynamic Tcl interpreter
     boost::shared_ptr<netlist::Library> curLib;      /* current library */
     boost::shared_ptr<netlist::Module> curDgn;       /* current design */
     std::ostream stdOs;                              /* standard output stream */
     std::ostream errOs;                              /* error output stream */
     std::map<std::string, CMD::CMDVar> macroDB;      /* command line macros */
-    
   };
 
 }
 
 // all the commands in the command environment
-#include "cmd/analyze.h"
-#include "cmd/current_design.h"
-#include "cmd/echo.h"
-#include "cmd/elaborate.h"
-#include "cmd/help.h"
-#include "cmd/quit.h"
-#include "cmd/set.h"
-#include "cmd/report_netlist.h"
-#include "cmd/source.h"
-#include "cmd/suppress_message.h"
-#include "cmd/write.h"
+
+// new tcl interpreter
+//#include "cmd_tcl_feed.h"
+//#include "cmd_tcl_interp.h"
+
 
 #endif
+// Local Variables:
+// mode: c++
+// End:

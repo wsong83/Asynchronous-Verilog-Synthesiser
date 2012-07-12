@@ -1,8 +1,40 @@
+##### Thu 12/07/2012
+* Merge dev back to master.
+* Re-write some netlist::Number operations for more general supports of Number operation.
+
+##### Wed 11/07/2012
+* merge brach tcl to dev.
+* Reimplement all commands using the new C++/Tcl library and the AVS shell env goes back to normal.
+
+##### Tue 10/07/2012
+* Expand the C++/Tcl library with extra support of user data, data type vector<string>, read & write Tcl variables.
+
+##### Fri 06/07/2012
+* kind of find out a way to handle Tcl list, the bloody bracket!
+* Modify the argument parser and add add list checker & list breaker.
+* "echo" and "help" are added back to AVS shell.
+
+##### Thu 05/07/2012
+* start further Tcl shell implementation.
+* Finished the modification of c++/Tcl, now support ClientData field. It is merged back to AVS.
+
+##### Mon 02/07/2012
+* Seems have embedded the Tcl interpreter into my AVS environment.
+* Implement the wrapper for Tcl interpreter.
+
+##### Mon 02/07/2012
+* Start a new branch "tcl" to replace the command line environment.
+* Decide to use c++/tcl to re-implement the command line environment. Exciting!
+
+##### Sun 01/07/2012
+* Add short-cut effect to || operation.
+* Add is_true(), is_false() and is_x() member function to Number to normalify the boolean check.
+
 ##### Sat 30/06/2012
 * Add selector validation and select range check in the elaboration of VIdentifier.
 
 ##### Fri 29/06/2012
-* Considering the range selector when settle resolve a const value from a variable (parmaeter or genvar).
+* Considering the range selector when settle resolve a const value from a variable (parameter or genvar).
 
 ##### Thu 28/06/2012
 * Broadly exchange iterative for loop into BOOST_FOREACH macros.
@@ -23,7 +55,7 @@
 * Fixed some bugs in case expression check and now consider numbers with x/z as constant and valuable.
 
 ##### Fri 22/06/2012
-* Fixed some bugs and tried to differentiate empty from full by forcing all maximal range expandation before range 
+* Fixed some bugs and tried to differentiate empty from full by forcing all maximal range expandation before range
   operations.
 * Find serious flaws in the range operation as it is difficult to differentiate empty ranges from full ranges.
 

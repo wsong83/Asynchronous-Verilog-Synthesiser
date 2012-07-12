@@ -7,6 +7,7 @@ shell/*.o
 shell/cmd/*.o
 preproc/*.o
 bin/*
+cpptcl/*.o
 
 ## Bison files
 averilog/averilog.cc

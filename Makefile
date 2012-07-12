@@ -29,12 +29,12 @@ export FLEX_EXE = flex
 export CXX = g++
 
 export CXXFLAGS = -std=c++0x -Wall -g
-export LINKFLAGS = -lboost_regex -lgmpxx -lgmp -lboost_system -lboost_filesystem -lboost_program_options
+export LINKFLAGS = -lboost_regex -lgmpxx -lgmp -lboost_system -lboost_filesystem -lboost_program_options -ltcl
 
 # targets
-SUBDIRS = preproc averilog netlist shell shell/cmd
+SUBDIRS = preproc averilog netlist shell shell/cmd cpptcl
 TESTDIRS = preproc/test shell/test
-BISONDIRS = shell.bison averilog.bison
+BISONDIRS = averilog.bison
 
 # actions
 

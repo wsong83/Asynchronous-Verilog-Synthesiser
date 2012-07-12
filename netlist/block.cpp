@@ -36,6 +36,7 @@ using namespace netlist;
 using std::ostream;
 using std::endl;
 using std::string;
+using std::vector;
 using boost::shared_ptr;
 using boost::static_pointer_cast;
 using std::list;

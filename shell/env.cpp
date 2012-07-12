@@ -32,18 +32,28 @@
 #include <boost/algorithm/string.hpp>
 
 #include "shell_top.h"
+#include "cmd_tcl_feed.h"
+#include "cmd_tcl_interp.h"
+
+#include <boost/foreach.hpp>
 
 #include <boost/foreach.hpp>
 
 #define YYSTYPE shell::CMD::cmd_token_type
 
-#include "cmd/cmd_define.h"
-#include "macro_name.h"
+// the commands
+#include "cmd/analyze.h"
+#include "cmd/current_design.h"
+#include "cmd/echo.h"
+#include "cmd/elaborate.h"
+#include "cmd/exit.h"
+#include "cmd/help.h"
+#include "cmd/report_netlist.h"
+#include "cmd/shell.h"
+#include "cmd/suppress_message.h"
+#include "cmd/write.h"
 
-//make sure the location of command.y is included
-#undef BISON_LOCATION_HH
-#undef BISON_POSITION_HH
-#include "command.hh"
+#include "macro_name.h"
 
 using namespace shell;
 using std::endl;
@@ -52,6 +62,7 @@ using std::cerr;
 using std::map;
 using std::vector;
 using std::list;
+using std::string;
 using boost::shared_ptr;
 using netlist::Library;
 using boost::filesystem::path;
@@ -65,10 +76,10 @@ shell::Env::Env()
 {}
 
 shell::Env::~Env() {
-  delete parser;
+  stdOs << "Release the Asynchronous Verilog Synthesis system..." << endl;
   try {
-    if(exists(macroDB[MACRO_TMP_PATH].get_string())) {
-      remove_all(macroDB[MACRO_TMP_PATH].get_string());
+    if(exists(tclInterp->tcli.read_variable<string>(MACRO_TMP_PATH))) {
+      remove_all(tclInterp->tcli.read_variable<string>(MACRO_TMP_PATH));
     }
   } catch (std::exception e) {
     throw("Error! problem with removing or creating the temporary work directory.");
@@ -86,34 +97,49 @@ bool shell::Env::initialise() {
   // set work to be the current library
   this->curLib = work;
 
-  // the env pointer in lexer
-  lexer.set_env(this);
+  // tcl interpreter
+  tclFeed.reset(new CMD::CMDTclFeed());
+  tclInterp.reset(new CMD::CMDTclInterp());
 
-  // initialise the parser
-  parser = new CMD::cmd_parser(this);
+  tclFeed->initialise(this);
+  tclInterp->initialise(this, tclFeed.get());
+
+  Tcl::interpreter& i = tclInterp->tcli;
 
   // initialise the macro database
   // file search path
-  macroDB[MACRO_SEARCH_PATH] = MACRO_SEARCH_PATH_VALUE;
+  i.set_variable(MACRO_SEARCH_PATH, MACRO_SEARCH_PATH_VALUE);
 
   // the temporary file directory
+  i.set_variable(MACRO_TMP_PATH, MACRO_TMP_PATH_VALUE);
+  path tmp_path(MACRO_TMP_PATH_VALUE);
+  cmd_create_tmp_path(tmp_path, this, true);
+  // also save it in AVS's own variable db
   macroDB[MACRO_TMP_PATH] = MACRO_TMP_PATH_VALUE;
-  path tmp_path(macroDB[MACRO_TMP_PATH].get_string());
-  try {
-    if(!exists(tmp_path)) {
-      if(!create_directory(tmp_path)) {
-        throw std::exception();
-      }
-    }
-  } catch (std::exception e) {
-    errOs << "Error! Fail to create the default temporary work directory!" << endl;
-    exit(0);
-  }
-  macroDB[MACRO_TMP_PATH].hook.reset(new CMD::CMDHook_TMP_PATH());
-
+  // trace the variable
+  i.def_write_trace(MACRO_TMP_PATH, MACRO_TMP_PATH, CMDHook_TMP_PATH, this);
+  
   // current_design
+  i.set_variable(MACRO_CURRENT_DESIGN, MACRO_CURRENT_DESIGN_VALUE);
   macroDB[MACRO_CURRENT_DESIGN] = MACRO_CURRENT_DESIGN_VALUE;
-  macroDB[MACRO_CURRENT_DESIGN].hook.reset(new CMD::CMDHook_CURRENT_DESIGN());
+  i.def_write_trace(MACRO_CURRENT_DESIGN, MACRO_CURRENT_DESIGN, 
+                    CMDHook_CURRENT_DESIGN, this);
+
+  // add the commands defined for AVS
+  i.def("analyze",        shell::CMD::CMDAnalyze::exec,        this, Tcl::variadic());
+  i.def("current_design", shell::CMD::CMDCurrentDesign::exec,  this, Tcl::variadic());
+  i.def("echo",           shell::CMD::CMDEcho::exec,           this, Tcl::variadic());
+  i.def("elaborate",      shell::CMD::CMDElaborate::exec,      this, Tcl::variadic());
+  i.def("exit",           shell::CMD::CMDExit::exec,           this, Tcl::variadic());
+  i.def("help",           shell::CMD::CMDHelp::exec,           this, Tcl::variadic());
+  i.def("report_netlist", shell::CMD::CMDReportNetlist::exec,  this, Tcl::variadic());
+  i.def("shell",          shell::CMD::CMDShell::exec,          this, Tcl::variadic());
+  i.def("suppress_message", 
+                          shell::CMD::CMDSuppressMessage::exec,this, Tcl::variadic());
+  i.def("write",          shell::CMD::CMDWrite::exec,          this, Tcl::variadic());
+
+  // make "quit" an alias of "exit"
+  i.create_alias("quit", i, "exit");
 
   // show the welcome message
   show_cmd(true);
@@ -134,7 +160,7 @@ void shell::Env::show_cmd(bool first_time) {
 }
 
 void shell::Env::run() {
-  parser->parse();
+  tclInterp->run();
 }
 
 shared_ptr<netlist::NetComp> shell::Env::hierarchical_search(const string& m) const {

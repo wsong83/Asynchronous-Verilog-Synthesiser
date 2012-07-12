@@ -20,30 +20,46 @@
  */
 
 /* 
- * argument definitions for exit/quit command
- * 15/05/2012   Wei Song
+ * The wrapper for Tcl interpreter
+ * 03/07/2012   Wei Song
  *
  *
  */
 
-#ifndef AV_CMD_QUIT_
-#define AV_CMD_QUIT_
+#ifndef _CMD_TCL_INTERP_H_
+#define _CMD_TCL_INTERP_H_
 
-#include "shell/env.h"
-#include "cmd_define.h"
+#include "env.h"
+#include "cpptcl/cpptcl.h"
 
-namespace shell { 
+namespace Tcl {
+  class interpreter;            // forward declaration
+}
+
+namespace shell {
   namespace CMD {
-  
-    class CMDQuit {
+    
+    class CMDTclInterp {
     public:
-      static bool exec ( Env&, vector<string>&);
-      static void help ( Env& );
+      CMDTclInterp();
+      virtual ~CMDTclInterp();
 
-      //private:
-      static po::options_description cmd_opt;
+      // helper
+      void initialise(Env *, CMDTclFeed *);
+      bool run();               // execute the interpreter
+
+      // the interpreter
+      Tcl::interpreter tcli;       // the tcl interpreter
+
+    private:
+      Env * gEnv;
+      CMDTclFeed * cmdFeed;
     };
   }
 }
 
-#endif
+#endif /* _CMD_TCL_INTERP_H_ */
+
+// Local Variables:
+// mode: c++
+// End:

@@ -20,28 +20,32 @@
  */
 
 /* 
- * Lexer for command line parserToken types for the command line parser
- * 11/05/2012   Wei Song
+ * shell command
+ * 12/07/2012   Wei Song
  *
  *
  */
 
-#ifndef AV_CMD_TOKEN_
-#define AV_CMD_TOKEN_
+#ifndef AV_CMD_SHELL_
+#define AV_CMD_SHELL_
 
-#include<string>
-using std::string;
-#include<vector>
-using std::vector;
+#include "cmd_define.h"
+#include "cpptcl.h"
 
-namespace shell { 
+namespace shell {
+  class Env;
+
   namespace CMD {
-    
-    struct cmd_token_type {
-      string          tStr;
-      vector<string>  tStrVec;
+
+    class CMDShell {
+    public:
+      static std::string exec (const Tcl::object&, Env *);
+      static void help (Env& );
+
+      static po::options_description cmd_opt;
+      static po::positional_options_description cmd_position;
     };
-    
   }
 }
+
 #endif

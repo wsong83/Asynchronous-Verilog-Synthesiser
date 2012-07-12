@@ -29,14 +29,15 @@
 #ifndef AVS_CMD_SUPPRESS_MESSAGE_
 #define AVS_CMD_SUPPRESS_MESSAGE_
 
-#include "shell/env.h"
 #include "cmd_define.h"
+#include "cpptcl.h"
 
 namespace shell {
+  class Env;
   namespace CMD {
     class CMDSuppressMessage {
     public:
-      static bool exec ( Env&, std::vector<std::string>&);
+      static bool exec ( const Tcl::object&, Env *);
       static void help ( Env& );
 
       static po::options_description cmd_opt;

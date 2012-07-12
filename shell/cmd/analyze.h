@@ -29,15 +29,16 @@
 #ifndef AV_CMD_ANALYZE_
 #define AV_CMD_ANALYZE_
 
-#include "shell/env.h"
 #include "cmd_define.h"
+#include "cpptcl.h"
 
 namespace shell { 
+  class Env;
   namespace CMD {
   
     class CMDAnalyze {
     public:
-      static bool exec ( Env&, std::vector<std::string>&);
+      static bool exec ( const Tcl::object&, Env *);
       static void help ( Env& );
 
       //private:

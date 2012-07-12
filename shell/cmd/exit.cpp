@@ -20,52 +20,51 @@
  */
 
 /* 
- * argument definitions for quit/exit command
- * 15/05/2012   Wei Song
+ * exit command
+ * 10/07/2012   Wei Song
  *
  *
  */
 
-#include "quit.h"
+#include "exit.h"
+#include "shell/env.h"
+#include "shell/cmd_tcl_interp.h"
 
+using std::vector;
+using std::endl;
+using std::string;
 using namespace shell;
 using namespace shell::CMD;
-using std::endl;
 
-static po::options_description arg_opt("Options");
-po::options_description_easy_init const dummy_arg_opt =
-  arg_opt.add_options()
-  ("help", "usage information.")
+po::options_description shell::CMD::CMDExit::cmd_opt;
+static po::options_description_easy_init dummy_cmd_opt =
+  CMDExit::cmd_opt.add_options()
+  ("help",     "usage information.")
   ;
 
-po::options_description shell::CMD::CMDQuit::cmd_opt;
-po::options_description const dummy_cmd_opt =
-  CMDQuit::cmd_opt.add(arg_opt);
-
-void shell::CMD::CMDQuit::help(Env& gEnv) {
-  gEnv.stdOs << "exit/quit: leave the AVS shell environment." << endl;
-  gEnv.stdOs << "    exit/quit [options]" << endl;
-  gEnv.stdOs << cmd_name_fix(arg_opt) << endl;
+void shell::CMD::CMDExit::help(Env& gEnv) {
+  gEnv.stdOs << "exit/quit: quit the system." << endl;
+  gEnv.stdOs << "    echo [-help]" << endl;
+  gEnv.stdOs << endl;
 }
 
-bool shell::CMD::CMDQuit::exec ( Env& gEnv, vector<string>& arg){
-  
+void shell::CMD::CMDExit::exec(const Tcl::object& tclObj, Env * pEnv) {
   po::variables_map vm;
+  Env& gEnv = *pEnv;
+  vector<string> arg = tclObj.get<vector<string> >(gEnv.tclInterp->tcli);
+  string rv;
 
   try {
     store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).run(), vm);
     notify(vm);
   } catch (std::exception& e) {
-    gEnv.stdOs << "Error: Wrong command syntax error! See usage by quit -help." << endl;
-    return false;
+    gEnv.stdOs << "Error: Wrong command syntax error! See usage by exit -help." << endl;
+    return;
   }
 
   if(vm.count("help")) {        // print help information
-    shell::CMD::CMDQuit::help(gEnv);
-    return false;               // do not quit when it is for help information
+    shell::CMD::CMDExit::help(gEnv);
   } else {
-    gEnv.stdOs << "Thank you." << endl;
-    return true;                // quit
+    throw Tcl::tcl_error("CMD_TCL_EXIT");
   }
-
 }

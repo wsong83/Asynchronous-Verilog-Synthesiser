@@ -20,25 +20,27 @@
  */
 
 /* 
- * argument definitions for source command
- * 15/05/2012   Wei Song
+ * exit command
+ * 10/07/2012   Wei Song
  *
  *
  */
 
-#ifndef AV_CMD_SOURCE_
-#define AV_CMD_SOURCE_
+#ifndef AV_CMD_EXIT_
+#define AV_CMD_EXIT_
 
-#include "shell/env.h"
 #include "cmd_define.h"
+#include "cpptcl.h"
 
-namespace shell { 
+namespace shell {
+  class Env;
+
   namespace CMD {
-  
-    class CMDSource {
+
+    class CMDExit {
     public:
-      static bool exec ( Env&, vector<string>&);
-      static void help ( Env& );
+      static void exec (const Tcl::object&, Env *);
+      static void help (Env& );
 
       static po::options_description cmd_opt;
       static po::positional_options_description cmd_position;
