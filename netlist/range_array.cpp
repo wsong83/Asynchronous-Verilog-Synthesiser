@@ -27,7 +27,6 @@
  */
 
 #include "component.h"
-#include "shell/env.h"
 #include <algorithm>
 
 using namespace netlist;
@@ -124,7 +123,6 @@ RangeArray netlist::RangeArray::op_and(const RangeArray& rhs) const {
   RangeArray rv;
   rv.child = RangeArrayCommon::op_and(rhs.child);
   rv.const_reduced = const_reduced & rhs.const_reduced;
-  //std::cout << "RangeArray &: " << *this << "; " << rhs << "; " << rv << std::endl;
   return rv;
 }
 
@@ -216,7 +214,6 @@ bool netlist::RangeArray::elaborate(elab_result_t &result, const ctype_t mctype,
 
 bool netlist::operator>= (const RangeArray& lhs, const RangeArray& rhs) {
   RangeArray tmp = lhs & rhs;
-  //std::cout << "RangeArray >=: " << lhs << "; " << rhs << "; " << tmp  << " -> " << (tmp == rhs) << std::endl;
   return tmp == rhs;
 }
 
