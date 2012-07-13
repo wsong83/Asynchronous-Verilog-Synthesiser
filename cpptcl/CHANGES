@@ -1,3 +1,6 @@
+13/07/2012 Tracking the global maps in each interpreter to ensure maps
+           are released after the destruction of interpreters.
+           [ Thanks to the crash report from Stephan Effelsberg]
 11/07/2012 Add multi-os support in Makefile and remove unused objv in 
            callbacks_cd.h. 
            [Thanks to the suggestions from Stephan Effelsberg]

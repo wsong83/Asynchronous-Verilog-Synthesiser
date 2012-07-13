@@ -95,6 +95,7 @@ policies variadic();
 
 class interpreter;
 class object;
+class tcl_name_database;
 
 namespace details
 {
@@ -376,9 +377,7 @@ public:
      void pkg_provide(std::string const &name, std::string const &version);
 
      // helper for cleaning up callbacks in non-managed interpreters
-  // the original static is removed as I need call member function
-  // see no reason why this must be a static
-     void clear_definitions(Tcl_Interp *);
+  static void clear_definitions(Tcl_Interp *);
 
   // create a trace to a variable
   // a read trace using variable name
@@ -539,6 +538,8 @@ private:
 
      Tcl_Interp *interp_;
      bool owner_;
+     // ensure the global database is not release before the release of all interpreters
+     boost::shared_ptr<tcl_name_database> db_; 
 };
 
 
