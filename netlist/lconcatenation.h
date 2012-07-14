@@ -49,6 +49,8 @@ namespace netlist {
     virtual void db_expunge();
     NETLIST_ELABORATE_DECL;
     NETLIST_SET_ALWAYS_POINTER_DECL;
+    NETLIST_SET_WIDTH_DECL;
+    NETLIST_GET_WIDTH_DECL;
 
     // helpers
     bool is_valid() const { return valid; }

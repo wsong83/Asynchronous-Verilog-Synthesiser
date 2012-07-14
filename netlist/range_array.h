@@ -38,7 +38,7 @@ namespace netlist {
     // constructors
     RangeArray() : NetComp(tRangeArray), const_reduced(false){}
     RangeArray(const std::list<boost::shared_ptr<Range> >& rhs) 
-      : NetComp(tRangeArray), RangeArrayCommon(rhs), const_reduced(false) { } /* valuable needs to be calculated!! */
+      : NetComp(tRangeArray), RangeArrayCommon(rhs), const_reduced(false){ } /* valuable needs to be calculated!! */
 
     // helpers
     bool is_empty() const { return child.size() == 1 && child.front()->is_empty(); } 
@@ -80,6 +80,8 @@ namespace netlist {
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
     NETLIST_ELABORATE_DECL;
+    NETLIST_SET_WIDTH_DECL;
+    NETLIST_GET_WIDTH_DECL;
 
   private:
     bool const_reduced;
@@ -89,9 +91,12 @@ namespace netlist {
   inline RangeArray operator& ( const RangeArray& lhs, const RangeArray& rhs) {return lhs.op_and(rhs); };
   inline RangeArray operator| ( const RangeArray& lhs, const RangeArray& rhs) { return lhs.op_or(rhs); }
   inline RangeArray operator- ( const RangeArray& lhs, const RangeArray& rhs) { return lhs.op_deduct(rhs); }
-  bool operator>= ( const RangeArray& lhs, const RangeArray& rhs); /* whether rhs belongs to lhs */
   inline bool operator== ( const RangeArray& lhs, const RangeArray& rhs) {
     return lhs.op_equ(rhs);
+  }
+  inline bool operator>= ( const RangeArray& lhs, const RangeArray& rhs) { /* whether rhs belongs to lhs */
+    RangeArray tmp = lhs & rhs;
+    return tmp == rhs;
   }
 
   NETLIST_STREAMOUT(RangeArray)

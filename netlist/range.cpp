@@ -272,6 +272,7 @@ Range netlist::Range::const_copy(bool tree, const Range& maxRange) const {
 
   rv.dim = dim;
   if(tree) rv.child = RangeArrayCommon::const_copy(maxRange.RangeArrayCommon::is_empty() ? Range() : *(maxRange.child.front()));
+  rv.width = width;
   return rv;
 }
 
@@ -681,6 +682,7 @@ Range* netlist::Range::deep_copy() const {
   rv->rtype = rtype;
   rv->child = RangeArrayCommon::deep_copy();
   rv->loc = loc;
+  rv->width = width;
   return rv;
 }
 
@@ -720,4 +722,45 @@ bool netlist::Range::elaborate(elab_result_t &result, const ctype_t mctype, cons
   if(rv) rv &= RangeArrayCommon::elaborate(result, mctype, fp);
 
   return rv;
+}
+
+// get the data width represented by this range
+unsigned int netlist::Range::get_width() {
+  if(width) return width;
+  switch(rtype) {
+  case TR_Const:
+  case TR_Var:
+    width = 1; break;
+  case TR_Range:
+    assert(0 == "unable to calculate the width of a variable range expression!");
+    break;
+  case TR_CRange: {
+    long rv = (cr.first - cr.second + Number(1)).get_value().get_si();
+    assert(rv >= 0);
+    width = static_cast<unsigned int>(rv);
+    break;
+  }
+  default:
+    break;
+  }
+  return width;
+}
+
+// set a new range value by width
+void netlist::Range::set_width(const unsigned int& w) {
+  if(width == w) return;
+  if(w == 0) rtype = TR_Empty;
+  else if(w == 1) {
+    if(rtype == TR_CRange) {
+      rtype = TR_Const;
+      c = cr.second;
+    } else if(rtype != TR_Var && rtype != TR_Const) {
+      assert(0 == "impossible to set the range width to 1.");
+    }
+  } else {
+    assert(rtype == TR_CRange);
+    assert(get_width() >= w);
+    cr.first = cr.second + Number(static_cast<int>(w - 1));
+  }
+  width = w;
 }

@@ -1,3 +1,10 @@
+##### Sat 14/07/2012
+* width support in Netlist::Range and Netlist::RangeArray.
+* Add get_width() and set_width() methods to all netlist components.
+
+##### Fri 13/07/2012
+* Fixed a bug in cpptcl which allow Tcl:interpreter to be used as a global object.
+
 ##### Thu 12/07/2012
 * Merge dev back to master.
 * Re-write some netlist::Number operations for more general supports of Number operation.
