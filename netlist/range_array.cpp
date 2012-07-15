@@ -221,7 +221,10 @@ unsigned int netlist::RangeArray::get_width() {
   return width;
 }
   
-void netlist::Range::set_width(const unsigned int& w) {
+void netlist::RangeArray::set_width(const unsigned int& w) {
   assert(get_width() >= w);
-  RangeArrayCommon::set_width(w);
+  if(width != w) {
+    RangeArrayCommon::set_width(w);
+    width = w;
+  }
 }

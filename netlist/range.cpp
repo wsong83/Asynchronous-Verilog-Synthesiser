@@ -730,7 +730,9 @@ unsigned int netlist::Range::get_width() {
   switch(rtype) {
   case TR_Const:
   case TR_Var:
-    width = 1; break;
+    width = 1;
+    if(!child.empty()) width *= RangeArrayCommon::get_width();
+    break;
   case TR_Range:
     assert(0 == "unable to calculate the width of a variable range expression!");
     break;
@@ -738,6 +740,7 @@ unsigned int netlist::Range::get_width() {
     long rv = (cr.first - cr.second + Number(1)).get_value().get_si();
     assert(rv >= 0);
     width = static_cast<unsigned int>(rv);
+    if(!child.empty()) width *= RangeArrayCommon::get_width();
     break;
   }
   default:
@@ -748,19 +751,25 @@ unsigned int netlist::Range::get_width() {
 
 // set a new range value by width
 void netlist::Range::set_width(const unsigned int& w) {
-  if(width == w) return;
-  if(w == 0) rtype = TR_Empty;
-  else if(w == 1) {
-    if(rtype == TR_CRange) {
-      rtype = TR_Const;
-      c = cr.second;
-    } else if(rtype != TR_Var && rtype != TR_Const) {
-      assert(0 == "impossible to set the range width to 1.");
+  if(child.empty()) {           // leaf range
+    if(width == w) return;
+    if(w == 0) rtype = TR_Empty;
+    else if(w == 1) {
+      if(rtype == TR_CRange) {
+        rtype = TR_Const;
+        c = cr.second;
+      } else if(rtype != TR_Var && rtype != TR_Const) {
+        assert(0 == "impossible to set the range width to 1.");
+      } 
+    } else {
+      assert(rtype == TR_CRange);
+      assert(get_width() >= w);
+      cr.first = cr.second + Number(static_cast<int>(w - 1));
     }
-  } else {
-    assert(rtype == TR_CRange);
-    assert(get_width() >= w);
-    cr.first = cr.second + Number(static_cast<int>(w - 1));
+    width = w;
+  } else {                      // has leaves
+    assert((rtype == TR_Var)||(rtype == TR_Const));
+    RangeArrayCommon::set_width(w);
+    width = w;
   }
-  width = w;
 }
