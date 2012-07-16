@@ -372,3 +372,20 @@ bool netlist::Variable::driver_and_load_checker() const {
                   
   return rv;
 }
+
+unsigned int netlist::Variable::get_width() {
+  if(width) return width;
+  else {
+    width = name.get_range().get_width();
+    return width;
+  }
+}
+
+void netlist::Variable::set_width(const unsigned int& w) {
+  if(width == w) return;
+  else {
+    assert(w <= get_width());
+    name.get_range().set_width(w);
+    width = w;
+  }
+}

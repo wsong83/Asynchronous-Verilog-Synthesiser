@@ -145,3 +145,31 @@ bool netlist::LConcatenation::elaborate(elab_result_t &result, const ctype_t mct
 void netlist::LConcatenation::set_always_pointer(SeqBlock *p) {
   BOOST_FOREACH(VIdentifier& m, data) m.set_always_pointer(p);
 }
+
+unsigned int netlist::LConcatenation::get_width() {
+  if(width) return width;
+  BOOST_FOREACH(VIdentifier& m, data)
+    width += m.get_width();
+  return width;
+}
+
+void netlist::LConcatenation::set_width(const unsigned int& w) {
+  if(width == w) return;
+  assert(w < get_width());
+  unsigned int wm = w;
+  list<VIdentifier>::reverse_iterator it, end;
+  for(it=data.rbegin(), end=data.rend(); it!=end; it++) {
+    if(wm >= it->get_width()) 
+      wm -= it->get_width();
+    else {
+      if(wm == 0) break;
+      else {
+        it->set_width(wm);
+        wm = 0;
+      }
+    }
+  }
+  if(it != end) 
+    data.erase(data.begin(), it.base()); // ATTN: it is a reverse_iterator
+  width = w;
+}

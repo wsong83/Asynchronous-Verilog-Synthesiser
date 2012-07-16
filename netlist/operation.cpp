@@ -38,30 +38,30 @@ using boost::shared_ptr;
 using boost::static_pointer_cast;
 
 netlist::Operation::Operation()
-  : otype(oNULL), valuable(false), father(NULL)
+  : NetComp(tOperation), otype(oNULL), valuable(false), father(NULL)
 {}
 
 netlist::Operation::Operation(operation_t otype)
-  : otype(otype), valuable(false), father(NULL)
+  : NetComp(tOperation), otype(otype), valuable(false), father(NULL)
 {
   // only operators do not need an operand
   assert(otype > oFun);
 }
 
 netlist::Operation::Operation(const Number& num)
-  : otype(oNum), valuable(true), data(new Number(num)), father(NULL)
+  : NetComp(tOperation), otype(oNum), valuable(true), data(new Number(num)), father(NULL)
 { }
 
 netlist::Operation::Operation(const VIdentifier& id)
-  : otype(oVar), valuable(false), data(new VIdentifier(id)), father(NULL)
+  : NetComp(tOperation), otype(oVar), valuable(false), data(new VIdentifier(id)), father(NULL)
 { }
 
 netlist::Operation::Operation(const shared_ptr<Concatenation>& con)
-  : otype(oCon), valuable(false), data(static_pointer_cast<NetComp>(con)), father(NULL)
+  : NetComp(tOperation), otype(oCon), valuable(false), data(static_pointer_cast<NetComp>(con)), father(NULL)
 { }
 
 netlist::Operation::Operation(const shared_ptr<LConcatenation>& con)
-  : otype(oCon), valuable(false), father(NULL)
+  : NetComp(tOperation), otype(oCon), valuable(false), father(NULL)
 {
   if(con->size() == 1) {
     otype = oVar;
@@ -74,6 +74,34 @@ netlist::Operation::Operation(const shared_ptr<LConcatenation>& con)
       *cp + m;
     }
   }
+}
+
+netlist::Operation::Operation(operation_t op, const boost::shared_ptr<Operation>& exp)
+ : NetComp(tOperation), otype(op), valuable(false), father(NULL)
+{
+  child.push_back(exp);
+  reduce();
+}
+
+netlist::Operation::Operation(operation_t op, const boost::shared_ptr<Operation>& exp1,
+                              const boost::shared_ptr<Operation>& exp2)
+ : NetComp(tOperation), otype(op), valuable(false), father(NULL)
+{
+  child.push_back(exp1);
+  child.push_back(exp2);
+  reduce();
+}
+
+netlist::Operation::Operation(operation_t op, 
+                              const boost::shared_ptr<Operation>& exp1,
+                              const boost::shared_ptr<Operation>& exp2,
+                              const boost::shared_ptr<Operation>& exp3)
+ : NetComp(tOperation), otype(op), valuable(false), father(NULL)
+{
+  child.push_back(exp1);
+  child.push_back(exp2);
+  child.push_back(exp3);
+  reduce();
 }
 
 netlist::Operation::~Operation() {
@@ -102,70 +130,137 @@ VIdentifier& netlist::Operation::get_var(){
   return *(static_pointer_cast<VIdentifier>(data));
 }
 
+string netlist::Operation::toString() const {
+  string op;
+  switch(otype) {
+  case oNum: 
+  case oVar: 
+  case oCon:    return toString(*data);
+  case oUPos:   return toString(*(child[0]));
+  case oUNeg:   op = "-";
+  case oULRev:  op = "!";
+  case oURev:   op = "~";
+  case oUAnd:   op = "&";
+  case oUNand:  op = "~&";
+  case oUOr:    op = "|";
+  case oUNor:   op = "~|";
+  case oUXor:   op = "^";
+  case oUNxor:  op = "~^";
+    return 
+      op + 
+      (child[0]->otype > oUNXor ? "("+toString(*(child[0]))+")" : toString(*(child[0])));    
+  case oPower:  op = "**";
+    return 
+      (child[0]->otype > oPower ? "("+toString(*(child[0]))+")" : toString(*(child[0])))
+      + " " + op + " " + 
+      (child[1]->otype > oPower ? "("+toString(*(child[1]))+")" : toString(*(child[1])));    
+  case oTime:   op = "*";
+  case oDiv:    op = "/";
+    return 
+      (child[0]->otype > oDiv ? "("+toString(*(child[0]))+")" : toString(*(child[0])))
+      + " " + op + " " + 
+      (child[1]->otype > oDiv ? "("+toString(*(child[1]))+")" : toString(*(child[1])));    
+  case oMode:   op = "%";
+  case oAdd:    op = "+";
+  case oMinus:  op = "-";
+    return 
+      (child[0]->otype > oMinus ? "("+toString(*(child[0]))+")" : toString(*(child[0])))
+      + " " + op + " " + 
+      (child[1]->otype > oMinus ? "("+toString(*(child[1]))+")" : toString(*(child[1])));    
+  case oRS:     op = ">>";
+  case oLS:     op = "<<";
+  case oLRS:    op = ">>>";
+    return 
+      (child[0]->otype >= oRS ? "("+toString(*(child[0]))+")" : toString(*(child[0])))
+      + " " + op + " " + 
+      (child[1]->otype >= oRS ? "("+toString(*(child[1]))+")" : toString(*(child[1])));    
+  case oLess:   op = "<";
+  case oLe:     op = "<=";
+  case oGreat:  op = ">";
+  case oGe:     op = ">=";
+    return 
+      (child[0]->otype >= oLess ? "("+toString(*(child[0]))+")" : toString(*(child[0])))
+      + " " + op + " " + 
+      (child[1]->otype >= oLess ? "("+toString(*(child[1]))+")" : toString(*(child[1])));    
+  case oEq:     op = "==";
+  case oNeq:    op = "!=";
+  case oCEq:    op = "===";
+  case oCNeq:   op = "!==";
+    return 
+      (child[0]->otype >= oEq ? "("+toString(*(child[0]))+")" : toString(*(child[0])))
+      + " " + op + " " + 
+      (child[1]->otype >= oEq ? "("+toString(*(child[1]))+")" : toString(*(child[1])));    
+  case oAnd:    op = "&";
+    return 
+      (child[0]->otype > oAnd ? "("+toString(*(child[0]))+")" : toString(*(child[0])))
+      + " " + op + " " + 
+      (child[1]->otype > oAnd ? "("+toString(*(child[1]))+")" : toString(*(child[1])));    
+  case oXor:    op = "^";
+  case oNxor:   op = "~^";
+    return 
+      (child[0]->otype > oNxor ? "("+toString(*(child[0]))+")" : toString(*(child[0])))
+      + " " + op + " " + 
+      (child[1]->otype > oNxor ? "("+toString(*(child[1]))+")" : toString(*(child[1])));    
+  case oOr:     op = "|";
+    return 
+      (child[0]->otype > oOr ? "("+toString(*(child[0]))+")" : toString(*(child[0])))
+      + " " + op + " " + 
+      (child[1]->otype > oOr ? "("+toString(*(child[1]))+")" : toString(*(child[1])));    
+  case oLAnd:   op = "&&";
+    return 
+      (child[0]->otype > oLAnd ? "("+toString(*(child[0]))+")" : toString(*(child[0])))
+      + " " + op + " " + 
+      (child[1]->otype > oLAnd ? "("+toString(*(child[1]))+")" : toString(*(child[1])));    
+  case oLOr:    op = "||";
+    return 
+      (child[0]->otype > oLOr ? "("+toString(*(child[0]))+")" : toString(*(child[0])))
+      + " " + op + " " + 
+      (child[1]->otype > oLOr ? "("+toString(*(child[1]))+")" : toString(*(child[1])));    
+  case oQuestion:
+    return 
+      toString(*(child[0])) + " ? " + toString(*(child[1])) + " : " + toString(*(child[2]));
+  default:
+    assert(0 == "fail to convert this type of operation to string!");
+    return "";
+  }
+}
+
+
 void netlist::Operation::db_register(int iod) {
   if(data.use_count() != 0) data->db_register(iod);
+  if(child.size()) 
+    BOOST_FOREACH(shared_ptr<Operation>& m, child) 
+      m->db_register(iod);
 }
 
 void netlist::Operation::db_expunge() {
   if(data.use_count() != 0) data->db_expunge();
+  if(child.size()) 
+    BOOST_FOREACH(shared_ptr<Operation>& m, child) 
+      m->db_expunge();
 }
 
 void netlist::Operation::set_father(Block *pf) {
   if(father == pf) return;
   father = pf;
   if(data.use_count() != 0) data->set_father(pf);
+  if(child.size()) 
+    BOOST_FOREACH(shared_ptr<Operation>& m, child) 
+      m->set_father(pf);
 }
 
 bool netlist::Operation::check_inparse() {
-  if(data.use_count() != 0) return data->check_inparse();
-  else return true;
+  if((rtype <= oCon) && (rtype >= oNum)) return data->check_inparse();
+  else {
+    bool rv = true;
+    BOOST_FOREACH(shared_ptr<Operation>& m, child)
+      rv &= m->check_inparse();
+    return rv;
+  }
 }
 
 ostream& netlist::Operation::streamout(ostream& os, unsigned int indent) const {
-  os << string(indent, ' ');
-  switch(otype) {
-  case oNULL:                          return os;
-  case oNum:
-  case oVar:
-  case oCon:        os << *data;       return os;
-  case oFun: // dummy
-  case oUPos:
-  case oAdd:        os << "+";         return os;
-  case oUNeg:
-  case oMinus:      os << "-";         return os;
-  case oULRev:      os << "!";         return os;
-  case oURev:       os << "~";         return os;
-  case oUAnd:
-  case oAnd:        os << "&";         return os;
-  case oUNand:      os << "~&";        return os;
-  case oUOr:
-  case oOr:         os << "|";         return os;
-  case oUNor:       os << "~|";        return os;
-  case oUXor:
-  case oXor:        os << "^";         return os;
-  case oUNxor:
-  case oNxor:       os << "~^";        return os;
-  case oPower:      os << "**";        return os;
-  case oTime:       os << "*";         return os;
-  case oDiv:        os << "/";         return os;
-  case oMode:       os << "%";         return os;
-  case oRS:         os << ">>";        return os;
-  case oLS:         os << "<<";        return os;
-  case oLRS:        os << ">>>";       return os;
-  case oLess:       os << " < ";       return os;
-  case oLe:         os << " <= ";      return os;
-  case oGreat:      os << " > ";       return os;
-  case oGe:         os << " >= ";      return os;
-  case oEq:         os << " == ";      return os;
-  case oNeq:        os << " != ";      return os;
-  case oCEq:        os << " === ";     return os;
-  case oCNeq:       os << " !== ";     return os;
-  case oLAnd:       os << "&&";        return os;
-  case oLOr:        os << "||";        return os;
-  case oQuestion:   os << "?";         return os;
-  };
-  // should not run to here
-  assert(1==0);
+  os << string(indent, ' ') << toString();
   return os;
 }
 
@@ -174,41 +269,55 @@ Operation* netlist::Operation::deep_copy() const {
   rv->otype = this->otype;
   rv->valuable = this->valuable;
   if(data.use_count() != 0) rv->data = shared_ptr<NetComp>(data->deep_copy());
+  if(child.size()) {
+    rv->child = vector<shared_ptr<Operation> >(child.size());
+    for(int i=0; i<child.size(); i++) 
+      rv->child[i] = child[i]->deep_copy();
+  }
   return rv;
 }
 
 void netlist::Operation::reduce() {
-  if(data.use_count() != 0)
-    data->reduce();
-
-  // change to simpler types of operation if possible
   switch(otype) {
-  case oVar: {
-    SP_CAST(m, VIdentifier, data);
-    if(m->is_valuable()) {
-      data.reset(new Number(m->get_value()));
-      otype = oNum;
-      valuable = true;
-    }
-    break;
-  }
-  case oCon: {
-    Concatenation& mcon = *(static_pointer_cast<Concatenation>(data));
-    if(mcon.data.size() == 1 &&
-       mcon.data.front()->exp->is_valuable() &&
-       mcon.data.front()->con.size() == 0
-       ) {
-      data.reset(new Number(mcon.data.front()->exp->get_value()));
-      otype = oNum;
-      valuable = true;
-    }
-    break;
-  }
-  case oNum: {
-    valuable = true;
-    break;
-  }
-  default:;
+  case oNum:      reduce_Num();      break;
+  case oVar:      reduce_Var();      break;
+  case oCon:      reduce_Con();      break;
+  case oUPos:     reduce_UPos();     break;
+  case oUNeg:     reduce_UNeg();     break;
+  case oULRev:    reduce_ULRev();    break;
+  case oURev:     reduce_URev();     break;
+  case oUAnd:     reduce_UAnd();     break;
+  case oUNand:    reduce_UNand();    break;
+  case oUOr:      reduce_UOr();      break;
+  case oUNor:     reduce_UNor();     break;
+  case oUXor:     reduce_UXor();     break;
+  case oUNxor:    reduce_UNxor();    break;
+  case oPower:    reduce_Power();    break;
+  case oTime:     reduce_Time();     break;
+  case oDiv:      reduce_Div();      break;
+  case oMode:     reduce_Mode();     break;
+  case oAdd:      reduce_Add();      break;
+  case oMinus:    reduce_Minus();    break;
+  case oRS:       reduce_RS();       break;
+  case oLS:       reduce_LS();       break;
+  case oLRS:      reduce_LRS();      break;
+  case oLess:     reduce_Less();     break;
+  case oLe:       reduce_Le();       break;
+  case oGreat:    reduce_Great();    break;
+  case oGe:       reduce_Ge();       break;
+  case oEq:       reduce_Eq();       break;
+  case oNeq:      reduce_Neq();      break;
+  case oCEq:      reduce_CEq();      break;
+  case oCNeq:     reduce_CNeq();     break;
+  case oAnd:      reduce_And();      break;
+  case oXor:      reduce_Xor();      break;
+  case oNxor:     reduce_Nxor();     break;
+  case oOr:       reduce_Or();       break;
+  case oLAnd:     reduce_LAnd();     break;
+  case oLOr:      reduce_LOr();      break;
+  case oQuestion: reduce_Question(); break;
+  default:  // should not run to here
+    assert(0 == "wrong operation type");
   }
 }
 
@@ -241,63 +350,34 @@ bool netlist::Operation::elaborate(NetComp::elab_result_t &result, const NetComp
   return rv;   
 }
 
-// dummy yet
-void netlist::execute_operation( Operation::operation_t op,
-                                 list<shared_ptr<Operation> >& d1,
-                                 list<shared_ptr<Operation> >& d2,
-                                 list<shared_ptr<Operation> >& d3
-                                 ) {
-  // check parameters
-  assert(op >= Operation::oUPos);
-  assert(!d1.empty());
-  if(op >= Operation::oPower) assert(!d2.empty());
-  if(op >= Operation::oQuestion) assert(!d3.empty());
+void netlist::Operation::reduce_Num() {
+  valuable = true;
+}
 
-  // will use d1 as return
-  switch(op) {
-  case Operation::oUPos:     execute_UPos(d1); return;
-  case Operation::oUNeg:     execute_UNeg(d1); return;
-  case Operation::oULRev:    execute_ULRev(d1); return;
-  case Operation::oURev:     execute_URev(d1); return;
-  case Operation::oUAnd:     execute_UAnd(d1); return;
-  case Operation::oUNand:    execute_UNand(d1); return;
-  case Operation::oUOr:      execute_UOr(d1); return;
-  case Operation::oUNor:     execute_UNor(d1); return;
-  case Operation::oUXor:     execute_UXor(d1); return;
-  case Operation::oUNxor:    execute_UNxor(d1); return;
-  case Operation::oPower:    execute_Power(d1, d2); return;
-  case Operation::oTime:     execute_Time(d1,d2); return;
-  case Operation::oDiv:      execute_Div(d1,d2); return;
-  case Operation::oMode:     execute_Mode(d1,d2); return;
-  case Operation::oAdd:      execute_Add(d1, d2); return;
-  case Operation::oMinus:    execute_Minus(d1, d2); return;
-  case Operation::oRS:       execute_RS(d1,d2); return;
-  case Operation::oLS:       execute_LS(d1,d2); return;
-  case Operation::oLRS:      execute_LRS(d1,d2); return;
-  case Operation::oLess:     execute_Less(d1,d2); return;
-  case Operation::oLe:       execute_Le(d1,d2); return;
-  case Operation::oGreat:    execute_Great(d1,d2); return;
-  case Operation::oGe:       execute_Ge(d1,d2); return;
-  case Operation::oEq:       execute_Eq(d1,d2); return;
-  case Operation::oNeq:      execute_Neq(d1,d2); return;
-  case Operation::oCEq:      execute_CEq(d1,d2); return;
-  case Operation::oCNeq:     execute_CNeq(d1,d2); return;
-  case Operation::oAnd:      execute_And(d1,d2); return;
-  case Operation::oXor:      execute_Xor(d1,d2); return;
-  case Operation::oNxor:     execute_Nxor(d1,d2); return;
-  case Operation::oOr:       execute_Or(d1,d2); return;
-  case Operation::oLAnd:     execute_LAnd(d1,d2); return;
-  case Operation::oLOr:      execute_LOr(d1,d2); return;
-  case Operation::oQuestion: execute_Question(d1,d2,d3); return;
-  default:  // should not run to here
-    assert(0 == "wrong operation type");
-  }
-  return;
+void netlist::Operation::reduce_Con() {
+  SP_CAST(m, Concatenation, data);
+  m->reduce();
+  if(m->is_valuable()) {
+    data.reset(new Number(m->get_value()));
+    otype = oNum;
+    valuable = true;
+  }  
+}
+
+void netlist::Operation::reduce_Con() {
+  SP_CAST(m, VIdentifier, data);
+  if(m->is_valuable()) {
+    data.reset(new Number(m->get_value()));
+    otype = oNum;
+    valuable = true;
+  }  
 }
 
 // unary +
-void netlist::execute_UPos(list<shared_ptr<Operation> >& d1) {
-  // for unary +, do nothing but omit the operator
+void netlist::reduce_UPos() {
+  // copy the content of child[0]
+  child[0]->reduce();
+  *this = *(child[0]);
   return;
 }
 

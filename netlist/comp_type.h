@@ -45,6 +45,7 @@ enum ctype_t {
   tModule,                  /* Module declaration */
   tModuleName,              /* module name */
   tNumber,                  /* number */
+  tOperation,               /* operation */
   tParaConn,                /* parameter connection */
   tParaName,                /* parameter name */
   tPort,                    /* port */
@@ -80,6 +81,7 @@ std::string get_type_name() const {
   case tModule:          rv = "Module";                  break;
   case tModuleName:      rv = "Module Name";             break;
   case tNumber:          rv = "Number";                  break;
+  case tOperation:       rv = "Operation";               break;
   case tParaConn:        rv = "Parameter Connection";    break;
   case tParaName:        rv = "Parameter Name";          break;
   case tPort:            rv = "Port Declaration";        break;

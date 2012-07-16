@@ -50,10 +50,6 @@ namespace netlist {
     bool is_valuable() const;    /* check valuable */
     Number get_value() const;    /* fetch the value if valuable */
     void reduce();               /* try to reduce the equation */
-    // return the size of equation
-    int size() const { return eqn.size(); }
-    bool empty() const { return eqn.empty(); }
-    boost::shared_ptr<Operation>& front() { return eqn.front(); }
     
     // develope the equation
     void append(Operation::operation_t);
@@ -69,12 +65,12 @@ namespace netlist {
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
     NETLIST_ELABORATE_DECL;
+    NETLIST_SET_WIDTH_DECL;
+    NETLIST_GET_WIDTH_DECL;
     
-    // data
-    std::list<boost::shared_ptr<Operation> > eqn;
-
   private:
-    bool valuable;
+    // data
+    boost::shared_ptr<Operation> eqn;
     
   };
 
@@ -84,17 +80,10 @@ namespace netlist {
 
   NETLIST_STREAMOUT(Expression);
 
-  // helper class
-  class expression_state {
-  public:
-    boost::shared_ptr<Operation> op;               // operator
-    int ops;                                       // number of operands needed
-    int opp;                                       // current number of operands
-    std::list<boost::shared_ptr<Operation> > d[3]; // oprands
-  expression_state() : opp(0) {}
-  };
-
-
 }
 
 #endif
+
+// Local Variables:
+// mode: c++
+// End:

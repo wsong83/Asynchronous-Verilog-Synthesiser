@@ -257,7 +257,8 @@ void netlist::RangeArrayCommon::set_width(const unsigned int& w) {
   unsigned int wm = w;
   list<shared_ptr<Range> >::reverse_iterator it, end;
   for(it=child.rbegin(), end=child.rend(); it!=end; it++) {
-    if(wm >= (*it)->get_width()) continue;
+    if(wm >= (*it)->get_width()) 
+      wm -= (*it)->get_width();
     else {
       if(wm == 0) break;
       else {
@@ -268,6 +269,7 @@ void netlist::RangeArrayCommon::set_width(const unsigned int& w) {
   }
   if(it != end) 
     child.erase(child.begin(), it.base()); // ATTN: it is a reverse_iterator and base() return the iterator of next
+  //width = w;  // RangeArrayCommon does not have a width member as it is a shared base class
 }
 
 list<shared_ptr<Range> >& netlist::RangeArrayCommon::sort(list<shared_ptr<Range> >& rhs) const {
