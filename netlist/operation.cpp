@@ -375,91 +375,118 @@ void netlist::Operation::reduce_Con() {
 
 // unary +
 void netlist::reduce_UPos() {
-  // copy the content of child[0]
+  assert(child[0].use_count() != 0);
   child[0]->reduce();
   *this = *(child[0]);
   return;
 }
 
 // unary -
-void netlist::execute_UNeg(list<shared_ptr<Operation> >& d1) {
-  if(d1.front()->is_valuable()) {
-    assert(d1.front()->get_type() == Operation::oNum);
-    d1.front()->get_num().negate();
-  } else {
-    d1.push_front(shared_ptr<Operation>(new Operation(Operation::oUNeg)));
+void netlist::reduce_UNeg() {
+  assert(child[0].use_count() != 0);
+  child[0]->reduce();
+  if(child[0]->is_valuable()) {
+    data.reset(child[0]->get_num());
+    static_pointer_cast<Number>(data)->negate();
+    child[0].reset();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // unary !
 void netlist::execute_ULRev(list<shared_ptr<Operation> >& d1) {
-  if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
-    d1.front()->get_num() = !(d1.front()->get_num());
-  } else {
-    d1.push_front(shared_ptr<Operation>(new Operation(Operation::oULRev)));
+  assert(child[0].use_count() != 0);
+  child[0]->reduce();
+  if(child[0]->is_valuable()) {
+    data.reset(new Number(!(child[0]->get_num())));
+    child[0].reset();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // unary ~
 void netlist::execute_URev(list<shared_ptr<Operation> >& d1) {
-  if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
-    d1.front()->get_num() = ~(d1.front()->get_num());
-  } else {
-    d1.push_front(shared_ptr<Operation>(new Operation(Operation::oURev)));
+  assert(child[0].use_count() != 0);
+  child[0]->reduce();
+  if(child[0]->is_valuable()) {
+    data.reset(new Number(~(child[0]->get_num())));
+    child[0].reset();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // unary &
 void netlist::execute_UAnd(list<shared_ptr<Operation> >& d1) {
-  if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
-    d1.front()->get_num() = op_uand(d1.front()->get_num());
-  } else {
-    d1.push_front(shared_ptr<Operation>(new Operation(Operation::oUAnd)));
+  assert(child[0].use_count() != 0);
+  child[0]->reduce();
+  if(child[0]->is_valuable()) {
+    data.reset(new Number(op_uand(child[0]->get_num())));
+    child[0].reset();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // unary ~&
 void netlist::execute_UNand(list<shared_ptr<Operation> >& d1) {
-  if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
-    d1.front()->get_num() = ~(op_uand(d1.front()->get_num()));
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oUNand)));
+  assert(child[0].use_count() != 0);
+  child[0]->reduce();
+  if(child[0]->is_valuable()) {
+    data.reset(new Number(~op_uand(child[0]->get_num())));
+    child[0].reset();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // unary |
 void netlist::execute_UOr(list<shared_ptr<Operation> >& d1) {
-  if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
-    d1.front()->get_num() = op_uor(d1.front()->get_num());
-  } else {
-    d1.push_front(shared_ptr<Operation>( new Operation(Operation::oUOr)));
+  assert(child[0].use_count() != 0);
+  child[0]->reduce();
+  if(child[0]->is_valuable()) {
+    data.reset(new Number(op_uor(child[0]->get_num())));
+    child[0].reset();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // unary ~|
 void netlist::execute_UNor(list<shared_ptr<Operation> >& d1) {
-  if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
-    d1.front()->get_num() = ~op_uor(d1.front()->get_num());
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oUNor)));
+  assert(child[0].use_count() != 0);
+  child[0]->reduce();
+  if(child[0]->is_valuable()) {
+    data.reset(new Number(~op_uor(child[0]->get_num())));
+    child[0].reset();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // unary ^
 void netlist::execute_UXor(list<shared_ptr<Operation> >& d1) {
-  if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
-    d1.front()->get_num() = op_uxor(d1.front()->get_num());
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oUXor)));
+  assert(child[0].use_count() != 0);
+  child[0]->reduce();
+  if(child[0]->is_valuable()) {
+    data.reset(new Number(op_uxor(child[0]->get_num())));
+    child[0].reset();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // unary ~^
 void netlist::execute_UNxor(list<shared_ptr<Operation> >& d1) {
-  if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
-    d1.front()->get_num() = ~op_uxor(d1.front()->get_num());
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oUNxor)));
+  assert(child[0].use_count() != 0);
+  child[0]->reduce();
+  if(child[0]->is_valuable()) {
+    data.reset(new Number(~op_uxor(child[0]->get_num())));
+    child[0].reset();
+    otype = oNum;
+    valuable = true;
   }
 }
   

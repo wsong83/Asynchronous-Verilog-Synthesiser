@@ -34,8 +34,8 @@ namespace netlist {
   class Expression : public NetComp {
   public:
     // constructors
-    Expression() : NetComp(tExp), valuable(false) {}
-    Expression(const shell::location& lloc) : NetComp(tExp, lloc), valuable(false) {}
+    Expression() : NetComp(tExp) {}
+    Expression(const shell::location& lloc) : NetComp(tExp, lloc) {}
     Expression(const Number&);	/* a number is an expression */
     Expression(const shell::location& lloc, const Number&);	/* a number is an expression */
     Expression(const VIdentifier&); /* a variable/parameter is an expression */

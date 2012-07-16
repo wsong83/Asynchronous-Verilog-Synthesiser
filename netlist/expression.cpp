@@ -44,49 +44,49 @@ using std::vector;
 using std::for_each;
 
 netlist::Expression::Expression(const Number& exp) 
-  : NetComp(tExp), valuable(exp.is_valuable())
+  : NetComp(tExp)
 {
   eqn.reset(new Operation(exp));
 }
 
 netlist::Expression::Expression(const location& lloc, const Number& exp) 
-  : NetComp(tExp, lloc), valuable(exp.is_valuable())
+  : NetComp(tExp, lloc)
 {
   eqn.reset(new Operation(exp));
 }
 
 netlist::Expression::Expression(const VIdentifier& id) 
-  : NetComp(tExp), valuable(false)
+  : NetComp(tExp)
 {
   eqn.reset(new Operation(id));
 }
 
 netlist::Expression::Expression(const location& lloc, const VIdentifier& id) 
-  : NetComp(tExp, lloc), valuable(false)
+  : NetComp(tExp, lloc)
 {
   eqn.reset(new Operation(id));
 }
 
 netlist::Expression::Expression(const shared_ptr<Concatenation>& con) 
-  : NetComp(tExp), valuable(false)
+  : NetComp(tExp)
 {
   eqn.reset(new Operation(con));
 }
 
 netlist::Expression::Expression(const location& lloc, const shared_ptr<Concatenation>& con) 
-  : NetComp(tExp, lloc), valuable(false)
+  : NetComp(tExp, lloc)
 {
   eqn.reset(new Operation(con));
 }
 
 netlist::Expression::Expression(const shared_ptr<LConcatenation>& con)
-  : NetComp(tExp), valuable(false)
+  : NetComp(tExp)
 {
   eqn.reset(new Operation(con));
 }
 
 netlist::Expression::Expression(const location& lloc, const shared_ptr<LConcatenation>& con)
-  : NetComp(tExp, lloc), valuable(false)
+  : NetComp(tExp, lloc)
 {
   eqn.reset(new Operation(con));
 }
@@ -102,7 +102,17 @@ Number netlist::Expression::get_value() const {
   return eqn->get_num();
 }
 
-//#define AVS_DEBUG_EXPRESSION_REDUCE
+bool netlist::Expression::is_valuable() const {
+  if(child.use_count() != 0) return child->is_valuable();
+  else return false;
+}
+
+Number netlist::Expression::get_value() const {
+  if(child.use_count() != 0) {
+    assert(child->is_valuable());
+    return child->get_valuable();
+  } else return Number();
+}  
 
 void netlist::Expression::reduce() {
   assert(eqn.use_count() != 0);
