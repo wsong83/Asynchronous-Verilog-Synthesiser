@@ -114,7 +114,7 @@ namespace netlist {
     operation_t otype;
     bool valuable;
     boost::shared_ptr<NetComp> data;
-    vector<shared_ptr<Operation> > child; // expression tree structure
+    std::vector<boost::shared_ptr<Operation> > child; // expression tree structure
 
     // helper function to reduce the expression
     void reduce_Num();

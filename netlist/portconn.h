@@ -37,7 +37,8 @@ namespace netlist {
 
     pp->exp->reduce();
     
-    if(pp->exp->size() > 1) return; /* unable to reduce it to another type */
+    /*
+    if(pp->exp->size() > 1) return; 
 
     if(pp->exp->front()->get_type() == Operation::oVar) {
       pp->type = T::type_t::CVAR;
@@ -52,6 +53,16 @@ namespace netlist {
       pp->exp.reset();
       return;
     }
+    */
+
+    if(pp->exp->is_valuable()) {
+      pp->type = T::type_t::CNUM;
+      pp->num = pp->exp->get_value();
+      pp->exp.reset();
+      return;
+    }
+
+    return;
   }
 
   class PortConn : public NetComp{

@@ -38,7 +38,7 @@ using shell::location;
 
 // decimal or integer
 netlist::Number::Number(const char *text, const int txt_leng) 
-  : NetComp(tNumber), valid(false), valuable(false)
+  : NetComp(tNumber), valid(false), valuable(false), sign_flag(false)
 {
   string m;
   int i;
@@ -76,7 +76,7 @@ netlist::Number::Number(const char *text, const int txt_leng)
 }
 
 netlist::Number::Number(const location& lloc, const char *text, const int txt_leng) 
-  : NetComp(tNumber, lloc), valid(false), valuable(false)
+  : NetComp(tNumber, lloc), valid(false), valuable(false), sign_flag(false)
 {
   string m;
   int i;
@@ -114,82 +114,94 @@ netlist::Number::Number(const location& lloc, const char *text, const int txt_le
 }
 
 netlist::Number::Number(int d) 
-  : NetComp(tNumber), valid(true), valuable(true)
+  : NetComp(tNumber), valid(true), valuable(true), sign_flag(d < 0)
 {
   mpz_class m(d);
   txt_value = m.get_str(2);
+  if(sign_flag) {               // negative number
+    txt_value[0] = '0';
+    mpz_class k(txt_value.c_str(), 2);
+    k = (~k + 1);
+    txt_value = k.get_str(2);
+  }
   num_leng = txt_value.size();
 }
 
 netlist::Number::Number(const mpz_class& m) 
-  : NetComp(tNumber), valid(true), valuable(true)
+  : NetComp(tNumber), valid(true), valuable(true), sign_flag(m < 0)
 {
   txt_value = m.get_str(2);
+  if(sign_flag) {               // negative number
+    txt_value[0] = '0';
+    mpz_class k(txt_value.c_str(), 2);
+    k = (~k + 1);
+    txt_value = k.get_str(2);
+  }
   num_leng = txt_value.size();
 }
 
 netlist::Number::Number(const string& txt)
-  : NetComp(tNumber), num_leng(txt.size()), txt_value(txt), valid(true)
+  : NetComp(tNumber), num_leng(txt.size()), txt_value(txt), valid(true), sign_flag(false)
 {
+  if(txt.size() >0 && txt[0]=='-') {               // negative number
+    txt_value[0] = '0';
+    mpz_class k(txt_value.c_str(), 2);
+    k = (~k + 1);
+    txt_value = k.get_str(2);
+    sign_flag = true;
+  }
   check_valuable();
 }
 
 netlist::Number::Number(const location& lloc, const string& txt)
-  : NetComp(tNumber, lloc), num_leng(txt.size()), txt_value(txt), valid(true)
+  : NetComp(tNumber, lloc), num_leng(txt.size()), txt_value(txt), valid(true), sign_flag(false)
 {
   check_valuable();
 }
 
-Number& netlist::Number::truncate (int lhs, int rhs) { // no sign support
-  assert(lhs >= 0 && (unsigned int)(lhs) <= num_leng && rhs >= 0 && rhs <= lhs);
-  txt_value = txt_value.substr(txt_value.length()-lhs-1, lhs-rhs+1);
-  num_leng = lhs-rhs+1;
-  return *this;
+mpz_class netlist::Number::get_value() const {
+  if(sign_flag && txt_value.size() > 0 && txt_value[0] == '1') { // signed negative number
+    mpz_class k(txt_value.c_str(), 2);
+    k = (~k + 1);
+    string result = "-" + k.get_str(2);
+    return mpz_class(result.c_str(), 2);
+  } else if(txt_value.size() > 0){
+    return mpz_class(txt_value.c_str(), 2);
+  } else {
+    return mpz_class(0);
+  }
+}
+
+void netlist::Number::set_signed() {
+  sign_flag = true;
+  if(txt_value.size() > 0 && txt_value[0] == '1') {
+    txt_value.insert(0, 1, '0');
+    if(txt_value.size() > num_leng) num_leng++;
+  }
 }
 
 Number netlist::Number::addition(const Number& rhs) const {
   assert(valuable && rhs.valuable);
-  Number m(0);
-  mpz_class d1(txt_value, 2);
-  mpz_class d2(rhs.txt_value, 2);
-  d1 = d1 + d2;
-  m.txt_value = d1.get_str(2);
-  m.num_leng = m.txt_value.size();
-  return m;
+  return Number(get_value() + rhs.get_value());
 }
 
 Number netlist::Number::minus(const Number& rhs) const {
   assert(valuable && rhs.valuable);
-  Number m(0);
-  mpz_class d1(txt_value, 2);
-  mpz_class d2(rhs.txt_value, 2);
-  d1 = d1 - d2;
-  m.txt_value = d1.get_str(2);
-  m.num_leng = m.txt_value.size();
-  return m;
+  return Number(get_value() - rhs.get_value());
 }
 
 Number& netlist::Number::operator+= (const Number& rhs) {
   assert(valuable && rhs.valuable);
-  mpz_class d(txt_value, 2);
-  d = d + mpz_class(rhs.txt_value, 2);
-  txt_value = d.get_str(2);
-  num_leng = txt_value.size();
-  return *this;
-}
-
-Number& netlist::Number::lfsh (int rhs) {
-  assert(rhs >= 0);
-
-  txt_value.append(rhs, '0');
-  num_leng += rhs;
+  mpz_class d = get_value();
+  d += rhs.get_value();
+  *this = Number(d);
   return *this;
 }
 
 ostream& netlist::Number::streamout (ostream& os, unsigned int indent) const{
   os << string(indent, ' ');
   if(valuable) {		// able to be represented as a decimal
-    mpz_class d(txt_value,2);
+    mpz_class d = get_value();
     if(d > MAX_INT_IN_STREAMOUT || d < -MAX_INT_IN_STREAMOUT)
       os << num_leng << "'h" << d.get_str(16);
     else
@@ -208,9 +220,18 @@ Number* netlist::Number::deep_copy() const {
 }
 
 void netlist::Number::concatenate(const Number& rhs) {
-  txt_value = txt_value + rhs.txt_value;
+  string ss = rhs.get_txt_value();
+  string stuff;
+  if(rhs.is_signed() && ss.size() > 0 && ss[0] == '1') {
+    stuff = string(rhs.get_length() - ss.size(), '1');
+  } else {
+    stuff = string(rhs.get_length() - ss.size(), '0');
+  }
+
+  txt_value = txt_value + stuff + ss;
   num_leng += rhs.num_leng;
   valuable = valuable && rhs.valuable;
+  sign_flag = false;            // once concatenated, all signed number turn to be unsigned
 }
 
 
@@ -429,6 +450,11 @@ Number netlist::op_uxor (const Number& lhs) {
   }
 }
 
+Number netlist::operator- (const Number& lhs) {
+  assert(lhs.is_valuable());
+  return Number(-lhs.get_value());
+}
+
 Number netlist::operator! (const Number& lhs) {
   if(lhs.is_true()) return Number("0");
   if(lhs.is_false()) return Number("1");
@@ -450,6 +476,16 @@ Number netlist::operator~ (const Number& lhs) {
 Number netlist::operator* (const Number& lhs, const Number& rhs) {
   assert(lhs.is_valuable() && rhs.is_valuable());
   return Number(lhs.get_value() * rhs.get_value());
+}
+
+Number netlist::operator/ (const Number& lhs, const Number& rhs) {
+  assert(lhs.is_valuable() && rhs.is_valuable());
+  return Number(lhs.get_value() / rhs.get_value());
+}
+
+Number netlist::operator% (const Number& lhs, const Number& rhs) {
+  assert(lhs.is_valuable() && rhs.is_valuable());
+  return Number(lhs.get_value() % rhs.get_value());
 }
 
 Number netlist::operator+ (const Number& lhs, const Number& rhs) {
@@ -571,13 +607,36 @@ bool netlist::operator>= (const Number& lhs, const Number& rhs) {
   return lhs.get_value() >= rhs.get_value();
 }
 
-bool netlist::case_equal(const Number& lhs, const Number& rhs) {
+bool netlist::op_case_equal(const Number& lhs, const Number& rhs) {
   return (Number::trim_zeros(lhs.get_txt_value()) == Number::trim_zeros(rhs.get_txt_value()));
 }
 
-Number netlist::operator<< (const Number& lhs, int rhs) {
-  Number dd(lhs);
-  dd.lfsh(rhs);
-  return dd;
+Number netlist::operator>>(const Number& lhs, const Number& rhs) {
+  long rhs_si = rhs.get_value().get_si();
+  assert(rhs_si >= 0);
+
+  rhs_si = rhs_si > static_cast<long>(lhs.get_length()) ? 
+    static_cast<long>(lhs.get_length()) : rhs_si;
+  string new_value = lhs.get_txt_value();
+  new_value = new_value.substr(0, 
+                               rhs_si > static_cast<long>(new_value.size()) 
+                               ? 0 : static_cast<long>(new_value.size()) - rhs_si);
+  Number rv(new_value);
+  rv.set_length(lhs.get_length());   // size should not change
+  return rv;
+}
+
+Number netlist::op_sign_rsh(const Number& lhs, const Number& rhs) {
+  assert(lhs.is_valuable() && rhs.is_valuable());
+  return lhs.get_value() >> rhs.get_value();
+}
+
+Number netlist::operator<< (const Number& lhs, const Number& rhs) {
+  long rhs_si = rhs.get_value().get_si();
+  assert(rhs_si >= 0);
+  string m = lhs.get_txt_value();
+  Number rv(m.append(rhs_si, '0'));
+  rv.set_length(rhs_si + lhs.get_length());
+  return rv;
 }
 
