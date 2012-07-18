@@ -78,14 +78,26 @@ namespace netlist {
     // constructors
     Operation();
     Operation(operation_t);
+    Operation(const shell::location&, operation_t);
     Operation(const Number&);
+    Operation(const shell::location&, const Number&);
     Operation(const VIdentifier&);
+    Operation(const shell::location&, const VIdentifier&);
     Operation(const boost::shared_ptr<Concatenation>&);
+    Operation(const shell::location&, const boost::shared_ptr<Concatenation>&);
     Operation(const boost::shared_ptr<LConcatenation>&);
+    Operation(const shell::location&, const boost::shared_ptr<LConcatenation>&);
+    Operation(const shell::location&, operation_t, 
+              const boost::shared_ptr<Operation>&); // (op)(exp)
     Operation(operation_t, const boost::shared_ptr<Operation>&); // (op)(exp)
     Operation(operation_t, const boost::shared_ptr<Operation>&, 
               const boost::shared_ptr<Operation>&); // (exp1)(op)(exp2)
+    Operation(const shell::location&, operation_t, const boost::shared_ptr<Operation>&, 
+              const boost::shared_ptr<Operation>&); // (exp1)(op)(exp2)
     Operation(operation_t, const boost::shared_ptr<Operation>&, 
+              const boost::shared_ptr<Operation>&,
+              const boost::shared_ptr<Operation>&); // (exp1) ? (exp2) : (exp3)
+    Operation(const shell::location&, operation_t, const boost::shared_ptr<Operation>&, 
               const boost::shared_ptr<Operation>&,
               const boost::shared_ptr<Operation>&); // (exp1) ? (exp2) : (exp3)
     
@@ -111,6 +123,8 @@ namespace netlist {
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
     NETLIST_ELABORATE_DECL;
+    NETLIST_SET_WIDTH_DECL;
+    NETLIST_GET_WIDTH_DECL;
 
   private:
     operation_t otype;

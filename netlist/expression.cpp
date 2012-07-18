@@ -52,7 +52,7 @@ netlist::Expression::Expression(const Number& exp)
 netlist::Expression::Expression(const location& lloc, const Number& exp) 
   : NetComp(tExp, lloc)
 {
-  eqn.reset(new Operation(exp));
+  eqn.reset(new Operation(lloc, exp));
 }
 
 netlist::Expression::Expression(const VIdentifier& id) 
@@ -64,7 +64,7 @@ netlist::Expression::Expression(const VIdentifier& id)
 netlist::Expression::Expression(const location& lloc, const VIdentifier& id) 
   : NetComp(tExp, lloc)
 {
-  eqn.reset(new Operation(id));
+  eqn.reset(new Operation(lloc, id));
 }
 
 netlist::Expression::Expression(const shared_ptr<Concatenation>& con) 
@@ -76,7 +76,7 @@ netlist::Expression::Expression(const shared_ptr<Concatenation>& con)
 netlist::Expression::Expression(const location& lloc, const shared_ptr<Concatenation>& con) 
   : NetComp(tExp, lloc)
 {
-  eqn.reset(new Operation(con));
+  eqn.reset(new Operation(lloc, con));
 }
 
 netlist::Expression::Expression(const shared_ptr<LConcatenation>& con)
@@ -88,7 +88,7 @@ netlist::Expression::Expression(const shared_ptr<LConcatenation>& con)
 netlist::Expression::Expression(const location& lloc, const shared_ptr<LConcatenation>& con)
   : NetComp(tExp, lloc)
 {
-  eqn.reset(new Operation(con));
+  eqn.reset(new Operation(lloc, con));
 }
 
 netlist::Expression::~Expression() {}
@@ -162,11 +162,20 @@ void netlist::Expression::concatenate(const Expression& rhs) {
 }
 
 unsigned int netlist::Expression::get_width() {
+  if(width) return width;
+  assert(eqn.use_count() != 0);
+  width = eqn->get_width();
   return width;
 }
 
 void netlist::Expression::set_width(const unsigned int& w) {
+  if(width == w) return;
+  assert(eqn.use_count() != 0);
+  // there is no need to make sure w <= width as it may happen this way
+  // such as assign a[3:0] = 1'b1;
+  eqn->set_width(w);
   width = w;
+  return;
 }
 
 Expression& netlist::operator+ (Expression& lhs, Expression& rhs) {

@@ -78,7 +78,15 @@ ERR_DEFINE("ELAB-CASE-3",
 // non-constant concationation parameter
 ERR_DEFINE("ELAB-EXPRESSION-0",
            EError,   1,
-           "\"%1\" cannot be reduced to a constant. In concatenation {Var{exp0, exp1, ..}}, Var must be a constant: a const exp, a parameter or a generate variable.");
+           "\"%1%\" cannot be reduced to a constant. In concatenation {Var{exp0, exp1, ..}}, Var must be a constant: a const exp, a parameter or a generate variable.");
+
+ERR_DEFINE("ELAB-EXPRESSION-2",
+           EError,   1,
+           "\"%1%\" is not supported yet. Variable power operation is not synthesisable.");
+
+ERR_DEFINE("ELAB-EXPRESSION-3",
+           EError,   1,
+           "\"%1%\" is not supported yet. Variable division/modulate operation is not synthesisable.");
 
 ERR_DEFINE("ELAB-IF-0", 
            EError,   0, 

@@ -27,6 +27,7 @@
  */
 
 #include "component.h"
+#include "shell/env.h"
 #include <boost/foreach.hpp>
 
 using namespace netlist;
@@ -36,6 +37,7 @@ using std::list;
 using std::vector;
 using boost::shared_ptr;
 using boost::static_pointer_cast;
+using shell::location;
 
 netlist::Operation::Operation()
   : NetComp(tOperation), otype(oNULL), valuable(false)
@@ -48,20 +50,55 @@ netlist::Operation::Operation(operation_t otype)
   assert(otype > oFun);
 }
 
+netlist::Operation::Operation(const location& lloc, operation_t otype)
+  : NetComp(tOperation, lloc), otype(otype), valuable(false)
+{
+  // only operators do not need an operand
+  assert(otype > oFun);
+}
+
 netlist::Operation::Operation(const Number& num)
-  : NetComp(tOperation), otype(oNum), valuable(true), data(new Number(num))
+  : NetComp(tOperation, num.loc), otype(oNum), valuable(true), data(new Number(num))
+{ }
+
+netlist::Operation::Operation(const location& lloc, const Number& num)
+  : NetComp(tOperation, lloc), otype(oNum), valuable(true), data(new Number(num))
 { }
 
 netlist::Operation::Operation(const VIdentifier& id)
-  : NetComp(tOperation), otype(oVar), valuable(false), data(new VIdentifier(id))
+  : NetComp(tOperation, id.loc), otype(oVar), valuable(false), data(new VIdentifier(id))
+{ }
+
+netlist::Operation::Operation(const location& lloc, const VIdentifier& id)
+  : NetComp(tOperation, lloc), otype(oVar), valuable(false), data(new VIdentifier(id))
 { }
 
 netlist::Operation::Operation(const shared_ptr<Concatenation>& con)
-  : NetComp(tOperation), otype(oCon), valuable(false), data(static_pointer_cast<NetComp>(con))
+  : NetComp(tOperation, con->loc), otype(oCon), valuable(false), data(static_pointer_cast<NetComp>(con))
+{ }
+
+netlist::Operation::Operation(const location& lloc, const shared_ptr<Concatenation>& con)
+  : NetComp(tOperation, lloc), otype(oCon), valuable(false), data(static_pointer_cast<NetComp>(con))
 { }
 
 netlist::Operation::Operation(const shared_ptr<LConcatenation>& con)
-  : NetComp(tOperation), otype(oCon), valuable(false)
+  : NetComp(tOperation, con->loc), otype(oCon), valuable(false)
+{
+  if(con->size() == 1) {
+    otype = oVar;
+    data.reset(new VIdentifier(con->front()));
+  } else {
+    // copy all elements in LConcatenation to Concatenation
+    shared_ptr<Concatenation> cp(new Concatenation());
+    BOOST_FOREACH(const VIdentifier& it, con->data) {
+      shared_ptr<ConElem> m( new ConElem(shared_ptr<Expression>(new Expression(it))));
+      *cp + m;
+    }
+  }
+}
+
+netlist::Operation::Operation(const location& lloc, const shared_ptr<LConcatenation>& con)
+  : NetComp(tOperation, lloc), otype(oCon), valuable(false)
 {
   if(con->size() == 1) {
     otype = oVar;
@@ -77,7 +114,14 @@ netlist::Operation::Operation(const shared_ptr<LConcatenation>& con)
 }
 
 netlist::Operation::Operation(operation_t op, const boost::shared_ptr<Operation>& exp)
- : NetComp(tOperation), otype(op), valuable(false)
+  : NetComp(tOperation, exp->loc), otype(op), valuable(false)
+{
+  child.push_back(exp);
+  reduce();
+}
+
+netlist::Operation::Operation(const location& lloc, operation_t op, const boost::shared_ptr<Operation>& exp)
+  : NetComp(tOperation, lloc), otype(op), valuable(false)
 {
   child.push_back(exp);
   reduce();
@@ -85,7 +129,17 @@ netlist::Operation::Operation(operation_t op, const boost::shared_ptr<Operation>
 
 netlist::Operation::Operation(operation_t op, const boost::shared_ptr<Operation>& exp1,
                               const boost::shared_ptr<Operation>& exp2)
- : NetComp(tOperation), otype(op), valuable(false)
+  : NetComp(tOperation, exp1->loc + exp2->loc), otype(op), valuable(false)
+{
+  child.push_back(exp1);
+  child.push_back(exp2);
+  reduce();
+}
+
+netlist::Operation::Operation(const location& lloc, operation_t op, 
+                              const boost::shared_ptr<Operation>& exp1,
+                              const boost::shared_ptr<Operation>& exp2)
+  : NetComp(tOperation, lloc), otype(op), valuable(false)
 {
   child.push_back(exp1);
   child.push_back(exp2);
@@ -96,7 +150,19 @@ netlist::Operation::Operation(operation_t op,
                               const boost::shared_ptr<Operation>& exp1,
                               const boost::shared_ptr<Operation>& exp2,
                               const boost::shared_ptr<Operation>& exp3)
- : NetComp(tOperation), otype(op), valuable(false)
+  : NetComp(tOperation, exp1->loc + exp3->loc), otype(op), valuable(false)
+{
+  child.push_back(exp1);
+  child.push_back(exp2);
+  child.push_back(exp3);
+  reduce();
+}
+
+netlist::Operation::Operation(const location& lloc, operation_t op, 
+                              const boost::shared_ptr<Operation>& exp1,
+                              const boost::shared_ptr<Operation>& exp2,
+                              const boost::shared_ptr<Operation>& exp3)
+  : NetComp(tOperation, lloc), otype(op), valuable(false)
 {
   child.push_back(exp1);
   child.push_back(exp2);
@@ -303,6 +369,7 @@ ostream& netlist::Operation::streamout(ostream& os, unsigned int indent) const {
 
 Operation* netlist::Operation::deep_copy() const {
   Operation* rv = new Operation();
+  rv->loc = loc;
   rv->width = width;
   rv->otype = this->otype;
   rv->valuable = this->valuable;
@@ -371,7 +438,127 @@ bool netlist::Operation::elaborate(NetComp::elab_result_t &result, const NetComp
   BOOST_FOREACH(shared_ptr<Operation>&m, child)
     rv &= m->elaborate(result, NetComp::tExp);
 
+  if(!rv) return rv;
+
+  // extra check
+  switch(otype) {
+  case oNum:
+  case oVar:
+  case oCon:
+  case oUPos:
+  case oUNeg:
+  case oULRev:
+  case oURev:
+  case oUAnd:
+  case oUNand:
+  case oUOr:
+  case oUNor:
+  case oUXor:
+  case oUNxor:
+  case oTime:
+  case oAdd:
+  case oMinus:
+  case oRS:
+  case oLS:
+  case oLRS:
+  case oLess:
+  case oLe:
+  case oGreat:
+  case oGe:
+  case oEq:
+  case oNeq:
+  case oAnd:
+  case oXor:
+  case oNxor:
+  case oOr:
+  case oLAnd:
+  case oLOr:
+  case oQuestion:
+    rv = true;
+    break;
+  case oPower:
+    // a shift must have been reduced if it is correct
+    G_ENV->error(loc, "ELAB-EXPRESSION-2", toString());
+    rv = false;
+    break;
+  case oDiv:
+  case oMode:
+    // a div/mod must have been reduced if it is correct
+    G_ENV->error(loc, "ELAB-EXPRESSION-3", toString());
+    rv = false;
+    break;
+  case oCEq:
+  case oCNeq:
+    // a case comparison must have been reduced if it is correct
+    G_ENV->error(loc, "ELAB-CASE-3", toString());
+    rv = false;
+    break;
+  default:  // should not run to here
+    assert(0 == "wrong operation type");
+  }
+
   return rv;   
+}
+
+unsigned int netlist::Operation::get_width() {
+  if(width) return width;
+  return width;
+
+  switch(otype) {
+  case oNum:
+  case oVar:
+  case oCon:
+    assert(data.use_count() != 0);
+    width = data->get_width();
+    break;
+  case oUPos:
+  case oUNeg:
+  case oURev:
+    assert(child[0].use_count() != 0);
+    width = child[0]->get_width();
+    break;
+  case oULRev:
+  case oUAnd:
+  case oUNand:
+  case oUOr:
+  case oUNor:
+  case oUXor:
+  case oUNxor:
+    assert(child[0].use_count() != 0);
+    child[0]->get_width();
+    width = 1;
+    break;
+  case oPower:    reduce_Power();    break;
+  case oTime:     reduce_Time();     break;
+  case oDiv:      reduce_Div();      break;
+  case oMode:     reduce_Mode();     break;
+  case oAdd:      reduce_Add();      break;
+  case oMinus:    reduce_Minus();    break;
+  case oRS:       reduce_RS();       break;
+  case oLS:       reduce_LS();       break;
+  case oLRS:      reduce_LRS();      break;
+  case oLess:     reduce_Less();     break;
+  case oLe:       reduce_Le();       break;
+  case oGreat:    reduce_Great();    break;
+  case oGe:       reduce_Ge();       break;
+  case oEq:       reduce_Eq();       break;
+  case oNeq:      reduce_Neq();      break;
+  case oCEq:      reduce_CEq();      break;
+  case oCNeq:     reduce_CNeq();     break;
+  case oAnd:      reduce_And();      break;
+  case oXor:      reduce_Xor();      break;
+  case oNxor:     reduce_Nxor();     break;
+  case oOr:       reduce_Or();       break;
+  case oLAnd:     reduce_LAnd();     break;
+  case oLOr:      reduce_LOr();      break;
+  case oQuestion: reduce_Question(); break;
+  default:// should not run to here
+    assert(0 == "wrong operation type");
+  }
+}
+
+void netlist::Operation::set_width(const unsigned int& w) {
+  width = w;
 }
 
 void netlist::Operation::reduce_Num() {
@@ -543,7 +730,7 @@ void netlist::Operation::reduce_Power() {
     child.clear();
     otype = oNum;
     valuable = true;
-  }
+  } 
 }
 
 // *
