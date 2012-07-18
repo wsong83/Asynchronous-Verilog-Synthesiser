@@ -115,17 +115,27 @@ Number& netlist::Operation::get_num(){
   return *(static_pointer_cast<Number>(data));
 }
 
-Number netlist::Operation::get_num() const{
+const Number& netlist::Operation::get_num() const{
   assert(otype == oNum);
   return *(static_pointer_cast<Number>(data));
 }
 
-Concatenation& netlist::Operation::get_con(){
+Concatenation& netlist::Operation::get_con() {
+  assert(otype == oCon);
+  return *(static_pointer_cast<Concatenation>(data));
+}
+
+const Concatenation& netlist::Operation::get_con() const{
   assert(otype == oCon);
   return *(static_pointer_cast<Concatenation>(data));
 }
 
 VIdentifier& netlist::Operation::get_var(){
+  assert(otype == oVar);
+  return *(static_pointer_cast<VIdentifier>(data));
+}
+
+const VIdentifier& netlist::Operation::get_var() const {
   assert(otype == oVar);
   return *(static_pointer_cast<VIdentifier>(data));
 }
@@ -137,16 +147,16 @@ string netlist::Operation::toString() const {
   case oVar: 
   case oCon:    return ::toString(*data);
   case oUPos:   return ::toString(*(child[0]));
-  case oUNeg:   op = "-";
-  case oULRev:  op = "!";
-  case oURev:   op = "~";
-  case oUAnd:   op = "&";
-  case oUNand:  op = "~&";
-  case oUOr:    op = "|";
-  case oUNor:   op = "~|";
-  case oUXor:   op = "^";
+  case oUNeg:   op = "-";   goto UNARY0;
+  case oULRev:  op = "!";   goto UNARY0;
+  case oURev:   op = "~";   goto UNARY0;
+  case oUAnd:   op = "&";   goto UNARY0;
+  case oUNand:  op = "~&";  goto UNARY0;
+  case oUOr:    op = "|";   goto UNARY0;
+  case oUNor:   op = "~|";  goto UNARY0;
+  case oUXor:   op = "^";   goto UNARY0;
   case oUNxor:  op = "~^";
-    return 
+  UNARY0:  return 
       op + 
       (child[0]->otype > oUNxor 
        ? "("+::toString(*(child[0]))+")" : ::toString(*(child[0])));    
@@ -157,47 +167,47 @@ string netlist::Operation::toString() const {
       + " " + op + " " + 
       (child[1]->otype > oPower 
        ? "("+::toString(*(child[1]))+")" : ::toString(*(child[1])));    
-  case oTime:   op = "*";
+  case oTime:   op = "*";   goto BDIV;
   case oDiv:    op = "/";
-    return 
+  BDIV: return 
       (child[0]->otype > oDiv 
        ? "("+::toString(*(child[0]))+")" : ::toString(*(child[0])))
       + " " + op + " " + 
       (child[1]->otype > oDiv 
        ? "("+::toString(*(child[1]))+")" : ::toString(*(child[1])));    
-  case oMode:   op = "%";
-  case oAdd:    op = "+";
+  case oMode:   op = "%";   goto BMINUS;
+  case oAdd:    op = "+";   goto BMINUS;
   case oMinus:  op = "-";
-    return 
+  BMINUS: return 
       (child[0]->otype > oMinus 
        ? "("+::toString(*(child[0]))+")" : ::toString(*(child[0])))
       + " " + op + " " + 
       (child[1]->otype > oMinus 
        ? "("+::toString(*(child[1]))+")" : ::toString(*(child[1])));    
-  case oRS:     op = ">>";
-  case oLS:     op = "<<";
+  case oRS:     op = ">>";   goto BLRS;
+  case oLS:     op = "<<";   goto BLRS;
   case oLRS:    op = ">>>";
-    return 
+  BLRS: return 
       (child[0]->otype >= oRS 
        ? "("+::toString(*(child[0]))+")" : ::toString(*(child[0])))
       + " " + op + " " + 
       (child[1]->otype >= oRS 
        ? "("+::toString(*(child[1]))+")" : ::toString(*(child[1])));    
-  case oLess:   op = "<";
-  case oLe:     op = "<=";
-  case oGreat:  op = ">";
+  case oLess:   op = "<";   goto BGE;
+  case oLe:     op = "<=";  goto BGE;
+  case oGreat:  op = ">";   goto BGE;
   case oGe:     op = ">=";
-    return 
+  BGE:  return 
       (child[0]->otype >= oLess 
        ? "("+::toString(*(child[0]))+")" : ::toString(*(child[0])))
       + " " + op + " " + 
       (child[1]->otype >= oLess 
        ? "("+::toString(*(child[1]))+")" : ::toString(*(child[1])));    
-  case oEq:     op = "==";
-  case oNeq:    op = "!=";
-  case oCEq:    op = "===";
-  case oCNeq:   op = "!==";
-    return 
+  case oEq:     op = "==";  goto BCNEQ;
+  case oNeq:    op = "!=";  goto BCNEQ;
+  case oCEq:    op = "==="; goto BCNEQ;
+  case oCNeq:   op = "!=="; goto BCNEQ;
+  BCNEQ:  return 
       (child[0]->otype >= oEq 
        ? "("+::toString(*(child[0]))+")" : ::toString(*(child[0])))
       + " " + op + " " + 
@@ -210,9 +220,9 @@ string netlist::Operation::toString() const {
       + " " + op + " " + 
       (child[1]->otype > oAnd 
        ? "("+::toString(*(child[1]))+")" : ::toString(*(child[1])));    
-  case oXor:    op = "^";
+  case oXor:    op = "^";   goto BNXOR;
   case oNxor:   op = "~^";
-    return 
+  BNXOR:  return 
       (child[0]->otype > oNxor 
        ? "("+::toString(*(child[0]))+")" : ::toString(*(child[0])))
       + " " + op + " " + 
@@ -293,6 +303,7 @@ ostream& netlist::Operation::streamout(ostream& os, unsigned int indent) const {
 
 Operation* netlist::Operation::deep_copy() const {
   Operation* rv = new Operation();
+  rv->width = width;
   rv->otype = this->otype;
   rv->valuable = this->valuable;
   if(data.use_count() != 0) rv->data = shared_ptr<NetComp>(data->deep_copy());
@@ -352,28 +363,14 @@ bool netlist::Operation::elaborate(NetComp::elab_result_t &result, const NetComp
   bool rv = true;
   result = NetComp::ELAB_Normal;
 
-  if(otype == oVar) {
+  if(data.use_count() != 0)
     rv &= data->elaborate(result, NetComp::tExp);
-    if(!rv) return rv;
-    SP_CAST(m, VIdentifier, data);
-    if(m->is_valuable()) {
-      data.reset(new Number(m->get_value()));
-      otype = oNum;
-      valuable = true;
-    }
-  } else if(otype == oCon) {
-    rv &= data->elaborate(result, NetComp::tExp);
-    if(!rv) return rv;
-    SP_CAST(m, Concatenation, data);
-    if(m->is_valuable()) {
-      data.reset(new Number(m->get_value()));
-      otype = oNum;
-      valuable = true;
-    } 
-  }
 
-  // a number or operator does not need to be reduced further
-  // function is not supported yet
+  if(!rv) return rv;
+
+  BOOST_FOREACH(shared_ptr<Operation>&m, child)
+    rv &= m->elaborate(result, NetComp::tExp);
+
   return rv;   
 }
 
@@ -396,6 +393,7 @@ void netlist::Operation::reduce_Con() {
 void netlist::Operation::reduce_Var() {
   assert(child.size() == 0);
   SP_CAST(m, VIdentifier, data);
+  m->reduce();
   if(m->is_valuable()) {
     data.reset(new Number(m->get_value()));
     otype = oNum;
@@ -754,6 +752,21 @@ void netlist::Operation::reduce_Neq() {
   child[1]->reduce();
   if(child[0]->is_valuable() && child[1]->is_valuable()) {
     data.reset(new Number(child[0]->get_num() != child[1]->get_num()));
+    child.clear();
+    otype = oNum;
+    valuable = true;
+  }
+}
+
+// ===
+void netlist::Operation::reduce_CEq() {
+  assert(child.size() == 2);
+  assert(child[0].use_count() != 0);
+  assert(child[1].use_count() != 0);
+  child[0]->reduce();
+  child[1]->reduce();
+  if(child[0]->is_valuable() && child[1]->is_valuable()) {
+    data.reset(new Number(op_case_equal(child[0]->get_num(), child[1]->get_num())));
     child.clear();
     otype = oNum;
     valuable = true;

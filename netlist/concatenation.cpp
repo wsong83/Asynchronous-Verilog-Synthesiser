@@ -29,6 +29,7 @@
 #include <algorithm>
 #include "component.h"
 #include "shell/env.h"
+#include <boost/foreach.hpp>
 
 using namespace netlist;
 using std::ostream;
@@ -150,23 +151,22 @@ ostream& netlist::Concatenation::streamout(ostream& os, unsigned int indent) con
   return os;
 }
     
-Concatenation& netlist::Concatenation::operator+ (shared_ptr<Concatenation>& rhs) {
+Concatenation& netlist::Concatenation::operator+ (const shared_ptr<Concatenation>& rhs) {
   list<shared_ptr<ConElem> >::iterator it, end;
   for(it=rhs->data.begin(), end=rhs->data.end(); it != end; it++)
     *this + *it;
   return *this;
 }
 
-Concatenation& netlist::Concatenation::operator+ (shared_ptr<ConElem>& rhs) {
+Concatenation& netlist::Concatenation::operator+ (const shared_ptr<ConElem>& rhs) {
   // check whether it is an embedded concatenation
   if( 0 == rhs->con.size() &&
-      rhs->exp->size() == 1 &&
-      rhs->exp->eqn.front()->get_type() == Operation::oCon
+      rhs->exp->is_singular() &&
+      rhs->exp->get_op().get_type() == Operation::oCon
       ) {
-    Concatenation& m_con = rhs->exp->eqn.front()->get_con();
-    list<shared_ptr<ConElem> >::iterator it, end;
-    for(it=m_con.data.begin(), end=m_con.data.end(); it != end; it++)
-      *this + *it;
+    const Concatenation& m_con = rhs->exp->get_op().get_con();
+    BOOST_FOREACH(const shared_ptr<ConElem>& it, m_con.data)
+      *this + it;
   } else {
     data.push_back(rhs);
   }
@@ -184,9 +184,9 @@ void netlist::Concatenation::reduce() {
   while(it != end) {
     (*it)->reduce();
     if((*it)->con.size() == 0) { // an expression
-      if((*it)->exp->eqn.size() == 1 &&
-         (*it)->exp->eqn.front()->get_type() == Operation::oCon) { // embedded concatenation
-        Concatenation cm = (*it)->exp->eqn.front()->get_con(); // fetch the concatenation
+      if((*it)->exp->is_singular() &&
+         (*it)->exp->get_op().get_type() == Operation::oCon) { // embedded concatenation
+        const Concatenation cm = (*it)->exp->get_op().get_con(); // fetch the concatenation
         data.insert(it,cm.data.begin(), cm.data.end());	// copy the elements to the current level
         data.erase(it); // delete current one as its content is copied
         

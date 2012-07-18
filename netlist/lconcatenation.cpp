@@ -45,10 +45,10 @@ netlist::LConcatenation::LConcatenation(shared_ptr<Concatenation>& con)
   con->reduce();
   BOOST_FOREACH(const shared_ptr<ConElem>& it, con->data) {
     if( 0 != it->con.size() ||    // the concatenation contain sub-concatenations
-        it->exp->size() != 1 ||   // the expression ia still complex
-        it->exp->front()->get_type() != Operation::oVar || // wrong type
-        it->exp->front()->get_var().get_type() != tVarName) return; // wrong type
-    data.push_back(it->exp->front()->get_var());
+        !it->exp->is_singular() ||   // the expression is still complex
+        it->exp->get_op().get_type() != Operation::oVar || // wrong type
+        it->exp->get_op().get_var().get_type() != tVarName) return; // wrong type
+    data.push_back(it->exp->get_op().get_var());
   }
   valid = true;
 }
@@ -59,10 +59,10 @@ netlist::LConcatenation::LConcatenation(const location& lloc, shared_ptr<Concate
   con->reduce();
   BOOST_FOREACH(const shared_ptr<ConElem>& it, con->data) {
     if( 0 != it->con.size() ||    // the concatenation contain sub-concatenations
-        it->exp->size() != 1 ||   // the expression ia still complex
-        it->exp->front()->get_type() != Operation::oVar || // wrong type
-        it->exp->front()->get_var().get_type() != tVarName) return; // wrong type
-    data.push_back(it->exp->front()->get_var());
+        !it->exp->is_singular() ||   // the expression ia still complex
+        it->exp->get_op().get_type() != Operation::oVar || // wrong type
+        it->exp->get_op().get_var().get_type() != tVarName) return; // wrong type
+    data.push_back(it->exp->get_op().get_var());
   }
   valid = true;
 }

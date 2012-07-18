@@ -77,6 +77,7 @@ namespace netlist {
     virtual Number* deep_copy() const;
     virtual void db_register(int iod) {}
     virtual void db_expunge() {}
+    NETLIST_ELABORATE_DECL;
 
   private:
     unsigned int num_leng;	// the number of digits in the number

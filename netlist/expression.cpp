@@ -94,25 +94,30 @@ netlist::Expression::Expression(const location& lloc, const shared_ptr<LConcaten
 netlist::Expression::~Expression() {}
 
 bool netlist::Expression::is_valuable() const {
+  assert(eqn.use_count() != 0);
   return eqn->is_valuable();
 }
 
-Number netlist::Expression::get_value() const { 
+Number netlist::Expression::get_value() const {
+  assert(eqn.use_count() != 0);
   assert(eqn->is_valuable());
   return eqn->get_num();
 }
 
-bool netlist::Expression::is_valuable() const {
-  if(child.use_count() != 0) return child->is_valuable();
-  else return false;
+bool netlist::Expression::is_singular() const {
+  assert(eqn.use_count() != 0);
+  return ((eqn->get_type() > Operation::oNULL) && (eqn->get_type() <= Operation::oFun));
 }
 
-Number netlist::Expression::get_value() const {
-  if(child.use_count() != 0) {
-    assert(child->is_valuable());
-    return child->get_valuable();
-  } else return Number();
-}  
+const Operation& netlist::Expression::get_op() const {
+  assert(eqn.use_count() != 0);
+  return *eqn;
+}
+
+Operation& netlist::Expression::get_op() {
+  assert(eqn.use_count() != 0);
+  return *eqn;
+}
 
 void netlist::Expression::reduce() {
   assert(eqn.use_count() != 0);
@@ -156,6 +161,14 @@ void netlist::Expression::concatenate(const Expression& rhs) {
   eqn->get_num().concatenate(rhs.eqn->get_num());
 }
 
+unsigned int netlist::Expression::get_width() {
+  return width;
+}
+
+void netlist::Expression::set_width(const unsigned int& w) {
+  width = w;
+}
+
 Expression& netlist::operator+ (Expression& lhs, Expression& rhs) {
   lhs.append(Operation::oAdd, rhs);
   return lhs;
@@ -181,23 +194,23 @@ ostream& netlist::Expression::streamout(ostream& os, unsigned int indent) const 
 void netlist::Expression::set_father(Block *pf) {
   if(father == pf) return;
   father = pf;
-  BOOST_FOREACH(shared_ptr<Operation>& it, eqn)
-    it->set_father(pf);
+  assert(eqn.use_count() != 0);
+  eqn->set_father(pf);
 }
 
 bool netlist::Expression::check_inparse() {
   bool rv = true;
-  BOOST_FOREACH(shared_ptr<Operation>& it, eqn)
-    rv &= it->check_inparse();
+  assert(eqn.use_count() != 0);
+  rv &= eqn->check_inparse();
   return rv;
 }
 
 Expression* netlist::Expression::deep_copy() const {
   Expression* rv = new Expression();
   rv->loc = loc;
-  rv->valuable = this->valuable;
-  BOOST_FOREACH(const shared_ptr<Operation>& it, eqn)
-    rv->eqn.push_back(shared_ptr<Operation>(it->deep_copy()));
+  rv->width = width;
+  assert(eqn.use_count() != 0);
+  rv->eqn = shared_ptr<Operation>(eqn->deep_copy());
   return rv;
 }
 
@@ -205,13 +218,12 @@ bool netlist::Expression::elaborate(elab_result_t &result, const ctype_t mctype,
   bool rv = true;
   result = ELAB_Normal;
   
-  // resolve all operation if possible
+  // try to reduce the expression
   assert(eqn.use_count() != 0);
+  eqn->reduce();
+
   eqn->elaborate(result);
   if(!rv) return false;
-
-  // try to reduce the expression
-  eqn->reduce();
 
   // type specific check
   switch(mctype) {

@@ -79,8 +79,8 @@ namespace netlist {
     NETLIST_DEFAULT_CON_WL(Concatenation, tConcatenation);
     
     // helpers
-    Concatenation& operator+ (boost::shared_ptr<Concatenation>& rhs);
-    Concatenation& operator+ (boost::shared_ptr<ConElem>& rhs);
+    Concatenation& operator+ (const boost::shared_ptr<Concatenation>& rhs);
+    Concatenation& operator+ (const boost::shared_ptr<ConElem>& rhs);
     void reduce();
     bool is_valuable() const { return (data.size() == 1 && data.front()->is_valuable()); }
     bool is_exp() const { return (data.size() == 1 && data.front()->con.size() == 0); }

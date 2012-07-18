@@ -95,9 +95,11 @@ namespace netlist {
     bool is_valuable() const { return valuable; }
     operation_t get_type() const { return otype; }
     Number& get_num();
-    Number get_num() const;
+    const Number& get_num() const;
     Concatenation& get_con();
+    const Concatenation& get_con() const;
     VIdentifier& get_var();
+    const VIdentifier& get_var() const;
     void reduce();
     std::string toString() const;
     

@@ -57,7 +57,7 @@ ostream& netlist::CaseItem::streamout (ostream& os, unsigned int indent) const {
       os << *(*it) << "," << endl;
       it++;
     }
-    os << *(*it) << ": ";
+    os << string(indent, ' ') << *(*it) << ": ";
   }
   
   // the body part
