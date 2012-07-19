@@ -39,16 +39,16 @@ namespace netlist {
      * So the whole structure is recursive.
      */
   public:
-    ConElem() : father(NULL) {}
-    ConElem(const shell::location& lloc) : loc(lloc), father(NULL){}
+    ConElem() : father(NULL), width(0) {}
+    ConElem(const shell::location& lloc) : loc(lloc), father(NULL), width(0){}
     ConElem(const boost::shared_ptr<Expression>& expr, const std::list<boost::shared_ptr<ConElem> >& elems)
-      : exp(expr), con(elems), father(NULL) {}
+      : exp(expr), con(elems), father(NULL), width(0) {}
     ConElem(const shell::location& lloc, const boost::shared_ptr<Expression>& expr, const std::list<boost::shared_ptr<ConElem> >& elems)
-      : exp(expr), con(elems), loc(lloc), father(NULL) {}
+      : exp(expr), con(elems), loc(lloc), father(NULL), width(0) {}
     ConElem(const boost::shared_ptr<Expression>& expr)
-      : exp(expr), father(NULL) {}
+      : exp(expr), father(NULL), width(0) {}
     ConElem(const shell::location& lloc, const boost::shared_ptr<Expression>& expr)
-      : exp(expr), loc(lloc), father(NULL) {}
+      : exp(expr), loc(lloc), father(NULL), width(0) {}
     
     // helpers
     void reduce();
@@ -63,11 +63,14 @@ namespace netlist {
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
     NETLIST_ELABORATE_DECL;
+    NETLIST_SET_WIDTH_DECL;
+    NETLIST_GET_WIDTH_DECL;
 
     boost::shared_ptr<Expression> exp;
     std::list<boost::shared_ptr<ConElem> > con;
     shell::location loc;
     Block* father;
+    unsigned int width;
 
   };
   NETLIST_STREAMOUT(ConElem);
@@ -79,8 +82,8 @@ namespace netlist {
     NETLIST_DEFAULT_CON_WL(Concatenation, tConcatenation);
     
     // helpers
-    Concatenation& operator+ (boost::shared_ptr<Concatenation>& rhs);
-    Concatenation& operator+ (boost::shared_ptr<ConElem>& rhs);
+    Concatenation& operator+ (const boost::shared_ptr<Concatenation>& rhs);
+    Concatenation& operator+ (const boost::shared_ptr<ConElem>& rhs);
     void reduce();
     bool is_valuable() const { return (data.size() == 1 && data.front()->is_valuable()); }
     bool is_exp() const { return (data.size() == 1 && data.front()->con.size() == 0); }
@@ -95,6 +98,8 @@ namespace netlist {
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
     NETLIST_ELABORATE_DECL;
+    NETLIST_SET_WIDTH_DECL;
+    NETLIST_GET_WIDTH_DECL;
 
     // data
     std::list<boost::shared_ptr<ConElem> > data;

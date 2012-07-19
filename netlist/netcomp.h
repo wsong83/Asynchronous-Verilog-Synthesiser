@@ -79,6 +79,16 @@
                          const std::vector<NetComp *>& fp = std::vector<NetComp *>());
 #endif
 
+#ifndef NETLIST_SET_WIDTH_DECL
+#define NETLIST_SET_WIDTH_DECL                                                                \
+  virtual void set_width( const unsigned int&);
+#endif
+
+#ifndef NETLIST_GET_WIDTH_DECL
+#define NETLIST_GET_WIDTH_DECL                                                                \
+  virtual unsigned int get_width();
+#endif
+
 namespace netlist{
   
   // the base class of all netlist components
@@ -86,14 +96,16 @@ namespace netlist{
   public:
 #include "comp_type.h"
     // no one should directly use this class
-    NetComp() : ctype(tUnknown), father(NULL) {}
-    NetComp(ctype_t tt) : ctype(tt), father(NULL) {}
-    NetComp(ctype_t tt, const shell::location& lloc) : ctype(tt), loc(lloc), father(NULL) {}
+    NetComp() : ctype(tUnknown), width(0), father(NULL) {}
+    NetComp(ctype_t tt) : ctype(tt), width(0), father(NULL) {}
+    NetComp(ctype_t tt, const shell::location& lloc) 
+      : ctype(tt), loc(lloc), width(0), father(NULL) {}
     virtual ~NetComp() {}
 
     ctype_t get_type() const { return ctype; }
     ctype_t ctype;
     shell::location loc;
+    unsigned int width;         // data width of this component
     
     virtual void reduce() {}	/* many netlist component need method to reduce itself */
 
@@ -161,6 +173,17 @@ namespace netlist{
                             const std::vector<NetComp *>& fp = std::vector<NetComp *>()) {
       std::cerr << "ERROR!!, the elaborate() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
       assert(0 == "elaborate() of NetComp is used");
+    }
+
+    virtual unsigned int get_width() {
+      std::cerr << "ERROR!!, the get_width() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
+      assert(0 == "get_width() of NetComp is used");
+      return 0;
+    }
+
+    virtual void set_width(const unsigned int&) {
+      std::cerr << "ERROR!!, the set_width() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
+      assert(0 == "set_width() of NetComp is used");
     }
 
   protected:

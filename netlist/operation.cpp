@@ -27,7 +27,9 @@
  */
 
 #include "component.h"
+#include "shell/env.h"
 #include <boost/foreach.hpp>
+#include <algorithm>
 
 using namespace netlist;
 using std::ostream;
@@ -36,32 +38,52 @@ using std::list;
 using std::vector;
 using boost::shared_ptr;
 using boost::static_pointer_cast;
+using shell::location;
 
 netlist::Operation::Operation()
-  : otype(oNULL), valuable(false), father(NULL)
+  : NetComp(tOperation), otype(oNULL), valuable(false)
 {}
 
 netlist::Operation::Operation(operation_t otype)
-  : otype(otype), valuable(false), father(NULL)
+  : NetComp(tOperation), otype(otype), valuable(false)
+{
+  // only operators do not need an operand
+  assert(otype > oFun);
+}
+
+netlist::Operation::Operation(const location& lloc, operation_t otype)
+  : NetComp(tOperation, lloc), otype(otype), valuable(false)
 {
   // only operators do not need an operand
   assert(otype > oFun);
 }
 
 netlist::Operation::Operation(const Number& num)
-  : otype(oNum), valuable(true), data(new Number(num)), father(NULL)
+  : NetComp(tOperation, num.loc), otype(oNum), valuable(true), data(new Number(num))
+{ }
+
+netlist::Operation::Operation(const location& lloc, const Number& num)
+  : NetComp(tOperation, lloc), otype(oNum), valuable(true), data(new Number(num))
 { }
 
 netlist::Operation::Operation(const VIdentifier& id)
-  : otype(oVar), valuable(false), data(new VIdentifier(id)), father(NULL)
+  : NetComp(tOperation, id.loc), otype(oVar), valuable(false), data(new VIdentifier(id))
+{ }
+
+netlist::Operation::Operation(const location& lloc, const VIdentifier& id)
+  : NetComp(tOperation, lloc), otype(oVar), valuable(false), data(new VIdentifier(id))
 { }
 
 netlist::Operation::Operation(const shared_ptr<Concatenation>& con)
-  : otype(oCon), valuable(false), data(static_pointer_cast<NetComp>(con)), father(NULL)
+  : NetComp(tOperation, con->loc), otype(oCon), valuable(false), data(static_pointer_cast<NetComp>(con))
+{ }
+
+netlist::Operation::Operation(const location& lloc, const shared_ptr<Concatenation>& con)
+  : NetComp(tOperation, lloc), otype(oCon), valuable(false), data(static_pointer_cast<NetComp>(con))
 { }
 
 netlist::Operation::Operation(const shared_ptr<LConcatenation>& con)
-  : otype(oCon), valuable(false), father(NULL)
+  : NetComp(tOperation, con->loc), otype(oCon), valuable(false)
 {
   if(con->size() == 1) {
     otype = oVar;
@@ -76,6 +98,79 @@ netlist::Operation::Operation(const shared_ptr<LConcatenation>& con)
   }
 }
 
+netlist::Operation::Operation(const location& lloc, const shared_ptr<LConcatenation>& con)
+  : NetComp(tOperation, lloc), otype(oCon), valuable(false)
+{
+  if(con->size() == 1) {
+    otype = oVar;
+    data.reset(new VIdentifier(con->front()));
+  } else {
+    // copy all elements in LConcatenation to Concatenation
+    shared_ptr<Concatenation> cp(new Concatenation());
+    BOOST_FOREACH(const VIdentifier& it, con->data) {
+      shared_ptr<ConElem> m( new ConElem(shared_ptr<Expression>(new Expression(it))));
+      *cp + m;
+    }
+  }
+}
+
+netlist::Operation::Operation(operation_t op, const boost::shared_ptr<Operation>& exp)
+  : NetComp(tOperation, exp->loc), otype(op), valuable(false)
+{
+  child.push_back(exp);
+  reduce();
+}
+
+netlist::Operation::Operation(const location& lloc, operation_t op, const boost::shared_ptr<Operation>& exp)
+  : NetComp(tOperation, lloc), otype(op), valuable(false)
+{
+  child.push_back(exp);
+  reduce();
+}
+
+netlist::Operation::Operation(operation_t op, const boost::shared_ptr<Operation>& exp1,
+                              const boost::shared_ptr<Operation>& exp2)
+  : NetComp(tOperation, exp1->loc + exp2->loc), otype(op), valuable(false)
+{
+  child.push_back(exp1);
+  child.push_back(exp2);
+  reduce();
+}
+
+netlist::Operation::Operation(const location& lloc, operation_t op, 
+                              const boost::shared_ptr<Operation>& exp1,
+                              const boost::shared_ptr<Operation>& exp2)
+  : NetComp(tOperation, lloc), otype(op), valuable(false)
+{
+  child.push_back(exp1);
+  child.push_back(exp2);
+  reduce();
+}
+
+netlist::Operation::Operation(operation_t op, 
+                              const boost::shared_ptr<Operation>& exp1,
+                              const boost::shared_ptr<Operation>& exp2,
+                              const boost::shared_ptr<Operation>& exp3)
+  : NetComp(tOperation, exp1->loc + exp3->loc), otype(op), valuable(false)
+{
+  child.push_back(exp1);
+  child.push_back(exp2);
+  child.push_back(exp3);
+  reduce();
+}
+
+netlist::Operation::Operation(const location& lloc, operation_t op, 
+                              const boost::shared_ptr<Operation>& exp1,
+                              const boost::shared_ptr<Operation>& exp2,
+                              const boost::shared_ptr<Operation>& exp3)
+  : NetComp(tOperation, lloc), otype(op), valuable(false)
+{
+  child.push_back(exp1);
+  child.push_back(exp2);
+  child.push_back(exp3);
+  reduce();
+}
+
 netlist::Operation::~Operation() {
   if(data.use_count() != 0) {
     data->db_expunge();
@@ -87,12 +182,17 @@ Number& netlist::Operation::get_num(){
   return *(static_pointer_cast<Number>(data));
 }
 
-Number netlist::Operation::get_num() const{
+const Number& netlist::Operation::get_num() const{
   assert(otype == oNum);
   return *(static_pointer_cast<Number>(data));
 }
 
-Concatenation& netlist::Operation::get_con(){
+Concatenation& netlist::Operation::get_con() {
+  assert(otype == oCon);
+  return *(static_pointer_cast<Concatenation>(data));
+}
+
+const Concatenation& netlist::Operation::get_con() const{
   assert(otype == oCon);
   return *(static_pointer_cast<Concatenation>(data));
 }
@@ -102,113 +202,228 @@ VIdentifier& netlist::Operation::get_var(){
   return *(static_pointer_cast<VIdentifier>(data));
 }
 
+const VIdentifier& netlist::Operation::get_var() const {
+  assert(otype == oVar);
+  return *(static_pointer_cast<VIdentifier>(data));
+}
+
+string netlist::Operation::toString() const {
+  string op;
+  switch(otype) {
+  case oNum: 
+  case oVar: 
+  case oCon:    return ::toString(*data);
+  case oUPos:   return ::toString(*(child[0]));
+  case oUNeg:   op = "-";   goto UNARY0;
+  case oULRev:  op = "!";   goto UNARY0;
+  case oURev:   op = "~";   goto UNARY0;
+  case oUAnd:   op = "&";   goto UNARY0;
+  case oUNand:  op = "~&";  goto UNARY0;
+  case oUOr:    op = "|";   goto UNARY0;
+  case oUNor:   op = "~|";  goto UNARY0;
+  case oUXor:   op = "^";   goto UNARY0;
+  case oUNxor:  op = "~^";
+  UNARY0:  return 
+      op + 
+      (child[0]->otype > oUNxor 
+       ? "("+::toString(*(child[0]))+")" : ::toString(*(child[0])));    
+  case oPower:  op = "**";
+    return 
+      (child[0]->otype > oPower 
+       ? "("+::toString(*(child[0]))+")" : ::toString(*(child[0])))
+      + " " + op + " " + 
+      (child[1]->otype > oPower 
+       ? "("+::toString(*(child[1]))+")" : ::toString(*(child[1])));    
+  case oTime:   op = "*";   goto BDIV;
+  case oDiv:    op = "/";
+  BDIV: return 
+      (child[0]->otype > oDiv 
+       ? "("+::toString(*(child[0]))+")" : ::toString(*(child[0])))
+      + " " + op + " " + 
+      (child[1]->otype > oDiv 
+       ? "("+::toString(*(child[1]))+")" : ::toString(*(child[1])));    
+  case oMode:   op = "%";   goto BMINUS;
+  case oAdd:    op = "+";   goto BMINUS;
+  case oMinus:  op = "-";
+  BMINUS: return 
+      (child[0]->otype > oMinus 
+       ? "("+::toString(*(child[0]))+")" : ::toString(*(child[0])))
+      + " " + op + " " + 
+      (child[1]->otype > oMinus 
+       ? "("+::toString(*(child[1]))+")" : ::toString(*(child[1])));    
+  case oRS:     op = ">>";   goto BLRS;
+  case oLS:     op = "<<";   goto BLRS;
+  case oLRS:    op = ">>>";
+  BLRS: return 
+      (child[0]->otype >= oRS 
+       ? "("+::toString(*(child[0]))+")" : ::toString(*(child[0])))
+      + " " + op + " " + 
+      (child[1]->otype >= oRS 
+       ? "("+::toString(*(child[1]))+")" : ::toString(*(child[1])));    
+  case oLess:   op = "<";   goto BGE;
+  case oLe:     op = "<=";  goto BGE;
+  case oGreat:  op = ">";   goto BGE;
+  case oGe:     op = ">=";
+  BGE:  return 
+      (child[0]->otype >= oLess 
+       ? "("+::toString(*(child[0]))+")" : ::toString(*(child[0])))
+      + " " + op + " " + 
+      (child[1]->otype >= oLess 
+       ? "("+::toString(*(child[1]))+")" : ::toString(*(child[1])));    
+  case oEq:     op = "==";  goto BCNEQ;
+  case oNeq:    op = "!=";  goto BCNEQ;
+  case oCEq:    op = "==="; goto BCNEQ;
+  case oCNeq:   op = "!=="; goto BCNEQ;
+  BCNEQ:  return 
+      (child[0]->otype >= oEq 
+       ? "("+::toString(*(child[0]))+")" : ::toString(*(child[0])))
+      + " " + op + " " + 
+      (child[1]->otype >= oEq 
+       ? "("+::toString(*(child[1]))+")" : ::toString(*(child[1])));    
+  case oAnd:    op = "&";
+    return 
+      (child[0]->otype > oAnd 
+       ? "("+::toString(*(child[0]))+")" : ::toString(*(child[0])))
+      + " " + op + " " + 
+      (child[1]->otype > oAnd 
+       ? "("+::toString(*(child[1]))+")" : ::toString(*(child[1])));    
+  case oXor:    op = "^";   goto BNXOR;
+  case oNxor:   op = "~^";
+  BNXOR:  return 
+      (child[0]->otype > oNxor 
+       ? "("+::toString(*(child[0]))+")" : ::toString(*(child[0])))
+      + " " + op + " " + 
+      (child[1]->otype > oNxor 
+       ? "("+::toString(*(child[1]))+")" : ::toString(*(child[1])));    
+  case oOr:     op = "|";
+    return 
+      (child[0]->otype > oOr 
+       ? "("+::toString(*(child[0]))+")" : ::toString(*(child[0])))
+      + " " + op + " " + 
+      (child[1]->otype > oOr 
+       ? "("+::toString(*(child[1]))+")" : ::toString(*(child[1])));    
+  case oLAnd:   op = "&&";
+    return 
+      (child[0]->otype > oLAnd 
+       ? "("+::toString(*(child[0]))+")" : ::toString(*(child[0])))
+      + " " + op + " " + 
+      (child[1]->otype > oLAnd 
+       ? "("+::toString(*(child[1]))+")" : ::toString(*(child[1])));    
+  case oLOr:    op = "||";
+    return 
+      (child[0]->otype > oLOr 
+       ? "("+::toString(*(child[0]))+")" : ::toString(*(child[0])))
+      + " " + op + " " + 
+      (child[1]->otype > oLOr 
+       ? "("+::toString(*(child[1]))+")" : ::toString(*(child[1])));    
+  case oQuestion:
+    return 
+      ::toString(*(child[0])) + " ? " 
+      + ::toString(*(child[1])) + " : " + ::toString(*(child[2]));
+  default:
+    assert(0 == "fail to convert this type of operation to string!");
+    return "";
+  }
+}
+
+
 void netlist::Operation::db_register(int iod) {
   if(data.use_count() != 0) data->db_register(iod);
+  if(child.size()) {
+    BOOST_FOREACH(shared_ptr<Operation>& m, child) 
+      m->db_register(iod);
+  }
 }
 
 void netlist::Operation::db_expunge() {
   if(data.use_count() != 0) data->db_expunge();
+  if(child.size()) {
+    BOOST_FOREACH(shared_ptr<Operation>& m, child) 
+      m->db_expunge();
+  }
 }
 
 void netlist::Operation::set_father(Block *pf) {
   if(father == pf) return;
   father = pf;
   if(data.use_count() != 0) data->set_father(pf);
+  if(child.size()) {
+    BOOST_FOREACH(shared_ptr<Operation>& m, child) 
+      m->set_father(pf);
+  }
 }
 
 bool netlist::Operation::check_inparse() {
-  if(data.use_count() != 0) return data->check_inparse();
-  else return true;
+  if((otype <= oCon) && (otype >= oNum)) return data->check_inparse();
+  else {
+    bool rv = true;
+    BOOST_FOREACH(shared_ptr<Operation>& m, child)
+      rv &= m->check_inparse();
+    return rv;
+  }
 }
 
 ostream& netlist::Operation::streamout(ostream& os, unsigned int indent) const {
-  os << string(indent, ' ');
-  switch(otype) {
-  case oNULL:                          return os;
-  case oNum:
-  case oVar:
-  case oCon:        os << *data;       return os;
-  case oFun: // dummy
-  case oUPos:
-  case oAdd:        os << "+";         return os;
-  case oUNeg:
-  case oMinus:      os << "-";         return os;
-  case oULRev:      os << "!";         return os;
-  case oURev:       os << "~";         return os;
-  case oUAnd:
-  case oAnd:        os << "&";         return os;
-  case oUNand:      os << "~&";        return os;
-  case oUOr:
-  case oOr:         os << "|";         return os;
-  case oUNor:       os << "~|";        return os;
-  case oUXor:
-  case oXor:        os << "^";         return os;
-  case oUNxor:
-  case oNxor:       os << "~^";        return os;
-  case oPower:      os << "**";        return os;
-  case oTime:       os << "*";         return os;
-  case oDiv:        os << "/";         return os;
-  case oMode:       os << "%";         return os;
-  case oRS:         os << ">>";        return os;
-  case oLS:         os << "<<";        return os;
-  case oLRS:        os << ">>>";       return os;
-  case oLess:       os << " < ";       return os;
-  case oLe:         os << " <= ";      return os;
-  case oGreat:      os << " > ";       return os;
-  case oGe:         os << " >= ";      return os;
-  case oEq:         os << " == ";      return os;
-  case oNeq:        os << " != ";      return os;
-  case oCEq:        os << " === ";     return os;
-  case oCNeq:       os << " !== ";     return os;
-  case oLAnd:       os << "&&";        return os;
-  case oLOr:        os << "||";        return os;
-  case oQuestion:   os << "?";         return os;
-  };
-  // should not run to here
-  assert(1==0);
+  os << string(indent, ' ') << toString();
   return os;
 }
 
 Operation* netlist::Operation::deep_copy() const {
   Operation* rv = new Operation();
+  rv->loc = loc;
+  rv->width = width;
   rv->otype = this->otype;
   rv->valuable = this->valuable;
   if(data.use_count() != 0) rv->data = shared_ptr<NetComp>(data->deep_copy());
+  if(child.size()) {
+    rv->child = vector<shared_ptr<Operation> >(child.size());
+    for(unsigned int i=0; i<child.size(); i++) 
+      rv->child[i].reset(child[i]->deep_copy());
+  }
   return rv;
 }
 
 void netlist::Operation::reduce() {
-  if(data.use_count() != 0)
-    data->reduce();
-
-  // change to simpler types of operation if possible
   switch(otype) {
-  case oVar: {
-    SP_CAST(m, VIdentifier, data);
-    if(m->is_valuable()) {
-      data.reset(new Number(m->get_value()));
-      otype = oNum;
-      valuable = true;
-    }
-    break;
-  }
-  case oCon: {
-    Concatenation& mcon = *(static_pointer_cast<Concatenation>(data));
-    if(mcon.data.size() == 1 &&
-       mcon.data.front()->exp->is_valuable() &&
-       mcon.data.front()->con.size() == 0
-       ) {
-      data.reset(new Number(mcon.data.front()->exp->get_value()));
-      otype = oNum;
-      valuable = true;
-    }
-    break;
-  }
-  case oNum: {
-    valuable = true;
-    break;
-  }
-  default:;
+  case oNum:      reduce_Num();      break;
+  case oVar:      reduce_Var();      break;
+  case oCon:      reduce_Con();      break;
+  case oUPos:     reduce_UPos();     break;
+  case oUNeg:     reduce_UNeg();     break;
+  case oULRev:    reduce_ULRev();    break;
+  case oURev:     reduce_URev();     break;
+  case oUAnd:     reduce_UAnd();     break;
+  case oUNand:    reduce_UNand();    break;
+  case oUOr:      reduce_UOr();      break;
+  case oUNor:     reduce_UNor();     break;
+  case oUXor:     reduce_UXor();     break;
+  case oUNxor:    reduce_UNxor();    break;
+  case oPower:    reduce_Power();    break;
+  case oTime:     reduce_Time();     break;
+  case oDiv:      reduce_Div();      break;
+  case oMode:     reduce_Mode();     break;
+  case oAdd:      reduce_Add();      break;
+  case oMinus:    reduce_Minus();    break;
+  case oRS:       reduce_RS();       break;
+  case oLS:       reduce_LS();       break;
+  case oLRS:      reduce_LRS();      break;
+  case oLess:     reduce_Less();     break;
+  case oLe:       reduce_Le();       break;
+  case oGreat:    reduce_Great();    break;
+  case oGe:       reduce_Ge();       break;
+  case oEq:       reduce_Eq();       break;
+  case oNeq:      reduce_Neq();      break;
+  case oCEq:      reduce_CEq();      break;
+  case oCNeq:     reduce_CNeq();     break;
+  case oAnd:      reduce_And();      break;
+  case oXor:      reduce_Xor();      break;
+  case oNxor:     reduce_Nxor();     break;
+  case oOr:       reduce_Or();       break;
+  case oLAnd:     reduce_LAnd();     break;
+  case oLOr:      reduce_LOr();      break;
+  case oQuestion: reduce_Question(); break;
+  default:  // should not run to here
+    assert(0 == "wrong operation type");
   }
 }
 
@@ -216,620 +431,798 @@ bool netlist::Operation::elaborate(NetComp::elab_result_t &result, const NetComp
   bool rv = true;
   result = NetComp::ELAB_Normal;
 
-  if(otype == oVar) {
+  if(data.use_count() != 0)
     rv &= data->elaborate(result, NetComp::tExp);
-    if(!rv) return rv;
-    SP_CAST(m, VIdentifier, data);
-    if(m->is_valuable()) {
-      data.reset(new Number(m->get_value()));
-      otype = oNum;
-      valuable = true;
-    }
-  } else if(otype == oCon) {
-    rv &= data->elaborate(result, NetComp::tExp);
-    if(!rv) return rv;
-    SP_CAST(m, Concatenation, data);
-    if(m->is_valuable()) {
-      data.reset(new Number(m->get_value()));
-      otype = oNum;
-      valuable = true;
-    } 
-  }
 
-  // a number or operator does not need to be reduced further
-  // function is not supported yet
-  return rv;   
-}
+  if(!rv) return rv;
 
-// dummy yet
-void netlist::execute_operation( Operation::operation_t op,
-                                 list<shared_ptr<Operation> >& d1,
-                                 list<shared_ptr<Operation> >& d2,
-                                 list<shared_ptr<Operation> >& d3
-                                 ) {
-  // check parameters
-  assert(op >= Operation::oUPos);
-  assert(!d1.empty());
-  if(op >= Operation::oPower) assert(!d2.empty());
-  if(op >= Operation::oQuestion) assert(!d3.empty());
+  BOOST_FOREACH(shared_ptr<Operation>&m, child)
+    rv &= m->elaborate(result, NetComp::tExp);
 
-  // will use d1 as return
-  switch(op) {
-  case Operation::oUPos:     execute_UPos(d1); return;
-  case Operation::oUNeg:     execute_UNeg(d1); return;
-  case Operation::oULRev:    execute_ULRev(d1); return;
-  case Operation::oURev:     execute_URev(d1); return;
-  case Operation::oUAnd:     execute_UAnd(d1); return;
-  case Operation::oUNand:    execute_UNand(d1); return;
-  case Operation::oUOr:      execute_UOr(d1); return;
-  case Operation::oUNor:     execute_UNor(d1); return;
-  case Operation::oUXor:     execute_UXor(d1); return;
-  case Operation::oUNxor:    execute_UNxor(d1); return;
-  case Operation::oPower:    execute_Power(d1, d2); return;
-  case Operation::oTime:     execute_Time(d1,d2); return;
-  case Operation::oDiv:      execute_Div(d1,d2); return;
-  case Operation::oMode:     execute_Mode(d1,d2); return;
-  case Operation::oAdd:      execute_Add(d1, d2); return;
-  case Operation::oMinus:    execute_Minus(d1, d2); return;
-  case Operation::oRS:       execute_RS(d1,d2); return;
-  case Operation::oLS:       execute_LS(d1,d2); return;
-  case Operation::oLRS:      execute_LRS(d1,d2); return;
-  case Operation::oLess:     execute_Less(d1,d2); return;
-  case Operation::oLe:       execute_Le(d1,d2); return;
-  case Operation::oGreat:    execute_Great(d1,d2); return;
-  case Operation::oGe:       execute_Ge(d1,d2); return;
-  case Operation::oEq:       execute_Eq(d1,d2); return;
-  case Operation::oNeq:      execute_Neq(d1,d2); return;
-  case Operation::oCEq:      execute_CEq(d1,d2); return;
-  case Operation::oCNeq:     execute_CNeq(d1,d2); return;
-  case Operation::oAnd:      execute_And(d1,d2); return;
-  case Operation::oXor:      execute_Xor(d1,d2); return;
-  case Operation::oNxor:     execute_Nxor(d1,d2); return;
-  case Operation::oOr:       execute_Or(d1,d2); return;
-  case Operation::oLAnd:     execute_LAnd(d1,d2); return;
-  case Operation::oLOr:      execute_LOr(d1,d2); return;
-  case Operation::oQuestion: execute_Question(d1,d2,d3); return;
+  if(!rv) return rv;
+
+  // extra check
+  switch(otype) {
+  case oNum:
+  case oVar:
+  case oCon:
+  case oUPos:
+  case oUNeg:
+  case oULRev:
+  case oURev:
+  case oUAnd:
+  case oUNand:
+  case oUOr:
+  case oUNor:
+  case oUXor:
+  case oUNxor:
+  case oTime:
+  case oAdd:
+  case oMinus:
+  case oRS:
+  case oLS:
+  case oLRS:
+  case oLess:
+  case oLe:
+  case oGreat:
+  case oGe:
+  case oEq:
+  case oNeq:
+  case oAnd:
+  case oXor:
+  case oNxor:
+  case oOr:
+  case oLAnd:
+  case oLOr:
+  case oQuestion:
+    rv = true;
+    break;
+  case oPower:
+    // a shift must have been reduced if it is correct
+    G_ENV->error(loc, "ELAB-EXPRESSION-2", toString());
+    rv = false;
+    break;
+  case oDiv:
+  case oMode:
+    // a div/mod must have been reduced if it is correct
+    G_ENV->error(loc, "ELAB-EXPRESSION-3", toString());
+    rv = false;
+    break;
+  case oCEq:
+  case oCNeq:
+    // a case comparison must have been reduced if it is correct
+    G_ENV->error(loc, "ELAB-CASE-3", toString());
+    rv = false;
+    break;
   default:  // should not run to here
     assert(0 == "wrong operation type");
   }
-  return;
+
+  return rv;   
+}
+
+unsigned int netlist::Operation::get_width() {
+  if(width) return width;
+  return width;
+
+  switch(otype) {
+  case oNum:
+  case oVar:
+  case oCon:
+    width = data->get_width();
+    break;
+  case oUPos:
+  case oUNeg:
+  case oURev:
+    width = child[0]->get_width();
+    break;
+  case oULRev:
+  case oUAnd:
+  case oUNand:
+  case oUOr:
+  case oUNor:
+  case oUXor:
+  case oUNxor:
+    child[0]->get_width();
+    width = 1;
+    break;
+  case oTime:
+    width = child[0]->get_width() * child[1]->get_width();
+    break;
+  case oAdd:
+  case oMinus:
+    width = std::max(child[0]->get_width(), child[1]->get_width()) + 1;
+    break;
+  case oRS:
+  case oLRS:
+    child[1]->get_width();
+    width = child[0]->get_width();
+    break;
+  case oLS:
+    if(child[1]->is_valuable()) {
+      assert(child[1]->get_num() >= 0);
+      width = child[0]->get_width() + child[1]->get_num().get_value().get_ui();
+    } else {
+      // the maximal possible
+      width = child[0]->get_width() + (1 << child[1]->get_width()) - 1;
+    }
+    break;
+  case oLess:
+  case oLe:
+  case oGreat:
+  case oGe:
+  case oEq:
+  case oNeq:
+    child[0]->get_width();
+    child[1]->get_width();
+    width = 1;
+    break;
+  case oAnd:
+  case oXor:
+  case oNxor:
+  case oOr:
+  case oLAnd:
+  case oLOr:
+    width = std::max(child[0]->get_width(), child[1]->get_width());
+    break;
+  case oQuestion:
+    child[0]->get_width();
+    width = std::max(child[1]->get_width(), child[2]->get_width());
+    break;
+  default:// should not run to here
+    assert(0 == "wrong operation type");
+  }
+  return width;
+}
+
+void netlist::Operation::set_width(const unsigned int& w) {
+  if(width == w) return;
+  
+  // only set a new width when it is possible to reduce the width
+  switch(otype) {
+  case oNum:
+  case oVar:
+  case oCon:
+    if(data->get_width() > w)
+      data->set_width(w);
+    break;
+  case oUPos:
+  case oUNeg:
+  case oURev:
+    if(child[0]->get_width() > w)
+      child[0]->set_width(w);
+    break;
+  case oULRev:
+  case oUAnd:
+  case oUNand:
+  case oUOr:
+  case oUNor:
+  case oUXor:
+  case oUNxor:
+    // impossible to be less than 1
+    break;
+  case oTime:
+    // no way to reduce it at this level
+    break;
+  case oAdd:
+  case oMinus:
+    if(child[0]->get_width() > w)
+      child[0]->set_width(w);
+    if(child[1]->get_width() > w)
+      child[1]->set_width(w);
+    break;
+  case oRS:
+  case oLRS:
+    if(child[0]->get_width() > w)
+      child[0]->set_width(w);
+    break;
+  case oLS:
+    if(child[1]->is_valuable()) {
+      assert(child[1]->get_num() >= 0);
+      long nw = static_cast<long>(w) - child[1]->get_num().get_value().get_ui();
+      if(nw <= 0) {             // all shifted
+        data.reset(new Number(0));
+        child.clear();
+        otype = oNum;
+        valuable = true;
+      } else if(child[0]->get_width() > static_cast<unsigned int>(nw))
+        child[0]->set_width(static_cast<unsigned int>(nw));
+    } else {
+      if(child[0]->get_width() > w)
+      child[0]->set_width(w);
+    }
+    break;
+  case oLess:
+  case oLe:
+  case oGreat:
+  case oGe:
+  case oEq:
+  case oNeq:
+    // impossible to be less than 1
+    break;
+  case oAnd:
+  case oXor:
+  case oNxor:
+  case oOr:
+  case oLAnd:
+  case oLOr:
+    if(child[0]->get_width() > w)
+      child[0]->set_width(w);
+    if(child[1]->get_width() > w)
+      child[1]->set_width(w);
+    break;
+  case oQuestion:
+    if(child[1]->get_width() > w)
+      child[1]->set_width(w);
+    if(child[2]->get_width() > w)
+      child[2]->set_width(w);
+    break;
+  default:// should not run to here
+    assert(0 == "wrong operation type");
+  }
+
+  width = w;
+}
+
+void netlist::Operation::reduce_Num() {
+  assert(child.size() == 0);
+  valuable = true;
+}
+
+void netlist::Operation::reduce_Con() {
+  assert(child.size() == 0);
+  SP_CAST(m, Concatenation, data);
+  m->reduce();
+  if(m->is_valuable()) {
+    data.reset(new Number(m->get_value()));
+    otype = oNum;
+    valuable = true;
+  }  
+}
+
+void netlist::Operation::reduce_Var() {
+  assert(child.size() == 0);
+  SP_CAST(m, VIdentifier, data);
+  m->reduce();
+  if(m->is_valuable()) {
+    data.reset(new Number(m->get_value()));
+    otype = oNum;
+    valuable = true;
+  }  
 }
 
 // unary +
-void netlist::execute_UPos(list<shared_ptr<Operation> >& d1) {
-  // for unary +, do nothing but omit the operator
+void netlist::Operation::reduce_UPos() {
+  assert(child.size() == 1);
+  assert(child[0].use_count() != 0);
+  child[0]->reduce();
+  *this = *(child[0]);
   return;
 }
 
 // unary -
-void netlist::execute_UNeg(list<shared_ptr<Operation> >& d1) {
-  if(d1.front()->is_valuable()) {
-    assert(d1.front()->get_type() == Operation::oNum);
-    d1.front()->get_num().negate();
-  } else {
-    d1.push_front(shared_ptr<Operation>(new Operation(Operation::oUNeg)));
+void netlist::Operation::reduce_UNeg() {
+  assert(child.size() == 1);
+  assert(child[0].use_count() != 0);
+  child[0]->reduce();
+  if(child[0]->is_valuable()) {
+    data.reset(new Number(-child[0]->get_num()));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // unary !
-void netlist::execute_ULRev(list<shared_ptr<Operation> >& d1) {
-  if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
-    d1.front()->get_num() = !(d1.front()->get_num());
-  } else {
-    d1.push_front(shared_ptr<Operation>(new Operation(Operation::oULRev)));
+void netlist::Operation::reduce_ULRev() {
+  assert(child.size() == 1);
+  assert(child[0].use_count() != 0);
+  child[0]->reduce();
+  if(child[0]->is_valuable()) {
+    data.reset(new Number(!(child[0]->get_num())));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // unary ~
-void netlist::execute_URev(list<shared_ptr<Operation> >& d1) {
-  if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
-    d1.front()->get_num() = ~(d1.front()->get_num());
-  } else {
-    d1.push_front(shared_ptr<Operation>(new Operation(Operation::oURev)));
+void netlist::Operation::reduce_URev() {
+  assert(child.size() == 1);
+  assert(child[0].use_count() != 0);
+  child[0]->reduce();
+  if(child[0]->is_valuable()) {
+    data.reset(new Number(~(child[0]->get_num())));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // unary &
-void netlist::execute_UAnd(list<shared_ptr<Operation> >& d1) {
-  if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
-    d1.front()->get_num() = op_uand(d1.front()->get_num());
-  } else {
-    d1.push_front(shared_ptr<Operation>(new Operation(Operation::oUAnd)));
+void netlist::Operation::reduce_UAnd() {
+  assert(child.size() == 1);
+  assert(child[0].use_count() != 0);
+  child[0]->reduce();
+  if(child[0]->is_valuable()) {
+    data.reset(new Number(op_uand(child[0]->get_num())));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // unary ~&
-void netlist::execute_UNand(list<shared_ptr<Operation> >& d1) {
-  if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
-    d1.front()->get_num() = ~(op_uand(d1.front()->get_num()));
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oUNand)));
+void netlist::Operation::reduce_UNand() {
+  assert(child.size() == 1);
+  assert(child[0].use_count() != 0);
+  child[0]->reduce();
+  if(child[0]->is_valuable()) {
+    data.reset(new Number(~op_uand(child[0]->get_num())));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // unary |
-void netlist::execute_UOr(list<shared_ptr<Operation> >& d1) {
-  if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
-    d1.front()->get_num() = op_uor(d1.front()->get_num());
-  } else {
-    d1.push_front(shared_ptr<Operation>( new Operation(Operation::oUOr)));
+void netlist::Operation::reduce_UOr() {
+  assert(child.size() == 1);
+  assert(child[0].use_count() != 0);
+  child[0]->reduce();
+  if(child[0]->is_valuable()) {
+    data.reset(new Number(op_uor(child[0]->get_num())));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // unary ~|
-void netlist::execute_UNor(list<shared_ptr<Operation> >& d1) {
-  if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
-    d1.front()->get_num() = ~op_uor(d1.front()->get_num());
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oUNor)));
+void netlist::Operation::reduce_UNor() {
+  assert(child.size() == 1);
+  assert(child[0].use_count() != 0);
+  child[0]->reduce();
+  if(child[0]->is_valuable()) {
+    data.reset(new Number(~op_uor(child[0]->get_num())));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // unary ^
-void netlist::execute_UXor(list<shared_ptr<Operation> >& d1) {
-  if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
-    d1.front()->get_num() = op_uxor(d1.front()->get_num());
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oUXor)));
+void netlist::Operation::reduce_UXor() {
+  assert(child.size() == 1);
+  assert(child[0].use_count() != 0);
+  child[0]->reduce();
+  if(child[0]->is_valuable()) {
+    data.reset(new Number(op_uxor(child[0]->get_num())));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // unary ~^
-void netlist::execute_UNxor(list<shared_ptr<Operation> >& d1) {
-  if(d1.size() == 1 && d1.front()->get_type() == Operation::oNum) {
-    d1.front()->get_num() = ~op_uxor(d1.front()->get_num());
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oUNxor)));
+void netlist::Operation::reduce_UNxor() {
+  assert(child.size() == 1);
+  assert(child[0].use_count() != 0);
+  child[0]->reduce();
+  if(child[0]->is_valuable()) {
+    data.reset(new Number(~op_uxor(child[0]->get_num())));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
   
 // **
-void netlist::execute_Power(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
-  if(d1.front()->is_valuable() && d2.front()->is_valuable()) {
+void netlist::Operation::reduce_Power() {
+  assert(child.size() == 2);
+  assert(child[0].use_count() != 0);
+  assert(child[1].use_count() != 0);
+  child[0]->reduce();
+  child[1]->reduce();
+  if(child[0]->is_valuable() && child[1]->is_valuable()) {
     mpz_class res;
-    mpz_pow_ui(res.get_mpz_t(), d1.front()->get_num().get_value().get_mpz_t(), d2.front()->get_num().get_value().get_ui());
-    d1.front()->get_num() = mpz_class(res);
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oPower)));
-    d1.splice(d1.end(), d2);
-  }
+    mpz_pow_ui(res.get_mpz_t(), 
+               child[0]->get_num().get_value().get_mpz_t(), 
+               child[1]->get_num().get_value().get_ui());
+    data.reset(new Number(res));
+    child.clear();
+    otype = oNum;
+    valuable = true;
+  } 
 }
 
 // *
-void netlist::execute_Time(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
-  if(d1.front()->is_valuable() && d2.front()->is_valuable()) {
-    mpz_class res = d1.front()->get_num().get_value() * d2.front()->get_num().get_value();
-    d1.front()->get_num() = res;
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oTime)));
-    d1.splice(d1.end(), d2);
+void netlist::Operation::reduce_Time() {
+  assert(child.size() == 2);
+  assert(child[0].use_count() != 0);
+  assert(child[1].use_count() != 0);
+  child[0]->reduce();
+  child[1]->reduce();
+  if(child[0]->is_valuable() && child[1]->is_valuable()) {
+    data.reset(new Number(child[0]->get_num() * child[1]->get_num()));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // /
-void netlist::execute_Div(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
-  if(d1.front()->is_valuable() && d2.front()->is_valuable()) {
-    mpz_class res = d1.front()->get_num().get_value() / d2.front()->get_num().get_value();
-    d1.front()->get_num() = res;
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oDiv)));
-    d1.splice(d1.end(), d2);
+void netlist::Operation::reduce_Div() {
+  assert(child.size() == 2);
+  assert(child[0].use_count() != 0);
+  assert(child[1].use_count() != 0);
+  child[0]->reduce();
+  child[1]->reduce();
+  if(child[0]->is_valuable() && child[1]->is_valuable()) {
+    data.reset(new Number(child[0]->get_num() / child[1]->get_num()));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // %
-void netlist::execute_Mode(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
-  if(d1.front()->is_valuable() && d2.front()->is_valuable()) {
-    mpz_class res = d1.front()->get_num().get_value() % d2.front()->get_num().get_value();
-    d1.front()->get_num() = res;
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oMode)));
-    d1.splice(d1.end(), d2);
+void netlist::Operation::reduce_Mode() {
+  assert(child.size() == 2);
+  assert(child[0].use_count() != 0);
+  assert(child[1].use_count() != 0);
+  child[0]->reduce();
+  child[1]->reduce();
+  if(child[0]->is_valuable() && child[1]->is_valuable()) {
+    data.reset(new Number(child[0]->get_num() % child[1]->get_num()));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 
 // +
-void netlist::execute_Add(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
-  if(d1.front()->is_valuable() && d2.front()->is_valuable()) {
-    mpz_class res = d1.front()->get_num().get_value() + d2.front()->get_num().get_value();
-    d1.front()->get_num() = res;
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oAdd)));
-    d1.splice(d1.end(), d2);
+void netlist::Operation::reduce_Add() {
+  assert(child.size() == 2);
+  assert(child[0].use_count() != 0);
+  assert(child[1].use_count() != 0);
+  child[0]->reduce();
+  child[1]->reduce();
+  if(child[0]->is_valuable() && child[1]->is_valuable()) {
+    data.reset(new Number(child[0]->get_num() + child[1]->get_num()));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // -
-void netlist::execute_Minus(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
-  if(d1.front()->is_valuable() && d2.front()->is_valuable()) {
-    mpz_class res = d1.front()->get_num().get_value() - d2.front()->get_num().get_value();
-    d1.front()->get_num() = res;
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oMinus)));
-    d1.splice(d1.end(), d2);
+void netlist::Operation::reduce_Minus() {
+  assert(child.size() == 2);
+  assert(child[0].use_count() != 0);
+  assert(child[1].use_count() != 0);
+  child[0]->reduce();
+  child[1]->reduce();
+  if(child[0]->is_valuable() && child[1]->is_valuable()) {
+    data.reset(new Number(child[0]->get_num() - child[1]->get_num()));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // >>
-void netlist::execute_RS(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
-  if(d1.front()->get_type() == Operation::oNum && d2.front()->is_valuable()) {
-    string tval = d1.front()->get_num().get_txt_value();
-    tval.erase(tval.size() - d2.front()->get_num().get_value().get_ui());
-    d1.front()->get_num() = Number(tval);
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oRS)));
-    d1.splice(d1.end(), d2);
-  }
+void netlist::Operation::reduce_RS() {
+  assert(child.size() == 2);
+  assert(child[0].use_count() != 0);
+  assert(child[1].use_count() != 0);
+  child[0]->reduce();
+  child[1]->reduce();
+  if(child[0]->is_valuable() && child[1]->is_valuable()) {
+    data.reset(new Number(child[0]->get_num() >> child[1]->get_num()));
+    child.clear();
+    otype = oNum;
+    valuable = true;
+  } 
 }
 
 // <<
-void netlist::execute_LS(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
-  if(d1.front()->get_type() == Operation::oNum && d2.front()->is_valuable()) {
-    string tval = d1.front()->get_num().get_txt_value();
-    tval.insert(tval.end(), d2.front()->get_num().get_value().get_ui(), '0');
-    d1.front()->get_num() = Number(tval);
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oLS)));
-    d1.splice(d1.end(), d2);
+void netlist::Operation::reduce_LS() {
+  assert(child.size() == 2);
+  assert(child[0].use_count() != 0);
+  assert(child[1].use_count() != 0);
+  child[0]->reduce();
+  child[1]->reduce();
+  if(child[0]->is_valuable() && child[1]->is_valuable()) {
+    data.reset(new Number(child[0]->get_num() << child[1]->get_num()));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
 
-// >>>, currently equivalent to >>, signed number not supported yet
-void netlist::execute_LRS(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
-  if(d1.front()->get_type() == Operation::oNum && d2.front()->is_valuable()) {
-    string tval = d1.front()->get_num().get_txt_value();
-    tval.erase(tval.size() - d2.front()->get_num().get_value().get_ui());
-    d1.front()->get_num() = Number(tval);
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oLRS)));
-    d1.splice(d1.end(), d2);
+// >>>
+void netlist::Operation::reduce_LRS() {
+  assert(child.size() == 2);
+  assert(child[0].use_count() != 0);
+  assert(child[1].use_count() != 0);
+  child[0]->reduce();
+  child[1]->reduce();
+  if(child[0]->is_valuable() && child[1]->is_valuable()) {
+    data.reset(new Number(op_sign_rsh(child[0]->get_num(), child[1]->get_num())));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // <
-void netlist::execute_Less(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
-  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
-    string tval1 = d1.front()->get_num().get_txt_value();
-    string tval2 = d2.front()->get_num().get_txt_value();
-    if(tval1.size() > tval2.size())
-      tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
-    else if(tval1.size() < tval2.size())
-      tval1.insert(tval1.begin(), tval2.size() - tval1.size(), '0');
-
-    for(unsigned int i=0; i<tval1.size(); i++) {
-      if(tval1[i] == '1' && tval2[i] == '0') {
-        d1.front()->get_num() = Number("0");
-        return;
-      } else if(tval1[i] == '0' && tval2[i] == '1') {
-        d1.front()->get_num() = Number("1");
-        return;
-      } else if(tval1[i] == 'x' || tval2[i] == 'x' || tval1[i] == 'z' || tval2[i] == 'z' ) {
-        d1.front()->get_num() = Number("x");
-        return;
-      }
-    }
-    // equal
-    d1.front()->get_num() = Number("0");
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oLess)));
-    d1.splice(d1.end(), d2);
+void netlist::Operation::reduce_Less() {
+  assert(child.size() == 2);
+  assert(child[0].use_count() != 0);
+  assert(child[1].use_count() != 0);
+  child[0]->reduce();
+  child[1]->reduce();
+  if(child[0]->is_valuable() && child[1]->is_valuable()) {
+    data.reset(new Number(child[0]->get_num() < child[1]->get_num()));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // <=
-void netlist::execute_Le(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
-  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
-    string tval1 = d1.front()->get_num().get_txt_value();
-    string tval2 = d2.front()->get_num().get_txt_value();
-    if(tval1.size() > tval2.size())
-      tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
-    else if(tval1.size() < tval2.size())
-      tval1.insert(tval1.begin(), tval2.size() - tval1.size(), '0');
-
-    for(unsigned int i=0; i<tval1.size(); i++) {
-      if(tval1[i] == '1' && tval2[i] == '0') {
-        d1.front()->get_num() = Number("0");
-        return;
-      } else if(tval1[i] == '0' && tval2[i] == '1') {
-        d1.front()->get_num() = Number("1");
-        return;
-      } else if(tval1[i] == 'x' || tval2[i] == 'x' || tval1[i] == 'z' || tval2[i] == 'z' ) {
-        d1.front()->get_num() = Number("x");
-        return;
-      }
-    }
-    // equal
-    d1.front()->get_num() = Number("1");
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oLe)));
-    d1.splice(d1.end(), d2);
+void netlist::Operation::reduce_Le() {
+  assert(child.size() == 2);
+  assert(child[0].use_count() != 0);
+  assert(child[1].use_count() != 0);
+  child[0]->reduce();
+  child[1]->reduce();
+  if(child[0]->is_valuable() && child[1]->is_valuable()) {
+    data.reset(new Number(child[0]->get_num() <= child[1]->get_num()));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // >
-void netlist::execute_Great(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
-  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
-    string tval1 = d1.front()->get_num().get_txt_value();
-    string tval2 = d2.front()->get_num().get_txt_value();
-    if(tval1.size() > tval2.size())
-      tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
-    else if(tval1.size() < tval2.size())
-      tval1.insert(tval1.begin(), tval2.size() - tval1.size(), '0');
-
-    for(unsigned int i=0; i<tval1.size(); i++) {
-      if(tval1[i] == '1' && tval2[i] == '0') {
-        d1.front()->get_num() = Number("1");
-        return;
-      } else if(tval1[i] == '0' && tval2[i] == '1') {
-        d1.front()->get_num() = Number("0");
-        return;
-      } else if(tval1[i] == 'x' || tval2[i] == 'x' || tval1[i] == 'z' || tval2[i] == 'z' ) {
-        d1.front()->get_num() = Number("x");
-        return;
-      }
-    }
-    // equal
-    d1.front()->get_num() = Number("0");
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oGreat)));
-    d1.splice(d1.end(), d2);
+void netlist::Operation::reduce_Great() {
+  assert(child.size() == 2);
+  assert(child[0].use_count() != 0);
+  assert(child[1].use_count() != 0);
+  child[0]->reduce();
+  child[1]->reduce();
+  if(child[0]->is_valuable() && child[1]->is_valuable()) {
+    data.reset(new Number(child[0]->get_num() > child[1]->get_num()));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // >=
-void netlist::execute_Ge(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
-  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
-    string tval1 = d1.front()->get_num().get_txt_value();
-    string tval2 = d2.front()->get_num().get_txt_value();
-    if(tval1.size() > tval2.size())
-      tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
-    else if(tval1.size() < tval2.size())
-      tval1.insert(tval1.begin(), tval2.size() - tval1.size(), '0');
-
-    for(unsigned int i=0; i<tval1.size(); i++) {
-      if(tval1[i] == '1' && tval2[i] == '0') {
-        d1.front()->get_num() = Number("1");
-        return;
-      } else if(tval1[i] == '0' && tval2[i] == '1') {
-        d1.front()->get_num() = Number("0");
-        return;
-      } else if(tval1[i] == 'x' || tval2[i] == 'x' || tval1[i] == 'z' || tval2[i] == 'z' ) {
-        d1.front()->get_num() = Number("x");
-        return;
-      }
-    }
-    // equal
-    d1.front()->get_num() = Number("1");
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oLe)));
-    d1.splice(d1.end(), d2);
+void netlist::Operation::reduce_Ge() {
+  assert(child.size() == 2);
+  assert(child[0].use_count() != 0);
+  assert(child[1].use_count() != 0);
+  child[0]->reduce();
+  child[1]->reduce();
+  if(child[0]->is_valuable() && child[1]->is_valuable()) {
+    data.reset(new Number(child[0]->get_num() >= child[1]->get_num()));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // ==
-void netlist::execute_Eq(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
-  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
-    string tval1 = d1.front()->get_num().get_txt_value();
-    string tval2 = d2.front()->get_num().get_txt_value();
-    if(tval1.size() > tval2.size())
-      tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
-    else if(tval1.size() < tval2.size())
-      tval1.insert(tval1.begin(), tval2.size() - tval1.size(), '0');
-
-    for(unsigned int i=0; i<tval1.size(); i++) {
-      if(tval1[i] == '1' && tval2[i] == '0') {
-        d1.front()->get_num() = Number("0");
-        return;
-      } else if(tval1[i] == '0' && tval2[i] == '1') {
-        d1.front()->get_num() = Number("0");
-        return;
-      } else if(tval1[i] == 'x' || tval2[i] == 'x' || tval1[i] == 'z' || tval2[i] == 'z' ) {
-        d1.front()->get_num() = Number("x");
-        return;
-      }
-    }
-    // equal
-    d1.front()->get_num() = Number("1");
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oEq)));
-    d1.splice(d1.end(), d2);
+void netlist::Operation::reduce_Eq() {
+  assert(child.size() == 2);
+  assert(child[0].use_count() != 0);
+  assert(child[1].use_count() != 0);
+  child[0]->reduce();
+  child[1]->reduce();
+  if(child[0]->is_valuable() && child[1]->is_valuable()) {
+    data.reset(new Number(child[0]->get_num() == child[1]->get_num()));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
+
 
 // !=
-void netlist::execute_Neq(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
-  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
-    string tval1 = d1.front()->get_num().get_txt_value();
-    string tval2 = d2.front()->get_num().get_txt_value();
-    if(tval1.size() > tval2.size())
-      tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
-    else if(tval1.size() < tval2.size())
-      tval1.insert(tval1.begin(), tval2.size() - tval1.size(), '0');
-
-    for(unsigned int i=0; i<tval1.size(); i++) {
-      if(tval1[i] == '1' && tval2[i] == '0') {
-        d1.front()->get_num() = Number("1");
-        return;
-      } else if(tval1[i] == '0' && tval2[i] == '1') {
-        d1.front()->get_num() = Number("1");
-        return;
-      } else if(tval1[i] == 'x' || tval2[i] == 'x' || tval1[i] == 'z' || tval2[i] == 'z' ) {
-        d1.front()->get_num() = Number("x");
-        return;
-      }
-    }
-    // equal
-    d1.front()->get_num() = Number("0");
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oNeq)));
-    d1.splice(d1.end(), d2);
+void netlist::Operation::reduce_Neq() {
+  assert(child.size() == 2);
+  assert(child[0].use_count() != 0);
+  assert(child[1].use_count() != 0);
+  child[0]->reduce();
+  child[1]->reduce();
+  if(child[0]->is_valuable() && child[1]->is_valuable()) {
+    data.reset(new Number(child[0]->get_num() != child[1]->get_num()));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
-// ===
-void netlist::execute_CEq(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
-  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
-    string tval1 = d1.front()->get_num().get_txt_value();
-    string tval2 = d2.front()->get_num().get_txt_value();
-    if(tval1.size() > tval2.size())
-      tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
-    else if(tval1.size() < tval2.size())
-      tval1.insert(tval1.begin(), tval2.size() - tval1.size(), '0');
 
-    for(unsigned int i=0; i<tval1.size(); i++) {
-      if(tval1[i] != tval2[i]) {
-        d1.front()->get_num() = Number("0");
-        return;
-      } 
-    }
-    // equal
-    d1.front()->get_num() = Number("1");
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oCEq)));
-    d1.splice(d1.end(), d2);
+// ===
+void netlist::Operation::reduce_CEq() {
+  assert(child.size() == 2);
+  assert(child[0].use_count() != 0);
+  assert(child[1].use_count() != 0);
+  child[0]->reduce();
+  child[1]->reduce();
+  if(child[0]->is_valuable() && child[1]->is_valuable()) {
+    data.reset(new Number(op_case_equal(child[0]->get_num(), child[1]->get_num())));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // !==
-void netlist::execute_CNeq(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
-  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
-    string tval1 = d1.front()->get_num().get_txt_value();
-    string tval2 = d2.front()->get_num().get_txt_value();
-    if(tval1.size() > tval2.size())
-      tval2.insert(tval2.begin(), tval1.size() - tval2.size(), '0');
-    else if(tval1.size() < tval2.size())
-      tval1.insert(tval1.begin(), tval2.size() - tval1.size(), '0');
-
-    for(unsigned int i=0; i<tval1.size(); i++) {
-      if(tval1[i] != tval2[i]) {
-        d1.front()->get_num() = Number("1");
-        return;
-      } 
-    }
-    // equal
-    d1.front()->get_num() = Number("0");
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oCNeq)));
-    d1.splice(d1.end(), d2);
+void netlist::Operation::reduce_CNeq() {
+  assert(child.size() == 2);
+  assert(child[0].use_count() != 0);
+  assert(child[1].use_count() != 0);
+  child[0]->reduce();
+  child[1]->reduce();
+  if(child[0]->is_valuable() && child[1]->is_valuable()) {
+    data.reset(new Number(!op_case_equal(child[0]->get_num(), child[1]->get_num())));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // &
-void netlist::execute_And(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
-  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
-    d1.front()->get_num() = d1.front()->get_num() & d2.front()->get_num();
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oAnd)));
-    d1.splice(d1.end(), d2);
+void netlist::Operation::reduce_And() {
+  assert(child.size() == 2);
+  assert(child[0].use_count() != 0);
+  assert(child[1].use_count() != 0);
+  child[0]->reduce();
+  child[1]->reduce();
+  if(child[0]->is_valuable() && child[1]->is_valuable()) {
+    data.reset(new Number(child[0]->get_num() & child[1]->get_num()));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // ^
-void netlist::execute_Xor(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
-  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
-    d1.front()->get_num() = d1.front()->get_num() ^ d2.front()->get_num();
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oXor)));
-    d1.splice(d1.end(), d2);
+void netlist::Operation::reduce_Xor() {
+  assert(child.size() == 2);
+  assert(child[0].use_count() != 0);
+  assert(child[1].use_count() != 0);
+  child[0]->reduce();
+  child[1]->reduce();
+  if(child[0]->is_valuable() && child[1]->is_valuable()) {
+    data.reset(new Number(child[0]->get_num() ^ child[1]->get_num()));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // ~^
-void netlist::execute_Nxor(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
-  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
-    d1.front()->get_num() = ~(d1.front()->get_num() ^ d2.front()->get_num());
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oNxor)));
-    d1.splice(d1.end(), d2);
+void netlist::Operation::reduce_Nxor() {
+  assert(child.size() == 2);
+  assert(child[0].use_count() != 0);
+  assert(child[1].use_count() != 0);
+  child[0]->reduce();
+  child[1]->reduce();
+  if(child[0]->is_valuable() && child[1]->is_valuable()) {
+    data.reset(new Number(~(child[0]->get_num() ^ child[1]->get_num())));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // |
-void netlist::execute_Or(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
-  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
-    d1.front()->get_num() = d1.front()->get_num() | d2.front()->get_num();
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oOr)));
-    d1.splice(d1.end(), d2);
+void netlist::Operation::reduce_Or() {
+  assert(child.size() == 2);
+  assert(child[0].use_count() != 0);
+  assert(child[1].use_count() != 0);
+  child[0]->reduce();
+  child[1]->reduce();
+  if(child[0]->is_valuable() && child[1]->is_valuable()) {
+    data.reset(new Number(~(child[0]->get_num() | child[1]->get_num())));
+    child.clear();
+    otype = oNum;
+    valuable = true;
   }
 }
 
 // &&
-void netlist::execute_LAnd(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
-  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
-    d1.front()->get_num() = d1.front()->get_num() && d2.front()->get_num();
-  } else if(d1.front()->get_type() == Operation::oNum) {
-    Number& m1 = d1.front()->get_num();
-    if(m1.is_false())            // 0 && x => 0
-      d1.front()->get_num() = Number("0");
-    else if (m1.is_true())     // 1 && x => x 
-      d1 = d2;
-    else {                      // personally I dont think it ever goes here
-      d1.push_front( shared_ptr<Operation>(new Operation(Operation::oLAnd)));
-      d1.splice(d1.end(), d2);
-    }
-  } else if(d2.front()->get_type() == Operation::oNum) {
-    Number& m2 = d2.front()->get_num();
-    if(m2.is_false()) {          // x && 0 => 0
-      d1.clear();
-      d1.push_back(shared_ptr<Operation>( new Operation(Number("0"))));
-    } else if (m2.is_true()) { } // x && 1 => x; do nothing
-    else {                      // personally I dont think it ever goes here
-      d1.push_front( shared_ptr<Operation>(new Operation(Operation::oLAnd)));
-      d1.splice(d1.end(), d2);
-    }    
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oLAnd)));
-    d1.splice(d1.end(), d2);
+void netlist::Operation::reduce_LAnd() {
+  assert(child.size() == 2);
+  assert(child[0].use_count() != 0);
+  assert(child[1].use_count() != 0);
+  child[0]->reduce();
+  child[1]->reduce();
+  if(child[0]->is_valuable() && child[1]->is_valuable()) {
+    data.reset(new Number(~(child[0]->get_num() && child[1]->get_num())));
+    child.clear();
+    otype = oNum;
+    valuable = true;
+  } else if(child[0]->is_valuable()) {
+    Number& m1 = child[0]->get_num();
+    if(m1.is_false()) {           // 0 && x => 0
+      data.reset(new Number(0));
+      child.clear();
+      otype = oNum;
+      valuable = true;
+    } else if (m1.is_true()) {    // 1 && x => x 
+      *this = *(child[1]);
+    } 
+  } else if(child[1]->is_valuable()) {
+    Number& m2 = child[1]->get_num();
+    if(m2.is_false()) {           // x && 0 => 0
+      data.reset(new Number(0));
+      child.clear();
+      otype = oNum;
+      valuable = true;
+    } else if (m2.is_true()) {    // x && 1 => x 
+      *this = *(child[0]);
+    } 
   }
 }
 
 // ||
-void netlist::execute_LOr(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2) {
-  if(d1.front()->get_type() == Operation::oNum && d2.front()->get_type() == Operation::oNum) {
-    d1.front()->get_num() = d1.front()->get_num() || d2.front()->get_num();
-  } else if(d1.front()->get_type() == Operation::oNum) {
-    Number& m1 = d1.front()->get_num();
-    if(m1.is_true())            // 1 || x => 1
-      d1.front()->get_num() = Number("1");
-    else if (m1.is_false())     // 0 || x => x 
-      d1 = d2;
-    else {                      // personally I dont think it ever goes here
-      d1.push_front( shared_ptr<Operation>(new Operation(Operation::oLOr)));
-      d1.splice(d1.end(), d2);
-    }
-  } else if(d2.front()->get_type() == Operation::oNum) {
-    Number& m2 = d2.front()->get_num();
-    if(m2.is_true()) {          // x || 1 => 1
-      d1.clear();
-      d1.push_back(shared_ptr<Operation>( new Operation(Number("1"))));
-    } else if (m2.is_false()) { } // x || 0 => x; do nothing
-    else {                      // personally I dont think it ever goes here
-      d1.push_front( shared_ptr<Operation>(new Operation(Operation::oLOr)));
-      d1.splice(d1.end(), d2);
-    }    
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oLOr)));
-    d1.splice(d1.end(), d2);
+void netlist::Operation::reduce_LOr() {
+  assert(child.size() == 2);
+  assert(child[0].use_count() != 0);
+  assert(child[1].use_count() != 0);
+  child[0]->reduce();
+  child[1]->reduce();
+  if(child[0]->is_valuable() && child[1]->is_valuable()) {
+    data.reset(new Number(~(child[0]->get_num() || child[1]->get_num())));
+    child.clear();
+    otype = oNum;
+    valuable = true;
+  } else if(child[0]->is_valuable()) {
+    Number& m1 = child[0]->get_num();
+    if(m1.is_true()) {           // 1 || x => 1
+      data.reset(new Number(1));
+      child.clear();
+      otype = oNum;
+      valuable = true;
+    } else if (m1.is_false()) {    // 0 || x => x 
+      *this = *(child[1]);
+    } 
+  } else if(child[1]->is_valuable()) {
+    Number& m2 = child[1]->get_num();
+    if(m2.is_true()) {           // x || 1 => 1
+      data.reset(new Number(1));
+      child.clear();
+      otype = oNum;
+      valuable = true;
+    } else if (m2.is_false()) {    // x || 0 => x 
+      *this = *(child[0]);
+    } 
   }
 }
 
 // ?:
-void netlist::execute_Question(list<shared_ptr<Operation> >& d1, list<shared_ptr<Operation> >& d2, list<shared_ptr<Operation> >&d3) {
-  if(d1.front()->get_type() == Operation::oNum) {
-    string tval1 = d1.front()->get_num().get_txt_value();
-    
-    if(d1.front()->get_num().is_true()) {
-      d1.clear();
-      d1.splice(d1.end(), d2);
-    } else {
-      d1.clear();
-      d1.splice(d1.end(), d3);
+void netlist::Operation::reduce_Question() {
+  assert(child.size() == 3);
+  assert(child[0].use_count() != 0);
+  assert(child[1].use_count() != 0);
+  assert(child[2].use_count() != 0);
+  child[0]->reduce();
+  child[1]->reduce();
+  child[2]->reduce();
+  if(child[0]->is_valuable()) {
+    if(child[0]->get_num().is_true()) {
+      *this = *(child[1]);
+    } else if(child[0]->get_num().is_false()){
+      *this = *(child[2]);
     }
-  } else {
-    d1.push_front( shared_ptr<Operation>(new Operation(Operation::oQuestion)));
-    d1.splice(d1.end(), d2);
-    d1.splice(d1.end(), d3);
   }
 }
 

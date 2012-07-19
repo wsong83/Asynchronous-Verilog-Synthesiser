@@ -1,3 +1,26 @@
+##### Thu 19/07/2012
+* Merge dev back to master.
+* Remove all parameters in the wriiten out netlist.
+* Range reduction finished. No obvious effect in or1200 design.
+
+##### Wed 18/07/2012
+* Fixed several small bugs in display.
+* The replacing of pre-lists to in-order expressions is finished.
+
+##### Mon 16/07/2012
+* Big change in expression and operation. Replace the pre-order equation list to in-order tree.
+  It is a pain to handle pre-order list in stream and reduce.
+
+##### Sun 15/07/2012
+* Support width calculation in ranges.
+
+##### Sat 14/07/2012
+* width support in Netlist::Range and Netlist::RangeArray.
+* Add get_width() and set_width() methods to all netlist components.
+
+##### Fri 13/07/2012
+* Fixed a bug in cpptcl which allow Tcl:interpreter to be used as a global object.
+
 ##### Thu 12/07/2012
 * Merge dev back to master.
 * Re-write some netlist::Number operations for more general supports of Number operation.

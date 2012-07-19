@@ -29,6 +29,7 @@
 #include <algorithm>
 #include "component.h"
 #include "shell/env.h"
+#include <boost/foreach.hpp>
 
 using namespace netlist;
 using std::ostream;
@@ -128,6 +129,19 @@ bool netlist::ConElem::elaborate(NetComp::elab_result_t &result, const NetComp::
   return rv;
 }
 
+unsigned int netlist::ConElem::get_width() {
+  if(width) return width;
+  assert(con.size() == 0);
+  width = exp->get_width();
+  return width;
+}
+
+void netlist::ConElem::set_width(const unsigned int& w) {
+  if(width == w) return;
+  assert(exp->get_width() > w);
+  exp->set_width(w);
+}
+
 ostream& netlist::Concatenation::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
   if(data.size() > 1) {
@@ -150,23 +164,22 @@ ostream& netlist::Concatenation::streamout(ostream& os, unsigned int indent) con
   return os;
 }
     
-Concatenation& netlist::Concatenation::operator+ (shared_ptr<Concatenation>& rhs) {
+Concatenation& netlist::Concatenation::operator+ (const shared_ptr<Concatenation>& rhs) {
   list<shared_ptr<ConElem> >::iterator it, end;
   for(it=rhs->data.begin(), end=rhs->data.end(); it != end; it++)
     *this + *it;
   return *this;
 }
 
-Concatenation& netlist::Concatenation::operator+ (shared_ptr<ConElem>& rhs) {
+Concatenation& netlist::Concatenation::operator+ (const shared_ptr<ConElem>& rhs) {
   // check whether it is an embedded concatenation
   if( 0 == rhs->con.size() &&
-      rhs->exp->size() == 1 &&
-      rhs->exp->eqn.front()->get_type() == Operation::oCon
+      rhs->exp->is_singular() &&
+      rhs->exp->get_op().get_type() == Operation::oCon
       ) {
-    Concatenation& m_con = rhs->exp->eqn.front()->get_con();
-    list<shared_ptr<ConElem> >::iterator it, end;
-    for(it=m_con.data.begin(), end=m_con.data.end(); it != end; it++)
-      *this + *it;
+    const Concatenation& m_con = rhs->exp->get_op().get_con();
+    BOOST_FOREACH(const shared_ptr<ConElem>& it, m_con.data)
+      *this + it;
   } else {
     data.push_back(rhs);
   }
@@ -184,9 +197,9 @@ void netlist::Concatenation::reduce() {
   while(it != end) {
     (*it)->reduce();
     if((*it)->con.size() == 0) { // an expression
-      if((*it)->exp->eqn.size() == 1 &&
-         (*it)->exp->eqn.front()->get_type() == Operation::oCon) { // embedded concatenation
-        Concatenation cm = (*it)->exp->eqn.front()->get_con(); // fetch the concatenation
+      if((*it)->exp->is_singular() &&
+         (*it)->exp->get_op().get_type() == Operation::oCon) { // embedded concatenation
+        const Concatenation cm = (*it)->exp->get_op().get_con(); // fetch the concatenation
         data.insert(it,cm.data.begin(), cm.data.end());	// copy the elements to the current level
         data.erase(it); // delete current one as its content is copied
         
@@ -265,9 +278,10 @@ void netlist::Concatenation::db_expunge() {
 
 Concatenation* netlist::Concatenation::deep_copy() const {
   Concatenation* rv = new Concatenation();
-  list<shared_ptr<ConElem> >::const_iterator it, end;
-  for(it=data.begin(), end=data.end(); it!=end; it++)
-    rv->data.push_back(shared_ptr<ConElem>((*it)->deep_copy()));
+  rv->loc = loc;
+  rv->width = width;
+  BOOST_FOREACH(const shared_ptr<ConElem>& m, data)
+    rv->data.push_back(shared_ptr<ConElem>(m->deep_copy()));
   return rv;
 }
 
@@ -286,4 +300,32 @@ bool netlist::Concatenation::check_inparse() {
     rv &= (*it)->check_inparse();
 
   return rv;
+}
+
+unsigned int netlist::Concatenation::get_width() {
+  if(width) return width;
+  BOOST_FOREACH(shared_ptr<ConElem>& m, data)
+    width += m->get_width();
+  return width;
+}
+
+void netlist::Concatenation::set_width(const unsigned int& w) {
+  if(width == w) return;
+  assert(w < get_width());
+  unsigned int wm = w;
+  list<shared_ptr<ConElem> >::reverse_iterator it, end;
+  for(it=data.rbegin(), end=data.rend(); it!=end; it++) {
+    if(wm >= (*it)->get_width()) 
+      wm -= (*it)->get_width();
+    else {
+      if(wm == 0) break;
+      else {
+        (*it)->set_width(wm);
+        wm = 0;
+      }
+    }
+  }
+  if(it != end) 
+    data.erase(data.begin(), it.base()); // ATTN: it is a reverse_iterator
+  width = w;
 }

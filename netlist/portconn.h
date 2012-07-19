@@ -36,22 +36,31 @@ namespace netlist {
     if(pp->type != T::type_t::CEXP) return;
 
     pp->exp->reduce();
-    
-    if(pp->exp->size() > 1) return; /* unable to reduce it to another type */
+        
+    if(!pp->exp->is_singular()) return; 
 
-    if(pp->exp->front()->get_type() == Operation::oVar) {
+    if(pp->exp->get_op().get_type() == Operation::oVar) {
       pp->type = T::type_t::CVAR;
-      pp->var = pp->exp->front()->get_var();
+      pp->var = pp->exp->get_op().get_var();
       pp->exp.reset();
       return;
     }
 
-    if(pp->exp->front()->get_type() == Operation::oNum) {
+    if(pp->exp->get_op().get_type() == Operation::oNum) {
       pp->type = T::type_t::CNUM;
-      pp->num = pp->exp->front()->get_num();
+      pp->num = pp->exp->get_op().get_num();
       pp->exp.reset();
       return;
     }
+    
+    if(pp->exp->is_valuable()) {
+      pp->type = T::type_t::CNUM;
+      pp->num = pp->exp->get_value();
+      pp->exp.reset();
+      return;
+    }
+
+    return;
   }
 
   class PortConn : public NetComp{

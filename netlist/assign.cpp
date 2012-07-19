@@ -103,6 +103,9 @@ bool netlist::Assign::elaborate(elab_result_t &result, const ctype_t mctype, con
   rv &= lval->elaborate(result, mctype, fp);
   rv &= rexp->elaborate(result, mctype, fp);
 
+  // check and reduce range
+  rexp->set_width(lval->get_width());
+
   return rv;
 }
 

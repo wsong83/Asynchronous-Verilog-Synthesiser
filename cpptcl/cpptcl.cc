@@ -225,38 +225,54 @@ namespace // unnamed
 
 // map of polymorphic callbacks
 typedef map<string, shared_ptr<callback_base> > callback_interp_map;
-typedef map<Tcl_Interp *, callback_interp_map> callback_map;
+typedef map<void *, callback_interp_map> callback_map;
 
-callback_map callbacks;
-callback_map constructors;
+  //callback_map callbacks;
+  //callback_map constructors;
 
   // map of polymorphic variable traces
   typedef pair<const string, tuple<shared_ptr<trace_base>, int, void *> > trace_record;
   typedef map<const string, tuple<shared_ptr<trace_base>, int, void *> > trace_record_map;
   typedef map<pair<string, string>, trace_record_map> trace_interp_map;
-  typedef map<Tcl_Interp *, trace_interp_map> trace_map;
+  typedef map<void *, trace_interp_map> trace_map;
 
-  trace_map traces;
+  //trace_map traces;
 
 // map of call policies
 typedef map<string, policies> policies_interp_map;
-typedef map<Tcl_Interp *, policies_interp_map> policies_map;
+typedef map<void *, policies_interp_map> policies_map;
 
-policies_map call_policies;
+  //policies_map call_policies;
 
 // map of object handlers
 typedef map<string, shared_ptr<class_handler_base> > class_interp_map;
-typedef map<Tcl_Interp *, class_interp_map> class_handlers_map;
+typedef map<void *, class_interp_map> class_handlers_map;
 
-class_handlers_map class_handlers;
+  //class_handlers_map class_handlers;
+}
 
+namespace Tcl {
+  // the global data structure to save all tcl names
+  class tcl_name_database {
+  public:
+    callback_map callbacks;     // free function map
+    callback_map constructors;  // object map
+    trace_map traces;           // variable trace map
+    policies_map call_policies; // object control
+    class_handlers_map class_handlers; // class handler
+  };
+}
+
+namespace { // unnamed
+
+  shared_ptr<tcl_name_database> gdb_(new tcl_name_database());
 
 // helper for finding call policies - returns true when found
 bool find_policies(Tcl_Interp *interp, string const &cmdName,
      policies_interp_map::iterator &piti)
 {
-     policies_map::iterator pit = call_policies.find(interp);
-     if (pit == call_policies.end())
+     policies_map::iterator pit = gdb_->call_policies.find(interp);
+     if (pit == gdb_->call_policies.end())
      {
           return false;
      }
@@ -278,8 +294,8 @@ void post_process_policies(Tcl_Interp *interp, policies &pol,
      // check if it is a factory
      if (pol.factory_.empty() == false)
      {
-          class_handlers_map::iterator it = class_handlers.find(interp);
-          if (it == class_handlers.end())
+          class_handlers_map::iterator it = gdb_->class_handlers.find(interp);
+          if (it == gdb_->class_handlers.end())
           {
                throw tcl_error(
                     "Factory was registered for unknown class.");
@@ -341,8 +357,8 @@ extern "C"
 int callback_handler(ClientData cData, Tcl_Interp *interp,
      int objc, Tcl_Obj * CONST objv[])
 {
-     callback_map::iterator it = callbacks.find(interp);
-     if (it == callbacks.end())
+     callback_map::iterator it = gdb_->callbacks.find(interp);
+     if (it == gdb_->callbacks.end())
      {
           char msg[] = "Trying to invoke non-existent callback (wrong interpreter?)";
           Tcl_SetResult(interp,
@@ -362,8 +378,8 @@ int callback_handler(ClientData cData, Tcl_Interp *interp,
           return TCL_ERROR;
      }
      
-     policies_map::iterator pit = call_policies.find(interp);
-     if (pit == call_policies.end())
+     policies_map::iterator pit = gdb_->call_policies.find(interp);
+     if (pit == gdb_->call_policies.end())
      {
           char msg[] = "Trying to invoke callback with no known policies";
           Tcl_SetResult(interp,
@@ -413,18 +429,18 @@ static char err_msg_trace_unknown[] = "Unknown error.";
 extern "C"
 char * trace_handler(ClientData cData, Tcl_Interp *interp,
                      const char * VarName, const char* index, int flags) {
-  if(!traces.count(interp)) {   // interp not found
+  if(!gdb_->traces.count(interp)) {   // interp not found
     return err_msg_trace_no_interp;
   }
      
   pair<string, string> map_name(VarName, "");
   if(index != NULL) map_name.second = boost::lexical_cast<string>(*index);
 
-  if(!traces[interp].count(map_name)) {
+  if(!gdb_->traces[interp].count(map_name)) {
     return err_msg_trace_no_var;
   }
   
-  BOOST_FOREACH(trace_record& m, traces[interp][map_name]) {
+  BOOST_FOREACH(trace_record& m, gdb_->traces[interp][map_name]) {
     if((static_cast<void **>(cData) == &(m.second.get<2>())) && (m.second.get<1>() & flags)) {
       try {
         // covert the pointer
@@ -494,8 +510,8 @@ int constructor_handler(ClientData cd, Tcl_Interp *interp,
 
      class_handler_base *chb = reinterpret_cast<class_handler_base*>(cd);
 
-     callback_map::iterator it = constructors.find(interp);
-     if (it == constructors.end())
+     callback_map::iterator it = gdb_->constructors.find(interp);
+     if (it == gdb_->constructors.end())
      {
           char msg[] = "Trying to invoke non-existent callback (wrong interpreter?)";
           Tcl_SetResult(interp,
@@ -1110,62 +1126,86 @@ void interpreter::create_alias(string const &cmd,
 void interpreter::clear_definitions(Tcl_Interp *interp)
 {
   // delete all callbacks that were registered for given interpreter
-  if(callbacks.count(interp)) {
-    callback_interp_map &imap = callbacks[interp];
+  if(gdb_->callbacks.count(interp)) {
+    callback_interp_map &imap = gdb_->callbacks[interp];
     for (callback_interp_map::iterator it2 = imap.begin();
          it2 != imap.end(); ++it2) {
       Tcl_DeleteCommand(interp, it2->first.c_str());
     }
-    callbacks.erase(interp);
+    gdb_->callbacks.erase(interp);
   }
 
   // delete all trace functions
-  if(traces.count(interp)) {
-    trace_interp_map &tmap = traces[interp];
+  if(gdb_->traces.count(interp)) {
+    trace_interp_map &tmap = gdb_->traces[interp];
     trace_interp_map::iterator it, end;
     for(it=tmap.begin(), end=tmap.end(); it!=end; it++) {
-      if(it->first.second == "")
-        undef_all_trace(it->first.first);
-      else
-        undef_all_trace(it->first.first, std::atoi(it->first.second.c_str()));
+      if(it->first.second == "") {
+        string VarName = it->first.first;
+        BOOST_FOREACH(trace_record& m, it->second) {
+          if(m.second.get<1>() & TCL_TRACE_READS)
+            Tcl_UntraceVar(interp, VarName.c_str(), TCL_TRACE_READS, 
+                           trace_handler, &(m.second.get<2>()));
+          if(m.second.get<1>() &TCL_TRACE_WRITES)
+            Tcl_UntraceVar(interp, VarName.c_str(), TCL_TRACE_WRITES, 
+                           trace_handler, &(m.second.get<2>()));
+        }
+      } else {
+        string VarName = it->first.first;
+        string index = it->first.second;
+        BOOST_FOREACH(trace_record& m, it->second) {
+          if(m.second.get<1>() & TCL_TRACE_READS)
+            Tcl_UntraceVar2(interp, VarName.c_str(), index.c_str(), TCL_TRACE_READS, 
+                           trace_handler, &(m.second.get<2>()));
+          if(m.second.get<1>() &TCL_TRACE_WRITES)
+            Tcl_UntraceVar2(interp, VarName.c_str(), index.c_str(), TCL_TRACE_WRITES, 
+                           trace_handler, &(m.second.get<2>()));
+        }
+      }
     }
-    traces.erase(interp);
+    gdb_->traces.erase(interp);
   }
 
   // delete all constructors
-  if(constructors.count(interp)) {
-    callback_interp_map &imap = constructors[interp];
+  if(gdb_->constructors.count(interp)) {
+    callback_interp_map &imap = gdb_->constructors[interp];
     for (callback_interp_map::iterator it2 = imap.begin();
          it2 != imap.end(); ++it2) {
       Tcl_DeleteCommand(interp, it2->first.c_str());
     }
-    callbacks.erase(interp);
+    gdb_->constructors.erase(interp);
   }
 
   // delete all call policies
-  call_policies.erase(interp);
+  gdb_->call_policies.erase(interp);
 
   // delete all object handlers
   // (we have to assume that all living objects were destroyed,
   // otherwise Bad Things will happen)
-  class_handlers.erase(interp);
+  gdb_->class_handlers.erase(interp);
 }
 
 void interpreter::add_function(string const &name,
                                shared_ptr<callback_base> cb, policies const &p, 
                                ClientData cData)
 {
+  // add gdb ref
+  if(db_.use_count() == 0) db_ = gdb_;
+
      Tcl_CreateObjCommand(interp_, name.c_str(),
           callback_handler, cData, 0);
 
-     callbacks[interp_][name] = cb;
-     call_policies[interp_][name] = p;
+     gdb_->callbacks[interp_][name] = cb;
+     gdb_->call_policies[interp_][name] = p;
 }
 
 void interpreter::add_trace(const string& VarName, unsigned int *index,  
                             const std::string& FunName,
                             shared_ptr<trace_base> proc,
                             void * cData, int flag) {
+  // add gdb ref
+  if(db_.use_count() == 0) db_ = gdb_;
+
   // empty function name is not allowed. 
   // Due to the standard result, no return or error is indicated. 
   // This is at user's risk.
@@ -1174,41 +1214,44 @@ void interpreter::add_trace(const string& VarName, unsigned int *index,
   // record the variable name and index into the map name
   pair<string, string> map_name(VarName, "");
   if(index != NULL) map_name.second = boost::lexical_cast<string>(*index);
-
+  
+  trace_record_map& trecord = gdb_->traces[interp_][map_name];
+  
   // record it in our own maps
-  if(traces[interp_][map_name].count(FunName)) { // already recorded
-    if(cData != traces[interp_][map_name][FunName].get<2>()) {
+  if(trecord.count(FunName)) { // already recorded
+    if(cData != trecord[FunName].get<2>()) {
       // user error, define the same trace function with the same variable 
       // but with different cData is not supported
       assert(0 == "Fail to add a trace on the same variable using the same function name but with different client data!");
       return;
     }
-    traces[interp_][map_name][FunName].get<1>() |= flag;
+    trecord[FunName].get<1>() |= flag;
   } else {                        // new
-    traces[interp_][map_name][FunName].get<0>() = proc;
-    traces[interp_][map_name][FunName].get<1>() = flag;
-    traces[interp_][map_name][FunName].get<2>() = cData;
+    trecord[FunName].get<0>() = proc;
+    trecord[FunName].get<1>() = flag;
+    trecord[FunName].get<2>() = cData;
   }
   if(index == NULL)
     Tcl_TraceVar(interp_, VarName.c_str(), flag, 
-                 trace_handler, &(traces[interp_][map_name][FunName].get<2>()));
+                 trace_handler, &(trecord[FunName].get<2>()));
   else
     Tcl_TraceVar2(interp_, VarName.c_str(), map_name.second.c_str(), flag, 
-                  trace_handler, &(traces[interp_][map_name][FunName].get<2>()));
+                  trace_handler, &(trecord[FunName].get<2>()));
 }
 
 void interpreter::remove_trace(const string& VarName, unsigned int *index, 
                                const std::string& FunName, int flag) {
-  if(!traces.count(interp_)) return; // interpreter not found
+  if(!gdb_->traces.count(interp_)) return; // interpreter not found
   
   // get variable name
   pair<string, string> map_name(VarName, "");
   if(index != NULL) map_name.second = boost::lexical_cast<string>(*index);
   
-  if(!traces[interp_].count(map_name)) return; // variable not found
-  
+  if(!gdb_->traces[interp_].count(map_name)) return; // variable not found
+  trace_record_map& trecord = gdb_->traces[interp_][map_name];
+
   if(FunName == "") {            // all
-    BOOST_FOREACH(trace_record& m, traces[interp_][map_name]) {
+    BOOST_FOREACH(trace_record& m, trecord) {
       if(m.second.get<1>() & flag) { // need a untrace operation
         // stupid tcl cannot untrace read and write traces at the same time if they are defined separately
         if(index == NULL) {
@@ -1231,54 +1274,60 @@ void interpreter::remove_trace(const string& VarName, unsigned int *index,
       m.second.get<1>() &= (~flag);
     }
     trace_record_map::iterator it, end;
-    for(it = traces[interp_][map_name].begin(), end = traces[interp_][map_name].end();
+    for(it = trecord.begin(), end = trecord.end();
         it != end; ) {
-      if(it->second.get<1>() == 0) traces[interp_][map_name].erase(it++);
+      if(it->second.get<1>() == 0) trecord.erase(it++);
       else it++;
     }
   } else {                       // a specific trace
-    if(!traces[interp_][map_name].count(FunName)) return; // function not found
-    if(traces[interp_][map_name][FunName].get<1>() & flag) { // need a untrace operation
+    if(!trecord.count(FunName)) return; // function not found
+    if(trecord[FunName].get<1>() & flag) { // need a untrace operation
         if(index == NULL) {
-          if(traces[interp_][map_name][FunName].get<1>() & flag & TCL_TRACE_READS)
+          if(trecord[FunName].get<1>() & flag & TCL_TRACE_READS)
             Tcl_UntraceVar(interp_, VarName.c_str(), TCL_TRACE_READS, 
-                           trace_handler, &(traces[interp_][map_name][FunName].get<2>()));
-          if(traces[interp_][map_name][FunName].get<1>() & flag & TCL_TRACE_WRITES)
+                           trace_handler, &(trecord[FunName].get<2>()));
+          if(trecord[FunName].get<1>() & flag & TCL_TRACE_WRITES)
             Tcl_UntraceVar(interp_, VarName.c_str(), TCL_TRACE_WRITES, 
-                           trace_handler, &(traces[interp_][map_name][FunName].get<2>()));
+                           trace_handler, &(trecord[FunName].get<2>()));
         }
         else { 
-          if(traces[interp_][map_name][FunName].get<1>() & flag & TCL_TRACE_READS)
+          if(trecord[FunName].get<1>() & flag & TCL_TRACE_READS)
             Tcl_UntraceVar2(interp_, VarName.c_str(), map_name.second.c_str(), TCL_TRACE_READS, 
-                            trace_handler, &(traces[interp_][map_name][FunName].get<2>()));
-          if(traces[interp_][map_name][FunName].get<1>() & flag & TCL_TRACE_WRITES)
+                            trace_handler, &(trecord[FunName].get<2>()));
+          if(trecord[FunName].get<1>() & flag & TCL_TRACE_WRITES)
             Tcl_UntraceVar2(interp_, VarName.c_str(), map_name.second.c_str(), TCL_TRACE_WRITES, 
-                            trace_handler, &(traces[interp_][map_name][FunName].get<2>()));
+                            trace_handler, &(trecord[FunName].get<2>()));
         }
     }
-    traces[interp_][map_name][FunName].get<1>() &= (~flag);
-    if(traces[interp_][map_name][FunName].get<1>() == 0)
-      traces[interp_][map_name].erase(FunName);
+    trecord[FunName].get<1>() &= (~flag);
+    if(trecord[FunName].get<1>() == 0)
+      trecord.erase(FunName);
   }
 
-  if(traces[interp_][map_name].empty()) traces[interp_].erase(map_name);
+  if(trecord.empty()) gdb_->traces[interp_].erase(map_name);
 }
 
 void interpreter::add_class(string const &name,
      shared_ptr<class_handler_base> chb)
 {
-     class_handlers[interp_][name] = chb;
+  // add gdb ref
+  if(db_.use_count() == 0) db_ = gdb_;
+
+     gdb_->class_handlers[interp_][name] = chb;
 }
 
 void interpreter::add_constructor(string const &name,
      shared_ptr<class_handler_base> chb, shared_ptr<callback_base> cb,
      policies const &p)
 {
+  // add gdb ref
+  if(db_.use_count() == 0) db_ = gdb_;
+
      Tcl_CreateObjCommand(interp_, name.c_str(),
           constructor_handler, static_cast<ClientData>(chb.get()), 0);
 
-     constructors[interp_][name] = cb;
-     call_policies[interp_][name] = p;
+     gdb_->constructors[interp_][name] = cb;
+     gdb_->call_policies[interp_][name] = p;
 }
 
 

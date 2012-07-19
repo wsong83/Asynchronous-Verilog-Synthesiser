@@ -429,18 +429,26 @@ bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
   
   // remove useless variables
   list<VIdentifier> var_to_be_removed;
-  for_each(db_var.begin_order(), db_var.end_order(), [&db_var, &var_to_be_removed](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  for_each(db_var.begin_order(), db_var.end_order(), [&var_to_be_removed](pair<VIdentifier, shared_ptr<Variable> >& m) {
       if(m.second->is_useless()) var_to_be_removed.push_back(m.first);
     });
   BOOST_FOREACH(const VIdentifier& m, var_to_be_removed) 
     db_var.erase(m);
   
   var_to_be_removed.clear();
-  for_each(db_genvar.begin_order(), db_genvar.end_order(), [&db_genvar, &var_to_be_removed](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  for_each(db_genvar.begin_order(), db_genvar.end_order(), [&var_to_be_removed](pair<VIdentifier, shared_ptr<Variable> >& m) {
       if(m.second->is_useless()) var_to_be_removed.push_back(m.first);
     });
   BOOST_FOREACH(const VIdentifier& m, var_to_be_removed) 
     db_genvar.erase(m);
+
+  var_to_be_removed.clear();
+  for_each(db_param.begin_order(), db_param.end_order(), [&var_to_be_removed](pair<VIdentifier, shared_ptr<Variable> >& m) {
+      if(m.second->is_useless()) var_to_be_removed.push_back(m.first);
+    });
+  BOOST_FOREACH(const VIdentifier& m, var_to_be_removed) 
+    db_param.erase(m);
+  assert(db_param.empty());
 
   // add called modules (instances) to the module queue in cmd/elaborate
   for_each(db_instance.begin(), db_instance.end(), 

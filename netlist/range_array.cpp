@@ -101,6 +101,7 @@ RangeArray netlist::RangeArray::const_copy(const RangeArray& maxRange) const {
                                            Range(0) : maxRange.front()
                                            );
   rv.const_reduced = const_reduced;
+  rv.width = width;
   return rv;
 }
 
@@ -110,6 +111,7 @@ RangeArray netlist::RangeArray::deep_object_copy() const {
       rv.child.push_back(shared_ptr<Range>(m->deep_copy()));
     });
   rv.const_reduced = const_reduced;
+  rv.width = width;
   return rv;
 }
 
@@ -199,6 +201,7 @@ RangeArray* netlist::RangeArray::deep_copy() const {
       rv->child.push_back(shared_ptr<Range>(m->deep_copy()));
     });
   rv->const_reduced = const_reduced;
+  rv->width = width;
   return rv;
 }
 
@@ -214,9 +217,21 @@ bool netlist::RangeArray::elaborate(elab_result_t &result, const ctype_t mctype,
   return RangeArrayCommon::elaborate(result, mctype, fp);
 }
 
-bool netlist::operator>= (const RangeArray& lhs, const RangeArray& rhs) {
-  RangeArray tmp = lhs & rhs;
-  //std::cout << "RangeArray >=: " << lhs << "; " << rhs << "; " << tmp  << " -> " << (tmp == rhs) << std::endl;
-  return tmp == rhs;
+unsigned int netlist::RangeArray::get_width(const RangeArray& r) const {
+  if(width) return width;
+  return RangeArrayCommon::get_width(*(r.child.front()));
 }
 
+unsigned int netlist::RangeArray::get_width(const RangeArray& r) {
+  if(width) return width;
+  width = RangeArrayCommon::get_width(*(r.child.front()));
+  return width;
+}
+  
+void netlist::RangeArray::set_width(const unsigned int& w, const RangeArray& r) {
+  assert(get_width(r) >= w);
+  if(width != w) {
+    RangeArrayCommon::set_width(w, *(r.child.front()));
+    width = w;
+  }
+}

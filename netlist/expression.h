@@ -34,32 +34,31 @@ namespace netlist {
   class Expression : public NetComp {
   public:
     // constructors
-    Expression() : NetComp(tExp), valuable(false) {}
-    Expression(const shell::location& lloc) : NetComp(tExp, lloc), valuable(false) {}
-    Expression(const Number&);	/* a number is an expression */
-    Expression(const shell::location& lloc, const Number&);	/* a number is an expression */
-    Expression(const VIdentifier&); /* a variable/parameter is an expression */
-    Expression(const shell::location& lloc, const VIdentifier&); /* a variable/parameter is an expression */
-    Expression(const boost::shared_ptr<Concatenation>&); /* a concatenation is an expression */
-    Expression(const shell::location& lloc, const boost::shared_ptr<Concatenation>&); /* a concatenation is an expression */
-    Expression(const boost::shared_ptr<LConcatenation>&); /* some times need to convert a lvalue back to expression */
-    Expression(const shell::location& lloc, const boost::shared_ptr<LConcatenation>&); /* some times need to convert a lvalue back to expression */
+    Expression() : NetComp(tExp) {}
+    Expression(const shell::location& lloc) : NetComp(tExp, lloc) {}
+    Expression(const Number&);	// a number is an expression
+    Expression(const shell::location& lloc, const Number&);	// a number is an expression
+    Expression(const VIdentifier&); // a variable/parameter is an expression
+    Expression(const shell::location& lloc, const VIdentifier&); // a variable/parameter is an expression
+    Expression(const boost::shared_ptr<Concatenation>&); // a concatenation is an expression
+    Expression(const shell::location& lloc, const boost::shared_ptr<Concatenation>&); // a concatenation is an expression
+    Expression(const boost::shared_ptr<LConcatenation>&); // some times need to convert a lvalue back to expression
+    Expression(const shell::location& lloc, const boost::shared_ptr<LConcatenation>&); // some times need to convert a lvalue back to expression
     virtual ~Expression();
 
     // helpers
-    bool is_valuable() const;    /* check valuable */
-    Number get_value() const;    /* fetch the value if valuable */
-    void reduce();               /* try to reduce the equation */
-    // return the size of equation
-    int size() const { return eqn.size(); }
-    bool empty() const { return eqn.empty(); }
-    boost::shared_ptr<Operation>& front() { return eqn.front(); }
+    bool is_valuable() const;    // check valuable
+    Number get_value() const;    // fetch the value if valuable
+    bool is_singular() const;    // the expression is a number, concatenation, variable or function call
+    Operation& get_op();             // get the private operation for read/write
+    const Operation& get_op() const; // read the private operation
+    void reduce();               // try to reduce the equation
     
     // develope the equation
     void append(Operation::operation_t);
     void append(Operation::operation_t, Expression&);
     void append(Operation::operation_t, Expression&, Expression&);
-    void concatenate(const Expression&); /* concatenate the number in two expressions */
+    void concatenate(const Expression&); // concatenate the number in two expressions
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
@@ -69,12 +68,12 @@ namespace netlist {
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
     NETLIST_ELABORATE_DECL;
+    NETLIST_SET_WIDTH_DECL;
+    NETLIST_GET_WIDTH_DECL;
     
-    // data
-    std::list<boost::shared_ptr<Operation> > eqn;
-
   private:
-    bool valuable;
+    // data
+    boost::shared_ptr<Operation> eqn;
     
   };
 
@@ -84,17 +83,10 @@ namespace netlist {
 
   NETLIST_STREAMOUT(Expression);
 
-  // helper class
-  class expression_state {
-  public:
-    boost::shared_ptr<Operation> op;               // operator
-    int ops;                                       // number of operands needed
-    int opp;                                       // current number of operands
-    std::list<boost::shared_ptr<Operation> > d[3]; // oprands
-  expression_state() : opp(0) {}
-  };
-
-
 }
 
 #endif
+
+// Local Variables:
+// mode: c++
+// End:

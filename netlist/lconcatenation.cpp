@@ -45,10 +45,10 @@ netlist::LConcatenation::LConcatenation(shared_ptr<Concatenation>& con)
   con->reduce();
   BOOST_FOREACH(const shared_ptr<ConElem>& it, con->data) {
     if( 0 != it->con.size() ||    // the concatenation contain sub-concatenations
-        it->exp->size() != 1 ||   // the expression ia still complex
-        it->exp->front()->get_type() != Operation::oVar || // wrong type
-        it->exp->front()->get_var().get_type() != tVarName) return; // wrong type
-    data.push_back(it->exp->front()->get_var());
+        !it->exp->is_singular() ||   // the expression is still complex
+        it->exp->get_op().get_type() != Operation::oVar || // wrong type
+        it->exp->get_op().get_var().get_type() != tVarName) return; // wrong type
+    data.push_back(it->exp->get_op().get_var());
   }
   valid = true;
 }
@@ -59,10 +59,10 @@ netlist::LConcatenation::LConcatenation(const location& lloc, shared_ptr<Concate
   con->reduce();
   BOOST_FOREACH(const shared_ptr<ConElem>& it, con->data) {
     if( 0 != it->con.size() ||    // the concatenation contain sub-concatenations
-        it->exp->size() != 1 ||   // the expression ia still complex
-        it->exp->front()->get_type() != Operation::oVar || // wrong type
-        it->exp->front()->get_var().get_type() != tVarName) return; // wrong type
-    data.push_back(it->exp->front()->get_var());
+        !it->exp->is_singular() ||   // the expression ia still complex
+        it->exp->get_op().get_type() != Operation::oVar || // wrong type
+        it->exp->get_op().get_var().get_type() != tVarName) return; // wrong type
+    data.push_back(it->exp->get_op().get_var());
   }
   valid = true;
 }
@@ -144,4 +144,32 @@ bool netlist::LConcatenation::elaborate(elab_result_t &result, const ctype_t mct
 
 void netlist::LConcatenation::set_always_pointer(SeqBlock *p) {
   BOOST_FOREACH(VIdentifier& m, data) m.set_always_pointer(p);
+}
+
+unsigned int netlist::LConcatenation::get_width() {
+  if(width) return width;
+  BOOST_FOREACH(VIdentifier& m, data)
+    width += m.get_width();
+  return width;
+}
+
+void netlist::LConcatenation::set_width(const unsigned int& w) {
+  if(width == w) return;
+  assert(w < get_width());
+  unsigned int wm = w;
+  list<VIdentifier>::reverse_iterator it, end;
+  for(it=data.rbegin(), end=data.rend(); it!=end; it++) {
+    if(wm >= it->get_width()) 
+      wm -= it->get_width();
+    else {
+      if(wm == 0) break;
+      else {
+        it->set_width(wm);
+        wm = 0;
+      }
+    }
+  }
+  if(it != end) 
+    data.erase(data.begin(), it.base()); // ATTN: it is a reverse_iterator
+  width = w;
 }

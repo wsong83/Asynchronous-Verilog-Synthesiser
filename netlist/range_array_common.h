@@ -73,6 +73,9 @@ namespace netlist {
     void db_register(int iod = 1);
     void db_expunge();
     NETLIST_ELABORATE_DECL;
+    unsigned int get_width(const Range&) const; // considering child
+    unsigned int get_width(const Range&); // considering child
+    void set_width(const unsigned int&, const Range&);
     
   protected:
     std::list<boost::shared_ptr<Range> > child; // the range expressions of the lower dimension

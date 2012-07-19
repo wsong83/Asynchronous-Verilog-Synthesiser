@@ -44,244 +44,138 @@ using std::vector;
 using std::for_each;
 
 netlist::Expression::Expression(const Number& exp) 
-  : NetComp(tExp), valuable(exp.is_valuable())
+  : NetComp(tExp)
 {
-  eqn.push_back(shared_ptr<Operation>( new Operation(exp)));
+  eqn.reset(new Operation(exp));
 }
 
 netlist::Expression::Expression(const location& lloc, const Number& exp) 
-  : NetComp(tExp, lloc), valuable(exp.is_valuable())
+  : NetComp(tExp, lloc)
 {
-  eqn.push_back(shared_ptr<Operation>( new Operation(exp)));
+  eqn.reset(new Operation(lloc, exp));
 }
 
 netlist::Expression::Expression(const VIdentifier& id) 
-  : NetComp(tExp), valuable(false)
+  : NetComp(tExp)
 {
-  eqn.push_back(shared_ptr<Operation>( new Operation(id)));
+  eqn.reset(new Operation(id));
 }
 
 netlist::Expression::Expression(const location& lloc, const VIdentifier& id) 
-  : NetComp(tExp, lloc), valuable(false)
+  : NetComp(tExp, lloc)
 {
-  eqn.push_back(shared_ptr<Operation>( new Operation(id)));
+  eqn.reset(new Operation(lloc, id));
 }
 
 netlist::Expression::Expression(const shared_ptr<Concatenation>& con) 
-  : NetComp(tExp), valuable(false)
+  : NetComp(tExp)
 {
-  eqn.push_back(shared_ptr<Operation>( new Operation(con)));
+  eqn.reset(new Operation(con));
 }
 
 netlist::Expression::Expression(const location& lloc, const shared_ptr<Concatenation>& con) 
-  : NetComp(tExp, lloc), valuable(false)
+  : NetComp(tExp, lloc)
 {
-  eqn.push_back(shared_ptr<Operation>( new Operation(con)));
+  eqn.reset(new Operation(lloc, con));
 }
 
 netlist::Expression::Expression(const shared_ptr<LConcatenation>& con)
-  : NetComp(tExp), valuable(false)
+  : NetComp(tExp)
 {
-  eqn.push_back(shared_ptr<Operation>(new Operation(con)));
+  eqn.reset(new Operation(con));
 }
 
 netlist::Expression::Expression(const location& lloc, const shared_ptr<LConcatenation>& con)
-  : NetComp(tExp, lloc), valuable(false)
+  : NetComp(tExp, lloc)
 {
-  eqn.push_back(shared_ptr<Operation>(new Operation(con)));
+  eqn.reset(new Operation(lloc, con));
 }
 
 netlist::Expression::~Expression() {}
 
 bool netlist::Expression::is_valuable() const {
-  return valuable;
+  assert(eqn.use_count() != 0);
+  return eqn->is_valuable();
 }
 
-Number netlist::Expression::get_value() const { 
-  if(valuable &&                                   // valuable 
-     1 == eqn.size() &&                            // and has only one element
-     eqn.front()->is_valuable() &&                  // and the element is valuable
-     Operation::oNum == eqn.front()->get_type())   // and it is a number
-      return eqn.front()->get_num();
-  else
-    return 0;
+Number netlist::Expression::get_value() const {
+  assert(eqn.use_count() != 0);
+  assert(eqn->is_valuable());
+  return eqn->get_num();
 }
 
-//#define AVS_DEBUG_EXPRESSION_REDUCE
+bool netlist::Expression::is_singular() const {
+  assert(eqn.use_count() != 0);
+  return ((eqn->get_type() > Operation::oNULL) && (eqn->get_type() <= Operation::oFun));
+}
+
+const Operation& netlist::Expression::get_op() const {
+  assert(eqn.use_count() != 0);
+  return *eqn;
+}
+
+Operation& netlist::Expression::get_op() {
+  assert(eqn.use_count() != 0);
+  return *eqn;
+}
 
 void netlist::Expression::reduce() {
-#ifdef AVS_DEBUG_EXPRESSION_REDUCE
-  std::cout << "before reduce: ";
-  BOOST_FOREACH(shared_ptr<Operation>& m, eqn) {
-    std::cout << *m << "(" << m.get() << ") ";
-  }
-  std::cout << std::endl;
-#endif
-
-  // reduce all concatenations if possible
-  list<shared_ptr<Operation> >::iterator it, end;
-  for(it=eqn.begin(), end=eqn.end(); it!=end; it++) {
-    (*it)->reduce();
-    if((*it)->get_type() == Operation::oCon &&
-       (*it)->get_con().is_exp()
-       ) {                      // replace this concatenation with an embedded expression
-      eqn.insert(it, (*it)->get_con().get_exp()->eqn.begin(), (*it)->get_con().get_exp()->eqn.end());
-      eqn.erase(it);
-      it--;
-    }
-  }   
-
-  // state stack
-  stack<shared_ptr<expression_state> > m_stack;
-
-  if(valuable) {
-#ifdef AVS_DEBUG_EXPRESSION_REDUCE
-    std::cout << "after reduce: ";
-    BOOST_FOREACH(shared_ptr<Operation>& m, eqn) {
-      std::cout << *m << "(" << m.get() << ") ";
-    }
-    std::cout << std::endl;
-#endif
-    return;          // fast return path
-  }
-
-  while(!eqn.empty()) {
-    // fetch a new operation element
-    shared_ptr<Operation> m = eqn.front();
-    eqn.pop_front();
-    
-    // check the operation
-    if(m->get_type() <= Operation::oFun) {   // a prime
-      if(m_stack.empty()) {     // only one element and it is a prime
-        assert(eqn.empty());    // eqn should be empty
-        eqn.push_back(m);
-        valuable = m->is_valuable();
-        {
-#ifdef AVS_DEBUG_EXPRESSION_REDUCE
-          std::cout << "after reduce: ";
-          BOOST_FOREACH(shared_ptr<Operation>& m, eqn) {
-            std::cout << *m << "(" << m.get() << ") ";
-          }
-          std::cout << std::endl;
-#endif
-          return;
-        }
-      } else {
-        shared_ptr<expression_state> m_state = m_stack.top();
-        m_state->d[(m_state->opp)++].push_back(m);
-        while(true) {
-          if(m_state->ops == m_state->opp) { // ready for execute
-            execute_operation(m_state->op->get_type(), m_state->d[0], m_state->d[1], m_state->d[2]);
-            m_stack.pop();
-            // recursive iterations
-            if(m_stack.empty()) { // final
-              assert(eqn.empty());    // eqn should be empty
-              eqn.splice(eqn.end(), m_state->d[0]);
-              valuable = eqn.size() == 1 && eqn.front()->is_valuable();
-              {
-#ifdef AVS_DEBUG_EXPRESSION_REDUCE
-                std::cout << "after reduce: ";
-                BOOST_FOREACH(shared_ptr<Operation>& m, eqn) {
-                  std::cout << *m << "(" << m.get() << ") ";
-                }
-                std::cout << std::endl;
-#endif
-                return;
-              }
-
-            } else {
-              shared_ptr<expression_state> tmp = m_state;
-              m_state = m_stack.top();
-              m_state->d[m_state->opp].splice(m_state->d[m_state->opp].end(), tmp->d[0]);
-              (m_state->opp)++;
-            }
-          } else break;       // do nothing, proceed to the next element
-        }
-      }
-    } else {                  // an operator
-      shared_ptr<expression_state> m_state(new expression_state);
-      m_state->op = m;
-      if(m->get_type() <= Operation::oUNxor) { // unary
-          m_state->ops = 1;
-      } else if(m->get_type() <= Operation::oLOr) { // two operands
-        m_state->ops = 2;
-      } else {
-        m_state->ops = 3;
-      }
-      m_stack.push(m_state);
-    }
-  }
-
-  // should not run to here
-  assert(1 == 0);
+  assert(eqn.use_count() != 0);
+  eqn->reduce();
 }
 
 void netlist::Expression::db_register(int iod) {
-  for_each(eqn.begin(), eqn.end(), [&iod](shared_ptr<Operation>& m) {m->db_register(iod);});
+  eqn->db_register(iod);
 }
 
 void netlist::Expression::db_expunge() {
-  for_each(eqn.begin(), eqn.end(), [](shared_ptr<Operation>& m) {m->db_expunge();});
+  eqn->db_expunge();
 }
 
 void netlist::Expression::append(Operation::operation_t otype) {
   assert(tExp == ctype);     // this object whould be valid
   assert(otype >= Operation::oUPos && otype < Operation::oPower);
+  assert(eqn.use_count() != 0);
 
-  // preparing operands
-  this->reduce();
-
-  // connect the equation
-  this->eqn.push_front(shared_ptr<Operation>(new Operation(otype)));
-  this->valuable = false;
-
-  // try to reduce the final equation
-  this->reduce();
-
+  eqn.reset(new Operation(otype, eqn));
 }
 
 void netlist::Expression::append(Operation::operation_t otype, Expression& d1) {
   assert(tExp == ctype);     // this object whould be valid
   assert(otype >= Operation::oPower && otype < Operation::oQuestion);
+  assert(eqn.use_count() != 0);
 
-  // preparing operands
-  this->reduce();
-  d1.reduce();
-
-  // connect the equation
-  this->eqn.push_front(shared_ptr<Operation>( new Operation(otype)));
-  this->eqn.splice(this->eqn.end(), d1.eqn);
-  this->valuable = false;
-  
-  // try to reduce the final equation
-  this->reduce();
+  eqn.reset(new Operation(otype, eqn, d1.eqn));
 }
 
 void netlist::Expression::append(Operation::operation_t otype, Expression& d1, Expression& d2) {
   assert(tExp == ctype);     // this object whould be valid
   assert(otype >= Operation::oQuestion);
+  assert(eqn.use_count() != 0);
 
-  // preparing operands
-  this->reduce();
-  d1.reduce();
-  d2.reduce();
-
-  this->eqn.push_front(shared_ptr<Operation>( new Operation(otype)));
-  this->eqn.splice(this->eqn.end(), d1.eqn);
-  this->eqn.splice(this->eqn.end(), d2.eqn);
-  this->valuable = false;
-  
-  // try to reduce the final equation
-  this->reduce();
+  eqn.reset(new Operation(otype, eqn, d1.eqn, d2.eqn));
 }
 
 void netlist::Expression::concatenate(const Expression& rhs) {
-  assert(eqn.size() == 1 &&
-	 eqn.front()->get_type() == Operation::oNum &&
-         rhs.eqn.size() == 1 &&
-	 rhs.eqn.front()->get_type() == Operation::oNum);
+  assert(eqn->is_valuable() && rhs.eqn->is_valuable());
+  eqn->get_num().concatenate(rhs.eqn->get_num());
+}
 
-  eqn.front()->get_num().concatenate(rhs.eqn.front()->get_num());
+unsigned int netlist::Expression::get_width() {
+  if(width) return width;
+  assert(eqn.use_count() != 0);
+  width = eqn->get_width();
+  return width;
+}
+
+void netlist::Expression::set_width(const unsigned int& w) {
+  if(width == w) return;
+  assert(eqn.use_count() != 0);
+  // there is no need to make sure w <= width as it may happen this way
+  // such as assign a[3:0] = 1'b1;
+  eqn->set_width(w);
+  width = w;
+  return;
 }
 
 Expression& netlist::operator+ (Expression& lhs, Expression& rhs) {
@@ -301,132 +195,31 @@ bool netlist::operator== (const Expression& lhs, const Expression& rhs) {
     return false;
 }
 
-namespace netlist{
-  inline void 
-  expression_pop_operators(
-                           ostream& os, 
-                           stack<pair<shared_ptr<Operation>,unsigned int> >& m_stack,
-                           shared_ptr<Operation>& op,
-                           unsigned int& op_cnt) {
-    while(true) {
-      if(!m_stack.empty()) { 
-        op = m_stack.top().first; 
-        op_cnt = m_stack.top().second + 1; 
-        m_stack.pop();
-      } else { 
-        op.reset(); 
-        op_cnt = 0;
-        return;
-      }
-      
-      if(op->get_type() <= Operation::oUNxor) { // unary
-        continue;
-      } else if (op->get_type() < Operation::oQuestion) { // two operands
-        if(op_cnt == 2) {
-          if(!m_stack.empty() && op->get_type() >= m_stack.top().first->get_type()+10)
-            os << ")";
-          continue;
-        } else {                  // must be 1
-          os << *op;
-          return;
-        }
-      } else {                    // must be ?:
-        if(op_cnt == 3) {
-          if(!m_stack.empty() && op->get_type() >= m_stack.top().first->get_type()+10)
-            os << ")";
-          continue;
-        } else if (op_cnt == 2) {
-          os << " : ";
-          return;
-        } else {                  // must be 1
-          os << " ? ";
-          return;
-        }
-      }   
-    }
-  }
-}
-
 ostream& netlist::Expression::streamout(ostream& os, unsigned int indent) const {
-  list<shared_ptr<Operation> >::const_iterator it, end;
-  stack<pair<shared_ptr<Operation>,unsigned int> > m_stack;
-  shared_ptr<Operation> c, op;
-  unsigned int op_cnt = 0;
-
-  os << string(indent, ' ');
-
-  for(it=eqn.begin(), end=eqn.end(); it!=end; it++) {
-    c = *it;
-    if(c->get_type() <= Operation::oFun) { // data
-      if(op.use_count() != 0) {
-        if(op->get_type() <= Operation::oUNxor) { // unary operation always add parenthesis
-          os << *c ;
-          expression_pop_operators(os, m_stack, op, op_cnt);
-        } else if(op->get_type() < Operation::oQuestion) { // two operands
-          if(op_cnt == 0) { 	// first operand
-            os << *c << *op;
-            op_cnt = 1;
-          } else {
-            os << *c;
-
-            if(!m_stack.empty() && op->get_type() >= m_stack.top().first->get_type()+10)
-              os << ")";
-
-            expression_pop_operators(os, m_stack, op, op_cnt);
-          } 
-        } else {		// ?
-          if(op_cnt == 0) { 	// first operand
-            os << *c << " ? ";
-            op_cnt = 1;
-          } else if(op_cnt == 1){
-            os << *c << " : ";
-            op_cnt = 2;
-          } else {
-            os << *c;
-
-            if(!m_stack.empty() && op->get_type() >= m_stack.top().first->get_type()+10)
-              os << ")";
-
-            expression_pop_operators(os, m_stack, op, op_cnt);
-          } 
-        }
-      } else {
-        os << *c;
-      }
-    } else {			// must be an operator
-      if(op.use_count() != 0) m_stack.push(pair<shared_ptr<Operation>,unsigned int>(op,op_cnt));
-      op = c;
-      op_cnt = 0;
-      if(!m_stack.empty() && op->get_type() >= m_stack.top().first->get_type()+10)
-        os << "(";
-      if(op->get_type() <=  Operation::oUNxor)
-        os << *op;
-    }
-  }
-  
+  os << string(indent, ' ') << *eqn;
   return os;
 }
 
 void netlist::Expression::set_father(Block *pf) {
   if(father == pf) return;
   father = pf;
-  BOOST_FOREACH(shared_ptr<Operation>& it, eqn)
-    it->set_father(pf);
+  assert(eqn.use_count() != 0);
+  eqn->set_father(pf);
 }
 
 bool netlist::Expression::check_inparse() {
   bool rv = true;
-  BOOST_FOREACH(shared_ptr<Operation>& it, eqn)
-    rv &= it->check_inparse();
+  assert(eqn.use_count() != 0);
+  rv &= eqn->check_inparse();
   return rv;
 }
 
 Expression* netlist::Expression::deep_copy() const {
   Expression* rv = new Expression();
   rv->loc = loc;
-  rv->valuable = this->valuable;
-  BOOST_FOREACH(const shared_ptr<Operation>& it, eqn)
-    rv->eqn.push_back(shared_ptr<Operation>(it->deep_copy()));
+  rv->width = width;
+  assert(eqn.use_count() != 0);
+  rv->eqn = shared_ptr<Operation>(eqn->deep_copy());
   return rv;
 }
 
@@ -434,21 +227,18 @@ bool netlist::Expression::elaborate(elab_result_t &result, const ctype_t mctype,
   bool rv = true;
   result = ELAB_Normal;
   
-  // resolve all operation if possible
-  BOOST_FOREACH(shared_ptr<Operation>& m, eqn)
-    rv &= m->elaborate(result);
-  if(!rv) return false;
-
-  //std::cout << "after operation elaboration: " << std::endl << *this << std::endl;
-  
   // try to reduce the expression
-  reduce();
+  assert(eqn.use_count() != 0);
+  eqn->reduce();
+
+  eqn->elaborate(result);
+  if(!rv) return false;
 
   // type specific check
   switch(mctype) {
   case tCaseItem: {
     // for a case item, it must be const
-    if(!valuable) {
+    if(!eqn->is_valuable()) {
       G_ENV->error(loc, "ELAB-CASE-3", toString(*this));
       rv = false;
     }

@@ -35,7 +35,7 @@ namespace netlist {
   class Number : public NetComp{
   public:
     // constructors
-    Number() : NetComp(tNumber), num_leng(0), valid(false), valuable(false) {};
+    Number() : NetComp(tNumber), num_leng(0), valid(false), valuable(false), sign_flag(false) {};
     Number(const char *text, const int txt_leng); /* constructor for scanner */
     Number(const shell::location& lloc, const char *text, const int txt_leng); /* constructor for scanner */
     Number(int d);
@@ -48,11 +48,11 @@ namespace netlist {
       if(txt_value.empty()) return "0"; 
       else return txt_value; 
     }
-    mpz_class get_value() const { 
-      if(txt_value.empty()) return 0; 
-      else return mpz_class(txt_value, 2); 
-    }
+    mpz_class get_value() const;
     unsigned int get_length() const { return num_leng; }
+    void set_length(const unsigned int& ns) { num_leng = ns; }
+    void set_signed();            // change a default unsigned number to signed number
+    bool is_signed() const {return sign_flag; }
     bool is_valuable() const { return valuable; }
     bool is_valid() const { return valid; }
     bool is_true() const { return std::string::npos != txt_value.find('1'); }
@@ -64,11 +64,9 @@ namespace netlist {
         std::string::npos != txt_value.find('z') ||
         std::string::npos != txt_value.find('Z');
     }
-    Number& truncate (int lhs, int rhs);
     Number addition (const Number& rhs) const;
     Number minus (const Number& rhs) const;
     Number& operator+= (const Number& rhs);
-    Number& lfsh (int rhs);
     
     void concatenate(const Number&); /* concatenate two fixed-point number */
     static std::string trim_zeros(const std::string&);
@@ -79,15 +77,16 @@ namespace netlist {
     virtual Number* deep_copy() const;
     virtual void db_register(int iod) {}
     virtual void db_expunge() {}
-
-    // operation
-    void negate() {}
+    NETLIST_ELABORATE_DECL;
+    NETLIST_GET_WIDTH_DECL;
+    NETLIST_SET_WIDTH_DECL;
 
   private:
-    unsigned int num_leng;	/* the number of digits in the number */
-    std::string txt_value;	/* literals of the number, useful when non-deterministic */
-    bool valid;			    /* true when number format is ok */
-    bool valuable;		    /* true when the number is const and deterministic */
+    unsigned int num_leng;	// the number of digits in the number
+    std::string txt_value;	// literals of the number, useful when non-deterministic
+    bool valid;			    // true when number format is ok
+    bool valuable;		    // true when the number is const and deterministic
+    bool sign_flag;         // true when it is a signed number
 
     //helpers
 
@@ -103,9 +102,12 @@ namespace netlist {
   Number op_uor    (const Number& lhs);
   Number op_uand   (const Number& lhs);
   Number op_uxor   (const Number& lhs);
+  Number operator- (const Number& lhs);
   Number operator! (const Number& lhs);
   Number operator~ (const Number& lhs);
   Number operator* (const Number& lhs, const Number& rhs);
+  Number operator/ (const Number& lhs, const Number& rhs);
+  Number operator% (const Number& lhs, const Number& rhs);
   Number operator+ (const Number& lhs, const Number& rhs);
   Number operator- (const Number& lhs, const Number& rhs);
   Number operator& (const Number& lhs, const Number& rhs);
@@ -119,8 +121,10 @@ namespace netlist {
   bool operator<= (const Number& lhs, const Number& rhs);
   bool operator> (const Number& lhs, const Number& rhs);
   bool operator>= (const Number& lhs, const Number& rhs);
-  bool case_equal (const Number& lhs, const Number& rhs);
-  Number operator<< (const Number& lhs, int rhs);
+  bool op_case_equal (const Number& lhs, const Number& rhs);
+  Number operator>> (const Number& lhs, const Number& rhs);
+  Number op_sign_rsh (const Number& lhs, const Number& rhs);
+  Number operator<< (const Number& lhs, const Number& rhs);
   NETLIST_STREAMOUT(Number)
 
 }

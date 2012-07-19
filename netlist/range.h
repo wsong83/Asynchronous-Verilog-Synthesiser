@@ -86,6 +86,10 @@ namespace netlist {
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
     NETLIST_ELABORATE_DECL;
+    unsigned int get_width() const;   // only the range
+    unsigned int get_width(const Range&) const; // considering child
+    unsigned int get_width(const Range&); // considering child
+    void set_width(const unsigned int&, const Range&);
 
   private:
     Number c;                          /* constant */

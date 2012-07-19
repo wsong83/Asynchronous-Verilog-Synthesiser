@@ -1,18 +1,19 @@
-* 12/07/2012              (**Important )   Range reduction.
 * 30/06/2012              (**Normal    )   May be port should use select instead of range?
 * 29/06/2012              (**Normal    )   Init value of wire and regs are to be ignored.
 * 29/06/2012              (**Normal    )   Error in module parsing should result in black box.
 * 26/06/2012              (**Important )   Set up a verification environment using Design Compiler to check the elaborated design.
 * 13/06/2012              (**Important )   Process of reducing Case statement in Block, SeqBlock and GenBlock.
 * 12/06/2012              (**Important )   Need serious test for Elab_empty and Elab_Const_If reduction in Block, SeqBlock and GenBlock.
-* 11/06/2012              (**Normal    )   + and - for Numbers with x or z generate asserion failures as not supported yet.
 * 11/06/2012              (**Normal    )   The != operator for netlist::Number generates wrong results when x or z exists. eg: "x1" != "0" results false.
 * 08/06/2012              (**Normal    )   May be there is no need to differentiate the types in ParaConn as they all go back to Netlist::Expression.
 * 06/06/2012              (**Normal    )   May be there is no need to use IIdentifier. Just using BIdentifier for instance is fine.
 * 05/06/2012              (**Important )   Set the pcomp member var for all VIdentifier and further reduce the netlist using ranges.
-* 18/05/2012              (**Normal    )   The list in command line env can be embedded list like concatenations in Verilog, right now only one level of strings are supported.
 
 =============
+* 19/07/2012 [12/07/2012] (Resolved    )   Range reduction. [no obvious effect in the or1200 design.]
+* 18/07/2012 [18/05/2012] (NoFixNeeded )   The list in command line env can be embedded list like concatenations in Verilog, right now only one level of strings are supported.
+                                           [it should have been handled by Tcl.]
+* 18/07/2012 [11/06/2012] (NoFixNeeded )   + and - for Numbers with x or z generate asserion failures as not supported yet. [not useful anyway.]
 * 12/07/2012 [18/06/2012] (Resolved    )   Need serious test for the range array operations. [seems fine right now. It will be test after range reduction anyway. ]
 * 12/07/2012 [29/06/2012] (NoFixNeeded )   Short cut effects in & and |. [further optimization is only possible after range reduction. ]
 * 11/07/2012 [17/05/2012] (Resolved    )   Need to rewrite the cmd_lexer class or use flex, not all Tcl features can be supported in current structure. 
