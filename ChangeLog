@@ -1,5 +1,10 @@
+##### Thu 19/07/2012
+* Merge dev back to master.
+* Remove all parameters in the wriiten out netlist.
+* Range reduction finished. No obvious effect in or1200 design.
+
 ##### Wed 18/07/2012
-*  Fixed several small bugs in display.
+* Fixed several small bugs in display.
 * The replacing of pre-lists to in-order expressions is finished.
 
 ##### Mon 16/07/2012
