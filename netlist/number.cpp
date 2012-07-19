@@ -240,6 +240,22 @@ void netlist::Number::concatenate(const Number& rhs) {
   sign_flag = false;            // once concatenated, all signed number turn to be unsigned
 }
 
+unsigned int netlist::Number::get_width() {
+  return num_leng;
+}
+
+void netlist::Number::set_width(const unsigned int& w) {
+  if(txt_value.size() <= w) {    // expand
+    num_leng = w;
+    if(sign_flag && txt_value.size() > 0 && txt_value[0] == '1') { // negtive value
+      txt_value.insert(0, w - txt_value.size(), '1');
+    } 
+  } else {                      // reduce the size
+    num_leng = w;
+    txt_value = txt_value.substr(txt_value.size()-w);
+    sign_flag = false;          // once reduced, it is no longer signed number
+  }
+}
 
 bool netlist::Number::bin2num(const char *text, const int txt_leng, const int start) {
   string m;

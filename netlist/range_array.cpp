@@ -215,16 +215,21 @@ bool netlist::RangeArray::elaborate(elab_result_t &result, const ctype_t mctype,
   return RangeArrayCommon::elaborate(result, mctype, fp);
 }
 
-unsigned int netlist::RangeArray::get_width() {
+unsigned int netlist::RangeArray::get_width(const RangeArray& r) const {
   if(width) return width;
-  width = RangeArrayCommon::get_width();
+  return RangeArrayCommon::get_width(*(r.child.front()));
+}
+
+unsigned int netlist::RangeArray::get_width(const RangeArray& r) {
+  if(width) return width;
+  width = RangeArrayCommon::get_width(*(r.child.front()));
   return width;
 }
   
-void netlist::RangeArray::set_width(const unsigned int& w) {
-  assert(get_width() >= w);
+void netlist::RangeArray::set_width(const unsigned int& w, const RangeArray& r) {
+  assert(get_width(r) >= w);
   if(width != w) {
-    RangeArrayCommon::set_width(w);
+    RangeArrayCommon::set_width(w, *(r.child.front()));
     width = w;
   }
 }

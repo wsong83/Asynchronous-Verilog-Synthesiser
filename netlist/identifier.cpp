@@ -504,8 +504,9 @@ unsigned int netlist::VIdentifier::get_width() {
     assert((pvar.use_count() != 0) && (uid != 0));
     if(m_select.RangeArrayCommon::is_empty())
       width = pvar->get_width();
-    else
-      width = m_select.get_width();
+    else if(!pvar->name.get_range().RangeArrayCommon::is_empty())
+      width = m_select.get_width(pvar->name.get_range());
+    else width = 1;
   }
   return width;
 }
@@ -514,10 +515,11 @@ void netlist::VIdentifier::set_width(const unsigned int& w) {
   if(width == w) return;
   else {
     assert(w <= get_width());
+    assert((pvar.use_count() != 0) && (uid != 0));
     if(m_select.RangeArrayCommon::is_empty())
       m_select = pvar->name.get_range().deep_object_copy();
 
-    m_select.set_width(w);
+    m_select.set_width(w, pvar->name.get_range());
     width = w;
   }
 }

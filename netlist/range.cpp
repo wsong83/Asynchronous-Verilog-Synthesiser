@@ -725,51 +725,69 @@ bool netlist::Range::elaborate(elab_result_t &result, const ctype_t mctype, cons
 }
 
 // get the data width represented by this range
-unsigned int netlist::Range::get_width() {
-  if(width) return width;
+unsigned int netlist::Range::get_width() const {
+  unsigned int rv = 0;
   switch(rtype) {
   case TR_Const:
   case TR_Var:
-    width = 1;
-    if(!child.empty()) width *= RangeArrayCommon::get_width();
+    rv = 1;
     break;
   case TR_Range:
     assert(0 == "unable to calculate the width of a variable range expression!");
     break;
   case TR_CRange: {
-    long rv = (cr.first - cr.second + Number(1)).get_value().get_si();
-    assert(rv >= 0);
-    width = static_cast<unsigned int>(rv);
-    if(!child.empty()) width *= RangeArrayCommon::get_width();
+    long m = (cr.first - cr.second + Number(1)).get_value().get_si();
+    assert(m >= 0);
+    rv = static_cast<unsigned int>(m);
     break;
   }
   default:
     break;
   }
+  return rv;
+}
+unsigned int netlist::Range::get_width(const Range& r) {
+  if(width) return width;
+  width = get_width();
+  if(!r.child.empty()) {
+    if(child.empty()) 
+      width *= r.RangeArrayCommon::get_width(*(r.child.front()));
+    else 
+      width *= RangeArrayCommon::get_width(*(r.child.front()));
+  }
   return width;
 }
 
+unsigned int netlist::Range::get_width(const Range& r) const {
+  if(width) return width;
+  unsigned int rv = get_width();
+  if(!r.child.empty()) {
+    if(child.empty()) 
+      rv *= r.RangeArrayCommon::get_width(*(r.child.front()));
+    else 
+      rv *= RangeArrayCommon::get_width(*(r.child.front()));
+  }
+  return rv;
+}
+
 // set a new range value by width
-void netlist::Range::set_width(const unsigned int& w) {
-  if(child.empty()) {           // leaf range
-    if(width == w) return;
-    if(w == 0) rtype = TR_Empty;
-    else if(w == 1) {
-      if(rtype == TR_CRange) {
-        rtype = TR_Const;
-        c = cr.second;
-      } else if(rtype != TR_Var && rtype != TR_Const) {
-        assert(0 == "impossible to set the range width to 1.");
-      } 
+void netlist::Range::set_width(const unsigned int& w, const Range& r) {
+  assert(get_width(r) >= w);
+  if(get_width(r) == w) return;
+  // need to reduce the size
+  if(!r.child.empty()) {        // the current range must be 1-bit wide
+    assert(1 == get_width());
+    if(!child.empty()) child = r.RangeArrayCommon::const_copy(*(r.child.front()));
+    RangeArrayCommon::set_width(w, *(r.child.front()));
+  } else {
+    assert(w > 0);
+    assert(rtype == TR_CRange);
+    if(w == 1) {
+      rtype = TR_Const;
+      c = cr.second;
     } else {
-      assert(rtype == TR_CRange);
-      assert(get_width() >= w);
       cr.first = cr.second + Number(static_cast<int>(w - 1));
     }
-    width = w;
-  } else {                      // has leaves
-    assert((rtype == TR_Var)||(rtype == TR_Const));
-    RangeArrayCommon::set_width(w);
-    width = w;
   }
+  width = w;
 }

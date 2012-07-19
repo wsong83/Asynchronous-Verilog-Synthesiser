@@ -129,6 +129,19 @@ bool netlist::ConElem::elaborate(NetComp::elab_result_t &result, const NetComp::
   return rv;
 }
 
+unsigned int netlist::ConElem::get_width() {
+  if(width) return width;
+  assert(con.size() == 0);
+  width = exp->get_width();
+  return width;
+}
+
+void netlist::ConElem::set_width(const unsigned int& w) {
+  if(width == w) return;
+  assert(exp->get_width() > w);
+  exp->set_width(w);
+}
+
 ostream& netlist::Concatenation::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
   if(data.size() > 1) {
@@ -265,9 +278,10 @@ void netlist::Concatenation::db_expunge() {
 
 Concatenation* netlist::Concatenation::deep_copy() const {
   Concatenation* rv = new Concatenation();
-  list<shared_ptr<ConElem> >::const_iterator it, end;
-  for(it=data.begin(), end=data.end(); it!=end; it++)
-    rv->data.push_back(shared_ptr<ConElem>((*it)->deep_copy()));
+  rv->loc = loc;
+  rv->width = width;
+  BOOST_FOREACH(const shared_ptr<ConElem>& m, data)
+    rv->data.push_back(shared_ptr<ConElem>(m->deep_copy()));
   return rv;
 }
 
@@ -286,4 +300,32 @@ bool netlist::Concatenation::check_inparse() {
     rv &= (*it)->check_inparse();
 
   return rv;
+}
+
+unsigned int netlist::Concatenation::get_width() {
+  if(width) return width;
+  BOOST_FOREACH(shared_ptr<ConElem>& m, data)
+    width += m->get_width();
+  return width;
+}
+
+void netlist::Concatenation::set_width(const unsigned int& w) {
+  if(width == w) return;
+  assert(w < get_width());
+  unsigned int wm = w;
+  list<shared_ptr<ConElem> >::reverse_iterator it, end;
+  for(it=data.rbegin(), end=data.rend(); it!=end; it++) {
+    if(wm >= (*it)->get_width()) 
+      wm -= (*it)->get_width();
+    else {
+      if(wm == 0) break;
+      else {
+        (*it)->set_width(wm);
+        wm = 0;
+      }
+    }
+  }
+  if(it != end) 
+    data.erase(data.begin(), it.base()); // ATTN: it is a reverse_iterator
+  width = w;
 }

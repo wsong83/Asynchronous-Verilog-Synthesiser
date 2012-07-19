@@ -246,23 +246,30 @@ bool netlist::RangeArrayCommon::elaborate(NetComp::elab_result_t &result, const 
   return rv;
 }
 
-unsigned int netlist::RangeArrayCommon::get_width() {
+unsigned int netlist::RangeArrayCommon::get_width(const Range& r) const{
   unsigned int rv = 0;
-  BOOST_FOREACH(shared_ptr<Range>& m, child)
-    rv += m->get_width();
+  BOOST_FOREACH(const shared_ptr<Range>& m, child)
+    rv += m->get_width(r);
   return rv;
 }
 
-void netlist::RangeArrayCommon::set_width(const unsigned int& w) {
+unsigned int netlist::RangeArrayCommon::get_width(const Range& r) {
+  unsigned int rv = 0;
+  BOOST_FOREACH(shared_ptr<Range>& m, child)
+    rv += m->get_width(r);
+  return rv;
+}
+
+void netlist::RangeArrayCommon::set_width(const unsigned int& w, const Range& r) {
   unsigned int wm = w;
   list<shared_ptr<Range> >::reverse_iterator it, end;
   for(it=child.rbegin(), end=child.rend(); it!=end; it++) {
-    if(wm >= (*it)->get_width()) 
-      wm -= (*it)->get_width();
+    if(wm >= (*it)->get_width(r)) 
+      wm -= (*it)->get_width(r);
     else {
       if(wm == 0) break;
       else {
-        (*it)->set_width(wm);
+        (*it)->set_width(wm, r);
         wm = 0;
       }
     }

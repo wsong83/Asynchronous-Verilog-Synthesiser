@@ -29,6 +29,7 @@
 #include "component.h"
 #include "shell/env.h"
 #include <boost/foreach.hpp>
+#include <algorithm>
 
 using namespace netlist;
 using std::ostream;
@@ -508,13 +509,11 @@ unsigned int netlist::Operation::get_width() {
   case oNum:
   case oVar:
   case oCon:
-    assert(data.use_count() != 0);
     width = data->get_width();
     break;
   case oUPos:
   case oUNeg:
   case oURev:
-    assert(child[0].use_count() != 0);
     width = child[0]->get_width();
     break;
   case oULRev:
@@ -524,40 +523,144 @@ unsigned int netlist::Operation::get_width() {
   case oUNor:
   case oUXor:
   case oUNxor:
-    assert(child[0].use_count() != 0);
     child[0]->get_width();
     width = 1;
     break;
-  case oPower:    reduce_Power();    break;
-  case oTime:     reduce_Time();     break;
-  case oDiv:      reduce_Div();      break;
-  case oMode:     reduce_Mode();     break;
-  case oAdd:      reduce_Add();      break;
-  case oMinus:    reduce_Minus();    break;
-  case oRS:       reduce_RS();       break;
-  case oLS:       reduce_LS();       break;
-  case oLRS:      reduce_LRS();      break;
-  case oLess:     reduce_Less();     break;
-  case oLe:       reduce_Le();       break;
-  case oGreat:    reduce_Great();    break;
-  case oGe:       reduce_Ge();       break;
-  case oEq:       reduce_Eq();       break;
-  case oNeq:      reduce_Neq();      break;
-  case oCEq:      reduce_CEq();      break;
-  case oCNeq:     reduce_CNeq();     break;
-  case oAnd:      reduce_And();      break;
-  case oXor:      reduce_Xor();      break;
-  case oNxor:     reduce_Nxor();     break;
-  case oOr:       reduce_Or();       break;
-  case oLAnd:     reduce_LAnd();     break;
-  case oLOr:      reduce_LOr();      break;
-  case oQuestion: reduce_Question(); break;
+  case oTime:
+    width = child[0]->get_width() * child[1]->get_width();
+    break;
+  case oAdd:
+  case oMinus:
+    width = std::max(child[0]->get_width(), child[1]->get_width()) + 1;
+    break;
+  case oRS:
+  case oLRS:
+    child[1]->get_width();
+    width = child[0]->get_width();
+    break;
+  case oLS:
+    if(child[1]->is_valuable()) {
+      assert(child[1]->get_num() >= 0);
+      width = child[0]->get_width() + child[1]->get_num().get_value().get_ui();
+    } else {
+      // the maximal possible
+      width = child[0]->get_width() + (1 << child[1]->get_width()) - 1;
+    }
+    break;
+  case oLess:
+  case oLe:
+  case oGreat:
+  case oGe:
+  case oEq:
+  case oNeq:
+    child[0]->get_width();
+    child[1]->get_width();
+    width = 1;
+    break;
+  case oAnd:
+  case oXor:
+  case oNxor:
+  case oOr:
+  case oLAnd:
+  case oLOr:
+    width = std::max(child[0]->get_width(), child[1]->get_width());
+    break;
+  case oQuestion:
+    child[0]->get_width();
+    width = std::max(child[1]->get_width(), child[2]->get_width());
+    break;
   default:// should not run to here
     assert(0 == "wrong operation type");
   }
+  return width;
 }
 
 void netlist::Operation::set_width(const unsigned int& w) {
+  if(width == w) return;
+  
+  // only set a new width when it is possible to reduce the width
+  switch(otype) {
+  case oNum:
+  case oVar:
+  case oCon:
+    if(data->get_width() > w)
+      data->set_width(w);
+    break;
+  case oUPos:
+  case oUNeg:
+  case oURev:
+    if(child[0]->get_width() > w)
+      child[0]->set_width(w);
+    break;
+  case oULRev:
+  case oUAnd:
+  case oUNand:
+  case oUOr:
+  case oUNor:
+  case oUXor:
+  case oUNxor:
+    // impossible to be less than 1
+    break;
+  case oTime:
+    // no way to reduce it at this level
+    break;
+  case oAdd:
+  case oMinus:
+    if(child[0]->get_width() > w)
+      child[0]->set_width(w);
+    if(child[1]->get_width() > w)
+      child[1]->set_width(w);
+    break;
+  case oRS:
+  case oLRS:
+    if(child[0]->get_width() > w)
+      child[0]->set_width(w);
+    break;
+  case oLS:
+    if(child[1]->is_valuable()) {
+      assert(child[1]->get_num() >= 0);
+      long nw = static_cast<long>(w) - child[1]->get_num().get_value().get_ui();
+      if(nw <= 0) {             // all shifted
+        data.reset(new Number(0));
+        child.clear();
+        otype = oNum;
+        valuable = true;
+      } else if(child[0]->get_width() > static_cast<unsigned int>(nw))
+        child[0]->set_width(static_cast<unsigned int>(nw));
+    } else {
+      if(child[0]->get_width() > w)
+      child[0]->set_width(w);
+    }
+    break;
+  case oLess:
+  case oLe:
+  case oGreat:
+  case oGe:
+  case oEq:
+  case oNeq:
+    // impossible to be less than 1
+    break;
+  case oAnd:
+  case oXor:
+  case oNxor:
+  case oOr:
+  case oLAnd:
+  case oLOr:
+    if(child[0]->get_width() > w)
+      child[0]->set_width(w);
+    if(child[1]->get_width() > w)
+      child[1]->set_width(w);
+    break;
+  case oQuestion:
+    if(child[1]->get_width() > w)
+      child[1]->set_width(w);
+    if(child[2]->get_width() > w)
+      child[2]->set_width(w);
+    break;
+  default:// should not run to here
+    assert(0 == "wrong operation type");
+  }
+
   width = w;
 }
 
@@ -821,7 +924,7 @@ void netlist::Operation::reduce_RS() {
     child.clear();
     otype = oNum;
     valuable = true;
-  }
+  } 
 }
 
 // <<

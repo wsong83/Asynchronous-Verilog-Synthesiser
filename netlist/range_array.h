@@ -80,8 +80,9 @@ namespace netlist {
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
     NETLIST_ELABORATE_DECL;
-    NETLIST_SET_WIDTH_DECL;
-    NETLIST_GET_WIDTH_DECL;
+    unsigned int get_width(const RangeArray&) const;
+    unsigned int get_width(const RangeArray&);
+    void set_width(const unsigned int&, const RangeArray&);
 
   private:
     bool const_reduced;

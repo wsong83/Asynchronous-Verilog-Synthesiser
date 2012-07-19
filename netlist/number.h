@@ -78,6 +78,8 @@ namespace netlist {
     virtual void db_register(int iod) {}
     virtual void db_expunge() {}
     NETLIST_ELABORATE_DECL;
+    NETLIST_GET_WIDTH_DECL;
+    NETLIST_SET_WIDTH_DECL;
 
   private:
     unsigned int num_leng;	// the number of digits in the number
