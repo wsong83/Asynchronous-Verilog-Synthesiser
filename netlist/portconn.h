@@ -63,7 +63,7 @@ namespace netlist {
     return;
   }
 
-  class PortConn : public NetComp{
+  class PortConn : public NetComp {
   public:
     PortConn(const boost::shared_ptr<Expression>& exp, int dir_m = 0) /* ordered connection */
       : NetComp(tPortConn), dir(dir_m), exp(exp), type(CEXP), named(false) { reduce(); }
@@ -84,13 +84,14 @@ namespace netlist {
     PortConn()                  /* oredered open output connection */
       : NetComp(tPortConn), dir(1), type(COPEN) {}
     
-    PortConn(const VIdentifier pn, const boost::shared_ptr<Expression>& exp, int dir_m = 0) /* named connection */
-      : NetComp(tPortConn), pname(pn), dir(0), exp(exp), type(CEXP), named(true) { reduce(); }
+  PortConn(const VIdentifier pn, const boost::shared_ptr<Expression>& exp, int dir_m = 0) /* named connection */
+      : NetComp(tPortConn), pname(pn), dir(dir_m), exp(exp), type(CEXP), named(true) { reduce(); }
 
     PortConn(const shell::location& lloc, 
              const VIdentifier pn, 
-             const boost::shared_ptr<Expression>& exp, int dir_m = 0) /* named connection */
-      : NetComp(tPortConn, lloc), pname(pn), dir(0), exp(exp), type(CEXP), named(true) { reduce(); }
+             const boost::shared_ptr<Expression>& exp,
+             int dir_m = 0) /* named connection */
+      : NetComp(tPortConn, lloc), pname(pn), dir(dir_m), exp(exp), type(CEXP), named(true) { reduce(); }
 
     PortConn(const VIdentifier pn)
       : NetComp(tPortConn), pname(pn), dir(1), type(COPEN), named(true) {}
@@ -139,7 +140,7 @@ namespace netlist {
       return rv;
     } 
 
-    virtual void db_register(int iod = 1) {
+    virtual void db_register(int) {
       switch(type) {
       case CEXP: 
         if(dir >= 0)  {
@@ -164,7 +165,7 @@ namespace netlist {
       }
     }
 
-    std::ostream& streamout (std::ostream& os, unsigned int indent) const {
+    std::ostream& streamout (std::ostream& os, unsigned int) const {
       if(named) os << "." << pname.name << "(";
       switch(type) {
       case CEXP: os << *exp; break;
@@ -249,7 +250,7 @@ namespace netlist {
       return rv;
     } 
 
-    virtual void db_register(int iod = 1) {
+    virtual void db_register(int) {
       switch(type) {
       case CEXP: exp->db_register(1); break;
       case CVAR: var.db_register(1); break;
@@ -265,7 +266,7 @@ namespace netlist {
       }
     }
 
-    std::ostream& streamout (std::ostream& os, unsigned int indent) const {
+    std::ostream& streamout (std::ostream& os, unsigned int) const {
       if(named) os << "." << pname.name << "(";
       switch(type) {
       case CEXP: os << *exp; break;

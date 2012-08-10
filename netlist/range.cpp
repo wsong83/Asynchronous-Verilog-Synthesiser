@@ -619,7 +619,7 @@ ostream& netlist::Range::streamout(ostream& os, unsigned int indent, const strin
   return os;
 }
 
-void netlist::Range::db_register(int iod) {
+void netlist::Range::db_register(int) {
   switch(rtype) {
   case TR_Var: v->db_register(1); break;
   case TR_Range: r.first->db_register(1); r.second->db_register(1); break;

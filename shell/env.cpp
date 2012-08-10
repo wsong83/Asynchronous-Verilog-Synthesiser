@@ -37,8 +37,6 @@
 
 #include <boost/foreach.hpp>
 
-#include <boost/foreach.hpp>
-
 #define YYSTYPE shell::CMD::cmd_token_type
 
 // the commands

@@ -1,13 +1,8 @@
 ##### Ignore these files in the Git version control #####
+*.o
 
 ## Compiler result
-averilog/*.o
-netlist/*.o
-shell/*.o
-shell/cmd/*.o
-preproc/*.o
 bin/*
-cpptcl/*.o
 
 ## Bison files
 averilog/averilog.cc

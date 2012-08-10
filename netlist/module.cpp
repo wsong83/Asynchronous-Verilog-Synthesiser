@@ -183,7 +183,7 @@ Module* netlist::Module::deep_copy() const {
   return rv;
 }
 
-void netlist::Module::db_register(int iod) {
+void netlist::Module::db_register(int) {
   // The item in statements are duplicated in db_instance, db_other, db_seqblock, db_assign and db_genblock.
   // Therefore, only statements are executed.
   for_each(db_param.begin_order(), db_param.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {

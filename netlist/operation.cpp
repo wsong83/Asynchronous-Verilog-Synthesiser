@@ -427,7 +427,7 @@ void netlist::Operation::reduce() {
   }
 }
 
-bool netlist::Operation::elaborate(NetComp::elab_result_t &result, const NetComp::ctype_t mctype, const vector<NetComp *>& fp) {
+bool netlist::Operation::elaborate(NetComp::elab_result_t &result, const NetComp::ctype_t, const vector<NetComp *>&) {
   bool rv = true;
   result = NetComp::ELAB_Normal;
 

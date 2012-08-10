@@ -106,7 +106,7 @@ void netlist::ConElem::db_expunge() {
   for_each(con.begin(), con.end(), [](shared_ptr<ConElem>& m) {m->db_expunge();});
 }
 
-bool netlist::ConElem::elaborate(NetComp::elab_result_t &result, const NetComp::ctype_t mctype, const vector<NetComp *>& fp) {
+bool netlist::ConElem::elaborate(NetComp::elab_result_t &result) {
   bool rv = true;
   result = NetComp::ELAB_Normal;
 
@@ -255,7 +255,7 @@ void netlist::Concatenation::reduce() {
   }
 }
 
-bool netlist::Concatenation::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
+bool netlist::Concatenation::elaborate(elab_result_t &result, const ctype_t, const vector<NetComp *>&) {
   bool rv = true;
   result = ELAB_Normal;
   for_each(data.begin(), data.end(), [&rv, &result](shared_ptr<ConElem>& m){

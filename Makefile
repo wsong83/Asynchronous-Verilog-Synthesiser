@@ -28,11 +28,15 @@ export BISON_EXE = bison
 export FLEX_EXE = flex
 export CXX = g++
 
-export CXXFLAGS = -std=c++0x -Wall -g
-export LINKFLAGS = -lboost_regex -lgmpxx -lgmp -lboost_system -lboost_filesystem -lboost_program_options -ltcl
+# OGDF library
+export OGDF_PATH = $(PWD)/../OGDF
+OGDF_LIB = $(OGDF_PATH)/_debug/libOGDF.a
+
+export CXXFLAGS = -std=c++0x -Wall -Wextra -g
+export LINKFLAGS = -lboost_regex -lgmpxx -lgmp -lboost_system -lboost_filesystem -lboost_program_options -ltcl -lboost_graph -lpthread $(OGDF_LIB)
 
 # targets
-SUBDIRS = preproc averilog netlist shell shell/cmd cpptcl
+SUBDIRS = preproc averilog netlist shell shell/cmd cpptcl cppPNML
 TESTDIRS = preproc/test shell/test
 BISONDIRS = averilog.bison
 

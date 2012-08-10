@@ -164,7 +164,7 @@ Variable* netlist::Variable::deep_copy() const {
   return rv;
 }
 
-void netlist::Variable::db_register(int iod) {
+void netlist::Variable::db_register(int) {
   name.db_register(1);
   if(exp.use_count() != 0) exp->db_register(1);
 }
@@ -174,7 +174,7 @@ void netlist::Variable::db_expunge() {
   if(exp.use_count() != 0) exp->db_expunge();
 }
 
-bool netlist::Variable::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
+bool netlist::Variable::elaborate(elab_result_t &result, const ctype_t, const vector<NetComp *>&) {
   bool rv = true;                    // the return value
   result = ELAB_Normal;
 

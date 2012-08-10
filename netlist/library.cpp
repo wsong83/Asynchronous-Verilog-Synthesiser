@@ -36,7 +36,7 @@ bool netlist::Library::pull() {
 }
 
 // dummy
-bool netlist::Library::pull(const std::string& fn, const std::string& ph) {
+bool netlist::Library::pull(const std::string&, const std::string&) {
   return true;
 }
 
@@ -46,7 +46,7 @@ bool netlist::Library::push() {
 }
 
 // dummy
-bool netlist::Library::push(const std::string& fn, const std::string& ph) {
+bool netlist::Library::push(const std::string&, const std::string&) {
   return true;
 }
 

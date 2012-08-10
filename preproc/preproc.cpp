@@ -58,7 +58,7 @@ VPPreProc::VPreProcXs::~VPreProcXs() {
 #//**********************************************************************
 #// Overrides of virtual functions to invoke callbacks
 
-void VPPreProc::VPreProcXs::comment(string cmt) {
+void VPPreProc::VPreProcXs::comment(string) {
   // nothing
 }
 

@@ -67,7 +67,7 @@ private:
     static int	s_numErrors;		///< Number of errors detected
 
 protected:
-    VFileLine(int called_only_for_default) {init("",0);}
+    VFileLine(int) {init("",0);}
 
 public:
     // CONSTRUCTORS

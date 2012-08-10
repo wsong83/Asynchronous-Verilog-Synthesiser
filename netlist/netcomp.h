@@ -74,9 +74,10 @@
 
 #ifndef NETLIST_ELABORATE_DECL
 #define NETLIST_ELABORATE_DECL                                                                \
-  virtual bool elaborate(netlist::NetComp::elab_result_t &,                                   \
-                         const netlist::NetComp::ctype_t mctype = netlist::NetComp::tUnknown, \
-                         const std::vector<NetComp *>& fp = std::vector<NetComp *>());
+  virtual bool elaborate(netlist::NetComp::elab_result_t &,      \
+                         const netlist::NetComp::ctype_t mctype, \
+                         const std::vector<NetComp *>& fp);      \
+  using NetComp::elaborate;
 #endif
 
 #ifndef NETLIST_SET_WIDTH_DECL
@@ -110,7 +111,7 @@ namespace netlist{
     virtual void reduce() {}	/* many netlist component need method to reduce itself */
 
     // the internal stream out method, to avoid friend declarations
-    virtual std::ostream& streamout (std::ostream& os, unsigned int indent) const {
+    virtual std::ostream& streamout (std::ostream& os, unsigned int) const {
       os << "ERROR!!, the streamout() of NetComp is used!!!" << std::endl;
       assert(0 == "the streamout() of NetComp is used");
       return os;
@@ -137,7 +138,7 @@ namespace netlist{
     }
 
     // store the always block id in VIedntifier to detect multiple driver
-    virtual void set_always_pointer(SeqBlock* p) {
+    virtual void set_always_pointer(SeqBlock*) {
       // only act to VIdentifier but it is defined to perform a recursive tree travel
     }
 
@@ -147,7 +148,7 @@ namespace netlist{
     }
 
     // register variable identifiers to the variable database
-    virtual void db_register(int iod) {
+    virtual void db_register(int) {
       std::cerr << "ERROR!!, the db_register() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
       assert(0 == "the db_register() of NetComp is used");
     }
@@ -168,11 +169,20 @@ namespace netlist{
                                 /*   which can be reduced to simpler if statements */
     };
 
-    virtual bool elaborate( elab_result_t& result,
-                            const ctype_t mctype = netlist::NetComp::tUnknown,
-                            const std::vector<NetComp *>& fp = std::vector<NetComp *>()) {
+    virtual bool elaborate( elab_result_t& ,
+                            const ctype_t ,
+                            const std::vector<NetComp *>&) {
       std::cerr << "ERROR!!, the elaborate() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
       assert(0 == "elaborate() of NetComp is used");
+      return false;
+    }
+
+    virtual bool elaborate( elab_result_t& r) {
+      return elaborate(r, tUnknown, std::vector<NetComp *>());
+    }
+
+    virtual bool elaborate( elab_result_t& r, const ctype_t t) {
+      return elaborate(r, t, std::vector<NetComp *>());
     }
 
     virtual unsigned int get_width() {

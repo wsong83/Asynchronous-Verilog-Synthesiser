@@ -42,7 +42,7 @@ namespace netlist {
     NETLIST_CHECK_INPARSE_DECL;
     NETLIST_SET_FATHER_DECL;
     virtual Assign* deep_copy() const;
-    virtual void db_register(int iod = 1) { 
+    virtual void db_register(int) { 
       if(lval.use_count() != 0) lval->db_register(0); 
       if(rexp.use_count() != 0) rexp->db_register(1); 
     }
