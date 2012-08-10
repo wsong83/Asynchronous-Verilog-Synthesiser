@@ -244,7 +244,7 @@ Instance* netlist::Instance::deep_copy() const {
   return rv;
 }
 
-void netlist::Instance::db_register(int iod) {
+void netlist::Instance::db_register(int) {
   for_each(port_list.begin(), port_list.end(), [](shared_ptr<PortConn>& m) {m->db_register(1);});
   for_each(para_list.begin(), para_list.end(), [](shared_ptr<ParaConn>& m) {m->db_register(1);});
 }
@@ -275,7 +275,7 @@ bool netlist::Instance::update_ports() {
   return true;
 }
 
-bool netlist::Instance::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
+bool netlist::Instance::elaborate(elab_result_t &result, const ctype_t, const vector<NetComp *>&) {
   bool rv = true;
   result = ELAB_Normal;
 

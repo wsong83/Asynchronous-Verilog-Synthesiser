@@ -75,7 +75,7 @@ namespace netlist {
     NETLIST_STREAMOUT_DECL;
     NETLIST_CHECK_INPARSE_DECL;
     virtual Number* deep_copy() const;
-    virtual void db_register(int iod) {}
+    virtual void db_register(int) {}
     virtual void db_expunge() {}
     NETLIST_ELABORATE_DECL;
     NETLIST_GET_WIDTH_DECL;

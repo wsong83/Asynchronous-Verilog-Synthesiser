@@ -62,7 +62,7 @@ namespace netlist {
     virtual ConElem* deep_copy() const;
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
-    NETLIST_ELABORATE_DECL;
+    virtual bool elaborate(NetComp::elab_result_t &);
     NETLIST_SET_WIDTH_DECL;
     NETLIST_GET_WIDTH_DECL;
 

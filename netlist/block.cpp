@@ -270,7 +270,7 @@ void netlist::Block::set_father() {
   DATABASE_SET_FATHER_FUN(db_other, BIdentifier, NetComp, this);
 }
 
-void netlist::Block::db_register(int iod) {
+void netlist::Block::db_register(int) {
   // the item in statements are duplicated in db_instance and db_other, therefore, only statements are executed
   // initialization of the variables in ablock are ignored as they are wire, reg and integers
   for_each(db_var.begin_order(), db_var.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {

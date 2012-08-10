@@ -219,7 +219,7 @@ Number* netlist::Number::deep_copy() const {
   return (new Number(*this));
 }
 
-bool netlist::Number::elaborate(NetComp::elab_result_t &result, const NetComp::ctype_t mctype, const std::vector<NetComp *>& fp) {
+bool netlist::Number::elaborate(NetComp::elab_result_t &result, const NetComp::ctype_t, const std::vector<NetComp *>&) {
   // number is the simpliest form it could be, so directly return OK
   result = NetComp::ELAB_Normal;
   return true;

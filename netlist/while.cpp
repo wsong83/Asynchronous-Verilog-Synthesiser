@@ -80,7 +80,7 @@ WhileState* netlist::WhileState::deep_copy() const {
   return rv;
 }
 
-void netlist::WhileState::db_register(int iod) {
+void netlist::WhileState::db_register(int) {
   if(exp.use_count() != 0) exp->db_register(1);
   if(body.use_count() != 0) body->db_register(1);
 }

@@ -223,7 +223,7 @@ Expression* netlist::Expression::deep_copy() const {
   return rv;
 }
 
-bool netlist::Expression::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
+bool netlist::Expression::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>&) {
   bool rv = true;
   result = ELAB_Normal;
   

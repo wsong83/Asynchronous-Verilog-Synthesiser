@@ -122,7 +122,7 @@ LConcatenation* netlist::LConcatenation::deep_copy() const {
   return rv;
 }
 
-void netlist::LConcatenation::db_register(int iod) {
+void netlist::LConcatenation::db_register(int) {
   BOOST_FOREACH(VIdentifier& m, data) m.db_register(0);
 }
 
@@ -130,7 +130,7 @@ void netlist::LConcatenation::db_expunge() {
   BOOST_FOREACH(VIdentifier& m, data) m.db_expunge();
 }
 
-bool netlist::LConcatenation::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
+bool netlist::LConcatenation::elaborate(elab_result_t &result, const ctype_t, const vector<NetComp *>& fp) {
   bool rv = true;
   result = ELAB_Normal;
 

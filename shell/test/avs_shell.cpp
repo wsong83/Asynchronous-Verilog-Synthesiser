@@ -30,7 +30,7 @@
 
 shell::Env* G_ENV(new shell::Env());
 
-int main(int argc, char* argv[])
+int main(int, char*[])
 {
   G_ENV->initialise();
   G_ENV->run();

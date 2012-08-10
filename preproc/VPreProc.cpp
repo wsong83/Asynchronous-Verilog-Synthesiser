@@ -285,7 +285,7 @@ VPPreProc::VPreProc::~VPreProc() {
 //*************************************************************************
 // VPreProc Methods.  Just call the implementation functions.
 
-void VPPreProc::VPreProc::comment(string cmt) { }
+void VPPreProc::VPreProc::comment(string) { }
 bool VPPreProc::VPreProc::openFile(string filename, VFileLine* filelinep) {
     VPreProcImp* idatap = static_cast<VPreProcImp*>(m_opaquep);
     return idatap->openFile (filename,filelinep);
@@ -602,7 +602,7 @@ bool VPPreProc::VPreProcImp::readWholefile(const string& filename, StrList& outl
     return true;
 }
 
-bool VPPreProc::VPreProcImp::openFile(string filename, VFileLine* filelinep) {
+bool VPPreProc::VPreProcImp::openFile(string filename, VFileLine*) {
     // Open a new file, possibly overriding the current one which is active.
 
     // Read a list<string> with the whole file.

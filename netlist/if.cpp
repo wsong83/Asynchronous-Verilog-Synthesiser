@@ -131,7 +131,7 @@ IfState* netlist::IfState::deep_copy() const {
   return rv;
 }
 
-void netlist::IfState::db_register(int iod) {
+void netlist::IfState::db_register(int) {
   if(exp.use_count() != 0) exp->db_register(1);
   if(ifcase.use_count() != 0) ifcase->db_register(1);
   if(elsecase.use_count() != 0) elsecase->db_register(1);

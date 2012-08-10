@@ -43,7 +43,7 @@ namespace netlist {
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
     virtual Port* deep_copy() const;
-    virtual void db_register(int iod = 1) {
+    virtual void db_register(int) {
       if(dir <= 0) name.db_register(0);
       if(dir >= 0) name.db_register(1);
     }

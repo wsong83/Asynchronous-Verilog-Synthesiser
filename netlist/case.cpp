@@ -94,7 +94,7 @@ CaseItem* netlist::CaseItem::deep_copy() const {
   return rv;
 }
 
-void netlist::CaseItem::db_register(int iod) {
+void netlist::CaseItem::db_register(int) {
   BOOST_FOREACH(shared_ptr<Expression>& m, exps) m->db_register(1);
   if(body.use_count() != 0) body->db_register(1);
 }
@@ -173,7 +173,7 @@ CaseState* netlist::CaseState::deep_copy() const {
   return rv;
 }
 
-void netlist::CaseState::db_register(int iod) {
+void netlist::CaseState::db_register(int) {
   BOOST_FOREACH(shared_ptr<CaseItem>& m, cases) m->db_register(1);
   if(exp.use_count() != 0) exp->db_register(1);
 }

@@ -64,7 +64,7 @@
   
   yyscan_t avscanner;
 
-  void averilog::av_parser::error (const location_type& loc, const string& msg) {
+  void averilog::av_parser::error (const location_type&, const string&) {
     //av_env.error(loc, "PARSER-0");
     //cout << msg << endl;
   }
