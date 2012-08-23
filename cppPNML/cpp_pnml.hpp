@@ -58,8 +58,12 @@ namespace cppPNML {
     virtual bool valid() const { return p_ != NULL; }
     bool setName(const std::string& n); // reset the name of this node
     std::string getName() const;
+    std::string getID() const;
+
+    // library functions, do not call directly
     details::ddObj * get_() { return p_; } // not to be used by user
     const details::ddObj * get_() const { return p_; } // not to be used by user
+    bool check_bgl() const;
     
   private:
     details::ddObj * p_;  
@@ -68,12 +72,27 @@ namespace cppPNML {
   class pnNode : public pnObj {
   public:
     pnNode();
+    pnNode(boost::shared_ptr<details::ddNode>); // not safe, use carefully (shared_ptr is referenced to naked pointer)
     void init(details::ddNode *);
     
     //helpers
     virtual bool valid() const { return pnObj::valid() && p_ != NULL; }
     bool setRefNode(const std::string& ref_id);
     std::string getRefNode() const;
+    std::pair<double, double> getPosition() const; // get the (x,y) position
+    std::pair<double, double> getBBox() const; // get the bounding box (w,h) size
+    pnNode& setPosition(const std::pair<double, double>&);
+    pnNode& setBBox(const std::pair<double, double>&); 
+    bool isPlace() const;
+    bool isTransition() const;
+    pnNode next();
+    const pnNode next() const;
+    pnNode pre();
+    const pnNode pre() const;
+
+    // library methods, do not call
+    details::ddNode * get_() { return p_; } // not to be used by users
+    const details::ddNode * get_() const { return p_; } // not to be used by users
     
   private:
     details::ddNode * p_;
@@ -84,6 +103,7 @@ namespace cppPNML {
     pnPlace();
     pnPlace(const std::string& id, const std::string& name_or_ref_id = std::string(), bool is_ref = false);
     pnPlace(boost::shared_ptr<details::ddPlace> p);
+    pnPlace(const pnNode&);
     void init(const std::string& id, const std::string& name = std::string());
     void initRef(const std::string& id, const std::string& ref_id);
     
@@ -93,12 +113,15 @@ namespace cppPNML {
        by setting force to true, the gragh will be converted to a multi-token graph
        otherwise change the graph type before set multi-token
     */
-    bool setInitMarking(unsigned int, bool force = false); 
+    // overlook multi-token problem
+    // it is not an important feature in PNML and I am not going to enforce it 
+    bool setInitMarking(unsigned int/*, bool force = false*/); 
     // fast marking set, user need to make sure the correctness
-    pnPlace& setInitMarkingF(unsigned int t, bool force = true) { 
-      setInitMarking(t, force); return *this;
+    pnPlace& setInitMarkingF(unsigned int t/*, bool force = true*/) { 
+      setInitMarking(t/*, force*/); return *this;
     }
     virtual bool valid() const { return pnNode::valid() && p_.use_count(); }
+    unsigned int getToken() const;
 
     // library methods (only for internal use)
     boost::shared_ptr<details::ddPlace> get_() { return p_; } // not to be used by user
@@ -113,6 +136,7 @@ namespace cppPNML {
     pnTran();
     pnTran(const std::string& id, const std::string& name_or_ref_id = std::string(), bool is_ref = false);
     pnTran(boost::shared_ptr<details::ddTransition> p);
+    pnTran(const pnNode&);
     void init(const std::string& id, const std::string& name = std::string());
     void initRef(const std::string& id, const std::string& ref_id);
 
@@ -130,11 +154,19 @@ namespace cppPNML {
 
   class pnArc : public pnObj {
   public:
+    enum pnArcT {
+      Normal,                   // normal unidirectional arc
+      Read,                     // read arc
+      Inhibitor,                // 
+      Reset                     // 
+    };
+
     pnArc();
     pnArc(const std::string& id, // id of this arc
           const std::string& source, // source id
           const std::string& target, // target id
-          const std::string& name = std::string() // name of the arc (optional)
+          const std::string& name = std::string(), // name of the arc (optional)
+          const pnArcT atype = Normal
           );
     pnArc(boost::shared_ptr<details::ddArc> p);
 
@@ -142,11 +174,21 @@ namespace cppPNML {
     void init(const std::string& id, // id of this arc
               const std::string& source, // source id
               const std::string& target, // target id
-              const std::string& name = std::string() // name of the arc (optional)
+              const std::string& name = std::string(), // name of the arc (optional)
+              const pnArcT atype = Normal
               );
 
     // helpers
-    virtual bool valid() const { return pnObj::valid() && p_.use_count(); }
+    virtual bool valid() const { return pnObj::valid() && p_; }
+    pnArcT getArcType() const;
+    void setArcType(pnArcT);
+    std::list<std::pair<double, double> > getBends() const; // get the bend points of this arc
+    pnNode getSource() const;
+    pnNode getTarget() const;
+    pnArc next();
+    const pnArc next() const;
+    pnArc pre();
+    const pnArc pre() const;
 
     // library methods (only for internal use)
     boost::shared_ptr<details::ddArc> get_() { return p_; } // not to be used by user
@@ -173,6 +215,15 @@ namespace cppPNML {
     // get object from the graph
     template<typename PT> const PT get (const std::string&) const;
     template<typename PT> PT get (const std::string&);
+    template<typename PT> PT front();
+    template<typename PT> const PT front() const;
+    template<typename PT> PT back();
+    template<typename PT> const PT back() const;
+    template<typename PT> unsigned int size(const PT& dummy = PT()) const;
+    pnGraph next();
+    const pnGraph next() const;
+    pnGraph pre();
+    const pnGraph pre() const;
 
     bool isOneSafe() const;   // true if this gragh is set one-safe
     // change the one-safe type of this grapgh
@@ -204,7 +255,21 @@ namespace cppPNML {
   template<> pnTran   pnGraph::get<pnTran>  (const std::string&);
   template<> pnArc    pnGraph::get<pnArc>   (const std::string&);
   template<> pnGraph  pnGraph::get<pnGraph> (const std::string&);
-
+  template<> pnNode   pnGraph::front<pnNode>  ();
+  template<> pnArc    pnGraph::front<pnArc>   ();
+  template<> pnGraph  pnGraph::front<pnGraph> ();
+  template<> const pnNode   pnGraph::front<pnNode>  () const;
+  template<> const pnArc    pnGraph::front<pnArc>   () const;
+  template<> const pnGraph  pnGraph::front<pnGraph> () const;
+  template<> pnNode   pnGraph::back<pnNode>  ();
+  template<> pnArc    pnGraph::back<pnArc>   ();
+  template<> pnGraph  pnGraph::back<pnGraph> ();
+  template<> const pnNode   pnGraph::back<pnNode>  () const;
+  template<> const pnArc    pnGraph::back<pnArc>   () const;
+  template<> const pnGraph  pnGraph::back<pnGraph> () const;
+  template<> unsigned int pnGraph::size<pnNode>  (const pnNode&) const;
+  template<> unsigned int pnGraph::size<pnArc>   (const pnArc&) const;
+  template<> unsigned int pnGraph::size<pnGraph> (const pnGraph&) const;
 
   typedef pnGraph pnPage;       // a non-hierarchical Graph is called a page in PNML
 
@@ -223,12 +288,22 @@ namespace cppPNML {
     bool setPNMLType(const std::string&); // if check is implemented, return false when the check failed
     pnPetriNet& setPNMLTypeF(const std::string& t) { setPNMLType(t); return *this; }
     std::string getPNMLType() const;
+    pnGraph front();
+    const pnGraph front() const;
+    pnGraph back();
+    const pnGraph back() const;
+    unsigned int size() const;
+    pnPetriNet next();
+    const pnPetriNet next() const;
+    pnPetriNet pre();
+    const pnPetriNet pre() const;
 
     // library methods (only for internal use)
     boost::shared_ptr<details::ddPetriNet> get_() { return p_; } // not to be used by user
     const boost::shared_ptr<details::ddPetriNet> get_() const { return p_; } // not to be used by user
 
   private:
+    bool check_page_set() const;
     boost::shared_ptr<details::ddPetriNet> p_;
   };
   
@@ -241,12 +316,18 @@ namespace cppPNML {
     virtual bool valid() const { return p_.use_count(); }
     bool add(const pnPetriNet&);
     pnPetriNetDoc& addF(const pnPetriNet& p) { add(p); return *this;}
+    pnPetriNet front();
+    const pnPetriNet front() const;
+    pnPetriNet back();
+    const pnPetriNet back() const;
+    unsigned int size() const;
 
     // library methods (only for internal use)
     boost::shared_ptr<details::ddPetriNetDoc> get_() { return p_; } // not to be used by user
     const boost::shared_ptr<details::ddPetriNetDoc> get_() const { return p_; } // not to be used by user
    
   private:
+    bool check_pn_set() const;
     boost::shared_ptr<details::ddPetriNetDoc> p_;
   };
 
@@ -255,15 +336,18 @@ namespace cppPNML {
   bool writeDot(std::ostream& os, const pnGraph& g);                   // write out a graph to a dot file
   bool writeGML(const std::string& fname, const pnGraph& g);           // write out the whole petri-net to a GML file
   bool writeGML(std::ostream& os, const pnGraph& g);                   // write out the whole petri-net to a GML file
+  bool writeSVG(const std::string& fname, const pnGraph& g);           // write out the whole petri-net to a SVG file
+  bool writeSVG(std::ostream& os, const pnGraph& g);                   // write out the whole petri-net to a SVG file
   bool writePNML(const std::string& fname, const pnPetriNetDoc& pn);   // write out the whole petri-net to a PNML file
   bool writePNML(std::ostream& os, const pnPetriNetDoc& pn);           // write out the whole petri-net to a PNML file
   bool readPNML(const std::string& fname, pnPetriNetDoc& pn);          // read in a PNML file
+  pnPetriNetDoc readPNML(const std::string& fname);                    // read in a PNML file
   bool readPNML(std::istream& in, pnPetriNetDoc& pn);                  // read in a PNML file
 
 
   // global data
   extern std::string cppPNML_errMsg;
-
+  
 }
 
 #endif // CPPPNML_CPPPNML_

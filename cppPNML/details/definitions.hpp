@@ -35,10 +35,20 @@
 #include <map>
 #include <set>
 #include <iostream>
+#include <boost/enable_shared_from_this.hpp>
 
 // the BGL library
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graph_utility.hpp>
+
+// pugixml
+#include "pugixml/pugixml.hpp"
+
+// forward declaration
+namespace ogdf {
+  class Graph;
+  class GraphAttributes;
+}
 
 namespace cppPNML {
 
@@ -52,13 +62,15 @@ namespace cppPNML {
     typedef boost::graph_traits<GType> GraphTraits;
     typedef typename GraphTraits::edge_descriptor edge_descriptor;
     typedef typename GraphTraits::vertex_descriptor vertex_descriptor;
-    
+    typedef typename GraphTraits::vertex_iterator vertex_iterator;
+    typedef typename GraphTraits::edge_iterator edge_iterator;
+
     // forward declaration
     class ddPetriNetDoc;
     class ddPetriNet;
     class ddGraph;
 
-    class ddObj {
+    class ddObj : public boost::enable_shared_from_this<ddObj> {
     public:
       // data
       enum pn_t {
@@ -83,10 +95,13 @@ namespace cppPNML {
 
       // helpers
       bool set_name(const std::string& n);
-      std::string get_name() const { return name; }
       virtual void write_dot(std::ostream&) const;
-      virtual void write_pnml(std::ostream&, unsigned int indent = 0) const;
-      virtual void write_gml(std::ostream&, unsigned int indent = 0) const;
+      virtual void write_pnml(pugi::xml_node&) const;
+      virtual bool read_pnml(const pugi::xml_node&, ddObj *);
+      virtual void write_ogdf(ogdf::Graph *, ogdf::GraphAttributes *, 
+                              std::map<std::string, void *>& // id to node map
+                              ) const;
+      virtual void read_ogdf(void *, ogdf::GraphAttributes *);
     };
 
     class ddNode : public ddObj {
@@ -94,7 +109,7 @@ namespace cppPNML {
       ddNode(pn_t, const std::string&, const std::string&);
 
       // record all ref nodes
-      boost::shared_ptr<std::set<std::string> > ref_set;
+      std::set<std::string> ref_set;
 
       // BGL
       bool fBGL;                // true when this object is registered in a BGL graph 
@@ -115,12 +130,17 @@ namespace cppPNML {
 
       // data
       unsigned int nToken;      // number of initial tokens
+      std::pair<double,double> tokenOffset; // the graphic offset of the token
       
       // helpers
-      bool set_initial_mark(unsigned int, bool);
+      bool set_initial_mark(unsigned int/*, bool*/);
       virtual void write_dot(std::ostream&) const;
-      virtual void write_pnml(std::ostream&, unsigned int indent = 0) const;
-      virtual void write_gml(std::ostream&, unsigned int indent = 0) const;
+      virtual void write_pnml(pugi::xml_node&) const;
+      virtual bool read_pnml(const pugi::xml_node&, ddObj*);
+      virtual void write_ogdf(ogdf::Graph *, ogdf::GraphAttributes *, 
+                              std::map<std::string, void *>& // id to node map
+                              ) const;
+      virtual void read_ogdf(void *, ogdf::GraphAttributes *);
     };
 
     class ddTransition : public ddNode {
@@ -129,23 +149,22 @@ namespace cppPNML {
 
       // helpers
       virtual void write_dot(std::ostream&) const;
-      virtual void write_pnml(std::ostream&, unsigned int indent = 0) const;
-      virtual void write_gml(std::ostream&, unsigned int indent = 0) const;
+      virtual void write_pnml(pugi::xml_node&) const;
+      virtual bool read_pnml(const pugi::xml_node&, ddObj*);
+      virtual void write_ogdf(ogdf::Graph *, ogdf::GraphAttributes *, 
+                              std::map<std::string, void *>& // id to node map
+                              ) const;
+      virtual void read_ogdf(void *, ogdf::GraphAttributes *);
     };
 
     class ddArc : public ddObj {
     public:
-      ddArc(const std::string&, const std::string&, const std::string&, const std::string&);
+      ddArc(const std::string&, const std::string&, const std::string&, const std::string&, pnArc::pnArcT);
       
       // data
       std::string source;       // source id
       std::string target;       // target id
-      enum arc_t {
-        ARC_Normal,             // normal unidirectional arc
-        ARC_Read,               // read or test arc
-        ARC_Inhibitor,          // these two are provide to be compatible with standard, no use now
-        ARC_Reset
-      } arc_type;
+      pnArc::pnArcT arc_type;   // arc type
 
       // BGL
       bool fBGL;                // true when this object is registered in a BGL graph 
@@ -153,13 +172,16 @@ namespace cppPNML {
       std::list<std::pair<double, double> > curve; // the curve of this arc
 
       // helper
-      void set_arc_type(arc_t);
-      arc_t get_arc_type() const;
+      void set_arc_type(pnArc::pnArcT);
 
       // helpers
       virtual void write_dot(std::ostream&) const;
-      virtual void write_pnml(std::ostream&, unsigned int indent = 0) const;
-      virtual void write_gml(std::ostream&, unsigned int indent = 0) const;
+      virtual void write_pnml(pugi::xml_node&) const;
+      virtual bool read_pnml(const pugi::xml_node&, ddObj*);
+      virtual void write_ogdf(ogdf::Graph *, ogdf::GraphAttributes *, 
+                              std::map<std::string, void *>& // id to node map
+                              ) const;
+      virtual void read_ogdf(void *, ogdf::GraphAttributes *);
     };
 
     class ddGraph : public ddObj {
@@ -171,11 +193,14 @@ namespace cppPNML {
       ddPetriNet * ppn_;
 
       // associate petri-net name to an id (some times id is not meaningful)
-      boost::shared_ptr<std::map<std::string, std::string> > name_map;
+      std::map<std::string, std::string> name_map;
       // remember all child pages using a name set
-      boost::shared_ptr<std::set<std::string> > page_set;
+      std::set<std::string> page_set;
+      // map to convert id to descriptor
+      std::map<std::string, vertex_descriptor> node_map;
+      std::map<std::string, edge_descriptor> arc_map;
       // flags
-      bool fOneSafe;            // true if it is a one safe petri-net (default true)
+      //bool fOneSafe;            // true if it is a one safe petri-net (default true)
 
       // helpers
       bool add(boost::shared_ptr<ddTransition>);
@@ -186,14 +211,20 @@ namespace cppPNML {
       boost::shared_ptr<ddObj> operator() (const std::string&);
       boost::shared_ptr<const ddObj> operator() (const std::string&) const;
       std::string get_id(const std::string&) const;
-      template<typename PT> boost::shared_ptr<const PT> get(const std::string&) const;
-      template<typename PT> boost::shared_ptr<PT> get(const std::string&);
-      bool set_one_safe(bool);
+      std::string get_id(const vertex_descriptor&) const;
+      std::string get_id(const edge_descriptor&) const;
+      template<typename PT> 
+      boost::shared_ptr<const PT> get(const std::string&) const;
+      template<typename PT> 
+      boost::shared_ptr<PT> get(const std::string&);
+      //bool set_one_safe(bool);
 
-      // graphviz
+      // formats and layout
       virtual void write_dot(std::ostream&) const;
-      virtual void write_pnml(std::ostream&, unsigned int indent = 0) const;
-      virtual void write_gml(std::ostream&,unsigned int indent = 0) const; // internal use, needed by layout
+      virtual void write_pnml(pugi::xml_node&) const;
+      virtual bool read_pnml(const pugi::xml_node&, ddObj*);
+      void write_ogdf(ogdf::Graph *, ogdf::GraphAttributes *) const;
+      void read_ogdf(ogdf::Graph *, ogdf::GraphAttributes *);
       virtual bool layout();    // generate the position information
 
     private:
@@ -201,26 +232,12 @@ namespace cppPNML {
       void vertexWriter(std::ostream&, const vertex_descriptor&) const; // vertex property writer
       void edgeWriter(std::ostream&, const edge_descriptor&) const;     // edge property writer
       void graphWriter(std::ostream&) const;                            // graph property writer
-      
+
       // the BGL graph
-      boost::shared_ptr<GType> bg_;
+      GType bg_;
       boost::property_map<GType, boost::vertex_name_t>::type vn_;
       boost::property_map<GType, boost::edge_name_t>::type en_;
     };
-
-    template <> boost::shared_ptr<const ddObj>        ddGraph::get<ddObj>        (const std::string&) const;
-    template <> boost::shared_ptr<const ddNode>       ddGraph::get<ddNode>       (const std::string&) const;
-    template <> boost::shared_ptr<const ddPlace>      ddGraph::get<ddPlace>      (const std::string&) const;
-    template <> boost::shared_ptr<const ddTransition> ddGraph::get<ddTransition> (const std::string&) const;
-    template <> boost::shared_ptr<const ddArc>        ddGraph::get<ddArc>        (const std::string&) const;
-    template <> boost::shared_ptr<const ddGraph>      ddGraph::get<ddGraph>      (const std::string&) const;
-    template <> boost::shared_ptr<ddObj>        ddGraph::get<ddObj>        (const std::string&);
-    template <> boost::shared_ptr<ddNode>       ddGraph::get<ddNode>       (const std::string&);
-    template <> boost::shared_ptr<ddPlace>      ddGraph::get<ddPlace>      (const std::string&);
-    template <> boost::shared_ptr<ddTransition> ddGraph::get<ddTransition> (const std::string&);
-    template <> boost::shared_ptr<ddArc>        ddGraph::get<ddArc>        (const std::string&);
-    template <> boost::shared_ptr<ddGraph>      ddGraph::get<ddGraph>      (const std::string&);
-
 
     class ddPetriNet : public ddObj {
     public:
@@ -237,9 +254,9 @@ namespace cppPNML {
       ddPetriNet(const std::string&, const std::string& name, pnml_t t = PNML_PT);
 
       // associate petri-net name to an id
-      boost::shared_ptr<std::map<std::string, std::string> > name_map;
+      std::map<std::string, std::string> name_map;
       // remember all child pages using a name set
-      boost::shared_ptr<std::set<std::string> > page_set;      
+      std::set<std::string> page_set;      
 
       // data
       pnml_t pnml_type;
@@ -250,9 +267,10 @@ namespace cppPNML {
       boost::shared_ptr<const ddGraph> operator() (const std::string&) const;
       bool add(boost::shared_ptr<ddGraph>);
       std::string get_id(const std::string&) const;
-
+      
       // pnml
-      virtual void write_pnml(std::ostream&, unsigned int indent = 0) const;
+      virtual void write_pnml(pugi::xml_node&) const;
+      virtual bool read_pnml(const pugi::xml_node&, ddObj*);
     };
 
     class ddPetriNetDoc : public ddObj {
@@ -260,12 +278,11 @@ namespace cppPNML {
       ddPetriNetDoc();
 
       // associate id to petri-net objects
-      typedef std::map<std::string, boost::shared_ptr<ddObj> > pnDocMap;
-      boost::shared_ptr<pnDocMap> id_map;
+      std::map<std::string, boost::shared_ptr<ddObj> > id_map;
       // associate petri-net name to an id (some times id is not meaningful)
-      boost::shared_ptr<std::map<std::string, std::string> > name_map;
+      std::map<std::string, std::string> name_map;
       // remember all child Petri_net using a name set
-      boost::shared_ptr<std::set<std::string> > pn_set;
+      std::set<std::string> pn_set;
 
       // helpers
       bool add_petriNet(boost::shared_ptr<ddPetriNet>);
@@ -276,26 +293,60 @@ namespace cppPNML {
       unsigned int count_name(const std::string&) const;
       std::string get_name(const std::string&) const;
       std::string get_id(const std::string&) const;
-      boost::shared_ptr<ddObj> get_obj(const std::string&);
-      boost::shared_ptr<const ddObj> get_obj(const std::string&) const;
+      template<typename PT> 
+      boost::shared_ptr<const PT> get(const std::string&) const;
+      template<typename PT> 
+      boost::shared_ptr<PT> get(const std::string&);
 
       // pnml
-      virtual void write_pnml(std::ostream&, unsigned int indent = 0) const;
-      
+      void write_pnml(std::ostream&) const;
+      void write_pnml(pugi::xml_document&) const;
+      bool read_pnml(std::istream&);
+      bool read_pnml(const pugi::xml_document&);
     };
-    
 
-    // extern layout function, hide the layout graphic library
-    extern std::string 
-    pn_layout(std::istream& istr,
-              GType &g,
-              boost::property_map<GType, boost::vertex_name_t>::type &vn,
-              boost::property_map<GType, boost::edge_name_t>::type &en,
-              std::map<std::string, std::pair<double, double> > &pos_map,
-              std::map<std::string, std::list<std::pair<double, double> > > &etrace_map
-              );
+    template <> 
+    boost::shared_ptr<const ddObj>        ddPetriNetDoc::get<ddObj>        (const std::string&) const;
+    template <> 
+    boost::shared_ptr<const ddNode>       ddPetriNetDoc::get<ddNode>       (const std::string&) const;
+    template <> 
+    boost::shared_ptr<const ddPlace>      ddPetriNetDoc::get<ddPlace>      (const std::string&) const;
+    template <> 
+    boost::shared_ptr<const ddTransition> ddPetriNetDoc::get<ddTransition> (const std::string&) const;
+    template <> 
+    boost::shared_ptr<const ddArc>        ddPetriNetDoc::get<ddArc>        (const std::string&) const;
+    template <> 
+    boost::shared_ptr<const ddGraph>      ddPetriNetDoc::get<ddGraph>      (const std::string&) const;
+    template <> 
+    boost::shared_ptr<const ddPetriNet>   ddPetriNetDoc::get<ddPetriNet>   (const std::string&) const;
+    template <> 
+    boost::shared_ptr<ddObj>        ddPetriNetDoc::get<ddObj>        (const std::string&);
+    template <> 
+    boost::shared_ptr<ddNode>       ddPetriNetDoc::get<ddNode>       (const std::string&);
+    template <> 
+    boost::shared_ptr<ddPlace>      ddPetriNetDoc::get<ddPlace>      (const std::string&);
+    template <> 
+    boost::shared_ptr<ddTransition> ddPetriNetDoc::get<ddTransition> (const std::string&);
+    template <> 
+    boost::shared_ptr<ddArc>        ddPetriNetDoc::get<ddArc>        (const std::string&);
+    template <> 
+    boost::shared_ptr<ddGraph>      ddPetriNetDoc::get<ddGraph>      (const std::string&);
+    template <> 
+    boost::shared_ptr<ddPetriNet>   ddPetriNetDoc::get<ddPetriNet>   (const std::string&);
+
+    template<typename PT> 
+    inline boost::shared_ptr<const PT> ddGraph::get(const std::string& m) const {
+      if(pdoc_) return pdoc_->get<PT>(m);
+      else      return boost::shared_ptr<const PT>();
+    }
+
+    template<typename PT> 
+    inline boost::shared_ptr<PT> ddGraph::get(const std::string& m) {
+      if(pdoc_) return pdoc_->get<PT>(m);
+      else      return boost::shared_ptr<PT>();
+    }
+  
   }
-
 }
 
 #endif /* CPPPNML_DEFINITIONS_H_ */
