@@ -23,12 +23,11 @@
 #
 
 INCDIRS = -I. -I.. -I$(OGDF_PATH)
-HEADERS = $(wildcard ../*.hpp)
-HEADERS += $(wildcard ./*.hpp)
+CC_FILES = $(wildcard ./*.cc)
 
 all: definitions.o
 
-definitions.o : %.o:%.cpp $(HEADERS)
+definitions.o : %.o:%.cpp definitions.hpp ../cpp_pnml.hpp $(CC_FILES)
 	$(CXX) $(INCDIRS) $(CXXFLAGS) $< -c -o $@
 
 clean:

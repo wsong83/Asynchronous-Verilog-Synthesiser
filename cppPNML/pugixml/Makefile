@@ -17,27 +17,17 @@
 #    along with this program; if not, write to the Free Software
 #    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
 #
-# 27/07/2012   Wei Song
+# Makefile
+# 14/08/2012   Wei Song
 #
 #
 
-# local variables
 INCDIRS = -I. 
-HEADERS = $(wildcard ./*.hpp)
-HEADERS += $(wildcard ./details/*.hpp)
 
-BUILD_DIRS = details pugixml
+all: pugixml.o
 
-all: cpp_pnml.o $(BUILD_DIRS)
-
-cpp_pnml.o: %.o:%.cpp $(HEADERS)
-	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
-
-$(BUILD_DIRS):
-	$(MAKE) -C $@
-
-.PHONY: clean $(BUILD_DIRS)
+pugixml.o : %.o:%.cpp
+	$(CXX) $(INCDIRS) $(CXXFLAGS) $< -c -o $@
 
 clean:
-	-rm *.o
-	-for d in $(BUILD_DIRS); do $(MAKE) -C $$d clean; done
+	-rm -f *.o
