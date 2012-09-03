@@ -37,6 +37,12 @@
 #include <boost/filesystem/fstream.hpp>
 using namespace boost::filesystem;
 
+// Boost.Spirit
+#include <boost/spirit/include/qi.hpp>
+#include <boost/fusion/include/adapt_struct.hpp>
+#include <boost/spirit/include/phoenix_fusion.hpp>
+#include <boost/spirit/include/phoenix_stl.hpp>
+
 #include <algorithm>
 
 using std::string;
@@ -46,6 +52,60 @@ using boost::shared_ptr;
 using std::list;
 using std::for_each;
 using namespace shell::CMD;
+
+
+namespace {
+  namespace qi = boost::spirit::qi;
+  namespace ascii = boost::spirit::ascii;
+
+  struct Argument {
+    bool bHelp;                 // show help information
+    bool bHierarchy;            // write out hierarchical design
+    string sDesign;             // target design to be written out
+    string sOutput;             // output file name
+    
+    Argument() : 
+      bHelp(false),
+      bHierarchy(false),
+      sDesign(""),
+      sOutput("") {}
+  };
+}
+
+  BOOST_FUSION_ADAPT_STRUCT
+  (
+   Argument,
+   (bool, bHelp)
+   (bool, bHierarchy)
+   (string, sDesign)
+   (string, sOutput)
+   )
+
+  typedef string::const_iterator SIter;
+
+  struct ArgParser : qi::grammar<SIter, Argument(), ascii::space_type> {
+    qi::rule<SIter, void(Argument&), ascii::space_type> args;
+    qi::rule<SIter, Argument(), ascii::space_type> start;
+    
+    ArgParser() : ArgParser::base_type(start) {
+      using qi::lit;
+      using ascii::char_;
+
+      args = lit('-') >> 
+        ( lit("help") [_r1.bHelp = true]           ||
+          lit("hierarchy") [_r1.bHierarchy = true]      ||
+          lit("output") >> +char_ [_r1.sOutput = _1]
+          )
+        ;
+      
+      start = 
+           *(args(at_c<0>(_val)))
+        >> -(+char_) [at_c<2>(_val) = _1]
+        >> *(args(at_c<0>(_val)))
+        ;
+    }
+  };
+//}
 
 static po::options_description arg_opt("Options");
 static po::options_description_easy_init const dummy_arg_opt =
@@ -68,6 +128,7 @@ static po::options_description const dummy_cmd_opt =
 po::positional_options_description shell::CMD::CMDWrite::cmd_position;
 static po::positional_options_description const dummy_position = 
   CMDWrite::cmd_position.add("design", 1);
+
 
 void shell::CMD::CMDWrite::help(Env& gEnv) {
   gEnv.stdOs << "write: write out a design to a file." << endl;
