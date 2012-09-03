@@ -217,7 +217,7 @@ SeqBlock* netlist::SeqBlock::deep_copy() const {
 
   // data in SeqBlock
   rv->sensitive = sensitive;
-  for_each(slist_pulse.begin(), slist_pulse.end(), [&rv](const pair<bool, shared_ptr<Expression> > m) {
+  for_each(slist_pulse.begin(), slist_pulse.end(), [&](const pair<bool, shared_ptr<Expression> > m) {
       rv->slist_pulse.push_back(pair<bool, shared_ptr<Expression> >(m.first, shared_ptr<Expression>(m.second->deep_copy())));
     });
   BOOST_FOREACH(const shared_ptr<Expression>& m, slist_level)
@@ -271,7 +271,7 @@ bool netlist::SeqBlock::elaborate(elab_result_t &result, const ctype_t mctype, c
   // elaborate all internal items
   // check all variables
   for_each(db_var.begin_order(), db_var.end_order(), 
-           [&rv, &elab_vect, &result](pair<VIdentifier, shared_ptr<Variable> >& m) {
+           [&](pair<VIdentifier, shared_ptr<Variable> >& m) {
              rv &= m.second->elaborate(result, tSeqBlock, elab_vect);
            });
   if(!rv) return rv;
@@ -288,7 +288,7 @@ bool netlist::SeqBlock::elaborate(elab_result_t &result, const ctype_t mctype, c
 }
 
 void netlist::SeqBlock::set_always_pointer(SeqBlock *p) {
-  for_each(db_other.begin(), db_other.end(), [&p](pair<const BIdentifier, shared_ptr<NetComp> >& m) {
+  for_each(db_other.begin(), db_other.end(), [&](pair<const BIdentifier, shared_ptr<NetComp> >& m) {
       m.second->set_always_pointer(p);
     });
 }

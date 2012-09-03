@@ -354,7 +354,7 @@ bool netlist::Module::calculate_name( string& newName,
   // resolve all parameters and get the new name
   newName = tmpModule->name.name;
   for_each(tmpModule->db_param.begin_order(), tmpModule->db_param.end_order(), 
-           [&rv, &tmpModule, &newName](pair<VIdentifier, shared_ptr<Variable> >& m) {
+           [&](pair<VIdentifier, shared_ptr<Variable> >& m) {
              rv &= m.second->update();
              if(!rv) 
                G_ENV->error(m.second->loc, "ELAB-PARA-0", m.second->name.name, tmpModule->name.name);
@@ -371,7 +371,7 @@ bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
   
   // before register all variable, update the port direction of all instance
   // as it will affect the direction of wires
-  for_each(db_instance.begin(), db_instance.end(), [&rv](pair<const IIdentifier, shared_ptr<Instance> >& m) {
+  for_each(db_instance.begin(), db_instance.end(), [&](pair<const IIdentifier, shared_ptr<Instance> >& m) {
       rv &= m.second->update_ports();
     });
   if(!rv) return rv;
@@ -384,7 +384,7 @@ bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
   // update the value of parameter to all variables after db_register
   // the update during update_name is not sufficient to resolve all parameters 
   // as db_register is run after elaboration
-  for_each(db_param.begin_order(), db_param.end_order(), [&rv](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  for_each(db_param.begin_order(), db_param.end_order(), [&](pair<VIdentifier, shared_ptr<Variable> >& m) {
       rv &= m.second->update();
     });
   if(!rv) return rv;
@@ -392,7 +392,7 @@ bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
   //std::cout << "after parameter update: " << std::endl << *this;
 
   // check ports
-  for_each(db_port.begin_order(), db_port.end_order(), [&rv, &result](pair<VIdentifier, shared_ptr<Port> >& m) {
+  for_each(db_port.begin_order(), db_port.end_order(), [&](pair<VIdentifier, shared_ptr<Port> >& m) {
       rv &= m.second->elaborate(result);
     });
   if(!rv) return rv;
@@ -400,7 +400,7 @@ bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
   //std::cout << "after port elaboration: " << std::endl << *this;
   
   // check all variables
-  for_each(db_var.begin_order(), db_var.end_order(), [&rv, &result](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  for_each(db_var.begin_order(), db_var.end_order(), [&](pair<VIdentifier, shared_ptr<Variable> >& m) {
       rv &= m.second->elaborate(result);
     });
   if(!rv) return rv;
@@ -422,28 +422,28 @@ bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
   //std::cout << "after statements elaboration: " << std::endl << *this;
   
   // check all variablescheck variable fan-in/out
-  for_each(db_var.begin_order(), db_var.end_order(), [&rv](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  for_each(db_var.begin_order(), db_var.end_order(), [&](pair<VIdentifier, shared_ptr<Variable> >& m) {
       rv &= m.second->check_post_elaborate();
     });
   if(!rv) return rv;
   
   // remove useless variables
   list<VIdentifier> var_to_be_removed;
-  for_each(db_var.begin_order(), db_var.end_order(), [&var_to_be_removed](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  for_each(db_var.begin_order(), db_var.end_order(), [&](pair<VIdentifier, shared_ptr<Variable> >& m) {
       if(m.second->is_useless()) var_to_be_removed.push_back(m.first);
     });
   BOOST_FOREACH(const VIdentifier& m, var_to_be_removed) 
     db_var.erase(m);
   
   var_to_be_removed.clear();
-  for_each(db_genvar.begin_order(), db_genvar.end_order(), [&var_to_be_removed](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  for_each(db_genvar.begin_order(), db_genvar.end_order(), [&](pair<VIdentifier, shared_ptr<Variable> >& m) {
       if(m.second->is_useless()) var_to_be_removed.push_back(m.first);
     });
   BOOST_FOREACH(const VIdentifier& m, var_to_be_removed) 
     db_genvar.erase(m);
 
   var_to_be_removed.clear();
-  for_each(db_param.begin_order(), db_param.end_order(), [&var_to_be_removed](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  for_each(db_param.begin_order(), db_param.end_order(), [&](pair<VIdentifier, shared_ptr<Variable> >& m) {
       if(m.second->is_useless()) var_to_be_removed.push_back(m.first);
     });
   BOOST_FOREACH(const VIdentifier& m, var_to_be_removed) 
@@ -452,7 +452,7 @@ bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
 
   // add called modules (instances) to the module queue in cmd/elaborate
   for_each(db_instance.begin(), db_instance.end(), 
-           [&mfifo, &mmap, &rv](pair<const IIdentifier, shared_ptr<Instance> >& m) {
+           [&](pair<const IIdentifier, shared_ptr<Instance> >& m) {
              rv &= m.second->elaborate(mfifo, mmap);
            });
   
@@ -463,7 +463,7 @@ void netlist::Module::get_hier(list<shared_ptr<Module> >& mfifo,
                                std::set<MIdentifier> & mmap) const{
   list<shared_ptr<Module> > myqueue;
   for_each(db_instance.begin(), db_instance.end(),
-           [&mfifo, &myqueue, &mmap](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
+           [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
              shared_ptr<Module> tarModule = G_ENV->find_module(m.second->mname);
              if(tarModule.use_count() != 0 && !mmap.count(tarModule->name.name)) {
                mfifo.push_front(tarModule);

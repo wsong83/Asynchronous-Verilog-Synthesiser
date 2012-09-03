@@ -136,7 +136,7 @@ bool shell::CMD::CMDWrite::exec ( const Tcl::object& tclObj, Env * pEnv){
     // find all modules
     tarDesign->get_hier(moduleQueue, moduleMap);
     // do the write out
-    for_each(moduleQueue.begin(), moduleQueue.end(), [&fhandler](shared_ptr<netlist::Module>& m) {
+    for_each(moduleQueue.begin(), moduleQueue.end(), [&](shared_ptr<netlist::Module>& m) {
         fhandler << *m << std::endl;
       });
   } else {

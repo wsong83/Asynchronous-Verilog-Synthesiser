@@ -220,7 +220,7 @@ bool shell::CMD::CMDElaborate::exec (const Tcl::object& tclObj, Env * pEnv){
     }
     
     // save all elaborated module to the current work library
-    for_each(moduleMap.begin(), moduleMap.end(), [&workLib](pair<const netlist::MIdentifier, shared_ptr<netlist::Module> >& m) {
+    for_each(moduleMap.begin(), moduleMap.end(), [&](pair<const netlist::MIdentifier, shared_ptr<netlist::Module> >& m) {
         workLib->swap(m.second);
       });
 
