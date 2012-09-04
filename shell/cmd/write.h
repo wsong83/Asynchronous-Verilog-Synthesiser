@@ -30,7 +30,7 @@
 #define AVS_CMD_WRITE_
 
 #include "cmd_define.h"
-#include "cpptcl.h"
+#include <string>
 
 namespace shell {
   class Env;
@@ -38,12 +38,8 @@ namespace shell {
 
     class CMDWrite {
     public:
-      static bool exec ( const Tcl::object&, Env *);
+      static bool exec ( const std::string&, Env *);
       static void help ( Env& );
-
-      //private:
-      static po::options_description cmd_opt;
-      static po::positional_options_description cmd_position;
     };
   }
 }

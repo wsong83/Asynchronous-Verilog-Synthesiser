@@ -68,6 +68,22 @@ using boost::filesystem::create_directory;
 using boost::filesystem::remove_all;
 using boost::filesystem::exists;
 
+namespace {
+
+#define FUNC_WRAPPER(rtype, func_name)                             \
+  rtype func_name(const Tcl::object& tclObj, Env * pEnv) {         \
+    return shell::CMD::func_name::exec(tclObj.get_string(), pEnv); \
+  }
+
+#define FUNC_WRAPPER_VOID(func_name)                               \
+  void func_name(const Tcl::object& tclObj, Env * pEnv) {          \
+    shell::CMD::func_name::exec(tclObj.get_string(), pEnv);        \
+  }
+
+  FUNC_WRAPPER(bool, CMDWrite)
+
+}
+
 
 shell::Env::Env() 
   : stdOs(cout.rdbuf()), errOs(cerr.rdbuf())
@@ -134,7 +150,8 @@ bool shell::Env::initialise() {
   i.def("shell",          shell::CMD::CMDShell::exec,          this, Tcl::variadic());
   i.def("suppress_message", 
                           shell::CMD::CMDSuppressMessage::exec,this, Tcl::variadic());
-  i.def("write",          shell::CMD::CMDWrite::exec,          this, Tcl::variadic());
+  i.def("write",          CMDWrite,     this, Tcl::variadic());
+  
 
   // make "quit" an alias of "exit"
   i.create_alias("quit", i, "exit");
