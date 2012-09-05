@@ -55,4 +55,24 @@ namespace shell {
   }
 }
 
+#ifndef NEW_TCL_CMD
+#define NEW_TCL_CMD(rt_type, cmd_name)                         \
+struct cmd_name {                                              \
+  static rt_type exec ( const std::string&, Env *);            \
+  static void help ( Env& );                                   \
+  static const std::string name;                               \
+  static const std::string description;                        \
+}
+#endif                               
+
+namespace shell {
+  class Env;
+  namespace CMD {
+    NEW_TCL_CMD(bool, CMDWrite);
+    NEW_TCL_CMD(bool, CMDAnalyze);
+  }
+}
+
+
+#undef NEW_TCL_CMD
 #endif

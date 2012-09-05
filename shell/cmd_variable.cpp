@@ -55,19 +55,6 @@ ostream& shell::CMD::CMDVar::streamout( ostream& os) const {
       os << "\"" << it << "\" ";
     return os;
   }
-  case vCollection: {
-    list<shared_ptr<netlist::NetComp> >::const_iterator it, end;
-    os << "{";
-    it=m_collection.begin();
-    end=m_collection.end();
-    while(it!=end) {
-      os << (*it)->get_hier_name();
-      it++;
-      if(it!=end) os << ", ";
-    }
-    os << "}";
-    return os;
-  }
   default: return os;
   }
 }
@@ -79,7 +66,7 @@ CMDVar& shell::CMD::CMDVar::operator= (const string& str) {
 }
 
 CMDVar& shell::CMD::CMDVar::operator= (const list<string>& slist) {
-  m_list = slist;
+  m_list.assign(slist.begin(), slist.end());
   var_type = vList;
   if(slist.size() == 1) {
     var_type = vString;
@@ -91,7 +78,7 @@ CMDVar& shell::CMD::CMDVar::operator= (const list<string>& slist) {
 }
 
 CMDVar& shell::CMD::CMDVar::operator= (const vector<string>& slist) {
-  m_list.assign(slist.begin(), slist.end());
+  m_list = slist;
   var_type = vList;
   if(slist.size() == 1) {
     var_type = vString;

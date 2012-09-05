@@ -50,6 +50,11 @@ static bool cmd_create_tmp_path(const path& p, Env * pEnv, bool init = false ) {
 }
   
 
+static vector<string> CMDHook_SEARCH_PATH(const vector<string>& new_search_path, Env * pEnv ) {
+  pEnv->macroDB[MACRO_SEARCH_PATH] = new_search_path; // just update the copy in C++
+  return new_search_path;
+}
+
 static string CMDHook_TMP_PATH(const string& new_path, Env * pEnv ) {
   string old_path = pEnv->macroDB[MACRO_TMP_PATH];
   if(new_path == old_path) return new_path; // same, nothing to do

@@ -26,7 +26,7 @@
  *
  */
 
-#include "write.h"
+#include "cmd_define.h"
 #include "shell/env.h"
 #include "shell/macro_name.h"
 
@@ -38,22 +38,14 @@ using namespace boost::filesystem;
 // Boost.Spirit
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/phoenix.hpp>
-#include <boost/spirit/include/phoenix_core.hpp>
-#include <boost/spirit/include/phoenix_operator.hpp>
-#include <boost/spirit/include/phoenix_fusion.hpp>
-#include <boost/spirit/include/phoenix_stl.hpp>
-#include <boost/spirit/include/support.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
-#include <boost/variant/recursive_variant.hpp>
 
-#include <algorithm>
+#include <boost/foreach.hpp>
 
 using std::string;
-using std::vector;
 using std::endl;
 using boost::shared_ptr;
 using std::list;
-using std::for_each;
 using namespace shell::CMD;
 
 
@@ -65,8 +57,8 @@ namespace {
   struct Argument {
     bool bHelp;                 // show help information
     bool bHierarchy;            // write out hierarchical design
-    std::string sDesign;             // target design to be written out
-    std::string sOutput;             // output file name
+    string sDesign;             // target design to be written out
+    string sOutput;             // output file name
     
     Argument() : 
       bHelp(false),
@@ -88,37 +80,52 @@ BOOST_FUSION_ADAPT_STRUCT
 namespace {
   typedef string::const_iterator SIter;
 
-  struct ArgParser : qi::grammar<SIter, Argument(), ascii::space_type> {
-    qi::rule<SIter, void(Argument&), ascii::space_type> args;
-    qi::rule<SIter, Argument(), ascii::space_type> start;
+  struct ArgParser : qi::grammar<SIter, Argument()> {
+    qi::rule<SIter, void(Argument&)> args;
+    qi::rule<SIter, Argument()> start;
+    qi::rule<SIter, std::string()> text;
+    qi::rule<SIter, void()> blanks;
     
     ArgParser() : ArgParser::base_type(start) {
       using qi::lit;
       using ascii::char_;
+      using ascii::space;
       using phoenix::at_c;
       using namespace qi::labels;
+
+      text %= +(char_("0-9a-zA-Z_$\\/"));
+      blanks = lit(' ') || lit('\t') || qi::eol || qi::eoi;
       
       args = lit('-') >> 
-        ( lit("help")                 [at_c<0>(_r1) = true]      ||
-          lit("hierarchy")            [at_c<1>(_r1) = true]      ||
-          lit("output") >> +char_     [at_c<3>(_r1) += _1]
-          )
-        ;
+        ( (lit("help")              >> blanks) [at_c<0>(_r1) = true]  ||
+          (lit("hierarchy")         >> blanks) [at_c<1>(_r1) = true]  ||
+          (lit("output") >> blanks >> text >> blanks) [at_c<3>(_r1) = _1]
+          );
       
       start = 
         *(args(_val))
-        >> -(+char_  [at_c<2>(_val) += _1])
+        >> -(text >> blanks) [at_c<2>(_val) = _1] 
         >> *(args(_val))
         ;
     }
   };
 }
 
+const string shell::CMD::CMDWrite::name = "write"; 
+const string shell::CMD::CMDWrite::description = 
+  "write out a design to a file.";
+
 void shell::CMD::CMDWrite::help(Env& gEnv) {
-  gEnv.stdOs << "write: write out a design to a file." << endl;
+  gEnv.stdOs << name << ": " << description << endl;
   gEnv.stdOs << "    write [options] [design_name]" << endl;
-  gEnv.stdOs << "   design_name          the design to be written out (default the current " << endl;
-  gEnv.stdOs << "                        design)." << endl << endl;
+  gEnv.stdOs << "    design_name         the design to be written out (default the current" << endl;
+  gEnv.stdOs << "                        design)." << endl;
+  gEnv.stdOs << "Options:" << endl;
+  gEnv.stdOs << "   -help                show this help information." << endl;
+  gEnv.stdOs << "   -hierarchy           write out the whole design hiarchy." << endl;
+  gEnv.stdOs << "                        (in default only the design module is written out)" << endl;
+  gEnv.stdOs << "   -output file_name    specify the output file name." << endl;
+  gEnv.stdOs << "                        (in default is \"design_name.v\")" << endl;
 }
 
 bool shell::CMD::CMDWrite::exec ( const string& str, Env * pEnv){
@@ -128,16 +135,15 @@ bool shell::CMD::CMDWrite::exec ( const string& str, Env * pEnv){
   string::const_iterator it = str.begin(), end = str.end();
   ArgParser parser;             // argument parser
   Argument arg;                 // argument struct
-  bool r = qi::phrase_parse(it, end, parser, ascii::space, arg);
+  bool r = qi::parse(it, end, parser, arg);
 
   if(!r || it != end) {
     gEnv.stdOs << "Error: Wrong command syntax error! See usage by write -help." << endl;
-    gEnv.stdOs << str << r << endl;
     return false;
   }
 
   if(arg.bHelp) {        // print help information
-    shell::CMD::CMDWrite::help(gEnv);
+    help(gEnv);
     return true;
   }
 
@@ -178,9 +184,9 @@ bool shell::CMD::CMDWrite::exec ( const string& str, Env * pEnv){
     // find all modules
     tarDesign->get_hier(moduleQueue, moduleMap);
     // do the write out
-    for_each(moduleQueue.begin(), moduleQueue.end(), [&](shared_ptr<netlist::Module>& m) {
-        fhandler << *m << std::endl;
-      });
+    BOOST_FOREACH(shared_ptr<netlist::Module>& m, moduleQueue) {
+      fhandler << *m << std::endl;
+    }
   } else {
     fhandler << *tarDesign << std::endl;
   } 

@@ -40,7 +40,7 @@
 #define YYSTYPE shell::CMD::cmd_token_type
 
 // the commands
-#include "cmd/analyze.h"
+#include "cmd/cmd_define.h"
 #include "cmd/current_design.h"
 #include "cmd/echo.h"
 #include "cmd/elaborate.h"
@@ -49,7 +49,7 @@
 #include "cmd/report_netlist.h"
 #include "cmd/shell.h"
 #include "cmd/suppress_message.h"
-#include "cmd/write.h"
+
 
 #include "macro_name.h"
 
@@ -123,6 +123,8 @@ bool shell::Env::initialise() {
   // initialise the macro database
   // file search path
   i.set_variable(MACRO_SEARCH_PATH, MACRO_SEARCH_PATH_VALUE);
+  macroDB[MACRO_SEARCH_PATH] = MACRO_SEARCH_PATH_VALUE;
+  i.def_write_trace(MACRO_SEARCH_PATH, MACRO_SEARCH_PATH, CMDHook_SEARCH_PATH, this);
 
   // the temporary file directory
   i.set_variable(MACRO_TMP_PATH, MACRO_TMP_PATH_VALUE);
