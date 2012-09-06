@@ -27,6 +27,7 @@
  */
 
 #include "cmd_define.h"
+#include "cmd_parse_base.h"
 #include "shell/env.h"
 #include "shell/macro_name.h"
 
@@ -39,20 +40,6 @@
 #include "averilog/averilog.lex.h"
 #include <boost/foreach.hpp>
 
-// Boost.Spirit
-#include <boost/spirit/include/qi.hpp>
-#include <boost/spirit/include/phoenix.hpp>
-#include <boost/spirit/include/phoenix_core.hpp>
-#include <boost/spirit/include/phoenix_operator.hpp>
-#include <boost/spirit/include/phoenix_fusion.hpp>
-#include <boost/spirit/include/phoenix_stl.hpp>
-#include <boost/spirit/include/support.hpp>
-#include <boost/fusion/include/adapt_struct.hpp>
-#include <boost/variant/recursive_variant.hpp>
-
-using std::string;
-using std::vector;
-using std::list;
 using std::endl;
 using std::ofstream;
 using boost::shared_ptr;
@@ -68,11 +55,11 @@ namespace {
   namespace ascii = boost::spirit::ascii;
 
   struct Argument {
-    bool bHelp;                 // show help information
-    string sFormat;             // language
-    string sLibrary;            // target work library
-    vector<string> svDefine;    // macro definitions
-    vector<string> svFile;      // target soruce file 
+    bool bHelp;                           // show help information
+    std::string sFormat;                  // language
+    std::string sLibrary;                 // target work library
+    std::vector<std::string> svDefine;    // macro definitions
+    std::vector<std::string> svFile;      // target soruce file 
     
     Argument() : 
       bHelp(false),
@@ -85,19 +72,18 @@ BOOST_FUSION_ADAPT_STRUCT
 (
  Argument,
  (bool, bHelp)
- (string, sFormat)
- (string, sLibrary)
- (vector<string>, svDefine)
- (vector<string>, svFile)
+ (std::string, sFormat)
+ (std::string, sLibrary)
+ (std::vector<std::string>, svDefine)
+ (std::vector<std::string>, svFile)
  )
 
 namespace {
-  typedef string::const_iterator SIter;
+  typedef std::string::const_iterator SIter;
 
-  struct ArgParser : qi::grammar<SIter, Argument(), ascii::space_type> {
-    qi::rule<SIter, void(Argument&), ascii::space_type> args;
-    qi::rule<SIter, Argument(), ascii::space_type> start;
-    qi::rule<SIter, string(), ascii::space_type> text;
+  struct ArgParser : qi::grammar<SIter, Argument()>, cmd_parse_base<SIter> {
+    qi::rule<SIter, void(Argument&)> args;
+    qi::rule<SIter, Argument()> start;
     
     ArgParser() : ArgParser::base_type(start) {
       using qi::lit;
@@ -105,18 +91,16 @@ namespace {
       using phoenix::at_c;
       using phoenix::push_back;
       using namespace qi::labels;
-
-      text %= +char_;
       
       args = 
-        (lit('-') >> 
-         ( lit("help")                 [at_c<0>(_r1) = true]         ||
-           lit("format") >> +char_     [at_c<1>(_r1) = _1]           ||
-           lit("library") >> +char_    [at_c<2>(_r1) = _1]           //||
-           //lit("define") >> text     [push_back(at_c<3>(_r1), _1)] 
+        ( lit('-') >> 
+          ( (lit("help")             >> blanks) [at_c<0>(_r1) = true] ||
+            (lit("format")   >> text >> blanks) [at_c<1>(_r1) = _1]   ||
+            (lit("library")  >> text >> blanks) [at_c<2>(_r1) = _1]   ||
+            (lit("define")   >> text >> blanks) [push_back(at_c<3>(_r1), _1)] 
            )
          ) 
-        //|| +text                       [push_back(at_c<4>(_r1), _1)]
+        || +(text >> blanks)                    [push_back(at_c<4>(_r1), _1)]
         ;
       
       start = +(args(_val));
@@ -125,35 +109,37 @@ namespace {
   };
 }
 
-const string shell::CMD::CMDAnalyze::name = "analyze"; 
-const string shell::CMD::CMDAnalyze::description = 
+const std::string shell::CMD::CMDAnalyze::name = "analyze"; 
+const std::string shell::CMD::CMDAnalyze::description = 
   "read in the Verilog HDL design files.";
-
 
 
 void shell::CMD::CMDAnalyze::help(Env& gEnv) {
   gEnv.stdOs << name << ": " << description << endl;
   gEnv.stdOs << "    analyze [options] source_files" << endl;
-  gEnv.stdOs << "    source_file        *the design to be read in." << endl;
+  gEnv.stdOs << "    source_file        +the design to be read in." << endl;
   gEnv.stdOs << "Options:" << endl;
   gEnv.stdOs << "   -help                show this help information." << endl;
   gEnv.stdOs << "   -format language     the source file language (default verilog)." << endl;
   gEnv.stdOs << "   -library lib_name    specify the target work library (default work)." << endl;
-  gEnv.stdOs << "   -define {MACRO_NAME} *define a macro in Verilog." << endl;
+  gEnv.stdOs << "   -define MACRO_NAME  *define a macro in Verilog." << endl;
 }
 
-bool shell::CMD::CMDAnalyze::exec (const string& str, Env * pEnv){
+bool shell::CMD::CMDAnalyze::exec (const std::string& str, Env * pEnv){
+
+  using std::string;
+
   Env &gEnv = *pEnv;
 
   // parse
   string::const_iterator it = str.begin(), end = str.end();
   ArgParser parser;             // argument parser
   Argument arg;                 // argument struct
-  bool r = qi::phrase_parse(it, end, parser, ascii::space, arg);
+  bool r = qi::parse(it, end, parser, arg);
 
   if(!r || it != end) {
     gEnv.stdOs << "Error: Wrong command syntax error! See usage by analyze -help." << endl;
-    gEnv.stdOs << str << r << endl;
+    gEnv.stdOs << "    analyze [options] source_files" << endl;
     return false;
   }
 
@@ -242,11 +228,8 @@ bool shell::CMD::CMDAnalyze::exec (const string& str, Env * pEnv){
       m_parser.initialize();
       m_parser.parse();
     }
-    return true;
   }
   
-  gEnv.stdOs << "no source file to read." << endl;
-  shell::CMD::CMDAnalyze::help(gEnv);    
-  return false;
+  return true;
 }
 

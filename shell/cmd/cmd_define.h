@@ -68,8 +68,9 @@ struct cmd_name {                                              \
 namespace shell {
   class Env;
   namespace CMD {
-    NEW_TCL_CMD(bool, CMDWrite);
     NEW_TCL_CMD(bool, CMDAnalyze);
+    NEW_TCL_CMD(void, CMDCurrentDesign);
+    NEW_TCL_CMD(bool, CMDWrite);
   }
 }
 

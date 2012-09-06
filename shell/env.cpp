@@ -41,7 +41,6 @@
 
 // the commands
 #include "cmd/cmd_define.h"
-#include "cmd/current_design.h"
 #include "cmd/echo.h"
 #include "cmd/elaborate.h"
 #include "cmd/exit.h"
@@ -80,6 +79,8 @@ namespace {
     shell::CMD::func_name::exec(tclObj.get_string(), pEnv);        \
   }
 
+  FUNC_WRAPPER(bool, CMDAnalyze)
+  FUNC_WRAPPER_VOID(CMDCurrentDesign)
   FUNC_WRAPPER(bool, CMDWrite)
 
 }
@@ -142,8 +143,8 @@ bool shell::Env::initialise() {
                     CMDHook_CURRENT_DESIGN, this);
 
   // add the commands defined for AVS
-  i.def("analyze",        shell::CMD::CMDAnalyze::exec,        this, Tcl::variadic());
-  i.def("current_design", shell::CMD::CMDCurrentDesign::exec,  this, Tcl::variadic());
+  i.def("analyze",        CMDAnalyze,        this, Tcl::variadic());
+  i.def("current_design", CMDCurrentDesign,  this, Tcl::variadic());
   i.def("echo",           shell::CMD::CMDEcho::exec,           this, Tcl::variadic());
   i.def("elaborate",      shell::CMD::CMDElaborate::exec,      this, Tcl::variadic());
   i.def("exit",           shell::CMD::CMDExit::exec,           this, Tcl::variadic());
@@ -152,7 +153,7 @@ bool shell::Env::initialise() {
   i.def("shell",          shell::CMD::CMDShell::exec,          this, Tcl::variadic());
   i.def("suppress_message", 
                           shell::CMD::CMDSuppressMessage::exec,this, Tcl::variadic());
-  i.def("write",          CMDWrite,     this, Tcl::variadic());
+  i.def("write",          CMDWrite,          this, Tcl::variadic());
   
 
   // make "quit" an alias of "exit"

@@ -27,6 +27,7 @@
  */
 
 #include "cmd_define.h"
+#include "cmd_parse_base.h"
 #include "shell/env.h"
 #include "shell/macro_name.h"
 
@@ -35,14 +36,8 @@
 #include <boost/filesystem/fstream.hpp>
 using namespace boost::filesystem;
 
-// Boost.Spirit
-#include <boost/spirit/include/qi.hpp>
-#include <boost/spirit/include/phoenix.hpp>
-#include <boost/fusion/include/adapt_struct.hpp>
-
 #include <boost/foreach.hpp>
 
-using std::string;
 using std::endl;
 using boost::shared_ptr;
 using std::list;
@@ -57,8 +52,8 @@ namespace {
   struct Argument {
     bool bHelp;                 // show help information
     bool bHierarchy;            // write out hierarchical design
-    string sDesign;             // target design to be written out
-    string sOutput;             // output file name
+    std::string sDesign;        // target design to be written out
+    std::string sOutput;        // output file name
     
     Argument() : 
       bHelp(false),
@@ -73,18 +68,16 @@ BOOST_FUSION_ADAPT_STRUCT
  Argument,
  (bool, bHelp)
  (bool, bHierarchy)
- (string, sDesign)
- (string, sOutput)
+ (std::string, sDesign)
+ (std::string, sOutput)
  )
 
 namespace {
-  typedef string::const_iterator SIter;
+  typedef std::string::const_iterator SIter;
 
-  struct ArgParser : qi::grammar<SIter, Argument()> {
+  struct ArgParser : qi::grammar<SIter, Argument()>, cmd_parse_base<SIter> {
     qi::rule<SIter, void(Argument&)> args;
     qi::rule<SIter, Argument()> start;
-    qi::rule<SIter, std::string()> text;
-    qi::rule<SIter, void()> blanks;
     
     ArgParser() : ArgParser::base_type(start) {
       using qi::lit;
@@ -93,9 +86,6 @@ namespace {
       using phoenix::at_c;
       using namespace qi::labels;
 
-      text %= +(char_("0-9a-zA-Z_$\\/"));
-      blanks = lit(' ') || lit('\t') || qi::eol || qi::eoi;
-      
       args = lit('-') >> 
         ( (lit("help")              >> blanks) [at_c<0>(_r1) = true]  ||
           (lit("hierarchy")         >> blanks) [at_c<1>(_r1) = true]  ||
@@ -111,8 +101,8 @@ namespace {
   };
 }
 
-const string shell::CMD::CMDWrite::name = "write"; 
-const string shell::CMD::CMDWrite::description = 
+const std::string shell::CMD::CMDWrite::name = "write"; 
+const std::string shell::CMD::CMDWrite::description = 
   "write out a design to a file.";
 
 void shell::CMD::CMDWrite::help(Env& gEnv) {
@@ -128,7 +118,10 @@ void shell::CMD::CMDWrite::help(Env& gEnv) {
   gEnv.stdOs << "                        (in default is \"design_name.v\")" << endl;
 }
 
-bool shell::CMD::CMDWrite::exec ( const string& str, Env * pEnv){
+bool shell::CMD::CMDWrite::exec ( const std::string& str, Env * pEnv){
+
+  using std::string;
+
   Env &gEnv = *pEnv;
 
   // parse
@@ -139,6 +132,7 @@ bool shell::CMD::CMDWrite::exec ( const string& str, Env * pEnv){
 
   if(!r || it != end) {
     gEnv.stdOs << "Error: Wrong command syntax error! See usage by write -help." << endl;
+    gEnv.stdOs << "    write [options] [design_name]" << endl;
     return false;
   }
 
@@ -148,7 +142,7 @@ bool shell::CMD::CMDWrite::exec ( const string& str, Env * pEnv){
   }
 
   // settle the design to be written out
-  std::string designName;
+  string designName;
   shared_ptr<netlist::Module> tarDesign;
   if(arg.sDesign.empty()) {
     designName = gEnv.macroDB[MACRO_CURRENT_DESIGN].get_string();
@@ -162,7 +156,7 @@ bool shell::CMD::CMDWrite::exec ( const string& str, Env * pEnv){
   }
 
   // specify the output file name
-  std::string outputFileName;
+  string outputFileName;
   if(arg.sOutput.empty()) outputFileName = designName + ".v";
   else outputFileName = arg.sOutput;
 
