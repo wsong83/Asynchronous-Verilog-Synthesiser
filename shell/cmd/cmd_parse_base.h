@@ -48,13 +48,23 @@ namespace shell {
     template<typename Iterator>
       struct cmd_parse_base {
         boost::spirit::qi::rule<Iterator, std::string()> text;
+        boost::spirit::qi::rule<Iterator, std::string()> identifier;
+        boost::spirit::qi::rule<Iterator, std::string()> filename;
         boost::spirit::qi::rule<Iterator, void()> blanks;
 
         cmd_parse_base() {
           using boost::spirit::qi::lit;
           using boost::spirit::ascii::char_;
-          text %= +(char_("0-9a-zA-Z_$\\/."));
-          blanks = lit(' ') || lit('\t') || boost::spirit::qi::eol || boost::spirit::qi::eoi;
+          using boost::spirit::ascii::print;
+          using boost::spirit::ascii::alpha;
+          using boost::spirit::ascii::alnum;
+          using boost::spirit::ascii::digit;
+          using boost::spirit::ascii::space;
+          text %= (print - '-' - space) >> *(print - space);
+          identifier %= (alpha|'$'|'\\'|'_') >> *(alnum|'$'|'\\'|'_'|'/') 
+                                             >> *('[' >> +digit >> ']');
+          filename %= (print - '-' - space) >> *(print - space);
+          blanks = +(space) || boost::spirit::qi::eoi;
         }
       };
   }

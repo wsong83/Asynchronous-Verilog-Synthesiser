@@ -26,6 +26,9 @@
  *
  */
 
+// uncomment it when need to debug Spirit.Qi
+//#define BOOST_SPIRIT_QI_DEBUG
+
 #include "cmd_define.h"
 #include "cmd_parse_base.h"
 #include "shell/env.h"
@@ -89,14 +92,23 @@ namespace {
       args = lit('-') >> 
         ( (lit("help")              >> blanks) [at_c<0>(_r1) = true]  ||
           (lit("hierarchy")         >> blanks) [at_c<1>(_r1) = true]  ||
-          (lit("output") >> blanks >> text >> blanks) [at_c<3>(_r1) = _1]
+          (lit("output") >> blanks >> filename >> blanks) [at_c<3>(_r1) = _1]
           );
       
       start = 
         *(args(_val))
-        >> -(text >> blanks) [at_c<2>(_val) = _1] 
+        >> -(identifier >> blanks) [at_c<2>(_val) = _1] 
         >> *(args(_val))
         ;
+
+#ifdef BOOST_SPIRIT_QI_DEBUG
+      BOOST_SPIRIT_DEBUG_NODE(args);
+      BOOST_SPIRIT_DEBUG_NODE(start);
+      BOOST_SPIRIT_DEBUG_NODE(text);
+      BOOST_SPIRIT_DEBUG_NODE(blanks);
+      BOOST_SPIRIT_DEBUG_NODE(identifier);
+      BOOST_SPIRIT_DEBUG_NODE(filename);
+#endif
     }
   };
 }
