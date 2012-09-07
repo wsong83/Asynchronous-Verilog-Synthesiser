@@ -41,14 +41,10 @@
 
 // the commands
 #include "cmd/cmd_define.h"
-#include "cmd/echo.h"
 #include "cmd/elaborate.h"
-#include "cmd/exit.h"
 #include "cmd/help.h"
 #include "cmd/report_netlist.h"
 #include "cmd/shell.h"
-#include "cmd/suppress_message.h"
-
 
 #include "macro_name.h"
 
@@ -79,9 +75,12 @@ namespace {
     shell::CMD::func_name::exec(tclObj.get_string(), pEnv);        \
   }
 
-  FUNC_WRAPPER(bool, CMDAnalyze)
-  FUNC_WRAPPER_VOID(CMDCurrentDesign)
-  FUNC_WRAPPER(bool, CMDWrite)
+  FUNC_WRAPPER     (bool,         CMDAnalyze         )
+  FUNC_WRAPPER_VOID(              CMDCurrentDesign   )
+  FUNC_WRAPPER     (std::string,  CMDEcho            )
+  FUNC_WRAPPER_VOID(              CMDExit            )
+  FUNC_WRAPPER     (bool,         CMDSuppressMessage )
+  FUNC_WRAPPER     (bool,         CMDWrite           )
 
 }
 
@@ -143,17 +142,16 @@ bool shell::Env::initialise() {
                     CMDHook_CURRENT_DESIGN, this);
 
   // add the commands defined for AVS
-  i.def("analyze",        CMDAnalyze,        this, Tcl::variadic());
-  i.def("current_design", CMDCurrentDesign,  this, Tcl::variadic());
-  i.def("echo",           shell::CMD::CMDEcho::exec,           this, Tcl::variadic());
-  i.def("elaborate",      shell::CMD::CMDElaborate::exec,      this, Tcl::variadic());
-  i.def("exit",           shell::CMD::CMDExit::exec,           this, Tcl::variadic());
-  i.def("help",           shell::CMD::CMDHelp::exec,           this, Tcl::variadic());
-  i.def("report_netlist", shell::CMD::CMDReportNetlist::exec,  this, Tcl::variadic());
-  i.def("shell",          shell::CMD::CMDShell::exec,          this, Tcl::variadic());
-  i.def("suppress_message", 
-                          shell::CMD::CMDSuppressMessage::exec,this, Tcl::variadic());
-  i.def("write",          CMDWrite,          this, Tcl::variadic());
+  i.def("analyze",          CMDAnalyze,        this, Tcl::variadic());
+  i.def("current_design",   CMDCurrentDesign,   this, Tcl::variadic());
+  i.def("echo",             CMDEcho,            this, Tcl::variadic());
+  i.def("elaborate",        shell::CMD::CMDElaborate::exec,      this, Tcl::variadic());
+  i.def("exit",             CMDExit,            this, Tcl::variadic());
+  i.def("help",             shell::CMD::CMDHelp::exec,           this, Tcl::variadic());
+  i.def("report_netlist",   shell::CMD::CMDReportNetlist::exec,  this, Tcl::variadic());
+  i.def("shell",            shell::CMD::CMDShell::exec,          this, Tcl::variadic());
+  i.def("suppress_message", CMDSuppressMessage, this, Tcl::variadic());
+  i.def("write",            CMDWrite,           this, Tcl::variadic());
   
 
   // make "quit" an alias of "exit"

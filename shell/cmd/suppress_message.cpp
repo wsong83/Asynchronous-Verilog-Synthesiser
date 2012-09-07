@@ -26,73 +26,110 @@
  *
  */
 
-#include "suppress_message.h"
+// uncomment it when need to debug Spirit.Qi
+//#define BOOST_SPIRIT_QI_DEBUG
+
+#include "cmd_define.h"
+#include "cmd_parse_base.h"
 #include "shell/env.h"
 #include "shell/macro_name.h"
-#include "shell/cmd_tcl_interp.h"
 #include <boost/foreach.hpp>
 
-using std::string;
-using std::vector;
 using std::endl;
 using namespace shell::CMD;
 
-static po::options_description arg_opt("Options");
-po::options_description_easy_init const dummy_arg_opt =
-  arg_opt.add_options()
-  ("help", "usage information.")
-  ;
+namespace {
+  namespace qi = boost::spirit::qi;
+  namespace phoenix = boost::phoenix;
 
-static po::options_description target_opt;
-po::options_description_easy_init const dummy_target_opt =
-  target_opt.add_options()
-  ("msgName", po::value<vector<string> >()->composing(), "the warning to be suppressed")
-  ;
-
-po::options_description shell::CMD::CMDSuppressMessage::cmd_opt;
-po::options_description const dummy_cmd_opt =
-  CMDSuppressMessage::cmd_opt.add(arg_opt).add(target_opt);
-
-po::positional_options_description shell::CMD::CMDSuppressMessage::cmd_position;
-po::positional_options_description const dummy_position = 
-  CMDSuppressMessage::cmd_position.add("msgName", -1);
-
-void shell::CMD::CMDSuppressMessage::help(Env& gEnv) {
-  gEnv.stdOs << "suppress_message: suppress the report of some messages." << endl;
-  gEnv.stdOs << "    suppress_message [options] message_names" << endl;
-  gEnv.stdOs << cmd_name_fix(arg_opt) << endl;
+  struct Argument {
+    bool bHelp;                         // show help information
+    std::vector<std::string> svErrIDs;  // error IDs
+    
+    Argument() : 
+      bHelp(false) {}
+  };
 }
 
-bool shell::CMD::CMDSuppressMessage::exec (const Tcl::object& tclObj, Env * pEnv){
-  po::variables_map vm;
-  Tcl::interpreter& interp = pEnv->tclInterp->tcli;
-  Env &gEnv = *pEnv;
-  vector<string> arg = tclObj.get<vector<string> >(interp);
+BOOST_FUSION_ADAPT_STRUCT
+(
+ Argument,
+ (bool, bHelp)
+ (std::vector<std::string>, svErrIDs)
+ )
 
-  try {
-    store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
-    notify(vm);
-  } catch (std::exception& e) {
+namespace {
+  typedef std::string::const_iterator SIter;
+
+  struct ArgParser : qi::grammar<SIter, Argument()>, cmd_parse_base<SIter> {
+    qi::rule<SIter, void(Argument&)> args;
+    qi::rule<SIter, Argument()> start;
+    
+    ArgParser() : ArgParser::base_type(start) {
+      using qi::lit;
+      using phoenix::at_c;
+      using phoenix::push_back;
+      using qi::_r1;
+      using qi::_1;
+      using qi::_val;
+
+      args = lit('-') >> "help" >> blanks [at_c<0>(_r1) = true];
+      
+      start = args(_val) || (+(text >> blanks) [push_back(at_c<1>(_val), _1)]);
+
+#ifdef BOOST_SPIRIT_QI_DEBUG
+      BOOST_SPIRIT_DEBUG_NODE(args);
+      BOOST_SPIRIT_DEBUG_NODE(start);
+      BOOST_SPIRIT_DEBUG_NODE(text);
+      BOOST_SPIRIT_DEBUG_NODE(blanks);
+      BOOST_SPIRIT_DEBUG_NODE(identifier);
+      BOOST_SPIRIT_DEBUG_NODE(filename);
+#endif
+    }
+  };
+}
+
+const std::string shell::CMD::CMDSuppressMessage::name = "suppress_message"; 
+const std::string shell::CMD::CMDSuppressMessage::description = 
+  "suppress the report of some messages.";
+
+
+void shell::CMD::CMDSuppressMessage::help(Env& gEnv) {
+  gEnv.stdOs << name << ": " << description << endl;
+  gEnv.stdOs << "    suppress_message [options] error_IDs" << endl;
+  gEnv.stdOs << "    error_ID            the ID of the error message to be suppressed." << endl;
+  gEnv.stdOs << "Options:" << endl;
+  gEnv.stdOs << "   -help                usage information." << endl;
+}
+
+bool shell::CMD::CMDSuppressMessage::exec (const std::string& str, Env * pEnv){
+
+  using std::string;
+
+  Env &gEnv = *pEnv;
+
+  // parse
+  string::const_iterator it = str.begin(), end = str.end();
+  ArgParser parser;             // argument parser
+  Argument arg;                 // argument struct
+  bool r = qi::parse(it, end, parser, arg);
+
+  if(!r || it != end) {
     gEnv.stdOs << "Error: Wrong command syntax error! See usage by suppress_message -help." << endl;
+    gEnv.stdOs << "    suppress_message [options] error_IDs" << endl;
     return false;
   }
 
-  if(vm.count("help")) {        // print help information
-    shell::CMD::CMDSuppressMessage::help(gEnv);
+  if(arg.bHelp) {        // print help information
+    help(gEnv);
     return true;
   }
 
-  if(vm.count("msgName")) {
-    vector<string> msg_name = vm["msgName"].as<vector<string> >();
-    BOOST_FOREACH(const string& it, msg_name)
-      if(!gEnv.error.suppress(it)) 
-        gEnv.stdOs << "Error: Error message \"" 
-                   << it 
-                   << "\" does not exist or cannot be suppressed."<< endl;
-
-    return true;
-  }
-
-  shell::CMD::CMDSuppressMessage::help(gEnv);
+  BOOST_FOREACH(const string& it, arg.svErrIDs)
+    if(!gEnv.error.suppress(it)) 
+      gEnv.stdOs << "Error: Error message \"" 
+                 << it 
+                 << "\" does not exist or cannot be suppressed."<< endl;
+  
   return true;
 }

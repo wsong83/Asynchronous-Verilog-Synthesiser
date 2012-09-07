@@ -69,11 +69,15 @@ namespace {
     qi::rule<SIter, Argument()> start;
     
     ArgParser() : ArgParser::base_type(start) {
-      args = qi::lit('-') >> qi::lit("help") >> blanks [phoenix::at_c<0>(qi::_r1) = true];
+      using qi::lit;
+      using phoenix::at_c;
+      using qi::_r1;
+      using qi::_1;
+      using qi::_val;
+
+      args = lit('-') >> "help" >> blanks [at_c<0>(_r1) = true];
       
-      start = (args(qi::_val) >> blanks)
-        || ((identifier >> blanks) [phoenix::at_c<1>(qi::_val) = qi::_1])
-        ;
+      start = args(_val) || ((identifier >> blanks) [at_c<1>(_val) = _1]);
 
 #ifdef BOOST_SPIRIT_QI_DEBUG
       BOOST_SPIRIT_DEBUG_NODE(args);
