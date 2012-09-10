@@ -26,52 +26,109 @@
  *
  */
 
-#include <string>
-#include "shell.h"
+// uncomment it when need to debug Spirit.Qi
+//#define BOOST_SPIRIT_QI_DEBUG
+
+#include "cmd_define.h"
+#include "cmd_parse_base.h"
 #include "shell/env.h"
-#include "shell/cmd_tcl_interp.h"
 #include "shell/cmd_utility.h"
 #include <boost/foreach.hpp>
 
-using std::vector;
 using std::endl;
-using std::string;
 using namespace shell;
 using namespace shell::CMD;
 
-po::options_description shell::CMD::CMDShell::cmd_opt;
-static po::options_description_easy_init dummy_cmd_opt =
-  CMDShell::cmd_opt.add_options()
-  ("help",     "usage information.")
-  ("command",  po::value<vector<string> >()->composing(), "shell command.")
-  ;
+namespace {
+  namespace qi = boost::spirit::qi;
+  namespace phoenix = boost::phoenix;
+  namespace ascii = boost::spirit::ascii;
 
-po::positional_options_description shell::CMD::CMDShell::cmd_position;
-static po::positional_options_description const dummy_position = 
-  CMDShell::cmd_position.add("varStr", -1);
+  struct Argument {
+    bool bHelp;                 // show help information
+    
+    Argument() : 
+      bHelp(false) {}
+  };
+}
+
+BOOST_FUSION_ADAPT_STRUCT
+(
+ Argument,
+ (bool, bHelp)
+ )
+
+namespace {
+  typedef std::string::const_iterator SIter;
+
+  struct ArgParser : qi::grammar<SIter, Argument()>, cmd_parse_base<SIter> {
+    qi::rule<SIter, void(Argument&)> args;
+    qi::rule<SIter, Argument()> start;
+    
+    ArgParser() : ArgParser::base_type(start) {
+      using qi::lit;
+      using phoenix::at_c;
+      using qi::_r1;
+      using qi::_val;
+
+      args = lit('-') >> "help" >> blanks [at_c<0>(_r1) = true];
+      
+      start = args(_val) || qi::omit[+ascii::print];
+
+#ifdef BOOST_SPIRIT_QI_DEBUG
+      BOOST_SPIRIT_DEBUG_NODE(args);
+      BOOST_SPIRIT_DEBUG_NODE(start);
+      BOOST_SPIRIT_DEBUG_NODE(text);
+      BOOST_SPIRIT_DEBUG_NODE(blanks);
+      BOOST_SPIRIT_DEBUG_NODE(identifier);
+      BOOST_SPIRIT_DEBUG_NODE(filename);
+#endif
+    }
+  };
+}
+
+const std::string shell::CMD::CMDShell::name = "shell"; 
+const std::string shell::CMD::CMDShell::description = 
+  "run a shell command.";
 
 
 void shell::CMD::CMDShell::help(Env& gEnv) {
-  gEnv.stdOs << "shell: run a shell command." << endl;
-  gEnv.stdOs << "    shell command" << endl;
+  gEnv.stdOs << name << ": " << description << endl;
+  gEnv.stdOs << "    shell -help|command" << endl;
+  gEnv.stdOs << "    command             the shell command to run." << endl;
   gEnv.stdOs << "Options:" << endl;
   gEnv.stdOs << "   -help                usage information." << endl;
-  gEnv.stdOs << endl;
 }
 
-string shell::CMD::CMDShell::exec(const Tcl::object& tclObj, Env * pEnv) {
+std::string shell::CMD::CMDShell::exec(const std::string& str, Env * pEnv) {
+
+  using std::string;
+
   Env &gEnv = *pEnv;
-  vector<string> arg = tclObj.get<vector<string> >(gEnv.tclInterp->tcli);
-  
-  if(arg.size()>0 && arg[0] == "-help") {        // print help information
-    shell::CMD::CMDShell::help(gEnv);
-    return "";
-  } else {
-    string command = tclObj.get_string();
-    if(is_tcl_list(command)) command = command.substr(1, command.size()-2);
-    string rv = shell_exec(command);
-    if(rv.size() > 0 && rv[rv.size()-1] == '\n')
-      rv.erase(rv.size()-1);
-    return rv;
+
+  // parse
+  string::const_iterator it = str.begin(), end = str.end();
+  ArgParser parser;             // argument parser
+  Argument arg;                 // argument struct
+  bool r = qi::parse(it, end, parser, arg);
+
+  if(!r || it != end) {
+    gEnv.stdOs << "Error: Wrong command syntax error! See usage by shell -help." << endl;
+    gEnv.stdOs << "    shell -help|command" << endl;
+    return string();
   }
+
+  if(arg.bHelp) {        // print help information
+    help(gEnv);
+    return string();
+  }
+
+  // run the command
+  string command = str;
+  if(is_tcl_list(command)) command = command.substr(1, command.size()-2);
+  string rv = shell_exec(command);
+  if(rv.size() > 0 && rv[rv.size()-1] == '\n')
+    rv.erase(rv.size()-1);
+  return rv;
+
 }

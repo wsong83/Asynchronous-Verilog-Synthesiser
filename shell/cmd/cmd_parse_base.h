@@ -61,8 +61,9 @@ namespace shell {
           using boost::spirit::ascii::digit;
           using boost::spirit::ascii::space;
           text %= (print - '-' - space) >> *(print - space);
-          identifier %= (alpha|'$'|'\\'|'_') >> *(alnum|'$'|'\\'|'_'|'/') 
-                                             >> *('[' >> +digit >> ']');
+          identifier %= (alpha|char_('$')|char_('\\')|char_('_')) 
+            >> *(alnum|char_('$')|char_('\\')|char_('_')|char_('/')) 
+            >> *(char_('[') >> +digit >> char_(']'));
           filename %= (print - '-' - space) >> *(print - space);
           blanks = +(space) || boost::spirit::qi::eoi;
         }

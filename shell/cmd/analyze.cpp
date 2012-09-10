@@ -97,13 +97,13 @@ namespace {
       
       args = 
         ( lit('-') >> 
-          ( (lit("help")    >> blanks)                         [at_c<0>(_r1) = true] ||
-            (lit("format")  >> blanks >> text       >> blanks) [at_c<1>(_r1) = _1]   ||
-            (lit("library") >> blanks >> text       >> blanks) [at_c<2>(_r1) = _1]   ||
-            (lit("define")  >> blanks >> identifier >> blanks) [push_back(at_c<3>(_r1), _1)] 
+          ( ("help"    >> blanks                        ) [at_c<0>(_r1) = true] ||
+            ("format"  >> blanks >> text       >> blanks) [at_c<1>(_r1) = _1]   ||
+            ("library" >> blanks >> text       >> blanks) [at_c<2>(_r1) = _1]   ||
+            ("define"  >> blanks >> identifier >> blanks) [push_back(at_c<3>(_r1), _1)] 
            )
          ) 
-        || +(text >> blanks)                    [push_back(at_c<4>(_r1), _1)]
+        || (filename   >> blanks                        ) [push_back(at_c<4>(_r1), _1)]
         ;
       
       start = +(args(_val));

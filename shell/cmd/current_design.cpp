@@ -36,7 +36,6 @@
 #include "shell/macro_name.h"
 
 using std::endl;
-
 using namespace shell;
 using namespace shell::CMD;
 
@@ -77,7 +76,7 @@ namespace {
 
       args = lit('-') >> "help" >> blanks [at_c<0>(_r1) = true];
       
-      start = args(_val) || ((identifier >> blanks) [at_c<1>(_val) = _1]);
+      start = -args(_val) >> -((identifier >> blanks) [at_c<1>(_val) = _1]);
 
 #ifdef BOOST_SPIRIT_QI_DEBUG
       BOOST_SPIRIT_DEBUG_NODE(args);

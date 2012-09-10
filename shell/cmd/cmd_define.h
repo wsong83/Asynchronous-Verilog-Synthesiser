@@ -71,7 +71,10 @@ namespace shell {
     NEW_TCL_CMD(bool, CMDAnalyze);
     NEW_TCL_CMD(void, CMDCurrentDesign);
     NEW_TCL_CMD(std::string, CMDEcho);
+    NEW_TCL_CMD(bool, CMDElaborate);
     NEW_TCL_CMD(void, CMDExit);
+    NEW_TCL_CMD(bool, CMDReportNetlist);
+    NEW_TCL_CMD(std::string, CMDShell);
     NEW_TCL_CMD(bool, CMDSuppressMessage);
     NEW_TCL_CMD(bool, CMDWrite);
   }
