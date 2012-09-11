@@ -26,114 +26,125 @@
  *
  */
 
-#include "help.h"
-#include <boost/foreach.hpp>
-#include "shell/cmd_utility.h"
+// uncomment it when need to debug Spirit.Qi
+//#define BOOST_SPIRIT_QI_DEBUG
+
 #include "cmd_define.h"
+#include "cmd_parse_base.h"
+#include "shell/env.h"
 
 using namespace shell;
 using namespace shell::CMD;
-using std::map;
-using std::string;
-using std::vector;
-using std::list;
-using std::pair;
 using std::endl;
 
 // the command list
-map<string, string> shell::CMD::CMDHelp::cmdDB;
+std::map<std::string, shell::CMD::CMDHelp::cmd_record > shell::CMD::CMDHelp::cmdDB;
 
-int cmdDB_init( map<string, string>& db) {
-  db.insert(pair<string, string>("analyze",          "show and list the usage of commands."        ));
-  db.insert(pair<string, string>("current_design",   "set or show the current target design."      ));
-  db.insert(pair<string, string>("echo",             "display a string with variables."            ));
-  db.insert(pair<string, string>("elaborate",        "build up a design from a Verilog module."    ));
-  db.insert(pair<string, string>("help",             "read in the Verilog HDL design files."       ));
-  db.insert(pair<string, string>("report_netlist",   "display the internal structure of a netlist item." ));
-  db.insert(pair<string, string>("source",           "read and execute another script file."       ));
-  db.insert(pair<string, string>("suppress_message", "suppress the report of some messages."       ));
-  db.insert(pair<string, string>("write",            "write out a design to a file."               ));
-  return 0;
+
+namespace {
+  namespace qi = boost::spirit::qi;
+  namespace phoenix = boost::phoenix;
+  namespace ascii = boost::spirit::ascii;
+
+  struct Argument {
+    bool bHelp;                           // show help information
+    std::string sCMDName;                 // the target command to show help info
+    
+    Argument() : 
+      bHelp(false),
+      sCMDName("") {}
+  };
 }
 
-// use the dummy variable to initialize the db
-static const int dummy_cmdDB = cmdDB_init(CMDHelp::cmdDB);
+BOOST_FUSION_ADAPT_STRUCT
+(
+ Argument,
+ (bool, bHelp)
+ (std::string, sCMDName)
+ )
 
-static po::options_description arg_opt("Options");
-po::options_description_easy_init const dummy_arg_opt =
-  arg_opt.add_options()
-  ("help", "usage information.")
-  ;
+namespace {
+  typedef std::string::const_iterator SIter;
 
-static po::options_description target_opt;
-po::options_description_easy_init const dummy_target_opt =
-  target_opt.add_options()
-  ("target", po::value<vector<string> >()->composing(), "target command names")
-  ;
+  struct ArgParser : qi::grammar<SIter, Argument()>, cmd_parse_base<SIter> {
+    qi::rule<SIter, void(Argument&)> args;
+    qi::rule<SIter, Argument()> start;
+    
+    ArgParser() : ArgParser::base_type(start) {
+      using qi::lit;
+      using ascii::char_;
+      using phoenix::at_c;
+      using phoenix::push_back;
+      using namespace qi::labels;
+      
+      args = (lit("-help") >> blanks) [at_c<0>(_r1) = true];
+      
+      start = -args(_val) >> -(text [at_c<1>(_val) = _1] >> blanks);
 
-po::options_description shell::CMD::CMDHelp::cmd_opt;
-po::options_description const dummy_cmd_opt =
-  CMDHelp::cmd_opt.add(arg_opt).add(target_opt);
+#ifdef BOOST_SPIRIT_QI_DEBUG
+      BOOST_SPIRIT_DEBUG_NODE(args);
+      BOOST_SPIRIT_DEBUG_NODE(start);
+      BOOST_SPIRIT_DEBUG_NODE(text);
+      BOOST_SPIRIT_DEBUG_NODE(blanks);
+      BOOST_SPIRIT_DEBUG_NODE(identifier);
+      BOOST_SPIRIT_DEBUG_NODE(filename);
+#endif
+    }
+  };
+}
 
-po::positional_options_description shell::CMD::CMDHelp::cmd_position;
-po::positional_options_description const dummy_position =
-  CMDHelp::cmd_position.add("target", -1);
+const std::string shell::CMD::CMDHelp::name = "help"; 
+const std::string shell::CMD::CMDHelp::description = 
+  "show and list the usage of commands.";
+
 
 void shell::CMD::CMDHelp::help(Env& gEnv) {
-  gEnv.stdOs << "help: show and list the usage of commands." << endl;
-  gEnv.stdOs << "    analyze [options] commands" << endl;
-  gEnv.stdOs << cmd_name_fix(arg_opt) << endl;
+  gEnv.stdOs << name << ": " << description << endl;
+  gEnv.stdOs << "    help [-help] [command_name]" << endl;
+  gEnv.stdOs << "    command_name        the one to show the detailed help info." << endl;
+  gEnv.stdOs << "                        ( if none, show the list of commands)" << endl;
+  gEnv.stdOs << "Options:" << endl;
+  gEnv.stdOs << "   -help                show this help information." << endl;
 }
 
-void shell::CMD::CMDHelp::exec (const Tcl::object& tclObj, Env * pEnv){
-  
-  Env& gEnv = *pEnv;
-  vector<string> arg = tcl_argu_parse(tclObj);
+void shell::CMD::CMDHelp::exec (const std::string& str, Env * pEnv){
 
-  po::variables_map vm;
+  using std::string;
+  using std::map;
+  using std::pair;
 
-  try {
-    store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
-    notify(vm);
-  } catch(std::exception& e) {
-    gEnv.stdOs << "Wrong command syntax error! See usage by help -help." << endl;
+  Env &gEnv = *pEnv;
+
+  // parse
+  string::const_iterator it = str.begin(), end = str.end();
+  ArgParser parser;             // argument parser
+  Argument arg;                 // argument struct
+  bool r = qi::parse(it, end, parser, arg);
+
+  if(!r || it != end) {
+    gEnv.stdOs << "Error: Wrong command syntax error! See usage by help -help." << endl;
+    gEnv.stdOs << "    help [-help] [command_name]" << endl;
     return;
   }
 
-  if(vm.count("help")) {        // print help information
-    shell::CMD::CMDHelp::help(gEnv);
+  if(arg.bHelp) {        // print help information
+    help(gEnv);
+    return;
   }
-  else if(vm.count("target")) {
-    vector<string> cmd_lst = vm["target"].as<vector<string> >();
-    BOOST_FOREACH(const string& it, cmd_lst) {
-      if(is_tcl_list(it)) {     // tcl list
-        list<string> clist = tcl_list_break_all(it);
-        BOOST_FOREACH(const string& cm, clist) {
-          if(cmdDB.count(cm)) { // should be a single command name
-            gEnv.stdOs << cm << 
-              string(cm.size() < 16 ? 16-cm.size() : 1, ' ') 
-                       << ": " << cmdDB[cm] << endl;
-          } else {
-            gEnv.stdOs << "Error: Wrong command name: \"" << cm << "\"."<< endl;
-            continue;
-          }
-        }
-      } else if(cmdDB.count(it)) { // should be a single command name
-        gEnv.stdOs << it << 
-          string(it.size() < 16 ? 16-it.size() : 1, ' ') 
-                   << ": " << cmdDB[it] << endl;
-      } else {
-        gEnv.stdOs << "Error: Wrong command name: \"" << it << "\"."<< endl;
-        continue;
-      }
-    }
-  } else {
-    // list all command;
-    map<string, string>::iterator it, end;
+
+  // whether a target command is provided
+  if(arg.sCMDName.empty()) {    // no
+    map<string, cmd_record>::iterator it, end;
     for(it=cmdDB.begin(), end=cmdDB.end(); it!=end; it++)
-        gEnv.stdOs << it->first << 
-          string(it->first.size() < 24 ? 24 - it->first.size() : 1, ' ')
-                   << it->second << endl;
+      gEnv.stdOs << it->first << 
+        string(it->first.size() < 24 ? 24 - it->first.size() : 1, ' ')
+                 << it->second.first << endl;
     gEnv.stdOs << endl;
+  } else {
+    if(cmdDB.count(arg.sCMDName)) { // should be a AVS command
+      cmdDB[arg.sCMDName].second(gEnv);
+    } else {
+      gEnv.stdOs << "Error: Wrong command name: \"" << arg.sCMDName << "\"."<< endl;
+    }    
   }
 }

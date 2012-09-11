@@ -33,6 +33,7 @@
 #include "cmd_parse_base.h"
 #include <boost/fusion/include/std_pair.hpp>
 #include "shell/env.h"
+#include "shell/cmd_tcl_interp.h"
 #include "shell/macro_name.h"
 #include <boost/regex.hpp>
 #include <boost/algorithm/string.hpp>
@@ -281,7 +282,7 @@ bool shell::CMD::CMDElaborate::exec (const std::string& str, Env * pEnv){
     });
   
   //set current design to this design
-  //interp.set_variable(MACRO_CURRENT_DESIGN, mDesign->name.name);
+  gEnv.tclInterp->tcli.set_variable(MACRO_CURRENT_DESIGN, mDesign->name.name);
   return true;
 }
 

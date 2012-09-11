@@ -27,7 +27,7 @@
  */
 
 // uncomment it when need to debug Spirit.Qi
-//#define BOOST_SPIRIT_QI_DEBUG
+// #define BOOST_SPIRIT_QI_DEBUG
 
 #include "cmd_define.h"
 #include "cmd_parse_base.h"
@@ -62,28 +62,17 @@ namespace {
   typedef std::string::const_iterator SIter;
 
   struct ArgParser : qi::grammar<SIter, Argument()>, cmd_parse_base<SIter> {
-    qi::rule<SIter, void(Argument&)> args;
     qi::rule<SIter, Argument()> start;
     
     ArgParser() : ArgParser::base_type(start) {
       using qi::lit;
-      using ascii::char_;
       using phoenix::at_c;
-      using phoenix::push_back;
-      using qi::_r1;
       using qi::_val;
       
-      args = lit('-') >> "help" >> blanks [at_c<0>(_r1) = true];
-      
-      start = -(args(_val));
+      start = -(lit("-help") >> blanks [at_c<0>(_val) = true]);
 
 #ifdef BOOST_SPIRIT_QI_DEBUG
-      BOOST_SPIRIT_DEBUG_NODE(args);
       BOOST_SPIRIT_DEBUG_NODE(start);
-      BOOST_SPIRIT_DEBUG_NODE(text);
-      BOOST_SPIRIT_DEBUG_NODE(blanks);
-      BOOST_SPIRIT_DEBUG_NODE(identifier);
-      BOOST_SPIRIT_DEBUG_NODE(filename);
 #endif
     }
   };
@@ -96,7 +85,7 @@ const std::string shell::CMD::CMDExit::description =
 
 void shell::CMD::CMDExit::help(Env& gEnv) {
   gEnv.stdOs << name << ": " << description << endl;
-  gEnv.stdOs << "    exit [-help]" << endl;
+  gEnv.stdOs << "    exit/quit [-help]" << endl;
 }
 
 void shell::CMD::CMDExit::exec(const std::string& str, Env * pEnv) {
@@ -113,7 +102,7 @@ void shell::CMD::CMDExit::exec(const std::string& str, Env * pEnv) {
 
   if(!r || it != end) {
     gEnv.stdOs << "Error: Wrong command syntax error! See usage by exit -help." << endl;
-    gEnv.stdOs << "    exit [-help]" << endl;
+    gEnv.stdOs << "    exit/quit [-help]" << endl;
     return ;
   }
 
