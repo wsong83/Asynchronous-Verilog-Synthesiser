@@ -31,6 +31,7 @@
 
 #include "cmd_define.h"
 #include "cmd_parse_base.h"
+#include <boost/fusion/include/std_pair.hpp>
 #include "shell/env.h"
 #include "shell/macro_name.h"
 #include <boost/regex.hpp>
@@ -73,9 +74,8 @@ BOOST_FUSION_ADAPT_STRUCT
 
 namespace {
   typedef std::string::const_iterator SIter;
-  typedef std::pair<std::string, unsigned int> paraType;
   struct ArgParser : qi::grammar<SIter, Argument()>, cmd_parse_base<SIter> {
-    qi::rule<SIter, paraType()> paraAssign;
+    qi::rule<SIter, std::pair<std::string, unsigned int>()> paraAssign;
     qi::rule<SIter, void(Argument&)> args;
     qi::rule<SIter, Argument()> start;
     
@@ -87,17 +87,20 @@ namespace {
       using qi::_val;
       using phoenix::push_back;
       
-      paraAssign = identifier[at_c<0>(_val) = _1] >> (lit('=')|"<="|"=>") >> qi::uint_ [at_c<1>(_val) = _1];
+      paraAssign %= identifier >> -blanks >> (lit("<=")|"=>"|lit('=')) >> -blanks >> qi::uint_;
 
       args = lit('-') >> 
         (
-         ("help"       >> blanks                   ) [at_c<0>(_r1) = true] ||
-         ("library"    >> blanks >> text >> blanks ) [at_c<1>(_r1) = _1]   //||
-         //"parameters" >> blanks >> 
-         //(
-         // ('\"'|'\'') >> *(paraAssign) % (lit(',')|';'|' ') >>  ('\"'|'\'') ||
-         // *(paraAssign) % lit(',')
-         // )           >> blanks                     [push_back(at_c<2>(_r1), _1)]
+         ("help"                        >> blanks                   ) [at_c<0>(_r1) = true] ||
+         ((lit("library")|"lib"|"work") >> blanks >> text >> blanks ) [at_c<1>(_r1) = _1]   ||
+          "parameters" >> blanks >> 
+         (
+          lit('\"') >> -blanks >>
+          -((paraAssign [push_back(at_c<2>(_r1), _1)]) % (blanks || (lit(',')|';') || blanks))
+          >> -blanks >> lit('\"') 
+          ||
+          (paraAssign [push_back(at_c<2>(_r1), _1)]) % (-blanks >> lit(',') >> -blanks)    
+          )            >> blanks
          );
       
       start = *args(_val) 
@@ -105,7 +108,7 @@ namespace {
         >> *args(_val);
 
 #ifdef BOOST_SPIRIT_QI_DEBUG
-      //BOOST_SPIRIT_DEBUG_NODE(paraAssign);
+      BOOST_SPIRIT_DEBUG_NODE(paraAssign);
       BOOST_SPIRIT_DEBUG_NODE(args);
       BOOST_SPIRIT_DEBUG_NODE(start);
       BOOST_SPIRIT_DEBUG_NODE(text);
@@ -132,7 +135,7 @@ void shell::CMD::CMDElaborate::help(Env& gEnv) {
   gEnv.stdOs << "   -library libName    *extra search library other than work." << endl;
   gEnv.stdOs << "   -work libName       *alias of -library." << endl;
   gEnv.stdOs << "   -parameters list    *module parameter initialization list." << endl;
-  gEnv.stdOs << "                        (eg. -parameters \"M=2;N<=3,L=>4 Q=5\" )" << endl;
+  gEnv.stdOs << "                        (eg. -parameters \"M=2;N<=3,L=>4 Q=5\")" << endl;
   gEnv.stdOs << "                        ( or -parameters M=2,N<=3,L=>4,Q=5 )" << endl;
 }
 
@@ -200,12 +203,12 @@ bool shell::CMD::CMDElaborate::exec (const std::string& str, Env * pEnv){
 
   // duplicate the design
   shared_ptr<netlist::Module> mDesign(tarDesign->deep_copy());
-  /*
+  
   // check and extract parameters
   string pstr;
   if(arg.pvPara.size()) {
     typedef std::pair<string, unsigned int> paraType;
-    BOOST_FOREACH(pair<string, unsigned int>& m, arg.pvPara) {
+    BOOST_FOREACH(paraType& m, arg.pvPara) {
       shared_ptr<netlist::Variable> mpara = mDesign->db_param.find(m.first);
       if(!mpara) {
         gEnv.stdOs << "Error: Fail to find parameter \"" << m.first << "\" in module \"" << mDesign->name.name << "\"." << endl;
@@ -219,7 +222,7 @@ bool shell::CMD::CMDElaborate::exec (const std::string& str, Env * pEnv){
       }
     }
   }
-  */
+  
   // do the real elaboration
   std::deque<shared_ptr<netlist::Module> >        moduleQueue; // recursive module tree
   // avoid elaborating duplicated maps, and temporarily store the elaborated modules
@@ -281,3 +284,4 @@ bool shell::CMD::CMDElaborate::exec (const std::string& str, Env * pEnv){
   //interp.set_variable(MACRO_CURRENT_DESIGN, mDesign->name.name);
   return true;
 }
+
