@@ -26,69 +26,115 @@
  *
  */
 
-#include "report_netlist.h"
+// uncomment it when need to debug Spirit.Qi
+//#define BOOST_SPIRIT_QI_DEBUG
+
+#include "cmd_define.h"
+#include "cmd_parse_base.h"
 #include "shell/env.h"
 #include "shell/macro_name.h"
-#include "shell/cmd_tcl_interp.h"
 
-using std::string;
-using std::vector;
 using std::endl;
 using boost::shared_ptr;
 using namespace shell;
 using namespace shell::CMD;
 
-po::options_description shell::CMD::CMDReportNetlist::cmd_opt;
-static po::options_description_easy_init dummy_cmd_opt =
-  CMDReportNetlist::cmd_opt.add_options()
-  ("help",     "usage information.")
-  ("net_item", po::value<string>(), "the hierarchy name of a netlist item.")
-  ;
+namespace {
+  namespace qi = boost::spirit::qi;
+  namespace phoenix = boost::phoenix;
 
-po::positional_options_description shell::CMD::CMDReportNetlist::cmd_position;
-static po::positional_options_description const dummy_position = 
-  CMDReportNetlist::cmd_position.add("net_item", 1);
+  struct Argument {
+    bool bHelp;                 // show help information
+    std::string sDesign;        // target design name
+    
+    Argument() : 
+      bHelp(false),
+      sDesign("") {}
+  };
+}
+
+BOOST_FUSION_ADAPT_STRUCT
+(
+ Argument,
+ (bool, bHelp)
+ (std::string, sDesign)
+ )
+
+namespace {
+  typedef std::string::const_iterator SIter;
+
+  struct ArgParser : qi::grammar<SIter, Argument()>, cmd_parse_base<SIter> {
+    qi::rule<SIter, void(Argument&)> args;
+    qi::rule<SIter, Argument()> start;
+    
+    ArgParser() : ArgParser::base_type(start) {
+      using qi::lit;
+      using phoenix::at_c;
+      using qi::_r1;
+      using qi::_1;
+      using qi::_val;
+
+      args = lit('-') >> "help" >> blanks [at_c<0>(_r1) = true];
+      
+      start = -args(_val) >> -((identifier >> blanks) [at_c<1>(_val) = _1]);
+
+#ifdef BOOST_SPIRIT_QI_DEBUG
+      BOOST_SPIRIT_DEBUG_NODE(args);
+      BOOST_SPIRIT_DEBUG_NODE(start);
+      BOOST_SPIRIT_DEBUG_NODE(text);
+      BOOST_SPIRIT_DEBUG_NODE(blanks);
+      BOOST_SPIRIT_DEBUG_NODE(identifier);
+      BOOST_SPIRIT_DEBUG_NODE(filename);
+#endif
+    }
+  };
+}
+
+const std::string shell::CMD::CMDReportNetlist::name = "report_netlist"; 
+const std::string shell::CMD::CMDReportNetlist::description = 
+  "display the internal structure of a netlist item.";
 
 
 void shell::CMD::CMDReportNetlist::help(Env& gEnv) {
-  gEnv.stdOs << "report_netlist: display the internal structure of a netlist item." << endl;
-  gEnv.stdOs << "    report_netlist netlist_item" << endl;
+  gEnv.stdOs << name << ": " << description << endl;
+  gEnv.stdOs << "    report_netlist [-help] DesignName" << endl;
+  gEnv.stdOs << "    DesignName          the taregt design to be reported." << endl;
   gEnv.stdOs << "Options:" << endl;
   gEnv.stdOs << "   -help                usage information." << endl;
-  gEnv.stdOs << endl;
 }
 
-bool shell::CMD::CMDReportNetlist::exec(const Tcl::object& tclObj, Env * pEnv) {
-  po::variables_map vm;
-  Tcl::interpreter& interp = pEnv->tclInterp->tcli;
-  Env &gEnv = *pEnv;
-  vector<string> arg = tclObj.get<vector<string> >(interp);
+bool shell::CMD::CMDReportNetlist::exec(const std::string& str, Env * pEnv) {
 
-  try {
-    store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
-    notify(vm);
-  } catch (std::exception& e) {
+  using std::string;
+
+  Env &gEnv = *pEnv;
+
+  // parse
+  string::const_iterator it = str.begin(), end = str.end();
+  ArgParser parser;             // argument parser
+  Argument arg;                 // argument struct
+  bool r = qi::parse(it, end, parser, arg);
+
+  if(!r || it != end) {
     gEnv.stdOs << "Error: Wrong command syntax error! See usage by report_netlist -help." << endl;
+    gEnv.stdOs << "    report_netlist [-help] DesignName" << endl;
     return false;
   }
 
-  if(vm.count("help")) {        // print help information
-    shell::CMD::CMDReportNetlist::help(gEnv);
+  if(arg.bHelp) {        // print help information
+    help(gEnv);
+    return true;
+  }
+
+  if(arg.sDesign.empty())
+    arg.sDesign = gEnv.macroDB[MACRO_CURRENT_DESIGN];
+
+  shared_ptr<netlist::NetComp> mitem = gEnv.hierarchical_search(arg.sDesign);
+  if(mitem.use_count() != 0) {
+    gEnv.stdOs << *mitem << endl;
     return true;
   } else {
-    string netItem;
-    if(vm.count("net_item")) {
-      netItem = vm["net_item"].as<string>();
-      shared_ptr<netlist::NetComp> mitem = gEnv.hierarchical_search(netItem);
-      if(mitem.use_count() != 0)
-        gEnv.stdOs << *mitem << endl;
-      else {
-        gEnv.stdOs << "Error: Fail to find any item named \"" << netItem << "\"." << endl;
-        return false;
-      }
-      return true;
-    } 
-    shell::CMD::CMDReportNetlist::help(gEnv);
-    return true;
+    gEnv.stdOs << "Error: Fail to find any item named \"" << arg.sDesign << "\"." << endl;
+    return false;
   }
 }

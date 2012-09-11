@@ -26,10 +26,12 @@
  *
  */
 
-#include "write.h"
+// uncomment it when need to debug Spirit.Qi
+//#define BOOST_SPIRIT_QI_DEBUG
+
+#include "cmd_define.h"
+#include "cmd_parse_base.h"
 #include "shell/env.h"
-#include "shell/macro_name.h"
-#include "shell/cmd_tcl_interp.h"
 #include "shell/macro_name.h"
 
 #define BOOST_FILESYSTEM_VERSION 3
@@ -37,72 +39,127 @@
 #include <boost/filesystem/fstream.hpp>
 using namespace boost::filesystem;
 
-#include <algorithm>
+#include <boost/foreach.hpp>
 
-using std::string;
-using std::vector;
 using std::endl;
 using boost::shared_ptr;
 using std::list;
-using std::for_each;
 using namespace shell::CMD;
 
-static po::options_description arg_opt("Options");
-static po::options_description_easy_init const dummy_arg_opt =
-  arg_opt.add_options()
-  ("help", "usage information.")
-  ("hierarchy", "write out the whole hierarchy (default only the current level).")
-  ("output", po::value<string>(), "the file name of the output file.")
-  ;
 
-static po::options_description design_opt;
-static po::options_description_easy_init const dummy_design_opt =
-  design_opt.add_options()
-  ("design", po::value<string>(), "the target design name.")
-  ;
+namespace {
+  namespace qi = boost::spirit::qi;
+  namespace phoenix = boost::phoenix;
+  namespace ascii = boost::spirit::ascii;
 
-po::options_description shell::CMD::CMDWrite::cmd_opt;
-static po::options_description const dummy_cmd_opt =
-  CMDWrite::cmd_opt.add(arg_opt).add(design_opt);
-
-po::positional_options_description shell::CMD::CMDWrite::cmd_position;
-static po::positional_options_description const dummy_position = 
-  CMDWrite::cmd_position.add("design", 1);
-
-void shell::CMD::CMDWrite::help(Env& gEnv) {
-  gEnv.stdOs << "write: write out a design to a file." << endl;
-  gEnv.stdOs << "    write [options] [design_name]" << endl;
-  gEnv.stdOs << cmd_name_fix(arg_opt);
-  gEnv.stdOs << "   design_name          the design to be written out (default the current " << endl;
-  gEnv.stdOs << "                        design)." << endl << endl;
+  struct Argument {
+    bool bHelp;                 // show help information
+    bool bHierarchy;            // write out hierarchical design
+    std::string sDesign;        // target design to be written out
+    std::string sOutput;        // output file name
+    
+    Argument() : 
+      bHelp(false),
+      bHierarchy(false),
+      sDesign(""),
+      sOutput("") {}
+  };
 }
 
-bool shell::CMD::CMDWrite::exec ( const Tcl::object& tclObj, Env * pEnv){
-  po::variables_map vm;
-  Tcl::interpreter& interp = pEnv->tclInterp->tcli;
-  Env &gEnv = *pEnv;
-  vector<string> arg = tclObj.get<vector<string> >(interp);
+BOOST_FUSION_ADAPT_STRUCT
+(
+ Argument,
+ (bool, bHelp)
+ (bool, bHierarchy)
+ (std::string, sDesign)
+ (std::string, sOutput)
+ )
 
-  try {
-    store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
-    notify(vm);
-  } catch (std::exception& e) {
+namespace {
+  typedef std::string::const_iterator SIter;
+
+  struct ArgParser : qi::grammar<SIter, Argument()>, cmd_parse_base<SIter> {
+    qi::rule<SIter, void(Argument&)> args;
+    qi::rule<SIter, Argument()> start;
+    
+    ArgParser() : ArgParser::base_type(start) {
+      using qi::lit;
+      using ascii::char_;
+      using ascii::space;
+      using phoenix::at_c;
+      using namespace qi::labels;
+
+      args = lit('-') >> 
+        ( (lit("help")              >> blanks) [at_c<0>(_r1) = true]  ||
+          (lit("hierarchy")         >> blanks) [at_c<1>(_r1) = true]  ||
+          (lit("output") >> blanks >> filename >> blanks) [at_c<3>(_r1) = _1]
+          );
+      
+      start = 
+        *(args(_val))
+        >> -(identifier >> blanks) [at_c<2>(_val) = _1] 
+        >> *(args(_val))
+        ;
+
+#ifdef BOOST_SPIRIT_QI_DEBUG
+      BOOST_SPIRIT_DEBUG_NODE(args);
+      BOOST_SPIRIT_DEBUG_NODE(start);
+      BOOST_SPIRIT_DEBUG_NODE(text);
+      BOOST_SPIRIT_DEBUG_NODE(blanks);
+      BOOST_SPIRIT_DEBUG_NODE(identifier);
+      BOOST_SPIRIT_DEBUG_NODE(filename);
+#endif
+    }
+  };
+}
+
+const std::string shell::CMD::CMDWrite::name = "write"; 
+const std::string shell::CMD::CMDWrite::description = 
+  "write out a design to a file.";
+
+void shell::CMD::CMDWrite::help(Env& gEnv) {
+  gEnv.stdOs << name << ": " << description << endl;
+  gEnv.stdOs << "    write [options] [design_name]" << endl;
+  gEnv.stdOs << "    design_name         the design to be written out (default the current" << endl;
+  gEnv.stdOs << "                        design)." << endl;
+  gEnv.stdOs << "Options:" << endl;
+  gEnv.stdOs << "   -help                show this help information." << endl;
+  gEnv.stdOs << "   -hierarchy           write out the whole design hiarchy." << endl;
+  gEnv.stdOs << "                        (in default only the design module is written out)" << endl;
+  gEnv.stdOs << "   -output file_name    specify the output file name." << endl;
+  gEnv.stdOs << "                        (in default is \"design_name.v\")" << endl;
+}
+
+bool shell::CMD::CMDWrite::exec ( const std::string& str, Env * pEnv){
+
+  using std::string;
+
+  Env &gEnv = *pEnv;
+
+  // parse
+  string::const_iterator it = str.begin(), end = str.end();
+  ArgParser parser;             // argument parser
+  Argument arg;                 // argument struct
+  bool r = qi::parse(it, end, parser, arg);
+
+  if(!r || it != end) {
     gEnv.stdOs << "Error: Wrong command syntax error! See usage by write -help." << endl;
+    gEnv.stdOs << "    write [options] [design_name]" << endl;
     return false;
   }
 
-  if(vm.count("help")) {        // print help information
-    shell::CMD::CMDWrite::help(gEnv);
+  if(arg.bHelp) {        // print help information
+    help(gEnv);
     return true;
   }
 
   // settle the design to be written out
   string designName;
   shared_ptr<netlist::Module> tarDesign;
-  if(vm.count("design")) {
-    designName = vm["design"].as<string>();
-  } else {
+  if(arg.sDesign.empty()) {
     designName = gEnv.macroDB[MACRO_CURRENT_DESIGN].get_string();
+  } else {
+    designName = arg.sDesign;
   }
   tarDesign = gEnv.find_module(designName);
   if(tarDesign.use_count() == 0) {
@@ -110,13 +167,10 @@ bool shell::CMD::CMDWrite::exec ( const Tcl::object& tclObj, Env * pEnv){
     return false;
   }
 
-  // whether to output the hierarchy
-  bool hierarchyOutPut = vm.count("hierarchy");
-
   // specify the output file name
   string outputFileName;
-  if(vm.count("output")) outputFileName = vm["output"].as<string>();
-  else outputFileName = designName + ".v";
+  if(arg.sOutput.empty()) outputFileName = designName + ".v";
+  else outputFileName = arg.sOutput;
 
   // open the file
   ofstream fhandler;
@@ -126,7 +180,7 @@ bool shell::CMD::CMDWrite::exec ( const Tcl::object& tclObj, Env * pEnv){
   gEnv.stdOs << "Write out design \"" << designName << "\" to file " << system_complete(outputFileName) << "." << endl;
 
   // do the write out
-  if(hierarchyOutPut) {         // hierarchical
+  if(arg.bHierarchy) {         // hierarchical
     // prepared the module map and queue
     list<shared_ptr<netlist::Module> > moduleQueue; // recursive module tree
     std::set<netlist::MIdentifier>  moduleMap;
@@ -136,9 +190,9 @@ bool shell::CMD::CMDWrite::exec ( const Tcl::object& tclObj, Env * pEnv){
     // find all modules
     tarDesign->get_hier(moduleQueue, moduleMap);
     // do the write out
-    for_each(moduleQueue.begin(), moduleQueue.end(), [&fhandler](shared_ptr<netlist::Module>& m) {
-        fhandler << *m << std::endl;
-      });
+    BOOST_FOREACH(shared_ptr<netlist::Module>& m, moduleQueue) {
+      fhandler << *m << std::endl;
+    }
   } else {
     fhandler << *tarDesign << std::endl;
   } 

@@ -29,30 +29,49 @@
 #ifndef AV_CMD_CMD_DEFINE_
 #define AV_CMD_CMD_DEFINE_
 
-#include <boost/program_options.hpp>
-  namespace po = boost::program_options;
-#include <boost/algorithm/string/replace.hpp>
 #include <iostream>
-#include <sstream>
 #include <string>
+#include <map>
+#include <utility>
+#include <boost/function.hpp>
 
-namespace shell { 
+#ifndef NEW_TCL_CMD
+#define NEW_TCL_CMD(rt_type, cmd_name)                         \
+struct cmd_name {                                              \
+  static rt_type exec ( const std::string&, Env *);            \
+  static void help ( Env& );                                   \
+  static const std::string name;                               \
+  static const std::string description;                        \
+}
+#endif                               
+
+namespace shell {
+  class Env;
   namespace CMD {
-    const po::command_line_style::style_t cmd_style = 
-      po::command_line_style::style_t(
-                                      po::command_line_style::unix_style |
-                                      po::command_line_style::allow_long_disguise
-                                      );
+    NEW_TCL_CMD(bool, CMDAnalyze);
+    NEW_TCL_CMD(void, CMDCurrentDesign);
+    NEW_TCL_CMD(std::string, CMDEcho);
+    NEW_TCL_CMD(bool, CMDElaborate);
+    NEW_TCL_CMD(void, CMDExit);
+    NEW_TCL_CMD(bool, CMDReportNetlist);
+    NEW_TCL_CMD(std::string, CMDShell);
+    NEW_TCL_CMD(bool, CMDSuppressMessage);
+    NEW_TCL_CMD(bool, CMDWrite);
 
-    // get rid of the --long-name problem
-    inline std::string cmd_name_fix(const po::options_description& opt) {
-      std::stringstream tmp;
-      tmp << opt;
-      std::string opt_str = tmp.str();
-      boost::algorithm::replace_all(opt_str, " --", "  -");
-      return opt_str;
-    }
+
+    // help is different
+    struct CMDHelp {
+      static void exec ( const std::string&, Env *);
+      static void help ( Env& );
+      static const std::string name;
+      static const std::string description;
+      typedef std::pair<std::string, boost::function1<void, Env&> > cmd_record;
+      static std::map<std::string, cmd_record> cmdDB;
+    };
+
   }
 }
 
+
+#undef NEW_TCL_CMD
 #endif

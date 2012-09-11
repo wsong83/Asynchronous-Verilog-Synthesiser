@@ -26,45 +26,91 @@
  *
  */
 
-#include "exit.h"
+// uncomment it when need to debug Spirit.Qi
+// #define BOOST_SPIRIT_QI_DEBUG
+
+#include "cmd_define.h"
+#include "cmd_parse_base.h"
 #include "shell/env.h"
 #include "shell/cmd_tcl_interp.h"
 
-using std::vector;
 using std::endl;
-using std::string;
 using namespace shell;
 using namespace shell::CMD;
 
-po::options_description shell::CMD::CMDExit::cmd_opt;
-static po::options_description_easy_init dummy_cmd_opt =
-  CMDExit::cmd_opt.add_options()
-  ("help",     "usage information.")
-  ;
 
-void shell::CMD::CMDExit::help(Env& gEnv) {
-  gEnv.stdOs << "exit/quit: quit the system." << endl;
-  gEnv.stdOs << "    echo [-help]" << endl;
-  gEnv.stdOs << endl;
+namespace {
+  namespace qi = boost::spirit::qi;
+  namespace phoenix = boost::phoenix;
+  namespace ascii = boost::spirit::ascii;
+
+  struct Argument {
+    bool bHelp;                           // show help information
+    
+    Argument() : 
+      bHelp(false) {}
+  };
 }
 
-void shell::CMD::CMDExit::exec(const Tcl::object& tclObj, Env * pEnv) {
-  po::variables_map vm;
-  Env& gEnv = *pEnv;
-  vector<string> arg = tclObj.get<vector<string> >(gEnv.tclInterp->tcli);
-  string rv;
+BOOST_FUSION_ADAPT_STRUCT
+(
+ Argument,
+ (bool, bHelp)
+ )
 
-  try {
-    store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).run(), vm);
-    notify(vm);
-  } catch (std::exception& e) {
+namespace {
+  typedef std::string::const_iterator SIter;
+
+  struct ArgParser : qi::grammar<SIter, Argument()>, cmd_parse_base<SIter> {
+    qi::rule<SIter, Argument()> start;
+    
+    ArgParser() : ArgParser::base_type(start) {
+      using qi::lit;
+      using phoenix::at_c;
+      using qi::_val;
+      
+      start = -(lit("-help") >> blanks [at_c<0>(_val) = true]);
+
+#ifdef BOOST_SPIRIT_QI_DEBUG
+      BOOST_SPIRIT_DEBUG_NODE(start);
+#endif
+    }
+  };
+}
+
+const std::string shell::CMD::CMDExit::name = "exit/quit"; 
+const std::string shell::CMD::CMDExit::description = 
+  "quit the system.";
+
+
+void shell::CMD::CMDExit::help(Env& gEnv) {
+  gEnv.stdOs << name << ": " << description << endl;
+  gEnv.stdOs << "    exit/quit [-help]" << endl;
+}
+
+void shell::CMD::CMDExit::exec(const std::string& str, Env * pEnv) {
+
+  using std::string;
+
+  Env &gEnv = *pEnv;
+
+  // parse
+  string::const_iterator it = str.begin(), end = str.end();
+  ArgParser parser;             // argument parser
+  Argument arg;                 // argument struct
+  bool r = qi::parse(it, end, parser, arg);
+
+  if(!r || it != end) {
     gEnv.stdOs << "Error: Wrong command syntax error! See usage by exit -help." << endl;
+    gEnv.stdOs << "    exit/quit [-help]" << endl;
+    return ;
+  }
+
+  if(arg.bHelp) {        // print help information
+    help(gEnv);
     return;
   }
 
-  if(vm.count("help")) {        // print help information
-    shell::CMD::CMDExit::help(gEnv);
-  } else {
-    throw Tcl::tcl_error("CMD_TCL_EXIT");
-  }
+  throw Tcl::tcl_error("CMD_TCL_EXIT");
+  
 }

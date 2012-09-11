@@ -26,21 +26,23 @@
  *
  */
 
+// uncomment it when need to debug Spirit.Qi
+//#define BOOST_SPIRIT_QI_DEBUG
+
+#include "cmd_define.h"
+#include "cmd_parse_base.h"
+#include "shell/env.h"
+#include "shell/macro_name.h"
+
 #include <fstream>
 #define BOOST_FILESYSTEM_VERSION 3
 #include <boost/filesystem.hpp>
-#include "analyze.h"
-#include "shell/env.h"
-#include "shell/cmd_tcl_interp.h"
 #include "preproc/preproc.h"
 #include "shell/macro_name.h"
 #include "averilog/averilog_util.h"
 #include "averilog/averilog.lex.h"
 #include <boost/foreach.hpp>
 
-using std::string;
-using std::vector;
-using std::list;
 using std::endl;
 using std::ofstream;
 using boost::shared_ptr;
@@ -49,78 +51,133 @@ using boost::filesystem::exists;
 using namespace shell;
 using namespace shell::CMD;
 
-static po::options_description arg_opt("Options");
-static po::options_description_easy_init const dummy_arg_opt =
-  arg_opt.add_options()
-  ("help", "usage information.")
-  ("format", po::value<string>(), "the source file language (now only support verilog).")
-  ("library", po::value<string>(), "set the output library (other than work).")
-  ("define", po::value<vector<string> >()->composing(), "macro definitions.")
-  ;
 
-static po::options_description file_opt;
-static po::options_description_easy_init const dummy_file_opt =
-  file_opt.add_options()
-  ("file", po::value<vector<string> >()->composing(), "input files")
-  ;
+namespace {
+  namespace qi = boost::spirit::qi;
+  namespace phoenix = boost::phoenix;
+  namespace ascii = boost::spirit::ascii;
 
-po::options_description shell::CMD::CMDAnalyze::cmd_opt;
-static po::options_description const dummy_cmd_opt =
-  CMDAnalyze::cmd_opt.add(arg_opt).add(file_opt);
-
-po::positional_options_description shell::CMD::CMDAnalyze::cmd_position;
-static po::positional_options_description const dummy_position = 
-  CMDAnalyze::cmd_position.add("file", -1);
-
-void shell::CMD::CMDAnalyze::help(Env& gEnv) {
-  gEnv.stdOs << "analyze: read in the Verilog HDL design files." << endl;
-  gEnv.stdOs << "    analyze [options] source_files" << endl;
-  gEnv.stdOs << cmd_name_fix(arg_opt) << endl;
+  struct Argument {
+    bool bHelp;                           // show help information
+    std::string sFormat;                  // language
+    std::string sLibrary;                 // target work library
+    std::vector<std::string> svDefine;    // macro definitions
+    std::vector<std::string> svFile;      // target soruce file 
+    
+    Argument() : 
+      bHelp(false),
+      sFormat("verilog"),
+      sLibrary("work") {}
+  };
 }
 
-bool shell::CMD::CMDAnalyze::exec (const Tcl::object& tclObj, Env * pEnv){
-  po::variables_map vm;
-  Env &gEnv = *pEnv;
-  Tcl::interpreter& interp = gEnv.tclInterp->tcli;
-  vector<string> arg = tclObj.get<vector<string> >(interp);
+BOOST_FUSION_ADAPT_STRUCT
+(
+ Argument,
+ (bool, bHelp)
+ (std::string, sFormat)
+ (std::string, sLibrary)
+ (std::vector<std::string>, svDefine)
+ (std::vector<std::string>, svFile)
+ )
 
-  try {
-    store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
-    notify(vm);
-  } catch (std::exception& e) {
+namespace {
+  typedef std::string::const_iterator SIter;
+
+  struct ArgParser : qi::grammar<SIter, Argument()>, cmd_parse_base<SIter> {
+    qi::rule<SIter, void(Argument&)> args;
+    qi::rule<SIter, Argument()> start;
+    
+    ArgParser() : ArgParser::base_type(start) {
+      using qi::lit;
+      using ascii::char_;
+      using phoenix::at_c;
+      using phoenix::push_back;
+      using namespace qi::labels;
+      
+      args = 
+        ( lit('-') >> 
+          ( ("help"    >> blanks                        ) [at_c<0>(_r1) = true] ||
+            ("format"  >> blanks >> text       >> blanks) [at_c<1>(_r1) = _1]   ||
+            ("library" >> blanks >> text       >> blanks) [at_c<2>(_r1) = _1]   ||
+            ("define"  >> blanks >> identifier >> blanks) [push_back(at_c<3>(_r1), _1)] 
+           )
+         ) 
+        || (filename   >> blanks                        ) [push_back(at_c<4>(_r1), _1)]
+        ;
+      
+      start = +(args(_val));
+
+#ifdef BOOST_SPIRIT_QI_DEBUG
+      BOOST_SPIRIT_DEBUG_NODE(args);
+      BOOST_SPIRIT_DEBUG_NODE(start);
+      BOOST_SPIRIT_DEBUG_NODE(text);
+      BOOST_SPIRIT_DEBUG_NODE(blanks);
+      BOOST_SPIRIT_DEBUG_NODE(identifier);
+      BOOST_SPIRIT_DEBUG_NODE(filename);
+#endif
+    }
+  };
+}
+
+const std::string shell::CMD::CMDAnalyze::name = "analyze"; 
+const std::string shell::CMD::CMDAnalyze::description = 
+  "read in the Verilog HDL design files.";
+
+
+void shell::CMD::CMDAnalyze::help(Env& gEnv) {
+  gEnv.stdOs << name << ": " << description << endl;
+  gEnv.stdOs << "    analyze [options] source_files" << endl;
+  gEnv.stdOs << "    source_file        +the design to be read in." << endl;
+  gEnv.stdOs << "Options:" << endl;
+  gEnv.stdOs << "   -help                show this help information." << endl;
+  gEnv.stdOs << "   -format language     the source file language (default verilog)." << endl;
+  gEnv.stdOs << "   -library lib_name    specify the target work library (default work)." << endl;
+  gEnv.stdOs << "   -define MACRO_NAME  *define a macro in Verilog." << endl;
+}
+
+bool shell::CMD::CMDAnalyze::exec (const std::string& str, Env * pEnv){
+
+  using std::string;
+
+  Env &gEnv = *pEnv;
+
+  // parse
+  string::const_iterator it = str.begin(), end = str.end();
+  ArgParser parser;             // argument parser
+  Argument arg;                 // argument struct
+  bool r = qi::parse(it, end, parser, arg);
+
+  if(!r || it != end) {
     gEnv.stdOs << "Error: Wrong command syntax error! See usage by analyze -help." << endl;
+    gEnv.stdOs << "    analyze [options] source_files" << endl;
     return false;
   }
 
-  if(vm.count("help")) {        // print help information
-    shell::CMD::CMDAnalyze::help(gEnv);
+  if(arg.bHelp) {        // print help information
+    help(gEnv);
     return true;
   }
 
   //set the target library
-  if(vm.count("library")) {
-    string lib_name = vm["library"].as<string>();
-    if(lib_name.empty()) {
-      gEnv.stdOs << "Error: The target library name is empty." << endl;
-      return false;
-    } else {
-      if(!gEnv.link_lib.count(lib_name))
-        gEnv.link_lib[lib_name] = shared_ptr<netlist::Library>(new netlist::Library(lib_name, lib_name+".db"));
-
-      gEnv.curLib = gEnv.link_lib[lib_name];
-    }
+  if(arg.sLibrary.empty()) {
+    gEnv.stdOs << "Error: The target library name is empty." << endl;
+    return false;
+  } else {
+    if(!gEnv.link_lib.count(arg.sLibrary))
+      gEnv.link_lib[arg.sLibrary] = shared_ptr<netlist::Library>(new netlist::Library(arg.sLibrary, arg.sLibrary+".db"));
+    
+    gEnv.curLib = gEnv.link_lib[arg.sLibrary];
   }
-
+  
   // analyse the target files
-  if(vm.count("file")) {
-    vector<string> target_files = vm["file"].as<vector<string> >();
-    BOOST_FOREACH(const string& it, target_files) {
+  if(arg.svFile.size()) {
+    BOOST_FOREACH(const string& it, arg.svFile) {
       //find the correct file name
       path fname(it);
       if(!exists(fname)) {
         bool m_exist = false;
-        BOOST_FOREACH(const string& sit, 
-                      interp.read_variable<vector<string> >(MACRO_SEARCH_PATH)) {
+        BOOST_FOREACH(const string& sit, gEnv.macroDB[MACRO_SEARCH_PATH].get_list()) {
           fname = sit + "/" + it;
           if(exists(fname)) { m_exist = true; break;}
         }
@@ -151,15 +208,13 @@ bool shell::CMD::CMDAnalyze::exec (const Tcl::object& tclObj, Env * pEnv){
       }
       
       //set the pre-defined macros
-      if(vm.count("define")) {
-        vector<string> macro_list = vm["define"].as<vector<string> >();
-        BOOST_FOREACH(const string& mit, macro_list)
+      if(arg.svDefine.size()) {
+        BOOST_FOREACH(const string& mit, arg.svDefine)
           preprocp->define(mit, "", "", true);
       }
 
       // set the include paths
-      BOOST_FOREACH(const string& iit, 
-                    interp.read_variable<vector<string> >(MACRO_SEARCH_PATH))
+      BOOST_FOREACH(const string& iit, gEnv.macroDB[MACRO_SEARCH_PATH].get_list())
         preprocp->add_incr(iit);
       
       // set the output file
@@ -184,9 +239,8 @@ bool shell::CMD::CMDAnalyze::exec (const Tcl::object& tclObj, Env * pEnv){
       m_parser.initialize();
       m_parser.parse();
     }
-    return true;
   }
   
-  shell::CMD::CMDAnalyze::help(gEnv);    
   return true;
 }
+

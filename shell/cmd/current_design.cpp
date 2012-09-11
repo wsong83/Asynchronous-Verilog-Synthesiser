@@ -26,62 +26,109 @@
  *
  */
 
-#include "current_design.h"
+// uncomment it when need to debug Spirit.Qi
+//#define BOOST_SPIRIT_QI_DEBUG
+
+#include "cmd_define.h"
+#include "cmd_parse_base.h"
 #include "shell/env.h"
-#include "shell/macro_name.h"
 #include "shell/cmd_tcl_interp.h"
+#include "shell/macro_name.h"
 
-using std::string;
 using std::endl;
-using std::vector;
-
 using namespace shell;
 using namespace shell::CMD;
 
+namespace {
+  namespace qi = boost::spirit::qi;
+  namespace phoenix = boost::phoenix;
 
-po::options_description shell::CMD::CMDCurrentDesign::cmd_opt;
-static po::options_description_easy_init dummy_cmd_opt =
-  CMDCurrentDesign::cmd_opt.add_options()
-  ("help",     "usage information.")
-  ("designName",  po::value<string>(), "the taregt design name.")
-  ;
+  struct Argument {
+    bool bHelp;                 // show help information
+    std::string sDesign;        // target design name
+    
+    Argument() : 
+      bHelp(false),
+      sDesign("") {}
+  };
+}
 
-po::positional_options_description shell::CMD::CMDCurrentDesign::cmd_position;
-static po::positional_options_description const dummy_position = 
-  CMDCurrentDesign::cmd_position.add("designName", 1);
+BOOST_FUSION_ADAPT_STRUCT
+(
+ Argument,
+ (bool, bHelp)
+ (std::string, sDesign)
+ )
+
+namespace {
+  typedef std::string::const_iterator SIter;
+
+  struct ArgParser : qi::grammar<SIter, Argument()>, cmd_parse_base<SIter> {
+    qi::rule<SIter, void(Argument&)> args;
+    qi::rule<SIter, Argument()> start;
+    
+    ArgParser() : ArgParser::base_type(start) {
+      using qi::lit;
+      using phoenix::at_c;
+      using qi::_r1;
+      using qi::_1;
+      using qi::_val;
+
+      args = lit('-') >> "help" >> blanks [at_c<0>(_r1) = true];
+      
+      start = -args(_val) >> -((identifier >> blanks) [at_c<1>(_val) = _1]);
+
+#ifdef BOOST_SPIRIT_QI_DEBUG
+      BOOST_SPIRIT_DEBUG_NODE(args);
+      BOOST_SPIRIT_DEBUG_NODE(start);
+      BOOST_SPIRIT_DEBUG_NODE(text);
+      BOOST_SPIRIT_DEBUG_NODE(blanks);
+      BOOST_SPIRIT_DEBUG_NODE(identifier);
+      BOOST_SPIRIT_DEBUG_NODE(filename);
+#endif
+    }
+  };
+}
+
+const std::string shell::CMD::CMDCurrentDesign::name = "current_design"; 
+const std::string shell::CMD::CMDCurrentDesign::description = 
+  "set or show the current target design.";
 
 
 void shell::CMD::CMDCurrentDesign::help(Env& gEnv) {
-  gEnv.stdOs << "current_design: set or show the current target design." << endl;
+  gEnv.stdOs << name << ": " << description << endl;
   gEnv.stdOs << "    current_design [DesignName]" << endl;
+  gEnv.stdOs << "    DesignName          the taregt design name." << endl;
+  gEnv.stdOs << "                        (if none, the current design is shown)" << endl;
   gEnv.stdOs << "Options:" << endl;
   gEnv.stdOs << "   -help                usage information." << endl;
-  gEnv.stdOs << endl;
 }
 
-void shell::CMD::CMDCurrentDesign::exec(const Tcl::object& tclObj, Env * pEnv) {
-  po::variables_map vm;
-  Tcl::interpreter& interp = pEnv->tclInterp->tcli;
+void shell::CMD::CMDCurrentDesign::exec(const std::string& str, Env * pEnv) {
+
+  using std::string;
+
   Env &gEnv = *pEnv;
-  vector<string> arg = tclObj.get<vector<string> >(interp);
 
-  try {
-    store(po::command_line_parser(arg).options(cmd_opt).style(cmd_style).positional(cmd_position).run(), vm);
-    notify(vm);
-  } catch (std::exception& e) {
+  // parse
+  string::const_iterator it = str.begin(), end = str.end();
+  ArgParser parser;             // argument parser
+  Argument arg;                 // argument struct
+  bool r = qi::parse(it, end, parser, arg);
+
+  if(!r || it != end) {
     gEnv.stdOs << "Error: Wrong command syntax error! See usage by current_design -help." << endl;
+    gEnv.stdOs << "    current_design [DesignName]" << endl;
     return;
   }
 
-  if(vm.count("help")) {        // print help information
-    shell::CMD::CMDCurrentDesign::help(gEnv);
+  if(arg.bHelp) {        // print help information
+    help(gEnv);
     return;
   }
 
-  if(vm.count("designName")) {
-    string designName = vm["designName"].as<string>();
-    interp.set_variable(MACRO_CURRENT_DESIGN, designName);
-    gEnv.macroDB[MACRO_CURRENT_DESIGN] = interp.read_variable<string>(MACRO_CURRENT_DESIGN);
+  if(!arg.sDesign.empty()) {
+    gEnv.tclInterp->tcli.set_variable(MACRO_CURRENT_DESIGN, arg.sDesign);
   }
 
   // show the current design

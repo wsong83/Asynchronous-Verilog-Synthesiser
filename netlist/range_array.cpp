@@ -106,7 +106,7 @@ RangeArray netlist::RangeArray::const_copy(const RangeArray& maxRange) const {
 
 RangeArray netlist::RangeArray::deep_object_copy() const {
   RangeArray rv;
-  for_each(child.begin(), child.end(), [&rv](const shared_ptr<Range>& m) {
+  for_each(child.begin(), child.end(), [&](const shared_ptr<Range>& m) {
       rv.child.push_back(shared_ptr<Range>(m->deep_copy()));
     });
   rv.const_reduced = const_reduced;
@@ -195,7 +195,7 @@ bool netlist::RangeArray::check_inparse() {
 
 RangeArray* netlist::RangeArray::deep_copy() const {
   RangeArray* rv = new RangeArray();
-  for_each(child.begin(), child.end(), [&rv](const shared_ptr<Range>& m) {
+  for_each(child.begin(), child.end(), [&](const shared_ptr<Range>& m) {
       rv->child.push_back(shared_ptr<Range>(m->deep_copy()));
     });
   rv->const_reduced = const_reduced;

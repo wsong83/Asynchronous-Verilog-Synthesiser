@@ -334,7 +334,7 @@ bool netlist::Block::elaborate(elab_result_t &result, const ctype_t mctype, cons
       case ELAB_Const_If: {     // need test
         SP_CAST(mif, IfState, *cit);
         for_each(mif->ifcase->db_var.begin_order(), mif->ifcase->db_var.end_order(),
-                 [&db_var](pair<VIdentifier, shared_ptr<Variable> >& m) {
+                 [&](pair<VIdentifier, shared_ptr<Variable> >& m) {
                      bool v = db_var.insert(m.first, m.second);
                      assert(v);
                    } );
@@ -374,7 +374,7 @@ bool netlist::Block::elaborate(elab_result_t &result, const ctype_t mctype, cons
 }
 
 void netlist::Block::set_always_pointer(SeqBlock *p) {
-  for_each(db_other.begin(), db_other.end(), [&p](pair<const BIdentifier, shared_ptr<NetComp> >& m) {
+  for_each(db_other.begin(), db_other.end(), [&](pair<const BIdentifier, shared_ptr<NetComp> >& m) {
       m.second->set_always_pointer(p);
     });
 }

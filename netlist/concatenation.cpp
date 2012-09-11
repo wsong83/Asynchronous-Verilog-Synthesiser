@@ -98,7 +98,7 @@ bool netlist::ConElem::check_inparse() {
 
 void netlist::ConElem::db_register(int iod) {
   exp->db_register(iod);
-  for_each(con.begin(), con.end(), [&iod](shared_ptr<ConElem>& m) {m->db_register(iod);});
+  for_each(con.begin(), con.end(), [&](shared_ptr<ConElem>& m) {m->db_register(iod);});
 }
 
 void netlist::ConElem::db_expunge() {
@@ -113,7 +113,7 @@ bool netlist::ConElem::elaborate(NetComp::elab_result_t &result) {
   rv &= exp->elaborate(result);
   if(!rv) return false;
   
-  for_each(con.begin(), con.end(), [&rv, &result](shared_ptr<ConElem>& m) {
+  for_each(con.begin(), con.end(), [&](shared_ptr<ConElem>& m) {
       rv &= m->elaborate(result);
     });
   if(!rv) return false;
@@ -258,7 +258,7 @@ void netlist::Concatenation::reduce() {
 bool netlist::Concatenation::elaborate(elab_result_t &result, const ctype_t, const vector<NetComp *>&) {
   bool rv = true;
   result = ELAB_Normal;
-  for_each(data.begin(), data.end(), [&rv, &result](shared_ptr<ConElem>& m){
+  for_each(data.begin(), data.end(), [&](shared_ptr<ConElem>& m){
       rv &= m->elaborate(result);
     });
   if(!rv) return false;
@@ -269,7 +269,7 @@ bool netlist::Concatenation::elaborate(elab_result_t &result, const ctype_t, con
 }
 
 void netlist::Concatenation::db_register(int iod) {
-  for_each(data.begin(), data.end(), [&iod](shared_ptr<ConElem>& m) {m->db_register(iod);});
+  for_each(data.begin(), data.end(), [&](shared_ptr<ConElem>& m) {m->db_register(iod);});
 }
 
 void netlist::Concatenation::db_expunge() {

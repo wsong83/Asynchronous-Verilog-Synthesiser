@@ -34,7 +34,7 @@ HEADERS += ../env.h
 # actions
 all: $(TARGETS)
 
-$(TARGETS): %.o:%.cpp %.h $(HEADERS)
+$(TARGETS): %.o:%.cpp $(HEADERS)
 	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
 
 .PHONY: clean

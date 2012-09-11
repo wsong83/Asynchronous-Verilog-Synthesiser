@@ -32,13 +32,10 @@
 #include <vector>
 #include <list>
 #include <string>
-#include "cpptcl.h"
+//#include "cpptcl.h"
 
 namespace shell {
   namespace CMD {
-    // break string into a c++ string vector
-    extern std::vector<std::string> tcl_argu_parse(const Tcl::object&);
-    
     // break one level of Tcl list { ... }
     extern std::list<std::string> tcl_list_break(const std::string&);
 

@@ -42,33 +42,27 @@ namespace shell {
         vUnknown,                /* probably empty, unkown yet */
         vString,                /* string */
         vList,                  /* a string list */
-        vCollection             /* object collection */
       } var_type;
 
       CMDVar()
         : var_type(vUnknown) {}
       CMDVar(const std::string& rhs) 
         : var_type(vString), m_list(1, rhs) {}
-      CMDVar(const std::list<std::string>& rhs) 
+      CMDVar(const std::vector<std::string>& rhs) 
         : var_type(vList), m_list(rhs) {
         if(rhs.size() == 1) {
           var_type = vString;
         }
       }
-      CMDVar(const std::list<boost::shared_ptr<netlist::NetComp> >& rhs) 
-        : var_type(vCollection), m_collection(rhs) {}
 
       // helpers
       //void set_string() { var_type = vString; }
       //void set_list() { var_type = vList; }
-      //void set_collection() { var_type = vCollection; }
       bool is_string() const { return var_type == vString; }
       bool is_list() const { return var_type == vList; }
-      bool is_collection() const { return var_type == vCollection; }
       const std::string& get_string() const { return m_list.front(); }
-      const std::list<std::string>& get_list() const { return m_list; }
-      const std::list<boost::shared_ptr<netlist::NetComp> >& get_collection() const { return m_collection; }
-
+      const std::vector<std::string>& get_list() const { return m_list; }
+      
       std::ostream& streamout( std::ostream& os) const;
       CMDVar& operator= (const std::string& );
       CMDVar& operator= (const std::list<std::string>& );
@@ -78,8 +72,7 @@ namespace shell {
       boost::shared_ptr<CMDVarHook> hook; /* call back function */
 
     private:
-      std::list<std::string> m_list;
-      std::list<boost::shared_ptr<netlist::NetComp> > m_collection;
+      std::vector<std::string> m_list;
 
     };
 

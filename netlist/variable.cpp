@@ -206,7 +206,7 @@ bool netlist::Variable::check_post_elaborate() {
 
   // check all fanin and fanout are not out-of-range
   for_each(fan[0].begin(), fan[0].end(), 
-           [&rv, &maxRange, &loc, this](pair<const unsigned int, VIdentifier *>& m) {
+           [&](pair<const unsigned int, VIdentifier *>& m) {
              rv &= maxRange >= 
                m.second->get_select().const_copy(maxRange);
              if(!rv) {
@@ -216,7 +216,7 @@ bool netlist::Variable::check_post_elaborate() {
            });
 
   for_each(fan[1].begin(), fan[1].end(), 
-           [&rv, &maxRange, &loc, this](pair<const unsigned int, VIdentifier *>& m) {
+           [&](pair<const unsigned int, VIdentifier *>& m) {
              //std::cout << m.second << "(" << m.second << ") :" << *(m.second->father);
              rv &= maxRange >= 
                m.second->get_select().const_copy(maxRange);
@@ -270,7 +270,7 @@ bool netlist::Variable::driver_and_load_checker() const {
   rangeLoad.set_empty();
   const VIdentifier * namep = &name;
   for_each(fan[1].begin(), fan[1].end(), 
-           [&rv, &maxRange, &rangeLoad, &namep](const pair<const unsigned int, VIdentifier *>& m) {
+           [&](const pair<const unsigned int, VIdentifier *>& m) {
              if(m.second == namep) return; // do not count the name in variable as a fan-out
              rangeLoad = rangeLoad.op_or(m.second->get_select().const_copy(maxRange));
            });
@@ -289,22 +289,20 @@ bool netlist::Variable::driver_and_load_checker() const {
   assignRange.set_empty();
   for_each
     (fan[0].begin(), fan[0].end(), 
-     [&driverMapSeq, &driverMapAssign, &maxRange, &assignRange]
-     (const pair<const unsigned int, VIdentifier*>& m) 
-     {
-       if(m.second->get_alwaysp() != NULL) { // seq-blocks
-         unsigned long malwaysp = (unsigned long)(m.second->get_alwaysp());
-         driverMapSeq[malwaysp].second = driverMapSeq[malwaysp].second.op_or(m.second->get_select().const_copy(maxRange));
-         // add up the assign range
-         assignRange = assignRange.op_or(m.second->get_select().const_copy(maxRange));
-       } else {                  // assigns
-         unsigned long mvarp = (unsigned long)(m.second);
-         driverMapAssign[mvarp].second = driverMapAssign[mvarp].second.op_or(m.second->get_select().const_copy(maxRange));
-         // add up the assign range
-         assignRange = assignRange.op_or(m.second->get_select().const_copy(maxRange));
-       }
-     });
-
+     [&](const pair<const unsigned int, VIdentifier*>& m) {
+      if(m.second->get_alwaysp() != NULL) { // seq-blocks
+        unsigned long malwaysp = (unsigned long)(m.second->get_alwaysp());
+        driverMapSeq[malwaysp].second = driverMapSeq[malwaysp].second.op_or(m.second->get_select().const_copy(maxRange));
+        // add up the assign range
+        assignRange = assignRange.op_or(m.second->get_select().const_copy(maxRange));
+      } else {                  // assigns
+        unsigned long mvarp = (unsigned long)(m.second);
+        driverMapAssign[mvarp].second = driverMapAssign[mvarp].second.op_or(m.second->get_select().const_copy(maxRange));
+        // add up the assign range
+        assignRange = assignRange.op_or(m.second->get_select().const_copy(maxRange));
+      }
+    });
+  
   // check no driver
   RangeArray rangeNoDriver = maxRange - assignRange;
   rangeLoad = rangeNoDriver & rangeLoad; // no driver but no load range
