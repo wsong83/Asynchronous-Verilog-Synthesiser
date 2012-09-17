@@ -17,27 +17,27 @@
 #    along with this program; if not, write to the Free Software
 #    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
 #
-# 27/07/2012   Wei Song
+# Makefile
+# Due to be replace by autoconf tool suite
+# 17/09/2012   Wei Song
 #
 #
 
-# local variables
-INCDIRS = -I. 
+# variables
+INCDIRS = -I./
+
+# targets
+TARGETS = sdfg.o
+
 HEADERS = $(wildcard ./*.hpp)
-HEADERS += $(wildcard ./details/*.hpp)
 
-BUILD_DIRS = details pugixml
+# actions
+all: $(TARGETS)
 
-all: cpp_pnml.o $(BUILD_DIRS)
-
-cpp_pnml.o: %.o:%.cpp $(HEADERS)
+$(TARGETS): %.o:%.cpp %.hpp $(HEADERS)
 	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
 
-$(BUILD_DIRS):
-	$(MAKE) -C $@
-
-.PHONY: clean $(BUILD_DIRS)
+.PHONY: clean
 
 clean:
 	-rm *.o
-	-for d in $(BUILD_DIRS); do $(MAKE) -C $$d clean; done

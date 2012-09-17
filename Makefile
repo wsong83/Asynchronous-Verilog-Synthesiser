@@ -33,10 +33,11 @@ export OGDF_PATH = $(PWD)/../OGDF
 OGDF_LIB = $(OGDF_PATH)/_debug/libOGDF.a
 
 export CXXFLAGS = -std=c++0x -Wall -Wextra -g
-export LINKFLAGS = -lboost_regex -lgmpxx -lgmp -lboost_system -lboost_filesystem -lboost_program_options -ltcl -lboost_graph -lpthread $(OGDF_LIB)
+ #export LINKFLAGS = -lboost_regex -lgmpxx -lgmp -lboost_system -lboost_filesystem -lboost_program_options -ltcl -lboost_graph -lpthread $(OGDF_LIB)
+export LINKFLAGS = -lboost_regex -lgmpxx -lgmp -lboost_system -lboost_filesystem -lboost_program_options -ltcl -lboost_graph 
 
 # targets
-SUBDIRS = preproc averilog netlist shell shell/cmd cpptcl cppPNML
+SUBDIRS = preproc averilog netlist shell shell/cmd cpptcl sdfg
 TESTDIRS = preproc/test shell/test
 BISONDIRS = averilog.bison
 
