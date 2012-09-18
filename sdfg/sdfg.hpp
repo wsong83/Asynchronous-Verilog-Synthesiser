@@ -51,10 +51,13 @@ namespace SDFG {
   typedef typename GraphTraits::vertex_iterator vertex_iterator;
   typedef typename GraphTraits::edge_iterator edge_iterator;
 
+  class dfgGraph;
+
   class dfgNode {
   public:
 
     boost::shared_ptr<netlist::NetComp> ptr;   // pointer to the netlist component
+    boost::shared_ptr<dfgGraph> child;         // when it is a module, it should has a child
     std::string name;           // description of this node
     vertex_descriptor id;         // node id
     enum node_type_t {          // node type
@@ -92,15 +95,20 @@ namespace SDFG {
 
   };
 
-  class dfgGraph {
+  class dfgGraph{
   public:
     GType bg_;                  // BGL graph
+    boost::shared_ptr<dfgNode> father; // father when it is a entity of another module
+    std::string name;           // description of this node
     
     std::map<edge_descriptor, boost::shared_ptr<dfgEdge> > edges;
     std::map<vertex_descriptor, boost::shared_ptr<dfgNode> > nodes;
 
     std::map<std::string, vertex_descriptor > port_map;
     std::map<std::string, vertex_descriptor> node_map;
+
+    dfgGraph() {}
+    dfgGraph(const std::string& n) : name(n) {}
 
     void add_node(boost::shared_ptr<dfgNode>);
     boost::shared_ptr<dfgNode> add_node(const std::string&, dfgNode::node_type_t);
