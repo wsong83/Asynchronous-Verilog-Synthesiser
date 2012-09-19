@@ -57,7 +57,9 @@ namespace SDFG {
   public:
 
     boost::shared_ptr<netlist::NetComp> ptr;   // pointer to the netlist component
-    boost::shared_ptr<dfgGraph> child;         // when it is a module, it should has a child
+    boost::shared_ptr<dfgGraph> child;         // when it is a module entity, it should has a child
+    std::multimap<std::string, std::string> sig2port;   // remember the port connection if it is a module entity
+    std::map<std::string, std::string> port2sig;        // remember the port connection if it is a module entity
     std::string name;           // description of this node
     vertex_descriptor id;         // node id
     enum node_type_t {          // node type

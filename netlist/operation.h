@@ -29,6 +29,8 @@
 #ifndef AV_H_OPERATION_
 #define AV_H_OPERATION_
 
+#include <set>
+
 namespace netlist {
 
   class Operation : public NetComp {
@@ -114,6 +116,7 @@ namespace netlist {
     const VIdentifier& get_var() const;
     void reduce();
     std::string toString() const;
+    void scan_vars(std::set<std::string>&, std::set<std::string>&, bool ctl = false) const;
     
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;

@@ -664,6 +664,73 @@ void netlist::Operation::set_width(const unsigned int& w) {
   width = w;
 }
 
+void netlist::Operation::scan_vars(std::set<string>& d_vars, std::set<string>& c_vars, bool ctl) const {
+  switch(otype) {
+  case oVar: {
+    if(ctl)
+      c_vars.insert(get_var().name);
+    else
+      d_vars.insert(get_var().name);
+    break;
+  }
+  case oCon: {
+    get_con().scan_vars(d_vars, c_vars, ctl);
+    break;
+  }
+  case oNULL:
+  case oNum:
+  case oFun: break;
+  case oUPos:
+  case oUNeg:
+  case oULRev:
+  case oURev:
+  case oUAnd:
+  case oUNand:
+  case oUOr:
+  case oUNor:
+  case oUXor:
+  case oUNxor: {
+    child[0]->scan_vars(d_vars, c_vars, ctl);
+    break;
+  }
+  case oPower:
+  case oTime:
+  case oDiv:
+  case oMode:
+  case oAdd:
+  case oMinus:
+  case oRS:
+  case oLS:
+  case oLRS:
+  case oLess:
+  case oLe:
+  case oGreat:
+  case oGe:
+  case oEq:
+  case oNeq:
+  case oCEq:
+  case oCNeq:
+  case oAnd:
+  case oXor:
+  case oNxor:
+  case oOr:
+  case oLAnd:
+  case oLOr: {
+    child[0]->scan_vars(d_vars, c_vars, ctl);
+    child[1]->scan_vars(d_vars, c_vars, ctl);
+    break;
+  }
+  case oQuestion: {
+    child[1]->scan_vars(d_vars, c_vars, true);
+    child[1]->scan_vars(d_vars, c_vars, ctl);
+    child[2]->scan_vars(d_vars, c_vars, ctl);
+    break;    
+  }
+  default:
+    assert(0 == "wrong operation type!");
+  }
+}
+
 void netlist::Operation::reduce_Num() {
   assert(child.size() == 0);
   valuable = true;

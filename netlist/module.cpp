@@ -467,7 +467,7 @@ void netlist::Module::get_hier(list<shared_ptr<Module> >& mfifo,
   for_each(db_instance.begin(), db_instance.end(),
            [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
              shared_ptr<Module> tarModule = G_ENV->find_module(m.second->mname);
-             if(tarModule.use_count() != 0 && !mmap.count(tarModule->name.name)) {
+             if(tarModule && !mmap.count(tarModule->name.name)) {
                mfifo.push_front(tarModule);
                myqueue.push_front(tarModule);
                mmap.insert(tarModule->name);
@@ -516,13 +516,15 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg() {
              }
            });
 
-  // put all modules into the graph  
+  // put all modules into the graph
+  std::cout << db_instance.size() << std::endl;
   for_each(db_instance.begin(), db_instance.end(),
            [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
              shared_ptr<dfgNode> n = G->add_node(m.first.name, dfgNode::SDFG_MODULE);
              n->ptr = m.second;
-             if(m.second->module_ptr) { // has sub-module
-               n->child = m.second->module_ptr->extract_sdfg();
+             shared_ptr<Module> subMod = G_ENV->find_module(m.second->mname);
+             if(subMod) { // has sub-module
+               //n->child = subMod->extract_sdfg();
                n->child->father = n;
              }
            });

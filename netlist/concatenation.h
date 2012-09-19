@@ -29,6 +29,8 @@
 #ifndef AV_H_CONCATENATION_
 #define AV_H_CONCATENATION_
 
+#include <set>
+
 namespace netlist {
 
   class ConElem {               /* element of a concatenation */
@@ -54,6 +56,7 @@ namespace netlist {
     void reduce();
     bool is_valuable() const { return con.size() == 0 && exp->is_valuable(); }
     Number get_value() { return exp->get_value(); }
+    void scan_vars(std::set<std::string>&, std::set<std::string>&, bool ctl = false) const;
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
@@ -89,6 +92,7 @@ namespace netlist {
     bool is_exp() const { return (data.size() == 1 && data.front()->con.size() == 0); }
     boost::shared_ptr<Expression>& get_exp() { return data.front()->exp; }
     Number get_value() { return data.front()->get_value(); }
+    void scan_vars(std::set<std::string>&, std::set<std::string>&, bool ctl = false) const;
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;

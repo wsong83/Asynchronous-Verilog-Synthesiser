@@ -153,7 +153,7 @@ namespace netlist {
 #include "while.h"
 #include "for.h"
 #include "library.h"
-//#include "uni_name.h"
+#include "uni_name.h"
 
 // the environment
 namespace shell {

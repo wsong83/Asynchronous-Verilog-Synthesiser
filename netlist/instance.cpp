@@ -29,14 +29,17 @@
 #include "component.h"
 #include "shell/env.h"
 #include <boost/foreach.hpp>
+#include "sdfg/sdfg.hpp"
 
 using namespace netlist;
+using namespace SDFG;
 using std::ostream;
 using std::endl;
 using std::string;
 using std::vector;
 using boost::shared_ptr;
 using std::list;
+using std::pair;
 using shell::location;
 
 
@@ -230,7 +233,7 @@ Instance* netlist::Instance::deep_copy() const {
   rv->name = name;
   rv->named = named;
   rv->type = type;
-  rv->module_ptr = module_ptr;
+  //rv->module_ptr = module_ptr;
 
   // lambda expression, need C++0x support
   for_each(port_list.begin(), port_list.end(), [rv](const shared_ptr<PortConn>& comp) { 
@@ -316,4 +319,53 @@ bool netlist::Instance::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
 
   return rv;
 
+}
+
+void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
+
+  // find out the node
+  shared_ptr<dfgNode> node = G->get_node(name.name);
+  assert(node);
+
+  BOOST_FOREACH(shared_ptr<PortConn> m, port_list) {
+    if(m->get_dir() <= 0) {     // input
+      switch(m->type) {
+      case PortConn::CEXP: {    // expression
+        shared_ptr<dfgNode> exp_node = G->add_node(UniName::uni_name(), dfgNode::SDFG_COMB);
+        m->exp->gen_sdfg_node(G, exp_node);
+        G->add_edge(exp_node->name, dfgEdge::SDFG_DF, exp_node->name, node->name);
+        node->sig2port.insert(pair<string, string>(exp_node->name, m->pname.name));
+        node->port2sig.insert(pair<string, string>(m->pname.name, exp_node->name));
+        break;
+      }
+      case PortConn::CVAR: {    // variable
+        G->add_edge(m->var.name, dfgEdge::SDFG_DF, m->var.name, node->name);
+        node->sig2port.insert(pair<string, string>(m->var.name, m->pname.name));
+        node->port2sig.insert(pair<string, string>(m->pname.name, m->var.name));
+        break;
+      }
+      case PortConn::CNUM: {    // constant number
+        break;                  // do nothing
+      }
+      default:
+        assert(0 == "port type wrong, input cannot be open.");
+      }
+    }
+    
+    if(m->get_dir() >= 0) {     // output
+      switch(m->type) {
+      case PortConn::CVAR: {    // variable
+        G->add_edge(m->pname.name, dfgEdge::SDFG_DF, node->name, m->var.name);
+        node->sig2port.insert(pair<string, string>(m->var.name, m->pname.name));
+        node->port2sig.insert(pair<string, string>(m->pname.name, m->var.name));
+        break;
+      }
+      case PortConn::COPEN: {   // open
+        break;                  // do nothing
+      }
+      default:
+        assert(0 == "port type wrong, output cannot be expression or number.");
+      }
+    }
+  }
 }

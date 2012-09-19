@@ -53,6 +53,8 @@ namespace netlist {
     Operation& get_op();             // get the private operation for read/write
     const Operation& get_op() const; // read the private operation
     void reduce();               // try to reduce the equation
+    void scan_vars(std::set<std::string>&, std::set<std::string>&, bool ctl = false) const;
+    virtual void gen_sdfg_node(boost::shared_ptr<SDFG::dfgGraph>, boost::shared_ptr<SDFG::dfgNode>);
     
     // develope the equation
     void append(Operation::operation_t);

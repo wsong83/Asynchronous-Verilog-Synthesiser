@@ -65,12 +65,13 @@ namespace netlist {
     // used to add new module to the elaboration process
     bool elaborate(std::deque<boost::shared_ptr<Module> >&, 
                    std::map<MIdentifier, boost::shared_ptr<Module> > &);
+    NETLIST_GEN_SDFG;
 
     // helpers
     void set_mname(const MIdentifier& mod_name) { mname = mod_name; }
     void set_name(const IIdentifier& nm) { name = nm; named=true; }
     void set_default_name(const IIdentifier& nm) {name = nm; }
-    void set_module_ptr(const boost::shared_ptr<Module>& mp) { module_ptr = mp;}
+    //void set_module_ptr(const boost::shared_ptr<Module>& mp) { module_ptr = mp;}
     void set_para(const std::list<boost::shared_ptr<ParaConn> >& para ) { para_list = para; }
     bool is_named() const { return named; }
     bool update_ports();   /* update port directions in elaboration */
@@ -78,7 +79,7 @@ namespace netlist {
     // data
     IIdentifier name;
     MIdentifier mname;
-    boost::shared_ptr<Module> module_ptr;
+    //boost::shared_ptr<Module> module_ptr;
     std::list<boost::shared_ptr<PortConn> > port_list;
     std::list<boost::shared_ptr<ParaConn> > para_list;
     type_t type;
@@ -93,3 +94,7 @@ namespace netlist {
 }
 
 #endif
+
+// Local Variables:
+// mode: c++
+// End:
