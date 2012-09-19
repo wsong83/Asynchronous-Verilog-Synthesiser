@@ -209,7 +209,7 @@ namespace netlist{
     }
 
     virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>) {
-      std::cerr << "ERROR!!, the set_width() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
+      std::cerr << "ERROR!!, the gen_sdfg() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
       assert(0 == "gen_sdfg() of NetComp is used");
     }
 

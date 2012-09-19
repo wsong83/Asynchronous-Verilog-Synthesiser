@@ -29,9 +29,6 @@
 #ifndef _H_SHELL_SHELL_ENV_
 #define _H_SHELL_SHELL_ENV_
 
-#include <boost/program_options.hpp>
-namespace po = boost::program_options;
-
 #include "location.h"
 #include "netlist/component.h"
 #include "err_report.h"
