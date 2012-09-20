@@ -116,7 +116,6 @@ namespace netlist {
     const VIdentifier& get_var() const;
     void reduce();
     std::string toString() const;
-    void scan_vars(std::set<std::string>&, std::set<std::string>&, bool ctl = false) const;
     
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
@@ -128,6 +127,7 @@ namespace netlist {
     NETLIST_ELABORATE_DECL;
     NETLIST_SET_WIDTH_DECL;
     NETLIST_GET_WIDTH_DECL;
+    NETLIST_SCAN_VARS;
 
   private:
     operation_t otype;

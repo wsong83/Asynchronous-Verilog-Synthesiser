@@ -56,7 +56,6 @@ namespace netlist {
     void reduce();
     bool is_valuable() const { return con.size() == 0 && exp->is_valuable(); }
     Number get_value() { return exp->get_value(); }
-    void scan_vars(std::set<std::string>&, std::set<std::string>&, bool ctl = false) const;
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
@@ -68,6 +67,7 @@ namespace netlist {
     virtual bool elaborate(NetComp::elab_result_t &);
     NETLIST_SET_WIDTH_DECL;
     NETLIST_GET_WIDTH_DECL;
+    NETLIST_SCAN_VARS;
 
     boost::shared_ptr<Expression> exp;
     std::list<boost::shared_ptr<ConElem> > con;
@@ -92,7 +92,6 @@ namespace netlist {
     bool is_exp() const { return (data.size() == 1 && data.front()->con.size() == 0); }
     boost::shared_ptr<Expression>& get_exp() { return data.front()->exp; }
     Number get_value() { return data.front()->get_value(); }
-    void scan_vars(std::set<std::string>&, std::set<std::string>&, bool ctl = false) const;
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
@@ -104,6 +103,7 @@ namespace netlist {
     NETLIST_ELABORATE_DECL;
     NETLIST_SET_WIDTH_DECL;
     NETLIST_GET_WIDTH_DECL;
+    NETLIST_SCAN_VARS;
 
     // data
     std::list<boost::shared_ptr<ConElem> > data;

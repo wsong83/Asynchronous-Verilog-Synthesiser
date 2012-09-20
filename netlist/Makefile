@@ -33,6 +33,8 @@ TARGETS = operation.o number.o concatenation.o lconcatenation.o identifier.o \
 	      while.o for.o module.o instance.o library.o uni_name.o
 
 HEADERS = $(wildcard ./*.h)
+HEADERS += $(wildcard ../sdfg/*.h)
+HEADERS += $(wildcard ../shell/*.h)
 
 # actions
 all: $(TARGETS)

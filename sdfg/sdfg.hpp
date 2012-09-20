@@ -72,16 +72,16 @@ namespace SDFG {
       SDFG_FF             = 0x0002, // flip-flop
       SDFG_LATCH          = 0x0004, // latch ?!
       SDFG_MODULE         = 0x0008, // module entity
-      SDFG_IPORT          = 0x0010, // input port
-      SDFG_OPORT          = 0x0020, // output port
-      SDFG_PORT           = 0x0030  // all ports
+      SDFG_IPORT          = 0x0050, // input port
+      SDFG_OPORT          = 0x0060, // output port
+      SDFG_PORT           = 0x0040  // all ports
     } type;
 
 
     dfgNode() {}
     dfgNode(const std::string& n, node_type_t t = SDFG_DF) : name(n), type(t) {}
     void write(pugi::xml_node&, std::list<boost::shared_ptr<dfgGraph> >&) const;
-
+        
   };
 
   class dfgEdge {
@@ -92,9 +92,9 @@ namespace SDFG {
     enum edge_type_t {
       SDFG_DF             = 0x0000, // default, unknown yet
       SDFG_DP             = 0x0001, // data path
-      SDFG_CTL            = 0x0004, // control path
-      SDFG_CLK            = 0x0005, // clk
-      SDFG_RST            = 0x0006  // reset
+      SDFG_CTL            = 0x0008, // control path
+      SDFG_CLK            = 0x000a, // clk
+      SDFG_RST            = 0x000c  // reset
     } type;
 
     dfgEdge() {}
@@ -122,12 +122,15 @@ namespace SDFG {
     boost::shared_ptr<dfgNode> add_node(const std::string&, dfgNode::node_type_t);
     void add_edge(boost::shared_ptr<dfgEdge>, const std::string&, const std::string&);
     boost::shared_ptr<dfgEdge> add_edge(const std::string&, dfgEdge::edge_type_t, const std::string&, const std::string&);
-    boost::shared_ptr<dfgEdge> get_edge(edge_descriptor);
     boost::shared_ptr<dfgEdge> get_edge(edge_descriptor) const;
-    boost::shared_ptr<dfgNode> get_node(vertex_descriptor);
+    boost::shared_ptr<dfgEdge> get_edge(const std::string&, const std::string&) const;   // return a random one if multiple
     boost::shared_ptr<dfgNode> get_node(vertex_descriptor) const;
-    boost::shared_ptr<dfgNode> get_node(const std::string&);
     boost::shared_ptr<dfgNode> get_node(const std::string&) const;
+
+    // existance check
+    bool exist(const std::string&, const std::string&) const;   // edge
+    bool exist(const vertex_descriptor&, const vertex_descriptor&) const; // edge 
+    bool exist(const std::string&) const;   // node   
 
     void write(std::ostream&) const;
     void write(pugi::xml_node&, std::list<boost::shared_ptr<dfgGraph> >&) const;

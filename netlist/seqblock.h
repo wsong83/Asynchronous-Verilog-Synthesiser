@@ -60,7 +60,8 @@ namespace netlist{
     virtual void db_expunge();
     NETLIST_ELABORATE_DECL;
     NETLIST_SET_ALWAYS_POINTER_DECL;
-
+    NETLIST_GEN_SDFG;
+    
     // data
     bool sensitive;                                         /* whether this is a sensitive block, top level block */
     std::list<std::pair<bool, boost::shared_ptr<Expression> > > slist_pulse; /* pulse sensitive list */
@@ -74,3 +75,7 @@ namespace netlist{
 }
 
 #endif
+
+// Local Variables:
+// mode: c++
+// End:

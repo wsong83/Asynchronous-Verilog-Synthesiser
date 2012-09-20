@@ -30,6 +30,7 @@
 #define AV_H_AV_NETCOMP_
 
 #include "shell/location.h"
+#include <set>
 
 // forward declarations
 namespace SDFG {
@@ -98,8 +99,24 @@ namespace SDFG {
 #endif
 
 #ifndef NETLIST_GEN_SDFG
-#define NETLIST_GEN_SDFG                                  \
+#define NETLIST_GEN_SDFG                                   \
   virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>); 
+#endif
+
+#ifndef NETLIST_GEN_SDFG_BLK
+#define NETLIST_GEN_SDFG_BLK                               \
+  virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>, \
+                        std::set<std::string>&,            \
+                        std::set<std::string>&,            \
+                        std::set<std::string>&); 
+#endif
+
+#ifndef NETLIST_SCAN_VARS
+#define NETLIST_SCAN_VARS                          \
+  virtual void scan_vars(std::set<std::string>&,   \
+                         std::set<std::string>&,   \
+                         std::set<std::string>&,   \
+                         bool) const;
 #endif
 
 namespace netlist{
@@ -211,6 +228,19 @@ namespace netlist{
     virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>) {
       std::cerr << "ERROR!!, the gen_sdfg() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
       assert(0 == "gen_sdfg() of NetComp is used");
+    }
+
+    virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>,
+                          std::set<std::string>&,
+                          std::set<std::string>&,
+                          std::set<std::string>&) {
+      std::cerr << "ERROR!!, the gen_sdfg() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
+      assert(0 == "gen_sdfg() of NetComp is used");
+    } 
+
+    virtual void scan_vars(std::set<std::string>&, std::set<std::string>&, std::set<std::string>&, bool) const {
+      std::cerr << "ERROR!!, the scan_vars() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
+      assert(0 == "scan_vars() of NetComp is used");
     }
 
   protected:

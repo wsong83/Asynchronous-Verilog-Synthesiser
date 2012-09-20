@@ -124,6 +124,13 @@ void netlist::CaseItem::set_always_pointer(SeqBlock *p) {
   if(body.use_count() != 0) body->set_always_pointer(p);
 }
 
+void netlist::CaseItem::gen_sdfg(shared_ptr<SDFG::dfgGraph> G, 
+                                 std::set<string>& target,
+                                 std::set<string>& dsrc,
+                                 std::set<string>& csrc) {
+  body->gen_sdfg(G, target, dsrc, csrc);
+}
+
 bool netlist::CaseItem::is_match(const Number& val) const {
   bool rv = false;
   if(exps.size() == 0) return true;                // default
@@ -304,4 +311,17 @@ bool netlist::CaseState::elaborate(elab_result_t &result, const ctype_t mctype, 
 
 void netlist::CaseState::set_always_pointer(SeqBlock *p) {
   BOOST_FOREACH(shared_ptr<CaseItem>& m, cases) m->set_always_pointer(p);
+}
+
+void netlist::CaseState::gen_sdfg(shared_ptr<SDFG::dfgGraph> G, 
+                              std::set<string>& target,
+                              std::set<string>& dsrc,
+                              std::set<string>& csrc) {
+
+  std::set<string> sexp;
+  exp->scan_vars(sexp, sexp, sexp, true);
+
+  BOOST_FOREACH(shared_ptr<CaseItem>& m, cases) {
+    m->gen_sdfg(G, target, dsrc, csrc);
+  }
 }

@@ -254,15 +254,15 @@ bool netlist::Expression::elaborate(elab_result_t &result, const ctype_t mctype,
   return rv;
 }
 
-void netlist::Expression::scan_vars(std::set<string>& d_vars, std::set<string>& c_vars, bool ctl) const {
-  eqn->scan_vars(d_vars, c_vars, ctl);
+void netlist::Expression::scan_vars(std::set<string>& t_vars, std::set<string>& d_vars, std::set<string>& c_vars, bool ctl) const {
+  eqn->scan_vars(t_vars, d_vars, c_vars, ctl);
 }
 
 void netlist::Expression::gen_sdfg_node(shared_ptr<dfgGraph> G, shared_ptr<dfgNode> node) {
   
   // scan for all variables
-  std::set<string> d_vars, c_vars; // data variables and control variables
-  eqn->scan_vars(d_vars, c_vars);
+  std::set<string> t_vars, d_vars, c_vars; // data variables and control variables
+  eqn->scan_vars(t_vars, d_vars, c_vars, false);
 
   // add edges according to the scan results
   BOOST_FOREACH(const string& m, d_vars) {

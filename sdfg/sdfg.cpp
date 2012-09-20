@@ -29,6 +29,7 @@
 #include "sdfg.hpp"
 #include <boost/tuple/tuple.hpp>
 #include <set>
+#include <algorithm>
 
 using namespace SDFG;
 using boost::shared_ptr;
@@ -36,6 +37,44 @@ using std::map;
 using std::string;
 using std::pair;
 using std::list;
+
+void SDFG::dfgNode::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<dfgGraph> >& GList) const {
+  xnode.append_attribute("name") = name.c_str();
+  string stype;
+  switch(type) {
+  case SDFG_COMB:    stype = "combi";   break;
+  case SDFG_FF:      stype = "ff";      break;
+  case SDFG_LATCH:   stype = "latch";   break;
+  case SDFG_MODULE:  stype = "module";  break;
+  case SDFG_IPORT:   stype = "iport";   break;
+  case SDFG_OPORT:   stype = "oport";   break;
+  case SDFG_PORT:    stype = "port";    break;
+  default:           stype = "unknown";
+  }    
+  xnode.append_attribute("type") = stype.c_str();
+  if(type == SDFG_MODULE) {     // module
+    if(child)  GList.push_back(child); // push the sub-module to the module list
+    for_each(port2sig.begin(), port2sig.end(), 
+             [&](const pair<const string, const string>& m) {
+               pugi::xml_node port = xnode.append_child("portmap");
+               port.append_attribute("port") = m.first.c_str();
+               port.append_attribute("signal") = m.second.c_str();
+             });
+  }
+}
+
+void SDFG::dfgEdge::write(pugi::xml_node& xnode) const {
+  xnode.append_attribute("name") = name.c_str();
+  string stype;
+  switch(type) {
+  case SDFG_DP:     stype = "data";     break;
+  case SDFG_CTL:    stype = "control";  break;
+  case SDFG_CLK:    stype = "clk";      break;
+  case SDFG_RST:    stype = "rst";      break;
+  default:          stype = "unknown";
+  }
+  xnode.append_attribute("type") = stype.c_str();
+}
 
 void SDFG::dfgGraph::add_node(shared_ptr<dfgNode> node) {
   assert(node);
@@ -66,19 +105,9 @@ shared_ptr<dfgEdge> SDFG::dfgGraph::add_edge(const string& n, dfgEdge::edge_type
   return edge;
 }
 
-shared_ptr<dfgEdge> SDFG::dfgGraph::get_edge(edge_descriptor eid) {
-  assert(edges.count(eid));
-  return edges[eid];
-}
-
 shared_ptr<dfgEdge> SDFG::dfgGraph::get_edge(edge_descriptor eid) const{
   assert(edges.count(eid));
   return edges.find(eid)->second;
-}
-
-shared_ptr<dfgNode> SDFG::dfgGraph::get_node(vertex_descriptor nid) {
-  assert(nodes.count(nid));
-  return nodes[nid];
 }
 
 shared_ptr<dfgNode> SDFG::dfgGraph::get_node(vertex_descriptor nid) const{
@@ -86,14 +115,14 @@ shared_ptr<dfgNode> SDFG::dfgGraph::get_node(vertex_descriptor nid) const{
   return nodes.find(nid)->second;
 }
 
-shared_ptr<dfgNode> SDFG::dfgGraph::get_node(const string& n) {
-  assert(node_map.count(n));
-  return nodes[node_map[n]];
-}
-
 shared_ptr<dfgNode> SDFG::dfgGraph::get_node(const string& n) const{
   assert(node_map.count(n));
   return nodes.find(node_map.find(n)->second)->second;
+}
+
+shared_ptr<dfgEdge> SDFG::dfgGraph::get_edge(const string& src, const string& tar) const{
+  assert(exist(src, tar));
+  return get_edge(boost::edge(get_node(src)->id, get_node(tar)->id, bg_).first);
 }
 
 void SDFG::dfgGraph::write(std::ostream& os) const {
@@ -112,6 +141,7 @@ void SDFG::dfgGraph::write(std::ostream& os) const {
   // write out the current graph
   pugi::xml_node xnode = sdfg_file.append_child("graph");
   write(xnode, sub_graph);
+  sub_graph_set.insert(name);
 
   // write out sub modules
   while(!sub_graph.empty()) {
@@ -128,3 +158,43 @@ void SDFG::dfgGraph::write(std::ostream& os) const {
   sdfg_file.save(os);
 
 }
+
+void SDFG::dfgGraph::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<dfgGraph> >& GList) const {
+  xnode.append_attribute("name") = name.c_str();
+  
+  // write all nodes to the graph
+  for_each(nodes.begin(), nodes.end(), 
+           [&](const pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
+               pugi::xml_node node = xnode.append_child("node");
+               node.append_attribute("id") = static_cast<int>(m.first);
+               m.second->write(node, GList);
+             });
+           
+  // write all edges to the graph
+  for_each(edges.begin(), edges.end(), 
+           [&](const pair<const edge_descriptor, shared_ptr<dfgEdge> >& m) {
+               pugi::xml_node node = xnode.append_child("edge");
+               node.append_attribute("source") = static_cast<int>(boost::source(m.first, bg_));
+               node.append_attribute("target") = static_cast<int>(boost::target(m.first, bg_));
+               m.second->write(node);
+             });
+}
+
+bool SDFG::dfgGraph::exist(const string& src, const string& tar) const {
+  shared_ptr<dfgNode> src_node = get_node(src);
+  shared_ptr<dfgNode> tar_node = get_node(tar);
+  if(src_node && tar_node) {
+    return boost::edge(src_node->id, tar_node->id, bg_).second;
+  } else {
+    return false;
+  }
+}
+
+bool SDFG::dfgGraph::exist(const vertex_descriptor& src, const vertex_descriptor& tar) const {
+  return boost::edge(src, tar, bg_).second;
+}
+
+bool SDFG::dfgGraph::exist(const std::string& name) const {
+  return get_node(name);
+}    
+

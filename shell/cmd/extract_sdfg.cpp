@@ -173,5 +173,6 @@ void shell::CMD::CMDExtractSDFG::exec ( const std::string& str, Env * pEnv){
   // extract SDFG
   shared_ptr<SDFG::dfgGraph> g = tarDesign->extract_sdfg();
 
+  g->write(fhandler);
   fhandler.close();
 }

@@ -517,18 +517,15 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg() {
            });
 
   // put all modules into the graph
-  std::cout << db_instance.size() << std::endl;
   for_each(db_instance.begin(), db_instance.end(),
            [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
              shared_ptr<dfgNode> n = G->add_node(m.first.name, dfgNode::SDFG_MODULE);
              n->ptr = m.second;
              shared_ptr<Module> subMod = G_ENV->find_module(m.second->mname);
-             /*
              if(subMod) { // has sub-module
                n->child = subMod->extract_sdfg();
                n->child->father = n;
              }
-             */
            });
 
   // now cope with internal structures

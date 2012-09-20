@@ -157,6 +157,8 @@ namespace netlist {
     virtual void db_expunge();
     NETLIST_ELABORATE_DECL;
     NETLIST_SET_ALWAYS_POINTER_DECL;
+    using NetComp::gen_sdfg;
+    NETLIST_GEN_SDFG_BLK;
 
     // data
     BIdentifier name;
@@ -185,3 +187,6 @@ namespace netlist {
 }
 
 #endif
+// Local Variables:
+// mode: c++
+// End:
