@@ -28,12 +28,14 @@
 
 #include "sdfg.hpp"
 #include <boost/tuple/tuple.hpp>
+#include <set>
 
 using namespace SDFG;
 using boost::shared_ptr;
 using std::map;
 using std::string;
 using std::pair;
+using std::list;
 
 void SDFG::dfgGraph::add_node(shared_ptr<dfgNode> node) {
   assert(node);
@@ -94,4 +96,35 @@ shared_ptr<dfgNode> SDFG::dfgGraph::get_node(const string& n) const{
   return nodes.find(node_map.find(n)->second)->second;
 }
 
+void SDFG::dfgGraph::write(std::ostream& os) const {
+  pugi::xml_document sdfg_file;       // using the pugixml library
+  pugi::xml_node node_xml = sdfg_file.append_child(pugi::node_declaration);
+  node_xml.append_attribute("version") = "1.0";
+  node_xml.append_attribute("encoding") = "UTF-8";
 
+  list<shared_ptr<dfgGraph> > sub_graph; // a list to record all sub graphs
+  std::set<string> sub_graph_set;        // a set to record all sub_graph written out
+
+  // set current graph as the top module
+  pugi::xml_node top = sdfg_file.append_child("top");
+  top.append_attribute("name") = name.c_str();
+
+  // write out the current graph
+  pugi::xml_node xnode = sdfg_file.append_child("graph");
+  write(xnode, sub_graph);
+
+  // write out sub modules
+  while(!sub_graph.empty()) {
+    if(!sub_graph_set.count(sub_graph.front()->name)) {
+      // a new graph has not been written yet
+      xnode = sdfg_file.append_child("graph");
+      sub_graph.front()->write(xnode, sub_graph); // write it out
+      sub_graph_set.insert(sub_graph.front()->name); // record it
+    }
+    sub_graph.pop_front();      // remove it
+  }
+
+  // save the file
+  sdfg_file.save(os);
+
+}

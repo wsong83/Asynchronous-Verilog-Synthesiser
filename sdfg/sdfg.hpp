@@ -32,10 +32,14 @@
 #include <boost/shared_ptr.hpp>
 #include <string>
 #include <map>
+#include <list>
 
 // the BGL library
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graph_utility.hpp>
+
+// pugixml library
+#include "pugixml/pugixml.hpp"
 
 
 namespace netlist {
@@ -76,6 +80,7 @@ namespace SDFG {
 
     dfgNode() {}
     dfgNode(const std::string& n, node_type_t t = SDFG_DF) : name(n), type(t) {}
+    void write(pugi::xml_node&, std::list<boost::shared_ptr<dfgGraph> >&) const;
 
   };
 
@@ -94,6 +99,7 @@ namespace SDFG {
 
     dfgEdge() {}
     dfgEdge(const std::string& n, edge_type_t t = SDFG_DF) : name(n), type(t) {}
+    void write(pugi::xml_node&) const;
 
   };
 
@@ -122,6 +128,9 @@ namespace SDFG {
     boost::shared_ptr<dfgNode> get_node(vertex_descriptor) const;
     boost::shared_ptr<dfgNode> get_node(const std::string&);
     boost::shared_ptr<dfgNode> get_node(const std::string&) const;
+
+    void write(std::ostream&) const;
+    void write(pugi::xml_node&, std::list<boost::shared_ptr<dfgGraph> >&) const;
 
   };
 

@@ -18,26 +18,16 @@
 #    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
 #
 # Makefile
-# Due to be replace by autoconf tool suite
-# 17/09/2012   Wei Song
+# 14/08/2012   Wei Song
 #
 #
 
-# variables
-INCDIRS = -I./ -I../
+INCDIRS = -I. 
 
-# targets
-TARGETS = sdfg.o
+all: pugixml.o
 
-HEADERS = $(wildcard ./*.hpp)
-
-# actions
-all: $(TARGETS)
-
-$(TARGETS): %.o:%.cpp %.hpp $(HEADERS)
-	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
-
-.PHONY: clean
+pugixml.o : %.o:%.cpp
+	$(CXX) $(INCDIRS) $(CXXFLAGS) $< -c -o $@
 
 clean:
-	-rm *.o
+	-rm -f *.o
