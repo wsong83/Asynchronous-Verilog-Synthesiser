@@ -75,6 +75,7 @@ namespace netlist {
     NETLIST_ELABORATE_DECL;
     NETLIST_SET_ALWAYS_POINTER_DECL;
     NETLIST_SCAN_VARS;
+    NETLIST_GEN_SDFG_BLK;
 
     //data
     boost::shared_ptr<Expression> exp; /* the condition expression */
@@ -92,3 +93,6 @@ namespace netlist {
 }
 
 #endif
+// Local Variables:
+// mode: c++
+// End:

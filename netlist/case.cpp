@@ -339,4 +339,7 @@ void netlist::CaseState::gen_sdfg(shared_ptr<SDFG::dfgGraph> G,
   BOOST_FOREACH(shared_ptr<CaseItem>& m, cases) {
     m->gen_sdfg(G, target, dsrc, csrc);
   }
+
+  // check whether there is a default
+  // do not do it now
 }

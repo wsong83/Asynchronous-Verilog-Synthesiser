@@ -218,3 +218,22 @@ void netlist::IfState::scan_vars(std::set<string>& target,
   if(elsecase)
     elsecase->scan_vars(target, dsrc, csrc, ctl);
 }
+
+
+void netlist::IfState::gen_sdfg(shared_ptr<SDFG::dfgGraph> G, 
+                                std::set<string>& target,
+                                std::set<string>& dsrc,
+                                std::set<string>& csrc) {
+  std::set<string> t, d, c;     // local version
+  scan_vars(t, d, c, false);
+
+  if(t.size() < target.size()) { // self loop
+    BOOST_FOREACH(const string& m, target) {
+      if(!t.count(m)) {         // the signal to have self-loop
+        if(!G->exist(m, m, SDFG::dfgEdge::SDFG_DATA)) 
+          G->add_edge(m, SDFG::dfgEdge::SDFG_DATA, m, m);
+      }
+    }
+  }
+
+}
