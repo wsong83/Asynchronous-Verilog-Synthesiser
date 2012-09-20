@@ -300,6 +300,11 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
 
   std::set<string> targets, data_sources, ctl_sources, slist;
 
+  // scan signals
+  BOOST_FOREACH(shared_ptr<NetComp>& m, statements) {
+    m->scan_vars(targets, data_sources, ctl_sources, false);
+  }
+
   BOOST_FOREACH(shared_ptr<NetComp>& m, statements) {
     m->gen_sdfg(G, targets, data_sources, ctl_sources);
   }

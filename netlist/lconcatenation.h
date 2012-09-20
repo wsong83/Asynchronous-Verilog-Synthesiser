@@ -51,6 +51,7 @@ namespace netlist {
     NETLIST_SET_ALWAYS_POINTER_DECL;
     NETLIST_SET_WIDTH_DECL;
     NETLIST_GET_WIDTH_DECL;
+    NETLIST_SCAN_VARS;
 
     // helpers
     bool is_valid() const { return valid; }

@@ -52,6 +52,7 @@ namespace netlist {
     }
     NETLIST_ELABORATE_DECL;
     NETLIST_SET_ALWAYS_POINTER_DECL;
+    NETLIST_SCAN_VARS;
 
     // helpers
     void set_name(const BIdentifier& nm) {name = nm; named=true;}

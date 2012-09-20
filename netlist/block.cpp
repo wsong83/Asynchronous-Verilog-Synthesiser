@@ -379,6 +379,15 @@ void netlist::Block::set_always_pointer(SeqBlock *p) {
     });
 }
 
+void netlist::Block::scan_vars(std::set<string>& target,
+                               std::set<string>& dsrc,
+                               std::set<string>& csrc,
+                               bool ctl) const {
+  BOOST_FOREACH(const shared_ptr<NetComp>& m, statements) {
+    m->scan_vars(target, dsrc, csrc, ctl);
+  }
+}
+
 void netlist::Block::gen_sdfg(shared_ptr<SDFG::dfgGraph> G, 
                               std::set<string>& target,
                               std::set<string>& dsrc,

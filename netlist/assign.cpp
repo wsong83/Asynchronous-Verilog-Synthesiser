@@ -114,6 +114,14 @@ void netlist::Assign::set_always_pointer(SeqBlock *p) {
   if(lval.use_count() != 0) lval->set_always_pointer(p);
 }
 
+void netlist::Assign::scan_vars(std::set<string>& target,
+                                std::set<string>& dsrc,
+                                std::set<string>& csrc,
+                                bool ctl) const {
+  lval->scan_vars(target, dsrc, csrc, ctl);
+  rexp->scan_vars(target, dsrc, csrc, ctl);
+}
+
 Assign* netlist::Assign::deep_copy() const {
   Assign* rv = new Assign( loc,
                            shared_ptr<LConcatenation>(lval->deep_copy()),

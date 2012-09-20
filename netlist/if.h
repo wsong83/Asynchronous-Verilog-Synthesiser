@@ -74,6 +74,7 @@ namespace netlist {
     virtual void db_expunge();
     NETLIST_ELABORATE_DECL;
     NETLIST_SET_ALWAYS_POINTER_DECL;
+    NETLIST_SCAN_VARS;
 
     //data
     boost::shared_ptr<Expression> exp; /* the condition expression */

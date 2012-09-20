@@ -209,3 +209,12 @@ void netlist::IfState::set_always_pointer(SeqBlock *p) {
   if(elsecase.use_count() != 0) elsecase->set_always_pointer(p);
 }
 
+void netlist::IfState::scan_vars(std::set<string>& target,
+                                 std::set<string>& dsrc,
+                                 std::set<string>& csrc,
+                                 bool ctl) const {
+  exp->scan_vars(csrc, csrc, csrc, true);
+  ifcase->scan_vars(target, dsrc, csrc, ctl);
+  if(elsecase)
+    elsecase->scan_vars(target, dsrc, csrc, ctl);
+}
