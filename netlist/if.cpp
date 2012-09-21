@@ -28,6 +28,8 @@
 
 #include "component.h"
 #include "shell/env.h"
+#include <boost/foreach.hpp>
+#include "sdfg/sdfg.hpp"
 
 using namespace netlist;
 using std::ostream;
@@ -221,19 +223,30 @@ void netlist::IfState::scan_vars(std::set<string>& target,
 
 
 void netlist::IfState::gen_sdfg(shared_ptr<SDFG::dfgGraph> G, 
-                                std::set<string>& target,
-                                std::set<string>& dsrc,
-                                std::set<string>& csrc) {
+                                const std::set<string>& target,
+                                const std::set<string>&,
+                                const std::set<string>&) {
   std::set<string> t, d, c;     // local version
   scan_vars(t, d, c, false);
 
-  if(t.size() < target.size()) { // self loop
-    BOOST_FOREACH(const string& m, target) {
-      if(!t.count(m)) {         // the signal to have self-loop
-        if(!G->exist(m, m, SDFG::dfgEdge::SDFG_DATA)) 
-          G->add_edge(m, SDFG::dfgEdge::SDFG_DATA, m, m);
-      }
+  // add control signals
+  std::set<string> csig;
+  exp->scan_vars(csig, csig, csig, true);
+  BOOST_FOREACH(const string& m, target) {
+    BOOST_FOREACH(const string& sig, csig) {
+      if(!G->exist(sig, m, SDFG::dfgEdge::SDFG_CTL))
+        G->add_edge(sig, SDFG::dfgEdge::SDFG_CTL, sig, m);
     }
   }
 
+  // do the rest
+  ifcase->gen_sdfg(G, t, d, c);
+  if(elsecase)
+    elsecase->gen_sdfg(G, t, d, c);
+  else {                        // no else, self-loop
+    BOOST_FOREACH(const string& m, target) {
+      if(!G->exist(m, m, SDFG::dfgEdge::SDFG_DP))
+        G->add_edge(m, SDFG::dfgEdge::SDFG_DP, m, m);
+    }
+  }
 }

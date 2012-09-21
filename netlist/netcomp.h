@@ -100,15 +100,10 @@ namespace SDFG {
 
 #ifndef NETLIST_GEN_SDFG
 #define NETLIST_GEN_SDFG                                   \
-  virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>); 
-#endif
-
-#ifndef NETLIST_GEN_SDFG_BLK
-#define NETLIST_GEN_SDFG_BLK                               \
   virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>, \
-                        std::set<std::string>&,            \
-                        std::set<std::string>&,            \
-                        std::set<std::string>&); 
+                        const std::set<std::string>&,      \
+                        const std::set<std::string>&,      \
+                        const std::set<std::string>&); 
 #endif
 
 #ifndef NETLIST_SCAN_VARS
@@ -225,15 +220,10 @@ namespace netlist{
       assert(0 == "set_width() of NetComp is used");
     }
 
-    virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>) {
-      std::cerr << "ERROR!!, the gen_sdfg() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
-      assert(0 == "gen_sdfg() of NetComp is used");
-    }
-
     virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>,
-                          std::set<std::string>&,
-                          std::set<std::string>&,
-                          std::set<std::string>&) {
+                          const std::set<std::string>&,
+                          const std::set<std::string>&,
+                          const std::set<std::string>&) {
       std::cerr << "ERROR!!, the gen_sdfg() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
       assert(0 == "gen_sdfg() of NetComp is used");
     } 

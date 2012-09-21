@@ -53,6 +53,7 @@ namespace netlist {
     NETLIST_ELABORATE_DECL;
     NETLIST_SET_ALWAYS_POINTER_DECL;
     NETLIST_SCAN_VARS;
+    NETLIST_GEN_SDFG;
 
     // helpers
     void set_name(const BIdentifier& nm) {name = nm; named=true;}
@@ -76,3 +77,6 @@ namespace netlist {
 }
 
 #endif
+// Local Variables:
+// mode: c++
+// End:

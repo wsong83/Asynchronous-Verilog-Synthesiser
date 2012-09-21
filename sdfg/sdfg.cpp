@@ -105,24 +105,55 @@ shared_ptr<dfgEdge> SDFG::dfgGraph::add_edge(const string& n, dfgEdge::edge_type
   return edge;
 }
 
-shared_ptr<dfgEdge> SDFG::dfgGraph::get_edge(edge_descriptor eid) const{
-  assert(edges.count(eid));
-  return edges.find(eid)->second;
+shared_ptr<dfgEdge> SDFG::dfgGraph::get_edge(const edge_descriptor& eid) const{
+  if(edges.count(eid))
+    return edges.find(eid)->second;
+  else
+    return shared_ptr<dfgEdge>();
 }
 
-shared_ptr<dfgNode> SDFG::dfgGraph::get_node(vertex_descriptor nid) const{
-  assert(nodes.count(nid));
-  return nodes.find(nid)->second;
+shared_ptr<dfgNode> SDFG::dfgGraph::get_node(const vertex_descriptor& nid) const{
+  if(nodes.count(nid))
+    return nodes.find(nid)->second;
+  else
+    return shared_ptr<dfgNode>();
 }
 
 shared_ptr<dfgNode> SDFG::dfgGraph::get_node(const string& n) const{
-  assert(node_map.count(n));
-  return nodes.find(node_map.find(n)->second)->second;
+  if(node_map.count(n))
+    return nodes.find(node_map.find(n)->second)->second;
+  else
+    return shared_ptr<dfgNode>();
+}
+
+shared_ptr<dfgEdge> SDFG::dfgGraph::get_edge(const vertex_descriptor& src, const vertex_descriptor& tar) const{
+  if(exist(src, tar))
+    return edges.find(boost::edge(get_node(src)->id, get_node(tar)->id, bg_).first)->second;
+  else
+    return shared_ptr<dfgEdge>();
 }
 
 shared_ptr<dfgEdge> SDFG::dfgGraph::get_edge(const string& src, const string& tar) const{
-  assert(exist(src, tar));
-  return get_edge(boost::edge(get_node(src)->id, get_node(tar)->id, bg_).first);
+  if(exist(src) && exist(tar))
+    return get_edge(node_map.find(src)->second, node_map.find(tar)->second);
+  else
+    return shared_ptr<dfgEdge>();
+}
+
+shared_ptr<dfgEdge> SDFG::dfgGraph::get_edge(const vertex_descriptor& src, const vertex_descriptor& tar, dfgEdge::edge_type_t tt) const{
+  GraphTraits::out_edge_iterator eit, eend;
+  for(boost::tie(eit, eend) = edge_range(src, tar, bg_);
+      eit != eend; ++eit) { 
+    if(get_edge(*eit)->type == tt) return edges.find(*eit)->second;
+  }
+  return shared_ptr<dfgEdge>();
+}
+
+shared_ptr<dfgEdge> SDFG::dfgGraph::get_edge(const string& src, const string& tar, dfgEdge::edge_type_t tt) const{
+  if(exist(src) && exist(tar))
+    return get_edge(node_map.find(src)->second, node_map.find(tar)->second, tt);
+  else
+    return shared_ptr<dfgEdge>();
 }
 
 void SDFG::dfgGraph::write(std::ostream& os) const {
@@ -192,6 +223,22 @@ bool SDFG::dfgGraph::exist(const string& src, const string& tar) const {
 
 bool SDFG::dfgGraph::exist(const vertex_descriptor& src, const vertex_descriptor& tar) const {
   return boost::edge(src, tar, bg_).second;
+}
+
+bool SDFG::dfgGraph::exist(const vertex_descriptor& src, const vertex_descriptor& tar, dfgEdge::edge_type_t tt) const {
+  GraphTraits::out_edge_iterator eit, eend;
+  for(boost::tie(eit, eend) = edge_range(src, tar, bg_);
+      eit != eend; ++eit) { 
+    if(get_edge(*eit)->type == tt) return true;
+  }
+  return false;
+}
+
+bool SDFG::dfgGraph::exist(const string& src, const string& tar, dfgEdge::edge_type_t tt) const {
+  if(exist(src) && exist(tar))
+    return exist(node_map.find(src)->second, node_map.find(tar)->second, tt);
+  else
+    return false;
 }
 
 bool SDFG::dfgGraph::exist(const std::string& name) const {

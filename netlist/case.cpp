@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <set>
 #include <boost/foreach.hpp>
+#include "sdfg/sdfg.hpp"
 
 using namespace netlist;
 using std::ostream;
@@ -132,10 +133,23 @@ void netlist::CaseItem::scan_vars(std::set<string>& target,
 }
 
 void netlist::CaseItem::gen_sdfg(shared_ptr<SDFG::dfgGraph> G, 
-                                 std::set<string>& target,
-                                 std::set<string>& dsrc,
-                                 std::set<string>& csrc) {
-  body->gen_sdfg(G, target, dsrc, csrc);
+                                 const std::set<string>& target,
+                                 const std::set<string>&,
+                                 const std::set<string>&) {
+  std::set<string> t, d, c;     // local version
+  scan_vars(t, d, c, false);
+  
+  // for all targets not in t, there is a self-loop
+  if(t.size() < target.size()) { // self loop
+    BOOST_FOREACH(const string& m, target) {
+      if(!t.count(m)) {         // the signal to have self-loop
+        if(!G->exist(m, m, SDFG::dfgEdge::SDFG_DP)) 
+          G->add_edge(m, SDFG::dfgEdge::SDFG_DP, m, m);
+      }
+    }
+  }
+  
+  body->gen_sdfg(G, t, d, c);
 }
 
 bool netlist::CaseItem::is_match(const Number& val) const {
@@ -332,12 +346,24 @@ void netlist::CaseState::scan_vars(std::set<string>& target,
 }
 
 void netlist::CaseState::gen_sdfg(shared_ptr<SDFG::dfgGraph> G, 
-                              std::set<string>& target,
-                              std::set<string>& dsrc,
-                              std::set<string>& csrc) {
+                              const std::set<string>& target,
+                              const std::set<string>&,
+                              const std::set<string>&) {
+  
+  std::set<string> t, d, c;     // local version
+  scan_vars(t, d, c, false);
+  
+  // add control signals
+  BOOST_FOREACH(const string& m, target) {
+    BOOST_FOREACH(const string& csig, c) {
+      if(!G->exist(csig, m, SDFG::dfgEdge::SDFG_CTL))
+        G->add_edge(csig, SDFG::dfgEdge::SDFG_CTL, csig, m);
+    }
+  }
 
+  // the case items
   BOOST_FOREACH(shared_ptr<CaseItem>& m, cases) {
-    m->gen_sdfg(G, target, dsrc, csrc);
+    m->gen_sdfg(G, t, d, c);
   }
 
   // check whether there is a default

@@ -76,6 +76,7 @@ namespace netlist {
     unsigned int get_width(const Range&) const; // considering child
     unsigned int get_width(const Range&); // considering child
     void set_width(const unsigned int&, const Range&);
+    void scan_vars(std::set<string>&, std::set<string>& dsrc, std::set<string>& csrc, bool ctl) const;
     
   protected:
     std::list<boost::shared_ptr<Range> > child; // the range expressions of the lower dimension

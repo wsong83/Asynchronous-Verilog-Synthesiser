@@ -233,3 +233,10 @@ void netlist::RangeArray::set_width(const unsigned int& w, const RangeArray& r) 
     width = w;
   }
 }
+
+void netlist::RangeArray::scan_vars(std::set<string>& target,
+                                    std::set<string>& dsrc,
+                                    std::set<string>& csrc,
+                                    bool ctl) const {
+  RangeArrayCommon::scan_vars(target, dsrc, csrc, ctl);
+}

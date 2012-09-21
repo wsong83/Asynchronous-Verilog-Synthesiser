@@ -175,11 +175,10 @@ void netlist::LConcatenation::set_width(const unsigned int& w) {
 }
 
 void netlist::LConcatenation::scan_vars(std::set<string>& target,
-                                        std::set<string>&,
-                                        std::set<string>&,
-                                        bool) const {
+                                        std::set<string>& dsource,
+                                        std::set<string>& control,
+                                        bool ctl) const {
   BOOST_FOREACH(const VIdentifier& m, data) {
-    target.insert(m.name);
-    assert(m.get_select().is_valuable());
+    m.scan_vars(target, dsource, control, ctl);
   }
 }

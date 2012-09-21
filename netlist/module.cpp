@@ -530,7 +530,7 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg() {
 
   // now cope with internal structures
   BOOST_FOREACH(shared_ptr<NetComp>& m, statements) {
-    m->gen_sdfg(G);
+    m->gen_sdfg(G, std::set<string>(), std::set<string>(), std::set<string>());
   }
 
   return G;

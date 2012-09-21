@@ -294,7 +294,10 @@ void netlist::SeqBlock::set_always_pointer(SeqBlock *p) {
     });
 }
 
-void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
+void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G, 
+                                 const std::set<string>&,
+                                 const std::set<string>&,
+                                 const std::set<string>&) {
   assert(db_var.empty());
   assert(db_instance.empty());
 
@@ -336,7 +339,7 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
                shared_ptr<SDFG::dfgNode> node = G->get_node(m);
                node->type = SDFG::dfgNode::SDFG_FF;
                // handle the reset signals
-               if(rsts.size() > 0 && G->exist(*(rsts.begin()), node->name))
+               if(rsts.size() > 0 && G->exist(*(rsts.begin()), node->name), SDFG::dfgEdge::SDFG_CTL)
                  G->get_edge(*(rsts.begin()), node->name)->type = SDFG::dfgEdge::SDFG_RST;
 
                // handle clock

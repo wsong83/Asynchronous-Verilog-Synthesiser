@@ -159,7 +159,7 @@ namespace netlist {
     NETLIST_SET_ALWAYS_POINTER_DECL;
     using NetComp::gen_sdfg;
     NETLIST_SCAN_VARS;
-    NETLIST_GEN_SDFG_BLK;
+    NETLIST_GEN_SDFG;
 
     // data
     BIdentifier name;

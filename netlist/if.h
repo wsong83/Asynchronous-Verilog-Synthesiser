@@ -75,7 +75,7 @@ namespace netlist {
     NETLIST_ELABORATE_DECL;
     NETLIST_SET_ALWAYS_POINTER_DECL;
     NETLIST_SCAN_VARS;
-    NETLIST_GEN_SDFG_BLK;
+    NETLIST_GEN_SDFG;
 
     //data
     boost::shared_ptr<Expression> exp; /* the condition expression */

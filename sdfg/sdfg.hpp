@@ -48,7 +48,7 @@ namespace netlist {
 
 namespace SDFG {
 
-  typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS> GType;
+  typedef boost::adjacency_list<boost::multisetS, boost::vecS, boost::bidirectionalS> GType;
   typedef boost::graph_traits<GType> GraphTraits;
   typedef typename GraphTraits::edge_descriptor edge_descriptor;
   typedef typename GraphTraits::vertex_descriptor vertex_descriptor;
@@ -122,14 +122,19 @@ namespace SDFG {
     boost::shared_ptr<dfgNode> add_node(const std::string&, dfgNode::node_type_t);
     void add_edge(boost::shared_ptr<dfgEdge>, const std::string&, const std::string&);
     boost::shared_ptr<dfgEdge> add_edge(const std::string&, dfgEdge::edge_type_t, const std::string&, const std::string&);
-    boost::shared_ptr<dfgEdge> get_edge(edge_descriptor) const;
+    boost::shared_ptr<dfgEdge> get_edge(const edge_descriptor&) const;
     boost::shared_ptr<dfgEdge> get_edge(const std::string&, const std::string&) const;   // return a random one if multiple
-    boost::shared_ptr<dfgNode> get_node(vertex_descriptor) const;
+    boost::shared_ptr<dfgEdge> get_edge(const vertex_descriptor&, const vertex_descriptor&) const;   // return a random one if multiple
+    boost::shared_ptr<dfgEdge> get_edge(const std::string&, const std::string&, dfgEdge::edge_type_t) const;
+    boost::shared_ptr<dfgEdge> get_edge(const vertex_descriptor&, const vertex_descriptor&, dfgEdge::edge_type_t) const;
+    boost::shared_ptr<dfgNode> get_node(const vertex_descriptor&) const;
     boost::shared_ptr<dfgNode> get_node(const std::string&) const;
 
     // existance check
     bool exist(const std::string&, const std::string&) const;   // edge
+    bool exist(const std::string&, const std::string&, dfgEdge::edge_type_t) const; // edge 
     bool exist(const vertex_descriptor&, const vertex_descriptor&) const; // edge 
+    bool exist(const vertex_descriptor&, const vertex_descriptor&, dfgEdge::edge_type_t) const; // edge 
     bool exist(const std::string&) const;   // node   
 
     void write(std::ostream&) const;

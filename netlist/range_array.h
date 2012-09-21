@@ -83,6 +83,7 @@ namespace netlist {
     unsigned int get_width(const RangeArray&) const;
     unsigned int get_width(const RangeArray&);
     void set_width(const unsigned int&, const RangeArray&);
+    NETLIST_SCAN_VARS;
 
   private:
     bool const_reduced;

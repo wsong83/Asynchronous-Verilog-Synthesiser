@@ -321,7 +321,10 @@ bool netlist::Instance::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
 
 }
 
-void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
+void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G, 
+                                 const std::set<string>&,
+                                 const std::set<string>&,
+                                 const std::set<string>&) {
 
   // find out the node
   shared_ptr<dfgNode> node = G->get_node(name.name);
