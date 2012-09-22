@@ -28,6 +28,8 @@
 
 #include "component.h"
 #include "shell/env.h"
+#include "sdfg/sdfg.hpp"
+#include <boost/foreach.hpp>
 
 using namespace netlist;
 using std::ostream;
@@ -114,6 +116,14 @@ void netlist::Assign::set_always_pointer(SeqBlock *p) {
   if(lval.use_count() != 0) lval->set_always_pointer(p);
 }
 
+void netlist::Assign::scan_vars(std::set<string>& target,
+                                std::set<string>& dsrc,
+                                std::set<string>& csrc,
+                                bool ctl) const {
+  lval->scan_vars(target, dsrc, csrc, ctl);
+  rexp->scan_vars(target, dsrc, csrc, ctl);
+}
+
 Assign* netlist::Assign::deep_copy() const {
   Assign* rv = new Assign( loc,
                            shared_ptr<LConcatenation>(lval->deep_copy()),
@@ -124,4 +134,24 @@ Assign* netlist::Assign::deep_copy() const {
   rv->named = named;
   rv->continuous = continuous;
   return rv;
+}
+
+void netlist::Assign::gen_sdfg(shared_ptr<SDFG::dfgGraph> G, 
+                               const std::set<string>&,
+                               const std::set<string>&,
+                               const std::set<string>&) {
+  std::set<string> t, d, c;     // local version
+  scan_vars(t, d, c, false);
+
+  BOOST_FOREACH(const string& m, t) {
+    BOOST_FOREACH(const string& sig, d) {
+      if(!G->exist(sig, m, SDFG::dfgEdge::SDFG_DP)) 
+        G->add_edge(sig, SDFG::dfgEdge::SDFG_DP, sig, m);
+    }
+    
+    BOOST_FOREACH(const string& sig, c) {
+      if(!G->exist(sig, m, SDFG::dfgEdge::SDFG_CTL)) 
+        G->add_edge(sig, SDFG::dfgEdge::SDFG_CTL, sig, m);
+    }
+  }
 }

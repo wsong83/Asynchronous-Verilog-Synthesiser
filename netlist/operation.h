@@ -29,6 +29,8 @@
 #ifndef AV_H_OPERATION_
 #define AV_H_OPERATION_
 
+#include <set>
+
 namespace netlist {
 
   class Operation : public NetComp {
@@ -125,6 +127,7 @@ namespace netlist {
     NETLIST_ELABORATE_DECL;
     NETLIST_SET_WIDTH_DECL;
     NETLIST_GET_WIDTH_DECL;
+    NETLIST_SCAN_VARS;
 
   private:
     operation_t otype;

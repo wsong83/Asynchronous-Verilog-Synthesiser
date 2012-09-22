@@ -84,6 +84,8 @@ namespace netlist{
     NETLIST_SET_ALWAYS_POINTER_DECL;
     bool is_default() const {return exps.size() == 0; }
     bool is_match(const Number&) const; /* whether this case match with the number (arguement) */
+    NETLIST_SCAN_VARS;
+    NETLIST_GEN_SDFG;
 
     // data
     std::list<boost::shared_ptr<Expression> > exps;
@@ -145,6 +147,8 @@ namespace netlist{
     void set_name(const BIdentifier& nm) {name = nm; named=true;}
     bool is_named() const { return named; }
     bool is_casex() const { return casex; }
+    NETLIST_SCAN_VARS;
+    NETLIST_GEN_SDFG;
 
     // data
     BIdentifier name;           /* dummy name for search index */
@@ -161,3 +165,6 @@ namespace netlist{
 }
 
 #endif
+// Local Variables:
+// mode: c++
+// End:

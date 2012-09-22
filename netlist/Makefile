@@ -30,9 +30,11 @@ INCDIRS = -I./ -I../
 TARGETS = operation.o number.o concatenation.o lconcatenation.o identifier.o \
 	      range.o range_array.o range_array_common.o expression.o port.o \
           variable.o assign.o block.o seqblock.o genblock.o case.o if.o \
-	      while.o for.o module.o instance.o library.o
+	      while.o for.o module.o instance.o library.o uni_name.o
 
 HEADERS = $(wildcard ./*.h)
+HEADERS += $(wildcard ../sdfg/*.h)
+HEADERS += $(wildcard ../shell/*.h)
 
 # actions
 all: $(TARGETS)

@@ -90,6 +90,7 @@ namespace netlist {
     unsigned int get_width(const Range&) const; // considering child
     unsigned int get_width(const Range&); // considering child
     void set_width(const unsigned int&, const Range&);
+    NETLIST_SCAN_VARS;
 
   private:
     Number c;                          /* constant */

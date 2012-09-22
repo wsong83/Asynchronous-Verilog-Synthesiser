@@ -279,6 +279,15 @@ void netlist::RangeArrayCommon::set_width(const unsigned int& w, const Range& r)
   //width = w;  // RangeArrayCommon does not have a width member as it is a shared base class
 }
 
+void netlist::RangeArrayCommon::scan_vars(std::set<string>& target,
+                                          std::set<string>& dsrc,
+                                          std::set<string>& csrc,
+                                          bool ctl) const {
+  BOOST_FOREACH(const shared_ptr<Range> m, child) {
+    m->scan_vars(target, dsrc, csrc, ctl);
+  }
+}
+
 list<shared_ptr<Range> >& netlist::RangeArrayCommon::sort(list<shared_ptr<Range> >& rhs) const {
   if(rhs.empty()) return rhs;
   rhs.sort([](shared_ptr<Range>& first, shared_ptr<Range>& second) -> bool {

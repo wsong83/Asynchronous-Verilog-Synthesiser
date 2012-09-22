@@ -19,22 +19,22 @@
 #
 # Makefile
 # Due to be replace by autoconf tool suite
-# 14/05/2012   Wei Song
+# 17/09/2012   Wei Song
 #
 #
 
 # variables
-INCDIRS = -I./ -I../../ -I../../cpptcl/
+INCDIRS = -I./ -I../
 
 # targets
-TARGETS = analyze.o current_design.o echo.o elaborate.o exit.o extract_sdfg.o help.o report_netlist.o shell.o suppress_message.o write.o
-HEADERS = $(wildcard ./*.h)
-HEADERS += ../env.h
+TARGETS = sdfg.o
+
+HEADERS = $(wildcard ./*.hpp)
 
 # actions
 all: $(TARGETS)
 
-$(TARGETS): %.o:%.cpp $(HEADERS)
+$(TARGETS): %.o:%.cpp %.hpp $(HEADERS)
 	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
 
 .PHONY: clean

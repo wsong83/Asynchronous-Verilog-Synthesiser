@@ -31,6 +31,7 @@
 #include "shell/env.h"
 #include <algorithm>
 #include <boost/foreach.hpp>
+#include "sdfg/sdfg.hpp"
 
 using namespace netlist;
 using std::ostream;
@@ -377,6 +378,41 @@ void netlist::Block::set_always_pointer(SeqBlock *p) {
   for_each(db_other.begin(), db_other.end(), [&](pair<const BIdentifier, shared_ptr<NetComp> >& m) {
       m.second->set_always_pointer(p);
     });
+}
+
+void netlist::Block::scan_vars(std::set<string>& target,
+                               std::set<string>& dsrc,
+                               std::set<string>& csrc,
+                               bool ctl) const {
+  BOOST_FOREACH(const shared_ptr<NetComp>& m, statements) {
+    m->scan_vars(target, dsrc, csrc, ctl);
+  }
+}
+
+void netlist::Block::gen_sdfg(shared_ptr<SDFG::dfgGraph> G, 
+                              const std::set<string>& target,
+                              const std::set<string>&,
+                              const std::set<string>&) {
+  assert(db_var.empty());
+  assert(db_instance.empty());
+
+  std::set<string> t, d, c;     // local version
+  scan_vars(t, d, c, false);
+  
+  // for all targets not in t, there is a self-loop
+  if(t.size() < target.size()) { // self loop
+    BOOST_FOREACH(const string& m, target) {
+      if(!t.count(m)) {         // the signal to have self-loop
+        if(!G->exist(m, m, SDFG::dfgEdge::SDFG_DP)) 
+          G->add_edge(m, SDFG::dfgEdge::SDFG_DP, m, m);
+      }
+    }
+  }
+
+  BOOST_FOREACH(shared_ptr<NetComp>& m, statements) {
+    m->gen_sdfg(G, t, d, c);
+  }
+
 }
 
 bool netlist::Block::elab_inparse_item(

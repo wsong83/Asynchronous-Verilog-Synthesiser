@@ -32,6 +32,8 @@ OTHER_OBJS += $(wildcard ../../shell/cmd/*.o)
 OTHER_OBJS += $(wildcard ../../preproc/*.o)
 OTHER_OBJS += $(wildcard ../../averilog/*.o)
 OTHER_OBJS += $(wildcard ../../cpptcl/*.o)
+OTHER_OBJS += $(wildcard ../../sdfg/*.o)
+OTHER_OBJS += $(wildcard ../../pugixml/*.o)
 
 # targets
 all: $(TARGETS)

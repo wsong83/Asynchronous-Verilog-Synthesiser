@@ -18,26 +18,16 @@
 #    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
 #
 # Makefile
-# Due to be replace by autoconf tool suite
-# 14/05/2012   Wei Song
+# 14/08/2012   Wei Song
 #
 #
 
-# variables
-INCDIRS = -I./ -I../../ -I../../cpptcl/
+INCDIRS = -I. 
 
-# targets
-TARGETS = analyze.o current_design.o echo.o elaborate.o exit.o extract_sdfg.o help.o report_netlist.o shell.o suppress_message.o write.o
-HEADERS = $(wildcard ./*.h)
-HEADERS += ../env.h
+all: pugixml.o
 
-# actions
-all: $(TARGETS)
-
-$(TARGETS): %.o:%.cpp $(HEADERS)
-	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
-
-.PHONY: clean
+pugixml.o : %.o:%.cpp
+	$(CXX) $(INCDIRS) $(CXXFLAGS) $< -c -o $@
 
 clean:
-	-rm *.o
+	-rm -f *.o

@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <set>
 #include <boost/foreach.hpp>
+#include "sdfg/sdfg.hpp"
 
 using namespace netlist;
 using std::ostream;
@@ -122,6 +123,33 @@ bool netlist::CaseItem::elaborate(elab_result_t &result, const ctype_t mctype, c
 
 void netlist::CaseItem::set_always_pointer(SeqBlock *p) {
   if(body.use_count() != 0) body->set_always_pointer(p);
+}
+
+void netlist::CaseItem::scan_vars(std::set<string>& target,
+                                  std::set<string>& dsrc,
+                                  std::set<string>& csrc,
+                                  bool ctl) const {
+  body->scan_vars(target, dsrc, csrc, ctl);
+}
+
+void netlist::CaseItem::gen_sdfg(shared_ptr<SDFG::dfgGraph> G, 
+                                 const std::set<string>& target,
+                                 const std::set<string>&,
+                                 const std::set<string>&) {
+  std::set<string> t, d, c;     // local version
+  scan_vars(t, d, c, false);
+  
+  // for all targets not in t, there is a self-loop
+  if(t.size() < target.size()) { // self loop
+    BOOST_FOREACH(const string& m, target) {
+      if(!t.count(m)) {         // the signal to have self-loop
+        if(!G->exist(m, m, SDFG::dfgEdge::SDFG_DP)) 
+          G->add_edge(m, SDFG::dfgEdge::SDFG_DP, m, m);
+      }
+    }
+  }
+  
+  body->gen_sdfg(G, t, d, c);
 }
 
 bool netlist::CaseItem::is_match(const Number& val) const {
@@ -304,4 +332,40 @@ bool netlist::CaseState::elaborate(elab_result_t &result, const ctype_t mctype, 
 
 void netlist::CaseState::set_always_pointer(SeqBlock *p) {
   BOOST_FOREACH(shared_ptr<CaseItem>& m, cases) m->set_always_pointer(p);
+}
+
+void netlist::CaseState::scan_vars(std::set<string>& target,
+                                   std::set<string>& dsrc,
+                                   std::set<string>& csrc,
+                                   bool ctl) const {
+  exp->scan_vars(csrc, csrc, csrc, true);
+  BOOST_FOREACH(const shared_ptr<CaseItem>& m, cases) {
+    m->scan_vars(target, dsrc, csrc, ctl);
+  }
+  
+}
+
+void netlist::CaseState::gen_sdfg(shared_ptr<SDFG::dfgGraph> G, 
+                              const std::set<string>& target,
+                              const std::set<string>&,
+                              const std::set<string>&) {
+  
+  std::set<string> t, d, c;     // local version
+  scan_vars(t, d, c, false);
+  
+  // add control signals
+  BOOST_FOREACH(const string& m, target) {
+    BOOST_FOREACH(const string& csig, c) {
+      if(!G->exist(csig, m, SDFG::dfgEdge::SDFG_CTL))
+        G->add_edge(csig, SDFG::dfgEdge::SDFG_CTL, csig, m);
+    }
+  }
+
+  // the case items
+  BOOST_FOREACH(shared_ptr<CaseItem>& m, cases) {
+    m->gen_sdfg(G, t, d, c);
+  }
+
+  // check whether there is a default
+  // do not do it now
 }

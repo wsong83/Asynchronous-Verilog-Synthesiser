@@ -31,6 +31,7 @@
 #include "shell/env.h"
 #include <algorithm>
 #include <boost/foreach.hpp>
+#include "sdfg/sdfg.hpp"
 
 using namespace netlist;
 using std::ostream;
@@ -291,4 +292,67 @@ void netlist::SeqBlock::set_always_pointer(SeqBlock *p) {
   for_each(db_other.begin(), db_other.end(), [&](pair<const BIdentifier, shared_ptr<NetComp> >& m) {
       m.second->set_always_pointer(p);
     });
+}
+
+void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G, 
+                                 const std::set<string>&,
+                                 const std::set<string>&,
+                                 const std::set<string>&) {
+  assert(db_var.empty());
+  assert(db_instance.empty());
+
+  std::set<string> targets, data_sources, ctl_sources, slist;
+
+  // scan signals
+  BOOST_FOREACH(shared_ptr<NetComp>& m, statements) {
+    m->scan_vars(targets, data_sources, ctl_sources, false);
+  }
+
+  BOOST_FOREACH(shared_ptr<NetComp>& m, statements) {
+    m->gen_sdfg(G, targets, data_sources, ctl_sources);
+  }
+
+  if(!slist_pulse.empty()) {    // ff
+    assert(slist_pulse.size() <= 2 && slist_pulse.size() >= 1);
+
+    // fetch the sensitive list
+    for_each(slist_pulse.begin(), slist_pulse.end(), 
+             [&](pair<bool, shared_ptr<Expression> >& m) {
+               m.second->scan_vars(slist, slist, slist, true);
+               });
+    
+    std::set<string> clks, rsts;
+    for_each(slist.begin(), slist.end(), 
+             [&](const string& m) {
+               if(ctl_sources.count(m)) // rst signals must be used in the control statements
+                 rsts.insert(m);
+               else             // clock signals are not shown in the control list
+                 clks.insert(m);
+             });
+
+    assert(clks.size() == 1);
+    assert(rsts.size() <= 1);
+    
+    // handle the nodes
+    BOOST_FOREACH(const string& m, targets) {
+      shared_ptr<SDFG::dfgNode> node = G->get_node(m);
+      assert(node);
+      node->type = SDFG::dfgNode::SDFG_FF;
+      // handle the reset signals
+      if(rsts.size() > 0 && G->exist(*(rsts.begin()), m, SDFG::dfgEdge::SDFG_CTL))
+        G->get_edge(*(rsts.begin()), m)->type = SDFG::dfgEdge::SDFG_RST;
+      
+      // handle clock
+      string clk_name = *(clks.begin());
+      G->add_edge(clk_name, SDFG::dfgEdge::SDFG_CLK, clk_name, m);
+    }
+  } else {                      // combinational
+    // handle the nodes
+    BOOST_FOREACH(const string& m, targets) {
+      if(G->exist(m, m))
+        G->get_node(m)->type = SDFG::dfgNode::SDFG_LATCH; // self-loop means latch
+      else
+        G->get_node(m)->type = SDFG::dfgNode::SDFG_COMB;
+    }
+  }
 }

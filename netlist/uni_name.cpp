@@ -33,6 +33,9 @@
 
 // large number library
 #include <gmpxx.h>
+#include <string>
+
+using std::string;
 
 string netlist::UniName::name = "uni_name_0";
 

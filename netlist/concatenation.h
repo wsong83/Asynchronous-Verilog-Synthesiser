@@ -29,6 +29,8 @@
 #ifndef AV_H_CONCATENATION_
 #define AV_H_CONCATENATION_
 
+#include <set>
+
 namespace netlist {
 
   class ConElem {               /* element of a concatenation */
@@ -65,6 +67,7 @@ namespace netlist {
     virtual bool elaborate(NetComp::elab_result_t &);
     NETLIST_SET_WIDTH_DECL;
     NETLIST_GET_WIDTH_DECL;
+    NETLIST_SCAN_VARS;
 
     boost::shared_ptr<Expression> exp;
     std::list<boost::shared_ptr<ConElem> > con;
@@ -100,6 +103,7 @@ namespace netlist {
     NETLIST_ELABORATE_DECL;
     NETLIST_SET_WIDTH_DECL;
     NETLIST_GET_WIDTH_DECL;
+    NETLIST_SCAN_VARS;
 
     // data
     std::list<boost::shared_ptr<ConElem> > data;

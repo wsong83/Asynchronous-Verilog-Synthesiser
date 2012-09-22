@@ -173,3 +173,12 @@ void netlist::LConcatenation::set_width(const unsigned int& w) {
     data.erase(data.begin(), it.base()); // ATTN: it is a reverse_iterator
   width = w;
 }
+
+void netlist::LConcatenation::scan_vars(std::set<string>& target,
+                                        std::set<string>&,
+                                        std::set<string>& control,
+                                        bool ctl) const {
+  BOOST_FOREACH(const VIdentifier& m, data) {
+    m.scan_vars(target, target, control, ctl);
+  }
+}

@@ -523,3 +523,15 @@ void netlist::VIdentifier::set_width(const unsigned int& w) {
     width = w;
   }
 }
+
+void netlist::VIdentifier::scan_vars(std::set<string>& target,
+                                     std::set<string>& dsource,
+                                     std::set<string>& control,
+                                     bool ctl) const {
+  if(ctl)
+    control.insert(name);
+  else
+    dsource.insert(name);
+
+  get_select().scan_vars(target, dsource, control, true);
+}

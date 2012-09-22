@@ -86,6 +86,9 @@ namespace netlist {
     void get_hier(std::list<boost::shared_ptr<Module> >&, 
                   std::set<MIdentifier> &) const;
 
+    // extract data flow graph
+    boost::shared_ptr<SDFG::dfgGraph> extract_sdfg();
+
     // data
     MIdentifier name;
     DataBase<VIdentifier, Port, true>      db_port;      /* input and output ports, ordered */

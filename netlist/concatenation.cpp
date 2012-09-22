@@ -46,6 +46,15 @@ void netlist::ConElem::reduce() {
     });
 }
 
+void netlist::ConElem::scan_vars(std::set<string>& t_vars, std::set<string>& d_vars, std::set<string>& c_vars, bool ctl) const {
+  if(exp)
+    exp->scan_vars(t_vars, d_vars, c_vars, ctl);
+  
+  BOOST_FOREACH(shared_ptr<ConElem> m, con) {
+    m->scan_vars(t_vars, d_vars, c_vars, ctl);
+  }
+}
+
 ostream& netlist::ConElem::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
   if(0 == con.size()) {
@@ -252,6 +261,12 @@ void netlist::Concatenation::reduce() {
       pre = it; 
       it++; 
     }
+  }
+}
+
+void netlist::Concatenation::scan_vars(std::set<string>& t_vars, std::set<string>& d_vars, std::set<string>& c_vars, bool ctl) const {
+  BOOST_FOREACH(shared_ptr<ConElem> m, data) {
+    m->scan_vars(t_vars, d_vars, c_vars, ctl);
   }
 }
 

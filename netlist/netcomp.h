@@ -30,6 +30,14 @@
 #define AV_H_AV_NETCOMP_
 
 #include "shell/location.h"
+#include <set>
+
+// forward declarations
+namespace SDFG {
+  class dfgNode;
+  class dfgEdge;
+  class dfgGraph;
+}
 
 // function macro for stream out operator <<
 #ifndef NETLIST_STREAMOUT
@@ -88,6 +96,22 @@
 #ifndef NETLIST_GET_WIDTH_DECL
 #define NETLIST_GET_WIDTH_DECL                                                                \
   virtual unsigned int get_width();
+#endif
+
+#ifndef NETLIST_GEN_SDFG
+#define NETLIST_GEN_SDFG                                   \
+  virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>, \
+                        const std::set<std::string>&,      \
+                        const std::set<std::string>&,      \
+                        const std::set<std::string>&); 
+#endif
+
+#ifndef NETLIST_SCAN_VARS
+#define NETLIST_SCAN_VARS                          \
+  virtual void scan_vars(std::set<std::string>&,   \
+                         std::set<std::string>&,   \
+                         std::set<std::string>&,   \
+                         bool) const;
 #endif
 
 namespace netlist{
@@ -194,6 +218,19 @@ namespace netlist{
     virtual void set_width(const unsigned int&) {
       std::cerr << "ERROR!!, the set_width() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
       assert(0 == "set_width() of NetComp is used");
+    }
+
+    virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>,
+                          const std::set<std::string>&,
+                          const std::set<std::string>&,
+                          const std::set<std::string>&) {
+      std::cerr << "ERROR!!, the gen_sdfg() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
+      assert(0 == "gen_sdfg() of NetComp is used");
+    } 
+
+    virtual void scan_vars(std::set<std::string>&, std::set<std::string>&, std::set<std::string>&, bool) const {
+      std::cerr << "ERROR!!, the scan_vars() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
+      assert(0 == "scan_vars() of NetComp is used");
     }
 
   protected:

@@ -30,8 +30,10 @@
 #include "shell/env.h"
 #include <algorithm>
 #include <boost/foreach.hpp>
+#include "sdfg/sdfg.hpp"
 
 using namespace netlist;
+using namespace SDFG;
 using std::ostream;
 using std::endl;
 using std::string;
@@ -465,7 +467,7 @@ void netlist::Module::get_hier(list<shared_ptr<Module> >& mfifo,
   for_each(db_instance.begin(), db_instance.end(),
            [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
              shared_ptr<Module> tarModule = G_ENV->find_module(m.second->mname);
-             if(tarModule.use_count() != 0 && !mmap.count(tarModule->name.name)) {
+             if(tarModule && !mmap.count(tarModule->name.name)) {
                mfifo.push_front(tarModule);
                myqueue.push_front(tarModule);
                mmap.insert(tarModule->name);
@@ -474,6 +476,64 @@ void netlist::Module::get_hier(list<shared_ptr<Module> >& mfifo,
   // breadth first
   BOOST_FOREACH(shared_ptr<Module>& m, myqueue) 
     m->get_hier(mfifo, mmap);
+}
+
+shared_ptr<dfgGraph> netlist::Module::extract_sdfg() {
+  shared_ptr<dfgGraph> G(new dfgGraph(name.name));
+  
+  // put all ports into the list
+  for_each(db_port.begin_order(), db_port.end_order(), 
+           [&](const pair<const VIdentifier, shared_ptr<Port> >& m) {
+             shared_ptr<dfgNode> n = G->add_node(m.first.name + "_P", dfgNode::SDFG_PORT);
+             switch(m.second->get_dir()) {
+             case  1: n->type = dfgNode::SDFG_OPORT; break;
+             case -1: n->type = dfgNode::SDFG_IPORT; break;
+             default: ;
+             }
+             n->ptr = m.second;
+           });
+
+  // put all signals into the list
+  for_each(db_var.begin_order(), db_var.end_order(),
+           [&](const pair<const VIdentifier, shared_ptr<Variable> >& m) {
+             shared_ptr<dfgNode> n = G->add_node(m.first.name, dfgNode::SDFG_DF);
+             n->ptr = m.second;
+           });
+  
+  // link port to signals
+  for_each(db_port.begin_order(), db_port.end_order(), 
+           [&](const pair<const VIdentifier, shared_ptr<Port> >& m) {
+             switch(m.second->get_dir()) {
+             case  1:           // output
+               G->add_edge(m.first.name, dfgEdge::SDFG_DF, m.first.name, m.first.name + "_P"); 
+               break;
+             case -1:           // input
+               G->add_edge(m.first.name, dfgEdge::SDFG_DF, m.first.name + "_P", m.first.name); 
+               break;
+             default:           // inout
+               G->add_edge(m.first.name, dfgEdge::SDFG_DF, m.first.name, m.first.name + "_P"); 
+               G->add_edge(m.first.name, dfgEdge::SDFG_DF, m.first.name + "_P", m.first.name);
+             }
+           });
+
+  // put all modules into the graph
+  for_each(db_instance.begin(), db_instance.end(),
+           [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
+             shared_ptr<dfgNode> n = G->add_node(m.first.name, dfgNode::SDFG_MODULE);
+             n->ptr = m.second;
+             shared_ptr<Module> subMod = G_ENV->find_module(m.second->mname);
+             if(subMod) { // has sub-module
+               n->child = subMod->extract_sdfg();
+               n->child->father = n;
+             }
+           });
+
+  // now cope with internal structures
+  BOOST_FOREACH(shared_ptr<NetComp>& m, statements) {
+    m->gen_sdfg(G, std::set<string>(), std::set<string>(), std::set<string>());
+  }
+
+  return G;
 }
 
 void netlist::Module::init_port_list(const list<VIdentifier>& port_list) {
