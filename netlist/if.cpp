@@ -244,7 +244,7 @@ void netlist::IfState::gen_sdfg(shared_ptr<SDFG::dfgGraph> G,
   if(elsecase)
     elsecase->gen_sdfg(G, t, d, c);
   else {                        // no else, self-loop
-    BOOST_FOREACH(const string& m, target) {
+    BOOST_FOREACH(const string& m, t) {
       if(!G->exist(m, m, SDFG::dfgEdge::SDFG_DP))
         G->add_edge(m, SDFG::dfgEdge::SDFG_DP, m, m);
     }

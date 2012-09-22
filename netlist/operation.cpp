@@ -667,10 +667,7 @@ void netlist::Operation::set_width(const unsigned int& w) {
 void netlist::Operation::scan_vars(std::set<string>& t_vars, std::set<string>& d_vars, std::set<string>& c_vars, bool ctl) const {
   switch(otype) {
   case oVar: {
-    if(ctl)
-      c_vars.insert(get_var().name);
-    else
-      d_vars.insert(get_var().name);
+    get_var().scan_vars(t_vars, d_vars, c_vars, ctl);
     break;
   }
   case oCon: {

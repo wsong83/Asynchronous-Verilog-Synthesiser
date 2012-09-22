@@ -334,26 +334,25 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G,
     assert(rsts.size() <= 1);
     
     // handle the nodes
-    for_each(targets.begin(), targets.end(), 
-             [&](const string& m) {
-               shared_ptr<SDFG::dfgNode> node = G->get_node(m);
-               node->type = SDFG::dfgNode::SDFG_FF;
-               // handle the reset signals
-               if(rsts.size() > 0 && G->exist(*(rsts.begin()), node->name), SDFG::dfgEdge::SDFG_CTL)
-                 G->get_edge(*(rsts.begin()), node->name)->type = SDFG::dfgEdge::SDFG_RST;
-
-               // handle clock
-               string clk_name = *(clks.begin());
-               G->add_edge(clk_name, SDFG::dfgEdge::SDFG_CLK, clk_name, node->name);
-             });
+    BOOST_FOREACH(const string& m, targets) {
+      shared_ptr<SDFG::dfgNode> node = G->get_node(m);
+      assert(node);
+      node->type = SDFG::dfgNode::SDFG_FF;
+      // handle the reset signals
+      if(rsts.size() > 0 && G->exist(*(rsts.begin()), m, SDFG::dfgEdge::SDFG_CTL))
+        G->get_edge(*(rsts.begin()), m)->type = SDFG::dfgEdge::SDFG_RST;
+      
+      // handle clock
+      string clk_name = *(clks.begin());
+      G->add_edge(clk_name, SDFG::dfgEdge::SDFG_CLK, clk_name, m);
+    }
   } else {                      // combinational
     // handle the nodes
-    for_each(targets.begin(), targets.end(), 
-             [&](const string& m) {
-               if(G->exist(m, m))
-                 G->get_node(m)->type = SDFG::dfgNode::SDFG_LATCH; // self-loop means latch
-               else
-                 G->get_node(m)->type = SDFG::dfgNode::SDFG_COMB;
-             });
+    BOOST_FOREACH(const string& m, targets) {
+      if(G->exist(m, m))
+        G->get_node(m)->type = SDFG::dfgNode::SDFG_LATCH; // self-loop means latch
+      else
+        G->get_node(m)->type = SDFG::dfgNode::SDFG_COMB;
+    }
   }
 }

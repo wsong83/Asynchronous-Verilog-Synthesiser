@@ -800,8 +800,8 @@ void netlist::Range::scan_vars(std::set<string>& target,
     v->scan_vars(target, dsrc, csrc, ctl);
   
   if(rtype == TR_Range) {
-    cr.first->scan_vars(target, dsrc, csrc, ctl);
-    cr.second->scan_vars(target, dsrc, csrc, ctl);
+    r.first->scan_vars(target, dsrc, csrc, ctl);
+    r.second->scan_vars(target, dsrc, csrc, ctl);
   }
 
   RangeArrayCommon::scan_vars(target, dsrc, csrc, ctl);
