@@ -37,7 +37,7 @@ export CXXFLAGS = -std=c++0x -Wall -Wextra -g
 export LINKFLAGS = -lboost_regex -lgmpxx -lgmp -lboost_system -lboost_filesystem -lboost_program_options -ltcl -lboost_graph 
 
 # targets
-SUBDIRS = preproc averilog netlist shell shell/cmd cpptcl sdfg pugixml
+SUBDIRS = preproc averilog netlist shell shell/cmd cpptcl sdfg pugixml tool
 TESTDIRS = preproc/test shell/test
 BISONDIRS = averilog.bison
 

@@ -62,6 +62,7 @@ namespace SDFG {
 
     boost::shared_ptr<netlist::NetComp> ptr;   // pointer to the netlist component
     boost::shared_ptr<dfgGraph> child;         // when it is a module entity, it should has a child
+    std::string child_name;                    // when it is a module entity, this is the module name of the module
     std::multimap<std::string, std::string> sig2port;   // remember the port connection if it is a module entity
     std::map<std::string, std::string> port2sig;        // remember the port connection if it is a module entity
     std::string name;           // description of this node
@@ -81,7 +82,11 @@ namespace SDFG {
     dfgNode() {}
     dfgNode(const std::string& n, node_type_t t = SDFG_DF) : name(n), type(t) {}
     void write(pugi::xml_node&, std::list<boost::shared_ptr<dfgGraph> >&) const;
-        
+    bool read(const pugi::xml_node&);
+
+    std::pair<double, double> position; // graphic position
+    std::pair<double, double> bbox;     // bounding box
+    void graphic_init();                // set initial graphic info.
   };
 
   class dfgEdge {
@@ -100,13 +105,16 @@ namespace SDFG {
     dfgEdge() {}
     dfgEdge(const std::string& n, edge_type_t t = SDFG_DF) : name(n), type(t) {}
     void write(pugi::xml_node&) const;
+    bool read(const pugi::xml_node&);
+
+    std::list<std::pair<double, double> > bend; // bending points of the edge
 
   };
 
   class dfgGraph{
   public:
     GType bg_;                  // BGL graph
-    boost::shared_ptr<dfgNode> father; // father when it is a entity of another module
+    //boost::shared_ptr<dfgNode> father; // father when it is a entity of another module
     std::string name;           // description of this node
     
     std::map<edge_descriptor, boost::shared_ptr<dfgEdge> > edges;
@@ -121,6 +129,7 @@ namespace SDFG {
     void add_node(boost::shared_ptr<dfgNode>);
     boost::shared_ptr<dfgNode> add_node(const std::string&, dfgNode::node_type_t);
     void add_edge(boost::shared_ptr<dfgEdge>, const std::string&, const std::string&);
+    void add_edge(boost::shared_ptr<dfgEdge>, const vertex_descriptor&, const vertex_descriptor&);
     boost::shared_ptr<dfgEdge> add_edge(const std::string&, dfgEdge::edge_type_t, const std::string&, const std::string&);
     boost::shared_ptr<dfgEdge> get_edge(const edge_descriptor&) const;
     boost::shared_ptr<dfgEdge> get_edge(const std::string&, const std::string&) const;   // return a random one if multiple
@@ -139,9 +148,10 @@ namespace SDFG {
 
     void write(std::ostream&) const;
     void write(pugi::xml_node&, std::list<boost::shared_ptr<dfgGraph> >&) const;
-
+    bool read(const pugi::xml_node&);
   };
 
+  boost::shared_ptr<dfgGraph> read(std::istream&);
 }
 
 #endif /* _SDFG_H_ */
