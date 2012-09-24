@@ -137,6 +137,7 @@ namespace SDFG {
     dfgGraph() {}
     dfgGraph(const std::string& n) : name(n) {}
 
+    // add and fetch nodes
     void add_node(boost::shared_ptr<dfgNode>);
     boost::shared_ptr<dfgNode> add_node(const std::string&, dfgNode::node_type_t);
     void add_edge(boost::shared_ptr<dfgEdge>, const std::string&, const std::string&);
@@ -157,6 +158,11 @@ namespace SDFG {
     bool exist(const vertex_descriptor&, const vertex_descriptor&, dfgEdge::edge_type_t) const; // edge 
     bool exist(const std::string&) const;   // node   
 
+    // graphic
+    bool layout();
+    bool layout(ogdf::Graph*, ogdf::GraphAttributes *);
+
+    // graphic formats
     void write(std::ostream&) const;
     void write(pugi::xml_node&, std::list<boost::shared_ptr<dfgGraph> >&) const;
     void write(ogdf::Graph*, ogdf::GraphAttributes*);

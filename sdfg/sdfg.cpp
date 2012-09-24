@@ -108,10 +108,11 @@ void SDFG::dfgNode::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<dfg
   xnode.append_attribute("type") = stype.c_str();
   if(type == SDFG_MODULE) {     // module
     if(child)  GList.push_back(child); // push the sub-module to the module list
-    xnode.append_child("module").text() = child_name.c_str();
+    pugi::xml_node xmodule = xnode.append_child("module");
+    xmodule.append_attribute("name") = child_name.c_str();
     for_each(port2sig.begin(), port2sig.end(), 
              [&](const pair<const string, const string>& m) {
-               pugi::xml_node port = xnode.append_child("portmap");
+               pugi::xml_node port = xmodule.append_child("portmap");
                port.append_attribute("port") = m.first.c_str();
                port.append_attribute("signal") = m.second.c_str();
              });
@@ -157,8 +158,9 @@ bool SDFG::dfgNode::read(const pugi::xml_node& xnode) {
   }
 
   if(type == SDFG_MODULE) {     // port map
-    child_name = xnode.child("module").text().get();
-    for(pugi::xml_node port = xnode.child("portmap"); port; port = port.next_sibling("portmap")) {
+    pugi::xml_node xmodule = xnode.child("module");
+    child_name = xmodule.attribute("name").as_string();
+    for(pugi::xml_node port = xmodule.child("portmap"); port; port = port.next_sibling("portmap")) {
       string port_name = port.attribute("port").as_string();
       string port_signal = port.attribute("signal").as_string();
       port2sig[port_name] = port_signal;
@@ -314,6 +316,49 @@ shared_ptr<dfgEdge> SDFG::dfgGraph::get_edge(const string& src, const string& ta
     return get_edge(node_map.find(src)->second, node_map.find(tar)->second, tt);
   else
     return shared_ptr<dfgEdge>();
+}
+
+bool SDFG::dfgGraph::layout() {
+  ogdf::Graph g;
+  ogdf::GraphAttributes ga;
+  write(&g, &ga);
+  return layout(&g, &ga);
+}
+
+bool SDFG::dfgGraph::layout(ogdf::Graph* pg, ogdf::GraphAttributes *pga) {
+  // Sugiyama Layout
+  ogdf::SugiyamaLayout SL;
+
+  ogdf::LongestPathRanking *ranking = new ogdf::LongestPathRanking();
+  //ogdf::OptimalRanking * ranking = new ogdf::OptimalRanking();
+  //ogdf::CoffmanGrahamRanking *ranking = new ogdf::CoffmanGrahamRanking();
+  //ranking->width(4);
+  ogdf::GreedyCycleRemoval * subGrapher = new ogdf::GreedyCycleRemoval();
+  ranking->setSubgraph(subGrapher);
+  SL.setRanking(ranking);
+
+  //ogdf::SplitHeuristic *crossMiner = new ogdf::SplitHeuristic();
+  //ogdf::MedianHeuristic *crossMiner = new ogdf::MedianHeuristic();
+  //ogdf::GreedyInsertHeuristic *crossMiner = new ogdf::GreedyInsertHeuristic();
+  //SL.setCrossMin(crossMiner);
+
+  ogdf::FastHierarchyLayout * layouter = new ogdf::FastHierarchyLayout();
+  layouter->layerDistance(G_NODE_H * G_LAYER_DIST);
+  layouter->nodeDistance(G_NODE_H * G_NODE_DIST);
+  SL.setLayout(layouter);
+
+  SL.runs(30);
+
+  try {
+    SL.call(*pga);
+  } catch(std::exception e) {
+    std::cout << string(__PRETTY_FUNCTION__) 
+              << ": layout engine SugiyamaLayout failed."
+              << std::endl;
+    return false;
+  }
+
+  return read(pg, pga);
 }
 
 void SDFG::dfgGraph::write(std::ostream& os) const {

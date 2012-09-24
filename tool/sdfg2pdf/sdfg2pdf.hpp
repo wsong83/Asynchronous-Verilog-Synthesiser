@@ -30,6 +30,20 @@
 #define AVS_TOOL_SDFG2PDF_H_
 
 #include "sdfg/sdfg.hpp"
+#include <fstream>
+#include <list>
+#include <utility>
 
+// OGDF
+#include "ogdf/basic/Graph.h"
+#include "ogdf/basic/GraphAttributes.h"
+
+// Qt
+#include <QPrinter>
+#include <QApplication>
+#include <QPainter>
+
+QPainterPath make_arrow(double x0, double y0, double x1, double y1);
+void draw_page(SDFG::dfgGraph& g, QPainter& painter, std::set<std::string>&, std::list<boost::shared_ptr<SDFG::dfgGraph> >&);
 
 #endif
