@@ -28,6 +28,7 @@
 
 #include "sdfg.hpp"
 #include <boost/tuple/tuple.hpp>
+#include <boost/format.hpp>
 #include <set>
 #include <algorithm>
 
@@ -37,6 +38,29 @@ using std::map;
 using std::string;
 using std::pair;
 using std::list;
+
+namespace SDFG {
+  namespace {
+    // local functions
+    unsigned long shash(const string& str) {
+      unsigned int id_size = 32; // assuming all system has a long larger than 4 bytes
+      unsigned long rv = 0;
+      for(unsigned int i=0; i<str.size(); i++) {
+        unsigned long highbit = rv >> (id_size - 2);
+        rv <<= 7;
+        rv &= 0xffffffff;
+        rv |= str[i];
+        rv ^= highbit;
+      }
+      return rv;
+    }
+    
+    // display the hash id of a tring
+    void show_hash(const string& str) {
+      std::cout << "hash id of \"" << str << "\":" << boost::format("0x%x") % shash(str) << std::endl;
+    }
+  }
+}
 
 void SDFG::dfgNode::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<dfgGraph> >& GList) const {
   xnode.append_attribute("name") = name.c_str();
@@ -54,6 +78,7 @@ void SDFG::dfgNode::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<dfg
   xnode.append_attribute("type") = stype.c_str();
   if(type == SDFG_MODULE) {     // module
     if(child)  GList.push_back(child); // push the sub-module to the module list
+    xnode.append_child("module").text() = child_name.c_str();
     for_each(port2sig.begin(), port2sig.end(), 
              [&](const pair<const string, const string>& m) {
                pugi::xml_node port = xnode.append_child("portmap");
@@ -61,6 +86,47 @@ void SDFG::dfgNode::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<dfg
                port.append_attribute("signal") = m.second.c_str();
              });
   }
+}
+
+bool SDFG::dfgNode::read(const pugi::xml_node& xnode) {
+  if(1 == 0) {
+    show_hash("combi");         // 0x3dfb7169
+    show_hash("ff");            // 0x00003366
+    show_hash("latch");         // 0xcc3d31e8
+    show_hash("module");        // 0xfc9d7666
+    show_hash("iport");         // 0x9e1bf974
+    show_hash("oport");         // 0xfe1bf974
+    show_hash("port");          // 0x0e1bf974
+    show_hash("unknown");       // 0xbddbfb6d
+    return false;
+  }
+
+  id = static_cast<vertex_descriptor>(xnode.attribute("id").as_int());
+  name = xnode.attribute("name").as_string();
+  switch(shash(xnode.attribute("type").as_string())) {
+  case 0x3dfb7169: type = SDFG_COMB;   break;
+  case 0x00003366: type = SDFG_FF;     break;
+  case 0xcc3d31e8: type = SDFG_LATCH;  break;
+  case 0xfc9d7666: type = SDFG_MODULE; break;
+  case 0x9e1bf974: type = SDFG_IPORT;  break;
+  case 0xfe1bf974: type = SDFG_OPORT;  break;
+  case 0x0e1bf974: type = SDFG_PORT;   break;
+  case 0xbddbfb6d: type = SDFG_DF;     break;
+  default: assert(0 == 1); return false;
+  }
+
+  if(type == SDFG_MODULE) {     // port map
+    child_name = xnode.child("module").text().get();
+    for(pugi::xml_node port = xnode.child("portmap"); port; port = port.next_sibling("portmap")) {
+      string port_name = port.attribute("port").as_string();
+      string port_signal = port.attribute("signal").as_string();
+      port2sig[port_name] = port_signal;
+      sig2port.insert(pair<string, string>(port_signal, port_name));
+    }
+  }
+
+  return true;
+
 }
 
 void SDFG::dfgEdge::write(pugi::xml_node& xnode) const {
@@ -74,6 +140,28 @@ void SDFG::dfgEdge::write(pugi::xml_node& xnode) const {
   default:          stype = "unknown";
   }
   xnode.append_attribute("type") = stype.c_str();
+}
+
+bool SDFG::dfgEdge::read(const pugi::xml_node& xnode) {
+  if(1 == 0) {
+    show_hash("data");          // 0x0c987a61
+    show_hash("control");       // 0xee9cb7ef
+    show_hash("clk");           // 0x0018f66b
+    show_hash("rst");           // 0x001cb9f4
+    show_hash("unknown");       // 0xbddbfb6d
+  }
+
+  name = xnode.attribute("name").as_string();
+  switch(shash(xnode.attribute("type").as_string())) {
+  case 0x0c987a61: type = SDFG_DP;  break;
+  case 0xee9cb7ef: type = SDFG_CTL; break;
+  case 0x0018f66b: type = SDFG_CLK; break;
+  case 0x001cb9f4: type = SDFG_RST; break;
+  case 0xbddbfb6d: type = SDFG_DF;  break;
+  default: assert(0 == 1); return false;
+  }
+
+  return true;
 }
 
 void SDFG::dfgGraph::add_node(shared_ptr<dfgNode> node) {
@@ -94,8 +182,13 @@ shared_ptr<dfgNode> SDFG::dfgGraph::add_node(const string& n, dfgNode::node_type
 void SDFG::dfgGraph::add_edge(shared_ptr<dfgEdge> edge, const string& src, const string& snk) {
   assert(edge);
   assert(node_map.count(src) && node_map.count(snk));
+  add_edge(edge, node_map[src], node_map[snk]);
+}
+
+void SDFG::dfgGraph::add_edge(shared_ptr<dfgEdge> edge, const vertex_descriptor& src, const vertex_descriptor& snk) {
+  assert(edge);
   bool added;
-  boost::tie(edge->id, added) = boost::add_edge(node_map[src], node_map[snk], bg_);
+  boost::tie(edge->id, added) = boost::add_edge(src, snk, bg_);
   edges[edge->id] = edge;
 }
 
@@ -211,6 +304,34 @@ void SDFG::dfgGraph::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<df
              });
 }
 
+bool SDFG::dfgGraph::read(const pugi::xml_node& xnode) {
+  // get the graph name
+  name = xnode.attribute("name").as_string();
+
+  map<vertex_descriptor, vertex_descriptor> id_map; // need to regenerate vertex_descriptor in BGL
+
+  // get all nodes
+  for(pugi::xml_node node = xnode.child("node"); node; node = node.next_sibling("node")) {
+    shared_ptr<dfgNode> pnode(new dfgNode());
+    if(!pnode->read(node)) {assert(0 == 1); return false;}
+    vertex_descriptor orig = pnode->id;
+    add_node(pnode);
+    id_map[orig] = pnode->id;
+  }
+
+  // get all edges
+  for(pugi::xml_node edge = xnode.child("edge"); edge; edge = edge.next_sibling("edge")) {
+    shared_ptr<dfgEdge> pedge(new dfgEdge());
+    if(!pedge->read(edge)) {assert(0 == 1); return false;}
+    vertex_descriptor src, tar;
+    src = static_cast<vertex_descriptor>(edge.attribute("source").as_int());
+    tar = static_cast<vertex_descriptor>(edge.attribute("target").as_int());
+    add_edge(pedge,id_map[src], id_map[tar]);
+  }
+  
+  return true;
+}
+
 bool SDFG::dfgGraph::exist(const string& src, const string& tar) const {
   shared_ptr<dfgNode> src_node = get_node(src);
   shared_ptr<dfgNode> tar_node = get_node(tar);
@@ -245,3 +366,40 @@ bool SDFG::dfgGraph::exist(const std::string& name) const {
   return get_node(name);
 }    
 
+shared_ptr<dfgGraph> SDFG::read(std::istream& istr) {
+  shared_ptr<dfgGraph> G(new dfgGraph());
+  pugi::xml_document doc;       // the sdfg XML file
+  pugi::xml_parse_result rv = doc.load(istr, 
+                                       pugi::parse_default     |
+                                       pugi::parse_declaration |   // declaration
+                                       pugi::parse_comments        // commetns
+                                       );
+  if(!rv) {
+    std::cout << string(__PRETTY_FUNCTION__) << " error reading the SDFG XML file!" << std::endl;
+    return G;
+  } 
+
+  map<string, shared_ptr<dfgGraph> > gmap;
+  G->name = doc.child("top").attribute("name").as_string();
+
+  for(pugi::xml_node xgraph = doc.child("graph"); xgraph; xgraph = xgraph.next_sibling("graph")) {
+    shared_ptr<dfgGraph> pg(new dfgGraph());
+    if(!pg->read(xgraph)) return G;
+    gmap[pg->name] = pg;
+  }
+
+  // link all module node
+  for_each(gmap.begin(), gmap.end(),
+           [&](pair<const string, shared_ptr<dfgGraph> >&m) {
+             for_each(m.second->nodes.begin(), m.second->nodes.end(),
+                      [&](pair<const vertex_descriptor, shared_ptr<dfgNode> > &n) {
+                        if(n.second->type == dfgNode::SDFG_MODULE)
+                          n.second->child = gmap[n.second->child_name];
+                      });
+           });
+
+  // set the top graph
+  G = gmap[G->name];
+
+  return G;
+}
