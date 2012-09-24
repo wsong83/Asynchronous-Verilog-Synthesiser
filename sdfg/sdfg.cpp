@@ -29,8 +29,19 @@
 #include "sdfg.hpp"
 #include <boost/tuple/tuple.hpp>
 #include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
 #include <set>
 #include <algorithm>
+
+#include <ogdf/layered/SugiyamaLayout.h>
+#include <ogdf/layered/FastHierarchyLayout.h>
+#include <ogdf/layered/LongestPathRanking.h>
+//#include <ogdf/layered/OptimalRanking.h>
+//#include <ogdf/layered/CoffmanGrahamRanking.h>
+#include <ogdf/layered/GreedyCycleRemoval.h>
+//#include <ogdf/layered/SplitHeuristic.h>
+//#include <ogdf/layered/MedianHeuristic.h>
+//#include <ogdf/layered/GreedyInsertHeuristic.h>
 
 using namespace SDFG;
 using boost::shared_ptr;
@@ -40,6 +51,12 @@ using std::pair;
 using std::list;
 
 namespace SDFG {
+
+static const double G_NODE_H = 17.6;
+static const double G_FONT_RATIO = 3.6;
+static const double G_LAYER_DIST = 1.0;
+static const double G_NODE_DIST = 1.5;
+
   namespace {
     // local functions
     unsigned long shash(const string& str) {
@@ -60,6 +77,19 @@ namespace SDFG {
       std::cout << "hash id of \"" << str << "\":" << boost::format("0x%x") % shash(str) << std::endl;
     }
   }
+}
+
+void SDFG::dfgNode::graphic_init() {
+  if(bbox.first == 0.0)
+    switch(type) {
+    case SDFG_FF:      bbox.first = 2*G_FONT_RATIO; break;
+    case SDFG_MODULE:  bbox.first = 6*G_FONT_RATIO; break;
+    case SDFG_PORT:    bbox.first = 4*G_FONT_RATIO; break;
+    default:           bbox.first = 4*G_FONT_RATIO;
+    }    
+  
+  if(bbox.second == 0.0)
+    bbox.second = G_NODE_H;
 }
 
 void SDFG::dfgNode::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<dfgGraph> >& GList) const {
@@ -88,6 +118,17 @@ void SDFG::dfgNode::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<dfg
   }
 }
 
+void SDFG::dfgNode::write(void *pnode, ogdf::GraphAttributes *pga) {
+  ogdf::node pn = static_cast<ogdf::node>(pnode);
+  graphic_init();
+  pga->labelNode(pn) = boost::str(boost::format("%u") % static_cast<unsigned int>(id)).c_str();
+  pga->width(pn) = bbox.first;
+  pga->height(pn) = bbox.second;
+  pga->x(pn) = position.first;
+  pga->y(pn) = position.second;
+}
+
+
 bool SDFG::dfgNode::read(const pugi::xml_node& xnode) {
   if(1 == 0) {
     show_hash("combi");         // 0x3dfb7169
@@ -101,7 +142,7 @@ bool SDFG::dfgNode::read(const pugi::xml_node& xnode) {
     return false;
   }
 
-  id = static_cast<vertex_descriptor>(xnode.attribute("id").as_int());
+  id = static_cast<vertex_descriptor>(xnode.attribute("id").as_uint());
   name = xnode.attribute("name").as_string();
   switch(shash(xnode.attribute("type").as_string())) {
   case 0x3dfb7169: type = SDFG_COMB;   break;
@@ -129,6 +170,15 @@ bool SDFG::dfgNode::read(const pugi::xml_node& xnode) {
 
 }
 
+bool SDFG::dfgNode::read(void * const pnode, ogdf::GraphAttributes * const pga) {
+  ogdf::node const pn = static_cast<ogdf::node const>(pnode);
+  
+  position.first = pga->x(pn);
+  position.second = pga->y(pn);
+
+  return true;
+}
+
 void SDFG::dfgEdge::write(pugi::xml_node& xnode) const {
   xnode.append_attribute("name") = name.c_str();
   string stype;
@@ -140,6 +190,12 @@ void SDFG::dfgEdge::write(pugi::xml_node& xnode) const {
   default:          stype = "unknown";
   }
   xnode.append_attribute("type") = stype.c_str();
+}
+
+void SDFG::dfgEdge::write(void *pedge, ogdf::GraphAttributes *pga) {
+  ogdf::edge pe = static_cast<ogdf::edge>(pedge);
+  // as multiple edges can exist between two nodes, edge type is stored to identify the single edge
+  pga->labelEdge(pe) = boost::str(boost::format("%u") % type).c_str();
 }
 
 bool SDFG::dfgEdge::read(const pugi::xml_node& xnode) {
@@ -161,6 +217,17 @@ bool SDFG::dfgEdge::read(const pugi::xml_node& xnode) {
   default: assert(0 == 1); return false;
   }
 
+  return true;
+}
+
+bool SDFG::dfgEdge::read(void * const pedge, ogdf::GraphAttributes * const pga) {
+  ogdf::edge const pe = static_cast<ogdf::edge const>(pedge);
+  
+  bend.clear();
+  for(ogdf::ListConstIterator<ogdf::DPoint> b = pga->bends(pe).begin(); b.valid(); ++b) {
+    bend.push_back(pair<double,double>((*b).m_x, (*b).m_y));
+  }
+  
   return true;
 }
 
@@ -304,6 +371,34 @@ void SDFG::dfgGraph::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<df
              });
 }
 
+void SDFG::dfgGraph::write(ogdf::Graph *pg, ogdf::GraphAttributes *pga){
+  pga->init(*pg,
+            ogdf::GraphAttributes::nodeGraphics | ogdf::GraphAttributes::edgeGraphics |
+            ogdf::GraphAttributes::nodeLabel    | ogdf::GraphAttributes::edgeStyle    | 
+            ogdf::GraphAttributes::nodeStyle    | ogdf::GraphAttributes::edgeArrow    |
+            ogdf::GraphAttributes::nodeWeight   | ogdf::GraphAttributes::edgeLabel    );
+  
+  map<vertex_descriptor, void *> i2n;
+
+  // nodes
+  for_each(nodes.begin(), nodes.end(),
+           [&](const pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
+               ogdf::node pnode = pg->newNode();
+               i2n[m.first] = pnode;
+               m.second->write(pnode, pga);
+             });
+
+  // edges
+  for_each(edges.begin(), edges.end(),
+           [&](const pair<const edge_descriptor, shared_ptr<dfgEdge> >& m) {
+               // get the source and target node pointers
+               ogdf::node ps = static_cast<ogdf::node>(i2n[boost::source(m.first, bg_)]);
+               ogdf::node pt = static_cast<ogdf::node>(i2n[boost::target(m.first, bg_)]);
+               ogdf::edge pedge = pg->newEdge(ps, pt);
+               m.second->write(pedge, pga);
+             });
+}
+
 bool SDFG::dfgGraph::read(const pugi::xml_node& xnode) {
   // get the graph name
   name = xnode.attribute("name").as_string();
@@ -324,11 +419,36 @@ bool SDFG::dfgGraph::read(const pugi::xml_node& xnode) {
     shared_ptr<dfgEdge> pedge(new dfgEdge());
     if(!pedge->read(edge)) {assert(0 == 1); return false;}
     vertex_descriptor src, tar;
-    src = static_cast<vertex_descriptor>(edge.attribute("source").as_int());
-    tar = static_cast<vertex_descriptor>(edge.attribute("target").as_int());
+    src = static_cast<vertex_descriptor>(edge.attribute("source").as_uint());
+    tar = static_cast<vertex_descriptor>(edge.attribute("target").as_uint());
     add_edge(pedge,id_map[src], id_map[tar]);
   }
   
+  return true;
+}
+
+bool SDFG::dfgGraph::read(ogdf::Graph * const pg, ogdf::GraphAttributes * const pga){
+  ogdf::node n;
+  forall_nodes(n, *pg) {
+    vertex_descriptor nid = static_cast<vertex_descriptor>
+      (boost::lexical_cast<unsigned long>(pga->labelNode(n).cstr()));
+    if(!nodes.count(nid)) return false;
+    nodes[nid]->read(n, pga);
+  }
+
+  ogdf::edge e;
+  forall_edges(e, *pg) {
+    vertex_descriptor src, tar;
+    src = static_cast<vertex_descriptor>
+      (boost::lexical_cast<unsigned long>(pga->labelNode(e->source()).cstr()));
+    tar = static_cast<vertex_descriptor>
+      (boost::lexical_cast<unsigned long>(pga->labelNode(e->target()).cstr()));
+    dfgEdge::edge_type_t etype = static_cast<dfgEdge::edge_type_t>
+      (boost::lexical_cast<unsigned long>(pga->labelEdge(e).cstr()));
+    if(!exist(src, tar, etype)) return false;
+    get_edge(src, tar, etype)->read(e, pga);
+  }
+
   return true;
 }
 

@@ -1,4 +1,10 @@
 ##### Thu 19/07/2012
+* New command extract_sdfg
+*     extract synchronous data-flow graph SDFG from a module
+*     remove cppPNML library as TCPN is not used in the near future
+*     add pugixml library back as a parser for the sdfg file
+
+##### Thu 19/07/2012
 * Merge dev back to master.
 * Remove all parameters in the wriiten out netlist.
 * Range reduction finished. No obvious effect in or1200 design.

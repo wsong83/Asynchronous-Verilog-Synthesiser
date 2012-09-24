@@ -20,7 +20,7 @@
  */
 
 /* 
- * A help library of SDFG
+ * A help library of Synchronous Data-Flow Graph (SDFG)
  * 17/09/2012   Wei Song
  *
  *
@@ -41,11 +41,18 @@
 // pugixml library
 #include "pugixml/pugixml.hpp"
 
-
+// forward decalration
 namespace netlist {
   class NetComp;
 }
 
+// forward declaration
+namespace ogdf {
+  class Graph;
+  class GraphAttributes;
+}
+
+// the Synchronous Data-Flow Graph (SDFG) library
 namespace SDFG {
 
   typedef boost::adjacency_list<boost::multisetS, boost::vecS, boost::bidirectionalS> GType;
@@ -79,10 +86,12 @@ namespace SDFG {
     } type;
 
 
-    dfgNode() {}
+    dfgNode(): position(0,0), bbox(0,0) {}
     dfgNode(const std::string& n, node_type_t t = SDFG_DF) : name(n), type(t) {}
     void write(pugi::xml_node&, std::list<boost::shared_ptr<dfgGraph> >&) const;
+    void write(void *, ogdf::GraphAttributes *);
     bool read(const pugi::xml_node&);
+    bool read(void * const, ogdf::GraphAttributes * const);
 
     std::pair<double, double> position; // graphic position
     std::pair<double, double> bbox;     // bounding box
@@ -105,7 +114,9 @@ namespace SDFG {
     dfgEdge() {}
     dfgEdge(const std::string& n, edge_type_t t = SDFG_DF) : name(n), type(t) {}
     void write(pugi::xml_node&) const;
+    void write(void *, ogdf::GraphAttributes *);
     bool read(const pugi::xml_node&);
+    bool read(void * const, ogdf::GraphAttributes * const);
 
     std::list<std::pair<double, double> > bend; // bending points of the edge
 
@@ -148,7 +159,9 @@ namespace SDFG {
 
     void write(std::ostream&) const;
     void write(pugi::xml_node&, std::list<boost::shared_ptr<dfgGraph> >&) const;
+    void write(ogdf::Graph*, ogdf::GraphAttributes*);
     bool read(const pugi::xml_node&);
+    bool read(ogdf::Graph* const, ogdf::GraphAttributes* const);
   };
 
   boost::shared_ptr<dfgGraph> read(std::istream&);

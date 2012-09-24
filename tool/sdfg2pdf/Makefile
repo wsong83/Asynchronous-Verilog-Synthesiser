@@ -38,7 +38,7 @@ OBJS    += $(wildcard ../../pugixml/*.o)
 all: $(TARGETS)
 
 $(TARGETS): %:%.cpp %.hpp $(HEADERS) $(OBJS)
-	$(CXX) $(INCDIRS) $(CXXFLAGS) $< $(OBJS) -o $@
+	$(CXX) $(INCDIRS) $(CXXFLAGS) $< $(OBJS) -lpthread $(OGDF_LIB) -o $@
 	cp $@ ../../bin/
 
 .PHONY: clean

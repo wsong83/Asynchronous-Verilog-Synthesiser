@@ -24,7 +24,7 @@
 #
 
 # variables
-INCDIRS = -I./ -I../
+INCDIRS = -I./ -I../ -I$(OGDF_PATH)
 
 # targets
 TARGETS = sdfg.o
