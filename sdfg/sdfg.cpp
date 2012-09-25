@@ -54,8 +54,8 @@ namespace SDFG {
 
 static const double G_NODE_H = 17.6;
 static const double G_FONT_RATIO = 3.6;
-static const double G_LAYER_DIST = 1.0;
-static const double G_NODE_DIST = 1.5;
+static const double G_LAYER_DIST = 2;
+static const double G_NODE_DIST = 3;
 
   namespace {
     // local functions
@@ -82,14 +82,14 @@ static const double G_NODE_DIST = 1.5;
 void SDFG::dfgNode::graphic_init() {
   if(bbox.first == 0.0)
     switch(type) {
-    case SDFG_FF:      bbox.first = 2*G_FONT_RATIO; break;
-    case SDFG_MODULE:  bbox.first = 6*G_FONT_RATIO; break;
-    case SDFG_PORT:    bbox.first = 4*G_FONT_RATIO; break;
-    default:           bbox.first = 4*G_FONT_RATIO;
+    case SDFG_COMB:    bbox = pair<double, double>(40.0, 25.0); break;
+    case SDFG_FF:      bbox = pair<double, double>(20.0, 20.0); break;
+    case SDFG_MODULE:  bbox = pair<double, double>(60.0, 35.0); break;
+    case SDFG_IPORT:   bbox = pair<double, double>(20.0, 20.0); break;
+    case SDFG_OPORT:   bbox = pair<double, double>(20.0, 20.0); break;
+    case SDFG_PORT:    bbox = pair<double, double>(30.0, 30.0); break;
+    default:           bbox = pair<double, double>(20.0, 20.0); break;
     }    
-  
-  if(bbox.second == 0.0)
-    bbox.second = G_NODE_H;
 }
 
 void SDFG::dfgNode::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<dfgGraph> >& GList) const {
@@ -318,6 +318,34 @@ shared_ptr<dfgEdge> SDFG::dfgGraph::get_edge(const string& src, const string& ta
     return shared_ptr<dfgEdge>();
 }
 
+shared_ptr<dfgNode> SDFG::dfgGraph::get_source(const edge_descriptor& eid) const {
+  if(exist(eid))
+    return nodes.find(boost::source(eid, bg_))->second;
+  else
+    return shared_ptr<dfgNode>();
+}
+
+shared_ptr<dfgNode> SDFG::dfgGraph::get_source(shared_ptr<dfgEdge> pe) const {
+  if(pe)
+    return get_source(pe->id);
+  else
+    return shared_ptr<dfgNode>();
+}
+
+shared_ptr<dfgNode> SDFG::dfgGraph::get_target(const edge_descriptor& eid) const {
+  if(exist(eid))
+    return nodes.find(boost::target(eid, bg_))->second;
+  else
+    return shared_ptr<dfgNode>();
+}
+
+shared_ptr<dfgNode> SDFG::dfgGraph::get_target(shared_ptr<dfgEdge> pe) const {
+  if(pe)
+    return get_target(pe->id);
+  else
+    return shared_ptr<dfgNode>();
+}
+
 bool SDFG::dfgGraph::layout() {
   ogdf::Graph g;
   ogdf::GraphAttributes ga;
@@ -333,8 +361,8 @@ bool SDFG::dfgGraph::layout(ogdf::Graph* pg, ogdf::GraphAttributes *pga) {
   //ogdf::OptimalRanking * ranking = new ogdf::OptimalRanking();
   //ogdf::CoffmanGrahamRanking *ranking = new ogdf::CoffmanGrahamRanking();
   //ranking->width(4);
-  ogdf::GreedyCycleRemoval * subGrapher = new ogdf::GreedyCycleRemoval();
-  ranking->setSubgraph(subGrapher);
+  //ogdf::GreedyCycleRemoval * subGrapher = new ogdf::GreedyCycleRemoval();
+  //ranking->setSubgraph(subGrapher);
   SL.setRanking(ranking);
 
   //ogdf::SplitHeuristic *crossMiner = new ogdf::SplitHeuristic();
@@ -525,6 +553,10 @@ bool SDFG::dfgGraph::exist(const string& src, const string& tar, dfgEdge::edge_t
     return exist(node_map.find(src)->second, node_map.find(tar)->second, tt);
   else
     return false;
+}
+
+bool SDFG::dfgGraph::exist(const edge_descriptor& eid) const {
+  return get_edge(eid);
 }
 
 bool SDFG::dfgGraph::exist(const std::string& name) const {

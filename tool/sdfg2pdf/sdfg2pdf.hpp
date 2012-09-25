@@ -44,6 +44,6 @@
 #include <QPainter>
 
 QPainterPath make_arrow(double x0, double y0, double x1, double y1);
-void draw_page(SDFG::dfgGraph& g, QPainter& painter, std::set<std::string>&, std::list<boost::shared_ptr<SDFG::dfgGraph> >&);
+void draw_page(SDFG::dfgGraph& g, QPainter& painter, QPrinter& printer, std::set<std::string>&, std::list<boost::shared_ptr<SDFG::dfgGraph> >&);
 
 #endif

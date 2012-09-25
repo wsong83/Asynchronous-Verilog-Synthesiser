@@ -150,12 +150,18 @@ namespace SDFG {
     boost::shared_ptr<dfgEdge> get_edge(const vertex_descriptor&, const vertex_descriptor&, dfgEdge::edge_type_t) const;
     boost::shared_ptr<dfgNode> get_node(const vertex_descriptor&) const;
     boost::shared_ptr<dfgNode> get_node(const std::string&) const;
+    boost::shared_ptr<dfgNode> get_source(const edge_descriptor&) const;
+    boost::shared_ptr<dfgNode> get_source(boost::shared_ptr<dfgEdge>) const;
+    boost::shared_ptr<dfgNode> get_target(const edge_descriptor&) const;
+    boost::shared_ptr<dfgNode> get_target(boost::shared_ptr<dfgEdge>) const;
+    
 
     // existance check
     bool exist(const std::string&, const std::string&) const;   // edge
     bool exist(const std::string&, const std::string&, dfgEdge::edge_type_t) const; // edge 
     bool exist(const vertex_descriptor&, const vertex_descriptor&) const; // edge 
     bool exist(const vertex_descriptor&, const vertex_descriptor&, dfgEdge::edge_type_t) const; // edge 
+    bool exist(const edge_descriptor&) const;
     bool exist(const std::string&) const;   // node   
 
     // graphic

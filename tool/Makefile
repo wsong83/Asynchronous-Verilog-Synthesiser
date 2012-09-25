@@ -30,6 +30,7 @@ all: $(tools)
 
 sdfg2pdf:
 	qmake-qt4 OGDF_PATH=$(OGDF_PATH) sdfg2pdf/sdfg2pdf.pro -o sdfg2pdf/Makefile
+	$(MAKE) -C $@ clean
 	$(MAKE) -C $@
 
 .PHONY: clean $(tools)
