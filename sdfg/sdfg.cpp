@@ -116,6 +116,15 @@ void SDFG::dfgNode::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<dfg
                port.append_attribute("port") = m.first.c_str();
                port.append_attribute("signal") = m.second.c_str();
              });
+    if(bbox.first != 0.0) {     // graphic information
+      pugi::xml_node xgraphic = xnode.append_child("graphic");
+      pugi::xml_node xsize = xgraphic.append_child("size");
+      xsize.append_attribute("width") = bbox.first;
+      xsize.append_attribute("height") = bbox.second;
+      pugi::xml_node xpos = xgraphic.append_child("position");
+      xpos.append_attribute("x") = position.first;
+      xpos.append_attribute("y") = position.second;
+    }
   }
 }
 
@@ -192,6 +201,16 @@ void SDFG::dfgEdge::write(pugi::xml_node& xnode) const {
   default:          stype = "unknown";
   }
   xnode.append_attribute("type") = stype.c_str();
+  
+  if(!bend.empty()) {     // graphic information
+    pugi::xml_node xgraphic = xnode.append_child("graphic");
+    for_each(bend.begin(), bend.end(), 
+             [&](const pair<double, double>& m) {
+               pugi::xml_node xbend = xgraphic.append_child("point");
+               xbend.append_attribute("x") = m.first;
+               xbend.append_attribute("x") = m.second;
+             });
+  }
 }
 
 void SDFG::dfgEdge::write(void *pedge, ogdf::GraphAttributes *pga) {
@@ -386,7 +405,39 @@ bool SDFG::dfgGraph::layout(ogdf::Graph* pg, ogdf::GraphAttributes *pga) {
     return false;
   }
 
-  return read(pg, pga);
+  if(!read(pg, pga)) return false;
+
+  // special operations for self loops
+  for_each(edges.begin(), edges.end(),
+           [&](pair<const edge_descriptor, shared_ptr<dfgEdge> >& m) {
+               if(boost::source(m.second->id, bg_) == boost::target(m.second->id, bg_)) { // self loop
+                 shared_ptr<dfgNode> node = get_source(m.second);
+                 if(m.second->type == dfgEdge::SDFG_CTL) { // control
+                   m.second->bend.push_back(pair<double, double>
+                                            (node->position.first+G_NODE_H * G_NODE_DIST,
+                                             node->position.second));
+                   m.second->bend.push_back(pair<double, double>
+                                            (node->position.first+G_NODE_H * G_NODE_DIST * 0.5,
+                                             node->position.second - G_NODE_H * G_NODE_DIST*0.866));
+                 } else if(m.second->type == dfgEdge::SDFG_DP) { // data
+                   m.second->bend.push_back(pair<double, double>
+                                            (node->position.first-G_NODE_H * G_NODE_DIST,
+                                             node->position.second));
+                   m.second->bend.push_back(pair<double, double>
+                                            (node->position.first-G_NODE_H * G_NODE_DIST * 0.5,
+                                             node->position.second - G_NODE_H * G_NODE_DIST*0.866));
+                 } else {       // other, should not be this case
+                   m.second->bend.push_back(pair<double, double>
+                                            (node->position.first+G_NODE_H * G_NODE_DIST,
+                                             node->position.second));
+                   m.second->bend.push_back(pair<double, double>
+                                            (node->position.first+G_NODE_H * G_NODE_DIST * 0.5,
+                                             node->position.second + G_NODE_H * G_NODE_DIST*0.866));
+                 }
+               }
+             });
+
+  return true;
 }
 
 void SDFG::dfgGraph::write(std::ostream& os) const {

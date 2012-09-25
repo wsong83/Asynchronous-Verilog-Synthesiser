@@ -35,7 +35,7 @@ using std::pair;
 
 static const double MIN_ROUND_DIST = 10.0;
 static const double TOKEN_DIST = 5;
-static const double ARROW_SIZE = MIN_ROUND_DIST/3;
+static const double ARROW_SIZE = MIN_ROUND_DIST/2;
 static const char * PDF_FONT = "times";
 static const unsigned int PDF_FONT_SIZE = 12;
 static const double PI = 3.14159265;
@@ -89,13 +89,11 @@ int main(int argc, char *argv[]) {
 
   painter.end();
   
-  /*
-  filename += ".copy";
+  filename = "debug.sdfg";
   std::ofstream outfile(filename.c_str());
   G->write(outfile);
   outfile.close();
-  */
-
+  
   return 0;
 }
 
@@ -175,7 +173,7 @@ void draw_page(SDFG::dfgGraph& g, QPainter& painter, QPrinter& printer, std::set
              y -= h/2;
 
              QRectF bbox = QRectF(x, y, w, h);
-             QPoint name_point(x+4, y-5);
+             QPoint name_point(x+w-5, y-5);
 
              switch(node.type) {
              case SDFG::dfgNode::SDFG_COMB: {
