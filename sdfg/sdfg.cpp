@@ -29,8 +29,19 @@
 #include "sdfg.hpp"
 #include <boost/tuple/tuple.hpp>
 #include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
 #include <set>
 #include <algorithm>
+
+#include <ogdf/layered/SugiyamaLayout.h>
+#include <ogdf/layered/FastHierarchyLayout.h>
+#include <ogdf/layered/LongestPathRanking.h>
+//#include <ogdf/layered/OptimalRanking.h>
+//#include <ogdf/layered/CoffmanGrahamRanking.h>
+#include <ogdf/layered/GreedyCycleRemoval.h>
+//#include <ogdf/layered/SplitHeuristic.h>
+//#include <ogdf/layered/MedianHeuristic.h>
+//#include <ogdf/layered/GreedyInsertHeuristic.h>
 
 using namespace SDFG;
 using boost::shared_ptr;
@@ -40,6 +51,12 @@ using std::pair;
 using std::list;
 
 namespace SDFG {
+
+static const double G_NODE_H = 17.6;
+static const double G_FONT_RATIO = 3.6;
+static const double G_LAYER_DIST = 2;
+static const double G_NODE_DIST = 3;
+
   namespace {
     // local functions
     unsigned long shash(const string& str) {
@@ -62,6 +79,19 @@ namespace SDFG {
   }
 }
 
+void SDFG::dfgNode::graphic_init() {
+  if(bbox.first == 0.0)
+    switch(type) {
+    case SDFG_COMB:    bbox = pair<double, double>(40.0, 25.0); break;
+    case SDFG_FF:      bbox = pair<double, double>(20.0, 20.0); break;
+    case SDFG_MODULE:  bbox = pair<double, double>(60.0, 35.0); break;
+    case SDFG_IPORT:   bbox = pair<double, double>(20.0, 20.0); break;
+    case SDFG_OPORT:   bbox = pair<double, double>(20.0, 20.0); break;
+    case SDFG_PORT:    bbox = pair<double, double>(30.0, 30.0); break;
+    default:           bbox = pair<double, double>(20.0, 20.0); break;
+    }    
+}
+
 void SDFG::dfgNode::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<dfgGraph> >& GList) const {
   xnode.append_attribute("name") = name.c_str();
   string stype;
@@ -78,15 +108,36 @@ void SDFG::dfgNode::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<dfg
   xnode.append_attribute("type") = stype.c_str();
   if(type == SDFG_MODULE) {     // module
     if(child)  GList.push_back(child); // push the sub-module to the module list
-    xnode.append_child("module").text() = child_name.c_str();
+    pugi::xml_node xmodule = xnode.append_child("module");
+    xmodule.append_attribute("name") = child_name.c_str();
     for_each(port2sig.begin(), port2sig.end(), 
              [&](const pair<const string, const string>& m) {
-               pugi::xml_node port = xnode.append_child("portmap");
+               pugi::xml_node port = xmodule.append_child("portmap");
                port.append_attribute("port") = m.first.c_str();
                port.append_attribute("signal") = m.second.c_str();
              });
+    if(bbox.first != 0.0) {     // graphic information
+      pugi::xml_node xgraphic = xnode.append_child("graphic");
+      pugi::xml_node xsize = xgraphic.append_child("size");
+      xsize.append_attribute("width") = bbox.first;
+      xsize.append_attribute("height") = bbox.second;
+      pugi::xml_node xpos = xgraphic.append_child("position");
+      xpos.append_attribute("x") = position.first;
+      xpos.append_attribute("y") = position.second;
+    }
   }
 }
+
+void SDFG::dfgNode::write(void *pnode, ogdf::GraphAttributes *pga) {
+  ogdf::node pn = static_cast<ogdf::node>(pnode);
+  graphic_init();
+  pga->labelNode(pn) = boost::str(boost::format("%u") % static_cast<unsigned int>(id)).c_str();
+  pga->width(pn) = bbox.first;
+  pga->height(pn) = bbox.second;
+  pga->x(pn) = position.first;
+  pga->y(pn) = position.second;
+}
+
 
 bool SDFG::dfgNode::read(const pugi::xml_node& xnode) {
   if(1 == 0) {
@@ -101,7 +152,7 @@ bool SDFG::dfgNode::read(const pugi::xml_node& xnode) {
     return false;
   }
 
-  id = static_cast<vertex_descriptor>(xnode.attribute("id").as_int());
+  id = static_cast<vertex_descriptor>(xnode.attribute("id").as_uint());
   name = xnode.attribute("name").as_string();
   switch(shash(xnode.attribute("type").as_string())) {
   case 0x3dfb7169: type = SDFG_COMB;   break;
@@ -116,8 +167,9 @@ bool SDFG::dfgNode::read(const pugi::xml_node& xnode) {
   }
 
   if(type == SDFG_MODULE) {     // port map
-    child_name = xnode.child("module").text().get();
-    for(pugi::xml_node port = xnode.child("portmap"); port; port = port.next_sibling("portmap")) {
+    pugi::xml_node xmodule = xnode.child("module");
+    child_name = xmodule.attribute("name").as_string();
+    for(pugi::xml_node port = xmodule.child("portmap"); port; port = port.next_sibling("portmap")) {
       string port_name = port.attribute("port").as_string();
       string port_signal = port.attribute("signal").as_string();
       port2sig[port_name] = port_signal;
@@ -127,6 +179,15 @@ bool SDFG::dfgNode::read(const pugi::xml_node& xnode) {
 
   return true;
 
+}
+
+bool SDFG::dfgNode::read(void * const pnode, ogdf::GraphAttributes * const pga) {
+  ogdf::node const pn = static_cast<ogdf::node const>(pnode);
+  
+  position.first = pga->x(pn);
+  position.second = pga->y(pn);
+
+  return true;
 }
 
 void SDFG::dfgEdge::write(pugi::xml_node& xnode) const {
@@ -140,6 +201,22 @@ void SDFG::dfgEdge::write(pugi::xml_node& xnode) const {
   default:          stype = "unknown";
   }
   xnode.append_attribute("type") = stype.c_str();
+  
+  if(!bend.empty()) {     // graphic information
+    pugi::xml_node xgraphic = xnode.append_child("graphic");
+    for_each(bend.begin(), bend.end(), 
+             [&](const pair<double, double>& m) {
+               pugi::xml_node xbend = xgraphic.append_child("point");
+               xbend.append_attribute("x") = m.first;
+               xbend.append_attribute("x") = m.second;
+             });
+  }
+}
+
+void SDFG::dfgEdge::write(void *pedge, ogdf::GraphAttributes *pga) {
+  ogdf::edge pe = static_cast<ogdf::edge>(pedge);
+  // as multiple edges can exist between two nodes, edge type is stored to identify the single edge
+  pga->labelEdge(pe) = boost::str(boost::format("%u") % type).c_str();
 }
 
 bool SDFG::dfgEdge::read(const pugi::xml_node& xnode) {
@@ -161,6 +238,17 @@ bool SDFG::dfgEdge::read(const pugi::xml_node& xnode) {
   default: assert(0 == 1); return false;
   }
 
+  return true;
+}
+
+bool SDFG::dfgEdge::read(void * const pedge, ogdf::GraphAttributes * const pga) {
+  ogdf::edge const pe = static_cast<ogdf::edge const>(pedge);
+  
+  bend.clear();
+  for(ogdf::ListConstIterator<ogdf::DPoint> b = pga->bends(pe).begin(); b.valid(); ++b) {
+    bend.push_back(pair<double,double>((*b).m_x, (*b).m_y));
+  }
+  
   return true;
 }
 
@@ -249,6 +337,109 @@ shared_ptr<dfgEdge> SDFG::dfgGraph::get_edge(const string& src, const string& ta
     return shared_ptr<dfgEdge>();
 }
 
+shared_ptr<dfgNode> SDFG::dfgGraph::get_source(const edge_descriptor& eid) const {
+  if(exist(eid))
+    return nodes.find(boost::source(eid, bg_))->second;
+  else
+    return shared_ptr<dfgNode>();
+}
+
+shared_ptr<dfgNode> SDFG::dfgGraph::get_source(shared_ptr<dfgEdge> pe) const {
+  if(pe)
+    return get_source(pe->id);
+  else
+    return shared_ptr<dfgNode>();
+}
+
+shared_ptr<dfgNode> SDFG::dfgGraph::get_target(const edge_descriptor& eid) const {
+  if(exist(eid))
+    return nodes.find(boost::target(eid, bg_))->second;
+  else
+    return shared_ptr<dfgNode>();
+}
+
+shared_ptr<dfgNode> SDFG::dfgGraph::get_target(shared_ptr<dfgEdge> pe) const {
+  if(pe)
+    return get_target(pe->id);
+  else
+    return shared_ptr<dfgNode>();
+}
+
+bool SDFG::dfgGraph::layout() {
+  ogdf::Graph g;
+  ogdf::GraphAttributes ga;
+  write(&g, &ga);
+  return layout(&g, &ga);
+}
+
+bool SDFG::dfgGraph::layout(ogdf::Graph* pg, ogdf::GraphAttributes *pga) {
+  // Sugiyama Layout
+  ogdf::SugiyamaLayout SL;
+
+  ogdf::LongestPathRanking *ranking = new ogdf::LongestPathRanking();
+  //ogdf::OptimalRanking * ranking = new ogdf::OptimalRanking();
+  //ogdf::CoffmanGrahamRanking *ranking = new ogdf::CoffmanGrahamRanking();
+  //ranking->width(4);
+  //ogdf::GreedyCycleRemoval * subGrapher = new ogdf::GreedyCycleRemoval();
+  //ranking->setSubgraph(subGrapher);
+  SL.setRanking(ranking);
+
+  //ogdf::SplitHeuristic *crossMiner = new ogdf::SplitHeuristic();
+  //ogdf::MedianHeuristic *crossMiner = new ogdf::MedianHeuristic();
+  //ogdf::GreedyInsertHeuristic *crossMiner = new ogdf::GreedyInsertHeuristic();
+  //SL.setCrossMin(crossMiner);
+
+  ogdf::FastHierarchyLayout * layouter = new ogdf::FastHierarchyLayout();
+  layouter->layerDistance(G_NODE_H * G_LAYER_DIST);
+  layouter->nodeDistance(G_NODE_H * G_NODE_DIST);
+  SL.setLayout(layouter);
+
+  SL.runs(30);
+
+  try {
+    SL.call(*pga);
+  } catch(std::exception e) {
+    std::cout << string(__PRETTY_FUNCTION__) 
+              << ": layout engine SugiyamaLayout failed."
+              << std::endl;
+    return false;
+  }
+
+  if(!read(pg, pga)) return false;
+
+  // special operations for self loops
+  for_each(edges.begin(), edges.end(),
+           [&](pair<const edge_descriptor, shared_ptr<dfgEdge> >& m) {
+               if(boost::source(m.second->id, bg_) == boost::target(m.second->id, bg_)) { // self loop
+                 shared_ptr<dfgNode> node = get_source(m.second);
+                 if(m.second->type == dfgEdge::SDFG_CTL) { // control
+                   m.second->bend.push_back(pair<double, double>
+                                            (node->position.first+G_NODE_H * G_NODE_DIST,
+                                             node->position.second));
+                   m.second->bend.push_back(pair<double, double>
+                                            (node->position.first+G_NODE_H * G_NODE_DIST * 0.5,
+                                             node->position.second - G_NODE_H * G_NODE_DIST*0.866));
+                 } else if(m.second->type == dfgEdge::SDFG_DP) { // data
+                   m.second->bend.push_back(pair<double, double>
+                                            (node->position.first-G_NODE_H * G_NODE_DIST,
+                                             node->position.second));
+                   m.second->bend.push_back(pair<double, double>
+                                            (node->position.first-G_NODE_H * G_NODE_DIST * 0.5,
+                                             node->position.second - G_NODE_H * G_NODE_DIST*0.866));
+                 } else {       // other, should not be this case
+                   m.second->bend.push_back(pair<double, double>
+                                            (node->position.first+G_NODE_H * G_NODE_DIST,
+                                             node->position.second));
+                   m.second->bend.push_back(pair<double, double>
+                                            (node->position.first+G_NODE_H * G_NODE_DIST * 0.5,
+                                             node->position.second + G_NODE_H * G_NODE_DIST*0.866));
+                 }
+               }
+             });
+
+  return true;
+}
+
 void SDFG::dfgGraph::write(std::ostream& os) const {
   pugi::xml_document sdfg_file;       // using the pugixml library
   pugi::xml_node node_xml = sdfg_file.append_child(pugi::node_declaration);
@@ -304,6 +495,34 @@ void SDFG::dfgGraph::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<df
              });
 }
 
+void SDFG::dfgGraph::write(ogdf::Graph *pg, ogdf::GraphAttributes *pga){
+  pga->init(*pg,
+            ogdf::GraphAttributes::nodeGraphics | ogdf::GraphAttributes::edgeGraphics |
+            ogdf::GraphAttributes::nodeLabel    | ogdf::GraphAttributes::edgeStyle    | 
+            ogdf::GraphAttributes::nodeStyle    | ogdf::GraphAttributes::edgeArrow    |
+            ogdf::GraphAttributes::nodeWeight   | ogdf::GraphAttributes::edgeLabel    );
+  
+  map<vertex_descriptor, void *> i2n;
+
+  // nodes
+  for_each(nodes.begin(), nodes.end(),
+           [&](const pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
+               ogdf::node pnode = pg->newNode();
+               i2n[m.first] = pnode;
+               m.second->write(pnode, pga);
+             });
+
+  // edges
+  for_each(edges.begin(), edges.end(),
+           [&](const pair<const edge_descriptor, shared_ptr<dfgEdge> >& m) {
+               // get the source and target node pointers
+               ogdf::node ps = static_cast<ogdf::node>(i2n[boost::source(m.first, bg_)]);
+               ogdf::node pt = static_cast<ogdf::node>(i2n[boost::target(m.first, bg_)]);
+               ogdf::edge pedge = pg->newEdge(ps, pt);
+               m.second->write(pedge, pga);
+             });
+}
+
 bool SDFG::dfgGraph::read(const pugi::xml_node& xnode) {
   // get the graph name
   name = xnode.attribute("name").as_string();
@@ -324,11 +543,36 @@ bool SDFG::dfgGraph::read(const pugi::xml_node& xnode) {
     shared_ptr<dfgEdge> pedge(new dfgEdge());
     if(!pedge->read(edge)) {assert(0 == 1); return false;}
     vertex_descriptor src, tar;
-    src = static_cast<vertex_descriptor>(edge.attribute("source").as_int());
-    tar = static_cast<vertex_descriptor>(edge.attribute("target").as_int());
+    src = static_cast<vertex_descriptor>(edge.attribute("source").as_uint());
+    tar = static_cast<vertex_descriptor>(edge.attribute("target").as_uint());
     add_edge(pedge,id_map[src], id_map[tar]);
   }
   
+  return true;
+}
+
+bool SDFG::dfgGraph::read(ogdf::Graph * const pg, ogdf::GraphAttributes * const pga){
+  ogdf::node n;
+  forall_nodes(n, *pg) {
+    vertex_descriptor nid = static_cast<vertex_descriptor>
+      (boost::lexical_cast<unsigned long>(pga->labelNode(n).cstr()));
+    if(!nodes.count(nid)) return false;
+    nodes[nid]->read(n, pga);
+  }
+
+  ogdf::edge e;
+  forall_edges(e, *pg) {
+    vertex_descriptor src, tar;
+    src = static_cast<vertex_descriptor>
+      (boost::lexical_cast<unsigned long>(pga->labelNode(e->source()).cstr()));
+    tar = static_cast<vertex_descriptor>
+      (boost::lexical_cast<unsigned long>(pga->labelNode(e->target()).cstr()));
+    dfgEdge::edge_type_t etype = static_cast<dfgEdge::edge_type_t>
+      (boost::lexical_cast<unsigned long>(pga->labelEdge(e).cstr()));
+    if(!exist(src, tar, etype)) return false;
+    get_edge(src, tar, etype)->read(e, pga);
+  }
+
   return true;
 }
 
@@ -360,6 +604,10 @@ bool SDFG::dfgGraph::exist(const string& src, const string& tar, dfgEdge::edge_t
     return exist(node_map.find(src)->second, node_map.find(tar)->second, tt);
   else
     return false;
+}
+
+bool SDFG::dfgGraph::exist(const edge_descriptor& eid) const {
+  return get_edge(eid);
 }
 
 bool SDFG::dfgGraph::exist(const std::string& name) const {
