@@ -87,7 +87,7 @@ namespace netlist {
                   std::set<MIdentifier> &) const;
 
     // extract data flow graph
-    boost::shared_ptr<SDFG::dfgGraph> extract_sdfg();
+    boost::shared_ptr<SDFG::dfgGraph> extract_sdfg(bool);
 
     // data
     MIdentifier name;

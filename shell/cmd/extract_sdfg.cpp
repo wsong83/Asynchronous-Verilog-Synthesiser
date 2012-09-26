@@ -55,11 +55,13 @@ namespace {
 
   struct Argument {
     bool bHelp;                 // show help information
+    bool bQuiet;                // suppress information
     std::string sDesign;        // target design to be written out
     std::string sOutput;        // output file name
     
     Argument() : 
       bHelp(false),
+      bQuiet(false),
       sDesign(""),
       sOutput("") {}
   };
@@ -69,6 +71,7 @@ BOOST_FUSION_ADAPT_STRUCT
 (
  Argument,
  (bool, bHelp)
+ (bool, bQuiet)
  (std::string, sDesign)
  (std::string, sOutput)
  )
@@ -89,12 +92,13 @@ namespace {
 
       args = lit('-') >> 
         ( (lit("help")              >> blanks) [at_c<0>(_r1) = true]  ||
-          (lit("output") >> blanks >> filename >> blanks) [at_c<2>(_r1) = _1]
+          (lit("quiet")             >> blanks) [at_c<1>(_r1) = true]  ||
+          (lit("output") >> blanks >> filename >> blanks) [at_c<3>(_r1) = _1]
           );
       
       start = 
         *(args(_val))
-        >> -(identifier >> blanks) [at_c<1>(_val) = _1] 
+        >> -(identifier >> blanks) [at_c<2>(_val) = _1] 
         >> *(args(_val))
         ;
 
@@ -120,6 +124,7 @@ void shell::CMD::CMDExtractSDFG::help(Env& gEnv) {
   gEnv.stdOs << "    design_name         the design to be extracted (default the current design)" << endl;
   gEnv.stdOs << "Options:" << endl;
   gEnv.stdOs << "   -help                show this help information." << endl;
+  gEnv.stdOs << "   -quiet               suppress the uniquifying information." << endl;
   gEnv.stdOs << "   -output file_name    specify the output file name." << endl;
   gEnv.stdOs << "                        (in default is \"design_name.sdfg\")" << endl;
 }
@@ -171,7 +176,14 @@ void shell::CMD::CMDExtractSDFG::exec ( const std::string& str, Env * pEnv){
   fhandler.open(system_complete(outputFileName), std::ios_base::out|std::ios_base::trunc);
 
   // extract SDFG
-  shared_ptr<SDFG::dfgGraph> g = tarDesign->extract_sdfg();
+  // make sure it is uniquified
+  if(!arg.bQuiet) {
+    gEnv.stdOs << "Info: netlist is automatically uniquified." << endl;
+    CMDUniquify::exec("", pEnv);
+  } else {
+    CMDUniquify::exec("-quiet", pEnv);
+  }
+  shared_ptr<SDFG::dfgGraph> g = tarDesign->extract_sdfg(arg.bQuiet);
 
   g->write(fhandler);
   fhandler.close();

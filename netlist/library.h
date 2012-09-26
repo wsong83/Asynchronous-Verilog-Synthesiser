@@ -79,7 +79,7 @@ namespace netlist {
     std::list<boost::shared_ptr<Block> >::iterator get_current_it() { return comp_list.begin(); }
     
     // check whether the iterator is valid in the list
-    bool it_valid(const std::list<boost::shared_ptr<Block> >::iterator& it) const { return it != comp_list.end(); }
+    bool is_valid(const std::list<boost::shared_ptr<Block> >::iterator& it) const { return it != comp_list.end(); }
     
     // push one item to the process list
     void push(boost::shared_ptr<Block> item) { comp_list.push_front(item); }

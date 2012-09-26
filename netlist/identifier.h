@@ -97,8 +97,8 @@ namespace netlist {
   class MIdentifier : public Identifier {
   public:
     // constructors
-    MIdentifier() : Identifier(tModuleName) {}
-    MIdentifier(const shell::location& lloc) : Identifier(tModuleName, lloc) {}
+    MIdentifier() : Identifier(tModuleName), numbered(false) {}
+    MIdentifier(const shell::location& lloc) : Identifier(tModuleName, lloc), numbered(false) {}
     MIdentifier(const std::string&);
     MIdentifier(const shell::location& lloc, const std::string&);
     MIdentifier(const averilog::avID& );

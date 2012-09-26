@@ -104,7 +104,7 @@ void shell::CMD::CMDCurrentDesign::help(Env& gEnv) {
   gEnv.stdOs << "   -help                usage information." << endl;
 }
 
-void shell::CMD::CMDCurrentDesign::exec(const std::string& str, Env * pEnv) {
+std::string shell::CMD::CMDCurrentDesign::exec(const std::string& str, Env * pEnv) {
 
   using std::string;
 
@@ -119,18 +119,17 @@ void shell::CMD::CMDCurrentDesign::exec(const std::string& str, Env * pEnv) {
   if(!r || it != end) {
     gEnv.stdOs << "Error: Wrong command syntax error! See usage by current_design -help." << endl;
     gEnv.stdOs << "    current_design [DesignName]" << endl;
-    return;
+    return gEnv.macroDB[MACRO_CURRENT_DESIGN];
   }
 
   if(arg.bHelp) {        // print help information
     help(gEnv);
-    return;
+    return gEnv.macroDB[MACRO_CURRENT_DESIGN];
   }
 
   if(!arg.sDesign.empty()) {
     gEnv.tclInterp->tcli.set_variable(MACRO_CURRENT_DESIGN, arg.sDesign);
   }
 
-  // show the current design
-  gEnv.stdOs << "current_design = " << gEnv.macroDB[MACRO_CURRENT_DESIGN] << endl;
+  return gEnv.macroDB[MACRO_CURRENT_DESIGN];
 }

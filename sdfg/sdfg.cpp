@@ -259,6 +259,7 @@ void SDFG::dfgGraph::add_node(shared_ptr<dfgNode> node) {
   node_map[node->name] = node->id;
   if(node->type & dfgNode::SDFG_PORT)
     port_map[node->name] = node->id;
+  node->pg = this;
 }
 
 shared_ptr<dfgNode> SDFG::dfgGraph::add_node(const string& n, dfgNode::node_type_t t) {
@@ -278,6 +279,7 @@ void SDFG::dfgGraph::add_edge(shared_ptr<dfgEdge> edge, const vertex_descriptor&
   bool added;
   boost::tie(edge->id, added) = boost::add_edge(src, snk, bg_);
   edges[edge->id] = edge;
+  edge->pg = this;
 }
 
 shared_ptr<dfgEdge> SDFG::dfgGraph::add_edge(const string& n, dfgEdge::edge_type_t t, const string& src, const string& snk) {
