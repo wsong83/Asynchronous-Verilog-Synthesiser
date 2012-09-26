@@ -1,4 +1,11 @@
-##### Thu 19/07/2012
+##### Wed 26/09/2012
+* New command uniquify
+*     make sure all entities have a unique module
+*     it is called automatically by extract_sdfg
+* New tool: tool/sdfg2pdf
+*     display the extracted DFG graph in pdf files
+
+##### Sat 22/09/2012
 * New command extract_sdfg
 *     extract synchronous data-flow graph SDFG from a module
 *     remove cppPNML library as TCPN is not used in the near future

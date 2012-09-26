@@ -151,7 +151,7 @@ bool shell::Env::initialise() {
   i.def(shell::CMD::func::name, func, this, Tcl::variadic()); \
   shell::CMD::CMDHelp::cmdDB[shell::CMD::func::name] =        \
     shell::CMD::CMDHelp::cmd_record                           \
-    (shell::CMD::func::description, shell::CMD::func::help)   \
+    (shell::CMD::func::description, shell::CMD::func::help)   
 
   AVS_ENV_ADD_TCL_CMD(CMDAnalyze);
   AVS_ENV_ADD_TCL_CMD(CMDCurrentDesign);
