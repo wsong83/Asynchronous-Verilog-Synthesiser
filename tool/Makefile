@@ -32,9 +32,11 @@ sdfg2pdf:
 	qmake-qt4 OGDF_PATH=$(OGDF_PATH) sdfg2pdf/sdfg2pdf.pro -o sdfg2pdf/Makefile
 	$(MAKE) -C $@ clean
 	$(MAKE) -C $@
+	cp sdfg2pdf/sdfg2pdf ../bin/
 
 .PHONY: clean $(tools)
 
 clean:
 	$(MAKE) -C sdfg2pdf distclean
+	-rm ../bin/sdfg2pdf
 

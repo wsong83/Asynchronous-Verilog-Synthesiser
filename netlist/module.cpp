@@ -478,7 +478,10 @@ void netlist::Module::get_hier(list<shared_ptr<Module> >& mfifo,
     m->get_hier(mfifo, mmap);
 }
 
-shared_ptr<dfgGraph> netlist::Module::extract_sdfg() {
+shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
+  if(!quiet)
+    G_ENV->stdOs << "extracting SDFG for module \"" << name.name << "\"." << endl; 
+
   shared_ptr<dfgGraph> G(new dfgGraph(name.name));
   
   // put all ports into the list
@@ -524,7 +527,7 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg() {
              shared_ptr<Module> subMod = G_ENV->find_module(m.second->mname);
              if(subMod) { // has sub-module
                n->child_name = m.second->mname.name;
-               n->child = subMod->extract_sdfg();
+               n->child = subMod->extract_sdfg(quiet);
                //n->child->father = n;
              }
            });

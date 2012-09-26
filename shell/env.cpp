@@ -73,7 +73,7 @@ namespace {
   }
 
   FUNC_WRAPPER     (bool,         CMDAnalyze         )
-  FUNC_WRAPPER_VOID(              CMDCurrentDesign   )
+  FUNC_WRAPPER     (std::string,  CMDCurrentDesign   )
   FUNC_WRAPPER     (std::string,  CMDEcho            )
   FUNC_WRAPPER     (bool,         CMDElaborate       )
   FUNC_WRAPPER_VOID(              CMDExit            )
@@ -82,6 +82,7 @@ namespace {
   FUNC_WRAPPER     (bool,         CMDReportNetlist   )
   FUNC_WRAPPER     (std::string,  CMDShell           )
   FUNC_WRAPPER     (bool,         CMDSuppressMessage )
+  FUNC_WRAPPER     (bool,         CMDUniquify        )
   FUNC_WRAPPER     (bool,         CMDWrite           )
 
 #undef FUNC_WRAPPER
@@ -150,7 +151,7 @@ bool shell::Env::initialise() {
   i.def(shell::CMD::func::name, func, this, Tcl::variadic()); \
   shell::CMD::CMDHelp::cmdDB[shell::CMD::func::name] =        \
     shell::CMD::CMDHelp::cmd_record                           \
-    (shell::CMD::func::description, shell::CMD::func::help)   \
+    (shell::CMD::func::description, shell::CMD::func::help)   
 
   AVS_ENV_ADD_TCL_CMD(CMDAnalyze);
   AVS_ENV_ADD_TCL_CMD(CMDCurrentDesign);
@@ -161,6 +162,7 @@ bool shell::Env::initialise() {
   AVS_ENV_ADD_TCL_CMD(CMDReportNetlist);
   AVS_ENV_ADD_TCL_CMD(CMDShell);
   AVS_ENV_ADD_TCL_CMD(CMDSuppressMessage);
+  AVS_ENV_ADD_TCL_CMD(CMDUniquify);
   AVS_ENV_ADD_TCL_CMD(CMDWrite);
 
 #undef AVS_ENV_ADD_TCL_CMD

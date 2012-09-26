@@ -72,6 +72,7 @@ namespace SDFG {
     std::string child_name;                    // when it is a module entity, this is the module name of the module
     std::multimap<std::string, std::string> sig2port;   // remember the port connection if it is a module entity
     std::map<std::string, std::string> port2sig;        // remember the port connection if it is a module entity
+    dfgGraph* pg;                                       // a pointer pointing to the father Graph
     std::string name;           // description of this node
     vertex_descriptor id;         // node id
     enum node_type_t {          // node type
@@ -86,8 +87,8 @@ namespace SDFG {
     } type;
 
 
-    dfgNode(): position(0,0), bbox(0,0) {}
-    dfgNode(const std::string& n, node_type_t t = SDFG_DF) : name(n), type(t) {}
+    dfgNode(): pg(NULL), position(0,0), bbox(0,0) {}
+    dfgNode(const std::string& n, node_type_t t = SDFG_DF) : pg(NULL), name(n), type(t) {}
     void write(pugi::xml_node&, std::list<boost::shared_ptr<dfgGraph> >&) const;
     void write(void *, ogdf::GraphAttributes *);
     bool read(const pugi::xml_node&);
@@ -101,6 +102,7 @@ namespace SDFG {
   class dfgEdge {
   public:
 
+    dfgGraph* pg;                                       // a pointer pointing to the father Graph
     std::string name;           // edge name
     edge_descriptor id;            // edge id
     enum edge_type_t {
@@ -111,8 +113,8 @@ namespace SDFG {
       SDFG_RST            = 0x000c  // reset
     } type;
 
-    dfgEdge() {}
-    dfgEdge(const std::string& n, edge_type_t t = SDFG_DF) : name(n), type(t) {}
+    dfgEdge() : pg(NULL) {}
+    dfgEdge(const std::string& n, edge_type_t t = SDFG_DF) : pg(NULL), name(n), type(t) {}
     void write(pugi::xml_node&) const;
     void write(void *, ogdf::GraphAttributes *);
     bool read(const pugi::xml_node&);
@@ -125,7 +127,7 @@ namespace SDFG {
   class dfgGraph{
   public:
     GType bg_;                  // BGL graph
-    //boost::shared_ptr<dfgNode> father; // father when it is a entity of another module
+    dfgNode* father;            // father when it is a entity of another module
     std::string name;           // description of this node
     
     std::map<edge_descriptor, boost::shared_ptr<dfgEdge> > edges;
@@ -134,8 +136,8 @@ namespace SDFG {
     std::map<std::string, vertex_descriptor > port_map;
     std::map<std::string, vertex_descriptor> node_map;
 
-    dfgGraph() {}
-    dfgGraph(const std::string& n) : name(n) {}
+    dfgGraph() : father(NULL) {}
+    dfgGraph(const std::string& n) : father(NULL), name(n) {}
 
     // add and fetch nodes
     void add_node(boost::shared_ptr<dfgNode>);
