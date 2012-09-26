@@ -288,6 +288,37 @@ shared_ptr<dfgEdge> SDFG::dfgGraph::add_edge(const string& n, dfgEdge::edge_type
   return edge;
 }
 
+bool SDFG::dfgGraph::remove_edge(boost::shared_ptr<dfgNode> src, boost::shared_ptr<dfgNode> tar, dfgEdge::edge_type_t etype) {
+  if(src && tar) 
+    remove_edge(src->id, tar->id, etype);
+  else
+    return false;
+}
+
+bool SDFG::dfgGraph::remove_edge(const std::string& src, const std::string& tar, dfgEdge::edge_type_t etype) {
+  shared_ptr<dfgEdge> pe = get_edge(src, tar, etype);
+  if(pe)
+    return remove_edge(pe->id);
+  else
+    return false;
+}
+
+bool SDFG::dfgGraph::remove_edge(const vertex_descriptor& src, const vertex_descriptor& tar, dfgEdge::edge_type_t etype) {
+  shared_ptr<dfgEdge> pe = get_edge(src, tar, etype);
+  if(pe)
+    return remove_edge(pe->id);
+  else
+    return false;
+}
+
+bool SDFG::dfgGraph::remove_edge(const edge_descriptor& eid) {
+  if(edges.erase(eid)) {
+    boost::remove_edge(eid, bg_);
+    return true;
+  } else
+    return false;
+}
+
 shared_ptr<dfgEdge> SDFG::dfgGraph::get_edge(const edge_descriptor& eid) const{
   if(edges.count(eid))
     return edges.find(eid)->second;
@@ -615,6 +646,11 @@ bool SDFG::dfgGraph::exist(const edge_descriptor& eid) const {
 bool SDFG::dfgGraph::exist(const std::string& name) const {
   return get_node(name);
 }    
+
+void SDFG::dfgGraph::simplify(list<shared_ptr<dfgNode> >& proc_list) {
+  // first I need to implement remove nodes
+
+}
 
 shared_ptr<dfgGraph> SDFG::read(std::istream& istr) {
   shared_ptr<dfgGraph> G(new dfgGraph());

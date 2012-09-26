@@ -139,12 +139,23 @@ namespace SDFG {
     dfgGraph() : father(NULL) {}
     dfgGraph(const std::string& n) : father(NULL), name(n) {}
 
-    // add and fetch nodes
+    // add, remove and fetch nodes
     void add_node(boost::shared_ptr<dfgNode>);
     boost::shared_ptr<dfgNode> add_node(const std::string&, dfgNode::node_type_t);
     void add_edge(boost::shared_ptr<dfgEdge>, const std::string&, const std::string&);
     void add_edge(boost::shared_ptr<dfgEdge>, const vertex_descriptor&, const vertex_descriptor&);
     boost::shared_ptr<dfgEdge> add_edge(const std::string&, dfgEdge::edge_type_t, const std::string&, const std::string&);
+    bool remove_node(boost::shared_ptr<dfgNode>);
+    bool remove_node(const std::string&);
+    bool remove_node(const vertex_descriptor&);
+    bool remove_edge(boost::shared_ptr<dfgEdge>);
+    bool remove_edge(boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgNode>); // !! remove all edge between these two nodes
+    bool remove_edge(const std::string&, const std::string&); // !! remove all edge between these two nodes
+    bool remove_edge(const vertex_descriptor&, const vertex_descriptor&); // !! remove all edge between these two nodes
+    bool remove_edge(boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgNode>, dfgEdge::edge_type_t);
+    bool remove_edge(const std::string&, const std::string&, dfgEdge::edge_type_t);
+    bool remove_edge(const vertex_descriptor&, const vertex_descriptor&, dfgEdge::edge_type_t);
+    bool remove_edge(const edge_descriptor&);
     boost::shared_ptr<dfgEdge> get_edge(const edge_descriptor&) const;
     boost::shared_ptr<dfgEdge> get_edge(const std::string&, const std::string&) const;   // return a random one if multiple
     boost::shared_ptr<dfgEdge> get_edge(const vertex_descriptor&, const vertex_descriptor&) const;   // return a random one if multiple
@@ -176,6 +187,9 @@ namespace SDFG {
     void write(ogdf::Graph*, ogdf::GraphAttributes*);
     bool read(const pugi::xml_node&);
     bool read(ogdf::Graph* const, ogdf::GraphAttributes* const);
+
+    // analyse functions
+    void simplify(std::list<boost::shared_ptr<dfgNode> >&); // remove unused node and edges
   };
 
   boost::shared_ptr<dfgGraph> read(std::istream&);
