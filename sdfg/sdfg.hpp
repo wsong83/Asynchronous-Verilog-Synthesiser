@@ -97,6 +97,8 @@ namespace SDFG {
     std::pair<double, double> position; // graphic position
     std::pair<double, double> bbox;     // bounding box
     void graphic_init();                // set initial graphic info.
+
+    void simplify(std::set<boost::shared_ptr<dfgNode> >&, bool); // remove unused nodes
   };
 
   class dfgEdge {
@@ -139,23 +141,27 @@ namespace SDFG {
     dfgGraph() : father(NULL) {}
     dfgGraph(const std::string& n) : father(NULL), name(n) {}
 
-    // add, remove and fetch nodes
+    // add nodes and edges
     void add_node(boost::shared_ptr<dfgNode>);
     boost::shared_ptr<dfgNode> add_node(const std::string&, dfgNode::node_type_t);
     void add_edge(boost::shared_ptr<dfgEdge>, const std::string&, const std::string&);
     void add_edge(boost::shared_ptr<dfgEdge>, const vertex_descriptor&, const vertex_descriptor&);
     boost::shared_ptr<dfgEdge> add_edge(const std::string&, dfgEdge::edge_type_t, const std::string&, const std::string&);
+
+    // remove nodes and edges
     bool remove_node(boost::shared_ptr<dfgNode>);
     bool remove_node(const std::string&);
     bool remove_node(const vertex_descriptor&);
-    bool remove_edge(boost::shared_ptr<dfgEdge>);
     bool remove_edge(boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgNode>); // !! remove all edge between these two nodes
     bool remove_edge(const std::string&, const std::string&); // !! remove all edge between these two nodes
     bool remove_edge(const vertex_descriptor&, const vertex_descriptor&); // !! remove all edge between these two nodes
     bool remove_edge(boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgNode>, dfgEdge::edge_type_t);
     bool remove_edge(const std::string&, const std::string&, dfgEdge::edge_type_t);
     bool remove_edge(const vertex_descriptor&, const vertex_descriptor&, dfgEdge::edge_type_t);
+    bool remove_edge(boost::shared_ptr<dfgEdge>);
     bool remove_edge(const edge_descriptor&);
+    
+    // get nodes and edges
     boost::shared_ptr<dfgEdge> get_edge(const edge_descriptor&) const;
     boost::shared_ptr<dfgEdge> get_edge(const std::string&, const std::string&) const;   // return a random one if multiple
     boost::shared_ptr<dfgEdge> get_edge(const vertex_descriptor&, const vertex_descriptor&) const;   // return a random one if multiple
@@ -167,7 +173,6 @@ namespace SDFG {
     boost::shared_ptr<dfgNode> get_source(boost::shared_ptr<dfgEdge>) const;
     boost::shared_ptr<dfgNode> get_target(const edge_descriptor&) const;
     boost::shared_ptr<dfgNode> get_target(boost::shared_ptr<dfgEdge>) const;
-    
 
     // existance check
     bool exist(const std::string&, const std::string&) const;   // edge
@@ -175,7 +180,27 @@ namespace SDFG {
     bool exist(const vertex_descriptor&, const vertex_descriptor&) const; // edge 
     bool exist(const vertex_descriptor&, const vertex_descriptor&, dfgEdge::edge_type_t) const; // edge 
     bool exist(const edge_descriptor&) const;
-    bool exist(const std::string&) const;   // node   
+    bool exist(const std::string&) const;   // node
+
+    // traverse
+    unsigned int size_out_edges(const vertex_descriptor&) const;
+    unsigned int size_out_edges(const std::string&) const;
+    unsigned int size_out_edges(boost::shared_ptr<dfgNode>) const;
+    unsigned int size_in_edges(const vertex_descriptor&) const;
+    unsigned int size_in_edges(const std::string&) const;
+    unsigned int size_in_edges(boost::shared_ptr<dfgNode>) const;
+    std::list<boost::shared_ptr<dfgNode> > get_out_nodes(const vertex_descriptor&) const;
+    std::list<boost::shared_ptr<dfgNode> > get_out_nodes(const std::string&) const;
+    std::list<boost::shared_ptr<dfgNode> > get_out_nodes(boost::shared_ptr<dfgNode>) const;
+    std::list<boost::shared_ptr<dfgNode> > get_in_nodes(const vertex_descriptor&) const;
+    std::list<boost::shared_ptr<dfgNode> > get_in_nodes(const std::string&) const;
+    std::list<boost::shared_ptr<dfgNode> > get_in_nodes(boost::shared_ptr<dfgNode>) const;
+    std::list<boost::shared_ptr<dfgEdge> > get_out_edges(const vertex_descriptor&) const;
+    std::list<boost::shared_ptr<dfgEdge> > get_out_edges(const std::string&) const;
+    std::list<boost::shared_ptr<dfgEdge> > get_out_edges(boost::shared_ptr<dfgNode>) const;
+    std::list<boost::shared_ptr<dfgEdge> > get_in_edges(const vertex_descriptor&) const;
+    std::list<boost::shared_ptr<dfgEdge> > get_in_edges(const std::string&) const;
+    std::list<boost::shared_ptr<dfgEdge> > get_in_edges(boost::shared_ptr<dfgNode>) const;
 
     // graphic
     bool layout();
@@ -189,7 +214,8 @@ namespace SDFG {
     bool read(ogdf::Graph* const, ogdf::GraphAttributes* const);
 
     // analyse functions
-    void simplify(std::list<boost::shared_ptr<dfgNode> >&); // remove unused node and edges
+    void simplify(bool); // remove unused node and edges, call this one when it is the top
+    void simplify(std::set<boost::shared_ptr<dfgNode> >&, bool); // remove unused node and edges
   };
 
   boost::shared_ptr<dfgGraph> read(std::istream&);
