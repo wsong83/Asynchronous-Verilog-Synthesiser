@@ -207,31 +207,31 @@ void draw_page(SDFG::dfgGraph& g, QPainter& painter, QPrinter& printer, std::set
              case SDFG::dfgNode::SDFG_IPORT: {
                painter.drawEllipse(bbox);
                painter.drawText(bbox, Qt::AlignCenter, "I");
-               painter.setFont(QFont(PDF_FONT, PDF_FONT_SIZE-2));
-               painter.drawText(name_point, node.name.substr(0,6).c_str());
+               painter.setFont(QFont(PDF_FONT, PDF_FONT_SIZE-4));
+               painter.drawText(name_point, node.name.substr(0,8).c_str());
                painter.setFont(font);
                break;
              }
              case SDFG::dfgNode::SDFG_OPORT: {
                painter.drawEllipse(bbox);
                painter.drawText(bbox, Qt::AlignCenter, "O");
-               painter.setFont(QFont(PDF_FONT, PDF_FONT_SIZE-2));
-               painter.drawText(name_point, node.name.substr(0,6).c_str());
+               painter.setFont(QFont(PDF_FONT, PDF_FONT_SIZE-4));
+               painter.drawText(name_point, node.name.substr(0,8).c_str());
                painter.setFont(font);
                break;
              }
              case SDFG::dfgNode::SDFG_PORT: {
                painter.drawEllipse(bbox);
                painter.drawText(bbox, Qt::AlignCenter, "I/O");
-               painter.setFont(QFont(PDF_FONT, PDF_FONT_SIZE-2));
-               painter.drawText(name_point, node.name.substr(0,6).c_str());
+               painter.setFont(QFont(PDF_FONT, PDF_FONT_SIZE-4));
+               painter.drawText(name_point, node.name.substr(0,8).c_str());
                painter.setFont(font);
                break;
              }
              default: {
                painter.drawEllipse(bbox);
-               painter.setFont(QFont(PDF_FONT, PDF_FONT_SIZE-2));
-               painter.drawText(name_point, node.name.substr(0,6).c_str());
+               painter.setFont(QFont(PDF_FONT, PDF_FONT_SIZE-4));
+               painter.drawText(name_point, node.name.substr(0,8).c_str());
                painter.setFont(font);
                break;
              }
