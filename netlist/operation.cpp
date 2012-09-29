@@ -718,7 +718,7 @@ void netlist::Operation::scan_vars(std::set<string>& t_vars, std::set<string>& d
     break;
   }
   case oQuestion: {
-    child[1]->scan_vars(t_vars, d_vars, c_vars, true);
+    child[0]->scan_vars(t_vars, d_vars, c_vars, true);
     child[1]->scan_vars(t_vars, d_vars, c_vars, ctl);
     child[2]->scan_vars(t_vars, d_vars, c_vars, ctl);
     break;    

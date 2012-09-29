@@ -24,17 +24,25 @@
 #
 
 # global variables
+#TARGET = RELEASE
+TARGET = DEBUG
+
 export BISON_EXE = bison
 export FLEX_EXE = flex
 export CXX = g++
 
 # OGDF library
 export OGDF_PATH = $(PWD)/../OGDF
-export OGDF_LIB = $(OGDF_PATH)/_debug/libOGDF.a
 
-export CXXFLAGS = -std=c++0x -Wall -Wextra -g
+ifeq ($(TARGET),RELEASE)
+	export OGDF_LIB = $(OGDF_PATH)/_release/libOGDF.a
+	export CXXFLAGS = -std=c++0x -Wall -Wextra -o2
+else
+	export OGDF_LIB = $(OGDF_PATH)/_debug/libOGDF.a
+	export CXXFLAGS = -std=c++0x -Wall -Wextra -g
+endif
+
 export LINKFLAGS = -lboost_regex -lgmpxx -lgmp -lboost_system -lboost_filesystem -lboost_program_options -ltcl -lboost_graph -lpthread $(OGDF_LIB)
-#export LINKFLAGS = -lboost_regex -lgmpxx -lgmp -lboost_system -lboost_filesystem -lboost_program_options -ltcl -lboost_graph 
 
 # targets
 SUBDIRS = preproc averilog netlist shell shell/cmd cpptcl sdfg pugixml tool
@@ -46,6 +54,8 @@ BISONDIRS = averilog.bison
 all: bison subdirs testdirs
 	-mkdir bin
 	-cp shell/test/avs_shell bin/
+
+debug: 
 
 .PHONY: bison subdirs $(SUBDIRS) clean testdirs $(TESTDIRS)
 
