@@ -1,3 +1,6 @@
+##### Sat 29/09/2012
+* Nodes without output edges are removed (cross module boundry removal!)
+
 ##### Wed 26/09/2012
 * New command uniquify
 *     make sure all entities have a unique module
