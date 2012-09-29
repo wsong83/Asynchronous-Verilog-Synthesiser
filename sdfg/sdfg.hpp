@@ -55,7 +55,7 @@ namespace ogdf {
 // the Synchronous Data-Flow Graph (SDFG) library
 namespace SDFG {
 
-  typedef boost::adjacency_list<boost::multisetS, boost::vecS, boost::bidirectionalS> GType;
+  typedef boost::adjacency_list<boost::multisetS, boost::listS, boost::bidirectionalS> GType;
   typedef boost::graph_traits<GType> GraphTraits;
   typedef typename GraphTraits::edge_descriptor edge_descriptor;
   typedef typename GraphTraits::vertex_descriptor vertex_descriptor;
@@ -75,6 +75,8 @@ namespace SDFG {
     dfgGraph* pg;                                       // a pointer pointing to the father Graph
     std::string name;           // description of this node
     vertex_descriptor id;         // node id
+    unsigned int node_index;   // when nodes are stored in listS, vertext_descriptors are no longer
+                                // integers, thereofer, separated indices must be generated and stored 
     enum node_type_t {          // node type
       SDFG_DF             = 0x0000, // default, unknown yet
       SDFG_COMB           = 0x0001, // combinational assign or always
@@ -87,8 +89,9 @@ namespace SDFG {
     } type;
 
 
-    dfgNode(): pg(NULL), position(0,0), bbox(0,0) {}
-    dfgNode(const std::string& n, node_type_t t = SDFG_DF) : pg(NULL), name(n), type(t) {}
+    dfgNode(): pg(NULL), node_index(0), position(0,0), bbox(0,0) {}
+    dfgNode(const std::string& n, node_type_t t = SDFG_DF) : 
+      pg(NULL), name(n), node_index(0), type(t), position(0,0), bbox(0,0) {}
     void write(pugi::xml_node&, std::list<boost::shared_ptr<dfgGraph> >&) const;
     void write(void *, ogdf::GraphAttributes *);
     bool read(const pugi::xml_node&);
@@ -137,9 +140,10 @@ namespace SDFG {
 
     std::map<std::string, vertex_descriptor > port_map;
     std::map<std::string, vertex_descriptor> node_map;
+    std::map<unsigned int, vertex_descriptor> index_map;
 
-    dfgGraph() : father(NULL) {}
-    dfgGraph(const std::string& n) : father(NULL), name(n) {}
+    dfgGraph() : father(NULL), node_index(0) {}
+    dfgGraph(const std::string& n) : father(NULL), name(n), node_index(0) {}
 
     // add nodes and edges
     void add_node(boost::shared_ptr<dfgNode>);
@@ -216,6 +220,10 @@ namespace SDFG {
     // analyse functions
     void simplify(bool); // remove unused node and edges, call this one when it is the top
     void simplify(std::set<boost::shared_ptr<dfgNode> >&, bool); // remove unused node and edges
+
+  private:
+    unsigned int node_index;   // when nodes are stored in listS, vertext_descriptors are no longer
+                                // integers, thereofer, separated indices must be generated and stored 
   };
 
   boost::shared_ptr<dfgGraph> read(std::istream&);

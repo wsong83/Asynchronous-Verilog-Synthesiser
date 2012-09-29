@@ -146,7 +146,7 @@ void SDFG::dfgNode::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<dfg
 void SDFG::dfgNode::write(void *pnode, ogdf::GraphAttributes *pga) {
   ogdf::node pn = static_cast<ogdf::node>(pnode);
   graphic_init();
-  pga->labelNode(pn) = boost::str(boost::format("%u") % static_cast<unsigned int>(id)).c_str();
+  pga->labelNode(pn) = boost::str(boost::format("%u") % node_index).c_str();
   pga->width(pn) = bbox.first;
   pga->height(pn) = bbox.second;
   pga->x(pn) = position.first;
@@ -167,7 +167,7 @@ bool SDFG::dfgNode::read(const pugi::xml_node& xnode) {
     return false;
   }
 
-  id = static_cast<vertex_descriptor>(xnode.attribute("id").as_uint());
+  node_index = xnode.attribute("id").as_uint();
   name = xnode.attribute("name").as_string();
   switch(shash(xnode.attribute("type").as_string())) {
   case 0x3dfb7169: type = SDFG_COMB;   break;
@@ -211,7 +211,6 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
     if((type & SDFG_OPORT) && (pg->father == NULL)) return; // a top-level output port
     
     BOOST_FOREACH(shared_ptr<dfgNode> m, pg->get_in_nodes(id)) {
-      std::cout << "put " << m->pg->name << "\\" << m->name << "\" into the proc_set." << std::endl; 
       proc_set.insert(m);
     }
     
@@ -316,6 +315,9 @@ void SDFG::dfgGraph::add_node(shared_ptr<dfgNode> node) {
   if(node->type & dfgNode::SDFG_PORT)
     port_map[node->name] = node->id;
   node->pg = this;
+  // generate and store an index
+  node->node_index = ++node_index;
+  index_map[node_index] = node->id;
 }
 
 shared_ptr<dfgNode> SDFG::dfgGraph::add_node(const string& n, dfgNode::node_type_t t) {
@@ -387,9 +389,10 @@ bool SDFG::dfgGraph::remove_node(const vertex_descriptor& nid) {
     list<shared_ptr<dfgEdge> > elist = get_in_edges(nid);
     if(nodes[nid]->type & dfgNode::SDFG_IPORT) {
       // output port
-      if(father)
+      if(father) {
         BOOST_FOREACH(shared_ptr<dfgEdge> m, elist)
           rv &= father->pg->remove_edge(m->id);
+      }
     } else {
       BOOST_FOREACH(shared_ptr<dfgEdge> m, elist)
         remove_edge(m->id);
@@ -405,7 +408,6 @@ bool SDFG::dfgGraph::remove_node(const vertex_descriptor& nid) {
   rv &= nodes.erase(nid);
   boost::remove_vertex(nid, bg_);
 
-  std::cout << pn->name << " is removed." << endl; 
   return rv;
 }
 
@@ -465,11 +467,6 @@ bool SDFG::dfgGraph::remove_edge(boost::shared_ptr<dfgEdge> edge) {
 }
 
 bool SDFG::dfgGraph::remove_edge(const edge_descriptor& eid) {
-  std::cout << "going to remove a edge from " 
-            << nodes[boost::source(eid, bg_)]->name
-            << " to " 
-            << nodes[boost::target(eid, bg_)]->name
-            << std::endl;
   if(edges.erase(eid)) {
     boost::remove_edge(eid, bg_);
     return true;
@@ -935,7 +932,7 @@ void SDFG::dfgGraph::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<df
   for_each(nodes.begin(), nodes.end(), 
            [&](const pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
                pugi::xml_node node = xnode.append_child("node");
-               node.append_attribute("id") = static_cast<int>(m.first);
+               node.append_attribute("id") = m.second->node_index;
                m.second->write(node, GList);
              });
            
@@ -943,8 +940,8 @@ void SDFG::dfgGraph::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<df
   for_each(edges.begin(), edges.end(), 
            [&](const pair<const edge_descriptor, shared_ptr<dfgEdge> >& m) {
                pugi::xml_node node = xnode.append_child("edge");
-               node.append_attribute("source") = static_cast<int>(boost::source(m.first, bg_));
-               node.append_attribute("target") = static_cast<int>(boost::target(m.first, bg_));
+               node.append_attribute("source") = get_source(m.first)->node_index;
+               node.append_attribute("target") = get_target(m.first)->node_index;
                m.second->write(node);
              });
 }
@@ -981,13 +978,13 @@ bool SDFG::dfgGraph::read(const pugi::xml_node& xnode) {
   // get the graph name
   name = xnode.attribute("name").as_string();
 
-  map<vertex_descriptor, vertex_descriptor> id_map; // need to regenerate vertex_descriptor in BGL
+  map<unsigned int, vertex_descriptor> id_map; // need to regenerate vertex_descriptor in BGL
 
   // get all nodes
   for(pugi::xml_node node = xnode.child("node"); node; node = node.next_sibling("node")) {
     shared_ptr<dfgNode> pnode(new dfgNode());
-    if(!pnode->read(node)) {assert(0 == 1); return false;}
-    vertex_descriptor orig = pnode->id;
+    if(!pnode->read(node)) return false;
+    unsigned int orig = pnode->node_index;
     add_node(pnode);
     id_map[orig] = pnode->id;
   }
@@ -995,10 +992,10 @@ bool SDFG::dfgGraph::read(const pugi::xml_node& xnode) {
   // get all edges
   for(pugi::xml_node edge = xnode.child("edge"); edge; edge = edge.next_sibling("edge")) {
     shared_ptr<dfgEdge> pedge(new dfgEdge());
-    if(!pedge->read(edge)) {assert(0 == 1); return false;}
-    vertex_descriptor src, tar;
-    src = static_cast<vertex_descriptor>(edge.attribute("source").as_uint());
-    tar = static_cast<vertex_descriptor>(edge.attribute("target").as_uint());
+    if(!pedge->read(edge)) return false;
+    unsigned int src, tar;
+    src = edge.attribute("source").as_uint();
+    tar = edge.attribute("target").as_uint();
     add_edge(pedge,id_map[src], id_map[tar]);
   }
   
@@ -1008,23 +1005,20 @@ bool SDFG::dfgGraph::read(const pugi::xml_node& xnode) {
 bool SDFG::dfgGraph::read(ogdf::Graph * const pg, ogdf::GraphAttributes * const pga){
   ogdf::node n;
   forall_nodes(n, *pg) {
-    vertex_descriptor nid = static_cast<vertex_descriptor>
-      (boost::lexical_cast<unsigned long>(pga->labelNode(n).cstr()));
-    if(!nodes.count(nid)) return false;
-    nodes[nid]->read(n, pga);
+    unsigned int nid = boost::lexical_cast<unsigned int>(pga->labelNode(n).cstr());
+    if(!index_map.count(nid)) return false;
+    nodes[index_map[nid]]->read(n, pga);
   }
 
   ogdf::edge e;
   forall_edges(e, *pg) {
-    vertex_descriptor src, tar;
-    src = static_cast<vertex_descriptor>
-      (boost::lexical_cast<unsigned long>(pga->labelNode(e->source()).cstr()));
-    tar = static_cast<vertex_descriptor>
-      (boost::lexical_cast<unsigned long>(pga->labelNode(e->target()).cstr()));
+    unsigned int src, tar;
+    src = boost::lexical_cast<unsigned int>(pga->labelNode(e->source()).cstr());
+    tar = boost::lexical_cast<unsigned int>(pga->labelNode(e->target()).cstr());
     dfgEdge::edge_type_t etype = static_cast<dfgEdge::edge_type_t>
-      (boost::lexical_cast<unsigned long>(pga->labelEdge(e).cstr()));
-    if(!exist(src, tar, etype)) return false;
-    get_edge(src, tar, etype)->read(e, pga);
+      (boost::lexical_cast<unsigned int>(pga->labelEdge(e).cstr()));
+    if(!exist(index_map[src], index_map[tar], etype)) return false;
+    get_edge(index_map[src], index_map[tar], etype)->read(e, pga);
   }
 
   return true;
@@ -1050,9 +1044,6 @@ void SDFG::dfgGraph::simplify(bool quiet) {
 }
 
 void SDFG::dfgGraph::simplify(std::set<shared_ptr<dfgNode> >& proc_set, bool quiet) {
-
-  //if(!quiet)
-  //  std::cout << "scan \"" << name << "\" for simplification." << std::endl; 
 
   // make a local copy of the node map, as nodes may be erased during the process
   map<vertex_descriptor, shared_ptr<dfgNode> > local_node_map = nodes;
