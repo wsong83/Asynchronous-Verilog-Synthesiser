@@ -205,29 +205,6 @@ bool SDFG::dfgNode::read(void * const pnode, ogdf::GraphAttributes * const pga) 
   return true;
 }
 
-void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bool quiet) {
-  // remove internal node without output edges
-  if(pg->size_out_edges(id) == 0) {
-    if((type & SDFG_PORT) && (type != SDFG_IPORT) && (pg->father == NULL)) return; // a top-level output port
-    
-    BOOST_FOREACH(shared_ptr<dfgNode> m, pg->get_in_nodes(id)) {
-      proc_set.insert(m);
-    }
-    
-    if((type & SDFG_PORT) && (type != SDFG_OPORT) && (pg->father)) // if it is an input, the whole module may be useless
-      proc_set.insert(pg->father->pg->nodes[pg->father->id]);
-
-    pg->remove_node(id);        // remove it
-    
-    if(!quiet)
-      std::cout << "node \"" << pg->name << "\\" << name << "\" is removed as it has no output edges." << std::endl;
-  }
-
-  // go lower if it is module node
-  if(type == SDFG_MODULE && child)
-    child->simplify(proc_set, quiet);
-}
-
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1025,36 +1002,6 @@ bool SDFG::dfgGraph::read(ogdf::Graph * const pg, ogdf::GraphAttributes * const 
   return true;
 }
 
-
-///////////////////////////////
-// analyse functions
-///////////////////////////////
-void SDFG::dfgGraph::simplify(bool quiet) {
-  // node cache
-  std::set<shared_ptr<dfgNode> > proc_set;
-
-  // in the first round, traverse all nodes
-  simplify(proc_set, quiet);
-
-  // handle the nodes need further operation
-  while(!proc_set.empty()) {
-    shared_ptr<dfgNode> pn = *(proc_set.begin());
-    proc_set.erase(pn);
-    pn->simplify(proc_set, quiet);
-  }
-}
-
-void SDFG::dfgGraph::simplify(std::set<shared_ptr<dfgNode> >& proc_set, bool quiet) {
-
-  // make a local copy of the node map, as nodes may be erased during the process
-  map<vertex_descriptor, shared_ptr<dfgNode> > local_node_map = nodes;
-  
-  // do the simplification
-  for_each(local_node_map.begin(), local_node_map.end(),
-           [&](pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
-             m.second->simplify(proc_set, quiet);
-           });
-}
 
 
 /////////////////////////////////////////////////////////////////////////////

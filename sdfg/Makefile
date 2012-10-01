@@ -26,15 +26,13 @@
 # variables
 INCDIRS = -I./ -I../ -I$(OGDF_PATH)
 
-# targets
-TARGETS = sdfg.o
-
-HEADERS = $(wildcard ./*.hpp)
-
 # actions
-all: $(TARGETS)
+all: sdfg.o sdfg_avs.o
 
-$(TARGETS): %.o:%.cpp %.hpp $(HEADERS)
+sdfg.o: sdfg.cpp sdfg.hpp
+	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
+
+sdfg_avs.o: sdfg_avs.cpp sdfg.hpp
 	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
 
 .PHONY: clean
