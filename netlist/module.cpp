@@ -528,7 +528,7 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
              if(subMod) { // has sub-module
                n->child_name = m.second->mname.name;
                n->child = subMod->extract_sdfg(quiet);
-               //n->child->father = n;
+               n->child->father = n.get();
              }
            });
 
