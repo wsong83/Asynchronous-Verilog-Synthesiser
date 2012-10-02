@@ -50,6 +50,8 @@ using std::list;
 
 void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bool quiet) {
 
+  if(!pg) return;               // this node is already deleted
+
   unsigned int oe_num = pg->size_out_edges(id);
   unsigned int ie_num = pg->size_in_edges(id);
 
@@ -61,14 +63,16 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
         proc_set.insert(m);
       }
       
-      if((type & SDFG_PORT) && (type != SDFG_OPORT) && (pg->father)) // if it is an input, the whole module may be useless
+      if((type & SDFG_PORT) && (type != SDFG_OPORT) && (pg->father)) {// if it is an input, the whole module may be useless
         assert(pg->father->pg->nodes[pg->father->id]);
         proc_set.insert(pg->father->pg->nodes[pg->father->id]);
-      
-      pg->remove_node(id);        // remove it
+      }
       
       if(!quiet)
         std::cout << "node \"" << pg->name << "/" << get_hier_name() << "\" is removed as it has no output edges." << std::endl;
+
+      pg->remove_node(id);        // remove it
+
       return;
     }
   }
@@ -106,9 +110,6 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
         proc_set.insert(tar_node);
       }
 
-      // remove the node
-      pg->remove_node(id);
-      
       // process source again later
       assert(src_node);
       proc_set.insert(src_node);
@@ -118,6 +119,10 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
                   << "\" is removed and its single input node \""
                   << src->pg->name << "/" << src_node->get_hier_name() 
                   << "\" is connected to all output nodes." << std::endl;
+
+      // remove the node
+      pg->remove_node(id);
+
       return;
     }
   }
@@ -155,9 +160,6 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
         proc_set.insert(src_node);
       }
 
-      // remove the node
-      pg->remove_node(id);
-      
       // process source again later
       assert(tar_node);
       proc_set.insert(tar_node);
@@ -167,6 +169,10 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
                   << "\" is removed and its single output node \""
                   << tar->pg->name << "/" << tar_node->get_hier_name() 
                   << "\" is connected with all input nodes." << std::endl;
+
+      // remove the node
+      pg->remove_node(id);
+      
       return;
     }
   }
@@ -187,10 +193,6 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
       // set up the bypass
       pg->father->pg->add_edge(src->get_hier_name(), pg->get_in_edges(id).front()->type, src->id, tar->id);
       
-      // remove the through wire
-      pg->remove_node(iport);
-      pg->remove_node(id);
-      
       // add src and tar to proc_set
       assert(src);
       proc_set.insert(src);
@@ -199,7 +201,7 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
       
       // remove iport from proc_set if it is in the list
       proc_set.erase(iport);
-
+      
       if(!quiet)
         std::cout << "move the through wire from \"" 
                   << pg->name << "/" << iport->get_hier_name()
@@ -208,6 +210,11 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
                   << "\" to the upper module \"" 
                   << pg->father->pg->name 
                   << "\"." << std::endl;
+
+      // remove the through wire
+      pg->remove_node(iport);
+      pg->remove_node(id);
+      
       return;
     }
   }

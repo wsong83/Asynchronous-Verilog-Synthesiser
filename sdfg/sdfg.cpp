@@ -424,6 +424,8 @@ bool SDFG::dfgGraph::remove_node(const vertex_descriptor& nid) {
   rv &= nodes.erase(nid);
   boost::remove_vertex(nid, bg_);
 
+  pn->pg = NULL;                    // make sure it cannot access graph
+
   return rv;
 }
 
@@ -483,8 +485,11 @@ bool SDFG::dfgGraph::remove_edge(boost::shared_ptr<dfgEdge> edge) {
 }
 
 bool SDFG::dfgGraph::remove_edge(const edge_descriptor& eid) {
-  if(edges.erase(eid)) {
+  if(edges.count(eid)) {
+    shared_ptr<dfgEdge> pe = edges[eid];
+    edges.erase(eid);
     boost::remove_edge(eid, bg_);
+    pe->pg = NULL;
     return true;
   } else
     return false;
@@ -728,7 +733,7 @@ list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_in_nodes(const vertex_descriptor&
       }
     } 
 
-    if(pn->type != dfgNode::SDFG_OPORT) { // have internal outputs
+    if(pn->type != dfgNode::SDFG_IPORT) { // have internal outputs
       GType::inv_adjacency_iterator nit, nend; //!! why inv_adjacency_iterator is in Graph instead of Trait?
       for(boost::tie(nit, nend) = boost::inv_adjacent_vertices(nid, bg_);
           nit != nend; ++nit) {
@@ -797,7 +802,7 @@ list<shared_ptr<dfgEdge> > SDFG::dfgGraph::get_in_edges(const vertex_descriptor&
   list<shared_ptr<dfgEdge> > rv;
   if(nodes.count(nid)) {
     shared_ptr<dfgNode> pn = nodes.find(nid)->second;
-    if(pn->type == dfgNode::SDFG_OPORT || pn->type == dfgNode::SDFG_PORT) { // output or I/O port
+    if(pn->type == dfgNode::SDFG_IPORT || pn->type == dfgNode::SDFG_PORT) { // input or I/O port
       if(pn && father && father->port2sig.count(pn->get_hier_name())) {
         string tar_name = father->port2sig.find(pn->get_hier_name())->second;
         GraphTraits::out_edge_iterator eit, eend;
@@ -812,7 +817,7 @@ list<shared_ptr<dfgEdge> > SDFG::dfgGraph::get_in_edges(const vertex_descriptor&
       }
     } 
 
-    if(pn->type != dfgNode::SDFG_OPORT) { // have internal outputs
+    if(pn->type != dfgNode::SDFG_IPORT) { // have internal outputs
       GraphTraits::in_edge_iterator eit, eend;
       for(boost::tie(eit, eend) = boost::in_edges(nid, bg_);
           eit != eend; ++eit) {
