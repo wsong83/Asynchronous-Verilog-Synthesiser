@@ -64,45 +64,94 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
     
     if(!quiet)
       std::cout << "node \"" << pg->name << "\\" << name << "\" is removed as it has no output edges." << std::endl;
+    return;
   }
 
-  // remove the node that has only one input and only one output, and it is a comb or unknown
+  // remove the node that has only one input and it is a comb or unknown
   if(pg->size_in_edges(id) == 1 &&
-     pg->size_out_edges(id) == 1 &&
      (type == SDFG_COMB || type == SDFG_DF)) {
     // get its source and target
-    shared_ptr<dfgNode> src = pg->get_in_nodes(id).front();
-    shared_ptr<dfgNode> tar = pg->get_out_nodes(id).front();
-   
-    // make sure it is not a signal between two modules (remove it will make the graph to crowed)
-    if(!(src->type == SDFG_MODULE && tar->type == SDFG_MODULE)) {
+    shared_ptr<dfgEdge> src = pg->get_in_edges(id).front();
+    list<shared_ptr<dfgEdge> > tar_list = pg->get_out_edges(id);
+    shared_ptr<dfgNode> src_node = pg->get_source(src);
+
+    // make sure it is not a signal connected to a module (remove it will make the graph to crowed)
+    if(!(src_node->type == SDFG_MODULE)) {
       // choosing the target edge type
       dfgEdge::edge_type_t etype;
-      shared_ptr<dfgEdge> src_edge = pg->get_edge(src->id, id);
-      shared_ptr<dfgEdge> tar_edge = pg->get_edge(id, tar->id);
       
-      if(tar_edge->type == dfgEdge::SDFG_DF)
-        etype = src_edge->type;   // use src type if tar type is unknown
-      else
-        etype = tar_edge->type;   // always use the tar type if it is available
-      
-      // add the new path
-      pg->add_edge(src->name, etype, src->name, tar->name);
-      
+      // add edges to by pass the node
+      BOOST_FOREACH(shared_ptr<dfgEdge> m, tar_list) {
+        // specify the type
+        if(m->type == dfgEdge::SDFG_DF)
+          etype = src->type;   // use src type if tar type is unknown
+        else
+          etype = m->type;     // always use the tar type if it is available
+
+        // add the new path
+        shared_ptr<dfgNode> tar_node = pg->get_target(m);
+        pg->add_edge(src->name, etype, src_node->id, tar_node->id);
+
+        // process target again later
+        proc_set.insert(tar_node);
+      }
+
       // remove the node
       pg->remove_node(id);
       
-      // add the input/output node to proc_set
-      proc_set.insert(src);
-      proc_set.insert(tar);
+      // process source again later
+      proc_set.insert(src_node);
       
       if(!quiet)
         std::cout << "node \"" << pg->name << "\\" << name
                   << "\" is removed and its single input node \""
-                  << src->pg->name << "\\" << src->name 
-                  << "\" is connected to its single output node \""
-                  << tar->pg->name << "\\" << tar->name
-                  << "\"." << std::endl;    
+                  << src->pg->name << "\\" << src_node->name 
+                  << "\" is connected to all output nodes." << std::endl;
+      return;
+    }
+  }
+
+  // remove the node that has only one output, and it is a comb or unknown
+  if(pg->size_out_edges(id) == 1 &&
+     (type == SDFG_COMB || type == SDFG_DF)) {
+    // get its source and target
+    list<shared_ptr<dfgEdge> > src_list = pg->get_in_edges(id);
+    shared_ptr<dfgEdge> tar = pg->get_out_edges(id).front();
+      shared_ptr<dfgNode> tar_node = pg->get_target(tar);
+   
+    // make sure it is not a signal connected to a module (remove it will make the graph to crowed)
+    if(!(tar_node->type == SDFG_MODULE)) {
+      // choosing the target edge type
+      dfgEdge::edge_type_t etype;
+
+      // add edges to by pass the node
+      BOOST_FOREACH(shared_ptr<dfgEdge> m, src_list) {
+        // specify the type
+        if(tar->type == dfgEdge::SDFG_DF)
+          etype = m->type;   // use src type if tar type is unknown
+        else
+          etype = tar->type;     // always use the tar type if it is available
+
+        // add the new path
+        shared_ptr<dfgNode> src_node = pg->get_source(m);
+        pg->add_edge(m->name, etype, src_node->id, tar_node->id);
+
+        // process source again later
+        proc_set.insert(src_node);
+      }
+
+      // remove the node
+      pg->remove_node(id);
+      
+      // process source again later
+      proc_set.insert(tar_node);
+      
+      if(!quiet)
+        std::cout << "node \"" << pg->name << "\\" << name
+                  << "\" is removed and its single output node \""
+                  << tar->pg->name << "\\" << tar_node->name 
+                  << "\" is connected with all input nodes." << std::endl;
+      return;
     }
   }
 

@@ -151,6 +151,7 @@ namespace SDFG {
     void add_edge(boost::shared_ptr<dfgEdge>, const std::string&, const std::string&);
     void add_edge(boost::shared_ptr<dfgEdge>, const vertex_descriptor&, const vertex_descriptor&);
     boost::shared_ptr<dfgEdge> add_edge(const std::string&, dfgEdge::edge_type_t, const std::string&, const std::string&);
+    boost::shared_ptr<dfgEdge> add_edge(const std::string&, dfgEdge::edge_type_t, const vertex_descriptor&, const vertex_descriptor&);
 
     // remove nodes and edges
     bool remove_node(boost::shared_ptr<dfgNode>);

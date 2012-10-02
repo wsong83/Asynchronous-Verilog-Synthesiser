@@ -311,6 +311,7 @@ void SDFG::dfgGraph::add_edge(shared_ptr<dfgEdge> edge, const string& src, const
 
 void SDFG::dfgGraph::add_edge(shared_ptr<dfgEdge> edge, const vertex_descriptor& src, const vertex_descriptor& snk) {
   assert(edge);
+  if(exist(src, snk, edge->type)) return; // do not insert a edge between the same nodes with the same type
   bool added;
   boost::tie(edge->id, added) = boost::add_edge(src, snk, bg_);
   edges[edge->id] = edge;
@@ -318,6 +319,12 @@ void SDFG::dfgGraph::add_edge(shared_ptr<dfgEdge> edge, const vertex_descriptor&
 }
 
 shared_ptr<dfgEdge> SDFG::dfgGraph::add_edge(const string& n, dfgEdge::edge_type_t t, const string& src, const string& snk) {
+  shared_ptr<dfgEdge> edge(new dfgEdge(n, t));
+  add_edge(edge, src, snk);
+  return edge;
+}
+
+shared_ptr<dfgEdge> SDFG::dfgGraph::add_edge(const string& n, dfgEdge::edge_type_t t, const vertex_descriptor& src, const vertex_descriptor& snk) {
   shared_ptr<dfgEdge> edge(new dfgEdge(n, t));
   add_edge(edge, src, snk);
   return edge;
