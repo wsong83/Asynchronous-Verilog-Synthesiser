@@ -31,6 +31,7 @@
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
+#include <boost/tokenizer.hpp>
 #include <set>
 #include <algorithm>
 #include <iostream>
@@ -94,6 +95,22 @@ static const double G_NODE_DIST = 3;
 /********        Node                                               ********/
 /////////////////////////////////////////////////////////////////////////////
 
+dfgNode* SDFG::dfgNode::copy() const {
+  dfgNode* rv = new dfgNode();
+  rv->ptr = ptr;
+  rv->child = child;
+  rv->child_name = child_name;
+  rv->sig2port = sig2port;
+  rv->port2sig = port2sig;
+  rv->pg = NULL;
+  rv->name = name;
+  rv->hier = hier;
+  rv->id = NULL;
+  rv->node_index = 0;
+  rv->type = type;
+  return rv;
+}
+
 void SDFG::dfgNode::graphic_init() {
   if(bbox.first == 0.0)
     switch(type) {
@@ -108,7 +125,7 @@ void SDFG::dfgNode::graphic_init() {
 }
 
 void SDFG::dfgNode::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<dfgGraph> >& GList) const {
-  xnode.append_attribute("name") = name.c_str();
+  xnode.append_attribute("name") = get_hier_name().c_str();
   string stype;
   switch(type) {
   case SDFG_COMB:    stype = "combi";   break;
@@ -168,7 +185,7 @@ bool SDFG::dfgNode::read(const pugi::xml_node& xnode) {
   }
 
   node_index = xnode.attribute("id").as_uint();
-  name = xnode.attribute("name").as_string();
+  set_hier_name(xnode.attribute("name").as_string());
   switch(shash(xnode.attribute("type").as_string())) {
   case 0x3dfb7169: type = SDFG_COMB;   break;
   case 0x00003366: type = SDFG_FF;     break;
@@ -205,6 +222,36 @@ bool SDFG::dfgNode::read(void * const pnode, ogdf::GraphAttributes * const pga) 
   return true;
 }
 
+shared_ptr<dfgNode> SDFG::dfgNode::flatten() const {
+  if(!pg->father)
+    return shared_ptr<dfgNode>();
+  else {
+    shared_ptr<dfgNode> rv(copy());
+    rv->hier.push_front(pg->father->name);
+    pg->father->pg->add_node(rv);
+    return rv;
+  }
+}
+
+string SDFG::dfgNode::get_hier_name() const {
+  string rv;
+  BOOST_FOREACH(const string& m, hier) {
+    rv += m + "/";
+  }
+
+  return rv+name;
+}
+
+void SDFG::dfgNode::set_hier_name(const string& hname) {
+  boost::char_separator<char> sep("/");
+  boost::tokenizer<boost::char_separator<char> > tokens(hname, sep);
+  hier.clear();
+  BOOST_FOREACH(const string& m, tokens) {
+    hier.push_back(m);
+  }
+  name = hier.back();
+  hier.pop_back();
+}
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -288,9 +335,9 @@ void SDFG::dfgGraph::add_node(shared_ptr<dfgNode> node) {
   assert(node);
   node->id = boost::add_vertex(bg_);
   nodes[node->id] = node;
-  node_map[node->name] = node->id;
+  node_map[node->get_hier_name()] = node->id;
   if(node->type & dfgNode::SDFG_PORT)
-    port_map[node->name] = node->id;
+    port_map[node->get_hier_name()] = node->id;
   node->pg = this;
   // generate and store an index
   node->node_index = ++node_index;
@@ -371,8 +418,8 @@ bool SDFG::dfgGraph::remove_node(const vertex_descriptor& nid) {
   // remove the node
   shared_ptr<dfgNode> pn = nodes[nid];
   if(pn) {
-    port_map.erase(pn->name);
-    rv &= node_map.erase(pn->name);
+    port_map.erase(pn->get_hier_name());
+    rv &= node_map.erase(pn->get_hier_name());
   }
   rv &= nodes.erase(nid);
   boost::remove_vertex(nid, bg_);
@@ -576,12 +623,12 @@ unsigned int SDFG::dfgGraph::size_out_edges(const vertex_descriptor& nid) const 
   if(nodes.count(nid)) {
     shared_ptr<dfgNode> pn = nodes.find(nid)->second;
     if(pn->type == dfgNode::SDFG_OPORT) { // output port
-      if(pn && pn->pg->father && pn->pg->father->port2sig.count(pn->name))
+      if(pn && father && father->port2sig.count(pn->get_hier_name()))
         return 1;
       else
         return 0;
     } else if(pn->type == dfgNode::SDFG_PORT) { // I/O port
-      if(pn && pn->pg->father && pn->pg->father->port2sig.count(pn->name))
+      if(pn && father && father->port2sig.count(pn->get_hier_name()))
         return 1 + boost::out_degree(nid, bg_);
       else
         return boost::out_degree(nid, bg_);
@@ -609,12 +656,12 @@ unsigned int SDFG::dfgGraph::size_in_edges(const vertex_descriptor& nid) const {
   if(nodes.count(nid)) {
     shared_ptr<dfgNode> pn = nodes.find(nid)->second;
     if(pn->type == dfgNode::SDFG_IPORT) { // input port
-      if(pn && pn->pg->father && pn->pg->father->port2sig.count(pn->name))
+      if(pn && father && father->port2sig.count(pn->get_hier_name()))
         return 1;
       else
         return 0;
     } else if(pn->type == dfgNode::SDFG_PORT) { // I/O port
-      if(pn && pn->pg->father && pn->pg->father->port2sig.count(pn->name))
+      if(pn && father && father->port2sig.count(pn->get_hier_name()))
         return 1 + boost::in_degree(nid, bg_);
       else
         return boost::in_degree(nid, bg_);
@@ -643,9 +690,8 @@ list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_out_nodes(const vertex_descriptor
   if(nodes.count(nid)) {
     shared_ptr<dfgNode> pn = nodes.find(nid)->second;
     if(pn->type == dfgNode::SDFG_OPORT || pn->type == dfgNode::SDFG_PORT) { // output or I/O port
-      if(pn && pn->pg->father && pn->pg->father->port2sig.count(pn->name)) {
-        dfgNode* fn = pn->pg->father;
-        rv.push_back(fn->pg->get_node(fn->port2sig.find(pn->name)->second));
+      if(pn && father && father->port2sig.count(pn->get_hier_name())) {
+        rv.push_back(father->pg->get_node(father->port2sig.find(pn->get_hier_name())->second));
       }
     } 
 
@@ -677,9 +723,8 @@ list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_in_nodes(const vertex_descriptor&
   if(nodes.count(nid)) {
     shared_ptr<dfgNode> pn = nodes.find(nid)->second;
     if(pn->type == dfgNode::SDFG_IPORT || pn->type == dfgNode::SDFG_PORT) { // input or I/O port
-      if(pn && pn->pg->father && pn->pg->father->port2sig.count(pn->name)) {
-        dfgNode* fn = pn->pg->father;
-        rv.push_back(fn->pg->get_node(fn->port2sig.find(pn->name)->second));
+      if(pn && father && father->port2sig.count(pn->get_hier_name())) {
+        rv.push_back(father->pg->get_node(father->port2sig.find(pn->get_hier_name())->second));
       }
     } 
 
@@ -711,17 +756,16 @@ list<shared_ptr<dfgEdge> > SDFG::dfgGraph::get_out_edges(const vertex_descriptor
   if(nodes.count(nid)) {
     shared_ptr<dfgNode> pn = nodes.find(nid)->second;
     if(pn->type == dfgNode::SDFG_OPORT || pn->type == dfgNode::SDFG_PORT) { // output or I/O port
-      if(pn && pn->pg->father && pn->pg->father->port2sig.count(pn->name)) {
-        dfgNode* fn = pn->pg->father;
-        string tar_name = fn->port2sig.find(pn->name)->second;
+      if(pn && father && father->port2sig.count(pn->get_hier_name())) {
+        string tar_name = father->port2sig.find(pn->get_hier_name())->second;
         GraphTraits::out_edge_iterator eit, eend;
         for(boost::tie(eit, eend) = 
               boost::edge_range(
-                                fn->id, 
-                                fn->pg->node_map.find(tar_name)->second, 
-                                fn->pg->bg_);
+                                father->id, 
+                                father->pg->node_map.find(tar_name)->second, 
+                                father->pg->bg_);
             eit != eend; ++eit) { 
-          rv.push_back(fn->pg->edges.find(*eit)->second);
+          rv.push_back(father->pg->edges.find(*eit)->second);
         }
       }
     } 
@@ -754,17 +798,16 @@ list<shared_ptr<dfgEdge> > SDFG::dfgGraph::get_in_edges(const vertex_descriptor&
   if(nodes.count(nid)) {
     shared_ptr<dfgNode> pn = nodes.find(nid)->second;
     if(pn->type == dfgNode::SDFG_OPORT || pn->type == dfgNode::SDFG_PORT) { // output or I/O port
-      if(pn && pn->pg->father && pn->pg->father->port2sig.count(pn->name)) {
-        dfgNode* fn = pn->pg->father;
-        string tar_name = fn->port2sig.find(pn->name)->second;
+      if(pn && father && father->port2sig.count(pn->get_hier_name())) {
+        string tar_name = father->port2sig.find(pn->get_hier_name())->second;
         GraphTraits::out_edge_iterator eit, eend;
         for(boost::tie(eit, eend) = 
               boost::edge_range(
-                                fn->pg->node_map.find(tar_name)->second, 
-                                fn->id, 
-                                fn->pg->bg_);
+                                father->pg->node_map.find(tar_name)->second, 
+                                father->id, 
+                                father->pg->bg_);
             eit != eend; ++eit) { 
-          rv.push_back(fn->pg->edges.find(*eit)->second);
+          rv.push_back(father->pg->edges.find(*eit)->second);
         }
       }
     } 

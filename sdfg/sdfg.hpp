@@ -73,8 +73,9 @@ namespace SDFG {
     std::multimap<std::string, std::string> sig2port;   // remember the port connection if it is a module entity
     std::map<std::string, std::string> port2sig;        // remember the port connection if it is a module entity
     dfgGraph* pg;                                       // a pointer pointing to the father Graph
-    std::string name;           // description of this node
-    vertex_descriptor id;         // node id
+    std::string name;                                   // description of this node
+    std::list<std::string> hier;                        // hierarchy prefix (name of flattened modules) 
+    vertex_descriptor id;                               // node id
     unsigned int node_index;   // when nodes are stored in listS, vertext_descriptors are no longer
                                 // integers, thereofer, separated indices must be generated and stored 
     enum node_type_t {          // node type
@@ -92,10 +93,14 @@ namespace SDFG {
     dfgNode(): pg(NULL), node_index(0), position(0,0), bbox(0,0) {}
     dfgNode(const std::string& n, node_type_t t = SDFG_DF) : 
       pg(NULL), name(n), node_index(0), type(t), position(0,0), bbox(0,0) {}
+    dfgNode* copy() const;      // copy content, not deep copy, orphan node generation
     void write(pugi::xml_node&, std::list<boost::shared_ptr<dfgGraph> >&) const;
     void write(void *, ogdf::GraphAttributes *);
     bool read(const pugi::xml_node&);
     bool read(void * const, ogdf::GraphAttributes * const);
+    boost::shared_ptr<dfgNode> flatten() const;   // move this node to one module higher
+    std::string get_hier_name() const;            // get the hierarchical name of the name
+    void set_hier_name(const std::string& hname); // set the hierarchical name
 
     std::pair<double, double> position; // graphic position
     std::pair<double, double> bbox;     // bounding box

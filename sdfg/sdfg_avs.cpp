@@ -49,34 +49,43 @@ using std::list;
 /////////////////////////////////////////////////////////////////////////////
 
 void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bool quiet) {
-  // remove internal node without output edges
-  if(pg->size_out_edges(id) == 0) {
-    if((type & SDFG_PORT) && (type != SDFG_IPORT) && (pg->father == NULL)) return; // a top-level output port
-    
-    BOOST_FOREACH(shared_ptr<dfgNode> m, pg->get_in_nodes(id)) {
-      proc_set.insert(m);
-    }
-    
-    if((type & SDFG_PORT) && (type != SDFG_OPORT) && (pg->father)) // if it is an input, the whole module may be useless
-      proc_set.insert(pg->father->pg->nodes[pg->father->id]);
 
-    pg->remove_node(id);        // remove it
-    
-    if(!quiet)
-      std::cout << "node \"" << pg->name << "\\" << name << "\" is removed as it has no output edges." << std::endl;
-    return;
+  unsigned int oe_num = pg->size_out_edges(id);
+  unsigned int ie_num = pg->size_in_edges(id);
+
+  // remove internal node without output edges
+  if(oe_num == 0) {
+    if(!((type & SDFG_PORT) && (type != SDFG_IPORT) && (pg->father == NULL))) {
+      BOOST_FOREACH(shared_ptr<dfgNode> m, pg->get_in_nodes(id)) {
+        assert(m);
+        proc_set.insert(m);
+      }
+      
+      if((type & SDFG_PORT) && (type != SDFG_OPORT) && (pg->father)) // if it is an input, the whole module may be useless
+        assert(pg->father->pg->nodes[pg->father->id]);
+        proc_set.insert(pg->father->pg->nodes[pg->father->id]);
+      
+      pg->remove_node(id);        // remove it
+      
+      if(!quiet)
+        std::cout << "node \"" << pg->name << "/" << get_hier_name() << "\" is removed as it has no output edges." << std::endl;
+      return;
+    }
   }
 
   // remove the node that has only one input and it is a comb or unknown
-  if(pg->size_in_edges(id) == 1 &&
-     (type == SDFG_COMB || type == SDFG_DF)) {
+  if(ie_num == 1 && (type == SDFG_COMB || type == SDFG_DF)) {
     // get its source and target
     shared_ptr<dfgEdge> src = pg->get_in_edges(id).front();
     list<shared_ptr<dfgEdge> > tar_list = pg->get_out_edges(id);
+    bool no_module = true;
+    BOOST_FOREACH(shared_ptr<dfgEdge> m, tar_list) {
+      no_module &= pg->get_target(m)->type != SDFG_MODULE;
+    }
     shared_ptr<dfgNode> src_node = pg->get_source(src);
 
-    // make sure it is not a signal connected to a module (remove it will make the graph to crowed)
-    if(!(src_node->type == SDFG_MODULE)) {
+    // make sure it is not a signal connected to a module/iport (remove it will make the graph to crowed)
+    if(!(src_node->type & SDFG_MODULE) && no_module) {
       // choosing the target edge type
       dfgEdge::edge_type_t etype;
       
@@ -93,6 +102,7 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
         pg->add_edge(src->name, etype, src_node->id, tar_node->id);
 
         // process target again later
+        assert(tar_node);
         proc_set.insert(tar_node);
       }
 
@@ -100,27 +110,31 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
       pg->remove_node(id);
       
       // process source again later
+      assert(src_node);
       proc_set.insert(src_node);
       
       if(!quiet)
-        std::cout << "node \"" << pg->name << "\\" << name
+        std::cout << "node \"" << pg->name << "/" << get_hier_name()
                   << "\" is removed and its single input node \""
-                  << src->pg->name << "\\" << src_node->name 
+                  << src->pg->name << "/" << src_node->get_hier_name() 
                   << "\" is connected to all output nodes." << std::endl;
       return;
     }
   }
 
   // remove the node that has only one output, and it is a comb or unknown
-  if(pg->size_out_edges(id) == 1 &&
-     (type == SDFG_COMB || type == SDFG_DF)) {
+  if(oe_num == 1 && (type == SDFG_COMB || type == SDFG_DF)) {
     // get its source and target
     list<shared_ptr<dfgEdge> > src_list = pg->get_in_edges(id);
+    bool no_module = true;
+    BOOST_FOREACH(shared_ptr<dfgEdge> m, src_list) {
+      no_module &= pg->get_source(m)->type != SDFG_MODULE;
+    }
     shared_ptr<dfgEdge> tar = pg->get_out_edges(id).front();
-      shared_ptr<dfgNode> tar_node = pg->get_target(tar);
-   
-    // make sure it is not a signal connected to a module (remove it will make the graph to crowed)
-    if(!(tar_node->type == SDFG_MODULE)) {
+    shared_ptr<dfgNode> tar_node = pg->get_target(tar);
+    
+    // make sure it is not a signal connected to a module/oport (remove it will make the graph to crowed)
+    if(!(tar_node->type & SDFG_MODULE) && no_module) {
       // choosing the target edge type
       dfgEdge::edge_type_t etype;
 
@@ -137,6 +151,7 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
         pg->add_edge(m->name, etype, src_node->id, tar_node->id);
 
         // process source again later
+        assert(src_node);
         proc_set.insert(src_node);
       }
 
@@ -144,13 +159,55 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
       pg->remove_node(id);
       
       // process source again later
+      assert(tar_node);
       proc_set.insert(tar_node);
       
       if(!quiet)
-        std::cout << "node \"" << pg->name << "\\" << name
+        std::cout << "node \"" << pg->name << "/" << get_hier_name()
                   << "\" is removed and its single output node \""
-                  << tar->pg->name << "\\" << tar_node->name 
+                  << tar->pg->name << "/" << tar_node->get_hier_name() 
                   << "\" is connected with all input nodes." << std::endl;
+      return;
+    }
+  }
+
+  // remove through wires
+  if(ie_num == 1 && type == SDFG_OPORT && pg->father != NULL) {
+    shared_ptr<dfgNode> iport = pg->get_in_nodes(id).front();
+    if(pg->size_out_edges(iport) == 1 && iport->type == SDFG_IPORT) {
+      // input port
+      shared_ptr<dfgNode> iport = pg->get_in_nodes(id).front();
+      
+      // get source and target
+      shared_ptr<dfgNode> src = 
+        pg->father->pg->get_node(pg->father->port2sig[iport->get_hier_name()]);
+      shared_ptr<dfgNode> tar = 
+        pg->father->pg->get_node(pg->father->port2sig[get_hier_name()]);
+      
+      // set up the bypass
+      pg->father->pg->add_edge(src->get_hier_name(), pg->get_in_edges(id).front()->type, src->id, tar->id);
+      
+      // remove the through wire
+      pg->remove_node(iport);
+      pg->remove_node(id);
+      
+      // add src and tar to proc_set
+      assert(src);
+      proc_set.insert(src);
+      assert(tar);
+      proc_set.insert(tar);
+      
+      // remove iport from proc_set if it is in the list
+      proc_set.erase(iport);
+
+      if(!quiet)
+        std::cout << "move the through wire from \"" 
+                  << pg->name << "/" << iport->get_hier_name()
+                  << "\" to \""
+                  << pg->name << "/" << get_hier_name() 
+                  << "\" to the upper module \"" 
+                  << pg->father->pg->name 
+                  << "\"." << std::endl;
       return;
     }
   }
@@ -186,6 +243,7 @@ void SDFG::dfgGraph::simplify(bool quiet) {
   // handle the nodes need further operation
   while(!proc_set.empty()) {
     shared_ptr<dfgNode> pn = *(proc_set.begin());
+    assert(pn);
     proc_set.erase(pn);
     pn->simplify(proc_set, quiet);
   }
