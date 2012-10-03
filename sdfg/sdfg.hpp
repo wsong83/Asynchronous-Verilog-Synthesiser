@@ -143,7 +143,6 @@ namespace SDFG {
     std::map<edge_descriptor, boost::shared_ptr<dfgEdge> > edges;
     std::map<vertex_descriptor, boost::shared_ptr<dfgNode> > nodes;
 
-    std::map<std::string, vertex_descriptor > port_map;
     std::map<std::string, vertex_descriptor> node_map;
     std::map<unsigned int, vertex_descriptor> index_map;
 
@@ -159,9 +158,10 @@ namespace SDFG {
     boost::shared_ptr<dfgEdge> add_edge(const std::string&, dfgEdge::edge_type_t, const vertex_descriptor&, const vertex_descriptor&);
 
     // remove nodes and edges
-    bool remove_node(boost::shared_ptr<dfgNode>);
-    bool remove_node(const std::string&);
-    bool remove_node(const vertex_descriptor&);
+    void remove_node(boost::shared_ptr<dfgNode>);
+    void remove_node(const std::string&);
+    void remove_node(const vertex_descriptor&);
+    void remove_node_cb(const vertex_descriptor&); // cross boundry
     bool remove_edge(boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgNode>); // !! remove all edge between these two nodes
     bool remove_edge(const std::string&, const std::string&); // !! remove all edge between these two nodes
     bool remove_edge(const vertex_descriptor&, const vertex_descriptor&); // !! remove all edge between these two nodes

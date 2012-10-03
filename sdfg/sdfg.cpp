@@ -222,6 +222,7 @@ bool SDFG::dfgNode::read(void * const pnode, ogdf::GraphAttributes * const pga) 
   return true;
 }
 
+/*****************/
 shared_ptr<dfgNode> SDFG::dfgNode::flatten() const {
   if(!pg->father)
     return shared_ptr<dfgNode>();
@@ -336,8 +337,6 @@ void SDFG::dfgGraph::add_node(shared_ptr<dfgNode> node) {
   node->id = boost::add_vertex(bg_);
   nodes[node->id] = node;
   node_map[node->get_hier_name()] = node->id;
-  if(node->type & dfgNode::SDFG_PORT)
-    port_map[node->get_hier_name()] = node->id;
   node->pg = this;
   // generate and store an index
   node->node_index = ++node_index;
@@ -381,58 +380,65 @@ shared_ptr<dfgEdge> SDFG::dfgGraph::add_edge(const string& n, dfgEdge::edge_type
 ///////////////////////////////
 // remove nodes and edges
 ///////////////////////////////
-bool SDFG::dfgGraph::remove_node(const string& node) {
+void SDFG::dfgGraph::remove_node(const string& node) {
   if(node_map.count(node))
-    return remove_node(node_map[node]);
-  else
-    return false;
+    remove_node(node_map[node]);
 }
 
-bool SDFG::dfgGraph::remove_node(shared_ptr<dfgNode> pn) {
+void SDFG::dfgGraph::remove_node(shared_ptr<dfgNode> pn) {
   if(pn)
     return remove_node(pn->id);
-  else
-    return false;
 }
 
-bool SDFG::dfgGraph::remove_node(const vertex_descriptor& nid) {
-  bool rv = true;
+/*****************/
+void SDFG::dfgGraph::remove_node(const vertex_descriptor& nid) {
+  if(!nodes.count(nid)) return;
+  shared_ptr<dfgNode> pn = nodes[nid];
   
-  if(!nodes.count(nid)) return rv;
-
   // remove all output edges
   {
     list<shared_ptr<dfgEdge> > elist = get_out_edges(nid);
     BOOST_FOREACH(shared_ptr<dfgEdge> m, elist)
-      rv &= m->pg->remove_edge(m->id);
+      remove_edge(m->id);
   }
 
   // remove all input edges
   {
     list<shared_ptr<dfgEdge> > elist = get_in_edges(nid);
     BOOST_FOREACH(shared_ptr<dfgEdge> m, elist)
-      rv &= m->pg->remove_edge(m->id);
+      remove_edge(m->id);
   }
 
   // remove the node
-  shared_ptr<dfgNode> pn = nodes[nid];
-  if(pn) {
-    port_map.erase(pn->get_hier_name());
-    rv &= node_map.erase(pn->get_hier_name());
-  }
-  rv &= nodes.erase(nid);
+  node_map.erase(pn->get_hier_name());
+  nodes.erase(nid);
   boost::remove_vertex(nid, bg_);
-
-  if(pn->type == dfgNode::SDFG_MODULE && pn->child) {
-    for_each(pn->child->nodes.begin(), pn->child->nodes.end(), 
-             [&](pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
-               pn->child->remove_node(m.second->id);
-             });
-  } 
-
   pn->pg = NULL;                    // make sure it cannot access graph
+}
 
-  return rv;
+bool SDFG::dfgGraph::remove_node_cb(const vertex_descriptor& nid) {
+  if(!nodes.count(nid)) return;
+  shared_ptr<dfgNode> pn = nodes[nid];
+
+  // do the normal operation
+  remove_node(nid);
+
+  if(pn->type & dfgNode::SDFG_PORT) { // port
+    remove_port(pn->get_hier_name);
+  }
+
+  if(pn->type & dfgNode::SDFG_MODULE) { // module
+    if(pn->child) {
+      // clear maps to avoid double delete
+      pn->port2sig.clear();
+      pn->sig2port.clear();
+      // remove all nodes
+      for_each(pn->child->nodes.begin(), pn->child->nodes.end(), 
+             [&](pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
+               pn->child->remove_node_cb(m.first);
+             });
+    }
+  }
 }
 
 bool SDFG::dfgGraph::remove_edge(boost::shared_ptr<dfgNode> src, boost::shared_ptr<dfgNode> tar) {
@@ -449,6 +455,7 @@ bool SDFG::dfgGraph::remove_edge(const std::string& src, const std::string& tar)
     return false;
 }
 
+/*****************/
 bool SDFG::dfgGraph::remove_edge(const vertex_descriptor& src, const vertex_descriptor& tar) {
   GraphTraits::out_edge_iterator eit, eend;
   bool rv = true;
@@ -490,6 +497,7 @@ bool SDFG::dfgGraph::remove_edge(boost::shared_ptr<dfgEdge> edge) {
     return false;
 }
 
+/*****************/
 bool SDFG::dfgGraph::remove_edge(const edge_descriptor& eid) {
   if(edges.count(eid)) {
     shared_ptr<dfgEdge> pe = edges[eid];
@@ -656,6 +664,7 @@ bool SDFG::dfgGraph::exist(const std::string& name) const {
 ///////////////////////////////
 // traverse
 ///////////////////////////////
+/*****************/
 unsigned int SDFG::dfgGraph::size_out_edges(const vertex_descriptor& nid) const {
   if(nodes.count(nid)) {
     shared_ptr<dfgNode> pn = nodes.find(nid)->second;
@@ -689,6 +698,7 @@ unsigned int SDFG::dfgGraph::size_out_edges(shared_ptr<dfgNode> pn) const {
     return 0;
 }
 
+/*****************/
 unsigned int SDFG::dfgGraph::size_in_edges(const vertex_descriptor& nid) const {
   if(nodes.count(nid)) {
     shared_ptr<dfgNode> pn = nodes.find(nid)->second;
@@ -722,6 +732,7 @@ unsigned int SDFG::dfgGraph::size_in_edges(shared_ptr<dfgNode> pn) const {
     return 0;
 }
 
+/*****************/
 list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_out_nodes(const vertex_descriptor& nid) const {
   list<shared_ptr<dfgNode> > rv;
   if(nodes.count(nid)) {
@@ -755,6 +766,7 @@ list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_out_nodes(shared_ptr<dfgNode> pn)
   return list<shared_ptr<dfgNode> >();
 }
 
+/*****************/
 list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_in_nodes(const vertex_descriptor& nid) const {
   list<shared_ptr<dfgNode> > rv;
   if(nodes.count(nid)) {
@@ -788,6 +800,7 @@ list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_in_nodes(shared_ptr<dfgNode> pn) 
   return list<shared_ptr<dfgNode> >();
 }
 
+/*****************/
 list<shared_ptr<dfgEdge> > SDFG::dfgGraph::get_out_edges(const vertex_descriptor& nid) const {
   list<shared_ptr<dfgEdge> > rv;
   if(nodes.count(nid)) {
@@ -830,6 +843,7 @@ list<shared_ptr<dfgEdge> > SDFG::dfgGraph::get_out_edges(boost::shared_ptr<dfgNo
   return list<shared_ptr<dfgEdge> >();
 }
 
+/*****************/
 list<shared_ptr<dfgEdge> > SDFG::dfgGraph::get_in_edges(const vertex_descriptor& nid) const {
   list<shared_ptr<dfgEdge> > rv;
   if(nodes.count(nid)) {
