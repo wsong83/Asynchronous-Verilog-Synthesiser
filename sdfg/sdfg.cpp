@@ -406,7 +406,6 @@ bool SDFG::dfgGraph::remove_node(const vertex_descriptor& nid) {
     BOOST_FOREACH(shared_ptr<dfgEdge> m, elist)
       rv &= m->pg->remove_edge(m->id);
   }
-  
 
   // remove all input edges
   {
@@ -423,6 +422,13 @@ bool SDFG::dfgGraph::remove_node(const vertex_descriptor& nid) {
   }
   rv &= nodes.erase(nid);
   boost::remove_vertex(nid, bg_);
+
+  if(pn->type == dfgNode::SDFG_MODULE && pn->child) {
+    for_each(pn->child->nodes.begin(), pn->child->nodes.end(), 
+             [&](pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
+               pn->child->remove_node(m.second->id);
+             });
+  } 
 
   pn->pg = NULL;                    // make sure it cannot access graph
 
@@ -487,6 +493,32 @@ bool SDFG::dfgGraph::remove_edge(boost::shared_ptr<dfgEdge> edge) {
 bool SDFG::dfgGraph::remove_edge(const edge_descriptor& eid) {
   if(edges.count(eid)) {
     shared_ptr<dfgEdge> pe = edges[eid];
+    
+    // modify port map if required
+    shared_ptr<dfgNode> src = get_source(eid);
+    shared_ptr<dfgNode> tar = get_target(eid);
+    if(src->type == dfgNode::SDFG_MODULE && src->child) {
+      std::multimap<string, string>::iterator it, end;
+      for(boost::tie(it, end) = src->sig2port.equal_range(tar->get_hier_name()); it!=end; ++it) {
+        src->port2sig.erase(it->second);
+        // !!! the node in the child graph is not removed here!
+        // remove edge will not remove the node automatically
+        // since it may generate a infinite removal loop operations
+      }
+      src->sig2port.erase(tar->get_hier_name());
+    }
+    
+    if(tar->type == dfgNode::SDFG_MODULE && tar->child) {
+      std::multimap<string, string>::iterator it, end;
+      for(boost::tie(it, end) = tar->sig2port.equal_range(src->get_hier_name()); it!=end; ++it) {
+        tar->port2sig.erase(it->second);
+        // !!! the node in the child graph is not removed here!
+        // remove edge will not remove the node automatically
+        // since it may generate a infinite removal loop operations
+      }
+      tar->sig2port.erase(src->get_hier_name());
+    }
+
     edges.erase(eid);
     boost::remove_edge(eid, bg_);
     pe->pg = NULL;

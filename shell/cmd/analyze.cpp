@@ -188,7 +188,7 @@ bool shell::CMD::CMDAnalyze::exec (const std::string& str, Env * pEnv){
       }
 
       // run the preprocessor first
-      gEnv.stdOs << "Read in \"" << fname.string() << "\"" << endl;
+      gEnv.error("PARSER-1", fname.string());
       VPPreProc::VFileLineXs* filelinep = new VPPreProc::VFileLineXs(NULL);
       VPPreProc::VPreProcXs* preprocp = new VPPreProc::VPreProcXs();
       

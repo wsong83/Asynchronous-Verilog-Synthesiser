@@ -36,13 +36,14 @@
 #include <algorithm>
 #include <iostream>
 
+#include "shell/env.h"
+
 using namespace SDFG;
 using boost::shared_ptr;
 using std::map;
 using std::string;
 using std::pair;
 using std::list;
-
 
 /////////////////////////////////////////////////////////////////////////////
 /********        Node                                               ********/
@@ -69,7 +70,7 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
       }
       
       if(!quiet)
-        std::cout << "node \"" << pg->name << "/" << get_hier_name() << "\" is removed as it has no output edges." << std::endl;
+        G_ENV->error("SDFG-SIMPLIFY-0", pg->name + "/" + get_hier_name());
 
       pg->remove_node(id);        // remove it
 
@@ -84,7 +85,8 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
     list<shared_ptr<dfgEdge> > tar_list = pg->get_out_edges(id);
     bool no_module = true;
     BOOST_FOREACH(shared_ptr<dfgEdge> m, tar_list) {
-      no_module &= pg->get_target(m)->type != SDFG_MODULE;
+      shared_ptr<dfgNode> tar_node = m->pg->get_target(m);
+      no_module &= tar_node->type != SDFG_MODULE;
     }
     shared_ptr<dfgNode> src_node = pg->get_source(src);
 
@@ -102,8 +104,8 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
           etype = m->type;     // always use the tar type if it is available
 
         // add the new path
-        shared_ptr<dfgNode> tar_node = pg->get_target(m);
-        pg->add_edge(src->name, etype, src_node->id, tar_node->id);
+        shared_ptr<dfgNode> tar_node = m->pg->get_target(m);
+        tar_node->pg->add_edge(src->name, etype, src_node->id, tar_node->id);
 
         // process target again later
         assert(tar_node);
@@ -115,10 +117,9 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
       proc_set.insert(src_node);
       
       if(!quiet)
-        std::cout << "node \"" << pg->name << "/" << get_hier_name()
-                  << "\" is removed and its single input node \""
-                  << src->pg->name << "/" << src_node->get_hier_name() 
-                  << "\" is connected to all output nodes." << std::endl;
+        G_ENV->error("SDFG-SIMPLIFY-1", 
+                     pg->name + "/" + get_hier_name(),
+                     src->pg->name + "/" + src_node->get_hier_name()); 
 
       // remove the node
       pg->remove_node(id);
@@ -129,11 +130,15 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
 
   // remove the node that has only one output, and it is a comb or unknown
   if(oe_num == 1 && (type == SDFG_COMB || type == SDFG_DF)) {
+    if(name == "tagcomp_miss")
+      std::cout << "find" << std::endl;
+    
     // get its source and target
     list<shared_ptr<dfgEdge> > src_list = pg->get_in_edges(id);
     bool no_module = true;
     BOOST_FOREACH(shared_ptr<dfgEdge> m, src_list) {
-      no_module &= pg->get_source(m)->type != SDFG_MODULE;
+      shared_ptr<dfgNode> src_node = m->pg->get_source(m);
+      no_module &= src_node->type != SDFG_MODULE;
     }
     shared_ptr<dfgEdge> tar = pg->get_out_edges(id).front();
     shared_ptr<dfgNode> tar_node = pg->get_target(tar);
@@ -152,8 +157,8 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
           etype = tar->type;     // always use the tar type if it is available
 
         // add the new path
-        shared_ptr<dfgNode> src_node = pg->get_source(m);
-        pg->add_edge(m->name, etype, src_node->id, tar_node->id);
+        shared_ptr<dfgNode> src_node = m->pg->get_source(m);
+        src_node->pg->add_edge(m->name, etype, src_node->id, tar_node->id);
 
         // process source again later
         assert(src_node);
@@ -165,10 +170,9 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
       proc_set.insert(tar_node);
       
       if(!quiet)
-        std::cout << "node \"" << pg->name << "/" << get_hier_name()
-                  << "\" is removed and its single output node \""
-                  << tar->pg->name << "/" << tar_node->get_hier_name() 
-                  << "\" is connected with all input nodes." << std::endl;
+        G_ENV->error("SDFG-SIMPLIFY-2",
+                     pg->name + "/" + get_hier_name(),
+                     tar->pg->name + "/" + tar_node->get_hier_name()); 
 
       // remove the node
       pg->remove_node(id);
@@ -203,13 +207,10 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
       proc_set.erase(iport);
       
       if(!quiet)
-        std::cout << "move the through wire from \"" 
-                  << pg->name << "/" << iport->get_hier_name()
-                  << "\" to \""
-                  << pg->name << "/" << get_hier_name() 
-                  << "\" to the upper module \"" 
-                  << pg->father->pg->name 
-                  << "\"." << std::endl;
+        G_ENV->error("SDFG-SIMPLIFY-3", 
+                     pg->name + "/" + iport->get_hier_name(),
+                     pg->name + "/" + get_hier_name(), 
+                     pg->father->pg->name); 
 
       // remove the through wire
       pg->remove_node(iport);
@@ -217,6 +218,31 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
       
       return;
     }
+  }
+
+  // move output driver to upper
+  if(ie_num == 0 && type == SDFG_OPORT && pg->father) {
+    // flatten the node
+    shared_ptr<dfgNode> nnode = flatten();
+    
+    // duplicate the edges
+    list<shared_ptr<dfgEdge> > tar_list = pg->get_out_edges(id);
+    BOOST_FOREACH(shared_ptr<dfgEdge> m, tar_list) {
+      shared_ptr<dfgNode> tar = m->pg->get_target(m->id);
+      nnode->pg->add_edge(nnode->get_hier_name(), m->type, nnode->id, tar->id);
+      assert(tar);
+      proc_set.insert(tar);
+    }
+
+    if(!quiet)
+      G_ENV->error("SDFG-SIMPLIFY-4",
+                   pg->name + "/" + get_hier_name(),
+                   pg->father->pg->name); 
+
+    // remove the node
+    pg->remove_node(id);
+    return;
+
   }
 
   // go lower if it is module node

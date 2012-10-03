@@ -183,7 +183,7 @@ void shell::CMD::CMDExtractSDFG::exec ( const std::string& str, Env * pEnv){
   // extract SDFG
   // make sure it is uniquified
   if(!arg.bQuiet) {
-    gEnv.stdOs << "Info: netlist is automatically uniquified." << endl;
+    gEnv.error("SDFG-EXTRACT-0");
     CMDUniquify::exec("", pEnv);
   } else {
     CMDUniquify::exec("-quiet", pEnv);
