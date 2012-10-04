@@ -71,7 +71,7 @@ namespace SDFG {
     boost::shared_ptr<dfgGraph> child;         // when it is a module entity, it should has a child
     std::string child_name;                    // when it is a module entity, this is the module name of the module
     std::multimap<std::string, std::string> sig2port;   // remember the port connection if it is a module entity
-    std::map<std::string, std::string, int> port2sig;   // remember the port connection if it is a module entity
+    std::map<std::string, std::string> port2sig;        // remember the port connection if it is a module entity
     dfgGraph* pg;                                       // a pointer pointing to the father Graph
     std::string name;                                   // description of this node
     std::list<std::string> hier;                        // hierarchy prefix (name of flattened modules) 

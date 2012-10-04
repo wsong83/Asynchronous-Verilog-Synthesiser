@@ -258,18 +258,21 @@ void SDFG::dfgNode::remove_port_sig(const string& sname, int dir) {
     std::multimap<string, string>::iterator it, end;
     // remove the port map connection
     boost::tie(it, end) = sig2port.equal_range(sname);
-    for(; it!=end; it++) {
-      if((child->get_node(*it)->type & SDFG_PORT) 
-         && (child->get_node(*it)->type != SDFG_OPORT)
+    while(it!=end) {
+      if((child->get_node(it->second)->type & SDFG_PORT) 
+         && (child->get_node(it->second)->type != SDFG_OPORT)
          && dir <= 0) {
-        port2sig.erase(*it);
+        port2sig.erase(it->second);
         sig2port.erase(it);
-      } else if((child->get_node(*it)->type & SDFG_PORT) 
-                && (child->get_node(*it)->type != SDFG_IPORT)
+        boost::tie(it, end) = sig2port.equal_range(sname);
+      } else if((child->get_node(it->second)->type & SDFG_PORT) 
+                && (child->get_node(it->second)->type != SDFG_IPORT)
                 && dir >= 0) {
-        port2sig.erase(*it);
+        port2sig.erase(it->second);
         sig2port.erase(it);
-      }
+        boost::tie(it, end) = sig2port.equal_range(sname);
+      } else 
+        ++it;
     }
   }
 }
@@ -443,7 +446,7 @@ void SDFG::dfgGraph::remove_node(const vertex_descriptor& nid) {
   pn->pg = NULL;                    // make sure it cannot access graph
 
   if(pn->type & dfgNode::SDFG_PORT) { // port
-    remove_port(pn->get_hier_name);
+    remove_port(pn->get_hier_name());
   }
 
   if(pn->type & dfgNode::SDFG_MODULE) { // module
@@ -454,7 +457,7 @@ void SDFG::dfgGraph::remove_node(const vertex_descriptor& nid) {
       // remove all nodes
       for_each(pn->child->nodes.begin(), pn->child->nodes.end(), 
              [&](pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
-               pn->child->remove_node_cb(m.first);
+               pn->child->remove_node(m.first);
              });
     }
   }
@@ -495,16 +498,16 @@ void SDFG::dfgGraph::remove_edge(boost::shared_ptr<dfgEdge> edge) {
   if(edge) remove_edge(edge->id);
 }
 
-void SDFG::dfgGraph::remove_edge(const edge_descriptor& eid, bool cb) {
+void SDFG::dfgGraph::remove_edge(const edge_descriptor& eid) {
   if(edges.count(eid)) {
     shared_ptr<dfgEdge> pe = edges[eid];
     shared_ptr<dfgNode> src = get_source(eid);
     shared_ptr<dfgNode> tar = get_target(eid);
     
-    if(cb && src->type == dfgNode::SDFG_MODULE) // remove a port signal
+    if(src->type == dfgNode::SDFG_MODULE) // remove a port signal
       src->remove_port_sig(tar->get_hier_name(), 1); // output
 
-    if(cb && tar->type == dfgNode::SDFG_MODULE)
+    if(tar->type == dfgNode::SDFG_MODULE)
       tar->remove_port_sig(src->get_hier_name(), -1); // input
 
     edges.erase(eid);
@@ -520,7 +523,7 @@ void SDFG::dfgGraph::remove_port(const std::string& pname) {
     // remove the port map connection
     boost::tie(it, end) = father->sig2port.equal_range(sname);
     for(; it!=end; it++) {
-      if(*it == pname) {
+      if(it->second == pname) {
         father->sig2port.erase(it);
         break;
       }
@@ -530,11 +533,11 @@ void SDFG::dfgGraph::remove_port(const std::string& pname) {
     bool outpc = false;
     boost::tie(it, end) = father->sig2port.equal_range(sname);
     for(; it!=end; it++) {
-      switch(get_node(*it)->type) {
+      switch(get_node(it->second)->type) {
       case dfgNode::SDFG_IPORT: inpc = true; break;
       case dfgNode::SDFG_OPORT: outpc = true; break;
       case dfgNode::SDFG_PORT:  inpc = true; outpc = true; break;
-      default: assert(0 = "node type wrong!");
+      default: assert(0 == "node type wrong!");
       }
     }
 

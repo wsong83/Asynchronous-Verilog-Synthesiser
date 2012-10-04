@@ -216,9 +216,9 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
     shared_ptr<dfgNode> nnode = flatten();
     
     // duplicate the edges
-    shared_ptr<dfgEdge> tar = pg->get_out_nodes_cb(id).front();
+    shared_ptr<dfgNode> tar = pg->get_out_nodes_cb(id).front();
     if(tar) {
-      tar->pg->add_edge(nnode->get_hier_name(), pg->get_out_edges_cb(id).front()->type(), nnode->id, tar->id);
+      tar->pg->add_edge(nnode->get_hier_name(), pg->get_out_edges_cb(id).front()->type, nnode->id, tar->id);
       proc_set.insert(tar);
     }
 

@@ -343,8 +343,7 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G,
       }
       case PortConn::CVAR: {    // variable
         G->add_edge(m->var.name, dfgEdge::SDFG_DF, m->var.name, node->name);
-        node->sig2port.insert(pair<string, string>(m->var.name, m->pname.name + "_P"));
-        node->port2sig.insert(pair<string, string>(m->pname.name + "_P", m->var.name));
+        node->add_port_sig(m->pname.name + "_P", m->var.name);
         break;
       }
       case PortConn::CNUM: {    // constant number
@@ -359,8 +358,7 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G,
       switch(m->type) {
       case PortConn::CVAR: {    // variable
         G->add_edge(m->pname.name, dfgEdge::SDFG_DF, node->name, m->var.name);
-        node->sig2port.insert(pair<string, string>(m->var.name, m->pname.name + "_P"));
-        node->port2sig.insert(pair<string, string>(m->pname.name + "_P", m->var.name));
+        node->add_port_sig(m->pname.name + "_P", m->var.name);
         break;
       }
       case PortConn::COPEN: {   // open
