@@ -249,21 +249,20 @@ bool shell::CMD::CMDElaborate::exec (const std::string& str, Env * pEnv){
     curDgn->calculate_name(newName);
     
     // report the behaviour to user
-    gEnv.stdOs << "elaborating module \"" << curDgn->name.name << "\"";
-    
+    string param_str;
     if(!curDgn->db_param.empty()) {
-      gEnv.stdOs << " with parameters \"";
+      param_str = " with parameters \"";
       list<pair<netlist::VIdentifier, shared_ptr<netlist::Variable> > >::const_iterator it, end;
       it = curDgn->db_param.begin_order();
       end = curDgn->db_param.end_order();
       while(it!=end) {
-        gEnv.stdOs << it->second->get_short_string();
+        param_str += it->second->get_short_string();
         it++;
-        if(it!=end) gEnv.stdOs << " ";
+        if(it!=end) param_str += " ";
       }
-      gEnv.stdOs << "\"";
+      param_str += "\"";
     }
-    gEnv.stdOs << "." << endl;
+    gEnv.error("ELAB-0", curDgn->name.name, param_str);
     
     // update the design name
     curDgn->set_name(newName);

@@ -40,6 +40,14 @@ ERR_DEFINE("PARSER-0",
            EFatal,   0, 
            "unkown parser error. Please report to the developers.");
 
+ERR_DEFINE("PARSER-1",     
+           EInfo,   1, 
+           "reading in \"%1%\".");
+
+ERR_DEFINE("ELAB-0", 
+           EInfo,   2, 
+           "elaborating module \"%1%\"%2%.");
+
 ERR_DEFINE("ELAB-ASSIGN-0", 
            EError,   0, 
            "illegal place for a continuous assignment.");
@@ -146,6 +154,34 @@ ERR_DEFINE("ELAB-VAR-3",
 ERR_DEFINE("ELAB-VAR-4",
            EError,   2,
            "variable \"%1%\" is out of the range definition of \"%2%\".");
+
+ERR_DEFINE("SDFG-EXTRACT-0", 
+           EInfo,   0, 
+           "netlist is automatically uniquified.");
+
+ERR_DEFINE("SDFG-EXTRACT-1", 
+           EInfo,   1, 
+           "extracting SDFG for module \"%1%\".");
+
+ERR_DEFINE("SDFG-SIMPLIFY-0", 
+           EInfo,   1, 
+           "node \"%1%\" is removed as it has no output edges.");
+
+ERR_DEFINE("SDFG-SIMPLIFY-1", 
+           EInfo,   2, 
+           "node \"%1%\" is removed and its single input node \"%2%\" is connected to all output nodes.");
+
+ERR_DEFINE("SDFG-SIMPLIFY-2", 
+           EInfo,   2, 
+           "node \"%1%\" is removed and its single output node \"%2%\" is connected to all input nodes.");
+
+ERR_DEFINE("SDFG-SIMPLIFY-3", 
+           EInfo,   3, 
+           "move the through wire from \"%1%\" to \"%2%\" to the upper module \"%3%\".");
+
+ERR_DEFINE("SDFG-SIMPLIFY-4", 
+           EInfo,   2, 
+           "move the constant output port \"%1%\" to the upper module \"%2%\".");
 
 /// on the left side of an assign should be a non-const variable or concatenation
 ERR_DEFINE("SYN-ASSIGN-0", 

@@ -480,7 +480,7 @@ void netlist::Module::get_hier(list<shared_ptr<Module> >& mfifo,
 
 shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
   if(!quiet)
-    G_ENV->stdOs << "extracting SDFG for module \"" << name.name << "\"." << endl; 
+    G_ENV->error("SDFG-EXTRACT-1", name.name);
 
   shared_ptr<dfgGraph> G(new dfgGraph(name.name));
   

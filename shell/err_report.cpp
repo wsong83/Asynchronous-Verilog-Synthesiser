@@ -107,6 +107,45 @@ bool shell::ErrReport::operator () (const shell::location& loc, const string& er
   return (eT.severe <= ErrorType::EError);
 }
 
+bool shell::ErrReport::operator () (const string& errID,
+				     const string& p1, const string& p2, const string& p3) {
+  const string rtype[4] = {"Fatal Error: ", "Error: ", "Warning: ", "Information: "}; 
+
+  if(!errList.count(errID)) return false; // error id non-existed
+
+  ErrorType& eT = errList.find(errID)->second;
+  if(eT.suppressed) return false;
+
+  switch(eT.num_of_para) {
+  case 0: {
+    os << "[" << errID << "] " << rtype[eT.severe]
+       << eT.errMsg << endl; 
+    break;
+  }
+  case 1: {
+    os << "[" << errID << "] " << rtype[eT.severe] 
+       << format(eT.errMsg) % p1 << endl;
+    break;
+  }
+  case 2: {
+    os << "[" << errID << "] " << rtype[eT.severe] 
+       << format(eT.errMsg) % p1 % p2 << endl;
+    break;
+  }
+  case 3: {
+    os << "[" << errID << "] " << rtype[eT.severe] 
+       << format(eT.errMsg) % p1 % p2 % p3 << endl;
+    break;
+  }
+  default:
+    // should not come here
+    assert(0 == "wrong number of error parameters");
+  } 
+
+  fail |= (eT.severe <= ErrorType::EError);
+  return (eT.severe <= ErrorType::EError);
+}
+
 bool shell::ErrReport::failure(const string& errID) const {
   assert(errList.count(errID));		// make sure the error id exist
   return (errList.find(errID)->second.severe <= ErrorType::EError);

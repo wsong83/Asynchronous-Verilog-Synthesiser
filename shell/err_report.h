@@ -64,7 +64,12 @@ namespace shell {
                      const std::string& errID,          /* the type of error to report */
                      const std::string& p1 = "",	    /* the first parameter */
                      const std::string& p2 = "",	    /* the second parameter */
-                     const std::string& p3 = ""	    /* the third parameter, maximum three */
+                     const std::string& p3 = ""	        /* the third parameter, maximum three */
+                     ) ;
+    bool operator() (const std::string& errID,          /* the type of error to report */
+                     const std::string& p1 = "",	    /* the first parameter */
+                     const std::string& p2 = "",	    /* the second parameter */
+                     const std::string& p3 = ""	        /* the third parameter, maximum three */
                      ) ;
     bool failure(const std::string& errID) const;
     bool is_failed() const { return fail; }
