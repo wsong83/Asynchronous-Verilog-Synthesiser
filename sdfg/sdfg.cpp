@@ -455,7 +455,8 @@ void SDFG::dfgGraph::remove_node(const vertex_descriptor& nid) {
       pn->port2sig.clear();
       pn->sig2port.clear();
       // remove all nodes
-      for_each(pn->child->nodes.begin(), pn->child->nodes.end(), 
+      map<vertex_descriptor, shared_ptr<dfgNode> > nlist = pn->child->nodes;
+      for_each(nlist.begin(), nlist.end(), 
              [&](pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
                pn->child->remove_node(m.first);
              });
@@ -473,10 +474,14 @@ void SDFG::dfgGraph::remove_edge(const std::string& src, const std::string& tar)
     remove_edge(node_map[src], node_map[tar]);
 }
 
+/// This is wrong!!!, rewrite it!
 void SDFG::dfgGraph::remove_edge(const vertex_descriptor& src, const vertex_descriptor& tar) {
-  GraphTraits::out_edge_iterator eit, eend;
-  for(boost::tie(eit, eend) = boost::edge_range(src, tar, bg_); eit != eend; ++eit) { 
-    remove_edge(*eit);
+  edge_descriptor eid;
+  bool found;
+  boost::tie(eid, found) = boost::edge(src, tar, bg_);
+  while(found) {
+    remove_edge(eid);
+    boost::tie(eid, found) = boost::edge(src, tar, bg_);
   }
 }
 
