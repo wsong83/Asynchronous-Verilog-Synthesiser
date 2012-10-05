@@ -183,6 +183,10 @@ ERR_DEFINE("SDFG-SIMPLIFY-4",
            EInfo,   2, 
            "move the constant output port \"%1%\" to the upper module \"%2%\".");
 
+ERR_DEFINE("SDFG-SIMPLIFY-5", 
+           EInfo,   1, 
+           "module \"%1%\" is flattened as it has no registers and node count is small.");
+
 /// on the left side of an assign should be a non-const variable or concatenation
 ERR_DEFINE("SYN-ASSIGN-0", 
            EError,   0, 

@@ -192,6 +192,7 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
       // add src and tar to proc_set
       if(src) proc_set.insert(src);
       if(tar) proc_set.insert(tar);
+      proc_set.insert(pg->father->pg->nodes[pg->father->id]);
       
       // remove iport from proc_set if it is in the list
       proc_set.erase(iport);
@@ -221,6 +222,8 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
       tar->pg->add_edge(nnode->get_hier_name(), pg->get_out_edges_cb(id).front()->type, nnode->id, tar->id);
       proc_set.insert(tar);
     }
+    proc_set.insert(nnode);
+    proc_set.insert(pg->father->pg->nodes[pg->father->id]);
 
     if(!quiet)
       G_ENV->error("SDFG-SIMPLIFY-4",
@@ -234,8 +237,34 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
   }
 
   // go lower if it is module node
-  if(type == SDFG_MODULE && child)
+  if(type == SDFG_MODULE && child) {
     child->simplify(proc_set, quiet);
+    
+    // flatten small modules
+    if(0 == child->size_of_regs() && 10 > child->size_of_nodes()) { // flatten the module
+      if(!quiet)
+        G_ENV->error("SDFG-SIMPLIFY-5", child->name);
+      list<shared_ptr<dfgNode> > nlist = child->flatten();
+      list<shared_ptr<dfgNode> > slist = pg->get_in_nodes(id);
+      list<shared_ptr<dfgNode> > tlist = pg->get_out_nodes(id);
+      shared_ptr<dfgNode> pn = pg->get_node(id);
+      pg->remove_node(id);
+      proc_set.erase(pn);
+
+      BOOST_FOREACH(shared_ptr<dfgNode> m, nlist) {
+        assert(m);
+        proc_set.insert(m);
+      }
+      BOOST_FOREACH(shared_ptr<dfgNode> m, slist) {
+        assert(m);
+        proc_set.insert(m);
+      }
+      BOOST_FOREACH(shared_ptr<dfgNode> m, tlist) {
+        assert(m);
+        proc_set.insert(m);
+      }
+    }
+  }
 }
 
 

@@ -39,7 +39,7 @@
 #include <ogdf/layered/SugiyamaLayout.h>
 #include <ogdf/layered/FastHierarchyLayout.h>
 #include <ogdf/layered/LongestPathRanking.h>
-//#include <ogdf/layered/OptimalRanking.h>
+#include <ogdf/layered/OptimalRanking.h>
 //#include <ogdf/layered/CoffmanGrahamRanking.h>
 #include <ogdf/layered/GreedyCycleRemoval.h>
 //#include <ogdf/layered/SplitHeuristic.h>
@@ -228,6 +228,9 @@ shared_ptr<dfgNode> SDFG::dfgNode::flatten() const {
   else {
     shared_ptr<dfgNode> rv(copy());
     rv->hier.push_front(pg->father->name);
+    // change node type if it is a port
+    if(rv->type & SDFG_PORT)
+      rv->type = SDFG_DF;
     pg->father->pg->add_node(rv);
     return rv;
   }
@@ -559,6 +562,89 @@ void SDFG::dfgGraph::remove_port(const std::string& pname) {
 }
 
 ///////////////////////////////
+// other modifications
+///////////////////////////////
+list<shared_ptr<dfgNode> > SDFG::dfgGraph::flatten() const{
+  // flatten all nodes
+  map<vertex_descriptor, shared_ptr<dfgNode> > fnodes; // to store all flattened nodes
+  list<shared_ptr<dfgNode> > rv;                       // return all new nodes generated
+
+  if(!father) return rv;           // when it is the top, it is impossible to flatten it
+
+  for_each(nodes.begin(), nodes.end(),
+           [&](const pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
+               fnodes[m.first] = m.second->flatten();
+               rv.push_back(fnodes[m.first]);
+             });
+
+  // duplicate all internal edges
+  for_each(edges.begin(), edges.end(),
+           [&](const pair<const edge_descriptor, shared_ptr<dfgEdge> >& m) {
+             father->pg->add_edge(fnodes[get_source_id(m.first)]->get_hier_name(), 
+                                  m.second->type, 
+                                  fnodes[get_source_id(m.first)]->id,
+                                  fnodes[get_target_id(m.first)]->id
+                                  );
+           });
+
+  // connect all ports
+  for_each(nodes.begin(), nodes.end(),
+           [&](const pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
+               if(m.second->type == dfgNode::SDFG_IPORT) {
+                 shared_ptr<dfgNode> src = get_in_nodes_cb(m.second->id).front();
+                 father->pg->add_edge(src->get_hier_name(), 
+                                      get_in_edges_cb(m.second->id).front()->type,
+                                      src->id,
+                                      fnodes[m.first]->id
+                                      );
+               }
+               if(m.second->type == dfgNode::SDFG_OPORT) {
+                 shared_ptr<dfgNode> tar = get_out_nodes_cb(m.second->id).front();
+                 father->pg->add_edge(fnodes[m.first]->get_hier_name(), 
+                                      get_out_edges_cb(m.second->id).front()->type,
+                                      fnodes[m.first]->id,
+                                      tar->id
+                                      );
+               }
+               if(m.second->type == dfgNode::SDFG_PORT) {
+                 // manually find out all the edges and connect them
+                 if(father->port2sig.count(m.second->get_hier_name())) {
+                   string sname = father->port2sig.find(m.second->get_hier_name())->second;
+                   shared_ptr<dfgNode> snode = father->pg->get_node(sname);
+                   GraphTraits::out_edge_iterator oit, oend;
+                   // output
+                   for(boost::tie(oit, oend) = 
+                         boost::edge_range(
+                                           father->id,
+                                           snode->id, 
+                                           father->pg->bg_);
+                       oit != oend; ++oit) { 
+                     father->pg->add_edge(fnodes[m.first]->get_hier_name(), 
+                                          father->pg->edges.find(*oit)->second->type,
+                                          fnodes[m.first]->id,
+                                          snode->id);
+                   }
+                   // input
+                   for(boost::tie(oit, oend) = 
+                         boost::edge_range(
+                                           snode->id,
+                                           father->id,
+                                           father->pg->bg_);
+                       oit != oend; ++oit) { 
+                     father->pg->add_edge(snode->get_hier_name(), 
+                                          father->pg->edges.find(*oit)->second->type,
+                                          snode->id,
+                                          fnodes[m.first]->id);
+                   }
+                 }
+               }             
+             });
+
+  return rv;
+}
+
+
+///////////////////////////////
 // get nodes and edges
 ///////////////////////////////
 shared_ptr<dfgEdge> SDFG::dfgGraph::get_edge(const edge_descriptor& eid) const{
@@ -640,6 +726,19 @@ shared_ptr<dfgNode> SDFG::dfgGraph::get_target(shared_ptr<dfgEdge> pe) const {
     return shared_ptr<dfgNode>();
 }
 
+vertex_descriptor SDFG::dfgGraph::get_source_id(const edge_descriptor& eid) const {
+  if(exist(eid))
+    return boost::source(eid, bg_);
+  else
+    return NULL;
+}
+
+vertex_descriptor SDFG::dfgGraph::get_target_id(const edge_descriptor& eid) const {
+  if(exist(eid))
+    return boost::target(eid, bg_);
+  else
+    return NULL;
+}
 
 ///////////////////////////////
 // existance check
@@ -675,12 +774,16 @@ bool SDFG::dfgGraph::exist(const string& src, const string& tar, dfgEdge::edge_t
 }
 
 bool SDFG::dfgGraph::exist(const edge_descriptor& eid) const {
-  return get_edge(eid);
+  return edges.count(eid);
 }
 
-bool SDFG::dfgGraph::exist(const std::string& name) const {
-  return get_node(name);
+bool SDFG::dfgGraph::exist(const vertex_descriptor& nid) const {
+  return nodes.count(nid);
 }    
+
+bool SDFG::dfgGraph::exist(const std::string& name) const {
+  return node_map.count(name);
+}
 
 
 ///////////////////////////////
@@ -960,6 +1063,43 @@ list<shared_ptr<dfgEdge> > SDFG::dfgGraph::get_in_edges(boost::shared_ptr<dfgNod
   return list<shared_ptr<dfgEdge> >();
 }
 
+///////////////////////////////
+// graphic property
+///////////////////////////////
+unsigned int SDFG::dfgGraph::size_of_nodes() const {
+  return nodes.size();
+}
+
+unsigned int SDFG::dfgGraph::size_of_regs() const {
+  unsigned int rv = 0;
+  for_each(nodes.begin(), nodes.end(),
+           [&](const pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
+               if(m.second->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH))
+                 rv++;
+             });
+  return rv;
+}
+
+unsigned int SDFG::dfgGraph::size_of_combs() const {
+  unsigned int rv = 0;
+  for_each(nodes.begin(), nodes.end(),
+           [&](const pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
+               if(! m.second->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_MODULE))
+                 rv++;
+             });
+  return rv;
+}
+
+unsigned int SDFG::dfgGraph::size_of_modules() const {
+  unsigned int rv = 0;
+  for_each(nodes.begin(), nodes.end(),
+           [&](const pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
+               if(m.second->type & dfgNode::SDFG_MODULE)
+                 rv++;
+             });
+  return rv;
+}
+
 
 ///////////////////////////////
 // graphic
@@ -975,8 +1115,8 @@ bool SDFG::dfgGraph::layout(ogdf::Graph* pg, ogdf::GraphAttributes *pga) {
   // Sugiyama Layout
   ogdf::SugiyamaLayout SL;
 
-  ogdf::LongestPathRanking *ranking = new ogdf::LongestPathRanking();
-  //ogdf::OptimalRanking * ranking = new ogdf::OptimalRanking();
+  //ogdf::LongestPathRanking *ranking = new ogdf::LongestPathRanking();
+  ogdf::OptimalRanking * ranking = new ogdf::OptimalRanking();
   //ogdf::CoffmanGrahamRanking *ranking = new ogdf::CoffmanGrahamRanking();
   //ranking->width(4);
   //ogdf::GreedyCycleRemoval * subGrapher = new ogdf::GreedyCycleRemoval();

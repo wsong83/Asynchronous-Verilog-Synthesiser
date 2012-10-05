@@ -173,6 +173,9 @@ namespace SDFG {
     void remove_edge(const edge_descriptor&);
     void remove_port(const std::string&);
     
+    // other modifications
+    std::list<boost::shared_ptr<dfgNode> > flatten() const;             // move all internal nodes to upper layer
+
     // get nodes and edges
     boost::shared_ptr<dfgEdge> get_edge(const edge_descriptor&) const;
     boost::shared_ptr<dfgEdge> get_edge(const std::string&, const std::string&) const;   // return a random one if multiple
@@ -185,6 +188,8 @@ namespace SDFG {
     boost::shared_ptr<dfgNode> get_source(boost::shared_ptr<dfgEdge>) const;
     boost::shared_ptr<dfgNode> get_target(const edge_descriptor&) const;
     boost::shared_ptr<dfgNode> get_target(boost::shared_ptr<dfgEdge>) const;
+    vertex_descriptor get_source_id(const edge_descriptor&) const;
+    vertex_descriptor get_target_id(const edge_descriptor&) const;
 
     // existance check
     bool exist(const std::string&, const std::string&) const;   // edge
@@ -192,7 +197,7 @@ namespace SDFG {
     bool exist(const vertex_descriptor&, const vertex_descriptor&) const; // edge 
     bool exist(const vertex_descriptor&, const vertex_descriptor&, dfgEdge::edge_type_t) const; // edge 
     bool exist(const edge_descriptor&) const;
-
+    bool exist(const vertex_descriptor&) const;
     bool exist(const std::string&) const;   // node
 
     // traverse
@@ -220,6 +225,12 @@ namespace SDFG {
     std::list<boost::shared_ptr<dfgEdge> > get_in_edges_cb(const vertex_descriptor&) const;
     std::list<boost::shared_ptr<dfgEdge> > get_in_edges(const std::string&) const;
     std::list<boost::shared_ptr<dfgEdge> > get_in_edges(boost::shared_ptr<dfgNode>) const;
+
+    // graphic property
+    unsigned int size_of_nodes() const;     // number of nodes in this graph
+    unsigned int size_of_regs() const;      // number of FFs and Latchs
+    unsigned int size_of_combs() const;     // number of ports, combi, and deafult nodes
+    unsigned int size_of_modules() const;   // number of sub-modules 
 
     // graphic
     bool layout();
