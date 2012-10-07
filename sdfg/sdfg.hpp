@@ -246,6 +246,8 @@ namespace SDFG {
     // analyse functions
     void simplify(bool); // remove unused node and edges, call this one when it is the top
     void simplify(std::set<boost::shared_ptr<dfgNode> >&, bool); // remove unused node and edges
+    void path_deduction(bool); // deduce the type of paths, call this one when it is the top
+    void path_deduction(std::set<boost::shared_ptr<dfgNode> >&, bool); // deduce the type of paths
 
   private:
     unsigned int node_index;   // when nodes are stored in listS, vertext_descriptors are no longer

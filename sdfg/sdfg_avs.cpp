@@ -311,4 +311,9 @@ void SDFG::dfgGraph::simplify(std::set<shared_ptr<dfgNode> >& proc_set, bool qui
            });
 }
 
+void SDFG::dfgGraph::path_deduction(bool quiet) {
+}
+
+void SDFG::dfgGraph::path_deduction(std::set<shared_ptr<dfgNode> >& proc_set, bool quiet) {
+}
 
