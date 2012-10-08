@@ -187,6 +187,18 @@ ERR_DEFINE("SDFG-SIMPLIFY-5",
            EInfo,   1, 
            "module \"%1%\" is flattened as it has no registers and node count is small.");
 
+ERR_DEFINE("SDFG-DEDUCTION-0", 
+           EInfo,   1, 
+           "node \"%1%\" is considered to be a driver of clock signal.");
+
+ERR_DEFINE("SDFG-DEDUCTION-1", 
+           EInfo,   1, 
+           "node \"%1%\" is considered to be a driver of reset signal.");
+
+ERR_DEFINE("SDFG-DEDUCTION-2", 
+           EInfo,   1, 
+           "node \"%1%\" is considered to be a driver of control signal.");
+
 /// on the left side of an assign should be a non-const variable or concatenation
 ERR_DEFINE("SYN-ASSIGN-0", 
            EError,   0, 

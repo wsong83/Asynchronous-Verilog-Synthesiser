@@ -79,14 +79,14 @@ namespace SDFG {
     unsigned int node_index;   // when nodes are stored in listS, vertext_descriptors are no longer
                                 // integers, thereofer, separated indices must be generated and stored 
     enum node_type_t {          // node type
-      SDFG_DF             = 0x0000, // default, unknown yet
-      SDFG_COMB           = 0x0001, // combinational assign or always
-      SDFG_FF             = 0x0002, // flip-flop
-      SDFG_LATCH          = 0x0004, // latch ?!
-      SDFG_MODULE         = 0x0008, // module entity
-      SDFG_IPORT          = 0x0050, // input port
-      SDFG_OPORT          = 0x0060, // output port
-      SDFG_PORT           = 0x0040  // all ports
+      SDFG_DF             = 0x00001, // default, unknown yet
+      SDFG_COMB           = 0x00010, // combinational assign or always
+      SDFG_FF             = 0x00020, // flip-flop
+      SDFG_LATCH          = 0x00040, // latch ?!
+      SDFG_MODULE         = 0x00080, // module entity
+      SDFG_IPORT          = 0x00500, // input port
+      SDFG_OPORT          = 0x00600, // output port
+      SDFG_PORT           = 0x00400  // all ports
     } type;
 
 
@@ -109,6 +109,7 @@ namespace SDFG {
     void graphic_init();                // set initial graphic info.
 
     void simplify(std::set<boost::shared_ptr<dfgNode> >&, bool); // remove unused nodes
+    void path_deduction(std::set<boost::shared_ptr<dfgNode> >&, bool); // deduce the type of paths
   };
 
   class dfgEdge {
@@ -118,11 +119,11 @@ namespace SDFG {
     std::string name;           // edge name
     edge_descriptor id;         // edge id
     enum edge_type_t {
-      SDFG_DF             = 0x0000, // default, unknown yet
-      SDFG_DP             = 0x0001, // data path
-      SDFG_CTL            = 0x0008, // control path
-      SDFG_CLK            = 0x000a, // clk
-      SDFG_RST            = 0x000c  // reset
+      SDFG_DF             = 0x00001, // default, unknown yet
+      SDFG_DP             = 0x00010, // data path
+      SDFG_CTL            = 0x00080, // control path
+      SDFG_CLK            = 0x000a0, // clk
+      SDFG_RST            = 0x000c0  // reset
     } type;
 
     dfgEdge() : pg(NULL) {}
@@ -186,6 +187,7 @@ namespace SDFG {
     boost::shared_ptr<dfgNode> get_node(const std::string&) const;
     boost::shared_ptr<dfgNode> get_source(const edge_descriptor&) const;
     boost::shared_ptr<dfgNode> get_source(boost::shared_ptr<dfgEdge>) const;
+    boost::shared_ptr<dfgNode> get_source_cb(const edge_descriptor&) const;
     boost::shared_ptr<dfgNode> get_target(const edge_descriptor&) const;
     boost::shared_ptr<dfgNode> get_target(boost::shared_ptr<dfgEdge>) const;
     vertex_descriptor get_source_id(const edge_descriptor&) const;
@@ -196,8 +198,12 @@ namespace SDFG {
     bool exist(const std::string&, const std::string&, dfgEdge::edge_type_t) const; // edge 
     bool exist(const vertex_descriptor&, const vertex_descriptor&) const; // edge 
     bool exist(const vertex_descriptor&, const vertex_descriptor&, dfgEdge::edge_type_t) const; // edge 
+    bool exist(boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgNode>) const; // edge 
+    bool exist(boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgNode>, dfgEdge::edge_type_t) const; // edge 
     bool exist(const edge_descriptor&) const;
+    bool exist(boost::shared_ptr<dfgEdge>) const;
     bool exist(const vertex_descriptor&) const;
+    bool exist(boost::shared_ptr<dfgNode>) const;
     bool exist(const std::string&) const;   // node
 
     // traverse
@@ -246,6 +252,8 @@ namespace SDFG {
     // analyse functions
     void simplify(bool); // remove unused node and edges, call this one when it is the top
     void simplify(std::set<boost::shared_ptr<dfgNode> >&, bool); // remove unused node and edges
+    void path_deduction(bool); // deduce the type of paths, call this one when it is the top
+    void path_deduction(std::set<boost::shared_ptr<dfgNode> >&, bool); // deduce the type of paths
 
   private:
     unsigned int node_index;   // when nodes are stored in listS, vertext_descriptors are no longer

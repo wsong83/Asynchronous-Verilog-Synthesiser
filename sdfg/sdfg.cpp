@@ -712,6 +712,14 @@ shared_ptr<dfgNode> SDFG::dfgGraph::get_source(shared_ptr<dfgEdge> pe) const {
     return shared_ptr<dfgNode>();
 }
 
+shared_ptr<dfgNode> SDFG::dfgGraph::get_source_cb(const edge_descriptor& eid) const {
+  shared_ptr<dfgNode> inode = get_source(eid);
+  if(inode->type == dfgNode::SDFG_MODULE && inode->child) {
+    return inode->child->get_node(inode->sig2port.find(get_target(eid)->get_hier_name())->second);
+  } else
+    return inode;
+}
+
 shared_ptr<dfgNode> SDFG::dfgGraph::get_target(const edge_descriptor& eid) const {
   if(exist(eid))
     return nodes.find(boost::target(eid, bg_))->second;
@@ -773,12 +781,27 @@ bool SDFG::dfgGraph::exist(const string& src, const string& tar, dfgEdge::edge_t
     return false;
 }
 
+bool SDFG::dfgGraph::exist(shared_ptr<dfgNode> src, shared_ptr<dfgNode> tar, dfgEdge::edge_type_t tt) const {
+  if(src && tar) return exist(src->id, tar->id, tt);
+  else return false;
+}
+
 bool SDFG::dfgGraph::exist(const edge_descriptor& eid) const {
   return edges.count(eid);
 }
 
+bool SDFG::dfgGraph::exist(shared_ptr<dfgEdge> e) const {
+  if(e) return exist(e->id);
+  else return false;
+}    
+
 bool SDFG::dfgGraph::exist(const vertex_descriptor& nid) const {
   return nodes.count(nid);
+}    
+
+bool SDFG::dfgGraph::exist(shared_ptr<dfgNode> n) const {
+  if(n) return exist(n->id);
+  else return false;
 }    
 
 bool SDFG::dfgGraph::exist(const std::string& name) const {
