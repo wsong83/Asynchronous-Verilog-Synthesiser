@@ -405,3 +405,10 @@ void SDFG::dfgGraph::path_deduction(std::set<shared_ptr<dfgNode> >& proc_set, bo
            });
 }
 
+shared_ptr<dfgGraph> SDFG::dfgGraph::get_reg_graph() const {
+  // find out all input ports and registers
+
+  // scan paths for each input port or register, and buld a new graph
+
+  // return the graph
+}

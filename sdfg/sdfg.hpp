@@ -144,14 +144,14 @@ namespace SDFG {
   public:
     boost::shared_ptr<dfgNode> src;
     boost::shared_ptr<dfgNode> tar;
-    dfgNode::edge_type_t type;
+    dfgEdge::edge_type_t type;
     std::list<std::pair<boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgEdge> > > path;
 
-    dfgPath() : type(dfgEdge::SDFG_DF) {};
+    dfgPath() : type(dfgEdge::SDFG_DF) {}
     
     // add sub-paths
     void add(boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgEdge>);
-  }
+  };
 
   class dfgGraph{
   public:
@@ -270,6 +270,7 @@ namespace SDFG {
     void simplify(std::set<boost::shared_ptr<dfgNode> >&, bool); // remove unused node and edges
     void path_deduction(bool); // deduce the type of paths, call this one when it is the top
     void path_deduction(std::set<boost::shared_ptr<dfgNode> >&, bool); // deduce the type of paths
+    boost::shared_ptr<dfgGraph> get_reg_graph() const; // extract a register only graph from the DFG
 
     // other
     std::string get_full_name() const;

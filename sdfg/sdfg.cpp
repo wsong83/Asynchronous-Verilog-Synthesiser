@@ -291,7 +291,9 @@ void SDFG::dfgNode::add_port_sig(const string& pname, const string& sname) {
   }
 }
 
-
+list<shared_ptr<dfgPath> > SDFG::dfgNode::get_out_paths() const {
+  // do bredth first scan and find out all out registers with corresponding path type
+}
 
 /////////////////////////////////////////////////////////////////////////////
 /********        Edge                                               ********/
@@ -369,7 +371,7 @@ void SDFG::dfgPath::add(boost::shared_ptr<dfgNode> n, boost::shared_ptr<dfgEdge>
 
   if(path.empty())
     src = n;
-  path.add(pair<shared_ptr<dfgNode>, shared_ptr<dfgEdge> >(n,e));
+  path.push_back(pair<shared_ptr<dfgNode>, shared_ptr<dfgEdge> >(n,e));
 }
 
 
