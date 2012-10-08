@@ -189,8 +189,10 @@ void shell::CMD::CMDExtractSDFG::exec ( const std::string& str, Env * pEnv){
     CMDUniquify::exec("-quiet", pEnv);
   }
   shared_ptr<SDFG::dfgGraph> g = tarDesign->extract_sdfg(arg.bQuiet);
-  if(arg.bSimplify)
+  if(arg.bSimplify) {
     g->simplify(arg.bQuiet);
+    g->path_deduction(arg.bQuiet);
+  }
 
   g->write(fhandler);
   fhandler.close();

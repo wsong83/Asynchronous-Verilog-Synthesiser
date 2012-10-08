@@ -267,6 +267,74 @@ void SDFG::dfgNode::simplify(std::set<boost::shared_ptr<dfgNode> >& proc_set, bo
   }
 }
 
+void SDFG::dfgNode::path_deduction(std::set<boost::shared_ptr<dfgNode> >& proc_set, bool quiet) {
+  if(!pg) return;               // this node is already deleted
+  if(type & (SDFG_FF|SDFG_LATCH)) return; // only deduct wires in a path
+  
+  if(type == SDFG_MODULE) {
+    if(child)
+      child->path_deduction(proc_set, quiet);
+    return;
+  }
+  
+  int oetype = 0;
+  int ietype = 0;
+  list<shared_ptr<dfgEdge> > oelist = pg->get_out_edges_cb(id);
+  list<shared_ptr<dfgEdge> > ielist = pg->get_in_edges_cb(id);
+  
+  BOOST_FOREACH(shared_ptr<dfgEdge> m, oelist) {
+    oetype |= m->type;
+  }
+  
+  BOOST_FOREACH(shared_ptr<dfgEdge> m, ielist) {
+    ietype |= m->type;
+  }
+  
+  if(oetype == dfgEdge::SDFG_CLK) { // clock signal
+    if(!quiet)
+      G_ENV->error("SDFG-DEDUCTION-0", pg->name + "/" + get_hier_name());
+    
+    BOOST_FOREACH(shared_ptr<dfgEdge> m, ielist) {
+      if(m->type != dfgEdge::SDFG_CLK) {
+        if(!m->pg->exist(m->pg->get_source(m), m->pg->get_target(m), dfgEdge::SDFG_CLK))
+          m->type = dfgEdge::SDFG_CLK;
+        else
+          m->pg->remove_edge(m->id);
+        proc_set.insert(m->pg->get_source_cb(m->id));
+      }
+    }
+  }
+  
+  if(oetype == dfgEdge::SDFG_RST) { // reset signal
+    if(!quiet)
+      G_ENV->error("SDFG-DEDUCTION-1", pg->name + "/" + get_hier_name());
+    
+    BOOST_FOREACH(shared_ptr<dfgEdge> m, ielist) {
+      if(m->type != dfgEdge::SDFG_RST) {
+        if(!m->pg->exist(m->pg->get_source(m), m->pg->get_target(m), dfgEdge::SDFG_RST))
+          m->type = dfgEdge::SDFG_RST;
+        else
+          m->pg->remove_edge(m->id);
+        proc_set.insert(m->pg->get_source_cb(m->id));
+      }
+    }
+  }
+
+  if(oetype == dfgEdge::SDFG_CTL) { // control signal
+    if(!quiet)
+      G_ENV->error("SDFG-DEDUCTION-2", pg->name + "/" + get_hier_name());
+    
+    BOOST_FOREACH(shared_ptr<dfgEdge> m, ielist) {
+      if(m->type != dfgEdge::SDFG_CTL) {
+        if(!m->pg->exist(m->pg->get_source(m), m->pg->get_target(m), dfgEdge::SDFG_CTL))
+          m->type = dfgEdge::SDFG_CTL;
+        else
+          m->pg->remove_edge(m->id);
+        proc_set.insert(m->pg->get_source_cb(m->id));
+      }
+    }
+  }
+}
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -300,7 +368,6 @@ void SDFG::dfgGraph::simplify(bool quiet) {
 }
 
 void SDFG::dfgGraph::simplify(std::set<shared_ptr<dfgNode> >& proc_set, bool quiet) {
-
   // make a local copy of the node map, as nodes may be erased during the process
   map<vertex_descriptor, shared_ptr<dfgNode> > local_node_map = nodes;
   
@@ -312,8 +379,29 @@ void SDFG::dfgGraph::simplify(std::set<shared_ptr<dfgNode> >& proc_set, bool qui
 }
 
 void SDFG::dfgGraph::path_deduction(bool quiet) {
+  // node cache
+  std::set<shared_ptr<dfgNode> > proc_set;
+
+  // in the first round, traverse all nodes
+  path_deduction(proc_set, quiet);
+
+  // handle the nodes need further operation
+  while(!proc_set.empty()) {
+    shared_ptr<dfgNode> pn = *(proc_set.begin());
+    assert(pn);
+    proc_set.erase(pn);
+    pn->path_deduction(proc_set, quiet);
+  }
 }
 
 void SDFG::dfgGraph::path_deduction(std::set<shared_ptr<dfgNode> >& proc_set, bool quiet) {
+  // make a local copy of the node map, as nodes may be erased during the process
+  map<vertex_descriptor, shared_ptr<dfgNode> > local_node_map = nodes;
+  
+  // do the simplification
+  for_each(local_node_map.begin(), local_node_map.end(),
+           [&](pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
+             m.second->path_deduction(proc_set, quiet);
+           });
 }
 
