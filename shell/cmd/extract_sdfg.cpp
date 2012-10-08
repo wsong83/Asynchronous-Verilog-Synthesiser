@@ -56,6 +56,7 @@ namespace {
   struct Argument {
     bool bHelp;                 // show help information
     bool bSimplify;             // whether to simplify it
+    bool bDeduction;            // whether to deduct wire types
     bool bQuiet;                // suppress information
     std::string sDesign;        // target design to be written out
     std::string sOutput;        // output file name
@@ -63,6 +64,7 @@ namespace {
     Argument() : 
       bHelp(false),
       bSimplify(true),
+      bDeduction(true),
       bQuiet(false),
       sDesign(""),
       sOutput("") {}
@@ -74,6 +76,7 @@ BOOST_FUSION_ADAPT_STRUCT
  Argument,
  (bool, bHelp)
  (bool, bSimplify)
+ (bool, bDeduction)
  (bool, bQuiet)
  (std::string, sDesign)
  (std::string, sOutput)
@@ -96,13 +99,14 @@ namespace {
       args = lit('-') >> 
         ( (lit("help")              >> blanks) [at_c<0>(_r1) = true]  ||
           (lit("no_simplification") >> blanks) [at_c<1>(_r1) = false] ||
-          (lit("quiet")             >> blanks) [at_c<2>(_r1) = true]  ||
-          (lit("output") >> blanks >> filename >> blanks) [at_c<4>(_r1) = _1]
+          (lit("no_type_deduction") >> blanks) [at_c<2>(_r1) = false] ||
+          (lit("quiet")             >> blanks) [at_c<3>(_r1) = true]  ||
+          (lit("output") >> blanks >> filename >> blanks) [at_c<5>(_r1) = _1]
           );
       
       start = 
         *(args(_val))
-        >> -(identifier >> blanks) [at_c<3>(_val) = _1] 
+        >> -(identifier >> blanks) [at_c<4>(_val) = _1] 
         >> *(args(_val))
         ;
 
@@ -129,6 +133,7 @@ void shell::CMD::CMDExtractSDFG::help(Env& gEnv) {
   gEnv.stdOs << "Options:" << endl;
   gEnv.stdOs << "   -help                show this help information." << endl;
   gEnv.stdOs << "   -no_simplification   do not simplify the SDFG." << endl;
+  gEnv.stdOs << "   -no_type_deduction   do not deduct wire types." << endl;
   gEnv.stdOs << "   -quiet               suppress the uniquifying information." << endl;
   gEnv.stdOs << "   -output file_name    specify the output file name." << endl;
   gEnv.stdOs << "                        (in default is \"design_name.sdfg\")" << endl;
@@ -189,8 +194,12 @@ void shell::CMD::CMDExtractSDFG::exec ( const std::string& str, Env * pEnv){
     CMDUniquify::exec("-quiet", pEnv);
   }
   shared_ptr<SDFG::dfgGraph> g = tarDesign->extract_sdfg(arg.bQuiet);
+
   if(arg.bSimplify) {
     g->simplify(arg.bQuiet);
+  }
+
+  if(arg.bDeduction) {
     g->path_deduction(arg.bQuiet);
   }
 
