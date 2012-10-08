@@ -245,6 +245,10 @@ string SDFG::dfgNode::get_hier_name() const {
   return rv+name;
 }
 
+string SDFG::dfgNode::get_full_name() const {
+  return pg->get_full_name() + get_hier_name();
+}
+
 void SDFG::dfgNode::set_hier_name(const string& hname) {
   boost::char_separator<char> sep("/");
   boost::tokenizer<boost::char_separator<char> > tokens(hname, sep);
@@ -356,6 +360,17 @@ bool SDFG::dfgEdge::read(void * const pedge, ogdf::GraphAttributes * const pga) 
 }
 
 
+
+/////////////////////////////////////////////////////////////////////////////
+/********        Path                                               ********/
+/////////////////////////////////////////////////////////////////////////////
+void SDFG::dfgPath::add(boost::shared_ptr<dfgNode> n, boost::shared_ptr<dfgEdge> e) {
+  assert(e->pg->get_source_cb(e->id) == n);
+
+  if(path.empty())
+    src = n;
+  path.add(pair<shared_ptr<dfgNode>, shared_ptr<dfgEdge> >(n,e));
+}
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1339,6 +1354,12 @@ bool SDFG::dfgGraph::read(ogdf::Graph * const pg, ogdf::GraphAttributes * const 
   return true;
 }
 
+string SDFG::dfgGraph::get_full_name() const {
+  if(father) 
+    return father->get_full_name();
+  else
+    return "";
+}
 
 
 /////////////////////////////////////////////////////////////////////////////
