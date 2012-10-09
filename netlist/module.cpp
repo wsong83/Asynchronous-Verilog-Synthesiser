@@ -182,6 +182,11 @@ Module* netlist::Module::deep_copy() const {
   // set father
   rv->set_father();
   rv->elab_inparse();
+
+  // SDFG
+  rv->DFG = DFG;
+  rv->RG = RG;
+
   return rv;
 }
 

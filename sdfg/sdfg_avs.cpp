@@ -406,6 +406,9 @@ void SDFG::dfgGraph::path_deduction(std::set<shared_ptr<dfgNode> >& proc_set, bo
 }
 
 shared_ptr<dfgGraph> SDFG::dfgGraph::get_reg_graph() const {
+
+  std::cout << "begin" << std::endl;
+
   // new register graph
   shared_ptr<dfgGraph> ng(new dfgGraph(name));
 
@@ -428,6 +431,8 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_reg_graph() const {
     // fetch current node
     shared_ptr<dfgNode> cnode = node_next.front();
     node_next.pop_front();
+
+    std::cout << "process " << cnode->get_full_name() << std::endl;
 
     // get the paths
     list<shared_ptr<dfgPath> > plist = cnode->get_out_paths();

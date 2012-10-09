@@ -308,7 +308,7 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_out_paths(shared_ptr<dfgPath> ppat
   shared_ptr<dfgNode> pn = pg->get_node(id);
   
   if(ppath->node_set.count(pn))
-    return rv;                     // combinational loop
+    return list<shared_ptr<dfgPath> >(); // combinational loop
 
   list<shared_ptr<dfgEdge> > oe_list = pg->get_out_edges_cb(id);
   BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
@@ -326,6 +326,7 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_out_paths(shared_ptr<dfgPath> ppat
         shared_ptr<dfgPath> pp(new dfgPath(*ppath));
         pp->push_back(pn, e);
         list<shared_ptr<dfgPath> > tpaths = n->get_out_paths(pp);
+        std::cout << tpaths.size() << " " << std::endl;
         BOOST_FOREACH(shared_ptr<dfgPath> p, tpaths) {
           shared_ptr<dfgPath> ppn(new dfgPath(*pp));
           ppn->combine(p);
@@ -430,10 +431,7 @@ void SDFG::dfgPath::push_front(boost::shared_ptr<dfgNode> n, boost::shared_ptr<d
 
 void SDFG::dfgPath::combine(boost::shared_ptr<dfgPath> p) {
   tar = p->tar;
-  for_each(p->path.begin(), p->path.end(),
-           [&](pair<shared_ptr<dfgNode>, shared_ptr<dfgEdge> >& e) {
-               push_back(e.first, e.second);
-             });
+  path.insert(path.end(), p->path.begin(), p->path.end());
 }
 
 

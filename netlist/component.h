@@ -162,6 +162,11 @@ namespace shell {
 
 extern shell::Env* G_ENV;
 
+// SDFG
+namespace SDFG {
+  class dfgGraph;
+}
+
 
 #include <sstream>
 
@@ -181,3 +186,7 @@ inline std::string toString (const boost::shared_ptr<T>& obj) {
 
 
 #endif
+
+// Local Variables:
+// mode: c++
+// End:

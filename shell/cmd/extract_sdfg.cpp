@@ -205,4 +205,7 @@ void shell::CMD::CMDExtractSDFG::exec ( const std::string& str, Env * pEnv){
 
   g->write(fhandler);
   fhandler.close();
+
+  // store it in the target module
+  tarDesign->DFG = g;
 }
