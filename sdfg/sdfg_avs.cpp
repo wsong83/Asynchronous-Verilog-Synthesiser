@@ -406,9 +406,58 @@ void SDFG::dfgGraph::path_deduction(std::set<shared_ptr<dfgNode> >& proc_set, bo
 }
 
 shared_ptr<dfgGraph> SDFG::dfgGraph::get_reg_graph() const {
-  // find out all input ports and registers
+  // new register graph
+  shared_ptr<dfgGraph> ng(new dfgGraph(name));
 
-  // scan paths for each input port or register, and buld a new graph
+  // node to visit
+  list<shared_ptr<dfgNode> > node_next;
+
+  // find out all ports and put it in the new graph
+  for_each(nodes.begin(), nodes.end(),
+           [&](const pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
+             if(m.second->type & dfgNode::SDFG_PORT) {
+               node_next.push_back(m.second);
+               shared_ptr<dfgNode> nnode(m.second->copy());
+               nnode->set_hier_name(m.second->get_full_name());
+               ng->add_node(nnode);
+             }
+           });
+  
+  // buld a new graph
+  while(!node_next.empty()) {
+    // fetch current node
+    shared_ptr<dfgNode> cnode = node_next.front();
+    node_next.pop_front();
+
+    // get the paths
+    list<shared_ptr<dfgPath> > plist = cnode->get_out_paths();
+    BOOST_FOREACH(shared_ptr<dfgPath> p, plist) {
+      if(p->tar) {
+        // add new node if it is new
+        if(!ng->exist(p->tar->get_full_name())) { // new node
+          node_next.push_back(p->tar);
+          shared_ptr<dfgNode> nnode(p->tar->copy());
+          nnode->set_hier_name(p->tar->get_full_name());
+          ng->add_node(nnode);
+        }
+        
+        // add path
+        if(p->type & dfgEdge::SDFG_CTL)
+          ng->add_edge(cnode->get_full_name(), dfgEdge::SDFG_CTL, cnode->get_full_name(), p->tar->get_full_name());
+        
+        if(p->type & dfgEdge::SDFG_DP)
+          ng->add_edge(cnode->get_full_name(), dfgEdge::SDFG_DP, cnode->get_full_name(), p->tar->get_full_name());
+
+        if(p->type & dfgEdge::SDFG_RST)
+          ng->add_edge(cnode->get_full_name(), dfgEdge::SDFG_RST, cnode->get_full_name(), p->tar->get_full_name());
+
+        if(p->type & dfgEdge::SDFG_CLK)
+          ng->add_edge(cnode->get_full_name(), dfgEdge::SDFG_CLK, cnode->get_full_name(), p->tar->get_full_name());
+      }
+    }
+    
+  }
 
   // return the graph
+  return ng;
 }

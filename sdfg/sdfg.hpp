@@ -71,7 +71,7 @@ namespace SDFG {
     boost::shared_ptr<netlist::NetComp> ptr;   // pointer to the netlist component
     boost::shared_ptr<dfgGraph> child;         // when it is a module entity, it should has a child
     std::string child_name;                    // when it is a module entity, this is the module name of the module
-    std::multimap<std::string, std::string> sig2port;   // remember the port connection if it is a module entity
+    std::map<std::string, std::list<std::string> > sig2port;   // remember the port connection if it is a module entity
     std::map<std::string, std::string> port2sig;        // remember the port connection if it is a module entity
     dfgGraph* pg;                                       // a pointer pointing to the father Graph
     std::string name;                                   // description of this node
@@ -105,7 +105,7 @@ namespace SDFG {
     void set_hier_name(const std::string&);       // set the hierarchical name
     void remove_port_sig(const std::string&, int); // remove a certain port signal
     void add_port_sig(const std::string&, const std::string&); // add a certain port connection
-    std::list<boost::shared_ptr<dfgPath> > get_out_paths() const; // return all output paths from this register/port
+    std::list<boost::shared_ptr<dfgPath> > get_out_paths(boost::shared_ptr<dfgPath> ppath = boost::shared_ptr<dfgPath>()) const; // return all output paths from this register/port
 
     std::pair<double, double> position; // graphic position
     std::pair<double, double> bbox;     // bounding box
@@ -146,11 +146,14 @@ namespace SDFG {
     boost::shared_ptr<dfgNode> tar;
     dfgEdge::edge_type_t type;
     std::list<std::pair<boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgEdge> > > path;
+    std::set<boost::shared_ptr<dfgNode> > node_set; // remember the nodes in this path; to avoid combi loop
 
     dfgPath() : type(dfgEdge::SDFG_DF) {}
     
     // add sub-paths
-    void add(boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgEdge>);
+    void push_back(boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgEdge>);
+    void push_front(boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgEdge>);
+    void combine(boost::shared_ptr<dfgPath>);
   };
 
   class dfgGraph{
@@ -206,6 +209,7 @@ namespace SDFG {
     boost::shared_ptr<dfgNode> get_source_cb(const edge_descriptor&) const;
     boost::shared_ptr<dfgNode> get_target(const edge_descriptor&) const;
     boost::shared_ptr<dfgNode> get_target(boost::shared_ptr<dfgEdge>) const;
+    std::list<boost::shared_ptr<dfgNode> > get_target_cb(const edge_descriptor&) const;
     vertex_descriptor get_source_id(const edge_descriptor&) const;
     vertex_descriptor get_target_id(const edge_descriptor&) const;
 

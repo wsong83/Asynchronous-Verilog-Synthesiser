@@ -337,8 +337,7 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G,
         shared_ptr<dfgNode> exp_node = G->add_node(UniName::uni_name(), dfgNode::SDFG_COMB);
         m->exp->gen_sdfg_node(G, exp_node);
         G->add_edge(exp_node->name, dfgEdge::SDFG_DF, exp_node->name, node->name);
-        node->sig2port.insert(pair<string, string>(exp_node->name, m->pname.name + "_P"));
-        node->port2sig.insert(pair<string, string>(m->pname.name + "_P", exp_node->name));
+        node->add_port_sig(m->pname.name + "_P", exp_node->name);
         break;
       }
       case PortConn::CVAR: {    // variable
