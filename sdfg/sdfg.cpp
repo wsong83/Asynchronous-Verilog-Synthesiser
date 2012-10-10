@@ -1336,7 +1336,7 @@ bool SDFG::dfgGraph::layout(ogdf::Graph* pg, ogdf::GraphAttributes *pga) {
   layouter->nodeDistance(G_NODE_H * G_NODE_DIST);
   SL.setLayout(layouter);
 
-  SL.runs(30);
+  SL.runs(10);
 
   try {
     SL.call(*pga);

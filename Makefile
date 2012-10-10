@@ -24,8 +24,8 @@
 #
 
 # global variables
-#TARGET = RELEASE
-TARGET = DEBUG
+TARGET = RELEASE
+#TARGET = DEBUG
 
 export BISON_EXE = bison
 export FLEX_EXE = flex

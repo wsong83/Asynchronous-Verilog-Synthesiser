@@ -432,8 +432,6 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_reg_graph() const {
     shared_ptr<dfgNode> cnode = node_next.front();
     node_next.pop_front();
 
-    std::cout << "process " << cnode->get_full_name() << std::endl;
-
     // get the paths
     list<shared_ptr<dfgPath> > plist = cnode->get_out_paths_f();
     BOOST_FOREACH(shared_ptr<dfgPath> p, plist) {
@@ -450,20 +448,27 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_reg_graph() const {
         if(p->type & dfgEdge::SDFG_CTL)
           ng->add_edge(cnode->get_full_name(), dfgEdge::SDFG_CTL, cnode->get_full_name(), p->tar->get_full_name());
         
-        if(p->type & dfgEdge::SDFG_DP)
-          ng->add_edge(cnode->get_full_name(), dfgEdge::SDFG_DP, cnode->get_full_name(), p->tar->get_full_name());
-        else if(p->type & dfgEdge::SDFG_DF)
-          ng->add_edge(cnode->get_full_name(), dfgEdge::SDFG_DF, cnode->get_full_name(), p->tar->get_full_name());
+        //if(p->type & dfgEdge::SDFG_DP)
+        //ng->add_edge(cnode->get_full_name(), dfgEdge::SDFG_DP, cnode->get_full_name(), p->tar->get_full_name());
+        //else if(p->type & dfgEdge::SDFG_DF)
+        //ng->add_edge(cnode->get_full_name(), dfgEdge::SDFG_DF, cnode->get_full_name(), p->tar->get_full_name());
 
-        if(p->type & dfgEdge::SDFG_RST)
-          ng->add_edge(cnode->get_full_name(), dfgEdge::SDFG_RST, cnode->get_full_name(), p->tar->get_full_name());
+        //if(p->type & dfgEdge::SDFG_RST)
+        //  ng->add_edge(cnode->get_full_name(), dfgEdge::SDFG_RST, cnode->get_full_name(), p->tar->get_full_name());
 
-        if(p->type & dfgEdge::SDFG_CLK)
-          ng->add_edge(cnode->get_full_name(), dfgEdge::SDFG_CLK, cnode->get_full_name(), p->tar->get_full_name());
+        //if(p->type & dfgEdge::SDFG_CLK)
+        //  ng->add_edge(cnode->get_full_name(), dfgEdge::SDFG_CLK, cnode->get_full_name(), p->tar->get_full_name());
       }
     }
     
   }
+
+  map<vertex_descriptor, shared_ptr<dfgNode> > nmap = ng->nodes;
+  for_each(nmap.begin(), nmap.end(),
+           [&](pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
+               if(!ng->exist(m.second->id, m.second->id)) 
+                 ng->remove_node(m.second->id);
+             });
 
   // return the graph
   return ng;
