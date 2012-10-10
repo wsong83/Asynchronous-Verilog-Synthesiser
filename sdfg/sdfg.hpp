@@ -160,7 +160,14 @@ namespace SDFG {
     void push_back(boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgEdge>);
     void push_front(boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgEdge>);
     void combine(boost::shared_ptr<dfgPath>);
+
+    // stream out
+    std::ostream& streamout(std::ostream&) const;
   };
+
+  inline std::ostream& operator<< (std::ostream& os, const dfgPath& p) {
+    return p.streamout(os);
+  }
 
   class dfgGraph{
   public:
@@ -218,6 +225,9 @@ namespace SDFG {
     std::list<boost::shared_ptr<dfgNode> > get_target_cb(const edge_descriptor&) const;
     vertex_descriptor get_source_id(const edge_descriptor&) const;
     vertex_descriptor get_target_id(const edge_descriptor&) const;
+
+    // hierarchical search
+    boost::shared_ptr<dfgNode> search_node(const std::string&) const;
 
     // existance check
     bool exist(const std::string&, const std::string&) const;   // edge

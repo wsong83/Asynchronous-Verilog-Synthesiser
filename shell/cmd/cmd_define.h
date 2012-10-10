@@ -56,6 +56,7 @@ namespace shell {
     NEW_TCL_CMD(void, CMDExtractREGG);
     NEW_TCL_CMD(void, CMDExtractSDFG);
     NEW_TCL_CMD(bool, CMDReportNetlist);
+    NEW_TCL_CMD(bool, CMDReportDFGPath);
     NEW_TCL_CMD(std::string, CMDShell);
     NEW_TCL_CMD(bool, CMDSuppressMessage);
     NEW_TCL_CMD(bool, CMDUniquify);
