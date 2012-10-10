@@ -511,7 +511,23 @@ void SDFG::dfgPath::combine(boost::shared_ptr<dfgPath> p) {
   path.insert(path.end(), p->path.begin(), p->path.end());
 }
 
+std::ostream& SDFG::dfgPath::streamout(std::ostream& os) const {
+  if(src && tar) {
+    os << src->get_full_name() << "->" << tar->get_full_name() << "(" << type << "): ";
+    if(path.empty())
+      os << src->get_full_name() << " > ... > " << tar->get_full_name();
+    else {
+      for_each(path.begin(), path.end(),
+               [&](const pair<shared_ptr<dfgNode>, shared_ptr<dfgEdge> >& m) {
+                 os << m.first->get_full_name() << " > ";
+               });
+      os << tar->get_full_name();
+    }
+    os << std::endl;
+  }
 
+  return os;
+}
 
 /////////////////////////////////////////////////////////////////////////////
 /********        Graph                                              ********/
@@ -632,7 +648,6 @@ void SDFG::dfgGraph::remove_edge(const std::string& src, const std::string& tar)
     remove_edge(node_map[src], node_map[tar]);
 }
 
-/// This is wrong!!!, rewrite it!
 void SDFG::dfgGraph::remove_edge(const vertex_descriptor& src, const vertex_descriptor& tar) {
   edge_descriptor eid;
   bool found;
@@ -926,6 +941,24 @@ vertex_descriptor SDFG::dfgGraph::get_target_id(const edge_descriptor& eid) cons
     return boost::target(eid, bg_);
   else
     return NULL;
+}
+
+///////////////////////////////
+// hierarchical search
+///////////////////////////////
+shared_ptr<dfgNode> SDFG::dfgGraph::search_node(const string& nname) const {
+  shared_ptr<dfgNode> dummy(new dfgNode());
+  dummy->set_hier_name(nname);
+
+  if(exist(dummy->get_hier_name())) // check node name
+    return get_node(dummy->get_hier_name());
+  else if(!dummy->hier.empty()) { // check hierarchical names
+    string gname = dummy->hier.front();
+    dummy->hier.pop_front();
+    if(exist(gname) && get_node(gname)->type == dfgNode::SDFG_MODULE && get_node(gname)->child)
+      return get_node(gname)->child->search_node(dummy->get_hier_name());
+  } else
+    return shared_ptr<dfgNode>(); // failed, return empty
 }
 
 ///////////////////////////////
