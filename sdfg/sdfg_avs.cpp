@@ -435,9 +435,9 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_reg_graph() const {
     std::cout << "process " << cnode->get_full_name() << std::endl;
 
     // get the paths
-    list<shared_ptr<dfgPath> > plist = cnode->get_out_paths();
+    list<shared_ptr<dfgPath> > plist = cnode->get_out_paths_f();
     BOOST_FOREACH(shared_ptr<dfgPath> p, plist) {
-      if(p->tar) {
+      if(p->type) {
         // add new node if it is new
         if(!ng->exist(p->tar->get_full_name())) { // new node
           node_next.push_back(p->tar);
@@ -452,6 +452,8 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_reg_graph() const {
         
         if(p->type & dfgEdge::SDFG_DP)
           ng->add_edge(cnode->get_full_name(), dfgEdge::SDFG_DP, cnode->get_full_name(), p->tar->get_full_name());
+        else if(p->type & dfgEdge::SDFG_DF)
+          ng->add_edge(cnode->get_full_name(), dfgEdge::SDFG_DF, cnode->get_full_name(), p->tar->get_full_name());
 
         if(p->type & dfgEdge::SDFG_RST)
           ng->add_edge(cnode->get_full_name(), dfgEdge::SDFG_RST, cnode->get_full_name(), p->tar->get_full_name());

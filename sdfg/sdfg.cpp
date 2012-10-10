@@ -339,6 +339,83 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_out_paths(shared_ptr<dfgPath> ppat
   return rv;
 }
 
+list<shared_ptr<dfgPath> > SDFG::dfgNode::get_out_paths_f() const {
+  // initial the type map
+  map<shared_ptr<dfgNode>, int> tmap; // node type map
+  map<shared_ptr<dfgNode>, list<shared_ptr<dfgNode> > > rmap; // node relation map
+  shared_ptr<dfgNode> pn = pg->get_node(id);
+  tmap[pn] = 0;
+
+  // initial operation
+  // build up the relation map
+  list<shared_ptr<dfgEdge> > oe_list = pg->get_out_edges_cb(id); // out edge list
+  BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
+    list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e->id);
+    BOOST_FOREACH(shared_ptr<dfgNode> n, tar_list) {
+      rmap[pn].push_back(n);
+    }
+  }
+
+  // visit all out edges
+  BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
+    list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e->id);
+    BOOST_FOREACH(shared_ptr<dfgNode> n, tar_list) {
+      n->path_type_update(tmap, rmap, e->type);
+    }
+  }
+
+  list<shared_ptr<dfgPath> > rv;
+  for_each(tmap.begin(), tmap.end(),
+           [&](pair<const shared_ptr<dfgNode>, int> m) {
+               if((m.first->type & (SDFG_FF|SDFG_LATCH))         || // register
+                  (m.first->type & SDFG_PORT && !m.first->pg->father)     // top-level output
+                  ) {
+                 shared_ptr<dfgPath> p(new dfgPath());
+                 p->src = pn;
+                 p->tar = m.first;
+                 p->type = m.second;
+                 rv.push_back(p);
+               }
+             });
+
+   return rv;
+}
+
+void SDFG::dfgNode::path_type_update(map<shared_ptr<dfgNode>, int >& tmap,
+                                     map<shared_ptr<dfgNode>, list<shared_ptr<dfgNode> > >& rmap,
+                                     int et) const {
+  shared_ptr<dfgNode> pn = pg->get_node(id);
+  if(tmap.count(pn)) {          // visited before
+    if(!((~tmap[pn])&et)) return;  // type already updated
+    else tmap[pn] |= et;
+  } else {
+    tmap[pn] = et;              // record the node and type
+  }
+
+  // do the update
+  if(rmap.count(pn)) {          // node relation calculated
+    BOOST_FOREACH(shared_ptr<dfgNode> n, rmap[pn]) {
+      path_type_update(tmap, rmap, tmap[pn]);
+    }
+  } else {
+    // build up the relation map
+    list<shared_ptr<dfgEdge> > oe_list = pg->get_out_edges_cb(id); // out edge list
+    BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
+      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e->id);
+      BOOST_FOREACH(shared_ptr<dfgNode> n, tar_list) {
+        rmap[pn].push_back(n);
+      }
+    }
+    
+    // visit all out edges
+    BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
+      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e->id);
+      BOOST_FOREACH(shared_ptr<dfgNode> n, tar_list) {
+        n->path_type_update(tmap, rmap, e->type | tmap[pn]);
+      }
+    }
+  }
+}
 
 
 /////////////////////////////////////////////////////////////////////////////

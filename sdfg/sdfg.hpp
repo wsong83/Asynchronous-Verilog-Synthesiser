@@ -106,6 +106,7 @@ namespace SDFG {
     void remove_port_sig(const std::string&, int); // remove a certain port signal
     void add_port_sig(const std::string&, const std::string&); // add a certain port connection
     std::list<boost::shared_ptr<dfgPath> > get_out_paths(boost::shared_ptr<dfgPath> ppath = boost::shared_ptr<dfgPath>()) const; // return all output paths from this register/port
+    std::list<boost::shared_ptr<dfgPath> > get_out_paths_f() const; // return all output paths from this register/port; fast algorithm (only start/end point and type)
 
     std::pair<double, double> position; // graphic position
     std::pair<double, double> bbox;     // bounding box
@@ -113,6 +114,11 @@ namespace SDFG {
 
     void simplify(std::set<boost::shared_ptr<dfgNode> >&, bool); // remove unused nodes
     void path_deduction(std::set<boost::shared_ptr<dfgNode> >&, bool); // deduce the type of paths
+
+  private:
+    void path_type_update(std::map<boost::shared_ptr<dfgNode>, int >&,
+                          std::map<boost::shared_ptr<dfgNode>, std::list<boost::shared_ptr<dfgNode> > >&,
+                          int) const; // helper for get_out_paths_f()
   };
 
   class dfgEdge {
@@ -144,7 +150,7 @@ namespace SDFG {
   public:
     boost::shared_ptr<dfgNode> src;
     boost::shared_ptr<dfgNode> tar;
-    dfgEdge::edge_type_t type;
+    int type;
     std::list<std::pair<boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgEdge> > > path;
     std::set<boost::shared_ptr<dfgNode> > node_set; // remember the nodes in this path; to avoid combi loop
 
