@@ -20,8 +20,8 @@
  */
 
 /* 
- * extract the SDFG of a module
- * 25/06/2012   Wei Song
+ * extract the register graph from a DFG
+ * 09/10/2012   Wei Song
  *
  *
  */
@@ -55,17 +55,13 @@ namespace {
 
   struct Argument {
     bool bHelp;                 // show help information
-    bool bSimplify;             // whether to simplify it
-    bool bDeduction;            // whether to deduct wire types
-    bool bQuiet;                // suppress information
+    //bool bQuiet;                // suppress information
     std::string sDesign;        // target design to be written out
     std::string sOutput;        // output file name
     
     Argument() : 
       bHelp(false),
-      bSimplify(true),
-      bDeduction(true),
-      bQuiet(false),
+      //bQuiet(false),
       sDesign(""),
       sOutput("") {}
   };
@@ -75,9 +71,6 @@ BOOST_FUSION_ADAPT_STRUCT
 (
  Argument,
  (bool, bHelp)
- (bool, bSimplify)
- (bool, bDeduction)
- (bool, bQuiet)
  (std::string, sDesign)
  (std::string, sOutput)
  )
@@ -98,15 +91,13 @@ namespace {
 
       args = lit('-') >> 
         ( (lit("help")              >> blanks) [at_c<0>(_r1) = true]  ||
-          (lit("no_simplification") >> blanks) [at_c<1>(_r1) = false] ||
-          (lit("no_type_deduction") >> blanks) [at_c<2>(_r1) = false] ||
-          (lit("quiet")             >> blanks) [at_c<3>(_r1) = true]  ||
-          (lit("output") >> blanks >> filename >> blanks) [at_c<5>(_r1) = _1]
+          //(lit("quiet")             >> blanks) [at_c<3>(_r1) = true]  ||
+          (lit("output") >> blanks >> filename >> blanks) [at_c<2>(_r1) = _1]
           );
       
       start = 
         *(args(_val))
-        >> -(identifier >> blanks) [at_c<4>(_val) = _1] 
+        >> -(identifier >> blanks) [at_c<1>(_val) = _1] 
         >> *(args(_val))
         ;
 
@@ -122,24 +113,21 @@ namespace {
   };
 }
 
-const std::string shell::CMD::CMDExtractSDFG::name = "extract_sdfg"; 
-const std::string shell::CMD::CMDExtractSDFG::description = 
-  "extract the SDFG of a module.";
+const std::string shell::CMD::CMDExtractREGG::name = "extract_regg"; 
+const std::string shell::CMD::CMDExtractREGG::description = 
+  "extract register graph from the SDFG of a module.";
 
-void shell::CMD::CMDExtractSDFG::help(Env& gEnv) {
+void shell::CMD::CMDExtractREGG::help(Env& gEnv) {
   gEnv.stdOs << name << ": " << description << endl;
-  gEnv.stdOs << "    extract_sdfg [options] [design_name]" << endl;
+  gEnv.stdOs << "    extract_regg [options] [design_name]" << endl;
   gEnv.stdOs << "    design_name         the design to be extracted (default the current design)" << endl;
   gEnv.stdOs << "Options:" << endl;
   gEnv.stdOs << "   -help                show this help information." << endl;
-  gEnv.stdOs << "   -no_simplification   do not simplify the SDFG." << endl;
-  gEnv.stdOs << "   -no_type_deduction   do not deduct wire types." << endl;
-  gEnv.stdOs << "   -quiet               suppress the uniquifying information." << endl;
   gEnv.stdOs << "   -output file_name    specify the output file name." << endl;
   gEnv.stdOs << "                        (in default is \"design_name.sdfg\")" << endl;
 }
 
-void shell::CMD::CMDExtractSDFG::exec ( const std::string& str, Env * pEnv){
+void shell::CMD::CMDExtractREGG::exec ( const std::string& str, Env * pEnv){
 
   using std::string;
 
@@ -175,37 +163,27 @@ void shell::CMD::CMDExtractSDFG::exec ( const std::string& str, Env * pEnv){
     gEnv.stdOs << "Error: Failed to find the target design \"" << designName << "\"." << endl;
     return;
   }
+  if(!tarDesign->DFG) {
+    gEnv.stdOs << "Error: No DFG has been extracted for the target design \"" << designName << "\"." << endl;
+    return;
+  }
 
   // specify the output file name
   string outputFileName;
-  if(arg.sOutput.empty()) outputFileName = designName + ".sdfg";
+  if(arg.sOutput.empty()) outputFileName = designName + ".regg";
   else outputFileName = arg.sOutput;
 
   // open the file
   ofstream fhandler;
   fhandler.open(system_complete(outputFileName), std::ios_base::out|std::ios_base::trunc);
 
-  // extract SDFG
-  // make sure it is uniquified
-  if(!arg.bQuiet) {
-    gEnv.error("SDFG-EXTRACT-0");
-    CMDUniquify::exec("", pEnv);
-  } else {
-    CMDUniquify::exec("-quiet", pEnv);
-  }
-  shared_ptr<SDFG::dfgGraph> g = tarDesign->extract_sdfg(arg.bQuiet);
-
-  if(arg.bSimplify) {
-    g->simplify(arg.bQuiet);
-  }
-
-  if(arg.bDeduction) {
-    g->path_deduction(arg.bQuiet);
-  }
+  // extract the register graph
+  // make sure there is a DFG attached to the module
+  shared_ptr<SDFG::dfgGraph> g = tarDesign->DFG->get_reg_graph();
 
   g->write(fhandler);
   fhandler.close();
 
   // store it in the target module
-  tarDesign->DFG = g;
+  tarDesign->RG = g;
 }

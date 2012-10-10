@@ -63,6 +63,7 @@ namespace SDFG {
   typedef typename GraphTraits::edge_iterator edge_iterator;
 
   class dfgGraph;
+  class dfgPath;
 
   class dfgNode {
   public:
@@ -70,7 +71,7 @@ namespace SDFG {
     boost::shared_ptr<netlist::NetComp> ptr;   // pointer to the netlist component
     boost::shared_ptr<dfgGraph> child;         // when it is a module entity, it should has a child
     std::string child_name;                    // when it is a module entity, this is the module name of the module
-    std::multimap<std::string, std::string> sig2port;   // remember the port connection if it is a module entity
+    std::map<std::string, std::list<std::string> > sig2port;   // remember the port connection if it is a module entity
     std::map<std::string, std::string> port2sig;        // remember the port connection if it is a module entity
     dfgGraph* pg;                                       // a pointer pointing to the father Graph
     std::string name;                                   // description of this node
@@ -90,7 +91,7 @@ namespace SDFG {
     } type;
 
 
-    dfgNode(): pg(NULL), node_index(0), position(0,0), bbox(0,0) {}
+    dfgNode(): pg(NULL), node_index(0), type(SDFG_DF), position(0,0), bbox(0,0) {}
     dfgNode(const std::string& n, node_type_t t = SDFG_DF) : 
       pg(NULL), name(n), node_index(0), type(t), position(0,0), bbox(0,0) {}
     dfgNode* copy() const;      // copy content, not deep copy, orphan node generation
@@ -100,9 +101,12 @@ namespace SDFG {
     bool read(void * const, ogdf::GraphAttributes * const);
     boost::shared_ptr<dfgNode> flatten() const;   // move this node to one module higher
     std::string get_hier_name() const;            // get the hierarchical name of the name
+    std::string get_full_name() const;            // get the hierarchical name of the name
     void set_hier_name(const std::string&);       // set the hierarchical name
     void remove_port_sig(const std::string&, int); // remove a certain port signal
     void add_port_sig(const std::string&, const std::string&); // add a certain port connection
+    std::list<boost::shared_ptr<dfgPath> > get_out_paths(boost::shared_ptr<dfgPath> ppath = boost::shared_ptr<dfgPath>()) const; // return all output paths from this register/port
+    std::list<boost::shared_ptr<dfgPath> > get_out_paths_f() const; // return all output paths from this register/port; fast algorithm (only start/end point and type)
 
     std::pair<double, double> position; // graphic position
     std::pair<double, double> bbox;     // bounding box
@@ -110,6 +114,11 @@ namespace SDFG {
 
     void simplify(std::set<boost::shared_ptr<dfgNode> >&, bool); // remove unused nodes
     void path_deduction(std::set<boost::shared_ptr<dfgNode> >&, bool); // deduce the type of paths
+
+  private:
+    void path_type_update(std::map<boost::shared_ptr<dfgNode>, int >&,
+                          std::map<boost::shared_ptr<dfgNode>, std::list<boost::shared_ptr<dfgNode> > >&,
+                          int) const; // helper for get_out_paths_f()
   };
 
   class dfgEdge {
@@ -126,7 +135,7 @@ namespace SDFG {
       SDFG_RST            = 0x000c0  // reset
     } type;
 
-    dfgEdge() : pg(NULL) {}
+    dfgEdge() : pg(NULL), type(SDFG_DF) {}
     dfgEdge(const std::string& n, edge_type_t t = SDFG_DF) : pg(NULL), name(n), type(t) {}
     void write(pugi::xml_node&) const;
     void write(void *, ogdf::GraphAttributes *);
@@ -135,6 +144,22 @@ namespace SDFG {
 
     std::list<std::pair<double, double> > bend; // bending points of the edge
 
+  };
+
+  class dfgPath {
+  public:
+    boost::shared_ptr<dfgNode> src;
+    boost::shared_ptr<dfgNode> tar;
+    int type;
+    std::list<std::pair<boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgEdge> > > path;
+    std::set<boost::shared_ptr<dfgNode> > node_set; // remember the nodes in this path; to avoid combi loop
+
+    dfgPath() : type(dfgEdge::SDFG_DF) {}
+    
+    // add sub-paths
+    void push_back(boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgEdge>);
+    void push_front(boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgEdge>);
+    void combine(boost::shared_ptr<dfgPath>);
   };
 
   class dfgGraph{
@@ -190,6 +215,7 @@ namespace SDFG {
     boost::shared_ptr<dfgNode> get_source_cb(const edge_descriptor&) const;
     boost::shared_ptr<dfgNode> get_target(const edge_descriptor&) const;
     boost::shared_ptr<dfgNode> get_target(boost::shared_ptr<dfgEdge>) const;
+    std::list<boost::shared_ptr<dfgNode> > get_target_cb(const edge_descriptor&) const;
     vertex_descriptor get_source_id(const edge_descriptor&) const;
     vertex_descriptor get_target_id(const edge_descriptor&) const;
 
@@ -254,6 +280,10 @@ namespace SDFG {
     void simplify(std::set<boost::shared_ptr<dfgNode> >&, bool); // remove unused node and edges
     void path_deduction(bool); // deduce the type of paths, call this one when it is the top
     void path_deduction(std::set<boost::shared_ptr<dfgNode> >&, bool); // deduce the type of paths
+    boost::shared_ptr<dfgGraph> get_reg_graph() const; // extract a register only graph from the DFG
+
+    // other
+    std::string get_full_name() const;
 
   private:
     unsigned int node_index;   // when nodes are stored in listS, vertext_descriptors are no longer

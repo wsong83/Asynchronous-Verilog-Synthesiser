@@ -205,7 +205,7 @@ bool SDFG::dfgNode::read(const pugi::xml_node& xnode) {
       string port_name = port.attribute("port").as_string();
       string port_signal = port.attribute("signal").as_string();
       port2sig[port_name] = port_signal;
-      sig2port.insert(pair<string, string>(port_signal, port_name));
+      sig2port[port_signal].push_back(port_name);
     }
   }
 
@@ -245,6 +245,15 @@ string SDFG::dfgNode::get_hier_name() const {
   return rv+name;
 }
 
+string SDFG::dfgNode::get_full_name() const {
+  string rv = pg->get_full_name();
+  if(rv.empty())
+    rv = get_hier_name();
+  else
+    rv += "/" + get_hier_name();
+  return rv;
+}
+
 void SDFG::dfgNode::set_hier_name(const string& hname) {
   boost::char_separator<char> sep("/");
   boost::tokenizer<boost::char_separator<char> > tokens(hname, sep);
@@ -258,22 +267,24 @@ void SDFG::dfgNode::set_hier_name(const string& hname) {
 
 void SDFG::dfgNode::remove_port_sig(const string& sname, int dir) {
   if(sig2port.count(sname)) {
-    std::multimap<string, string>::iterator it, end;
     // remove the port map connection
-    boost::tie(it, end) = sig2port.equal_range(sname);
+    list<string>::iterator it = sig2port[sname].begin();
+    list<string>::iterator end = sig2port[sname].end();
     while(it!=end) {
-      if((child->get_node(it->second)->type & SDFG_PORT) 
-         && (child->get_node(it->second)->type != SDFG_OPORT)
+      if((child->get_node(*it)->type & SDFG_PORT) 
+         && (child->get_node(*it)->type != SDFG_OPORT)
          && dir <= 0) {
-        port2sig.erase(it->second);
-        sig2port.erase(it);
-        boost::tie(it, end) = sig2port.equal_range(sname);
-      } else if((child->get_node(it->second)->type & SDFG_PORT) 
-                && (child->get_node(it->second)->type != SDFG_IPORT)
+        port2sig.erase(*it);
+        sig2port[sname].erase(it);
+        it = sig2port[sname].begin();
+        end = sig2port[sname].end();
+      } else if((child->get_node(*it)->type & SDFG_PORT) 
+                && (child->get_node(*it)->type != SDFG_IPORT)
                 && dir >= 0) {
-        port2sig.erase(it->second);
-        sig2port.erase(it);
-        boost::tie(it, end) = sig2port.equal_range(sname);
+        port2sig.erase(*it);
+        sig2port[sname].erase(it);
+        it = sig2port[sname].begin();
+        end = sig2port[sname].end();
       } else 
         ++it;
     }
@@ -283,10 +294,128 @@ void SDFG::dfgNode::remove_port_sig(const string& sname, int dir) {
 void SDFG::dfgNode::add_port_sig(const string& pname, const string& sname) {
   if(child->exist(pname)) {
     port2sig[pname] = sname;
-    sig2port.insert(pair<string, string>(sname, pname));
+    sig2port[sname].push_back(pname);
   }
 }
 
+list<shared_ptr<dfgPath> > SDFG::dfgNode::get_out_paths(shared_ptr<dfgPath> ppath) const {
+  if(!ppath) {
+    ppath.reset(new dfgPath());
+    ppath->src = pg->get_node(id);
+  }
+
+  list<shared_ptr<dfgPath> > rv;
+  shared_ptr<dfgNode> pn = pg->get_node(id);
+  
+  if(ppath->node_set.count(pn))
+    return list<shared_ptr<dfgPath> >(); // combinational loop
+
+  list<shared_ptr<dfgEdge> > oe_list = pg->get_out_edges_cb(id);
+  BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
+    list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e->id);
+    BOOST_FOREACH(shared_ptr<dfgNode> n, tar_list) {
+      assert(n->type != SDFG_MODULE);
+      if((n->type & (SDFG_FF|SDFG_LATCH))         || // register
+         (n->type & SDFG_PORT && !n->pg->father)     // top-level output
+         ) { // end node
+        shared_ptr<dfgPath> p(new dfgPath(*ppath));
+        p->push_back(pn, e);
+        p->tar = n;
+        rv.push_back(p);
+      } else {                  // normal path middle node
+        shared_ptr<dfgPath> pp(new dfgPath(*ppath));
+        pp->push_back(pn, e);
+        list<shared_ptr<dfgPath> > tpaths = n->get_out_paths(pp);
+        std::cout << tpaths.size() << " " << std::endl;
+        BOOST_FOREACH(shared_ptr<dfgPath> p, tpaths) {
+          shared_ptr<dfgPath> ppn(new dfgPath(*pp));
+          ppn->combine(p);
+          rv.push_back(ppn);
+        }
+      }
+    }
+  }
+
+  return rv;
+}
+
+list<shared_ptr<dfgPath> > SDFG::dfgNode::get_out_paths_f() const {
+  // initial the type map
+  map<shared_ptr<dfgNode>, int> tmap; // node type map
+  map<shared_ptr<dfgNode>, list<shared_ptr<dfgNode> > > rmap; // node relation map
+  shared_ptr<dfgNode> pn = pg->get_node(id);
+  tmap[pn] = 0;
+
+  // initial operation
+  // build up the relation map
+  list<shared_ptr<dfgEdge> > oe_list = pg->get_out_edges_cb(id); // out edge list
+  BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
+    list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e->id);
+    BOOST_FOREACH(shared_ptr<dfgNode> n, tar_list) {
+      rmap[pn].push_back(n);
+    }
+  }
+
+  // visit all out edges
+  BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
+    list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e->id);
+    BOOST_FOREACH(shared_ptr<dfgNode> n, tar_list) {
+      n->path_type_update(tmap, rmap, e->type);
+    }
+  }
+
+  list<shared_ptr<dfgPath> > rv;
+  for_each(tmap.begin(), tmap.end(),
+           [&](pair<const shared_ptr<dfgNode>, int> m) {
+               if((m.first->type & (SDFG_FF|SDFG_LATCH))         || // register
+                  (m.first->type & SDFG_PORT && !m.first->pg->father)     // top-level output
+                  ) {
+                 shared_ptr<dfgPath> p(new dfgPath());
+                 p->src = pn;
+                 p->tar = m.first;
+                 p->type = m.second;
+                 rv.push_back(p);
+               }
+             });
+
+   return rv;
+}
+
+void SDFG::dfgNode::path_type_update(map<shared_ptr<dfgNode>, int >& tmap,
+                                     map<shared_ptr<dfgNode>, list<shared_ptr<dfgNode> > >& rmap,
+                                     int et) const {
+  shared_ptr<dfgNode> pn = pg->get_node(id);
+  if(tmap.count(pn)) {          // visited before
+    if(!((~tmap[pn])&et)) return;  // type already updated
+    else tmap[pn] |= et;
+  } else {
+    tmap[pn] = et;              // record the node and type
+  }
+
+  // do the update
+  if(rmap.count(pn)) {          // node relation calculated
+    BOOST_FOREACH(shared_ptr<dfgNode> n, rmap[pn]) {
+      path_type_update(tmap, rmap, tmap[pn]);
+    }
+  } else {
+    // build up the relation map
+    list<shared_ptr<dfgEdge> > oe_list = pg->get_out_edges_cb(id); // out edge list
+    BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
+      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e->id);
+      BOOST_FOREACH(shared_ptr<dfgNode> n, tar_list) {
+        rmap[pn].push_back(n);
+      }
+    }
+    
+    // visit all out edges
+    BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
+      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e->id);
+      BOOST_FOREACH(shared_ptr<dfgNode> n, tar_list) {
+        n->path_type_update(tmap, rmap, e->type | tmap[pn]);
+      }
+    }
+  }
+}
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -355,6 +484,32 @@ bool SDFG::dfgEdge::read(void * const pedge, ogdf::GraphAttributes * const pga) 
   return true;
 }
 
+
+
+/////////////////////////////////////////////////////////////////////////////
+/********        Path                                               ********/
+/////////////////////////////////////////////////////////////////////////////
+void SDFG::dfgPath::push_back(boost::shared_ptr<dfgNode> n, boost::shared_ptr<dfgEdge> e) {
+  assert(e->pg->get_source_cb(e->id) == n);
+  
+  if(path.empty())
+    src = n;
+  path.push_back(pair<shared_ptr<dfgNode>, shared_ptr<dfgEdge> >(n,e));
+  node_set.insert(n);
+}
+
+void SDFG::dfgPath::push_front(boost::shared_ptr<dfgNode> n, boost::shared_ptr<dfgEdge> e) {
+  assert(e->pg->get_source_cb(e->id) == n);
+
+  path.push_front(pair<shared_ptr<dfgNode>, shared_ptr<dfgEdge> >(n,e));
+  node_set.insert(n);
+  src = n;
+}
+
+void SDFG::dfgPath::combine(boost::shared_ptr<dfgPath> p) {
+  tar = p->tar;
+  path.insert(path.end(), p->path.begin(), p->path.end());
+}
 
 
 
@@ -527,28 +682,26 @@ void SDFG::dfgGraph::remove_edge(const edge_descriptor& eid) {
 void SDFG::dfgGraph::remove_port(const std::string& pname) {
   if(father && father->port2sig.count(pname)) {
     string sname = father->port2sig[pname];
-    std::multimap<string, string>::iterator it, end;
     // remove the port map connection
-    boost::tie(it, end) = father->sig2port.equal_range(sname);
-    for(; it!=end; it++) {
-      if(it->second == pname) {
-        father->sig2port.erase(it);
+    list<string>::iterator it, end;
+    for(it=father->sig2port[sname].begin(), end=father->sig2port[sname].end(); it!=end; ++it) {
+      if(*it == pname) {
+        father->sig2port[sname].erase(it);
         break;
       }
     }
     // scan it again to get input/output count
     bool inpc = false;
     bool outpc = false;
-    boost::tie(it, end) = father->sig2port.equal_range(sname);
-    for(; it!=end; it++) {
-      switch(get_node(it->second)->type) {
+    for(it=father->sig2port[sname].begin(), end=father->sig2port[sname].end(); it!=end; ++it) {
+      switch(get_node(*it)->type) {
       case dfgNode::SDFG_IPORT: inpc = true; break;
       case dfgNode::SDFG_OPORT: outpc = true; break;
       case dfgNode::SDFG_PORT:  inpc = true; outpc = true; break;
       default: assert(0 == "node type wrong!");
       }
     }
-
+    
     if(!inpc) {               // remove input
       father->pg->remove_edge(sname, father->get_hier_name());
     }
@@ -715,7 +868,16 @@ shared_ptr<dfgNode> SDFG::dfgGraph::get_source(shared_ptr<dfgEdge> pe) const {
 shared_ptr<dfgNode> SDFG::dfgGraph::get_source_cb(const edge_descriptor& eid) const {
   shared_ptr<dfgNode> inode = get_source(eid);
   if(inode->type == dfgNode::SDFG_MODULE && inode->child) {
-    return inode->child->get_node(inode->sig2port.find(get_target(eid)->get_hier_name())->second);
+    list<string> plist = inode->sig2port.find(get_target(eid)->get_hier_name())->second;
+    if(!plist.empty()) {
+      BOOST_FOREACH(string& m, plist) {
+        shared_ptr<dfgNode> n = inode->child->get_node(m);
+        if(n->type & dfgNode::SDFG_OPORT && n->type != dfgNode::SDFG_IPORT)
+          return n;
+      }
+      return shared_ptr<dfgNode>();
+    }
+    return shared_ptr<dfgNode>();
   } else
     return inode;
 }
@@ -732,6 +894,24 @@ shared_ptr<dfgNode> SDFG::dfgGraph::get_target(shared_ptr<dfgEdge> pe) const {
     return get_target(pe->id);
   else
     return shared_ptr<dfgNode>();
+}
+
+list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_target_cb(const edge_descriptor& eid) const {
+  list<shared_ptr<dfgNode> > rv;
+  shared_ptr<dfgNode> onode = get_target(eid);
+  if(onode->type == dfgNode::SDFG_MODULE && onode->child) {
+    list<string> plist = onode->sig2port.find(get_source(eid)->get_hier_name())->second;
+    if(!plist.empty()) {
+      BOOST_FOREACH(string& m, plist) {
+        shared_ptr<dfgNode> n = onode->child->get_node(m);
+        if(n->type & dfgNode::SDFG_IPORT && n->type != dfgNode::SDFG_OPORT)
+          rv.push_back(n);
+      }
+    }
+  } else
+    rv.push_back(onode);
+
+  return rv;
 }
 
 vertex_descriptor SDFG::dfgGraph::get_source_id(const edge_descriptor& eid) const {
@@ -1156,7 +1336,7 @@ bool SDFG::dfgGraph::layout(ogdf::Graph* pg, ogdf::GraphAttributes *pga) {
   layouter->nodeDistance(G_NODE_H * G_NODE_DIST);
   SL.setLayout(layouter);
 
-  SL.runs(30);
+  SL.runs(10);
 
   try {
     SL.call(*pga);
@@ -1339,6 +1519,12 @@ bool SDFG::dfgGraph::read(ogdf::Graph * const pg, ogdf::GraphAttributes * const 
   return true;
 }
 
+string SDFG::dfgGraph::get_full_name() const {
+  if(father) 
+    return father->get_full_name();
+  else
+    return "";
+}
 
 
 /////////////////////////////////////////////////////////////////////////////

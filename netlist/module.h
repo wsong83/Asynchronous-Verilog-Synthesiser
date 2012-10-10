@@ -98,6 +98,10 @@ namespace netlist {
     DataBase<BIdentifier, Assign>          db_assign;    /* continuous assignments */
     DataBase<BIdentifier, GenBlock>        db_genblock;  /* generation blocks */
 
+    // DFG graphs
+    boost::shared_ptr<SDFG::dfgGraph> DFG; // the DFG graph of this module (sub-module is embedded, so it is a full graph)
+    boost::shared_ptr<SDFG::dfgGraph> RG;  // the register graph of this module
+
   private:
     // only used in constructors
     void init_port_list(const std::list<VIdentifier>&);
@@ -111,3 +115,7 @@ namespace netlist {
 }
 
 #endif
+
+// Local Variables:
+// mode: c++
+// End:
