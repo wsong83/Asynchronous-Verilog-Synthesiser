@@ -59,6 +59,7 @@ namespace {
     std::string sSource;        // source node
     std::string sTarget;        // target node
     std::string sDesign;        // target design
+    unsigned int nMax;          // the maximal number of paths to be reported
     std::string sOutput;        // output file name
     
     Argument() : 
@@ -67,6 +68,7 @@ namespace {
       sSource(""),
       sTarget(""),
       sDesign(""),
+      nMax(0),
       sOutput("") {}
   };
 }
@@ -79,6 +81,7 @@ BOOST_FUSION_ADAPT_STRUCT
  (std::string, sSource)
  (std::string, sTarget)
  (std::string, sDesign)
+ (unsigned int, nMax)
  (std::string, sOutput)
  )
 
@@ -102,7 +105,8 @@ namespace {
           (lit("source") >> blanks >> identifier >> blanks) [at_c<2>(_r1) = _1]   ||
           (lit("target") >> blanks >> identifier >> blanks) [at_c<3>(_r1) = _1]   ||
           (lit("design") >> blanks >> identifier >> blanks) [at_c<4>(_r1) = _1]   ||
-          (lit("output") >> blanks >> filename >> blanks)   [at_c<5>(_r1) = _1]
+          (lit("max")    >> blanks >> qi::uint_  >> blanks) [at_c<5>(_r1) = _1]   ||
+          (lit("output") >> blanks >> filename >> blanks)   [at_c<6>(_r1) = _1]
           );
       
       start = +(args(_val));
@@ -131,6 +135,7 @@ void shell::CMD::CMDReportDFGPath::help(Env& gEnv) {
   gEnv.stdOs << "   -source ID           path starting points (FF/input)." << endl;
   gEnv.stdOs << "   -target ID           path ending points (FF/output)." << endl;
   gEnv.stdOs << "   -design ID           design name if not the current design." << endl;
+  gEnv.stdOs << "   -max N               the maximal number of paths to be reported." << endl;
   gEnv.stdOs << "   -output file_name    specify an output file." << endl;
 }
 
@@ -217,14 +222,23 @@ bool shell::CMD::CMDReportDFGPath::exec ( const std::string& str, Env * pEnv){
   }
 
   list<shared_ptr<SDFG::dfgPath> > plist;
+  std::set<shared_ptr<SDFG::dfgNode> > targets;
+  if(tar)
+    targets.insert(tar);
+
   if(arg.bFast)
     plist = src->get_out_paths_f();
-  else
-    plist = src->get_out_paths();
-  
+  else {
+    if(arg.nMax == 0)
+      plist = src->get_out_paths(10, targets);
+    else
+      plist = src->get_out_paths(arg.nMax, targets);
+  }
+
+  int index = 0;
   BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, plist) {
     if(!tar || (tar && p->tar == tar))
-      gEnv.stdOs << *p;
+      gEnv.stdOs << "[" << ++index << "]  " << *p;
   }
 
   return true;

@@ -105,7 +105,7 @@ namespace SDFG {
     void set_hier_name(const std::string&);       // set the hierarchical name
     void remove_port_sig(const std::string&, int); // remove a certain port signal
     void add_port_sig(const std::string&, const std::string&); // add a certain port connection
-    std::list<boost::shared_ptr<dfgPath> > get_out_paths(boost::shared_ptr<dfgPath> ppath = boost::shared_ptr<dfgPath>()) const; // return all output paths from this register/port
+    std::list<boost::shared_ptr<dfgPath> > get_out_paths(unsigned int, const std::set<boost::shared_ptr<dfgNode> >&) const; // return all output paths from this register/port
     std::list<boost::shared_ptr<dfgPath> > get_out_paths_f() const; // return all output paths from this register/port; fast algorithm (only start/end point and type)
 
     std::pair<double, double> position; // graphic position
@@ -116,9 +116,16 @@ namespace SDFG {
     void path_deduction(std::set<boost::shared_ptr<dfgNode> >&, bool); // deduce the type of paths
 
   private:
-    void path_type_update(std::map<boost::shared_ptr<dfgNode>, int >&,
-                          std::map<boost::shared_ptr<dfgNode>, std::list<boost::shared_ptr<dfgNode> > >&,
-                          int) const; // helper for get_out_paths_f()
+    void path_type_update(std::list<boost::shared_ptr<dfgPath> >&,
+                          boost::shared_ptr<dfgPath>&,
+                          unsigned int,
+                          const std::set<boost::shared_ptr<dfgNode> >&,
+                          std::map<boost::shared_ptr<dfgNode>, std::map<boost::shared_ptr<dfgNode>, int > >&,
+                          std::set<boost::shared_ptr<dfgNode> >&) const; // helper for get_out_paths()
+
+    void path_type_update_f(std::map<boost::shared_ptr<dfgNode>, int >&,
+                            std::map<boost::shared_ptr<dfgNode>, std::list<boost::shared_ptr<dfgNode> > >&,
+                            int) const; // helper for get_out_paths_f()
   };
 
   class dfgEdge {
@@ -151,14 +158,14 @@ namespace SDFG {
     boost::shared_ptr<dfgNode> src;
     boost::shared_ptr<dfgNode> tar;
     int type;
-    std::list<std::pair<boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgEdge> > > path;
+    std::list<boost::shared_ptr<dfgNode> > path;
     std::set<boost::shared_ptr<dfgNode> > node_set; // remember the nodes in this path; to avoid combi loop
 
-    dfgPath() : type(dfgEdge::SDFG_DF) {}
+    dfgPath() : type(0) {}
     
     // add sub-paths
-    void push_back(boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgEdge>);
-    void push_front(boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgEdge>);
+    void push_back(boost::shared_ptr<dfgNode>, int);
+    void push_front(boost::shared_ptr<dfgNode>, int);
     void combine(boost::shared_ptr<dfgPath>);
 
     // stream out

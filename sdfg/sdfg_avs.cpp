@@ -433,7 +433,7 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_reg_graph() const {
     node_next.pop_front();
 
     // get the paths
-    list<shared_ptr<dfgPath> > plist = cnode->get_out_paths_f();
+    list<shared_ptr<dfgPath> > plist = cnode->get_out_paths(0, std::set<shared_ptr<dfgNode> >() );
     BOOST_FOREACH(shared_ptr<dfgPath> p, plist) {
       if(p->type) {
         // add new node if it is new
