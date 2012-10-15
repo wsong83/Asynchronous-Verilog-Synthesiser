@@ -59,7 +59,7 @@ namespace {
     std::string sSource;        // source node
     std::string sTarget;        // target node
     std::string sDesign;        // target design
-    unsigned int nMax;          // the maximal number of paths to be reported
+    int nMax;                   // the maximal number of paths to be reported
     std::string sOutput;        // output file name
     
     Argument() : 
@@ -68,7 +68,7 @@ namespace {
       sSource(""),
       sTarget(""),
       sDesign(""),
-      nMax(0),
+      nMax(-1),
       sOutput("") {}
   };
 }
@@ -81,7 +81,7 @@ BOOST_FUSION_ADAPT_STRUCT
  (std::string, sSource)
  (std::string, sTarget)
  (std::string, sDesign)
- (unsigned int, nMax)
+ (int, nMax)
  (std::string, sOutput)
  )
 
@@ -102,8 +102,8 @@ namespace {
       args = lit('-') >> 
         ( (lit("help")   >> blanks)                         [at_c<0>(_r1) = true] ||
           (lit("fast")   >> blanks)                         [at_c<1>(_r1) = true] ||
-          (lit("source") >> blanks >> identifier >> blanks) [at_c<2>(_r1) = _1]   ||
-          (lit("target") >> blanks >> identifier >> blanks) [at_c<3>(_r1) = _1]   ||
+          (lit("from")   >> blanks >> identifier >> blanks) [at_c<2>(_r1) = _1]   ||
+          (lit("to")     >> blanks >> identifier >> blanks) [at_c<3>(_r1) = _1]   ||
           (lit("design") >> blanks >> identifier >> blanks) [at_c<4>(_r1) = _1]   ||
           (lit("max")    >> blanks >> qi::uint_  >> blanks) [at_c<5>(_r1) = _1]   ||
           (lit("output") >> blanks >> filename >> blanks)   [at_c<6>(_r1) = _1]
@@ -132,8 +132,8 @@ void shell::CMD::CMDReportDFGPath::help(Env& gEnv) {
   gEnv.stdOs << "Options:" << endl;
   gEnv.stdOs << "   -help                show this help information." << endl;
   gEnv.stdOs << "   -fast                use the fast algorithm which omit intermediate nodes." << endl;
-  gEnv.stdOs << "   -source ID           path starting points (FF/input)." << endl;
-  gEnv.stdOs << "   -target ID           path ending points (FF/output)." << endl;
+  gEnv.stdOs << "   -from ID             path starting points (FF/input)." << endl;
+  gEnv.stdOs << "   -to ID               path ending points (FF/output)." << endl;
   gEnv.stdOs << "   -design ID           design name if not the current design." << endl;
   gEnv.stdOs << "   -max N               the maximal number of paths to be reported." << endl;
   gEnv.stdOs << "   -output file_name    specify an output file." << endl;
@@ -227,12 +227,9 @@ bool shell::CMD::CMDReportDFGPath::exec ( const std::string& str, Env * pEnv){
     targets.insert(tar);
 
   if(arg.bFast)
-    plist = src->get_out_paths_f();
+      plist = src->get_out_paths_f(arg.nMax < 0 ? 10 : arg.nMax, targets);  
   else {
-    if(arg.nMax == 0)
-      plist = src->get_out_paths(10, targets);
-    else
-      plist = src->get_out_paths(arg.nMax, targets);
+      plist = src->get_out_paths(arg.nMax < 0 ? 10 : arg.nMax, targets);  
   }
 
   int index = 0;
