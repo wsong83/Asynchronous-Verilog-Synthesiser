@@ -59,7 +59,7 @@ namespace {
     std::string sSource;        // source node
     std::string sTarget;        // target node
     std::string sDesign;        // target design
-    unsigned int nMax;          // the maximal number of paths to be reported
+    int nMax;                   // the maximal number of paths to be reported
     std::string sOutput;        // output file name
     
     Argument() : 
@@ -68,7 +68,7 @@ namespace {
       sSource(""),
       sTarget(""),
       sDesign(""),
-      nMax(0),
+      nMax(-1),
       sOutput("") {}
   };
 }
@@ -81,7 +81,7 @@ BOOST_FUSION_ADAPT_STRUCT
  (std::string, sSource)
  (std::string, sTarget)
  (std::string, sDesign)
- (unsigned int, nMax)
+ (int, nMax)
  (std::string, sOutput)
  )
 
@@ -227,12 +227,9 @@ bool shell::CMD::CMDReportDFGPath::exec ( const std::string& str, Env * pEnv){
     targets.insert(tar);
 
   if(arg.bFast)
-    plist = src->get_out_paths_f();
+      plist = src->get_out_paths_f(arg.nMax < 0 ? 10 : arg.nMax, targets);  
   else {
-    if(arg.nMax == 0)
-      plist = src->get_out_paths(10, targets);
-    else
-      plist = src->get_out_paths(arg.nMax, targets);
+      plist = src->get_out_paths(arg.nMax < 0 ? 10 : arg.nMax, targets);  
   }
 
   int index = 0;
