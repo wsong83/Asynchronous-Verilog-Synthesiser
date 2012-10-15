@@ -102,8 +102,8 @@ namespace {
       args = lit('-') >> 
         ( (lit("help")   >> blanks)                         [at_c<0>(_r1) = true] ||
           (lit("fast")   >> blanks)                         [at_c<1>(_r1) = true] ||
-          (lit("source") >> blanks >> identifier >> blanks) [at_c<2>(_r1) = _1]   ||
-          (lit("target") >> blanks >> identifier >> blanks) [at_c<3>(_r1) = _1]   ||
+          (lit("from")   >> blanks >> identifier >> blanks) [at_c<2>(_r1) = _1]   ||
+          (lit("to")     >> blanks >> identifier >> blanks) [at_c<3>(_r1) = _1]   ||
           (lit("design") >> blanks >> identifier >> blanks) [at_c<4>(_r1) = _1]   ||
           (lit("max")    >> blanks >> qi::uint_  >> blanks) [at_c<5>(_r1) = _1]   ||
           (lit("output") >> blanks >> filename >> blanks)   [at_c<6>(_r1) = _1]
@@ -132,8 +132,8 @@ void shell::CMD::CMDReportDFGPath::help(Env& gEnv) {
   gEnv.stdOs << "Options:" << endl;
   gEnv.stdOs << "   -help                show this help information." << endl;
   gEnv.stdOs << "   -fast                use the fast algorithm which omit intermediate nodes." << endl;
-  gEnv.stdOs << "   -source ID           path starting points (FF/input)." << endl;
-  gEnv.stdOs << "   -target ID           path ending points (FF/output)." << endl;
+  gEnv.stdOs << "   -from ID             path starting points (FF/input)." << endl;
+  gEnv.stdOs << "   -to ID               path ending points (FF/output)." << endl;
   gEnv.stdOs << "   -design ID           design name if not the current design." << endl;
   gEnv.stdOs << "   -max N               the maximal number of paths to be reported." << endl;
   gEnv.stdOs << "   -output file_name    specify an output file." << endl;
