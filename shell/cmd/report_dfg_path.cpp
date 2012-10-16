@@ -186,8 +186,8 @@ bool shell::CMD::CMDReportDFGPath::exec ( const std::string& str, Env * pEnv){
   }
   
   // check start and end points
-  if(arg.sSource.empty()) {
-    gEnv.stdOs << "Error: The starting point must be specified." << endl;
+  if(arg.sSource.empty() && arg.sTarget.empty()) {
+    gEnv.stdOs << "Error: At least one of the starting point or the ending point must be specified." << endl;
   }
   
   shared_ptr<SDFG::dfgNode> src;
@@ -225,11 +225,34 @@ bool shell::CMD::CMDReportDFGPath::exec ( const std::string& str, Env * pEnv){
   std::set<shared_ptr<SDFG::dfgNode> > targets;
   if(tar)
     targets.insert(tar);
+  std::set<shared_ptr<SDFG::dfgNode> > sources;
+  if(src)
+    sources.insert(src);
 
-  if(arg.bFast)
-      plist = src->get_out_paths_f(arg.nMax < 0 ? 10 : arg.nMax, targets);  
-  else {
-      plist = src->get_out_paths(arg.nMax < 0 ? 10 : arg.nMax, targets);  
+  if(!sources.empty()) {
+    BOOST_FOREACH(shared_ptr<SDFG::dfgNode> s, sources) {
+      list<shared_ptr<SDFG::dfgPath> > mp;
+      if(arg.bFast)
+        mp = s->get_out_paths_f((arg.nMax < 0 ? 10 : arg.nMax)-plist.size(), targets);  
+      else {
+        mp = s->get_out_paths((arg.nMax < 0 ? 10 : arg.nMax)-plist.size(), targets);  
+      }
+      plist.insert(plist.end(), mp.begin(), mp.end());
+      if(plist.size() >= (arg.nMax < 0 ? 10 : arg.nMax)) 
+        break;
+    }
+  } else {
+    BOOST_FOREACH(shared_ptr<SDFG::dfgNode> t, targets) {
+      list<shared_ptr<SDFG::dfgPath> > mp;
+      if(arg.bFast)
+        mp = t->get_in_paths_f((arg.nMax < 0 ? 10 : arg.nMax)-plist.size(), sources);  
+      else {
+        mp = t->get_in_paths((arg.nMax < 0 ? 10 : arg.nMax)-plist.size(), sources);  
+      }
+      plist.insert(plist.end(), mp.begin(), mp.end());
+      if(plist.size() >= (arg.nMax < 0 ? 10 : arg.nMax)) 
+        break;
+    }
   }
 
   int index = 0;

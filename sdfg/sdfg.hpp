@@ -108,6 +108,7 @@ namespace SDFG {
     std::list<boost::shared_ptr<dfgPath> > get_out_paths(unsigned int, const std::set<boost::shared_ptr<dfgNode> >&) const; // return all output paths from this register/port
     std::list<boost::shared_ptr<dfgPath> > get_out_paths_f(unsigned int, const std::set<boost::shared_ptr<dfgNode> >&) const; // return all output paths from this register/port; fast algorithm (only start/end point and type)
     std::list<boost::shared_ptr<dfgPath> > get_in_paths(unsigned int, const std::set<boost::shared_ptr<dfgNode> >&) const; // return all input paths to this register/port
+    std::list<boost::shared_ptr<dfgPath> > get_in_paths_f(unsigned int, const std::set<boost::shared_ptr<dfgNode> >&) const; // return all input paths from this register/port; fast algorithm (only start/end point and type)
 
     std::pair<double, double> position; // graphic position
     std::pair<double, double> bbox;     // bounding box
@@ -125,18 +126,24 @@ namespace SDFG {
                               std::set<boost::shared_ptr<dfgNode> >&) const; // helper for get_out_paths()
 
     void in_path_type_update(std::list<boost::shared_ptr<dfgPath> >&,
-                              boost::shared_ptr<dfgPath>&,
-                              unsigned int,
-                              const std::set<boost::shared_ptr<dfgNode> >&,
-                              std::map<boost::shared_ptr<dfgNode>, std::map<boost::shared_ptr<dfgNode>, int > >&,
-                              std::set<boost::shared_ptr<dfgNode> >&) const; // helper for get_out_paths()
+                             boost::shared_ptr<dfgPath>&,
+                             unsigned int,
+                             const std::set<boost::shared_ptr<dfgNode> >&,
+                             std::map<boost::shared_ptr<dfgNode>, std::map<boost::shared_ptr<dfgNode>, int > >&,
+                             std::set<boost::shared_ptr<dfgNode> >&) const; // helper for get_in_paths()
 
     void out_path_type_update_f(std::set<boost::shared_ptr<dfgNode> >&,
                                 unsigned int,
                                 const std::set<boost::shared_ptr<dfgNode> >&,
                                 std::map<boost::shared_ptr<dfgNode>, std::list<boost::shared_ptr<dfgNode> > >&,
                                 std::map<boost::shared_ptr<dfgNode>, int>&) const; // helper for get_out_paths_f()
-  };
+
+    void in_path_type_update_f(std::set<boost::shared_ptr<dfgNode> >&,
+                               unsigned int,
+                               const std::set<boost::shared_ptr<dfgNode> >&,
+                               std::map<boost::shared_ptr<dfgNode>, std::list<boost::shared_ptr<dfgNode> > >&,
+                               std::map<boost::shared_ptr<dfgNode>, int>&) const; // helper for get_in_paths_f()
+ };
 
   class dfgEdge {
   public:
