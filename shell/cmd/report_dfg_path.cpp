@@ -55,7 +55,6 @@ namespace {
 
   struct Argument {
     bool bHelp;                 // show help information
-    bool bFast;                 // fast version
     std::string sSource;        // source node
     std::string sTarget;        // target node
     std::string sDesign;        // target design
@@ -64,7 +63,6 @@ namespace {
     
     Argument() : 
       bHelp(false),
-      bFast(false),
       sSource(""),
       sTarget(""),
       sDesign(""),
@@ -77,7 +75,6 @@ BOOST_FUSION_ADAPT_STRUCT
 (
  Argument,
  (bool, bHelp)
- (bool, bFast)
  (std::string, sSource)
  (std::string, sTarget)
  (std::string, sDesign)
@@ -101,12 +98,11 @@ namespace {
 
       args = lit('-') >> 
         ( (lit("help")   >> blanks)                         [at_c<0>(_r1) = true] ||
-          (lit("fast")   >> blanks)                         [at_c<1>(_r1) = true] ||
-          (lit("from")   >> blanks >> identifier >> blanks) [at_c<2>(_r1) = _1]   ||
-          (lit("to")     >> blanks >> identifier >> blanks) [at_c<3>(_r1) = _1]   ||
-          (lit("design") >> blanks >> identifier >> blanks) [at_c<4>(_r1) = _1]   ||
-          (lit("max")    >> blanks >> qi::uint_  >> blanks) [at_c<5>(_r1) = _1]   ||
-          (lit("output") >> blanks >> filename >> blanks)   [at_c<6>(_r1) = _1]
+          (lit("from")   >> blanks >> identifier >> blanks) [at_c<1>(_r1) = _1]   ||
+          (lit("to")     >> blanks >> identifier >> blanks) [at_c<2>(_r1) = _1]   ||
+          (lit("design") >> blanks >> identifier >> blanks) [at_c<3>(_r1) = _1]   ||
+          (lit("max")    >> blanks >> qi::uint_  >> blanks) [at_c<4>(_r1) = _1]   ||
+          (lit("output") >> blanks >> filename >> blanks)   [at_c<5>(_r1) = _1]
           );
       
       start = +(args(_val));
@@ -131,7 +127,6 @@ void shell::CMD::CMDReportDFGPath::help(Env& gEnv) {
   gEnv.stdOs << "    report_dfg_path -source ID [options]" << endl;
   gEnv.stdOs << "Options:" << endl;
   gEnv.stdOs << "   -help                show this help information." << endl;
-  gEnv.stdOs << "   -fast                use the fast algorithm which omit intermediate nodes." << endl;
   gEnv.stdOs << "   -from ID             path starting points (FF/input)." << endl;
   gEnv.stdOs << "   -to ID               path ending points (FF/output)." << endl;
   gEnv.stdOs << "   -design ID           design name if not the current design." << endl;
@@ -232,11 +227,7 @@ bool shell::CMD::CMDReportDFGPath::exec ( const std::string& str, Env * pEnv){
   if(!sources.empty()) {
     BOOST_FOREACH(shared_ptr<SDFG::dfgNode> s, sources) {
       list<shared_ptr<SDFG::dfgPath> > mp;
-      if(arg.bFast)
-        mp = s->get_out_paths_f((arg.nMax < 0 ? 10 : arg.nMax)-plist.size(), targets);  
-      else {
-        mp = s->get_out_paths((arg.nMax < 0 ? 10 : arg.nMax)-plist.size(), targets);  
-      }
+      mp = s->get_out_paths((arg.nMax < 0 ? 10 : arg.nMax)-plist.size(), targets);  
       plist.insert(plist.end(), mp.begin(), mp.end());
       if(plist.size() >= (arg.nMax < 0 ? 10 : arg.nMax)) 
         break;
@@ -244,11 +235,7 @@ bool shell::CMD::CMDReportDFGPath::exec ( const std::string& str, Env * pEnv){
   } else {
     BOOST_FOREACH(shared_ptr<SDFG::dfgNode> t, targets) {
       list<shared_ptr<SDFG::dfgPath> > mp;
-      if(arg.bFast)
-        mp = t->get_in_paths_f((arg.nMax < 0 ? 10 : arg.nMax)-plist.size(), sources);  
-      else {
-        mp = t->get_in_paths((arg.nMax < 0 ? 10 : arg.nMax)-plist.size(), sources);  
-      }
+      mp = t->get_in_paths((arg.nMax < 0 ? 10 : arg.nMax)-plist.size(), sources);  
       plist.insert(plist.end(), mp.begin(), mp.end());
       if(plist.size() >= (arg.nMax < 0 ? 10 : arg.nMax)) 
         break;

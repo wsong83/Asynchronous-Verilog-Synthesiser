@@ -374,13 +374,19 @@ void SDFG::dfgPath::push_back(boost::shared_ptr<dfgNode> n, int et) {
   if(path.empty())
     src = n;
   path.push_back(n);
-  type |= et;
+  if((type & et) & dfgEdge::SDFG_DP)
+    type |= et;
+  else
+    type = et;
   node_set.insert(n);
 }
 
 void SDFG::dfgPath::push_front(boost::shared_ptr<dfgNode> n, int et) {
   path.push_front(n);
-  type |= et;
+  if((type & et) & dfgEdge::SDFG_DP)
+    type |= et;
+  else if(type == 0)
+    type = et;
   node_set.insert(n);
   src = n;
 }
@@ -399,9 +405,12 @@ std::ostream& SDFG::dfgPath::streamout(std::ostream& os) const {
     else {
       if(type & dfgEdge::SDFG_DP) stype = "DP";
       if(type & dfgEdge::SDFG_CTL) {
-        if((type & dfgEdge::SDFG_CLK) == dfgEdge::SDFG_CLK) stype = stype.empty() ? "CLK" : stype + "|CLK";
-        if((type & dfgEdge::SDFG_RST) == dfgEdge::SDFG_RST) stype = stype.empty() ? "RST" : stype + "|RST";
-        if((type & dfgEdge::SDFG_CTL) == dfgEdge::SDFG_CTL) stype = stype.empty() ? "CTL" : stype + "|CTL";
+        if((type & dfgEdge::SDFG_CLK) == dfgEdge::SDFG_CLK) 
+          stype = stype.empty() ? "CLK" : stype + "|CLK";
+        else if((type & dfgEdge::SDFG_RST) == dfgEdge::SDFG_RST) 
+          stype = stype.empty() ? "RST" : stype + "|RST";
+        else 
+          stype = stype.empty() ? "CTL" : stype + "|CTL";
       }
     }
 
