@@ -658,6 +658,7 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_reg_graph() const {
 list<list<shared_ptr<dfgNode> > > SDFG::dfgGraph::get_fsm_groups() const {
   // find all registers who has self-loops
   list<shared_ptr<dfgNode> > nlist;
+  std::set<shared_ptr<dfgNode> > pfsm; // potential FSMs
   unsigned int regn = 0;        // total number of registers
   unsigned int pfsmn = 0;       // total number of potential FSMs
   typedef pair<const vertex_descriptor, shared_ptr<dfgNode> > node_record_type;
@@ -665,7 +666,63 @@ list<list<shared_ptr<dfgNode> > > SDFG::dfgGraph::get_fsm_groups() const {
     if(nr.second->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_MODULE))
       nlist.push_back(nr.second);
   }
-    
+
+  while(!nlist.empty()) {
+    shared_ptr<dfgNode> cn = nlist.front();
+    nlist.pop_front();
+
+    if(cn->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH)) { // register
+      regn++;
+      std::set<shared_ptr<dfgNode> > tar_set;
+      tar_set.insert(cn);
+      list<shared_ptr<dfgPath> > pathlist = cn->get_out_paths(0, tar_set);
+      BOOST_FOREACH(shared_ptr<dfgPath> p, pathlist) {
+        if(p->type & dfgEdge::SDFG_CTL) {
+          list<shared_ptr<dfgNode> >::iterator pre, it, end;  
+          list<int>::iterator tit;
+          pre = p->path.begin();
+          it = p->path.begin();
+          tit = p->path_type.begin();
+          end = p->path.end();
+          for(++it; it!=end; pre=it++, ++tit) {
+            shared_ptr<dfgNode> cnode = *it;
+            shared_ptr<dfgNode> pnode = *pre;
+            if(*tit & dfgEdge::SDFG_CTL) {
+              self_ctl_loop = true;
+              break;
+            } else if(cnode->pg->size_in_edges(cnode->id) > 1)
+              break;
+          }
+          
+          if(self_ctl_loop) 
+            break;
+          else {
+            shared_ptr<dfgNode> cnode = gnode;
+            shared_ptr<dfgNode> pnode = *pre;
+            if(*tit & dfgEdge::SDFG_CTL) {
+              self_ctl_loop = true;
+              break;
+            }
+          }
+
+          pfsm.insert(cn);
+          pfsmn++;
+          break;
+        }
+      }
+    } else {
+      // must be module
+      if(cn->child) {
+        BOOST_FOREACH(node_record_type nr, cn->child->nodes) {
+          if(nr.second->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_MODULE))
+            nlist.push_back(nr.second);
+        }
+      }
+    }
+  }
+
+  
+          
         
 
 
