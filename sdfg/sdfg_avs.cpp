@@ -655,7 +655,20 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_reg_graph() const {
   return ng;
 }
 
-list<list<shared_ptr<dfgNode> > > SDFG::dfgGraph::get_fsm_groups(const shared_ptr<dfgGraph>& regg) const {
+list<list<shared_ptr<dfgNode> > > SDFG::dfgGraph::get_fsm_groups() const {
+  // find all registers who has self-loops
+  list<shared_ptr<dfgNode> > nlist;
+  unsigned int regn = 0;        // total number of registers
+  unsigned int pfsmn = 0;       // total number of potential FSMs
+  typedef pair<const vertex_descriptor, shared_ptr<dfgNode> > node_record_type;
+  BOOST_FOREACH(node_record_type nr, nodes) {
+    if(nr.second->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_MODULE))
+      nlist.push_back(nr.second);
+  }
+    
+        
+
+
   // scan all registers in the regg for registers who have self-control loops
   std::set<shared_ptr<dfgNode> > pfsm; // potential FSMs
   map<vertex_descriptor, shared_ptr<dfgNode> >::const_iterator it, end;
