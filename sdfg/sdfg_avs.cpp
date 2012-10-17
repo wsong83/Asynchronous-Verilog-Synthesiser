@@ -599,8 +599,6 @@ void SDFG::dfgGraph::path_deduction(std::set<shared_ptr<dfgNode> >& proc_set, bo
 
 shared_ptr<dfgGraph> SDFG::dfgGraph::get_reg_graph() const {
 
-  std::cout << "begin" << std::endl;
-
   // new register graph
   shared_ptr<dfgGraph> ng(new dfgGraph(name));
 
@@ -662,10 +660,7 @@ list<list<shared_ptr<dfgNode> > > SDFG::dfgGraph::get_fsm_groups(const shared_pt
   std::set<shared_ptr<dfgNode> > pfsm; // potential FSMs
   map<vertex_descriptor, shared_ptr<dfgNode> >::const_iterator it, end;
   for(it=regg->nodes.begin(), end=regg->nodes.end(); it!=end; ++it) {
-    std::set<shared_ptr<dfgNode> > tset;
-    tset.insert(it->second);
-    list<shared_ptr<dfgPath> > p = it->second->get_out_paths(0, tset);
-    if(!p.empty() && (p.front()->type & dfgEdge::SDFG_CTL))
+    if(regg->exist(it->second, it->second, dfgEdge::SDFG_CTL))
       pfsm.insert(it->second);
   }
 
@@ -675,21 +670,81 @@ list<list<shared_ptr<dfgNode> > > SDFG::dfgGraph::get_fsm_groups(const shared_pt
     // remove the registers which is not a fsm
     // get the in paths and out paths
     std::set<shared_ptr<dfgNode> > dummyset;
-    list<shared_ptr<dfgPath> > pi = n->get_in_paths(0, dummyset);
-    list<shared_ptr<dfgPath> > po = n->get_out_paths(0, dummyset);
+    // the node in DFG
+    shared_ptr<dfgNode> gnode = search_node(n->get_hier_name());
+    list<shared_ptr<dfgPath> > po = gnode->get_out_paths(0, dummyset);
     
-    // must have control output
-    bool ctl_output = false;
-    BOOST_FOREACH(shared_ptr<dfgPath> p, po) {
-      if(p->type & dfgEdge::SDFG_CTL) {
-        ctl_output = true;
-        break;
+    // control self loop
+    bool self_ctl_loop = false;
+    BOOST_FOREACH(shared_ptr<dfgPath>p, po) {
+      if(p->tar == gnode) {
+        list<shared_ptr<dfgNode> >::iterator pre, it, end;  
+        list<int>::iterator tit;
+        pre = p->path.begin();
+        it = p->path.begin();
+        tit = p->path_type.begin();
+        end = p->path.end();
+        for(++it; it!=end; pre=it++, ++tit) {
+          shared_ptr<dfgNode> cnode = *it;
+          shared_ptr<dfgNode> pnode = *pre;
+          if(*tit & dfgEdge::SDFG_CTL) {
+            self_ctl_loop = true;
+            break;
+          } else if(cnode->pg->size_in_edges(cnode->id) > 1)
+            break;
+        }
+
+        if(self_ctl_loop) 
+          break;
+        else {
+          shared_ptr<dfgNode> cnode = gnode;
+          shared_ptr<dfgNode> pnode = *pre;
+          if(*tit & dfgEdge::SDFG_CTL) {
+            self_ctl_loop = true;
+            break;
+          }
+        }
       }
-    }
-    if(!ctl_output) ffsm.insert(n);
+    }        
+    if(!self_ctl_loop) { ffsm.insert(n); continue;}
+
+    // must have control output to other node
+    bool ctl_output = false;
+    BOOST_FOREACH(shared_ptr<dfgPath>p, po) {
+      if(p->tar != gnode) {
+        list<shared_ptr<dfgNode> >::iterator pre, it, end;
+        list<int>::iterator tit;
+        pre = p->path.begin();
+        it = p->path.begin();
+        tit = p->path_type.begin();
+        end = p->path.end();
+        for(++it; it!=end; pre=it++, ++tit) {
+          shared_ptr<dfgNode> cnode = *it;
+          shared_ptr<dfgNode> pnode = *pre;
+          if(*tit & dfgEdge::SDFG_CTL) {
+            ctl_output = true;
+            break;
+          } else if(cnode->pg->size_in_edges(cnode->id) > 1)
+            break;
+        }
+
+        if(ctl_output) 
+          break;
+        else {
+          shared_ptr<dfgNode> cnode = p->tar;
+          shared_ptr<dfgNode> pnode = *pre;
+          if(*tit & dfgEdge::SDFG_CTL) {
+            ctl_output = true;
+            break;
+          }
+        }
+      }
+    }        
+    if(!ctl_output) { ffsm.insert(n); continue;}
     
 
     // all data input should be const(omitted), itself
+    list<shared_ptr<dfgPath> > pi = n->get_in_paths(0, dummyset);
     BOOST_FOREACH(shared_ptr<dfgPath> p, pi) {
       if(p->type & dfgEdge::SDFG_DP) {
         if(p->src != n) {

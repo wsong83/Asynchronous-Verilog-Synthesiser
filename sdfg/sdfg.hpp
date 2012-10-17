@@ -163,6 +163,7 @@ namespace SDFG {
     boost::shared_ptr<dfgNode> tar;
     int type;
     std::list<boost::shared_ptr<dfgNode> > path;
+    std::list<int> path_type;
     std::set<boost::shared_ptr<dfgNode> > node_set; // remember the nodes in this path; to avoid combi loop
 
     dfgPath() : type(0) {}
