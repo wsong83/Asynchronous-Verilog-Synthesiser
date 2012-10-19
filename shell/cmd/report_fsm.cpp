@@ -159,23 +159,14 @@ bool shell::CMD::CMDReportFSM::exec ( const std::string& str, Env * pEnv){
     G = tarDesign->DFG;
   }
   
-  // check the regg is ready
-  shared_ptr<SDFG::dfgGraph> RG;
-  if(!tarDesign->RG) {
-    gEnv.stdOs << "Error: Register graph is not extracted for the target design \"" << designName << "\"." << endl;
-    return false;
-  } else {
-    RG = tarDesign->RG;
-  }
-
   // do the FSM extraction
-  list<list<shared_ptr<SDFG::dfgNode> > > fsmg = G->get_fsm_groups(RG);
+  list<list<shared_ptr<SDFG::dfgNode> > > fsmg = G->get_fsm_groups();
 
   unsigned int index = 0;
   BOOST_FOREACH(list<shared_ptr<SDFG::dfgNode> >& g, fsmg) {
     gEnv.stdOs << "[" << ++index << "]  ";
     BOOST_FOREACH(shared_ptr<SDFG::dfgNode>& n, g) {
-      gEnv.stdOs << n->get_hier_name() << " ";
+      gEnv.stdOs << n->get_full_name() << " ";
     }
     gEnv.stdOs << endl;
   }

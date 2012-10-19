@@ -373,8 +373,7 @@ bool SDFG::dfgEdge::read(void * const pedge, ogdf::GraphAttributes * const pga) 
 void SDFG::dfgPath::push_back(boost::shared_ptr<dfgNode> n, int et) {
   if(path.empty())
     src = n;
-  path.push_back(n);
-  path_type.push_back(et);
+  path.push_back(path_type(n, et));
   if((type & et) & dfgEdge::SDFG_DP)
     type |= et;
   else
@@ -383,8 +382,7 @@ void SDFG::dfgPath::push_back(boost::shared_ptr<dfgNode> n, int et) {
 }
 
 void SDFG::dfgPath::push_front(boost::shared_ptr<dfgNode> n, int et) {
-  path.push_front(n);
-  path_type.push_front(et);
+  path.push_front(path_type(n, et));
   if((type & et) & dfgEdge::SDFG_DP)
     type |= et;
   else if(type == 0)
@@ -396,7 +394,6 @@ void SDFG::dfgPath::push_front(boost::shared_ptr<dfgNode> n, int et) {
 void SDFG::dfgPath::combine(boost::shared_ptr<dfgPath> p) {
   tar = p->tar;
   path.insert(path.end(), p->path.begin(), p->path.end());
-  path_type.insert(path_type.end(), p->path_type.begin(), p->path_type.end());
   if((type & p->type) & dfgEdge::SDFG_DP)
     type |= p->type;
   else
@@ -424,23 +421,21 @@ std::ostream& SDFG::dfgPath::streamout(std::ostream& os) const {
     if(path.empty())
       os << src->get_full_name() << " > ... > " << tar->get_full_name();
     else {
-      list<int>::const_iterator it_type = path_type.begin();
-      BOOST_FOREACH(shared_ptr<dfgNode> m, path) {
+      BOOST_FOREACH(const path_type& m, path) {
         string stype;
-        if(*it_type == dfgEdge::SDFG_DF) stype = "DF";
+        if(m.second == dfgEdge::SDFG_DF) stype = "DF";
         else {
-          if(*it_type & dfgEdge::SDFG_DP) stype = "DP";
-          if(*it_type & dfgEdge::SDFG_CTL) {
-            if((*it_type & dfgEdge::SDFG_CLK) == dfgEdge::SDFG_CLK) 
+          if(m.second & dfgEdge::SDFG_DP) stype = "DP";
+          if(m.second & dfgEdge::SDFG_CTL) {
+            if((m.second & dfgEdge::SDFG_CLK) == dfgEdge::SDFG_CLK) 
               stype = stype.empty() ? "CLK" : stype + "|CLK";
-            else if((*it_type & dfgEdge::SDFG_RST) == dfgEdge::SDFG_RST) 
+            else if((m.second & dfgEdge::SDFG_RST) == dfgEdge::SDFG_RST) 
               stype = stype.empty() ? "RST" : stype + "|RST";
             else 
               stype = stype.empty() ? "CTL" : stype + "|CTL";
           }
         }
-        os << m->get_full_name() << "(" << stype << ")";
-        ++it_type;
+        os << m.first->get_full_name() << "(" << stype << ")";
       }
       os << tar->get_full_name();
     }

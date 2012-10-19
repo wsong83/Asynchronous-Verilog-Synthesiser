@@ -303,7 +303,7 @@ namespace SDFG {
     void path_deduction(bool); // deduce the type of paths, call this one when it is the top
     void path_deduction(std::set<boost::shared_ptr<dfgNode> >&, bool); // deduce the type of paths
     boost::shared_ptr<dfgGraph> get_reg_graph() const; // extract a register only graph from the DFG
-    std::list<std::list<boost::shared_ptr<dfgNode> > > get_fsm_groups(const boost::shared_ptr<dfgGraph>&) const; // extract fsms from regg and dfg
+    std::list<std::list<boost::shared_ptr<dfgNode> > > get_fsm_groups() const; // extract fsms from regg and dfg
 
     // other
     std::string get_full_name() const;
