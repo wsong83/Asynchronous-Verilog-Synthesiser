@@ -226,17 +226,27 @@ bool shell::CMD::CMDReportDFGPath::exec ( const std::string& str, Env * pEnv){
 
   if(!sources.empty()) {
     BOOST_FOREACH(shared_ptr<SDFG::dfgNode> s, sources) {
-      list<shared_ptr<SDFG::dfgPath> > mp;
-      mp = s->get_out_paths((arg.nMax < 0 ? 10 : arg.nMax)-plist.size(), targets);  
-      plist.insert(plist.end(), mp.begin(), mp.end());
+      list<shared_ptr<SDFG::dfgPath> >& mp = s->get_out_paths();
+      BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, mp) {
+        if(targets.empty() || targets.count(p->tar)) {
+           if(plist.size() < (arg.nMax < 0 ? 10 : arg.nMax))
+             plist.push_back(p);
+           else break;
+        }
+      }
       if(plist.size() >= (arg.nMax < 0 ? 10 : arg.nMax)) 
         break;
     }
   } else {
     BOOST_FOREACH(shared_ptr<SDFG::dfgNode> t, targets) {
-      list<shared_ptr<SDFG::dfgPath> > mp;
-      mp = t->get_in_paths((arg.nMax < 0 ? 10 : arg.nMax)-plist.size(), sources);  
-      plist.insert(plist.end(), mp.begin(), mp.end());
+      list<shared_ptr<SDFG::dfgPath> >& mp = t->get_in_paths();
+      BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, mp) {
+        if(sources.empty() || sources.count(p->tar)) {
+           if(plist.size() < (arg.nMax < 0 ? 10 : arg.nMax))
+             plist.push_back(p);
+           else break;
+        }
+      }
       if(plist.size() >= (arg.nMax < 0 ? 10 : arg.nMax)) 
         break;
     }
@@ -244,8 +254,7 @@ bool shell::CMD::CMDReportDFGPath::exec ( const std::string& str, Env * pEnv){
 
   int index = 0;
   BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, plist) {
-    if(!tar || (tar && p->tar == tar))
-      gEnv.stdOs << "[" << ++index << "]  " << *p;
+    gEnv.stdOs << "[" << ++index << "]  " << *p;
   }
 
   return true;

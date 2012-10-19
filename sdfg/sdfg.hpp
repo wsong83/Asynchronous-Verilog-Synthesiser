@@ -90,6 +90,9 @@ namespace SDFG {
       SDFG_PORT           = 0x00400  // all ports
     } type;
 
+    // only available in register graph
+    std::list<boost::shared_ptr<dfgPath> > opath, ipath; // record all output/input paths to avoid recalculation
+
 
     dfgNode(): pg(NULL), node_index(0), type(SDFG_DF), position(0,0), bbox(0,0) {}
     dfgNode(const std::string& n, node_type_t t = SDFG_DF) : 
@@ -105,8 +108,8 @@ namespace SDFG {
     void set_hier_name(const std::string&);       // set the hierarchical name
     void remove_port_sig(const std::string&, int); // remove a certain port signal
     void add_port_sig(const std::string&, const std::string&); // add a certain port connection
-    std::list<boost::shared_ptr<dfgPath> > get_out_paths(unsigned int, const std::set<boost::shared_ptr<dfgNode> >&) const; // return all output paths from this register/port
-    std::list<boost::shared_ptr<dfgPath> > get_in_paths(unsigned int, const std::set<boost::shared_ptr<dfgNode> >&) const; // return all input paths to this register/port
+    std::list<boost::shared_ptr<dfgPath> >& get_out_paths(); // return all output paths from this register/port
+    std::list<boost::shared_ptr<dfgPath> >& get_in_paths(); // return all input paths to this register/port
 
     std::pair<double, double> position; // graphic position
     std::pair<double, double> bbox;     // bounding box
@@ -118,17 +121,13 @@ namespace SDFG {
   private:
     void out_path_type_update(std::list<boost::shared_ptr<dfgPath> >&,
                               boost::shared_ptr<dfgPath>&,
-                              unsigned int,
-                              const std::set<boost::shared_ptr<dfgNode> >&,
                               std::map<boost::shared_ptr<dfgNode>, std::map<boost::shared_ptr<dfgNode>, int > >&,
-                              std::set<boost::shared_ptr<dfgNode> >&) const; // helper for get_out_paths()
+                              std::set<boost::shared_ptr<dfgNode> >&); // helper for get_out_paths()
 
     void in_path_type_update(std::list<boost::shared_ptr<dfgPath> >&,
                              boost::shared_ptr<dfgPath>&,
-                             unsigned int,
-                             const std::set<boost::shared_ptr<dfgNode> >&,
                              std::map<boost::shared_ptr<dfgNode>, std::map<boost::shared_ptr<dfgNode>, int > >&,
-                             std::set<boost::shared_ptr<dfgNode> >&) const; // helper for get_in_paths()
+                             std::set<boost::shared_ptr<dfgNode> >&); // helper for get_in_paths()
 
  };
 
