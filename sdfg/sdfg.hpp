@@ -106,7 +106,7 @@ namespace SDFG {
     void remove_port_sig(const std::string&, int); // remove a certain port signal
     void add_port_sig(const std::string&, const std::string&); // add a certain port connection
     std::list<boost::shared_ptr<dfgPath> > get_out_paths(unsigned int, const std::set<boost::shared_ptr<dfgNode> >&) const; // return all output paths from this register/port
-    std::list<boost::shared_ptr<dfgPath> > get_out_paths_f(unsigned int, const std::set<boost::shared_ptr<dfgNode> >&) const; // return all output paths from this register/port; fast algorithm (only start/end point and type)
+    std::list<boost::shared_ptr<dfgPath> > get_in_paths(unsigned int, const std::set<boost::shared_ptr<dfgNode> >&) const; // return all input paths to this register/port
 
     std::pair<double, double> position; // graphic position
     std::pair<double, double> bbox;     // bounding box
@@ -123,12 +123,14 @@ namespace SDFG {
                               std::map<boost::shared_ptr<dfgNode>, std::map<boost::shared_ptr<dfgNode>, int > >&,
                               std::set<boost::shared_ptr<dfgNode> >&) const; // helper for get_out_paths()
 
-    void out_path_type_update_f(std::set<boost::shared_ptr<dfgNode> >&,
-                                unsigned int,
-                                const std::set<boost::shared_ptr<dfgNode> >&,
-                                std::map<boost::shared_ptr<dfgNode>, std::list<boost::shared_ptr<dfgNode> > >&,
-                                std::map<boost::shared_ptr<dfgNode>, int>&) const; // helper for get_out_paths_f()
-  };
+    void in_path_type_update(std::list<boost::shared_ptr<dfgPath> >&,
+                             boost::shared_ptr<dfgPath>&,
+                             unsigned int,
+                             const std::set<boost::shared_ptr<dfgNode> >&,
+                             std::map<boost::shared_ptr<dfgNode>, std::map<boost::shared_ptr<dfgNode>, int > >&,
+                             std::set<boost::shared_ptr<dfgNode> >&) const; // helper for get_in_paths()
+
+ };
 
   class dfgEdge {
   public:
@@ -160,7 +162,8 @@ namespace SDFG {
     boost::shared_ptr<dfgNode> src;
     boost::shared_ptr<dfgNode> tar;
     int type;
-    std::list<boost::shared_ptr<dfgNode> > path;
+    typedef std::pair<boost::shared_ptr<dfgNode>, int> path_type;
+    std::list<path_type> path;
     std::set<boost::shared_ptr<dfgNode> > node_set; // remember the nodes in this path; to avoid combi loop
 
     dfgPath() : type(0) {}
@@ -300,6 +303,7 @@ namespace SDFG {
     void path_deduction(bool); // deduce the type of paths, call this one when it is the top
     void path_deduction(std::set<boost::shared_ptr<dfgNode> >&, bool); // deduce the type of paths
     boost::shared_ptr<dfgGraph> get_reg_graph() const; // extract a register only graph from the DFG
+    std::list<std::list<boost::shared_ptr<dfgNode> > > get_fsm_groups() const; // extract fsms from regg and dfg
 
     // other
     std::string get_full_name() const;

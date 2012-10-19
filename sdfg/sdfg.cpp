@@ -373,14 +373,20 @@ bool SDFG::dfgEdge::read(void * const pedge, ogdf::GraphAttributes * const pga) 
 void SDFG::dfgPath::push_back(boost::shared_ptr<dfgNode> n, int et) {
   if(path.empty())
     src = n;
-  path.push_back(n);
-  type |= et;
+  path.push_back(path_type(n, et));
+  if((type & et) & dfgEdge::SDFG_DP)
+    type |= et;
+  else
+    type = et;
   node_set.insert(n);
 }
 
 void SDFG::dfgPath::push_front(boost::shared_ptr<dfgNode> n, int et) {
-  path.push_front(n);
-  type |= et;
+  path.push_front(path_type(n, et));
+  if((type & et) & dfgEdge::SDFG_DP)
+    type |= et;
+  else if(type == 0)
+    type = et;
   node_set.insert(n);
   src = n;
 }
@@ -388,7 +394,10 @@ void SDFG::dfgPath::push_front(boost::shared_ptr<dfgNode> n, int et) {
 void SDFG::dfgPath::combine(boost::shared_ptr<dfgPath> p) {
   tar = p->tar;
   path.insert(path.end(), p->path.begin(), p->path.end());
-  type |= p->type;
+  if((type & p->type) & dfgEdge::SDFG_DP)
+    type |= p->type;
+  else
+    type = p->type;
 }
 
 std::ostream& SDFG::dfgPath::streamout(std::ostream& os) const {
@@ -399,9 +408,12 @@ std::ostream& SDFG::dfgPath::streamout(std::ostream& os) const {
     else {
       if(type & dfgEdge::SDFG_DP) stype = "DP";
       if(type & dfgEdge::SDFG_CTL) {
-        if((type & dfgEdge::SDFG_CLK) == dfgEdge::SDFG_CLK) stype = stype.empty() ? "CLK" : stype + "|CLK";
-        if((type & dfgEdge::SDFG_RST) == dfgEdge::SDFG_RST) stype = stype.empty() ? "RST" : stype + "|RST";
-        if((type & dfgEdge::SDFG_CTL) == dfgEdge::SDFG_CTL) stype = stype.empty() ? "CTL" : stype + "|CTL";
+        if((type & dfgEdge::SDFG_CLK) == dfgEdge::SDFG_CLK) 
+          stype = stype.empty() ? "CLK" : stype + "|CLK";
+        else if((type & dfgEdge::SDFG_RST) == dfgEdge::SDFG_RST) 
+          stype = stype.empty() ? "RST" : stype + "|RST";
+        else 
+          stype = stype.empty() ? "CTL" : stype + "|CTL";
       }
     }
 
@@ -409,8 +421,21 @@ std::ostream& SDFG::dfgPath::streamout(std::ostream& os) const {
     if(path.empty())
       os << src->get_full_name() << " > ... > " << tar->get_full_name();
     else {
-      BOOST_FOREACH(shared_ptr<dfgNode> m, path) {
-        os << m->get_full_name() << " > ";
+      BOOST_FOREACH(const path_type& m, path) {
+        string stype;
+        if(m.second == dfgEdge::SDFG_DF) stype = "DF";
+        else {
+          if(m.second & dfgEdge::SDFG_DP) stype = "DP";
+          if(m.second & dfgEdge::SDFG_CTL) {
+            if((m.second & dfgEdge::SDFG_CLK) == dfgEdge::SDFG_CLK) 
+              stype = stype.empty() ? "CLK" : stype + "|CLK";
+            else if((m.second & dfgEdge::SDFG_RST) == dfgEdge::SDFG_RST) 
+              stype = stype.empty() ? "RST" : stype + "|RST";
+            else 
+              stype = stype.empty() ? "CTL" : stype + "|CTL";
+          }
+        }
+        os << m.first->get_full_name() << "(" << stype << ")";
       }
       os << tar->get_full_name();
     }

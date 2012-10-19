@@ -1,3 +1,13 @@
+##### Mon 15/10/2012
+* New command report_dfg_path
+      search and reports all the paths (IO/FF -> IO/FF) from a certain IO/FF to all/certain IO/FF.
+* New command extract_regg
+      generate a flattened register DFG from the hierarchical DFG
+      it will be used to detect all FFs who has self-control loops (potential FSM)
+* add capability in SDFG library to store paths, and search paths from a specified starting point
+* regulate all printed informations using error No., so they can be suppressed by user
+* remove cppPNML library from master branch
+
 ##### Sat 29/09/2012
 * Nodes without output edges are removed (cross module boundry removal!)
 
