@@ -734,18 +734,57 @@ list<list<shared_ptr<dfgNode> > > SDFG::dfgGraph::get_fsm_groups() const {
     pfsm.erase(n);
   }
 
+  // figure out the relations of FSMs
+  unsigned int number_of_groups = 0;
+  map<shared_ptr<dfgNode>, unsigned int> group_map;
+  BOOST_FOREACH(shared_ptr<dfgNode> n, pfsm) {
+    if(group_map.count(n)) continue;
+ 
+    // get all the FSMs connected
+    unsigned int gid = 0;
+    std::set<shared_ptr<dfgNode> > connected_fsm;
+    BOOST_FOREACH(shared_ptr<dfgPath> p, n->get_out_paths()) {
+      if(pfsm.count(p->tar)) {  // it is a FSM
+        connected_fsm.insert(p->tar);
+        if(group_map.count(p->tar)) { // try to get a group id
+          if(gid == 0 || gid >= group_map[p->tar])
+            gid = group_map[p->tar];
+        }
+      }
+    }
+    BOOST_FOREACH(shared_ptr<dfgPath> p, n->get_in_paths()) {
+      if(pfsm.count(p->src)) {  // it is a FSM
+        connected_fsm.insert(p->tar);
+        if(group_map.count(p->src)) { // try to get a group id
+          if(gid == 0 || gid >= group_map[p->src])
+            gid = group_map[p->tar];
+        }
+      }
+    }
+    if(gid == 0) gid = ++number_of_groups;
+    group_map[n] = gid;
+    BOOST_FOREACH(shared_ptr<dfgNode> n, connected_fsm) {
+      group_map[n] = gid;
+    }
+  }
+
+  map<unsigned int, list<shared_ptr<dfgNode> > > fmap;
+  typedef pair<const shared_ptr<dfgNode>, unsigned int> group_map_type;
+  BOOST_FOREACH(group_map_type gm, group_map) {
+    fmap[gm.second].push_back(gm.first);
+  }
+
+  list<list<shared_ptr<dfgNode> > > rv;
+  typedef pair<const unsigned int, list<shared_ptr<dfgNode> > > fmap_type;
+  BOOST_FOREACH(fmap_type fm, fmap) {
+    rv.push_back(fm.second);
+  }
+
   // report:
   std::cout << "\n\nSUMMARY:" << std::endl;
   std::cout << "In a design of " << noden << " nodes, " << regn << " nodes are registers." << std::endl;
-  std::cout << "Find " << pfsmn << " potential FSMs but finally reduce to " << pfsm.size() << ":" << std::endl; 
-
-  // generate the return value
-  list<list<shared_ptr<dfgNode> > > rv;
-  BOOST_FOREACH(shared_ptr<dfgNode> n, pfsm) {
-    list<shared_ptr<dfgNode> > fsml;
-    fsml.push_back(n);
-    rv.push_back(fsml);
-  }
+  std::cout << "Find " << pfsmn << " potential FSMs but finally reduce to " << pfsm.size() << " in "
+            << rv.size() << " groups:" << std::endl; 
 
   return rv;
 }
