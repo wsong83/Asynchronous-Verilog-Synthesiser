@@ -250,6 +250,10 @@ ERR_DEFINE("SYN-MODULE-2",
            EError,   1, 
            "module \"%1%\" is a black-box.");
 
+ERR_DEFINE("SYN-MODULE-3", 
+           EInfo,   2, 
+           "module \"%1%\" is added to library \"%2%\".");
+
 ERR_DEFINE("SYN-NUM-0",    
            EError,   1, 
            "unrecoginised format of number \"%1%\".");

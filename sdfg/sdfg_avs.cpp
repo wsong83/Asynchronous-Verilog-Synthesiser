@@ -653,17 +653,20 @@ list<list<shared_ptr<dfgNode> > > SDFG::dfgGraph::get_fsm_groups() const {
       nlist.push_back(nr.second);
   }
 
+  std::set<shared_ptr<dfgNode> > fakes; // for debug reasons
   while(!nlist.empty()) {
     shared_ptr<dfgNode> cn = nlist.front();
     nlist.pop_front();
 
     if(cn->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH)) { // register
       regn++;
+      bool fake = false;        // for debug
       std::set<shared_ptr<dfgNode> > tar_set;
       tar_set.insert(cn);
       list<shared_ptr<dfgPath> >& pathlist = cn->get_out_paths();
       BOOST_FOREACH(shared_ptr<dfgPath> p, pathlist) {
         if((p->tar == cn) && (p->type & dfgEdge::SDFG_CTL)) {
+          fake = true;          // for debug
           shared_ptr<dfgNode> pre;
           BOOST_FOREACH(dfgPath::path_type& pedge, p->path) {
             if(pedge.second & dfgEdge::SDFG_CTL) {
@@ -678,6 +681,7 @@ list<list<shared_ptr<dfgNode> > > SDFG::dfgGraph::get_fsm_groups() const {
           }
         }
       }
+      if(fake) fakes.insert(cn); // for debug
     } else {
       // must be module
       if(cn->child) {
@@ -726,6 +730,11 @@ list<list<shared_ptr<dfgNode> > > SDFG::dfgGraph::get_fsm_groups() const {
         }
       }
     }
+  }
+
+  // report fakes, debug
+  BOOST_FOREACH(shared_ptr<dfgNode> n, fakes) {
+    std::cout << n->get_hier_name() << " is a fake FSM." << std::endl;
   }
 
   // remove fake fsms

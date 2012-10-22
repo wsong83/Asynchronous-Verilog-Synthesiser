@@ -61,7 +61,7 @@ netlist::Module::Module(const location& lloc, const MIdentifier& nm, const share
   elab_inparse();
 }
 
-netlist::Module::Module(const MIdentifier& nm, const list<VIdentifier>& port_list, const shared_ptr<Block>& body)
+netlist::Module::Module(const MIdentifier& nm, const list<shared_ptr<Port> >& port_list, const shared_ptr<Block>& body)
   : Block(*body), name(nm) 
 {
   ctype = tModule;
@@ -70,7 +70,7 @@ netlist::Module::Module(const MIdentifier& nm, const list<VIdentifier>& port_lis
   elab_inparse();
 }
 
-netlist::Module::Module(const location& lloc, const MIdentifier& nm, const list<VIdentifier>& port_list, const shared_ptr<Block>& body)
+netlist::Module::Module(const location& lloc, const MIdentifier& nm, const list<shared_ptr<Port> >& port_list, const shared_ptr<Block>& body)
   : Block(*body), name(nm) 
 {
   ctype = tModule;
@@ -81,7 +81,7 @@ netlist::Module::Module(const location& lloc, const MIdentifier& nm, const list<
 }
 
 netlist::Module::Module(const MIdentifier& nm, const list<shared_ptr<Variable> >& para_list,
-                        const list<VIdentifier>& port_list, const shared_ptr<Block>& body)
+                        const list<shared_ptr<Port> >& port_list, const shared_ptr<Block>& body)
   : Block(*body), name(nm) 
 {
   ctype = tModule;
@@ -93,7 +93,7 @@ netlist::Module::Module(const MIdentifier& nm, const list<shared_ptr<Variable> >
 
 netlist::Module::Module(const location& lloc, const MIdentifier& nm, 
                         const list<shared_ptr<Variable> >& para_list,
-                        const list<VIdentifier>& port_list, const shared_ptr<Block>& body)
+                        const list<shared_ptr<Port> >& port_list, const shared_ptr<Block>& body)
   : Block(*body), name(nm) 
 {
   ctype = tModule;
@@ -545,12 +545,15 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
   return G;
 }
 
-void netlist::Module::init_port_list(const list<VIdentifier>& port_list) {
-  BOOST_FOREACH(const VIdentifier& m, port_list) {
-    shared_ptr<Port> p = db_port.swap(m, shared_ptr<Port>(new Port(m.loc, m)));
+void netlist::Module::init_port_list(const list<shared_ptr<Port> >& port_list) {
+  BOOST_FOREACH(shared_ptr<Port> m, port_list) {
+    shared_ptr<Port> p = db_port.swap(m->name, m);
+    if(m->ptype) {              // reg
+      db_var.swap(m->name, shared_ptr<Variable>(new Variable(m->loc, m->name, Variable::TReg)));
+    }
     if(p.use_count() != 0) {
       // duplicated declaration
-      G_ENV->error(m.loc, "SYN-PORT-1", m.name, toString(p->loc));
+      G_ENV->error(m->loc, "SYN-PORT-1", m->name.name, toString(p->loc));
     }
   }
 }  

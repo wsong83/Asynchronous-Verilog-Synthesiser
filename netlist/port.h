@@ -63,7 +63,7 @@ namespace netlist {
     bool is_inout() const { return dir == 0; }
 
     VIdentifier name;
-
+    int ptype;                  /* 0, unknown/wire; 1 reg */
   private:
     int dir;                    /* -1 in, 0 inout, 1 out */
   };

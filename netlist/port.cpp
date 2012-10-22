@@ -38,13 +38,13 @@ using shell::location;
 using std::vector;
 
 netlist::Port::Port(const VIdentifier& pid)
-  : NetComp(tPort), name(pid), dir(0) {}
+  : NetComp(tPort), name(pid), ptype(0), dir(0) {}
 
 netlist::Port::Port(const location& lloc, const VIdentifier& pid)
-  : NetComp(tPort, lloc), name(pid), dir(0) {}
+  : NetComp(tPort, lloc), name(pid), ptype(0), dir(0) {}
 
 netlist::Port::Port(const location& lloc)
-  : NetComp(tPort, lloc), dir(0) {}
+  : NetComp(tPort, lloc), ptype(0), dir(0) {}
 
 void netlist::Port::set_father(Block *pf) {
   if(father == pf) return;
@@ -67,6 +67,7 @@ Port* netlist::Port::deep_copy() const {
   rv->name = *mname;
   delete mname;
   rv->dir = dir;
+  rv->ptype = ptype;
   return rv;
 }      
 
