@@ -455,6 +455,7 @@ bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
     });
   BOOST_FOREACH(const VIdentifier& m, var_to_be_removed) 
     db_param.erase(m);
+  //if(!db_param.empty()) std::cout << *this << endl;
   assert(db_param.empty());
 
   // add called modules (instances) to the module queue in cmd/elaborate

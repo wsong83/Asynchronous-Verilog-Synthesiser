@@ -65,7 +65,7 @@ namespace netlist {
     VIdentifier name;
     int ptype;                  /* 0, unknown/wire; 1 reg */
   private:
-    int dir;                    /* -1 in, 0 inout, 1 out */
+    int dir;                    /* -1 in, 0 inout, 1 out, -2 default */
   };
   NETLIST_STREAMOUT(Port);
 

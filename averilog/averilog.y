@@ -390,18 +390,27 @@ parameter_declaration
 input_declaration 
     : "input" list_of_port_identifiers
     {
+      bool undired = true;
       BOOST_FOREACH(shared_ptr<Port> it, $2) {
-        it->set_in();
+        if(undired && it->get_dir() == -2) {
+          it->set_in();
+        } else {
+          undired = false;
+        }
         $$.push_back(it);
       }
     }
     | "input" '[' expression ':' expression ']' list_of_port_identifiers
     {      
-      
+      bool undired = true;
       BOOST_FOREACH(shared_ptr<Port> it, $7) {
-        it->set_in();
-        pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
-        it->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@2+@6, m)));
+        if(undired && it->get_dir() == -2) {
+          it->set_in();
+          pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
+          it->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@2+@6, m)));
+        } else {
+          undired = false;
+        }
         $$.push_back(it);
       }
     }  
@@ -410,35 +419,55 @@ input_declaration
 output_declaration 
     : "output" list_of_port_identifiers
     {
+      bool undired = true;
       BOOST_FOREACH(shared_ptr<Port> it, $2) {
-        it->set_out();
+        if(undired && it->get_dir() == -2) {
+          it->set_out();
+        } else {
+          undired = false;
+        }
         $$.push_back(it);
       }
     }
     | "output" '[' expression ':' expression ']' list_of_port_identifiers
     {
+      bool undired = true;
       BOOST_FOREACH(shared_ptr<Port> it, $7) {
-        it->set_out();
-        pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
-        it->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@2+@6,m)));
+        if(undired && it->get_dir() == -2) {
+          it->set_out();
+          pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
+          it->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@2+@6,m)));
+        } else {
+          undired = false;
+        }
         $$.push_back(it);
       }
     }  
     | "output" "reg" list_of_port_identifiers
     {
+      bool undired = true;
       BOOST_FOREACH(shared_ptr<Port> it, $3) {
-        it->set_out();
-        it->ptype = 1;          /* reg */
+        if(undired && it->get_dir() == -2) {
+          it->set_out();
+          it->ptype = 1;          /* reg */
+        } else {
+          undired = false;
+        }
         $$.push_back(it);
       }
     }
     | "output" "reg" '[' expression ':' expression ']' list_of_port_identifiers
     {
+      bool undired = true;
       BOOST_FOREACH(shared_ptr<Port> it, $8) {
-        it->set_out();
-        it->ptype = 1;          /* reg */
-        pair<shared_ptr<Expression>, shared_ptr<Expression> > m($4, $6);
-        it->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@3+@7,m)));
+        if(undired && it->get_dir() == -2) {
+          it->set_out();
+          it->ptype = 1;          /* reg */
+          pair<shared_ptr<Expression>, shared_ptr<Expression> > m($4, $6);
+          it->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@3+@7,m)));
+        } else {
+          undired = false;
+        }
         $$.push_back(it);
       }
     }  
@@ -546,7 +575,7 @@ list_of_port_identifiers
     { 
       $$.push_back(shared_ptr<Port>(new Port($3.loc, $3))); 
     }
-    | list_of_port_identifiers ',' input_declaration 
+    | list_of_port_identifiers ',' input_declaration
     { 
       $$.insert($$.end(), $3.begin(), $3.end()); 
     }
@@ -556,6 +585,7 @@ list_of_port_identifiers
     }
     | error
     ;
+
 
 list_of_variable_identifiers 
     : variable_identifier
@@ -860,8 +890,41 @@ list_of_net_assignments
 
 //A.6.2 Procedural blocks and assignments
 always_construct 
-    : "always" '@' '(' event_expressions ')' statement_or_null   { $$.reset(new SeqBlock(@$, $4, $6)); } 
-    | "always" statement                                         { $$.reset(new SeqBlock(@$, *$2));    }
+    : "always" '@' '(' '*' ')' statement
+    { 
+      $$.reset(new SeqBlock(@$, *$6));
+      std::set<string> targets, csrc;
+      $$->scan_vars(targets, csrc, csrc, false);
+      bool sensitive = false;
+      BOOST_FOREACH(const string& v, csrc) {
+        if(!$$->db_var.count(VIdentifier(v))) {
+          $$->slist_level.push_back(shared_ptr<Expression>(new Expression(VIdentifier(v))));
+          sensitive = true;
+        }
+      }
+      $$->sensitive = sensitive;
+    }
+    | "always" '@' '(' event_expressions ')' statement_or_null
+    { 
+      $$.reset(new SeqBlock(@$, $4, $6)); 
+    }
+    | "always" '@' '*' statement 
+    { 
+      $$.reset(new SeqBlock(@$, *$4)); 
+      std::set<string> targets, csrc;
+      $$->scan_vars(targets, csrc, csrc, false);
+      bool sensitive = false;
+      BOOST_FOREACH(const string& v, csrc) {
+        if(!$$->db_var.count(VIdentifier(v))) {
+          $$->slist_level.push_back(shared_ptr<Expression>(new Expression(VIdentifier(v))));
+        }
+      }
+      $$->sensitive = sensitive;
+    }
+    | "always" statement
+    { 
+      $$.reset(new SeqBlock(@$, *$2));
+    }
     ;
 
 blocking_assignment 

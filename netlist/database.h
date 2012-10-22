@@ -98,6 +98,10 @@ namespace netlist {
       }
     }
 
+    bool count(const K& key) const {
+      return find(key);
+    }
+
     boost::shared_ptr<T> swap(const K& key, const boost::shared_ptr<T>& comp) {
       if(ORDER) {
         typename DBTL::iterator it, end;

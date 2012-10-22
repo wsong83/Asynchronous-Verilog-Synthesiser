@@ -716,6 +716,14 @@ bool netlist::Range::elaborate(elab_result_t &result, const ctype_t mctype, cons
     }
     break;
   }
+  case TR_CRange: {
+    if(cr.first < cr.second) {  // make sure it is reverse order
+      Number tmp = cr.second;
+      cr.second = cr.first;
+      cr.first = tmp;
+    }
+    break;
+  }
   default:;
   }
 

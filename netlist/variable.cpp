@@ -53,6 +53,7 @@ void netlist::Variable::set_value(const VIdentifier& var) {
   if(exp.use_count()!=0) exp->db_expunge();
   VIdentifier * varp = var.deep_copy();
   exp.reset(new Expression(*varp));
+  exp->db_register(1);
   delete varp;
   update();
 }
@@ -60,6 +61,7 @@ void netlist::Variable::set_value(const VIdentifier& var) {
 void netlist::Variable::set_value(const shared_ptr<Expression>& mexp) {
   if(exp.use_count()!=0) exp->db_expunge();
   exp.reset(mexp->deep_copy());
+  exp->db_register(1);
   update();
 }
 
@@ -185,7 +187,13 @@ bool netlist::Variable::elaborate(elab_result_t &result, const ctype_t, const ve
   }
 
   // elaborate the identifier
+  if(exp) {
+    G_ENV->error(exp->loc, "SYN-VAR-4", name.name);
+    exp->db_expunge();
+    exp.reset();
+  }
   rv &= name.elaborate(result, tVariable);
+  rv &= name.get_range().elaborate(result, tVariable);
   rv &= name.get_range().is_valuable();
   rv &= name.get_range().is_declaration();
   assert(rv);                   // not sure why it can goes wrong so assert first
