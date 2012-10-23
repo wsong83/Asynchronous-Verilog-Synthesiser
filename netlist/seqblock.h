@@ -61,6 +61,7 @@ namespace netlist{
     NETLIST_ELABORATE_DECL;
     NETLIST_SET_ALWAYS_POINTER_DECL;
     NETLIST_GEN_SDFG;
+    NETLIST_REPLACE_VARIABLE;
     
     // data
     bool sensitive;                                         /* whether this is a sensitive block, top level block */

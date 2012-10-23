@@ -152,6 +152,13 @@ void netlist::CaseItem::gen_sdfg(shared_ptr<SDFG::dfgGraph> G,
   body->gen_sdfg(G, t, d, c);
 }
 
+void netlist::CaseItem::replace_variable(const VIdentifier& var, const Number& num) {
+  BOOST_FOREACH(shared_ptr<Expression> e, exps) {
+    e->replace_variable(var, num);
+  }
+  if(body) body->replace_variable(var, num);
+}
+
 bool netlist::CaseItem::is_match(const Number& val) const {
   bool rv = false;
   if(exps.size() == 0) return true;                // default
@@ -369,3 +376,11 @@ void netlist::CaseState::gen_sdfg(shared_ptr<SDFG::dfgGraph> G,
   // check whether there is a default
   // do not do it now
 }
+
+void netlist::CaseState::replace_variable(const VIdentifier& var, const Number& num) {
+  exp->replace_variable(var, num);
+  BOOST_FOREACH(shared_ptr<CaseItem> ci, cases) {
+    ci->replace_variable(var, num);
+  }
+}
+

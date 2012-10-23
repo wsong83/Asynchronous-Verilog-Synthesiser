@@ -66,6 +66,7 @@ namespace netlist {
     NETLIST_ELABORATE_DECL;
     NETLIST_SET_WIDTH_DECL;
     NETLIST_GET_WIDTH_DECL;
+    NETLIST_REPLACE_VARIABLE;
 
     // helpers
     void set_value(const Number&); /* reset the value of this variable */

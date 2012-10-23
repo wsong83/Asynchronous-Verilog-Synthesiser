@@ -240,3 +240,7 @@ void netlist::RangeArray::scan_vars(std::set<string>& target,
                                     bool ctl) const {
   RangeArrayCommon::scan_vars(target, dsrc, csrc, ctl);
 }
+
+void netlist::RangeArray::replace_variable(const VIdentifier& var, const Number& num) {
+  RangeArrayCommon::replace_variable(var, num);
+}

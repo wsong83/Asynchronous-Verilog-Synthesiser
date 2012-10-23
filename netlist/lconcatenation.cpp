@@ -182,3 +182,9 @@ void netlist::LConcatenation::scan_vars(std::set<string>& target,
     m.scan_vars(target, target, control, ctl);
   }
 }
+
+void netlist::LConcatenation::replace_variable(const VIdentifier& var, const Number& num) {
+  BOOST_FOREACH(VIdentifier& d, data) {
+    d.replace_variable(var, num);
+  }
+}

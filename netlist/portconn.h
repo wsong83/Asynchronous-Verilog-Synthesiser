@@ -138,7 +138,23 @@ namespace netlist {
       rv->num = num;
       rv->type = type;
       return rv;
-    } 
+    }
+
+    virtual void replace_variable(const VIdentifier& v, const Number& n) {
+      switch(type) {
+      case CEXP:
+        exp->replace_variable(v, n); break;
+      case CVAR:
+        if(var == v) {
+          type = CNUM;
+          num = n;
+        } else {
+          var.replace_variable(v, n);
+        }
+        break;
+      default: ;
+      }
+    }
 
     virtual void db_register(int) {
       switch(type) {
@@ -262,6 +278,22 @@ namespace netlist {
       switch(type) {
       case CEXP: exp->db_expunge(); break;
       case CVAR: var.db_expunge(); break;
+      default: ;
+      }
+    }
+
+    virtual void replace_variable(const VIdentifier& v, const Number& n) {
+      switch(type) {
+      case CEXP:
+        exp->replace_variable(v, n); break;
+      case CVAR:
+        if(var == v) {
+          type = CNUM;
+          num = n;
+        } else {
+          var.replace_variable(v, n);
+        }
+        break;
       default: ;
       }
     }

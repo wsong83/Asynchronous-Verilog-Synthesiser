@@ -86,6 +86,7 @@ namespace netlist{
     bool is_match(const Number&) const; /* whether this case match with the number (arguement) */
     NETLIST_SCAN_VARS;
     NETLIST_GEN_SDFG;
+    NETLIST_REPLACE_VARIABLE;
 
     // data
     std::list<boost::shared_ptr<Expression> > exps;
@@ -149,7 +150,8 @@ namespace netlist{
     bool is_casex() const { return casex; }
     NETLIST_SCAN_VARS;
     NETLIST_GEN_SDFG;
-
+    NETLIST_REPLACE_VARIABLE;
+    
     // data
     BIdentifier name;           /* dummy name for search index */
     boost::shared_ptr<Expression> exp;

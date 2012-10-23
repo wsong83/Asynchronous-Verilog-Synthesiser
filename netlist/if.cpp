@@ -250,3 +250,10 @@ void netlist::IfState::gen_sdfg(shared_ptr<SDFG::dfgGraph> G,
     }
   }
 }
+
+void netlist::IfState::replace_variable(const VIdentifier& var, const Number& num) {
+  exp->replace_variable(var, num);
+  ifcase->replace_variable(var, num);
+  if(elsecase) elsecase->replace_variable(var, num);
+}
+

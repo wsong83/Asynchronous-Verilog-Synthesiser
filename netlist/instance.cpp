@@ -369,3 +369,12 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G,
     }
   }
 }
+
+void netlist::Instance::replace_variable(const VIdentifier& var, const Number& num) {
+  BOOST_FOREACH(shared_ptr<PortConn> pc, port_list) {
+    pc->replace_variable(var, num);
+  }
+  BOOST_FOREACH(shared_ptr<ParaConn> pc, para_list) {
+    pc->replace_variable(var, num);
+  }
+}

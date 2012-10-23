@@ -115,3 +115,10 @@ void netlist::ForState::db_expunge() {
 void netlist::ForState::set_always_pointer(SeqBlock *p) {
   if(body.use_count() != 0) body->set_always_pointer(p);
 }
+
+void netlist::ForState::replace_variable(const VIdentifier& var, const Number& num) {
+  if(init) init->replace_variable(var, num);
+  if(cond) cond->replace_variable(var, num);
+  if(incr) incr->replace_variable(var, num);
+  body->replace_variable(var, num);
+}

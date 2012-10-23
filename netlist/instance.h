@@ -66,6 +66,7 @@ namespace netlist {
     bool elaborate(std::deque<boost::shared_ptr<Module> >&, 
                    std::map<MIdentifier, boost::shared_ptr<Module> > &);
     NETLIST_GEN_SDFG;
+    NETLIST_REPLACE_VARIABLE;
 
     // helpers
     void set_mname(const MIdentifier& mod_name) { mname = mod_name; }

@@ -64,9 +64,6 @@ namespace netlist {
   // lconcatenation.h
   class LConcatenation;
 
-  // common base of Range and RangeArray
-  class RangeArray;
-
   // range.h
   class Range;			/* range expression */
 
@@ -113,6 +110,9 @@ namespace netlist {
 
   // while.h
   class WhileState;
+
+  // for.h
+  class ForState;
 
   // library.h
   class Library;

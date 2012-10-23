@@ -258,6 +258,10 @@ void netlist::Expression::scan_vars(std::set<string>& t_vars, std::set<string>& 
   eqn->scan_vars(t_vars, d_vars, c_vars, ctl);
 }
 
+void netlist::Expression::replace_variable(const VIdentifier& var, const Number& num) {
+  eqn->replace_variable(var, num);
+}
+
 void netlist::Expression::gen_sdfg_node(shared_ptr<dfgGraph> G, shared_ptr<dfgNode> node) {
   
   // scan for all variables

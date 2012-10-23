@@ -68,6 +68,7 @@ namespace netlist {
     NETLIST_SET_WIDTH_DECL;
     NETLIST_GET_WIDTH_DECL;
     NETLIST_SCAN_VARS;
+    NETLIST_REPLACE_VARIABLE;
 
     boost::shared_ptr<Expression> exp;
     std::list<boost::shared_ptr<ConElem> > con;
@@ -104,6 +105,7 @@ namespace netlist {
     NETLIST_SET_WIDTH_DECL;
     NETLIST_GET_WIDTH_DECL;
     NETLIST_SCAN_VARS;
+    NETLIST_REPLACE_VARIABLE;
 
     // data
     std::list<boost::shared_ptr<ConElem> > data;

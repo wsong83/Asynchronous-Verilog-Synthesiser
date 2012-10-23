@@ -55,6 +55,13 @@ void netlist::ConElem::scan_vars(std::set<string>& t_vars, std::set<string>& d_v
   }
 }
 
+void netlist::ConElem::replace_variable(const VIdentifier& var, const Number& num) {
+  exp->replace_variable(var, num);
+  BOOST_FOREACH(shared_ptr<ConElem> ce, con) {
+    ce->replace_variable(var, num);
+  }
+}
+
 ostream& netlist::ConElem::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
   if(0 == con.size()) {
@@ -267,6 +274,12 @@ void netlist::Concatenation::reduce() {
 void netlist::Concatenation::scan_vars(std::set<string>& t_vars, std::set<string>& d_vars, std::set<string>& c_vars, bool ctl) const {
   BOOST_FOREACH(shared_ptr<ConElem> m, data) {
     m->scan_vars(t_vars, d_vars, c_vars, ctl);
+  }
+}
+
+void netlist::Concatenation::replace_variable(const VIdentifier& var, const Number& num) {
+  BOOST_FOREACH(shared_ptr<ConElem> d, data) {
+    d->replace_variable(var, num);
   }
 }
 

@@ -93,3 +93,8 @@ void netlist::WhileState::db_expunge() {
 void netlist::WhileState::set_always_pointer(SeqBlock *p) {
   if(body.use_count() != 0) body->set_always_pointer(p);
 }
+
+void netlist::WhileState::replace_variable(const VIdentifier& var, const Number& num) {
+  exp->replace_variable(var, num);
+  body->replace_variable(var, num);
+}

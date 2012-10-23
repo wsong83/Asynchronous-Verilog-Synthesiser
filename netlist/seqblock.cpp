@@ -356,3 +356,14 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G,
     }
   }
 }
+
+void netlist::SeqBlock::replace_variable(const VIdentifier& var, const Number& num) {
+  BOOST_FOREACH(shared_ptr<Expression> sl, slist_level) {
+    sl->replace_variable(var, num);
+  }
+  typedef pair<bool, shared_ptr<Expression> > sp_type;
+  BOOST_FOREACH(sp_type sp, slist_pulse) {
+    sp.second->replace_variable(var, num);
+  }
+  Block::replace_variable(var, num);
+}

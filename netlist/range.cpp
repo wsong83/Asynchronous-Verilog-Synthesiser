@@ -815,3 +815,16 @@ void netlist::Range::scan_vars(std::set<string>& target,
   RangeArrayCommon::scan_vars(target, dsrc, csrc, ctl);
     
 }
+
+void netlist::Range::replace_variable(const VIdentifier& var, const Number& num) {
+  if(rtype == TR_Var)
+    v->replace_variable(var, num);
+  
+  if(rtype == TR_Range) {
+    r.first->replace_variable(var, num);
+    r.second->replace_variable(var, num);
+  }
+
+  RangeArrayCommon::replace_variable(var, num);
+  
+}

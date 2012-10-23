@@ -81,7 +81,7 @@ namespace SDFG {
 #endif
 
 #ifndef NETLIST_ELABORATE_DECL
-#define NETLIST_ELABORATE_DECL                                                                \
+#define NETLIST_ELABORATE_DECL                                   \
   virtual bool elaborate(netlist::NetComp::elab_result_t &,      \
                          const netlist::NetComp::ctype_t mctype, \
                          const std::vector<NetComp *>& fp);      \
@@ -89,12 +89,12 @@ namespace SDFG {
 #endif
 
 #ifndef NETLIST_SET_WIDTH_DECL
-#define NETLIST_SET_WIDTH_DECL                                                                \
+#define NETLIST_SET_WIDTH_DECL                                   \
   virtual void set_width( const unsigned int&);
 #endif
 
 #ifndef NETLIST_GET_WIDTH_DECL
-#define NETLIST_GET_WIDTH_DECL                                                                \
+#define NETLIST_GET_WIDTH_DECL                                   \
   virtual unsigned int get_width();
 #endif
 
@@ -112,6 +112,11 @@ namespace SDFG {
                          std::set<std::string>&,   \
                          std::set<std::string>&,   \
                          bool) const;
+#endif
+
+#ifndef NETLIST_REPLACE_VARIABLE
+#define NETLIST_REPLACE_VARIABLE                   \
+  virtual void replace_variable(const VIdentifier&, const Number&);
 #endif
 
 namespace netlist{
@@ -169,6 +174,13 @@ namespace netlist{
     // get the hierarchy name
     virtual std::string get_hier_name() {
       return "";
+    }
+
+    // replace a variable with a value in a block
+    // use in unfolding for, while loops
+    virtual void replace_variable(const VIdentifier&, const Number&) {
+      std::cerr << "ERROR!!, the replace_variable() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
+      assert(0 == "the replace_variable() of NetComp is used");
     }
 
     // register variable identifiers to the variable database

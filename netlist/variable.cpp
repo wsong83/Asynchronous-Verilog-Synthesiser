@@ -187,7 +187,7 @@ bool netlist::Variable::elaborate(elab_result_t &result, const ctype_t, const ve
   }
 
   // elaborate the identifier
-  if(exp) {
+  if((vtype == TWire || vtype == TReg) && exp) {
     G_ENV->error(exp->loc, "SYN-VAR-4", name.name);
     exp->db_expunge();
     exp.reset();
@@ -397,4 +397,8 @@ void netlist::Variable::set_width(const unsigned int& w) {
     name.get_range().set_width(w, name.get_range());
     width = w;
   }
+}
+
+void netlist::Variable::replace_variable(const VIdentifier& var, const Number& num) {
+  if(exp) exp->replace_variable(var, num);
 }

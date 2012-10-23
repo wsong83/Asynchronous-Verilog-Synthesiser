@@ -415,6 +415,14 @@ void netlist::Block::gen_sdfg(shared_ptr<SDFG::dfgGraph> G,
 
 }
 
+void netlist::Block::replace_variable(const VIdentifier& var, const Number& num) {
+  if(!db_var.count(var)) {
+    BOOST_FOREACH(shared_ptr<NetComp> stm, statements) {
+      stm->replace_variable(var, num);
+    }
+  }
+}
+
 bool netlist::Block::elab_inparse_item(
                                        const shared_ptr<NetComp>& it,
                                        list<shared_ptr<NetComp> >::iterator& itor

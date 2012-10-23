@@ -535,3 +535,7 @@ void netlist::VIdentifier::scan_vars(std::set<string>& target,
 
   get_select().scan_vars(target, dsource, control, true);
 }
+
+void netlist::VIdentifier::replace_variable(const VIdentifier& var, const Number& num) {
+  m_select.replace_variable(var, num);
+}

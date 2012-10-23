@@ -155,3 +155,8 @@ void netlist::Assign::gen_sdfg(shared_ptr<SDFG::dfgGraph> G,
     }
   }
 }
+
+void netlist::Assign::replace_variable(const VIdentifier& var, const Number& num) {
+  lval->replace_variable(var, num);
+  rexp->replace_variable(var, num);
+}

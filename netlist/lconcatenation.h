@@ -52,6 +52,7 @@ namespace netlist {
     NETLIST_SET_WIDTH_DECL;
     NETLIST_GET_WIDTH_DECL;
     NETLIST_SCAN_VARS;
+    NETLIST_REPLACE_VARIABLE;
 
     // helpers
     bool is_valid() const { return valid; }

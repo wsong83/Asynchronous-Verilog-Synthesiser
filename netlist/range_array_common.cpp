@@ -288,6 +288,12 @@ void netlist::RangeArrayCommon::scan_vars(std::set<string>& target,
   }
 }
 
+void netlist::RangeArrayCommon::replace_variable(const VIdentifier& var, const Number& num) {
+  BOOST_FOREACH(shared_ptr<Range> r, child) {
+    r->replace_variable(var, num);
+  }
+}
+
 list<shared_ptr<Range> >& netlist::RangeArrayCommon::sort(list<shared_ptr<Range> >& rhs) const {
   if(rhs.empty()) return rhs;
   rhs.sort([](shared_ptr<Range>& first, shared_ptr<Range>& second) -> bool {
@@ -295,3 +301,4 @@ list<shared_ptr<Range> >& netlist::RangeArrayCommon::sort(list<shared_ptr<Range>
   });
   return rhs;
 }
+
