@@ -42,6 +42,35 @@ using boost::shared_ptr;
 using std::list;
 using std::for_each;
 
+netlist::CaseItem::CaseItem(const shared_ptr<Expression>& exp, const shared_ptr<Block>& body)
+  : NetComp(tCaseItem), body(body)
+{
+  exps.push_back(exp);
+}
+
+netlist::CaseItem::CaseItem(const shell::location& lloc, const shared_ptr<Expression>& exp, const shared_ptr<Block>& body)
+  : NetComp(tCaseItem, lloc), body(body)
+{
+  exps.push_back(exp);
+}
+
+// normal default case
+netlist::CaseItem::CaseItem(const shared_ptr<Block>& body)
+  : NetComp(tCaseItem), body(body) {}
+
+netlist::CaseItem::CaseItem(const shell::location& lloc, const shared_ptr<Block>& body)
+  : NetComp(tCaseItem, lloc), body(body)
+{
+  body->elab_inparse();
+}
+
+// multiple expressions
+netlist::CaseItem::CaseItem(const list<shared_ptr<Expression> >& expm, const shared_ptr<Block>& body)
+  : NetComp(tCaseItem), exps(expm), body(body) {}
+
+netlist::CaseItem::CaseItem(const shell::location& lloc, const list<shared_ptr<Expression> >& expm, const shared_ptr<Block>& body)
+  : NetComp(tCaseItem, lloc), exps(expm), body(body) {}
+
 ostream& netlist::CaseItem::streamout (ostream& os, unsigned int indent) const {
   // show the expressions
   if(is_default()) {
@@ -76,20 +105,9 @@ void netlist::CaseItem::set_father(Block *pf) {
     body->set_father(pf);
 }
 
-bool netlist::CaseItem::check_inparse() {
-  bool rv = true;
-  BOOST_FOREACH(shared_ptr<Expression>& it, exps)
-    rv &= it->check_inparse();
-
-  if(body.use_count())
-    rv &= body->check_inparse();
-
-  return rv;
-} 
-
 CaseItem* netlist::CaseItem::deep_copy() const {
   CaseItem* rv = new CaseItem(loc);
-  if(body.use_count() != 0) rv->body.reset(body->deep_copy());
+  if(body) rv->body.reset(body->deep_copy());
   BOOST_FOREACH(const  shared_ptr<Expression>& m, exps)
     rv->exps.push_back(shared_ptr<Expression>(m->deep_copy()));
   return rv;
@@ -97,32 +115,26 @@ CaseItem* netlist::CaseItem::deep_copy() const {
 
 void netlist::CaseItem::db_register(int) {
   BOOST_FOREACH(shared_ptr<Expression>& m, exps) m->db_register(1);
-  if(body.use_count() != 0) body->db_register(1);
+  if(body) body->db_register(1);
 }
 
 void netlist::CaseItem::db_expunge() {
   BOOST_FOREACH(shared_ptr<Expression>& m, exps) m->db_expunge();
-  if(body.use_count() != 0) body->db_expunge();
+  if(body) body->db_expunge();
 }
 
-bool netlist::CaseItem::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
-  bool rv = true;
-  result = ELAB_Normal;
+bool netlist::CaseItem::elaborate(set<shared_ptr<Variable> >& to_del,
+                                  map<shared_ptr<NetComp>, list<shared_ptr<Variable> > >& to_add) {
 
   // check all expressions are const expressions
   BOOST_FOREACH(shared_ptr<Expression>& m, exps) 
-    rv &= m->elaborate(result, tCaseItem);
+    rv &= m->elaborate(to_del, to_add);
   if(!rv) return false;
 
   // check the case body
-  if(body.use_count() != 0) rv &= body->elaborate(result, mctype, fp);
+  if(body) rv &= body->elaborate(to_del, to_add);
 
   return rv;
-}
-
-
-void netlist::CaseItem::set_always_pointer(SeqBlock *p) {
-  if(body.use_count() != 0) body->set_always_pointer(p);
 }
 
 void netlist::CaseItem::scan_vars(std::set<string>& target,
@@ -170,6 +182,43 @@ bool netlist::CaseItem::is_match(const Number& val) const {
   return rv;
 }
 
+netlist::CaseState::CaseState(const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, 
+                              const shared_ptr<CaseItem>& ditem, bool mcasex)
+  : NetComp(tCase), exp(exp), cases(citems), named(false), casex(mcasex) 
+{
+  cases.push_back(ditem);
+}
+
+netlist::CaseState::CaseState(const shell::location& lloc, const shared_ptr<Expression>& exp, 
+                              const list<shared_ptr<CaseItem> >& citems, const shared_ptr<CaseItem>& ditem, 
+                              bool mcasex)
+  : NetComp(tCase, lloc), exp(exp), cases(citems), named(false), casex(mcasex) 
+{
+  cases.push_back(ditem);
+}
+
+netlist::CaseState::CaseState(const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, 
+                              bool mcasex)
+  : NetComp(tCase), exp(exp), cases(citems), named(false), casex(mcasex) {} 
+
+netlist::CaseState::CaseState(const shell::location& lloc, const shared_ptr<Expression>& exp, 
+                              const list<shared_ptr<CaseItem> >& citems, bool mcasex)
+  : NetComp(tCase, lloc), exp(exp), cases(citems), named(false), casex(mcasex) {} 
+
+netlist::CaseState::CaseState(const shared_ptr<Expression>& exp, const shared_ptr<CaseItem>& ditem, 
+                              bool mcasex)
+  : NetComp(tCase), exp(exp), named(false), casex(mcasex) 
+{
+  cases.push_back(ditem);
+}
+
+netlist::CaseState::CaseState(const shell::location& lloc, const shared_ptr<Expression>& exp, 
+                              const shared_ptr<CaseItem>& ditem, bool mcasex)
+  : NetComp(tCase, lloc), exp(exp), named(false), casex(mcasex) 
+{
+  cases.push_back(ditem);
+}
+
 ostream& netlist::CaseState::streamout (ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
   if(casex) os << "casex(" << *exp << ")" << endl;
@@ -189,20 +238,12 @@ void netlist::CaseState::set_father(Block *pf) {
     it->set_father(pf);
 }
 
-bool netlist::CaseState::check_inparse() {
-  bool rv = true;
-  rv &= exp->check_inparse();
-  BOOST_FOREACH(shared_ptr<CaseItem>& it, cases)
-    rv &= it->check_inparse();
-  return rv;
-}
-
 CaseState* netlist::CaseState::deep_copy() const {
   CaseState* rv = new CaseState(loc);
   rv->name = name;
   rv->named = named;
   rv->casex = casex;
-  if(exp.use_count() != 0) rv->exp.reset(exp->deep_copy());
+  if(exp) rv->exp.reset(exp->deep_copy());
   BOOST_FOREACH(const shared_ptr<CaseItem>& m, cases)
     rv->cases.push_back(shared_ptr<CaseItem>(m->deep_copy()));
   return rv;
@@ -210,27 +251,18 @@ CaseState* netlist::CaseState::deep_copy() const {
 
 void netlist::CaseState::db_register(int) {
   BOOST_FOREACH(shared_ptr<CaseItem>& m, cases) m->db_register(1);
-  if(exp.use_count() != 0) exp->db_register(1);
+  if(exp) exp->db_register(1);
 }
 
 void netlist::CaseState::db_expunge() {
   BOOST_FOREACH(shared_ptr<CaseItem>& m, cases) m->db_expunge();
-  if(exp.use_count() != 0) exp->db_expunge();
+  if(exp) exp->db_expunge();
 }
 
-bool netlist::CaseState::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
+bool netlist::CaseState::elaborate(set<shared_ptr<Variable> >& to_del,
+                                   map<shared_ptr<NetComp>, list<shared_ptr<Variable> > >& to_add) {
   bool rv = true;
-  result = ELAB_Normal;
-
-  // check the father component
-  if(!(
-       mctype == tGenBlock ||      // a case statement can be defined in a generate block
-       mctype == tSeqBlock         // a case statement can be defined in a sequential block
-       )) {
-    G_ENV->error(loc, "ELAB-CASE-0");
-    return false;
-  }
-
+  
   //elaborate the case expression
   assert(exp.use_count() != 0);
   rv &= exp->elaborate(result, mctype, fp);
@@ -336,10 +368,6 @@ bool netlist::CaseState::elaborate(elab_result_t &result, const ctype_t mctype, 
   return rv;
 
 } 
-
-void netlist::CaseState::set_always_pointer(SeqBlock *p) {
-  BOOST_FOREACH(shared_ptr<CaseItem>& m, cases) m->set_always_pointer(p);
-}
 
 void netlist::CaseState::scan_vars(std::set<string>& target,
                                    std::set<string>& dsrc,

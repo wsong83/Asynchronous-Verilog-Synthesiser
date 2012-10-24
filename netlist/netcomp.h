@@ -66,26 +66,16 @@ namespace SDFG {
   boost::shared_ptr<T > m = boost::static_pointer_cast<T >(d)
 #endif
 
-#ifndef NETLIST_CHECK_INPARSE_DECL
-#define NETLIST_CHECK_INPARSE_DECL           \
-  virtual bool check_inparse( );
-#endif
-
 #ifndef NETLIST_SET_FATHER_DECL
 #define NETLIST_SET_FATHER_DECL           \
-  virtual void set_father(netlist::Block* pf);    
-#endif
-
-#ifndef NETLIST_SET_ALWAYS_POINTER_DECL
-#define NETLIST_SET_ALWAYS_POINTER_DECL           \
-  virtual void set_always_pointer(netlist::SeqBlock* p);    
+  virtual void set_father(Block* pf);    
 #endif
 
 #ifndef NETLIST_ELABORATE_DECL
-#define NETLIST_ELABORATE_DECL                                   \
-  virtual bool elaborate(netlist::NetComp::elab_result_t &,      \
-                         const netlist::NetComp::ctype_t mctype, \
-                         const std::vector<NetComp *>& fp);      \
+#define NETLIST_ELABORATE_DECL                                \
+  virtual bool elaborate(                                     \
+    std::set<boost::shared_ptr<Variable> >&,                  \
+    std::map<boost::shared_ptr<NetComp>, std::list<boost::shared_ptr<Variable> > >&); \
   using NetComp::elaborate;
 #endif
 
@@ -154,22 +144,10 @@ namespace netlist{
       return(new NetComp());
     }
 
-    // syntax check during parsing
-    virtual bool check_inparse() {
-      std::cerr << "ERROR!!, the check_inparse() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
-      assert(0 == "the check_inparse() of NetComp is used");
-      return false;
-    }
-
     // set the father block pointer
     virtual void set_father(Block* pf) {
       // here a naked pointer is used because tranfer this to shared_ptr is too complicated to be employed
       father = pf;
-    }
-
-    // store the always block id in VIedntifier to detect multiple driver
-    virtual void set_always_pointer(SeqBlock*) {
-      // only act to VIdentifier but it is defined to perform a recursive tree travel
     }
 
     // get the hierarchy name
@@ -207,20 +185,11 @@ namespace netlist{
       ELAB_UNFOLDED_FOR         /* the for statement is unfolded and should be removed */
     };
 
-    virtual bool elaborate( elab_result_t& ,
-                            const ctype_t ,
-                            const std::vector<NetComp *>&) {
+    virtual bool elaborate(std::set<boost::shared_ptr<Variable> >&,
+                           std::map<boost::shared_ptr<NetComp>, std::list<boost::shared_ptr<Variable> > >&) {
       std::cerr << "ERROR!!, the elaborate() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
       assert(0 == "elaborate() of NetComp is used");
       return false;
-    }
-
-    virtual bool elaborate( elab_result_t& r) {
-      return elaborate(r, tUnknown, std::vector<NetComp *>());
-    }
-
-    virtual bool elaborate( elab_result_t& r, const ctype_t t) {
-      return elaborate(r, t, std::vector<NetComp *>());
     }
 
     virtual unsigned int get_width() {
@@ -246,7 +215,6 @@ namespace netlist{
       std::cerr << "ERROR!!, the scan_vars() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
       assert(0 == "scan_vars() of NetComp is used");
     }
-    
     
     boost::shared_ptr<NetComp> get_sp() {
         return shared_from_this();

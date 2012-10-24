@@ -38,50 +38,21 @@ namespace netlist{
     NETLIST_DEFAULT_CON(CaseItem, tCaseItem);
     NETLIST_DEFAULT_CON_WL(CaseItem, tCaseItem);
     // constructor with only one expression, the normal case
-    CaseItem(const boost::shared_ptr<Expression>& exp, const boost::shared_ptr<Block>& body)
-      : NetComp(tCaseItem), body(body)
-    {
-      exps.push_back(exp);
-      body->elab_inparse();
-    }
-    CaseItem(const shell::location& lloc, const boost::shared_ptr<Expression>& exp, const boost::shared_ptr<Block>& body)
-      : NetComp(tCaseItem, lloc), body(body)
-    {
-      exps.push_back(exp);
-      body->elab_inparse();
-    }
+    CaseItem(const boost::shared_ptr<Expression>&, const boost::shared_ptr<Block>&);
+    CaseItem(const shell::location&, const boost::shared_ptr<Expression>&, const boost::shared_ptr<Block>&);
     // normal default case
-    CaseItem(const boost::shared_ptr<Block>& body)
-      : NetComp(tCaseItem), body(body)
-    {
-      body->elab_inparse();
-    }
-    CaseItem(const shell::location& lloc, const boost::shared_ptr<Block>& body)
-      : NetComp(tCaseItem, lloc), body(body)
-    {
-      body->elab_inparse();
-    }
+    CaseItem(const boost::shared_ptr<Block>&);
+    CaseItem(const shell::location&, const boost::shared_ptr<Block>&);
     // multiple expressions
-    CaseItem(const std::list<boost::shared_ptr<Expression> >& expm, const boost::shared_ptr<Block>& body)
-      : NetComp(tCaseItem), exps(expm), body(body)
-    {
-      body->elab_inparse();
-    }
-    CaseItem(const shell::location& lloc, const std::list<boost::shared_ptr<Expression> >& expm, const boost::shared_ptr<Block>& body)
-      : NetComp(tCaseItem, lloc), exps(expm), body(body)
-    {
-      body->elab_inparse();
-    }
+    CaseItem(const list<boost::shared_ptr<Expression> >&, const boost::shared_ptr<Block>&);
+    CaseItem(const shell::location&, const list<shared_ptr<Expression> >&, const shared_ptr<Block>&);
 
     // helpers
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
-    NETLIST_CHECK_INPARSE_DECL;
     virtual CaseItem* deep_copy() const;
-    virtual void db_register(int iod = 1);
-    virtual void db_expunge();
+    NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
-    NETLIST_SET_ALWAYS_POINTER_DECL;
     bool is_default() const {return exps.size() == 0; }
     bool is_match(const Number&) const; /* whether this case match with the number (arguement) */
     NETLIST_SCAN_VARS;
@@ -100,51 +71,26 @@ namespace netlist{
     // constructors
     NETLIST_DEFAULT_CON(CaseState, tCase);
     NETLIST_DEFAULT_CON_WL(CaseState, tCase);
-    CaseState(const boost::shared_ptr<Expression>& exp, const std::list<boost::shared_ptr<CaseItem> >& citems, 
-              const boost::shared_ptr<CaseItem>& ditem, bool mcasex = false)
-      : NetComp(tCase), exp(exp), cases(citems), named(false), casex(mcasex) 
-    {
-      cases.push_back(ditem);
-    }
-    CaseState(const shell::location& lloc, const boost::shared_ptr<Expression>& exp, 
-              const std::list<boost::shared_ptr<CaseItem> >& citems, const boost::shared_ptr<CaseItem>& ditem, 
-              bool mcasex = false)
-      : NetComp(tCase, lloc), exp(exp), cases(citems), named(false), casex(mcasex) 
-    {
-      cases.push_back(ditem);
-    }
-    CaseState(const boost::shared_ptr<Expression>& exp, const std::list<boost::shared_ptr<CaseItem> >& citems, 
-              bool mcasex = false)
-      : NetComp(tCase), exp(exp), cases(citems), named(false), casex(mcasex) 
-    { 
-    }
-    CaseState(const shell::location& lloc, const boost::shared_ptr<Expression>& exp, 
-              const std::list<boost::shared_ptr<CaseItem> >& citems, bool mcasex = false)
-      : NetComp(tCase, lloc), exp(exp), cases(citems), named(false), casex(mcasex) 
-    { 
-    }
-    CaseState(const boost::shared_ptr<Expression>& exp, const boost::shared_ptr<CaseItem>& ditem, 
-              bool mcasex = false)
-      : NetComp(tCase), exp(exp), named(false), casex(mcasex) 
-    {
-      cases.push_back(ditem);
-    }
-    CaseState(const shell::location& lloc, const boost::shared_ptr<Expression>& exp, 
-              const boost::shared_ptr<CaseItem>& ditem, bool mcasex = false)
-      : NetComp(tCase, lloc), exp(exp), named(false), casex(mcasex) 
-    {
-      cases.push_back(ditem);
-    }
+    CaseState(const boost::shared_ptr<Expression>&, const std::list<boost::shared_ptr<CaseItem> >&, 
+              const boost::shared_ptr<CaseItem>&, bool mcasex = false);
+    CaseState(const shell::location&, const boost::shared_ptr<Expression>&, 
+              const std::list<boost::shared_ptr<CaseItem> >&, const boost::shared_ptr<CaseItem>&, 
+              bool mcasex = false);
+    CaseState(const boost::shared_ptr<Expression>&, const std::list<boost::shared_ptr<CaseItem> >&, 
+              bool mcasex = false);
+    CaseState(const shell::location&, const boost::shared_ptr<Expression>&, 
+              const std::list<boost::shared_ptr<CaseItem> >&, bool mcasex = false);
+    CaseState(const boost::shared_ptr<Expression>&, const boost::shared_ptr<CaseItem>&, 
+              bool mcasex = false);
+    CaseState(const shell::location&, const boost::shared_ptr<Expression>&, 
+              const boost::shared_ptr<CaseItem>&, bool mcasex = false);
 
     // helpers
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
-    NETLIST_CHECK_INPARSE_DECL;
     virtual CaseState* deep_copy() const;
-    virtual void db_register(int iod = 1);
-    virtual void db_expunge();
+    NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
-    NETLIST_SET_ALWAYS_POINTER_DECL;
     void set_name(const BIdentifier& nm) {name = nm; named=true;}
     bool is_named() const { return named; }
     bool is_casex() const { return casex; }

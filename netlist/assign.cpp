@@ -66,13 +66,6 @@ ostream& netlist::Assign::streamout(ostream& os, unsigned int indent) const {
   return os;
 }
 
-bool netlist::Assign::check_inparse() {
-  bool rv = true;
-  rv &= lval->check_inparse();
-  rv &= rexp->check_inparse();
-  return rv;
-}
-
 void netlist::Assign::set_father(Block *pf) {
   if(father == pf) return;
   father = pf;
@@ -81,40 +74,27 @@ void netlist::Assign::set_father(Block *pf) {
   rexp->set_father(pf);
 }
 
-bool netlist::Assign::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
+void netlist::Assign::db_register(int) { 
+  lval->db_register(0); 
+  rexp->db_register(1); 
+}
+
+void netlist::Assign::db_expunge() { 
+  lval->db_expunge(); 
+  rexp->db_expunge(); 
+}
+
+bool netlist::Assign::elaborate(set<shared_ptr<Variable> >& to_del,
+                                map<shared_ptr<NetComp>, list<shared_ptr<Variable> > >& to_add) {
   bool rv = true;
-  result = ELAB_Normal;
-
-  if(continuous && !( mctype == tModule ||
-                      mctype == tGenBlock
-                      )) {
-    G_ENV->error(loc, "ELAB-ASSIGN-0");
-    return false;
-  }
-
-  if(!continuous && !( mctype == tSeqBlock
-                       )) {
-    G_ENV->error(loc, "ELAB-ASSIGN-1");
-    return false;
-  }
-
-  assert(lval.use_count() != 0);
-  assert(rexp.use_count() != 0);
 
   // check internals
-  rv &= lval->elaborate(result, mctype, fp);
-  rv &= rexp->elaborate(result, mctype, fp);
-
-  // check and reduce range
-  rexp->set_width(lval->get_width());
+  rv &= lval->elaborate(to_del, to_add);
+  rv &= rexp->elaborate(to_del, to_add);
 
   return rv;
 }
 
-
-void netlist::Assign::set_always_pointer(SeqBlock *p) {
-  if(lval.use_count() != 0) lval->set_always_pointer(p);
-}
 
 void netlist::Assign::scan_vars(std::set<string>& target,
                                 std::set<string>& dsrc,
