@@ -415,9 +415,9 @@ bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
   //std::cout << "after var elaboration: " << std::endl << *this;
   
   // resolve all generate variables
-  for_each(db_genvar.begin_order(), db_genvar.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
-        m.second->update();
-      });
+  //for_each(db_genvar.begin_order(), db_genvar.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  //      m.second->update();
+  //    });
   
   //std::cout << "after genvar elaboration: " << std::endl << *this;
   

@@ -29,6 +29,7 @@
 #ifndef AV_H_AV_NETCOMP_
 #define AV_H_AV_NETCOMP_
 
+#include <boost/enable_shared_from_this.hpp>
 #include "shell/location.h"
 #include <set>
 
@@ -62,7 +63,7 @@ namespace SDFG {
 
 #ifndef SP_CAST
 #define SP_CAST(m, T, d)                      \
-  boost::shared_ptr<T > m = static_pointer_cast<T >(d)
+  boost::shared_ptr<T > m = boost::static_pointer_cast<T >(d)
 #endif
 
 #ifndef NETLIST_CHECK_INPARSE_DECL
@@ -122,7 +123,7 @@ namespace SDFG {
 namespace netlist{
   
   // the base class of all netlist components
-  class NetComp {
+  class NetComp : public boost::enable_shared_from_this<NetComp> {
   public:
 #include "comp_type.h"
     // no one should directly use this class
@@ -201,8 +202,9 @@ namespace netlist{
       ELAB_Empty,               /* the whole component is empty */
       ELAB_Const_If,            /* the if condition is constant and should be reduced */
       ELAB_Const_Case,          /* the case condition is constant and should be reduced */
-      ELAB_To_If_Case           /* the case statement has only 1 or 2 case items, */
+      ELAB_To_If_Case,          /* the case statement has only 1 or 2 case items, */
                                 /*   which can be reduced to simpler if statements */
+      ELAB_UNFOLDED_FOR         /* the for statement is unfolded and should be removed */
     };
 
     virtual bool elaborate( elab_result_t& ,
@@ -243,6 +245,11 @@ namespace netlist{
     virtual void scan_vars(std::set<std::string>&, std::set<std::string>&, std::set<std::string>&, bool) const {
       std::cerr << "ERROR!!, the scan_vars() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
       assert(0 == "scan_vars() of NetComp is used");
+    }
+    
+    
+    boost::shared_ptr<NetComp> get_sp() {
+        return shared_from_this();
     }
 
   protected:

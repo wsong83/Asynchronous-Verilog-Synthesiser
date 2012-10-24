@@ -93,6 +93,10 @@ bool netlist::operator== (const Identifier& lhs, const Identifier& rhs) {
   return lhs.compare(rhs) == 0;
 }
 
+bool netlist::operator!= (const Identifier& lhs, const Identifier& rhs) {
+  return lhs.compare(rhs) != 0;
+}
+
 //////////////////////////////// Block identifier /////////////////
 netlist::BIdentifier::BIdentifier(const string& nm)
   : Identifier(tBlockName, nm), anonymous(false)  {  }

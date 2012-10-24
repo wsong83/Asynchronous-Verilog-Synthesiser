@@ -58,6 +58,7 @@ namespace netlist {
   bool operator< (const Identifier& lhs, const Identifier& rhs);
   bool operator> (const Identifier& lhs, const Identifier& rhs);
   bool operator== (const Identifier& lhs, const Identifier& rhs);
+  bool operator!= (const Identifier& lhs, const Identifier& rhs);
   NETLIST_STREAMOUT(Identifier);
   
   ////////////// block identifier

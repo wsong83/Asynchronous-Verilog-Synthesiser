@@ -27,15 +27,19 @@
  */
 
 #include "component.h"
+#include "shell/env.h"
+#include <algorithm>
 
 using namespace netlist;
 using std::ostream;
 using std::string;
 using boost::shared_ptr;
 using shell::location;
+using std::vector;
+using std::list;
 
 netlist::ForState::ForState(
-                            const shared_ptr<Assign>& init, 
+                            const shared_ptr<Assign>& init,
                             const shared_ptr<Expression>& cond, 
                             const shared_ptr<Assign>& incr, 
                             const shared_ptr<Block>& body
@@ -110,6 +114,78 @@ void netlist::ForState::db_expunge() {
   if(cond.use_count() != 0) cond->db_expunge();
   if(incr.use_count() != 0) incr->db_expunge();
   if(body.use_count() != 0) body->db_expunge();
+}
+
+bool netlist::ForState::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
+  bool rv = true;
+  //result = ELAB_Normal;
+  //vector<NetComp *> elab_vect = fp;
+  //elab_vect.push_back(this);
+
+  // set up the initial assignment
+  if(!init) {
+    G_ENV->error(loc, "ELAB-FOR-0");
+    rv = false;
+    return rv;
+  } else if(!init->rexp->is_valuable()) {
+    G_ENV->error(init->loc, "ELAB-FOR-1", toString(*(init->rexp)));
+    rv = false;
+    return rv;
+  } else if(init->lval->size() != 1) {
+    G_ENV->error(init->loc, "ELAB-FOR-2", toString(*(init->lval)));
+    rv = false;
+    return rv;
+  }
+
+  VIdentifier& var = init->lval->front();
+  Number num = init->rexp->get_value();
+
+  // get the place to insert
+  list<shared_ptr<NetComp> >::iterator ithis = std::find(father->statements.begin(), father->statements.end(), get_sp());
+  assert(ithis != father->statements.end());
+
+  // unfold the for statement
+  shared_ptr<Expression> m_cond(cond->deep_copy());
+  m_cond->replace_variable(var, num);
+  m_cond->reduce();
+  if(!m_cond->is_valuable()) {
+    G_ENV->error(cond->loc, "ELAB-FOR-3", toString(*cond));
+    rv = false;
+    return rv;
+  }
+
+  while(m_cond->get_value().is_true()) {
+    shared_ptr<Block> m_blk(body->deep_copy());
+    m_blk->replace_variable(var, num);
+    father->statements.insert(ithis, m_blk);
+    m_blk->set_father(father);
+    m_blk->db_register(1);
+    m_blk->elaborate(result, mctype, fp);
+
+    // increment
+    if(!incr || incr->lval->size() != 1 || incr->lval->front() != var) {
+      G_ENV->error(cond->loc, "ELAB-FOR-4", toString(*incr));
+      rv = false;
+      return rv;
+    }
+    shared_ptr<Assign> m_incr(incr->deep_copy());
+    m_incr->rexp->replace_variable(var, num);
+    m_incr->rexp->reduce();
+    if(!m_incr->rexp->is_valuable()) {
+      G_ENV->error(cond->loc, "ELAB-FOR-4", toString(*incr));
+      rv = false;
+      return rv;
+    }
+    
+    // update num
+    num = m_incr->rexp->get_value();
+    m_cond.reset(cond->deep_copy());
+    m_cond->replace_variable(var, num);
+    m_cond->reduce();
+  }
+
+  result = ELAB_UNFOLDED_FOR;
+  return rv;
 }
 
 void netlist::ForState::set_always_pointer(SeqBlock *p) {

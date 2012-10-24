@@ -302,70 +302,81 @@ bool netlist::Block::elaborate(elab_result_t &result, const ctype_t mctype, cons
   
   // elaborate all internal items
   // check all variables
+  std::set<shared_ptr<Variable> > to_del_var;
+  std::set<shared_ptr<NetComp> > to_del;
+  std::map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add;
+
   list<pair<VIdentifier, shared_ptr<Variable> > >::iterator vit, vend;
   vit = db_var.begin_order();
   vend = db_var.end_order();
   while(vit != vend) {
     rv &= vit->second->elaborate(result, mctype, fp);
     if(result == ELAB_Empty) {
-      VIdentifier tname = vit->first;
-      vit++;
-      db_var.erase(tname);
-      vend = db_var.end_order();
-      result = ELAB_Normal;
+      to_del_var.insert(vit->second);
     } else
       vit++;
   }
   if(!rv) return rv;
 
+  BOOST_FOREACH(shared_ptr<Variable> v, to_del_var) {
+    db_var.erase(v->name);
+  }
+
   // elaborate the internals
-  list<shared_ptr<NetComp> >::iterator cit, cend;
-  cit = statements.begin();
-  cend = statements.end();
-  while(cit != cend) {
-    rv &= (*cit)->elaborate(result, mctype, fp);
-    if(rv) {
-      switch(result) {          // need test
-      case ELAB_Empty: {
-        (*cit).reset();
-        cit = statements.erase(cit);
-        cend = statements.end();
-        break;
+  BOOST_FOREACH(shared_ptr<NetComp> m, statements) {
+    rv &= m->elaborate(result, mctype, fp);
+    switch(result) {          // need test
+    case ELAB_Empty: {
+      to_del.insert(m);
+      break;
+    }
+    case ELAB_Const_If: {     // need test
+      SP_CAST(mif, IfState, m);
+      typedef pair<const VIdentifier, shared_ptr<Variable> > db_var_type;
+      BOOST_FOREACH(db_var_type mv, mif->ifcase->db_var.db_list) {
+        to_add[m].insert(to_add[m].end(), mv.second);
       }
-      case ELAB_Const_If: {     // need test
-        SP_CAST(mif, IfState, *cit);
-        for_each(mif->ifcase->db_var.begin_order(), mif->ifcase->db_var.end_order(),
-                 [&](pair<VIdentifier, shared_ptr<Variable> >& m) {
-                     bool v = db_var.insert(m.first, m.second);
-                     assert(v);
-                   } );
-        statements.insert(cit, mif->ifcase->statements.begin(), mif->ifcase->statements.end());
-        (*cit).reset();
-        cit = statements.erase(cit);
-        cend = statements.end();
-        break;
+      to_add[m].insert(to_add[m].begin(), 
+                       mif->ifcase->statements.begin(), mif->ifcase->statements.end());
+      break;
+    }
+    default:;
+    }
+    if(!rv) return rv;
+  }
+
+  typedef pair<const shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add_type;
+  BOOST_FOREACH(to_add_type m, to_add) {
+    list<shared_ptr<NetComp> >::iterator it = std::find(statements.begin(), statements.end(), m.first);
+    BOOST_FOREACH(shared_ptr<NetComp> st, m.second) {
+      if(st->get_type() == tVariable) {
+        SP_CAST(mvar, Variable, st);
+        db_var.insert(mvar->name, mvar);
+      } else {
+        statements.insert(it, st);
       }
-      default:
-        cit++;
-      }
-    } else {
-      cit++;
     }
   }
-  if(!rv) return rv;
 
+  BOOST_FOREACH(shared_ptr<NetComp> m, to_del) {
+    statements.erase(std::find(statements.begin(), statements.end(), m));
+  }
+  
   // check the db_var again as some variables may be removed
+  to_del_var.clear();
   vit = db_var.begin_order();
   vend = db_var.end_order();
   while(vit != vend) {
     rv &= vit->second->elaborate(result, mctype, fp);
     if(result == ELAB_Empty) {
-      VIdentifier tname = vit->first;
-      vit++;
-      db_var.erase(tname);
-      vend = db_var.end_order();
+      to_del_var.insert(vit->second);
     } else
       vit++;
+  }
+  if(!rv) return rv;
+
+  BOOST_FOREACH(shared_ptr<Variable> v, to_del_var) {
+    db_var.erase(v->name);
   }
 
   // final check

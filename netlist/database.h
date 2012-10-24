@@ -185,7 +185,7 @@ namespace netlist {
       return os;
     }
     
-  private:
+  //private:
     DBTM db_map;                /* unordered database */
     DBTL db_list;               /* oredered database */
     

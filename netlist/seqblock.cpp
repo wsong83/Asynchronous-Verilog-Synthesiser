@@ -278,9 +278,32 @@ bool netlist::SeqBlock::elaborate(elab_result_t &result, const ctype_t mctype, c
   if(!rv) return rv;
 
   // elaborate the internals
-  BOOST_FOREACH(shared_ptr<NetComp>& m, statements)
+  std::set<shared_ptr<NetComp> > to_del;
+  std::map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add;
+  BOOST_FOREACH(shared_ptr<NetComp> m, statements) {
     rv &= m->elaborate(result, tSeqBlock, elab_vect);
+    if(result == ELAB_UNFOLDED_FOR) {
+      to_del.insert(m);
+    }
+  }
   if(!rv) return rv;
+
+  typedef pair<const shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add_type;
+  BOOST_FOREACH(to_add_type m, to_add) {
+    list<shared_ptr<NetComp> >::iterator it = std::find(statements.begin(), statements.end(), m.first);
+    BOOST_FOREACH(shared_ptr<NetComp> st, m.second) {
+      if(st->get_type() == tVariable) {
+        SP_CAST(mvar, Variable, st);
+        db_var.insert(mvar->name, mvar);
+      } else {
+        statements.insert(it, st);
+      }
+    }
+  }
+
+  BOOST_FOREACH(shared_ptr<NetComp> m, to_del) {
+    statements.erase(std::find(statements.begin(), statements.end(), m));
+  }
 
   // final check
   // to do what?

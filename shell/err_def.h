@@ -96,6 +96,26 @@ ERR_DEFINE("ELAB-EXPRESSION-3",
            EError,   1,
            "\"%1%\" is not supported yet. Variable division/modulate operation is not synthesisable.");
 
+ERR_DEFINE("ELAB-FOR-0",
+           EError,   0,
+           "for statement must have a initial assignment.");
+
+ERR_DEFINE("ELAB-FOR-1",
+           EError,   1,
+           "cannot evaluate the initial assignment \"%1%\" of the for statement");
+
+ERR_DEFINE("ELAB-FOR-2",
+           EError,   1,
+           "cannot handle multiple variable initial assignment \"%1%\" of the for statement");
+
+ERR_DEFINE("ELAB-FOR-3",
+           EError,   1,
+           "cannot evaluate the condition \"%1%\" of the for statement");
+
+ERR_DEFINE("ELAB-FOR-4",
+           EError,   1,
+           "cannot evaluate the increment assignment \"%1%\" of the for statement");
+
 ERR_DEFINE("ELAB-IF-0", 
            EError,   0, 
            "illegal place for an if statement.");
