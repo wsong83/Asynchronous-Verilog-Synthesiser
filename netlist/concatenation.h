@@ -41,16 +41,13 @@ namespace netlist {
      * So the whole structure is recursive.
      */
   public:
-    ConElem() : father(NULL), width(0) {}
-    ConElem(const shell::location& lloc) : loc(lloc), father(NULL), width(0){}
-    ConElem(const boost::shared_ptr<Expression>& expr, const std::list<boost::shared_ptr<ConElem> >& elems)
-      : exp(expr), con(elems), father(NULL), width(0) {}
-    ConElem(const shell::location& lloc, const boost::shared_ptr<Expression>& expr, const std::list<boost::shared_ptr<ConElem> >& elems)
-      : exp(expr), con(elems), loc(lloc), father(NULL), width(0) {}
-    ConElem(const boost::shared_ptr<Expression>& expr)
-      : exp(expr), father(NULL), width(0) {}
-    ConElem(const shell::location& lloc, const boost::shared_ptr<Expression>& expr)
-      : exp(expr), loc(lloc), father(NULL), width(0) {}
+    ConElem();
+    ConElem(const shell::location& lloc);
+    ConElem(const boost::shared_ptr<Expression>& expr, const std::list<boost::shared_ptr<ConElem> >& elems);
+    ConElem(const shell::location& lloc, const boost::shared_ptr<Expression>& expr, 
+            const std::list<boost::shared_ptr<ConElem> >& elems);
+    ConElem(const boost::shared_ptr<Expression>& expr);
+    ConElem(const shell::location& lloc, const boost::shared_ptr<Expression>& expr);
     
     // helpers
     void reduce();
@@ -60,13 +57,9 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
-    NETLIST_CHECK_INPARSE_DECL;
     virtual ConElem* deep_copy() const;
-    virtual void db_register(int iod = 1);
-    virtual void db_expunge();
-    virtual bool elaborate(NetComp::elab_result_t &);
-    NETLIST_SET_WIDTH_DECL;
-    NETLIST_GET_WIDTH_DECL;
+    NETLIST_DB_DECL;
+    NETLIST_ELABORATE_DECL;
     NETLIST_SCAN_VARS;
     NETLIST_REPLACE_VARIABLE;
 
@@ -97,13 +90,8 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
-    NETLIST_CHECK_INPARSE_DECL;
     virtual Concatenation* deep_copy() const;
-    virtual void db_register(int iod = 1);
-    virtual void db_expunge();
-    NETLIST_ELABORATE_DECL;
-    NETLIST_SET_WIDTH_DECL;
-    NETLIST_GET_WIDTH_DECL;
+    NETLIST_DB_DECL;
     NETLIST_SCAN_VARS;
     NETLIST_REPLACE_VARIABLE;
 

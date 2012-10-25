@@ -34,8 +34,8 @@ namespace netlist {
 
   class RangeArrayCommon {
   public:
-    RangeArrayCommon() {}
-    RangeArrayCommon(const std::list<boost::shared_ptr<Range> >& rhs) : child(rhs) {}
+    RangeArrayCommon();
+    RangeArrayCommon(const std::list<boost::shared_ptr<Range> >&);
 
     // helpers
     bool is_valuable() const;
@@ -68,11 +68,8 @@ namespace netlist {
 
     // inherit from NetComp, actually not
     NETLIST_SET_FATHER_DECL;
-    NETLIST_CHECK_INPARSE_DECL;
     std::list<boost::shared_ptr<Range> > deep_copy() const;
-    void db_register(int iod = 1);
-    void db_expunge();
-    virtual bool elaborate(NetComp::elab_result_t &, const NetComp::ctype_t mctype, const std::vector<NetComp *>& fp);
+    NETLIST_DB_DECL;
     unsigned int get_width(const Range&) const; // considering child
     unsigned int get_width(const Range&); // considering child
     void set_width(const unsigned int&, const Range&);

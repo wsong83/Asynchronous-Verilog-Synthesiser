@@ -262,107 +262,36 @@ void netlist::CaseState::db_expunge() {
 bool netlist::CaseState::elaborate(set<shared_ptr<Variable> >& to_del,
                                    map<shared_ptr<NetComp>, list<shared_ptr<Variable> > >& to_add) {
   bool rv = true;
-  
+  set<shared_ptr<Variable> >& m_del;
+  map<shared_ptr<NetComp>, list<shared_ptr<Variable> > >& m_add
+
   //elaborate the case expression
   assert(exp.use_count() != 0);
-  rv &= exp->elaborate(result, mctype, fp);
+  rv &= exp->elaborate(m_del, m_add);
   if(!rv) return false;
 
   // elaborate all case items
   BOOST_FOREACH(shared_ptr<CaseItem>& m, cases)
-    rv &= m->elaborate(result, mctype);
+    rv &= m->elaborate(m_del, m_add);
   if(!rv) return false;
 
   // post-elaborate process
   
-  // check the number of default and make sure it is at the end
-  list<shared_ptr<CaseItem> >::iterator it, end;
-  for(it=cases.begin(), end=cases.end(); it!=end; it++) {
-    if((*it)->is_default()) {
-      it++;
-      if(it != end) {           // still have case items after a default case
-        G_ENV->error((*it)->loc, "ELAB-CASE-1");
-        cases.erase(it, end);
-      }
-      break;
-    }
-  }
-
-  // check all cases have different values and remove duplicated cases
-  // #define CASE_DEBUG_CASE
-#ifdef CASE_DEBUG_CASE
-  std::cout << "beginning check case statements: " << std::endl;
-#endif
-
-  bool already_has_default = false;
-  std::set<string> case_exps;
-  it=cases.begin();
-  end=cases.end();
-  while(it!=end) {
-    if(!already_has_default && (*it)->is_default()) {
-      it++;
-      already_has_default = true;
-      continue;
-    }
-
-    // check all case expressions
-    list<shared_ptr<Expression> >::iterator eit, eend;
-    eit=(*it)->exps.begin(); 
-    eend=(*it)->exps.end(); 
-    while(eit!=eend) {
-      if(case_exps.count(Number::trim_zeros((*eit)->get_value().get_txt_value()))) { // duplicated
-#ifdef CASE_DEBUG_CASE
-        std::cout << "duplicated " << **eit << " text: " 
-                  << Number::trim_zeros((*eit)->get_value().get_txt_value())  
-                  << std::endl;
-#endif
-        G_ENV->error((*eit)->loc, "ELAB-CASE-2");
-        eit = (*it)->exps.erase(eit);
-      } else {
-#ifdef CASE_DEBUG_CASE
-        std::cout << "insert " << **eit << " text: " 
-                  << Number::trim_zeros((*eit)->get_value().get_txt_value())  
-                  << std::endl;
-#endif
-        case_exps.insert(Number::trim_zeros((*eit)->get_value().get_txt_value()));
-        eit++;
-      }
-    }
-
-    if((*it)->is_default()) {
-      it = cases.erase(it);
-    } else {
-      it++;
-    }
-  } 
-
   if(cases.size() == 0) {       // empty case
-    result = ELAB_Empty;
+    to_del.insert(get_sp());
     return rv;
   }
 
   if(exp->is_valuable()) {      // const case condition
     Number exp_val = exp->get_value();
     // find the case item
-    for(it=cases.begin(), end=cases.end(); it!=end; it++) {
-      if((*it)->is_match(exp_val)) {
-        cases.push_front(shared_ptr<CaseItem>(new CaseItem((*it)->loc, (*it)->body)));
+    BOOST_FOREACH(shared_ptr<CaseItem>& m, cases) {
+      if (m->is_match(exp_val)) {
+        to_add[get_sp()].push_back(m->body);
         break;
       }
     }
-    if(it == end) {             // no match at all
-      result = ELAB_Empty;
-      return rv;
-    } else {
-      result = ELAB_Const_Case;
-      return rv;
-    }
-  }
-
-  if(cases.size() == 1 || (cases.size() == 2 && cases.back()->is_default())) {       // only one case item
-    // convert it into an if
-    result = ELAB_To_If_Case;
-    return rv;
+    to_del.insert(get_sp());
   }
 
   return rv;

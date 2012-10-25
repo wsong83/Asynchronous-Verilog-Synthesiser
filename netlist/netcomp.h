@@ -79,16 +79,6 @@ namespace SDFG {
   using NetComp::elaborate;
 #endif
 
-#ifndef NETLIST_SET_WIDTH_DECL
-#define NETLIST_SET_WIDTH_DECL                                   \
-  virtual void set_width( const unsigned int&);
-#endif
-
-#ifndef NETLIST_GET_WIDTH_DECL
-#define NETLIST_GET_WIDTH_DECL                                   \
-  virtual unsigned int get_width();
-#endif
-
 #ifndef NETLIST_GEN_SDFG
 #define NETLIST_GEN_SDFG                                   \
   virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>, \
@@ -126,7 +116,6 @@ namespace netlist{
     ctype_t get_type() const { return ctype; }
     ctype_t ctype;
     shell::location loc;
-    unsigned int width;         // data width of this component
     
     virtual void reduce() {}	/* many netlist component need method to reduce itself */
 

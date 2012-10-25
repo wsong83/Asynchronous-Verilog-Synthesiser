@@ -36,6 +36,9 @@ using std::pair;
 using boost::shared_ptr;
 using shell::location;
 
+netlist::Range::Range() 
+  : NetComp(tRange), dim(false), rtype(TR_Err) { }
+
 netlist::Range::Range(const mpz_class& sel)
   : NetComp(tRange), c(sel), dim(false), rtype(TR_Const) {  }
 
@@ -652,21 +655,6 @@ ostream& netlist::Range::streamout(ostream& os, unsigned int indent) const {
   return streamout(os, indent, "");
 }
 
-bool netlist::Range::check_inparse() {
-  bool rv = true;
-  
-  switch(rtype) {
-  case TR_Var: rv &= v->check_inparse(); break;
-  case TR_Range: 
-    rv &= r.first->check_inparse(); 
-    rv &= r.second->check_inparse(); 
-    break;
-  default:;
-  }
-  rv &= RangeArrayCommon::check_inparse();
-  return rv;
-}
-
 Range* netlist::Range::deep_copy() const {
   Range* rv = new Range();
   switch(rtype) {
@@ -686,51 +674,6 @@ Range* netlist::Range::deep_copy() const {
   return rv;
 }
 
-bool netlist::Range::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
-  bool rv = true;
-  result = ELAB_Normal;
-
-  switch(rtype) {
-  case TR_Var: {
-    rv = v->elaborate(result, tExp); 
-    if(v->is_valuable()) {
-      c = v->get_value();
-      rtype = TR_Const;
-      v.reset();
-    }
-    break;
-  }
-  case TR_Range: {
-    rv = r.first->elaborate(result) && r.second->elaborate(result); 
-    if(r.first->is_valuable() && r.second->is_valuable()) {
-      if(r.first->get_value() == r.second->get_value()) {
-        c = v->get_value();
-        rtype = TR_Const;
-      } else {
-        cr.first = r.first->get_value();
-        cr.second = r.second->get_value();
-        rtype = TR_CRange;
-      }
-      r.first.reset();
-      r.second.reset();
-    }
-    break;
-  }
-  case TR_CRange: {
-    if(cr.first < cr.second) {  // make sure it is reverse order
-      Number tmp = cr.second;
-      cr.second = cr.first;
-      cr.first = tmp;
-    }
-    break;
-  }
-  default:;
-  }
-
-  if(rv) rv &= RangeArrayCommon::elaborate(result, mctype, fp);
-
-  return rv;
-}
 
 // get the data width represented by this range
 unsigned int netlist::Range::get_width() const {

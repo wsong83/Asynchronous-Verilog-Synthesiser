@@ -46,6 +46,10 @@ using std::list;
 using std::vector;
 using std::for_each;
 
+netlist::Expression::Expression() : NetComp(tExp) {}
+
+netlist::Expression::Expression(const shell::location& lloc) : NetComp(tExp, lloc) {}
+
 netlist::Expression::Expression(const Number& exp) 
   : NetComp(tExp)
 {
@@ -164,23 +168,6 @@ void netlist::Expression::concatenate(const Expression& rhs) {
   eqn->get_num().concatenate(rhs.eqn->get_num());
 }
 
-unsigned int netlist::Expression::get_width() {
-  if(width) return width;
-  assert(eqn.use_count() != 0);
-  width = eqn->get_width();
-  return width;
-}
-
-void netlist::Expression::set_width(const unsigned int& w) {
-  if(width == w) return;
-  assert(eqn.use_count() != 0);
-  // there is no need to make sure w <= width as it may happen this way
-  // such as assign a[3:0] = 1'b1;
-  eqn->set_width(w);
-  width = w;
-  return;
-}
-
 Expression& netlist::operator+ (Expression& lhs, Expression& rhs) {
   lhs.append(Operation::oAdd, rhs);
   return lhs;
@@ -210,13 +197,6 @@ void netlist::Expression::set_father(Block *pf) {
   eqn->set_father(pf);
 }
 
-bool netlist::Expression::check_inparse() {
-  bool rv = true;
-  assert(eqn.use_count() != 0);
-  rv &= eqn->check_inparse();
-  return rv;
-}
-
 Expression* netlist::Expression::deep_copy() const {
   Expression* rv = new Expression();
   rv->loc = loc;
@@ -226,30 +206,13 @@ Expression* netlist::Expression::deep_copy() const {
   return rv;
 }
 
-bool netlist::Expression::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>&) {
+bool netlist::Expression::elaborate(set<shared_ptr<Variable> >& to_del,
+                                    map<shared_ptr<NetComp>, list<shared_ptr<Variable> > >& to_add) {
   bool rv = true;
-  result = ELAB_Normal;
   
-  // try to reduce the expression
-  assert(eqn.use_count() != 0);
   eqn->reduce();
 
-  eqn->elaborate(result);
-  if(!rv) return false;
-
-  // type specific check
-  switch(mctype) {
-  case tCaseItem: {
-    // for a case item, it must be const
-    if(!eqn->is_valuable()) {
-      G_ENV->error(loc, "ELAB-CASE-3", toString(*this));
-      rv = false;
-    }
-    break;
-  }
-  default:
-    ;
-  }
+  rv &= eqn->elaborate(to_del, to_add);
 
   return rv;
 }

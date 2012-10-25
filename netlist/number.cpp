@@ -36,6 +36,8 @@ using std::ostream;
 using std::string;
 using shell::location;
 
+netlist::Number::Number() : NetComp(tNumber), num_leng(0), valid(false), valuable(false), sign_flag(false) {};
+
 // decimal or integer
 netlist::Number::Number(const char *text, const int txt_leng) 
   : NetComp(tNumber), valid(false), valuable(false), sign_flag(false)
@@ -217,12 +219,6 @@ bool netlist::Number::check_inparse() {
 
 Number* netlist::Number::deep_copy() const {
   return (new Number(*this));
-}
-
-bool netlist::Number::elaborate(NetComp::elab_result_t &result, const NetComp::ctype_t, const std::vector<NetComp *>&) {
-  // number is the simpliest form it could be, so directly return OK
-  result = NetComp::ELAB_Normal;
-  return true;
 }
 
 void netlist::Number::concatenate(const Number& rhs) {

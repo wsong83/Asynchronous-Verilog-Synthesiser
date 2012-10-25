@@ -52,13 +52,13 @@ void netlist::Port::set_father(Block *pf) {
   name.set_father(pf);
 }
 
-bool netlist::Port::check_inparse() {
-  shared_ptr<Variable> m = father->gfind_var(VIdentifier(name.name));
-  if(m.use_count() == 0) {      // port without wire/reg definition
-    G_ENV->error(loc, "SYN-PORT-2", name.name);
-    father->db_var.insert(VIdentifier(name.name), shared_ptr<Variable>( new Variable(*this)));
-  }
-  return true;
+void netlist::Port::db_register(int) {
+  if(dir <= 0) name.db_register(0);
+  if(dir >= 0) name.db_register(1);
+}
+
+void netlist::Port::db_expunge() {
+  name.db_expunge();
 }
 
 Port* netlist::Port::deep_copy() const {

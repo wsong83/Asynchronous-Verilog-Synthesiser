@@ -37,11 +37,11 @@ namespace netlist {
   class Identifier : public NetComp{
   public:
     // constructors
-    Identifier() {}
-    Identifier(NetComp::ctype_t ctype) : NetComp(ctype) {}
-    Identifier(NetComp::ctype_t ctype, const shell::location& lloc) : NetComp(ctype, lloc) {}
+    Identifier();
+    Identifier(NetComp::ctype_t);
+    Identifier(NetComp::ctype_t, const shell::location&);
     Identifier(NetComp::ctype_t, const std::string&);
-    Identifier(NetComp::ctype_t, const shell::location& lloc, const std::string&);
+    Identifier(NetComp::ctype_t, const shell::location&, const std::string&);
 
     // helpers
     int compare(const Identifier& rhs) const; /* compare two identifiers */
@@ -55,10 +55,10 @@ namespace netlist {
 
   };
   
-  bool operator< (const Identifier& lhs, const Identifier& rhs);
-  bool operator> (const Identifier& lhs, const Identifier& rhs);
-  bool operator== (const Identifier& lhs, const Identifier& rhs);
-  bool operator!= (const Identifier& lhs, const Identifier& rhs);
+  bool operator< (const Identifier&, const Identifier&);
+  bool operator> (const Identifier&, const Identifier&);
+  bool operator== (const Identifier&, const Identifier&);
+  bool operator!= (const Identifier&, const Identifier&);
   NETLIST_STREAMOUT(Identifier);
   
   ////////////// block identifier
@@ -66,11 +66,11 @@ namespace netlist {
   public:
     // constructors
     BIdentifier(const std::string&);
-    BIdentifier(const shell::location& lloc, const std::string&);
+    BIdentifier(const shell::location&, const std::string&);
     BIdentifier();
-    BIdentifier(const shell::location& lloc);
+    BIdentifier(const shell::location&);
     BIdentifier(const averilog::avID& );
-    BIdentifier(const shell::location& lloc, const averilog::avID& );
+    BIdentifier(const shell::location&, const averilog::avID& );
 
     // helpers
     BIdentifier& operator++ ();
@@ -85,9 +85,9 @@ namespace netlist {
   class FIdentifier : public Identifier {
   public:
     // constructors
-    FIdentifier() : Identifier(NetComp::tFuncName) { }
+    FIdentifier();
     FIdentifier(const std::string&);
-    FIdentifier(const shell::location& lloc, const std::string&);
+    FIdentifier(const shell::location&, const std::string&);
     
     // helpers
 
@@ -98,12 +98,12 @@ namespace netlist {
   class MIdentifier : public Identifier {
   public:
     // constructors
-    MIdentifier() : Identifier(tModuleName), numbered(false) {}
-    MIdentifier(const shell::location& lloc) : Identifier(tModuleName, lloc), numbered(false) {}
+    MIdentifier();
+    MIdentifier(const shell::location&);
     MIdentifier(const std::string&);
-    MIdentifier(const shell::location& lloc, const std::string&);
+    MIdentifier(const shell::location&, const std::string&);
     MIdentifier(const averilog::avID& );
-    MIdentifier(const shell::location& lloc, const averilog::avID& );
+    MIdentifier(const shell::location&, const averilog::avID& );
     
     // helpers
     MIdentifier& operator++ ();
@@ -139,8 +139,8 @@ namespace netlist {
   class PoIdentifier : public Identifier {
   public:
     // constructors
-    PoIdentifier() : Identifier(NetComp::tPortName) {}
-    PoIdentifier(const shell::location& lloc) : Identifier(NetComp::tPortName, lloc) {}
+    PoIdentifier();
+    PoIdentifier(const shell::location&);
     PoIdentifier(const std::string&);
     PoIdentifier(const shell::location&, const std::string&);
     PoIdentifier(const averilog::avID&);
@@ -193,14 +193,8 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
-    NETLIST_CHECK_INPARSE_DECL;
     virtual VIdentifier* deep_copy() const;
-    virtual void db_register(int iod = 1);
-    virtual void db_expunge();
-    NETLIST_ELABORATE_DECL;
-    NETLIST_SET_ALWAYS_POINTER_DECL;
-    NETLIST_SET_WIDTH_DECL;
-    NETLIST_GET_WIDTH_DECL;
+    NETLIST_DB_DECL;
     NETLIST_SCAN_VARS;
     NETLIST_REPLACE_VARIABLE;
 

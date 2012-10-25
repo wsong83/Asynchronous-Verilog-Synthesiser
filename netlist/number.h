@@ -35,7 +35,7 @@ namespace netlist {
   class Number : public NetComp{
   public:
     // constructors
-    Number() : NetComp(tNumber), num_leng(0), valid(false), valuable(false), sign_flag(false) {};
+    Number();
     Number(const char *text, const int txt_leng); /* constructor for scanner */
     Number(const shell::location& lloc, const char *text, const int txt_leng); /* constructor for scanner */
     Number(int d);
@@ -73,13 +73,9 @@ namespace netlist {
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
-    NETLIST_CHECK_INPARSE_DECL;
     virtual Number* deep_copy() const;
-    virtual void db_register(int) {}
-    virtual void db_expunge() {}
-    NETLIST_ELABORATE_DECL;
-    NETLIST_GET_WIDTH_DECL;
-    NETLIST_SET_WIDTH_DECL;
+    unsigned int get_width();
+    void set_width(const unsigned int&);
 
   private:
     unsigned int num_leng;	// the number of digits in the number

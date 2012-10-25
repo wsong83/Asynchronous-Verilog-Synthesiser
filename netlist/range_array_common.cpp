@@ -37,6 +37,11 @@ using std::list;
 using boost::shared_ptr;
 using shell::location;
 
+netlist::RangeArrayCommon::RangeArrayCommon() {}
+
+netlist::RangeArrayCommon::RangeArrayCommon(const list<shared_ptr<Range> >& rhs) 
+  : child(rhs) {}
+
 bool netlist::RangeArrayCommon::is_valuable() const {
   bool rv = true;
   BOOST_FOREACH(const shared_ptr<Range>& m, child)
@@ -216,13 +221,6 @@ void netlist::RangeArrayCommon::set_father(Block* pf) {
   BOOST_FOREACH(shared_ptr<Range>& m, child) m->set_father(pf);
 }
 
-bool netlist::RangeArrayCommon::check_inparse() {
-  bool rv = true;
-  BOOST_FOREACH(const shared_ptr<Range>& m, child) rv &= m->check_inparse();
-  return rv;
-}
-
-
 list<shared_ptr<Range> > netlist::RangeArrayCommon::deep_copy() const {
   list<shared_ptr<Range> > rv;
   BOOST_FOREACH(const shared_ptr<Range>& m, child) 
@@ -236,14 +234,6 @@ void netlist::RangeArrayCommon::db_register(int iod) {
 
 void netlist::RangeArrayCommon::db_expunge() {
   BOOST_FOREACH(const shared_ptr<Range>& m, child) m->db_expunge();
-}
-
-bool netlist::RangeArrayCommon::elaborate(NetComp::elab_result_t &result, const NetComp::ctype_t mctype, const vector<NetComp *>& fp) {
-  bool rv = true;
-  result = NetComp::ELAB_Normal;
-  BOOST_FOREACH(const shared_ptr<Range>& m, child) 
-    rv &= m->elaborate(result, mctype, fp);
-  return rv;
 }
 
 unsigned int netlist::RangeArrayCommon::get_width(const Range& r) const{
