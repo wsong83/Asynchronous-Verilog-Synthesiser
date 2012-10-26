@@ -43,6 +43,33 @@ using std::vector;
 using std::deque;
 
 
+netlist::Variable::Variable() 
+  : NetComp(tVariable), uid(0) {}
+
+netlist::Variable::Variable(const shell::location& lloc) 
+  : NetComp(tVariable, lloc), uid(0) {}
+
+netlist::Variable::Variable(const VIdentifier& id, vtype_t mtype)
+  : NetComp(tVariable), vtype(mtype), name(id), uid(0) {}
+
+netlist::Variable::Variable(const Port& p)
+  : NetComp(tVariable, p.loc), vtype(TWire), uid(0) 
+{
+  VIdentifier *newName = p.name.deep_copy();
+  name = *newName;
+  delete newName;
+}
+
+netlist::Variable::Variable(const shell::location& lloc, const VIdentifier& id, vtype_t mtype)
+  : NetComp(tVariable, lloc), vtype(mtype), name(id), uid(0) {}
+
+netlist::Variable::Variable(const VIdentifier& id, const shared_ptr<Expression>& expp, vtype_t mtype)
+  : NetComp(tVariable), vtype(mtype), name(id), uid(0), exp(expp) {}
+
+netlist::Variable::Variable(const shell::location& lloc, const VIdentifier& id, 
+                            const shared_ptr<Expression>& expp, vtype_t mtype)
+  : NetComp(tVariable, lloc), vtype(mtype), name(id), uid(0), exp(expp) {}
+
 void netlist::Variable::set_value(const Number& num) {
   if(exp.use_count()!=0) exp->db_expunge();
   exp.reset(new Expression(num));
@@ -73,9 +100,9 @@ bool netlist::Variable::update() {
 
   Number m = exp->get_value();
   exp.reset(new Expression(m));
-  map<unsigned int, VIdentifier *>::iterator it, end;
-  for(it=fan[1].begin(), end=fan[1].end(); it != end; it++) {
-    it->second->set_value(m);
+  typedef pair<const unsigned int, Videntifier *> fan_type;
+  BOOST_FOREACH(fan_type f, fan[1]) {
+    f.second->set_value(m);
   }
   return true;
 }
@@ -103,11 +130,6 @@ ostream& netlist::Variable::streamout(ostream& os, unsigned int indent) const {
   if(exp.use_count() != 0) { os << " = " << *exp; }
   os << ";" << endl;
   return os;
-}
-
-bool netlist::Variable::check_inparse() {
-  if(exp.use_count() != 0) return exp->check_inparse();
-  else return true;
 }
 
 unsigned int netlist::Variable::get_id() {
@@ -176,88 +198,21 @@ void netlist::Variable::db_expunge() {
   if(exp.use_count() != 0) exp->db_expunge();
 }
 
-bool netlist::Variable::elaborate(elab_result_t &result, const ctype_t, const vector<NetComp *>&) {
-  bool rv = true;                    // the return value
-  result = ELAB_Normal;
-
-  // check type
-  if(vtype == TVar) {
-    rv = false;
-    assert(0 == "unknown variable type, which should not happen in practical cases.");
-  }
-
-  // elaborate the identifier
-  if((vtype == TWire || vtype == TReg) && exp) {
-    G_ENV->error(exp->loc, "SYN-VAR-4", name.name);
-    exp->db_expunge();
-    exp.reset();
-  }
-  rv &= name.elaborate(result, tVariable);
-  rv &= name.get_range().elaborate(result, tVariable);
-  rv &= name.get_range().is_valuable();
-  rv &= name.get_range().is_declaration();
-  assert(rv);                   // not sure why it can goes wrong so assert first
-
-  //for_each(fan[1].begin(), fan[1].end(), [](pair<const unsigned int, VIdentifier *>& m) {
-  //  std::cout << m.second << "(" << m.second << ") :" << *(m.second->father);
-  //  });
-
-  return rv;
-}
-
-bool netlist::Variable::check_post_elaborate() {
-
-  bool  rv = true;
-
-  // get the normalized max range
-  RangeArray maxRange = name.get_range().const_copy(name.get_range());
-
-  // check all fanin and fanout are not out-of-range
-  for_each(fan[0].begin(), fan[0].end(), 
-           [&](pair<const unsigned int, VIdentifier *>& m) {
-             rv &= maxRange >= 
-               m.second->get_select().const_copy(maxRange);
-             if(!rv) {
-               G_ENV->error(m.second->loc, "ELAB-VAR-4", 
-                            toString(*(m.second)), toString(name.get_range()));
-             }
-           });
-
-  for_each(fan[1].begin(), fan[1].end(), 
-           [&](pair<const unsigned int, VIdentifier *>& m) {
-             //std::cout << m.second << "(" << m.second << ") :" << *(m.second->father);
-             rv &= maxRange >= 
-               m.second->get_select().const_copy(maxRange);
-             if(!rv) {
-               G_ENV->error(m.second->loc, "ELAB-VAR-4", 
-                            toString(*(m.second)), toString(name.get_range()));
-             }
-           });
-
-  // check fan-in and fan-out
-  switch(vtype) {
-  case TWire: {
-    rv = driver_and_load_checker();
-    if(!rv) break;
-    
-    // TODO:
-    //  check whether it is a continueous assignment,
-    //  an input port or an output port of an instance.
-    
-    break;
-  }
-  case TReg: {
-    rv = driver_and_load_checker();
-    if(!rv) break;
-    // TODO:
-    //  check whether it is a blocked or non-blocked assignment in a always block.
-    break;
-  }
-  case TParam:
-  case TGenvar:
-  default: ;
+bool netlist::Variable::elaborate(set<shared_ptr<Variable> >& to_del,
+                                  map<shared_ptr<NetComp>, list<shared_ptr<Variable> > >& to_add) {
+  if(!name.get_range().is_valuable()) {
+    G_ENV->error(loc, "ELAB-RANGE-0", name.name);
+    return false;
   }
   
+  name.get_range().const_reduce();
+  if(!name.get_range().is_declaration()) {
+    G_ENV->error(loc, "ELAB-VAR-5", name.name);
+    return false;  
+  }
+
+  update();
+
   return rv;
 }
 
@@ -377,26 +332,6 @@ bool netlist::Variable::driver_and_load_checker() const {
   } // if(driverMapAssign.size() > 1)
                   
   return rv;
-}
-
-unsigned int netlist::Variable::get_width() {
-  if(width) return width;
-  else {
-    if(!name.get_range().RangeArrayCommon::is_empty())
-      width = name.get_range().get_width(name.get_range());
-    else width = 1;
-    return width;
-  }
-}
-
-void netlist::Variable::set_width(const unsigned int& w) {
-  if(width == w) return;
-  else {
-    assert(w <= get_width());
-    assert(!name.get_range().RangeArrayCommon::is_empty());
-    name.get_range().set_width(w, name.get_range());
-    width = w;
-  }
 }
 
 void netlist::Variable::replace_variable(const VIdentifier& var, const Number& num) {
