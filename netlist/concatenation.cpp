@@ -134,23 +134,6 @@ void netlist::ConElem::db_expunge() {
   }
 }
 
-bool netlist::ConElem::elaborate(set<shared_ptr<Variable> >& to_del,
-                                map<shared_ptr<NetComp>, list<shared_ptr<Variable> > >& to_add) {
-  bool rv = true;
-
-  rv &= exp->elaborate(to_del, to_add);
-  if(!rv) return false;
-  
-  BOOST_FOREACH(shared_ptr<ConElem> ce, con) {
-    rv &= ce->elaborate(to_del, to_add);
-  }
-  if(!rv) return false;
-
-  reduce();
-  
-  return rv;
-}
-
 ostream& netlist::Concatenation::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
   if(data.size() > 1) {
@@ -282,13 +265,12 @@ void netlist::Concatenation::db_register(int iod) {
 }
 
 void netlist::Concatenation::db_expunge() {
-  BOOST_FOREACH(shared_ptr<ConElem> d, data) d->db_expunge;
+  BOOST_FOREACH(shared_ptr<ConElem> d, data) d->db_expunge();
 }
 
 Concatenation* netlist::Concatenation::deep_copy() const {
   Concatenation* rv = new Concatenation();
   rv->loc = loc;
-  rv->width = width;
   BOOST_FOREACH(const shared_ptr<ConElem>& m, data)
     rv->data.push_back(shared_ptr<ConElem>(m->deep_copy()));
   return rv;

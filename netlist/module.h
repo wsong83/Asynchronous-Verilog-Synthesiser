@@ -54,11 +54,9 @@ namespace netlist {
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
-    NETLIST_CHECK_INPARSE_DECL;
     using NetComp::set_father;
     virtual Module* deep_copy() const;
-    virtual void db_register(int iod = 1);
-    virtual void db_expunge();
+    NETLIST_DB_DECL;
 
     // helpers
     virtual void set_name(const MIdentifier& nm) { name = nm; named=true;}

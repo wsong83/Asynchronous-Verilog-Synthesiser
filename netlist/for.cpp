@@ -37,6 +37,7 @@ using boost::shared_ptr;
 using shell::location;
 using std::vector;
 using std::list;
+using std::map;
 
 netlist::ForState::ForState(
                             const shared_ptr<Assign>& init,
@@ -69,15 +70,6 @@ void netlist::ForState::set_father(Block *pf) {
   cond->set_father(pf);
   incr->set_father(pf);
   body->set_father(pf);
-}
-
-bool netlist::ForState::check_inparse() {
-  bool rv = true;
-  rv &= init->check_inparse();
-  rv &= cond->check_inparse();
-  rv &= incr->check_inparse();
-  rv &= body->check_inparse();
-  return rv;
 }
 
 ostream& netlist::ForState::streamout(ostream& os, unsigned int indent) const {
@@ -116,25 +108,18 @@ void netlist::ForState::db_expunge() {
   if(body.use_count() != 0) body->db_expunge();
 }
 
-bool netlist::ForState::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
-  bool rv = true;
-  //result = ELAB_Normal;
-  //vector<NetComp *> elab_vect = fp;
-  //elab_vect.push_back(this);
-
+bool netlist::ForState::elaborate(std::set<shared_ptr<NetComp> >& to_del,
+                                  map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > >& to_add) {
   // set up the initial assignment
   if(!init) {
     G_ENV->error(loc, "ELAB-FOR-0");
-    rv = false;
-    return rv;
+    return false;
   } else if(!init->rexp->is_valuable()) {
     G_ENV->error(init->loc, "ELAB-FOR-1", toString(*(init->rexp)));
-    rv = false;
-    return rv;
+    return false;
   } else if(init->lval->size() != 1) {
     G_ENV->error(init->loc, "ELAB-FOR-2", toString(*(init->lval)));
-    rv = false;
-    return rv;
+    return false;
   }
 
   VIdentifier& var = init->lval->front();
@@ -150,8 +135,7 @@ bool netlist::ForState::elaborate(elab_result_t &result, const ctype_t mctype, c
   m_cond->reduce();
   if(!m_cond->is_valuable()) {
     G_ENV->error(cond->loc, "ELAB-FOR-3", toString(*cond));
-    rv = false;
-    return rv;
+    return false;
   }
 
   while(m_cond->get_value().is_true()) {
@@ -160,21 +144,19 @@ bool netlist::ForState::elaborate(elab_result_t &result, const ctype_t mctype, c
     father->statements.insert(ithis, m_blk);
     m_blk->set_father(father);
     m_blk->db_register(1);
-    m_blk->elaborate(result, mctype, fp);
+    m_blk->elaborate(to_del, to_add);
 
     // increment
     if(!incr || incr->lval->size() != 1 || incr->lval->front() != var) {
       G_ENV->error(cond->loc, "ELAB-FOR-4", toString(*incr));
-      rv = false;
-      return rv;
+      return false;
     }
     shared_ptr<Assign> m_incr(incr->deep_copy());
     m_incr->rexp->replace_variable(var, num);
     m_incr->rexp->reduce();
     if(!m_incr->rexp->is_valuable()) {
       G_ENV->error(cond->loc, "ELAB-FOR-4", toString(*incr));
-      rv = false;
-      return rv;
+      return false;
     }
     
     // update num
@@ -184,12 +166,7 @@ bool netlist::ForState::elaborate(elab_result_t &result, const ctype_t mctype, c
     m_cond->reduce();
   }
 
-  result = ELAB_UNFOLDED_FOR;
-  return rv;
-}
-
-void netlist::ForState::set_always_pointer(SeqBlock *p) {
-  if(body.use_count() != 0) body->set_always_pointer(p);
+return true;
 }
 
 void netlist::ForState::replace_variable(const VIdentifier& var, const Number& num) {

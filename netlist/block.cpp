@@ -42,6 +42,7 @@ using boost::shared_ptr;
 using boost::static_pointer_cast;
 using std::list;
 using std::pair;
+using std::map;
 using shell::location;
 using std::for_each;
 
@@ -127,24 +128,6 @@ bool netlist::Block::add_statements(const shared_ptr<Block>& body) {
     statements.splice(statements.end(), body->statements);
   }
   return true;
-}
-
-void netlist::Block::elab_inparse() {
-  list<shared_ptr<NetComp> >::iterator it, end;
-  for(it=statements.begin(), end=statements.end(); it!=end; it++) {
-    if(elab_inparse_item(*it, it)) {
-      it = statements.erase(it);
-      it--;
-      end = statements.end();
-    }
-  }
-
-  // double check the size
-  if(statements.size() + db_var.size() > 1)
-    blocked = true;             // indicating multiple variable defintions (may happen when it is module or genblock)
-
-  // set the father pointers
-  set_father();
 }
 
 BIdentifier& netlist::Block::new_BId() {
@@ -255,15 +238,6 @@ Block* netlist::Block::deep_copy() const {
   return rv;
 }
 
-bool netlist::Block::check_inparse() {
-  bool rv = true;
-  // macros defined in database.h
-  DATABASE_CHECK_INPARSE_FUN(db_var, VIdentifier, Variable, rv);
-  DATABASE_CHECK_INPARSE_FUN(db_instance, IIdentifier, Instance, rv);
-  DATABASE_CHECK_INPARSE_FUN(db_other, BIdentifier, NetComp, rv);
-  return rv;
-}
-
 void netlist::Block::set_father() {
   // macros defined in database.h
   DATABASE_SET_FATHER_FUN(db_var, VIdentifier, Variable, this);
@@ -274,75 +248,35 @@ void netlist::Block::set_father() {
 void netlist::Block::db_register(int) {
   // the item in statements are duplicated in db_instance and db_other, therefore, only statements are executed
   // initialization of the variables in ablock are ignored as they are wire, reg and integers
-  for_each(db_var.begin_order(), db_var.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  for_each(db_var.begin_order(), db_var.end_order(), [](pair<const VIdentifier, shared_ptr<Variable> >& m) {
       m.second->db_register(1);
     });
   for_each(statements.begin(), statements.end(), [](shared_ptr<NetComp>& m) {m->db_register(1);});
 }
 
 void netlist::Block::db_expunge() {
-  for_each(db_var.begin_order(), db_var.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  for_each(db_var.begin_order(), db_var.end_order(), [](pair<const VIdentifier, shared_ptr<Variable> >& m) {
       m.second->db_expunge();
     });
   for_each(statements.begin(), statements.end(), [](shared_ptr<NetComp>& m) {m->db_expunge();});
 }
 
-bool netlist::Block::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
-  bool rv = true;
-  result = ELAB_Normal;
+bool netlist::Block::elaborate(std::set<shared_ptr<NetComp> >&,
+                               map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > >&) {
 
-  // check the father component
-  if(!(
-       mctype == tGenBlock ||   // a general block can be defined in a generate block
-       mctype == tSeqBlock      // a general block can be defined in a generate block
-       )) {
-    G_ENV->error(loc, "ELAB-BLOCK-1");
-    return false;
-  }
-  
-  // elaborate all internal items
-  // check all variables
-  std::set<shared_ptr<Variable> > to_del_var;
   std::set<shared_ptr<NetComp> > to_del;
-  std::map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add;
+  map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add;
 
-  list<pair<VIdentifier, shared_ptr<Variable> > >::iterator vit, vend;
-  vit = db_var.begin_order();
-  vend = db_var.end_order();
-  while(vit != vend) {
-    rv &= vit->second->elaborate(result, mctype, fp);
-    if(result == ELAB_Empty) {
-      to_del_var.insert(vit->second);
-    } else
-      vit++;
-  }
-  if(!rv) return rv;
-
-  BOOST_FOREACH(shared_ptr<Variable> v, to_del_var) {
-    db_var.erase(v->name);
-  }
+  // variables
+  list<pair<const VIdentifier, shared_ptr<Variable> > >::iterator vit, vend;
+  for(vit = db_var.begin_order(), vend = db_var.end_order(); vit!=vend; ++vit)
+    if(!vit->second->elaborate(to_del, to_add))
+      return false;
 
   // elaborate the internals
   BOOST_FOREACH(shared_ptr<NetComp> m, statements) {
-    rv &= m->elaborate(result, mctype, fp);
-    switch(result) {          // need test
-    case ELAB_Empty: {
-      to_del.insert(m);
-      break;
-    }
-    case ELAB_Const_If: {     // need test
-      SP_CAST(mif, IfState, m);
-      typedef pair<const VIdentifier, shared_ptr<Variable> > db_var_type;
-      BOOST_FOREACH(db_var_type mv, mif->ifcase->db_var.db_list) {
-        to_add[m].insert(to_add[m].end(), mv.second);
-      }
-      to_add[m].insert(to_add[m].begin(), 
-                       mif->ifcase->statements.begin(), mif->ifcase->statements.end());
-      break;
-    }
-    default:;
-    }
-    if(!rv) return rv;
+    if(!m->elaborate(to_del, to_add))
+      return false;
   }
 
   typedef pair<const shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add_type;
@@ -362,33 +296,7 @@ bool netlist::Block::elaborate(elab_result_t &result, const ctype_t mctype, cons
     statements.erase(std::find(statements.begin(), statements.end(), m));
   }
   
-  // check the db_var again as some variables may be removed
-  to_del_var.clear();
-  vit = db_var.begin_order();
-  vend = db_var.end_order();
-  while(vit != vend) {
-    rv &= vit->second->elaborate(result, mctype, fp);
-    if(result == ELAB_Empty) {
-      to_del_var.insert(vit->second);
-    } else
-      vit++;
-  }
-  if(!rv) return rv;
-
-  BOOST_FOREACH(shared_ptr<Variable> v, to_del_var) {
-    db_var.erase(v->name);
-  }
-
-  // final check
-  // to do what?
-
-  return rv;
-}
-
-void netlist::Block::set_always_pointer(SeqBlock *p) {
-  for_each(db_other.begin(), db_other.end(), [&](pair<const BIdentifier, shared_ptr<NetComp> >& m) {
-      m.second->set_always_pointer(p);
-    });
+  return true;
 }
 
 void netlist::Block::scan_vars(std::set<string>& target,

@@ -36,9 +36,10 @@ using std::ostream;
 using std::endl;
 using shell::location;
 using std::string;
+using std::list;
 using std::vector;
 using boost::shared_ptr;
-
+using std::map;
 
 netlist::Assign::Assign( const shared_ptr<LConcatenation>& lhs,
                          const shared_ptr<Expression>& rhs,
@@ -84,15 +85,11 @@ void netlist::Assign::db_expunge() {
   rexp->db_expunge(); 
 }
 
-bool netlist::Assign::elaborate(set<shared_ptr<Variable> >& to_del,
-                                map<shared_ptr<NetComp>, list<shared_ptr<Variable> > >& to_add) {
-  bool rv = true;
-
-  // check internals
-  rv &= lval->elaborate(to_del, to_add);
-  rv &= rexp->elaborate(to_del, to_add);
-
-  return rv;
+bool netlist::Assign::elaborate(std::set<shared_ptr<NetComp> >&,
+                                map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > >&) {
+  lval->reduce();
+  rexp->reduce();
+  return true;
 }
 
 

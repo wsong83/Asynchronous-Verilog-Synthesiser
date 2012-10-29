@@ -267,28 +267,28 @@ ostream& netlist::PoIdentifier::streamout(ostream& os, unsigned int indent) cons
 
 //////////////////////////////// variable identifier /////////////////
 netlist::VIdentifier::VIdentifier()
-  : Identifier(tVarName, "n_0"), numbered(true), pcomp(NULL), uid(0), alwaysp(NULL) {  }
+  : Identifier(tVarName, "n_0"), numbered(true), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const location& lloc)
-  : Identifier(tVarName, lloc, "n_0"), numbered(true), pcomp(NULL), uid(0), alwaysp(NULL) {  }
+  : Identifier(tVarName, lloc, "n_0"), numbered(true), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const string& nm)
-  : Identifier(tVarName, nm), numbered(false), pcomp(NULL), uid(0), alwaysp(NULL) {  }
+  : Identifier(tVarName, nm), numbered(false), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const location& lloc, const string& nm)
-  : Identifier(tVarName, lloc, nm), numbered(false), pcomp(NULL), uid(0), alwaysp(NULL) {  }
+  : Identifier(tVarName, lloc, nm), numbered(false), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const averilog::avID& id)
-  : Identifier(tVarName, id.name), numbered(false), pcomp(NULL), uid(0), alwaysp(NULL) { }
+  : Identifier(tVarName, id.name), numbered(false), uid(0) { }
 
 netlist::VIdentifier::VIdentifier(const location& lloc, const averilog::avID& id)
-  : Identifier(tVarName, lloc, id.name), numbered(false), pcomp(NULL), uid(0), alwaysp(NULL) { }
+  : Identifier(tVarName, lloc, id.name), numbered(false), uid(0) { }
 
 netlist::VIdentifier::VIdentifier(const string& nm, const RangeArray& rg)
-  : Identifier(tVarName, nm), m_range(rg), numbered(false), pcomp(NULL), uid(0), alwaysp(NULL) {  }
+  : Identifier(tVarName, nm), m_range(rg), numbered(false), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const location& lloc, const string& nm, const RangeArray& rg)
-  : Identifier(tVarName, lloc, nm), m_range(rg), numbered(false), pcomp(NULL), uid(0), alwaysp(NULL) {  }
+  : Identifier(tVarName, lloc, nm), m_range(rg), numbered(false), uid(0) {  }
 
 netlist::VIdentifier::~VIdentifier() {
   db_expunge();
@@ -328,7 +328,7 @@ bool netlist::VIdentifier::is_valuable() const {
 Number netlist::VIdentifier::get_value() const {
   assert(value.is_valid());
   assert(m_select.RangeArrayCommon::is_empty() || // no selector
-         (pvar.use_count() != 0 && uid != 0 && m_select.is_valuable())); // otherwise the parent variable is set
+         (pvar && uid != 0 && m_select.is_valuable())); // otherwise the parent variable is set
   
   if(m_select.RangeArrayCommon::is_empty()) return value;
 
@@ -357,33 +357,17 @@ Number netlist::VIdentifier::get_value() const {
   if(str_size == 0) return 0;
   else return Number(txt_value.substr(str_range.first, str_size));
 }
-  
+
+void netlist::VIdentifier::reduce() {
+  m_range.const_reduce(RangeArray());
+  m_select.const_reduce(RangeArray());
+}
 
 void netlist::VIdentifier::set_father(Block *pf) {
   if(father == pf) return;
   Identifier::set_father(pf);
   m_range.set_father(pf);
   m_select.set_father(pf);
-}
-
-void netlist::VIdentifier::set_always_pointer(SeqBlock* p) {
-  alwaysp = p;
-}
-
-bool netlist::VIdentifier::check_inparse() {
-  bool rv = true;
-
-  // check whether the variable is declared before use
-  if((father->gfind_var(*this)).use_count() == 0) {
-    G_ENV->error(loc, "SYN-VAR-3", name);
-    father->get_module()->db_var.insert(*this, shared_ptr<Variable>(new Variable(loc, *this, Variable::TWire)));
-    rv = false;
-  }
-  
-  rv &= m_range.check_inparse();
-  rv &= m_select.check_inparse();
-
-  return rv;
 }
 
 ostream& netlist::VIdentifier::streamout(ostream& os, unsigned int indent) const {
@@ -415,7 +399,7 @@ void netlist::VIdentifier::db_register(int iod) {
   shared_ptr<Variable> mvar;
   if(uid == 0) { // the root Variable unkown yet, need to find it out
     mvar = father->gfind_var(*this);
-    if(mvar.use_count() == 0) { // this variable is not defined yet
+    if(!mvar) { // this variable is not defined yet
       // not sure whether this is needed.
       // so assert it 
       assert(0 == "really need to define a new variable! Analyse this case...");

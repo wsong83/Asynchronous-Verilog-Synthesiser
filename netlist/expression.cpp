@@ -41,6 +41,7 @@ using std::string;
 using boost::shared_ptr;
 using shell::location;
 using std::pair;
+using std::map;
 using std::stack;
 using std::list;
 using std::vector;
@@ -200,20 +201,8 @@ void netlist::Expression::set_father(Block *pf) {
 Expression* netlist::Expression::deep_copy() const {
   Expression* rv = new Expression();
   rv->loc = loc;
-  rv->width = width;
   assert(eqn.use_count() != 0);
   rv->eqn = shared_ptr<Operation>(eqn->deep_copy());
-  return rv;
-}
-
-bool netlist::Expression::elaborate(set<shared_ptr<Variable> >& to_del,
-                                    map<shared_ptr<NetComp>, list<shared_ptr<Variable> > >& to_add) {
-  bool rv = true;
-  
-  eqn->reduce();
-
-  rv &= eqn->elaborate(to_del, to_add);
-
   return rv;
 }
 

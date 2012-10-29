@@ -40,6 +40,7 @@ using std::string;
 using std::vector;
 using boost::shared_ptr;
 using std::list;
+using std::map;
 using std::for_each;
 
 netlist::CaseItem::CaseItem(const shared_ptr<Expression>& exp, const shared_ptr<Block>& body)
@@ -123,18 +124,19 @@ void netlist::CaseItem::db_expunge() {
   if(body) body->db_expunge();
 }
 
-bool netlist::CaseItem::elaborate(set<shared_ptr<Variable> >& to_del,
-                                  map<shared_ptr<NetComp>, list<shared_ptr<Variable> > >& to_add) {
+bool netlist::CaseItem::elaborate(std::set<shared_ptr<NetComp> >& to_del,
+                                  map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > >& to_add) {
 
   // check all expressions are const expressions
   BOOST_FOREACH(shared_ptr<Expression>& m, exps) 
-    rv &= m->elaborate(to_del, to_add);
-  if(!rv) return false;
+    m->reduce();
 
   // check the case body
-  if(body) rv &= body->elaborate(to_del, to_add);
+  if(body) 
+    if(!body->elaborate(to_del, to_add))
+      return false;
 
-  return rv;
+  return true;
 }
 
 void netlist::CaseItem::scan_vars(std::set<string>& target,
@@ -259,27 +261,19 @@ void netlist::CaseState::db_expunge() {
   if(exp) exp->db_expunge();
 }
 
-bool netlist::CaseState::elaborate(set<shared_ptr<Variable> >& to_del,
-                                   map<shared_ptr<NetComp>, list<shared_ptr<Variable> > >& to_add) {
-  bool rv = true;
-  set<shared_ptr<Variable> >& m_del;
-  map<shared_ptr<NetComp>, list<shared_ptr<Variable> > >& m_add
-
-  //elaborate the case expression
-  assert(exp.use_count() != 0);
-  rv &= exp->elaborate(m_del, m_add);
-  if(!rv) return false;
+bool netlist::CaseState::elaborate(std::set<shared_ptr<NetComp> >& to_del,
+                                   map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > >& to_add) {
+  exp->reduce();
 
   // elaborate all case items
   BOOST_FOREACH(shared_ptr<CaseItem>& m, cases)
-    rv &= m->elaborate(m_del, m_add);
-  if(!rv) return false;
+    if(!m->elaborate(to_del, to_add)) return false;
+
 
   // post-elaborate process
-  
   if(cases.size() == 0) {       // empty case
     to_del.insert(get_sp());
-    return rv;
+    return true;
   }
 
   if(exp->is_valuable()) {      // const case condition
@@ -294,7 +288,7 @@ bool netlist::CaseState::elaborate(set<shared_ptr<Variable> >& to_del,
     to_del.insert(get_sp());
   }
 
-  return rv;
+  return true;
 
 } 
 

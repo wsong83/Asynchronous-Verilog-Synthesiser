@@ -74,10 +74,17 @@ namespace SDFG {
 #ifndef NETLIST_ELABORATE_DECL
 #define NETLIST_ELABORATE_DECL                                \
   virtual bool elaborate(                                     \
-    std::set<boost::shared_ptr<Variable> >&,                  \
-    std::map<boost::shared_ptr<NetComp>, std::list<boost::shared_ptr<Variable> > >&); \
+    std::set<boost::shared_ptr<NetComp> >&,                  \
+    std::map<boost::shared_ptr<NetComp>, std::list<boost::shared_ptr<NetComp> > >&); \
   using NetComp::elaborate;
 #endif
+
+#ifndef NETLIST_DB_DECL
+#define NETLIST_DB_DECL                         \
+  virtual void db_register(int);                \
+  virtual void db_expunge();
+#endif
+
 
 #ifndef NETLIST_GEN_SDFG
 #define NETLIST_GEN_SDFG                                   \
@@ -107,10 +114,10 @@ namespace netlist{
   public:
 #include "comp_type.h"
     // no one should directly use this class
-    NetComp() : ctype(tUnknown), width(0), father(NULL) {}
-    NetComp(ctype_t tt) : ctype(tt), width(0), father(NULL) {}
+    NetComp() : ctype(tUnknown), father(NULL) {}
+    NetComp(ctype_t tt) : ctype(tt), father(NULL) {}
     NetComp(ctype_t tt, const shell::location& lloc) 
-      : ctype(tt), loc(lloc), width(0), father(NULL) {}
+      : ctype(tt), loc(lloc), father(NULL) {}
     virtual ~NetComp() {}
 
     ctype_t get_type() const { return ctype; }
@@ -174,8 +181,8 @@ namespace netlist{
       ELAB_UNFOLDED_FOR         /* the for statement is unfolded and should be removed */
     };
 
-    virtual bool elaborate(std::set<boost::shared_ptr<Variable> >&,
-                           std::map<boost::shared_ptr<NetComp>, std::list<boost::shared_ptr<Variable> > >&) {
+    virtual bool elaborate(std::set<boost::shared_ptr<NetComp> >&,
+                           std::map<boost::shared_ptr<NetComp>, std::list<boost::shared_ptr<NetComp> > >&) {
       std::cerr << "ERROR!!, the elaborate() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << std::endl;
       assert(0 == "elaborate() of NetComp is used");
       return false;

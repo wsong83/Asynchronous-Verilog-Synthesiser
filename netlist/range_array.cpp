@@ -32,6 +32,7 @@
 using namespace netlist;
 using std::ostream;
 using std::string;
+using std::list;
 using std::vector;
 using std::pair;
 using std::for_each;

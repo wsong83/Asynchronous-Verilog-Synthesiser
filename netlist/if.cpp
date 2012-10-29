@@ -34,6 +34,8 @@
 using namespace netlist;
 using std::ostream;
 using std::string;
+using std::list;
+using std::map;
 using std::vector;
 using boost::shared_ptr;
 using boost::static_pointer_cast;
@@ -141,8 +143,8 @@ void netlist::IfState::db_expunge() {
   if(elsecase) elsecase->db_expunge();
 }
 
-bool netlist::IfState::elaborate(set<shared_ptr<Variable> >& to_del,
-                                 map<shared_ptr<NetComp>, list<shared_ptr<Variable> > >& to_add) {
+bool netlist::IfState::elaborate(std::set<shared_ptr<NetComp> >& to_del,
+                                 map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > >& to_add) {
   // elaborate the if condition expression
   exp->reduce();
   ifcase->elaborate(to_del, to_add);
@@ -152,16 +154,11 @@ bool netlist::IfState::elaborate(set<shared_ptr<Variable> >& to_del,
   if(exp->is_valuable() && exp->get_value().is_false()) { // false
     if(elsecase) to_add[get_sp()].push_back(elsecase);
     to_del.insert(get_sp());
-  } else if(exp->is_valuable() && exp->get_value().is_true) { // true
+  } else if(exp->is_valuable() && exp->get_value().is_true()) { // true
     to_add[get_sp()].push_back(ifcase);
     to_del.insert(get_sp());
   }
   return true;
-}
-
-void netlist::IfState::set_always_pointer(SeqBlock *p) {
-  if(ifcase) ifcase->set_always_pointer(p);
-  if(elsecase) elsecase->set_always_pointer(p);
 }
 
 void netlist::IfState::scan_vars(std::set<string>& target,

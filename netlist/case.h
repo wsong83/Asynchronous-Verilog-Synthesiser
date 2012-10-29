@@ -44,8 +44,8 @@ namespace netlist{
     CaseItem(const boost::shared_ptr<Block>&);
     CaseItem(const shell::location&, const boost::shared_ptr<Block>&);
     // multiple expressions
-    CaseItem(const list<boost::shared_ptr<Expression> >&, const boost::shared_ptr<Block>&);
-    CaseItem(const shell::location&, const list<shared_ptr<Expression> >&, const shared_ptr<Block>&);
+    CaseItem(const std::list<boost::shared_ptr<Expression> >&, const boost::shared_ptr<Block>&);
+    CaseItem(const shell::location&, const std::list<boost::shared_ptr<Expression> >&, const boost::shared_ptr<Block>&);
 
     // helpers
     NETLIST_STREAMOUT_DECL;

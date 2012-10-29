@@ -78,6 +78,7 @@ namespace netlist {
     
   protected:
     std::list<boost::shared_ptr<Range> > child; // the range expressions of the lower dimension
+    unsigned int width;
 
   private:
     // re-order a list of range expressions

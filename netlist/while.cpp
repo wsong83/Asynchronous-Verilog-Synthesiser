@@ -54,7 +54,7 @@ void netlist::WhileState::set_father(Block *pf) {
 }
 
 ostream& netlist::WhileState::streamout(ostream& os, unsigned int indent) const {
-  assert(exp.use_count() != 0);
+  assert(exp);
 
   os << string(indent, ' ') << "while (" << *exp << ") ";
   body->streamout(os, indent, true);
@@ -62,36 +62,25 @@ ostream& netlist::WhileState::streamout(ostream& os, unsigned int indent) const 
   return os;
 }
 
-bool netlist::WhileState::check_inparse() {
-  bool rv = true;
-  rv &= exp->check_inparse();
-  rv &= body->check_inparse();
-  return rv;
-}
-
 WhileState* netlist::WhileState::deep_copy() const {
   WhileState* rv = new WhileState(loc);
   rv->name = name;
   rv->named = named;
   
-  if(exp.use_count() != 0) rv->exp.reset(exp->deep_copy());
-  if(body.use_count() != 0) rv->body.reset(body->deep_copy());
+  if(exp) rv->exp.reset(exp->deep_copy());
+  if(body) rv->body.reset(body->deep_copy());
 
   return rv;
 }
 
 void netlist::WhileState::db_register(int) {
-  if(exp.use_count() != 0) exp->db_register(1);
-  if(body.use_count() != 0) body->db_register(1);
+  if(exp) exp->db_register(1);
+  if(body) body->db_register(1);
 }
 
 void netlist::WhileState::db_expunge() {
-  if(exp.use_count() != 0) exp->db_expunge();
-  if(body.use_count() != 0) body->db_expunge();
-}
-
-void netlist::WhileState::set_always_pointer(SeqBlock *p) {
-  if(body.use_count() != 0) body->set_always_pointer(p);
+  if(exp) exp->db_expunge();
+  if(body) body->db_expunge();
 }
 
 void netlist::WhileState::replace_variable(const VIdentifier& var, const Number& num) {

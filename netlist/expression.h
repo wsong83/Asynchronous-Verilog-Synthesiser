@@ -66,7 +66,6 @@ namespace netlist {
     NETLIST_SET_FATHER_DECL;
     virtual Expression* deep_copy() const;
     NETLIST_DB_DECL;
-    NETLIST_ELABORATE_DECL;
     NETLIST_SCAN_VARS;
     NETLIST_REPLACE_VARIABLE;
     

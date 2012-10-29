@@ -36,6 +36,7 @@ using namespace netlist;
 using std::ostream;
 using std::endl;
 using std::pair;
+using std::list;
 using std::string;
 using boost::shared_ptr;
 using std::map;
@@ -100,7 +101,7 @@ bool netlist::Variable::update() {
 
   Number m = exp->get_value();
   exp.reset(new Expression(m));
-  typedef pair<const unsigned int, Videntifier *> fan_type;
+  typedef pair<const unsigned int, VIdentifier *> fan_type;
   BOOST_FOREACH(fan_type f, fan[1]) {
     f.second->set_value(m);
   }
@@ -198,14 +199,14 @@ void netlist::Variable::db_expunge() {
   if(exp.use_count() != 0) exp->db_expunge();
 }
 
-bool netlist::Variable::elaborate(set<shared_ptr<Variable> >& to_del,
-                                  map<shared_ptr<NetComp>, list<shared_ptr<Variable> > >& to_add) {
+bool netlist::Variable::elaborate(std::set<shared_ptr<NetComp> >&,
+                                  map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > >&) {
   if(!name.get_range().is_valuable()) {
     G_ENV->error(loc, "ELAB-RANGE-0", name.name);
     return false;
   }
   
-  name.get_range().const_reduce();
+  name.get_range().const_reduce(RangeArray());
   if(!name.get_range().is_declaration()) {
     G_ENV->error(loc, "ELAB-VAR-5", name.name);
     return false;  
@@ -213,7 +214,7 @@ bool netlist::Variable::elaborate(set<shared_ptr<Variable> >& to_del,
 
   update();
 
-  return rv;
+  return true;
 }
 
 // used in shell/cmd/elaborate.cpp
@@ -221,116 +222,6 @@ string netlist::Variable::get_short_string() const {
   string rv = name.name;
   rv += "=";
   rv += toString(*exp);
-  return rv;
-}
-
-bool netlist::Variable::driver_and_load_checker() const {
-  bool rv = true; 
-  RangeArray maxRange = name.get_range().const_copy(name.get_range()); // add [0:0] is 1-bit
-
-  // checking loads
-  RangeArray rangeLoad;
-  rangeLoad.set_empty();
-  const VIdentifier * namep = &name;
-  for_each(fan[1].begin(), fan[1].end(), 
-           [&](const pair<const unsigned int, VIdentifier *>& m) {
-             if(m.second == namep) return; // do not count the name in variable as a fan-out
-             rangeLoad = rangeLoad.op_or(m.second->get_select().const_copy(maxRange));
-           });
-  rangeLoad = maxRange - rangeLoad;
-
-  if(!rangeLoad.is_empty()) {
-    std::ostringstream sos;
-    rangeLoad.RangeArrayCommon::streamout(sos, 0, name.name);
-    G_ENV->error(loc, "ELAB-VAR-2", sos.str());
-    // no laod is not serious problem, rv is not changed
-  }
-
-  map<unsigned long, pair<SeqBlock*, RangeArray> > driverMapSeq; // seq-blocks
-  map<unsigned long, pair<VIdentifier*, RangeArray> > driverMapAssign; // assigns
-  RangeArray assignRange;
-  assignRange.set_empty();
-  for_each
-    (fan[0].begin(), fan[0].end(), 
-     [&](const pair<const unsigned int, VIdentifier*>& m) {
-      if(m.second->get_alwaysp() != NULL) { // seq-blocks
-        unsigned long malwaysp = (unsigned long)(m.second->get_alwaysp());
-        driverMapSeq[malwaysp].second = driverMapSeq[malwaysp].second.op_or(m.second->get_select().const_copy(maxRange));
-        // add up the assign range
-        assignRange = assignRange.op_or(m.second->get_select().const_copy(maxRange));
-      } else {                  // assigns
-        unsigned long mvarp = (unsigned long)(m.second);
-        driverMapAssign[mvarp].second = driverMapAssign[mvarp].second.op_or(m.second->get_select().const_copy(maxRange));
-        // add up the assign range
-        assignRange = assignRange.op_or(m.second->get_select().const_copy(maxRange));
-      }
-    });
-  
-  // check no driver
-  RangeArray rangeNoDriver = maxRange - assignRange;
-  rangeLoad = rangeNoDriver & rangeLoad; // no driver but no load range
-  rangeNoDriver = rangeNoDriver - rangeLoad; // really some useful signal but no load
-  if(!rangeNoDriver.is_empty()) {
-    std::ostringstream sos;
-    rangeNoDriver.RangeArrayCommon::streamout(sos, 0, name.name);
-    G_ENV->error(loc, "ELAB-VAR-0", sos.str());
-    return false;
-  }
-  if(!rangeLoad.is_empty()) {
-    std::ostringstream sos;
-    rangeLoad.RangeArrayCommon::streamout(sos, 0, name.name);
-    G_ENV->error(loc, "ELAB-VAR-3", sos.str());
-    //return false;  // no driver but no load is not a problem
-  }
-
-  // multi-driver check
-  if(driverMapSeq.size() > 0 && driverMapAssign.size() > 0) { // both seq and assign
-    G_ENV->error(loc, "ELAB-VAR-1", name.name, 
-                 toString(driverMapSeq.begin()->second.first->loc),
-                 toString(driverMapAssign.begin()->second.first->loc)
-                 );
-    return false;
-  }
-
-  
-  if(driverMapSeq.size() > 1) { // sequential
-    map<unsigned long, pair<SeqBlock*, RangeArray> >::iterator mit, mend;
-    map<unsigned long, pair<SeqBlock*, RangeArray> >::iterator nit, nend;
-    for(mit=driverMapSeq.begin(), mend=driverMapSeq.end(); mit != mend; mit++) {
-      for(nit=driverMapSeq.begin(), nend=driverMapSeq.end(); nit != nend; nit++) {
-        if(mit->first != nit->first && // not the same sequential block
-           !mit->second.second.op_and(nit->second.second).is_empty() // have shared area
-           ) {
-          // they have shared range
-          G_ENV->error(loc, "ELAB-VAR-1", name.name, 
-                       toString(mit->second.first->loc),
-                       toString(nit->second.first->loc)
-                       );
-          return false;
-        }
-      }
-    }
-  } // if(driverMapSeq.size() > 1)
-
-  if(driverMapAssign.size() > 1) { // continuous
-    map<unsigned long, pair<VIdentifier*, RangeArray> >::iterator mit, mend;
-    map<unsigned long, pair<VIdentifier*, RangeArray> >::iterator nit, nend;
-    for(mit=driverMapAssign.begin(), mend=driverMapAssign.end(); mit != mend; mit++) {
-      for(nit=driverMapAssign.begin(), nend=driverMapAssign.end(); nit != nend; nit++) {
-        if(mit->first != nit->first && // not the same assignment
-           !mit->second.second.op_and(nit->second.second).is_empty() // have shared area
-           ) {
-          // they have shared range
-          G_ENV->error(loc, "ELAB-VAR-1", name.name, 
-                       toString(mit->second.first->loc),
-                       toString(nit->second.first->loc)
-                       );
-          return false;
-        }
-      }
-    }
-  } // if(driverMapAssign.size() > 1)
-                  
   return rv;
 }
 
