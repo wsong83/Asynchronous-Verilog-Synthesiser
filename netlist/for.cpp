@@ -86,26 +86,26 @@ ForState* netlist::ForState::deep_copy() const {
   rv->name = name;
   rv->named = named;
   
-  if(init.use_count() != 0) rv->init.reset(init->deep_copy());
-  if(cond.use_count() != 0) rv->cond.reset(cond->deep_copy());
-  if(incr.use_count() != 0) rv->incr.reset(incr->deep_copy());
-  if(body.use_count() != 0) rv->body.reset(body->deep_copy());
+  if(init) rv->init.reset(init->deep_copy());
+  if(cond) rv->cond.reset(cond->deep_copy());
+  if(incr) rv->incr.reset(incr->deep_copy());
+  if(body) rv->body.reset(body->deep_copy());
 
   return rv;
 }
 
 void netlist::ForState::db_register(int) {
-  if(init.use_count() != 0) init->db_register(1);
-  if(cond.use_count() != 0) cond->db_register(1);
-  if(incr.use_count() != 0) incr->db_register(1);
-  if(body.use_count() != 0) body->db_register(1);
+  if(init) init->db_register(1);
+  if(cond) cond->db_register(1);
+  if(incr) incr->db_register(1);
+  if(body) body->db_register(1);
 }
 
 void netlist::ForState::db_expunge() {
-  if(init.use_count() != 0) init->db_expunge();
-  if(cond.use_count() != 0) cond->db_expunge();
-  if(incr.use_count() != 0) incr->db_expunge();
-  if(body.use_count() != 0) body->db_expunge();
+  if(init) init->db_expunge();
+  if(cond) cond->db_expunge();
+  if(incr) incr->db_expunge();
+  if(body) body->db_expunge();
 }
 
 bool netlist::ForState::elaborate(std::set<shared_ptr<NetComp> >& to_del,

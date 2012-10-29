@@ -72,13 +72,13 @@ netlist::Variable::Variable(const shell::location& lloc, const VIdentifier& id,
   : NetComp(tVariable, lloc), vtype(mtype), name(id), uid(0), exp(expp) {}
 
 void netlist::Variable::set_value(const Number& num) {
-  if(exp.use_count()!=0) exp->db_expunge();
+  if(exp) exp->db_expunge();
   exp.reset(new Expression(num));
   update();
 }
 
 void netlist::Variable::set_value(const VIdentifier& var) {
-  if(exp.use_count()!=0) exp->db_expunge();
+  if(exp) exp->db_expunge();
   VIdentifier * varp = var.deep_copy();
   exp.reset(new Expression(*varp));
   exp->db_register(1);
@@ -87,14 +87,14 @@ void netlist::Variable::set_value(const VIdentifier& var) {
 }
 
 void netlist::Variable::set_value(const shared_ptr<Expression>& mexp) {
-  if(exp.use_count()!=0) exp->db_expunge();
+  if(exp) exp->db_expunge();
   exp.reset(mexp->deep_copy());
   exp->db_register(1);
   update();
 }
 
 bool netlist::Variable::update() {
-  if(exp.use_count() == 0) return false; // no need to update
+  if(!exp) return false; // no need to update
 
   exp->reduce();
   if(!exp->is_valuable()) return false;
@@ -112,7 +112,7 @@ void netlist::Variable::set_father(Block *pf) {
   if(father == pf) return;
   father = pf;
   name.set_father(pf);
-  if(exp.use_count() != 0) exp->set_father(pf);
+  if(exp) exp->set_father(pf);
 }
 
 ostream& netlist::Variable::streamout(ostream& os, unsigned int indent) const {
@@ -128,7 +128,7 @@ ostream& netlist::Variable::streamout(ostream& os, unsigned int indent) const {
   }
   name.get_range().RangeArrayCommon::streamout(os, 0, "", true, false); // show range of declaration 
   name.get_range().RangeArrayCommon::streamout(os, 1, name.name, true, true); // show dimension of declaration
-  if(exp.use_count() != 0) { os << " = " << *exp; }
+  if(exp) { os << " = " << *exp; }
   os << ";" << endl;
   return os;
 }
@@ -182,7 +182,7 @@ Variable* netlist::Variable::deep_copy() const {
   VIdentifier * newid = name.deep_copy();
   Variable *rv = new Variable(loc, *newid, vtype);
   delete newid;
-  if(exp.use_count() != 0) rv->exp.reset(exp->deep_copy());
+  if(exp) rv->exp.reset(exp->deep_copy());
 
   // every time a variable is deep copied, all fan-in and -out connections are lost and need to regenerated
  
@@ -191,12 +191,12 @@ Variable* netlist::Variable::deep_copy() const {
 
 void netlist::Variable::db_register(int) {
   name.db_register(1);
-  if(exp.use_count() != 0) exp->db_register(1);
+  if(exp) exp->db_register(1);
 }
 
 void netlist::Variable::db_expunge() {
   name.db_expunge();
-  if(exp.use_count() != 0) exp->db_expunge();
+  if(exp) exp->db_expunge();
 }
 
 bool netlist::Variable::elaborate(std::set<shared_ptr<NetComp> >&,

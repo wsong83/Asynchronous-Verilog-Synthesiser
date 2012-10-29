@@ -100,14 +100,14 @@ void netlist::IfState::set_father(Block *pf) {
 }
 
 ostream& netlist::IfState::streamout(ostream& os, unsigned int indent, bool fl_prefix) const {
-  assert(exp.use_count() != 0);
+  assert(exp);
 
   if(!fl_prefix) os << string(indent, ' ');
   
   os << "if (" << *exp << ") ";
   ifcase->streamout(os, indent, true);
 
-  if(elsecase.use_count() == 0) return os;
+  if(!elsecase) return os;
 
   os << string(indent, ' ') << "else ";
   if(!elsecase->is_blocked() && (elsecase->front()->get_type() == NetComp::tIf)) {

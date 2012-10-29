@@ -35,20 +35,14 @@ namespace netlist {
   class Block : public NetComp {
   public:
     // constructors
-    Block() : NetComp(tBlock), named(false), blocked(false) {}
-    Block(const shell::location& lloc) : NetComp(tBlock, lloc), named(false), blocked(false) {}
-    Block(ctype_t t, const BIdentifier& nm) 
-      : NetComp(t), name(nm), named(true), blocked(true) {}
-    Block(ctype_t t, const shell::location& lloc, const BIdentifier& nm) 
-      : NetComp(t, lloc), name(nm), named(true), blocked(true) {}
-    Block(const BIdentifier& nm) 
-      : NetComp(tBlock), name(nm), named(true), blocked(true) {}
-    Block(const shell::location& lloc, const BIdentifier& nm) 
-      : NetComp(tBlock, lloc), name(nm), named(true), blocked(true) {}
-    Block(NetComp::ctype_t t) 
-      : NetComp(t), named(false), blocked(false) {}
-    Block(NetComp::ctype_t t, const shell::location& lloc) 
-      : NetComp(t, lloc), named(false), blocked(false) {}
+    Block();
+    Block(const shell::location&);
+    Block(ctype_t, const BIdentifier&);
+    Block(ctype_t, const shell::location&, const BIdentifier&);
+    Block(const BIdentifier&);
+    Block(const shell::location&, const BIdentifier&);
+    Block(NetComp::ctype_t);
+    Block(NetComp::ctype_t, const shell::location&);
 
     /* add a general statement to this block */
     virtual bool add(const boost::shared_ptr<NetComp>&); 

@@ -67,7 +67,7 @@ list<shared_ptr<Range> > netlist::RangeArrayCommon::const_copy(const list<shared
     rv.push_back(shared_ptr<Range>(maxRange.deep_copy()));
   } else {
     BOOST_FOREACH(const shared_ptr<Range>& m, rhs) {
-      assert(m.use_count() != 0);
+      assert(m);
       rv.push_back(shared_ptr<Range>(new Range(m->const_copy(true, maxRange))));
     }
   }

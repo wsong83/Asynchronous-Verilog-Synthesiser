@@ -44,6 +44,15 @@ using std::pair;
 using shell::location;
 using std::for_each;
 
+netlist::Module::Module()
+  : Block(tModule) {}
+
+netlist::Module::Module(const MIdentifier& nm)
+  : Block(tModule), name(nm) { named=true; }
+
+netlist::Module::Module(const shell::location& lloc, const MIdentifier& nm)
+  : Block(tModule, lloc), name(nm) { named=true; }
+
 netlist::Module::Module(const MIdentifier& nm, const shared_ptr<Block>& body)
   : Block(*body), name(nm) 
 {
@@ -226,17 +235,13 @@ void netlist::Module::db_expunge() {
 
 
 VIdentifier& netlist::Module::new_VId() {
-  while(db_var.find(unnamed_var).use_count() +
-        db_param.find(unnamed_var).use_count() +
-        db_genvar.find(unnamed_var).use_count() != 0)
+  while(db_var.find(unnamed_var) || db_param.find(unnamed_var) || db_genvar.find(unnamed_var))
     ++unnamed_var;
   return unnamed_var;
 }
 
 BIdentifier& netlist::Module::new_BId() {
-  while(db_seqblock.find(unnamed_block).use_count() +
-        db_assign.find(unnamed_block).use_count() +
-        db_genblock.find(unnamed_block).use_count() != 0)
+  while(db_seqblock.find(unnamed_block) || db_assign.find(unnamed_block) || db_genblock.find(unnamed_block))
     ++unnamed_block;
   return unnamed_block;
 }
@@ -255,15 +260,15 @@ shared_ptr<Variable> netlist::Module::gfind_var(const VIdentifier& key) const {
 }
 
 shared_ptr<Block> netlist::Module::find_block(const BIdentifier& key) const {
-  shared_ptr<Block>        rv = db_seqblock.find(key);
-  if(rv.use_count() == 0)  rv = db_genblock.find(key);
+  shared_ptr<Block> rv = db_seqblock.find(key);
+  if(!rv)           rv = db_genblock.find(key);
   return rv;
 }
 
 shared_ptr<NetComp> netlist::Module::find_item(const BIdentifier& key) const {
-  shared_ptr<NetComp>      rv = db_seqblock.find(key);
-  if(rv.use_count() == 0)  rv = db_genblock.find(key);
-  if(rv.use_count() == 0)  rv = db_assign.find(key);
+  shared_ptr<NetComp> rv = db_seqblock.find(key);
+  if(!rv)             rv = db_genblock.find(key);
+  if(!rv)             rv = db_assign.find(key);
   return rv;
 }
 
@@ -272,10 +277,9 @@ shared_ptr<Port> netlist::Module::find_port(const VIdentifier& key) const {
 }
 
 shared_ptr<NetComp> netlist::Module::search(const string& key) const {
-  shared_ptr<NetComp> rv;
-  rv = find_var(key);
-  if(rv.use_count() == 0) rv = find_instance(key);
-  if(rv.use_count() == 0) rv = find_item(key);
+  shared_ptr<NetComp> rv = find_var(key);
+  if(!rv)             rv = find_instance(key);
+  if(!rv)             rv = find_item(key);
   return rv;
 }
 

@@ -1190,7 +1190,7 @@ void interpreter::add_function(string const &name,
                                ClientData cData)
 {
   // add gdb ref
-  if(db_.use_count() == 0) db_ = gdb_;
+  if(!db_) db_ = gdb_;
 
      Tcl_CreateObjCommand(interp_, name.c_str(),
           callback_handler, cData, 0);
@@ -1204,7 +1204,7 @@ void interpreter::add_trace(const string& VarName, unsigned int *index,
                             shared_ptr<trace_base> proc,
                             void * cData, int flag) {
   // add gdb ref
-  if(db_.use_count() == 0) db_ = gdb_;
+  if(!db_) db_ = gdb_;
 
   // empty function name is not allowed. 
   // Due to the standard result, no return or error is indicated. 
@@ -1311,9 +1311,9 @@ void interpreter::add_class(string const &name,
      shared_ptr<class_handler_base> chb)
 {
   // add gdb ref
-  if(db_.use_count() == 0) db_ = gdb_;
+  if(!db_) db_ = gdb_;
 
-     gdb_->class_handlers[interp_][name] = chb;
+  gdb_->class_handlers[interp_][name] = chb;
 }
 
 void interpreter::add_constructor(string const &name,
@@ -1321,26 +1321,25 @@ void interpreter::add_constructor(string const &name,
      policies const &p)
 {
   // add gdb ref
-  if(db_.use_count() == 0) db_ = gdb_;
+  if(!db_) db_ = gdb_;
 
-     Tcl_CreateObjCommand(interp_, name.c_str(),
-          constructor_handler, static_cast<ClientData>(chb.get()), 0);
-
-     gdb_->constructors[interp_][name] = cb;
-     gdb_->call_policies[interp_][name] = p;
+  Tcl_CreateObjCommand(interp_, name.c_str(),
+                       constructor_handler, static_cast<ClientData>(chb.get()), 0);
+  
+  gdb_->constructors[interp_][name] = cb;
+  gdb_->call_policies[interp_][name] = p;
 }
 
 
 int tcl_cast<int>::from(Tcl_Interp *interp, Tcl_Obj *obj)
 {
-     int res;
-     int cc = Tcl_GetIntFromObj(interp, obj, &res);
-     if (cc != TCL_OK)
-     {
-          throw tcl_error(interp);
-     }
+  int res;
+  int cc = Tcl_GetIntFromObj(interp, obj, &res);
+  if (cc != TCL_OK) {
+    throw tcl_error(interp);
+  }
      
-     return res;
+  return res;
 }
 
 Tcl_Obj * tcl_cast<int>::to(Tcl_Interp *, int const & v) {

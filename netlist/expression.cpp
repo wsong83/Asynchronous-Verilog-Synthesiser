@@ -102,33 +102,33 @@ netlist::Expression::Expression(const location& lloc, const shared_ptr<LConcaten
 netlist::Expression::~Expression() {}
 
 bool netlist::Expression::is_valuable() const {
-  assert(eqn.use_count() != 0);
+  assert(eqn);
   return eqn->is_valuable();
 }
 
 Number netlist::Expression::get_value() const {
-  assert(eqn.use_count() != 0);
+  assert(eqn);
   assert(eqn->is_valuable());
   return eqn->get_num();
 }
 
 bool netlist::Expression::is_singular() const {
-  assert(eqn.use_count() != 0);
+  assert(eqn);
   return ((eqn->get_type() > Operation::oNULL) && (eqn->get_type() <= Operation::oFun));
 }
 
 const Operation& netlist::Expression::get_op() const {
-  assert(eqn.use_count() != 0);
+  assert(eqn);
   return *eqn;
 }
 
 Operation& netlist::Expression::get_op() {
-  assert(eqn.use_count() != 0);
+  assert(eqn);
   return *eqn;
 }
 
 void netlist::Expression::reduce() {
-  assert(eqn.use_count() != 0);
+  assert(eqn);
   eqn->reduce();
 }
 
@@ -143,7 +143,7 @@ void netlist::Expression::db_expunge() {
 void netlist::Expression::append(Operation::operation_t otype) {
   assert(tExp == ctype);     // this object whould be valid
   assert(otype >= Operation::oUPos && otype < Operation::oPower);
-  assert(eqn.use_count() != 0);
+  assert(eqn);
 
   eqn.reset(new Operation(otype, eqn));
 }
@@ -151,7 +151,7 @@ void netlist::Expression::append(Operation::operation_t otype) {
 void netlist::Expression::append(Operation::operation_t otype, Expression& d1) {
   assert(tExp == ctype);     // this object whould be valid
   assert(otype >= Operation::oPower && otype < Operation::oQuestion);
-  assert(eqn.use_count() != 0);
+  assert(eqn);
 
   eqn.reset(new Operation(otype, eqn, d1.eqn));
 }
@@ -159,7 +159,7 @@ void netlist::Expression::append(Operation::operation_t otype, Expression& d1) {
 void netlist::Expression::append(Operation::operation_t otype, Expression& d1, Expression& d2) {
   assert(tExp == ctype);     // this object whould be valid
   assert(otype >= Operation::oQuestion);
-  assert(eqn.use_count() != 0);
+  assert(eqn);
 
   eqn.reset(new Operation(otype, eqn, d1.eqn, d2.eqn));
 }
@@ -194,14 +194,14 @@ ostream& netlist::Expression::streamout(ostream& os, unsigned int indent) const 
 void netlist::Expression::set_father(Block *pf) {
   if(father == pf) return;
   father = pf;
-  assert(eqn.use_count() != 0);
+  assert(eqn);
   eqn->set_father(pf);
 }
 
 Expression* netlist::Expression::deep_copy() const {
   Expression* rv = new Expression();
   rv->loc = loc;
-  assert(eqn.use_count() != 0);
+  assert(eqn);
   rv->eqn = shared_ptr<Operation>(eqn->deep_copy());
   return rv;
 }

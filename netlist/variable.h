@@ -64,8 +64,8 @@ namespace netlist {
     void set_genvar() { vtype = TGenvar; }
     vtype_t get_vtype() const { return vtype; }
     bool update();  /* recalculate the value and update all fanouts, true when it is reduced to a number */
-    bool is_valuable() const {  return (exp.use_count() != 0) ? exp->is_valuable() : false; }
-    Number get_value() const {  return (exp.use_count() != 0) ? exp->get_value() : 0; }
+    bool is_valuable() const {  return exp ? exp->is_valuable() : false; }
+    Number get_value() const {  return exp ? exp->get_value() : 0; }
     std::string get_short_string() const;
     bool check_post_elaborate(); /* check fan-in/out */
     bool is_useless() const { return fan[0].size() == 0 && fan[1].size() == 1; }
@@ -87,3 +87,6 @@ namespace netlist {
 }
 
 #endif
+// Local Variables:
+// mode: c++
+// End:

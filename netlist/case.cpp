@@ -102,7 +102,7 @@ void netlist::CaseItem::set_father(Block *pf) {
   BOOST_FOREACH(shared_ptr<Expression>& it, exps)
     it->set_father(pf);
 
-  if(body.use_count())
+  if(body)
     body->set_father(pf);
 }
 
