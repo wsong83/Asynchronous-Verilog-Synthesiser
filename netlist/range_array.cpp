@@ -49,8 +49,7 @@ bool netlist::RangeArray::is_valuable() {
   if(const_reduced || child.empty() ) return true;
   
   // otherwise check it
-  bool rv = true;
-  rv = RangeArrayCommon::is_valuable();
+  bool rv = RangeArrayCommon::is_valuable();
 
   if(rv) const_reduced = true;
   return rv;

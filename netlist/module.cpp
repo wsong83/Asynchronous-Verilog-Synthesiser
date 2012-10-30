@@ -206,6 +206,9 @@ void netlist::Module::db_register(int) {
       m.second->db_register(1);
     });
   BOOST_FOREACH(shared_ptr<NetComp>& m, statements) m->db_register(1);
+  for_each(db_instance.begin(), db_instance.end(), [](pair<const IIdentifier, shared_ptr<Instance> >& m) {
+      m.second->db_register(1);
+    });
 }
 
 void netlist::Module::db_expunge() {
