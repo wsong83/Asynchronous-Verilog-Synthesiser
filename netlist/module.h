@@ -54,17 +54,15 @@ namespace netlist {
     using NetComp::set_father;
     virtual Module* deep_copy() const;
     NETLIST_DB_DECL;
+    // build up the internal databases
+    virtual void elab_inparse(); /* resolve the content in statements during parsing */
     /* elaborate the design */
     bool elaborate(std::deque<boost::shared_ptr<Module> >&,
                    std::map<MIdentifier, boost::shared_ptr<Module> > &); 
 
     // helpers
     virtual void set_name(const MIdentifier& nm) { name = nm; named=true;}
-    VIdentifier& new_VId();
-    BIdentifier& new_BId();
     virtual boost::shared_ptr<Variable>  find_var       (const VIdentifier&) const; /* find a variable */
-    virtual boost::shared_ptr<Block>     find_block     (const BIdentifier&) const; /* find a block */
-    virtual boost::shared_ptr<NetComp>   find_item      (const BIdentifier&) const; /* find an item in db_other */
     virtual boost::shared_ptr<Port>      find_port      (const VIdentifier&) const; /* find an item in db_other */
     /* find a variable in the global environment, up to the module level */
     virtual boost::shared_ptr<Variable>  gfind_var      (const VIdentifier&) const; 
@@ -87,10 +85,6 @@ namespace netlist {
     MIdentifier name;
     DataBase<VIdentifier, Port, true>      db_port;      /* input and output ports, ordered */
     DataBase<VIdentifier, Variable, true>  db_param;     /* parameters, ordered */
-    DataBase<VIdentifier, Variable, true>  db_genvar;    /* generate variable, ordered */
-    DataBase<BIdentifier, SeqBlock>        db_seqblock;  /* always blocks */
-    DataBase<BIdentifier, Assign>          db_assign;    /* continuous assignments */
-    DataBase<BIdentifier, GenBlock>        db_genblock;  /* generation blocks */
 
     // DFG graphs
     boost::shared_ptr<SDFG::dfgGraph> DFG; // the DFG graph of this module (sub-module is embedded, so it is a full graph)

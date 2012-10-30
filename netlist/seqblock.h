@@ -48,7 +48,6 @@ namespace netlist{
     
     // helpers
     virtual std::ostream& streamout(std::ostream&, unsigned int, bool) const;
-    virtual void elab_inparse();        /* resolve the content during parsing */
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;

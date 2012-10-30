@@ -132,7 +132,6 @@ namespace netlist {
     BIdentifier& new_BId();     /* generate an unused block id */
     IIdentifier& new_IId();     /* generate an unused instance id*/
     VIdentifier& new_VId();     /* generate an unused variable id */
-    virtual boost::shared_ptr<NetComp>   find_item      (const BIdentifier&) const; /* find an item in db_other */
     virtual boost::shared_ptr<Instance>  find_instance  (const IIdentifier&) const; /* find an instance */
     virtual boost::shared_ptr<Variable>  find_var       (const VIdentifier&) const; /* find a variable */
     /* find a variable in the global environment, up to the module level */
@@ -158,7 +157,6 @@ namespace netlist {
     std::list<boost::shared_ptr<NetComp> > statements;   /* a general list to stor the statements */
     DataBase<VIdentifier, Variable, true>  db_var;       /* variables */
     DataBase<IIdentifier, Instance>        db_instance;  /* module instances */
-    DataBase<BIdentifier, NetComp>         db_other;     /* non-block statements, including assignements, if, etc. */
     
   protected:
 
@@ -170,9 +168,6 @@ namespace netlist {
     bool named;                 /* true when named */
     bool blocked;               /* user used begin and end for this block */
     
-    // helper in elab_inparse
-    bool elab_inparse_item (const boost::shared_ptr<NetComp>&, std::list<boost::shared_ptr<NetComp> >::iterator&);
-
   };
 
   NETLIST_STREAMOUT(Block);

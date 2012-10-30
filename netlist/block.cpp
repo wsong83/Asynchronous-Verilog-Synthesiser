@@ -155,25 +155,15 @@ bool netlist::Block::add_statements(const shared_ptr<Block>& body) {
 }
 
 BIdentifier& netlist::Block::new_BId() {
-  while(db_other.find(unnamed_block))
-    ++unnamed_block;
-  return unnamed_block;
+  return ++unnamed_block;
 }
 
 IIdentifier& netlist::Block::new_IId() {
-  while(db_instance.find(unnamed_instance))
-    ++unnamed_instance;
-  return unnamed_instance;
+  return ++unnamed_instance;
 }
 
 VIdentifier& netlist::Block::new_VId() {
-  while(db_var.find(unnamed_var))
-    ++unnamed_var;
-  return unnamed_var;
-}
-
-shared_ptr<NetComp> netlist::Block::find_item(const BIdentifier& key) const {
-  return db_other.find(key);
+  return ++unnamed_var;
 }
 
 shared_ptr<Instance> netlist::Block::find_instance(const IIdentifier& key) const {
@@ -238,6 +228,57 @@ ostream& netlist::Block::streamout(ostream& os, unsigned int indent, bool fl_pre
   return os;
 }
 
+void netlist::Block::elab_inparse() {
+  std::set<shared_ptr<NetComp> > to_del;
+
+  BOOST_FOREACH(shared_ptr<NetComp> st, statements) {
+    switch(st->get_type()) {
+    case tVariable: {
+      SP_CAST(m, Variable, st);
+      if(find_var(m->name)) {
+        G_ENV->error(m->loc, "SYN-VAR-1", m->name.name, toString(find_var(m->name)->loc));
+      } else {
+        db_var.insert(m->name, m);
+        to_del.insert(st);
+      }
+      break;
+    }
+    case tInstance: {
+      SP_CAST(m, Instance, st);
+      if(!m->is_named()) {
+        G_ENV->error(m->loc, "SYN-INST-1");
+        m->set_default_name(new_IId());
+      }
+      if(db_instance.find(m->name)) {
+        shared_ptr<Instance> m_inst = db_instance.find(m->name);
+        if(m_inst->is_named() && m->is_named()) {
+          G_ENV->error(m->loc, "SYN-INST-0", m->name.name, toString(m_inst->loc));
+        }
+        if(m->is_named() && !m_inst->is_named()) {
+          db_instance.erase(m_inst->name);
+          IIdentifier m_iid = m_inst->name;
+          while(db_instance.find(m_iid)) {++m_iid; }
+          m_inst->set_default_name(m_iid);
+          db_instance.insert(m_inst->name, m_inst);
+        } else {
+          IIdentifier m_iid = m->name;
+          while(db_instance.find(m_iid)) {++m_iid; }
+          m->set_default_name(m_iid);
+        }
+      }
+      db_instance.insert(m->name, m);
+      to_del.insert(st);
+      break;
+    }
+    default: ;
+    }
+  }
+
+  BOOST_FOREACH(shared_ptr<NetComp> var, to_del) {
+    statements.remove(var);
+  }
+}
+
 Block* netlist::Block::deep_copy() const {
   Block* rv = new Block();
   rv->loc = loc;
@@ -265,8 +306,9 @@ Block* netlist::Block::deep_copy() const {
 void netlist::Block::set_father() {
   // macros defined in database.h
   DATABASE_SET_FATHER_FUN(db_var, VIdentifier, Variable, this);
-  DATABASE_SET_FATHER_FUN(db_instance, IIdentifier, Instance, this);
-  DATABASE_SET_FATHER_FUN(db_other, BIdentifier, NetComp, this);
+  BOOST_FOREACH(shared_ptr<NetComp> st, statements) {
+    st->set_father(this);
+  }
 }
 
 void netlist::Block::db_register(int) {

@@ -39,6 +39,7 @@ using std::string;
 using std::vector;
 using boost::shared_ptr;
 using std::list;
+using std::map;
 using std::pair;
 using shell::location;
 
@@ -262,12 +263,9 @@ bool netlist::Instance::update_ports() {
   return true;
 }
 
-bool netlist::Instance::elaborate(elab_result_t &result, const ctype_t, const vector<NetComp *>&) {
-  bool rv = true;
-  result = ELAB_Normal;
-
-  return rv;
-
+bool netlist::Instance::elaborate(std::set<shared_ptr<NetComp> >&,
+                                  map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > >&) {
+  return true;
 }
 
 bool netlist::Instance::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo, 
