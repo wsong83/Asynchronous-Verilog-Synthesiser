@@ -41,6 +41,7 @@ using boost::shared_ptr;
 using boost::static_pointer_cast;
 using std::list;
 using std::pair;
+using std::map;
 using shell::location;
 using std::for_each;
 
@@ -119,7 +120,7 @@ ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
   if(db_port.empty()) os << ";" << endl;
   else {
     os << "(";
-    list<pair<VIdentifier, shared_ptr<Port> > >::const_iterator it, end;
+    list<pair<const VIdentifier, shared_ptr<Port> > >::const_iterator it, end;
     it = db_port.begin_order();
     end = db_port.end_order();
     while(it != end){
@@ -202,32 +203,32 @@ Module* netlist::Module::deep_copy() const {
 void netlist::Module::db_register(int) {
   // The item in statements are duplicated in db_instance, db_other, db_seqblock, db_assign and db_genblock.
   // Therefore, only statements are executed.
-  for_each(db_param.begin_order(), db_param.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  for_each(db_param.begin_order(), db_param.end_order(), [](pair<const VIdentifier, shared_ptr<Variable> >& m) {
       m.second->db_register(1);
     });
-  for_each(db_port.begin_order(), db_port.end_order(), [](pair<VIdentifier, shared_ptr<Port> >& m) {
+  for_each(db_port.begin_order(), db_port.end_order(), [](pair<const VIdentifier, shared_ptr<Port> >& m) {
       m.second->db_register(1);
     });
-  for_each(db_var.begin_order(), db_var.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  for_each(db_var.begin_order(), db_var.end_order(), [](pair<const VIdentifier, shared_ptr<Variable> >& m) {
       m.second->db_register(1);
     });
-  for_each(db_genvar.begin_order(), db_genvar.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  for_each(db_genvar.begin_order(), db_genvar.end_order(), [](pair<const VIdentifier, shared_ptr<Variable> >& m) {
       m.second->db_register(1);
     });
   BOOST_FOREACH(shared_ptr<NetComp>& m, statements) m->db_register(1);
 }
 
 void netlist::Module::db_expunge() {
-  for_each(db_param.begin_order(), db_param.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  for_each(db_param.begin_order(), db_param.end_order(), [](pair<const VIdentifier, shared_ptr<Variable> >& m) {
       m.second->db_expunge();
     });
-  for_each(db_port.begin_order(), db_port.end_order(), [](pair<VIdentifier, shared_ptr<Port> >& m) {
+  for_each(db_port.begin_order(), db_port.end_order(), [](pair<const VIdentifier, shared_ptr<Port> >& m) {
       m.second->db_expunge();
     });
-  for_each(db_var.begin_order(), db_var.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  for_each(db_var.begin_order(), db_var.end_order(), [](pair<const VIdentifier, shared_ptr<Variable> >& m) {
       m.second->db_expunge();
     });
-  for_each(db_genvar.begin_order(), db_genvar.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  for_each(db_genvar.begin_order(), db_genvar.end_order(), [](pair<const VIdentifier, shared_ptr<Variable> >& m) {
       m.second->db_expunge();
     });
   BOOST_FOREACH(shared_ptr<NetComp>& m, statements) m->db_expunge();
@@ -283,43 +284,6 @@ shared_ptr<NetComp> netlist::Module::search(const string& key) const {
   return rv;
 }
 
-void netlist::Module::elab_inparse() {
-  list<shared_ptr<NetComp> >::iterator it, end;
-  for(it=statements.begin(), end=statements.end(); it!=end; it++) {
-    if(elab_inparse_item(*it)) {
-      // the item should be removed
-      it = statements.erase(it);
-      it--;
-      end = statements.end();
-    }
-  }
-
-  blocked = true;               // module is always blocked
-  
-  if(statements.size() == 0)
-    G_ENV->error(loc, "SYN-MODULE-2", name.name);
-
-
-  // set the father pointers
-  set_father();
-  check_inparse();
-}
-
-bool netlist::Module::check_inparse() {
-  bool rv = true;
-
-  // macros defined in database.h
-  DATABASE_CHECK_INPARSE_FUN(db_port, VIdentifier, Port, rv);
-  DATABASE_CHECK_INPARSE_FUN(db_param, VIdentifier, Variable, rv);
-  DATABASE_CHECK_INPARSE_FUN(db_genvar, VIdentifier, Variable, rv);
-  DATABASE_CHECK_INPARSE_FUN(db_seqblock, BIdentifier, SeqBlock, rv);
-  DATABASE_CHECK_INPARSE_FUN(db_assign, BIdentifier, Assign, rv);
-  DATABASE_CHECK_INPARSE_FUN(db_genblock, BIdentifier, GenBlock, rv);
-
-  rv &= Block::check_inparse();
-  return rv;
-}
-
 void netlist::Module::set_father() {
   // macros defined in database.h
   DATABASE_SET_FATHER_FUN(db_port, VIdentifier, Port, this);
@@ -360,12 +324,12 @@ bool netlist::Module::calculate_name( string& newName,
   if(!rv) return rv;
 
   tmpModule->set_father();
-  tmpModule->db_register();
+  tmpModule->db_register(0);
 
   // resolve all parameters and get the new name
   newName = tmpModule->name.name;
   for_each(tmpModule->db_param.begin_order(), tmpModule->db_param.end_order(), 
-           [&](pair<VIdentifier, shared_ptr<Variable> >& m) {
+           [&](pair<const VIdentifier, shared_ptr<Variable> >& m) {
              rv &= m.second->update();
              if(!rv) 
                G_ENV->error(m.second->loc, "ELAB-PARA-0", m.second->name.name, tmpModule->name.name);
@@ -375,11 +339,12 @@ bool netlist::Module::calculate_name( string& newName,
   return rv;
 }
 
-bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo, 
-                                std::map<MIdentifier, boost::shared_ptr<Module> > & mmap) {
+bool netlist::Module::elaborate(std::deque<shared_ptr<Module> >& mfifo,
+                                map<MIdentifier, shared_ptr<Module> > & mmap) {
   bool rv = true;
-  elab_result_t result;
-  
+  std::set<shared_ptr<NetComp> > to_del;
+  map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add;
+
   // before register all variable, update the port direction of all instance
   // as it will affect the direction of wires
   for_each(db_instance.begin(), db_instance.end(), [&](pair<const IIdentifier, shared_ptr<Instance> >& m) {
@@ -388,38 +353,30 @@ bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
   if(!rv) return rv;
 
   // link all variables
-  db_register();
+  db_register(0);
 
   //std::cout << "after instance port update: " << std::endl << *this;
 
   // update the value of parameter to all variables after db_register
   // the update during update_name is not sufficient to resolve all parameters 
   // as db_register is run after elaboration
-  for_each(db_param.begin_order(), db_param.end_order(), [&](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  for_each(db_param.begin_order(), db_param.end_order(), [&](pair<const VIdentifier, shared_ptr<Variable> >& m) {
       rv &= m.second->update();
     });
   if(!rv) return rv;
 
   //std::cout << "after parameter update: " << std::endl << *this;
 
-  // check ports
-  for_each(db_port.begin_order(), db_port.end_order(), [&](pair<VIdentifier, shared_ptr<Port> >& m) {
-      rv &= m.second->elaborate(result);
-    });
-  if(!rv) return rv;
-  
-  //std::cout << "after port elaboration: " << std::endl << *this;
-  
   // check all variables
-  for_each(db_var.begin_order(), db_var.end_order(), [&](pair<VIdentifier, shared_ptr<Variable> >& m) {
-      rv &= m.second->elaborate(result);
+  for_each(db_var.begin_order(), db_var.end_order(), [&](pair<const VIdentifier, shared_ptr<Variable> >& m) {
+      rv &= m.second->elaborate(to_del, to_add);
     });
   if(!rv) return rv;
 
   //std::cout << "after var elaboration: " << std::endl << *this;
   
   // resolve all generate variables
-  //for_each(db_genvar.begin_order(), db_genvar.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  //for_each(db_genvar.begin_order(), db_genvar.end_order(), [](pair<const VIdentifier, shared_ptr<Variable> >& m) {
   //      m.second->update();
   //    });
   
@@ -427,34 +384,28 @@ bool netlist::Module::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
   
   // elaborate the internals
   BOOST_FOREACH(shared_ptr<NetComp>& m, statements) 
-    rv &= m->elaborate(result, tModule);
+    rv &= m->elaborate(to_del, to_add);
   if(!rv) return rv;
   
   //std::cout << "after statements elaboration: " << std::endl << *this;
   
-  // check all variablescheck variable fan-in/out
-  for_each(db_var.begin_order(), db_var.end_order(), [&](pair<VIdentifier, shared_ptr<Variable> >& m) {
-      rv &= m.second->check_post_elaborate();
-    });
-  if(!rv) return rv;
-  
   // remove useless variables
   list<VIdentifier> var_to_be_removed;
-  for_each(db_var.begin_order(), db_var.end_order(), [&](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  for_each(db_var.begin_order(), db_var.end_order(), [&](pair<const VIdentifier, shared_ptr<Variable> >& m) {
       if(m.second->is_useless()) var_to_be_removed.push_back(m.first);
     });
   BOOST_FOREACH(const VIdentifier& m, var_to_be_removed) 
     db_var.erase(m);
   
   var_to_be_removed.clear();
-  for_each(db_genvar.begin_order(), db_genvar.end_order(), [&](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  for_each(db_genvar.begin_order(), db_genvar.end_order(), [&](pair<const VIdentifier, shared_ptr<Variable> >& m) {
       if(m.second->is_useless()) var_to_be_removed.push_back(m.first);
     });
   BOOST_FOREACH(const VIdentifier& m, var_to_be_removed) 
     db_genvar.erase(m);
 
   var_to_be_removed.clear();
-  for_each(db_param.begin_order(), db_param.end_order(), [&](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  for_each(db_param.begin_order(), db_param.end_order(), [&](pair<const VIdentifier, shared_ptr<Variable> >& m) {
       if(m.second->is_useless()) var_to_be_removed.push_back(m.first);
     });
   BOOST_FOREACH(const VIdentifier& m, var_to_be_removed) 
@@ -573,155 +524,3 @@ void netlist::Module::init_param_list(const list<shared_ptr<Variable> >& para_li
   }    
 }
 
-bool netlist::Module::elab_inparse_item(const shared_ptr<NetComp>& it) {
-  // return true when this item should be removed from the statement list
-  
-  switch(it->get_type()) {
-  case tAssign: {
-    SP_CAST(m, Assign, it);
-    m->set_name(new_BId());
-    db_assign.insert(m->name, m);
-    return false;
-  }
-  case tSeqBlock: {
-    SP_CAST(m, SeqBlock, it);
-    if(!m->is_named()) {
-      m->set_default_name(new_BId());
-      db_seqblock.insert(m->name, m);
-    } else {
-      shared_ptr<NetComp> item = find_item(m->name);
-      if(item.use_count() != 0) { // name conflicts
-        shared_ptr<Block> blk = find_block(m->name);
-        if(blk.use_count() != 0 && blk->is_named()) { // conflict with a named block
-          G_ENV->error(m->loc, "SYN-BLOCK-0", m->name.name, toString(blk->loc));
-          // rename and insert
-          while(find_item(++(m->name)).use_count() != 0) {}
-          db_seqblock.insert(m->name, m);
-        } else {              // conflict with a unnamed block
-          //fatch the item
-          switch(item->get_type()) {
-          case tSeqBlock: 
-            item = db_seqblock.swap(m->name, m); 
-            break;
-          case tGenBlock: 
-            item = db_genblock.fetch(m->name); 
-            db_seqblock.insert(m->name, m); 
-            break;
-          default: 
-            item = db_assign.fetch(m->name); 
-            db_seqblock.insert(m->name, m); 
-            break;
-          }
-          // reinsert the unnamed item
-          elab_inparse_item(item);
-        }
-      } else { // no name conflicts
-        db_seqblock.insert(m->name, m); 
-      }
-    }
-    return false;
-  }
-  case tGenBlock: {
-    SP_CAST(m, GenBlock, it);
-    if(!m->is_named()) {
-      m->set_default_name(new_BId());
-      db_genblock.insert(m->name, m);
-    } else {
-      shared_ptr<NetComp> item = find_item(m->name);
-      if(item.use_count() != 0) { // name conflicts
-        shared_ptr<Block> blk = find_block(m->name);
-        if(blk.use_count() != 0 && blk->is_named()) { // conflict with a named block
-          G_ENV->error(m->loc, "SYN-BLOCK-0", m->name.name, toString(blk->loc));
-          // rename and insert
-          while(find_item(++(m->name)).use_count() != 0) {}
-          db_genblock.insert(m->name, m);
-        } else {              // conflict with a unnamed block
-          //fatch the item
-          switch(item->get_type()) {
-          case tSeqBlock: 
-            item = db_seqblock.fetch(m->name); 
-            db_genblock.insert(m->name, m); 
-            break;
-          case tGenBlock: 
-            item = db_genblock.swap(m->name, m); 
-            break;
-          default: 
-            item = db_assign.fetch(m->name); 
-            db_genblock.insert(m->name, m); 
-            break;
-          }
-          // reinsert the unnamed item
-          elab_inparse_item(item);
-        }
-      } else { // no name conflicts
-        db_genblock.insert(m->name, m); 
-      }
-    }
-    return false;
-  }
-  case tInstance: {
-    SP_CAST(m, Instance, it);
-    if(!m->is_named()) {
-      G_ENV->error(m->loc, "SYN-INST-1");
-      m->set_default_name(new_IId());
-      db_instance.insert(m->name, m);
-    } else {
-      shared_ptr<Instance> mm = db_instance.find(m->name);
-      if(mm.use_count() != 0) {
-        if(mm->is_named()) {
-          G_ENV->error(m->loc, "SYN-INST-0", m->name.name, toString(mm->loc));
-          while(db_instance.find(++(m->name)).use_count() != 0) {}
-          db_instance.insert(m->name, m);
-        } else {                  // conflict with an unnamed instance
-          mm = db_instance.swap(m->name, m);
-          elab_inparse_item(mm);
-        }
-      } else {
-        db_instance.insert(m->name, m);
-      }
-    }                 
-    return false;
-  }
-  case tPort: {
-    SP_CAST(m, Port, it);
-    shared_ptr<Port> mm = db_port.find(m->name);
-    if(mm.use_count() != 0) {
-      db_port.swap(m->name, m);
-    } else {
-      G_ENV->error(m->loc, "SYN-PORT-0", toString(m), name.name);
-      db_port.insert(m->name, m);
-    }
-    return true;
-  }
-  case tVariable: {
-    SP_CAST(m, Variable, it);
-    shared_ptr<Variable> mm = find_var(m->name);
-    if(mm.use_count() != 0) {
-      G_ENV->error(m->loc, "SYN-VAR-1", m->name.name, toString(mm->loc));
-    } else {
-      switch(m->get_vtype()) {
-      case Variable::TWire:
-      case Variable::TReg: {
-        db_var.insert(m->name, m);
-        break;
-      }
-      case Variable::TParam: {
-        /// if multiple definitions exist for the same parameter, the last one take effect
-        db_param.insert(m->name, m); 
-        break;
-      }
-      case Variable::TGenvar: {
-        db_genvar.insert(m->name, m);
-        break;
-      }
-      default:
-        G_ENV->error(m->loc, "SYN-VAR-0", m->name.name);
-      }
-    }
-    return true;
-  }
-  default:
-    G_ENV->error(it->loc, "SYN-MODULE-1");
-    return true;
-  }
-}

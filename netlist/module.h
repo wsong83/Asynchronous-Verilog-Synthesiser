@@ -54,7 +54,9 @@ namespace netlist {
     using NetComp::set_father;
     virtual Module* deep_copy() const;
     NETLIST_DB_DECL;
-    NETLIST_ELABORATE_DECL;
+    /* elaborate the design */
+    bool elaborate(std::deque<boost::shared_ptr<Module> >&,
+                   std::map<MIdentifier, boost::shared_ptr<Module> > &); 
 
     // helpers
     virtual void set_name(const MIdentifier& nm) { name = nm; named=true;}
