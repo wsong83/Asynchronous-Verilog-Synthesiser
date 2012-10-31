@@ -41,10 +41,15 @@ using std::string;
 using boost::shared_ptr;
 using shell::location;
 using std::pair;
+using std::map;
 using std::stack;
 using std::list;
 using std::vector;
 using std::for_each;
+
+netlist::Expression::Expression() : NetComp(tExp) {}
+
+netlist::Expression::Expression(const shell::location& lloc) : NetComp(tExp, lloc) {}
 
 netlist::Expression::Expression(const Number& exp) 
   : NetComp(tExp)
@@ -97,33 +102,33 @@ netlist::Expression::Expression(const location& lloc, const shared_ptr<LConcaten
 netlist::Expression::~Expression() {}
 
 bool netlist::Expression::is_valuable() const {
-  assert(eqn.use_count() != 0);
+  assert(eqn);
   return eqn->is_valuable();
 }
 
 Number netlist::Expression::get_value() const {
-  assert(eqn.use_count() != 0);
+  assert(eqn);
   assert(eqn->is_valuable());
   return eqn->get_num();
 }
 
 bool netlist::Expression::is_singular() const {
-  assert(eqn.use_count() != 0);
+  assert(eqn);
   return ((eqn->get_type() > Operation::oNULL) && (eqn->get_type() <= Operation::oFun));
 }
 
 const Operation& netlist::Expression::get_op() const {
-  assert(eqn.use_count() != 0);
+  assert(eqn);
   return *eqn;
 }
 
 Operation& netlist::Expression::get_op() {
-  assert(eqn.use_count() != 0);
+  assert(eqn);
   return *eqn;
 }
 
 void netlist::Expression::reduce() {
-  assert(eqn.use_count() != 0);
+  assert(eqn);
   eqn->reduce();
 }
 
@@ -138,7 +143,7 @@ void netlist::Expression::db_expunge() {
 void netlist::Expression::append(Operation::operation_t otype) {
   assert(tExp == ctype);     // this object whould be valid
   assert(otype >= Operation::oUPos && otype < Operation::oPower);
-  assert(eqn.use_count() != 0);
+  assert(eqn);
 
   eqn.reset(new Operation(otype, eqn));
 }
@@ -146,7 +151,7 @@ void netlist::Expression::append(Operation::operation_t otype) {
 void netlist::Expression::append(Operation::operation_t otype, Expression& d1) {
   assert(tExp == ctype);     // this object whould be valid
   assert(otype >= Operation::oPower && otype < Operation::oQuestion);
-  assert(eqn.use_count() != 0);
+  assert(eqn);
 
   eqn.reset(new Operation(otype, eqn, d1.eqn));
 }
@@ -154,7 +159,7 @@ void netlist::Expression::append(Operation::operation_t otype, Expression& d1) {
 void netlist::Expression::append(Operation::operation_t otype, Expression& d1, Expression& d2) {
   assert(tExp == ctype);     // this object whould be valid
   assert(otype >= Operation::oQuestion);
-  assert(eqn.use_count() != 0);
+  assert(eqn);
 
   eqn.reset(new Operation(otype, eqn, d1.eqn, d2.eqn));
 }
@@ -162,23 +167,6 @@ void netlist::Expression::append(Operation::operation_t otype, Expression& d1, E
 void netlist::Expression::concatenate(const Expression& rhs) {
   assert(eqn->is_valuable() && rhs.eqn->is_valuable());
   eqn->get_num().concatenate(rhs.eqn->get_num());
-}
-
-unsigned int netlist::Expression::get_width() {
-  if(width) return width;
-  assert(eqn.use_count() != 0);
-  width = eqn->get_width();
-  return width;
-}
-
-void netlist::Expression::set_width(const unsigned int& w) {
-  if(width == w) return;
-  assert(eqn.use_count() != 0);
-  // there is no need to make sure w <= width as it may happen this way
-  // such as assign a[3:0] = 1'b1;
-  eqn->set_width(w);
-  width = w;
-  return;
 }
 
 Expression& netlist::operator+ (Expression& lhs, Expression& rhs) {
@@ -206,56 +194,24 @@ ostream& netlist::Expression::streamout(ostream& os, unsigned int indent) const 
 void netlist::Expression::set_father(Block *pf) {
   if(father == pf) return;
   father = pf;
-  assert(eqn.use_count() != 0);
+  assert(eqn);
   eqn->set_father(pf);
-}
-
-bool netlist::Expression::check_inparse() {
-  bool rv = true;
-  assert(eqn.use_count() != 0);
-  rv &= eqn->check_inparse();
-  return rv;
 }
 
 Expression* netlist::Expression::deep_copy() const {
   Expression* rv = new Expression();
   rv->loc = loc;
-  rv->width = width;
-  assert(eqn.use_count() != 0);
+  assert(eqn);
   rv->eqn = shared_ptr<Operation>(eqn->deep_copy());
-  return rv;
-}
-
-bool netlist::Expression::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>&) {
-  bool rv = true;
-  result = ELAB_Normal;
-  
-  // try to reduce the expression
-  assert(eqn.use_count() != 0);
-  eqn->reduce();
-
-  eqn->elaborate(result);
-  if(!rv) return false;
-
-  // type specific check
-  switch(mctype) {
-  case tCaseItem: {
-    // for a case item, it must be const
-    if(!eqn->is_valuable()) {
-      G_ENV->error(loc, "ELAB-CASE-3", toString(*this));
-      rv = false;
-    }
-    break;
-  }
-  default:
-    ;
-  }
-
   return rv;
 }
 
 void netlist::Expression::scan_vars(std::set<string>& t_vars, std::set<string>& d_vars, std::set<string>& c_vars, bool ctl) const {
   eqn->scan_vars(t_vars, d_vars, c_vars, ctl);
+}
+
+void netlist::Expression::replace_variable(const VIdentifier& var, const Number& num) {
+  eqn->replace_variable(var, num);
 }
 
 void netlist::Expression::gen_sdfg_node(shared_ptr<dfgGraph> G, shared_ptr<dfgNode> node) {

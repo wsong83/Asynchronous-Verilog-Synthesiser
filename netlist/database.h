@@ -36,8 +36,8 @@ namespace netlist {
     class DataBase {
   public:
     typedef std::map<K, boost::shared_ptr<T> > DBTM;
-    typedef std::list<std::pair<K, boost::shared_ptr<T> > > DBTL;
-    typedef std::pair<K, boost::shared_ptr<T> > DTT;
+    typedef std::list<std::pair<const K, boost::shared_ptr<T> > > DBTL;
+    typedef std::pair<const K, boost::shared_ptr<T> > DTT;
     
     // store a component
     bool insert(const K& key, const boost::shared_ptr<T>& comp) {
@@ -96,6 +96,10 @@ namespace netlist {
         else
           return boost::shared_ptr<T>();
       }
+    }
+
+    bool count(const K& key) const {
+      return find(key);
     }
 
     boost::shared_ptr<T> swap(const K& key, const boost::shared_ptr<T>& comp) {
@@ -181,7 +185,7 @@ namespace netlist {
       return os;
     }
     
-  private:
+  //private:
     DBTM db_map;                /* unordered database */
     DBTL db_list;               /* oredered database */
     
@@ -200,14 +204,14 @@ namespace netlist {
 // T, component type
 // F the father pointer
 #ifndef DATABASE_SET_FATHER_FUN
-#define DATABASE_SET_FATHER_FUN(DN, K, T, F)                            \
-{                                                                       \
-  std::map<K, boost::shared_ptr<T> >::iterator it, end;                 \
-  for(it=DN.begin(), end=DN.end(); it!=end; it++)                       \
-    it->second->set_father(F);                                          \
-  std::list<std::pair<K, boost::shared_ptr<T> > >::iterator oit, oend;  \
-  for(oit=DN.begin_order(), oend=DN.end_order(); oit!=oend; oit++)      \
-    oit->second->set_father(F);                                         \
+#define DATABASE_SET_FATHER_FUN(DN, K, T, F)                                  \
+{                                                                             \
+  std::map<K, boost::shared_ptr<T> >::iterator it, end;                       \
+  for(it=DN.begin(), end=DN.end(); it!=end; it++)                             \
+    it->second->set_father(F);                                                \
+  std::list<std::pair<const K, boost::shared_ptr<T> > >::iterator oit, oend;  \
+  for(oit=DN.begin_order(), oend=DN.end_order(); oit!=oend; oit++)            \
+    oit->second->set_father(F);                                               \
 }    
 #endif
 
@@ -218,14 +222,14 @@ namespace netlist {
 // T, component type
 // R, the return boolean variable
 #ifndef DATABASE_CHECK_INPARSE_FUN
-#define DATABASE_CHECK_INPARSE_FUN(DN, K, T, R)                         \
-{                                                                       \
-  std::map<K, boost::shared_ptr<T> >::iterator it, end;                 \
-  for(it=DN.begin(), end=DN.end(); it!=end; it++)                       \
-    R &= it->second->check_inparse();                                   \
-  std::list<std::pair<K, boost::shared_ptr<T> > >::iterator oit, oend;  \
-  for(oit=DN.begin_order(), oend=DN.end_order(); oit!=oend; oit++)       \
-    R &= oit->second->check_inparse();                                  \
+#define DATABASE_CHECK_INPARSE_FUN(DN, K, T, R)                               \
+{                                                                             \
+  std::map<K, boost::shared_ptr<T> >::iterator it, end;                       \
+  for(it=DN.begin(), end=DN.end(); it!=end; it++)                             \
+    R &= it->second->check_inparse();                                         \
+  std::list<std::pair<const K, boost::shared_ptr<T> > >::iterator oit, oend;  \
+  for(oit=DN.begin_order(), oend=DN.end_order(); oit!=oend; oit++)            \
+    R &= oit->second->check_inparse();                                        \
 }
 #endif
 
@@ -236,14 +240,14 @@ namespace netlist {
 // T, component type
 // R, the target return database
 #ifndef DATABASE_DEEP_COPY_FUN
-#define DATABASE_DEEP_COPY_FUN(DN, K, T, R)                                  \
-{                                                                            \
-  std::map<K, boost::shared_ptr<T> >::const_iterator it, end;                \
-  for(it=DN.begin(), end=DN.end(); it!=end; it++)                            \
-    R.insert(it->first, boost::shared_ptr<T>(it->second->deep_copy()));      \
-  std::list<std::pair<K, boost::shared_ptr<T> > >::const_iterator oit, oend; \
-  for(oit=DN.begin_order(), oend=DN.end_order(); oit!=oend; oit++)           \
-    R.insert(oit->first, boost::shared_ptr<T>(oit->second->deep_copy()));    \
+#define DATABASE_DEEP_COPY_FUN(DN, K, T, R)                                        \
+{                                                                                  \
+  std::map<K, boost::shared_ptr<T> >::const_iterator it, end;                      \
+  for(it=DN.begin(), end=DN.end(); it!=end; it++)                                  \
+    R.insert(it->first, boost::shared_ptr<T>(it->second->deep_copy()));            \
+  std::list<std::pair<const K, boost::shared_ptr<T> > >::const_iterator oit, oend; \
+  for(oit=DN.begin_order(), oend=DN.end_order(); oit!=oend; oit++)                 \
+    R.insert(oit->first, boost::shared_ptr<T>(oit->second->deep_copy()));          \
 }
 #endif
 

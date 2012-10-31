@@ -28,9 +28,9 @@ INCDIRS = -I./ -I../
 
 # targets
 TARGETS = operation.o number.o concatenation.o lconcatenation.o identifier.o \
-	      range.o range_array.o range_array_common.o expression.o port.o \
+	      range.o range_array.o range_array_common.o expression.o port.o portconn.o \
           variable.o assign.o block.o seqblock.o genblock.o case.o if.o \
-	      while.o for.o module.o instance.o library.o uni_name.o
+	      while.o for.o module.o netcomp.o instance.o library.o uni_name.o
 
 HEADERS = $(wildcard ./*.h)
 HEADERS += $(wildcard ../sdfg/*.h)

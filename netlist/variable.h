@@ -38,34 +38,21 @@ namespace netlist {
       TVar, TWire, TReg, TParam, TGenvar
     } vtype;
 
-    Variable() : NetComp(tVariable), uid(0) {}
-    Variable(const shell::location& lloc) : NetComp(tVariable, lloc), uid(0) {}
-    Variable(const VIdentifier& id, vtype_t mtype = TVar)
-      : NetComp(tVariable), vtype(mtype), name(id), uid(0) {}
-    Variable(const Port& p)
-      : NetComp(tVariable, p.loc), vtype(TWire), uid(0) {
-      VIdentifier *newName = p.name.deep_copy();
-      name = *newName;
-      delete newName;
-    }
-    Variable(const shell::location& lloc, const VIdentifier& id, vtype_t mtype = TVar)
-      : NetComp(tVariable, lloc), vtype(mtype), name(id), uid(0) {}
-    Variable(const VIdentifier& id, const boost::shared_ptr<Expression>& expp, vtype_t mtype = TVar)
-      : NetComp(tVariable), vtype(mtype), name(id), uid(0), exp(expp) {}
-    Variable(const shell::location& lloc, const VIdentifier& id, 
-             const boost::shared_ptr<Expression>& expp, vtype_t mtype = TVar)
-    : NetComp(tVariable, lloc), vtype(mtype), name(id), uid(0), exp(expp) {}
+    Variable();
+    Variable(const shell::location&);
+    Variable(const VIdentifier&, vtype_t mtype = TVar);
+    Variable(const Port&);
+    Variable(const shell::location&, const VIdentifier&, vtype_t mtype = TVar);
+    Variable(const VIdentifier&, const boost::shared_ptr<Expression>&, vtype_t mtype = TVar);
+    Variable(const shell::location&, const VIdentifier&, const boost::shared_ptr<Expression>&, vtype_t mtype = TVar);
 
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
-    NETLIST_CHECK_INPARSE_DECL;
     virtual Variable* deep_copy() const;
-    virtual void db_register(int iod = 1);
-    virtual void db_expunge();
+    NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
-    NETLIST_SET_WIDTH_DECL;
-    NETLIST_GET_WIDTH_DECL;
+    NETLIST_REPLACE_VARIABLE;
 
     // helpers
     void set_value(const Number&); /* reset the value of this variable */
@@ -77,8 +64,8 @@ namespace netlist {
     void set_genvar() { vtype = TGenvar; }
     vtype_t get_vtype() const { return vtype; }
     bool update();  /* recalculate the value and update all fanouts, true when it is reduced to a number */
-    bool is_valuable() const {  return (exp.use_count() != 0) ? exp->is_valuable() : false; }
-    Number get_value() const {  return (exp.use_count() != 0) ? exp->get_value() : 0; }
+    bool is_valuable() const {  return exp ? exp->is_valuable() : false; }
+    Number get_value() const {  return exp ? exp->get_value() : 0; }
     std::string get_short_string() const;
     bool check_post_elaborate(); /* check fan-in/out */
     bool is_useless() const { return fan[0].size() == 0 && fan[1].size() == 1; }
@@ -86,6 +73,7 @@ namespace netlist {
     VIdentifier name;
     std::map<unsigned int, VIdentifier *> fan[2]; /* fan[0] for fanin, fan[1] for fanout */
     unsigned int get_id();
+    boost::shared_ptr<Expression> exp;
 
   private:
 
@@ -93,13 +81,12 @@ namespace netlist {
     bool driver_and_load_checker() const;
 
     unsigned int uid;
-    boost::shared_ptr<Expression> exp;
-
   };
 
   NETLIST_STREAMOUT(Variable);
-
-
 }
 
 #endif
+// Local Variables:
+// mode: c++
+// End:

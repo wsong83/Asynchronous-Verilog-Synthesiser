@@ -39,6 +39,7 @@ using std::string;
 using std::vector;
 using boost::shared_ptr;
 using std::list;
+using std::map;
 using std::pair;
 using shell::location;
 
@@ -168,22 +169,6 @@ void netlist::Instance::set_father(Block *pf) {
   }
 }
 
-bool netlist::Instance::check_inparse() {
-  bool rv = true;
-  {
-    list<shared_ptr<PortConn> >::iterator it, end;
-    for(it=port_list.begin(),end=port_list.end(); it!=end; it++)
-      rv &= (*it)->check_inparse();
-  }
- 
-  {
-    list<shared_ptr<ParaConn> >::iterator it, end;
-    for(it=para_list.begin(),end=para_list.end(); it!=end; it++)
-      rv &= (*it)->check_inparse();
-  }
-  return rv;
-}  
-
 ostream& netlist::Instance::streamout(ostream& os, unsigned int indent) const {
   // the module name
   os << string(indent, ' ') << mname.name << " ";
@@ -221,7 +206,7 @@ ostream& netlist::Instance::streamout(ostream& os, unsigned int indent) const {
       else
         break;
     }
-    os << ");" << endl;
+    os << ");" << endl <<endl;
   }
   return os;
 }
@@ -278,12 +263,9 @@ bool netlist::Instance::update_ports() {
   return true;
 }
 
-bool netlist::Instance::elaborate(elab_result_t &result, const ctype_t, const vector<NetComp *>&) {
-  bool rv = true;
-  result = ELAB_Normal;
-
-  return rv;
-
+bool netlist::Instance::elaborate(std::set<shared_ptr<NetComp> >&,
+                                  map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > >&) {
+  return true;
 }
 
 bool netlist::Instance::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo, 
@@ -367,5 +349,14 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G,
         assert(0 == "port type wrong, output cannot be expression or number.");
       }
     }
+  }
+}
+
+void netlist::Instance::replace_variable(const VIdentifier& var, const Number& num) {
+  BOOST_FOREACH(shared_ptr<PortConn> pc, port_list) {
+    pc->replace_variable(var, num);
+  }
+  BOOST_FOREACH(shared_ptr<ParaConn> pc, para_list) {
+    pc->replace_variable(var, num);
   }
 }

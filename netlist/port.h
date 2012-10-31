@@ -39,17 +39,10 @@ namespace netlist {
     Port(const shell::location&);
 
     // inherit from NetComp
-    NETLIST_CHECK_INPARSE_DECL;
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
     virtual Port* deep_copy() const;
-    virtual void db_register(int) {
-      if(dir <= 0) name.db_register(0);
-      if(dir >= 0) name.db_register(1);
-    }
-    virtual void db_expunge() {
-      name.db_expunge();
-    }
+    NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
    
     // helpers
@@ -63,9 +56,9 @@ namespace netlist {
     bool is_inout() const { return dir == 0; }
 
     VIdentifier name;
-
+    int ptype;                  /* 0, unknown/wire; 1 reg */
   private:
-    int dir;                    /* -1 in, 0 inout, 1 out */
+    int dir;                    /* -1 in, 0 inout, 1 out, -2 default */
   };
   NETLIST_STREAMOUT(Port);
 

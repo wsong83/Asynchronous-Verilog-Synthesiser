@@ -172,7 +172,7 @@ netlist::Operation::Operation(const location& lloc, operation_t op,
 }
 
 netlist::Operation::~Operation() {
-  if(data.use_count() != 0) {
+  if(data) {
     data->db_expunge();
   }
 }
@@ -328,7 +328,7 @@ string netlist::Operation::toString() const {
 
 
 void netlist::Operation::db_register(int iod) {
-  if(data.use_count() != 0) data->db_register(iod);
+  if(data) data->db_register(iod);
   if(child.size()) {
     BOOST_FOREACH(shared_ptr<Operation>& m, child) 
       m->db_register(iod);
@@ -336,7 +336,7 @@ void netlist::Operation::db_register(int iod) {
 }
 
 void netlist::Operation::db_expunge() {
-  if(data.use_count() != 0) data->db_expunge();
+  if(data) data->db_expunge();
   if(child.size()) {
     BOOST_FOREACH(shared_ptr<Operation>& m, child) 
       m->db_expunge();
@@ -346,20 +346,10 @@ void netlist::Operation::db_expunge() {
 void netlist::Operation::set_father(Block *pf) {
   if(father == pf) return;
   father = pf;
-  if(data.use_count() != 0) data->set_father(pf);
+  if(data) data->set_father(pf);
   if(child.size()) {
     BOOST_FOREACH(shared_ptr<Operation>& m, child) 
       m->set_father(pf);
-  }
-}
-
-bool netlist::Operation::check_inparse() {
-  if((otype <= oCon) && (otype >= oNum)) return data->check_inparse();
-  else {
-    bool rv = true;
-    BOOST_FOREACH(shared_ptr<Operation>& m, child)
-      rv &= m->check_inparse();
-    return rv;
   }
 }
 
@@ -371,10 +361,9 @@ ostream& netlist::Operation::streamout(ostream& os, unsigned int indent) const {
 Operation* netlist::Operation::deep_copy() const {
   Operation* rv = new Operation();
   rv->loc = loc;
-  rv->width = width;
   rv->otype = this->otype;
   rv->valuable = this->valuable;
-  if(data.use_count() != 0) rv->data = shared_ptr<NetComp>(data->deep_copy());
+  if(data) rv->data = shared_ptr<NetComp>(data->deep_copy());
   if(child.size()) {
     rv->child = vector<shared_ptr<Operation> >(child.size());
     for(unsigned int i=0; i<child.size(); i++) 
@@ -425,243 +414,6 @@ void netlist::Operation::reduce() {
   default:  // should not run to here
     assert(0 == "wrong operation type");
   }
-}
-
-bool netlist::Operation::elaborate(NetComp::elab_result_t &result, const NetComp::ctype_t, const vector<NetComp *>&) {
-  bool rv = true;
-  result = NetComp::ELAB_Normal;
-
-  if(data.use_count() != 0)
-    rv &= data->elaborate(result, NetComp::tExp);
-
-  if(!rv) return rv;
-
-  BOOST_FOREACH(shared_ptr<Operation>&m, child)
-    rv &= m->elaborate(result, NetComp::tExp);
-
-  if(!rv) return rv;
-
-  // extra check
-  switch(otype) {
-  case oNum:
-  case oVar:
-  case oCon:
-  case oUPos:
-  case oUNeg:
-  case oULRev:
-  case oURev:
-  case oUAnd:
-  case oUNand:
-  case oUOr:
-  case oUNor:
-  case oUXor:
-  case oUNxor:
-  case oTime:
-  case oAdd:
-  case oMinus:
-  case oRS:
-  case oLS:
-  case oLRS:
-  case oLess:
-  case oLe:
-  case oGreat:
-  case oGe:
-  case oEq:
-  case oNeq:
-  case oAnd:
-  case oXor:
-  case oNxor:
-  case oOr:
-  case oLAnd:
-  case oLOr:
-  case oQuestion:
-    rv = true;
-    break;
-  case oPower:
-    // a shift must have been reduced if it is correct
-    G_ENV->error(loc, "ELAB-EXPRESSION-2", toString());
-    rv = false;
-    break;
-  case oDiv:
-  case oMode:
-    // a div/mod must have been reduced if it is correct
-    G_ENV->error(loc, "ELAB-EXPRESSION-3", toString());
-    rv = false;
-    break;
-  case oCEq:
-  case oCNeq:
-    // a case comparison must have been reduced if it is correct
-    G_ENV->error(loc, "ELAB-CASE-3", toString());
-    rv = false;
-    break;
-  default:  // should not run to here
-    assert(0 == "wrong operation type");
-  }
-
-  return rv;   
-}
-
-unsigned int netlist::Operation::get_width() {
-  if(width) return width;
-  return width;
-
-  switch(otype) {
-  case oNum:
-  case oVar:
-  case oCon:
-    width = data->get_width();
-    break;
-  case oUPos:
-  case oUNeg:
-  case oURev:
-    width = child[0]->get_width();
-    break;
-  case oULRev:
-  case oUAnd:
-  case oUNand:
-  case oUOr:
-  case oUNor:
-  case oUXor:
-  case oUNxor:
-    child[0]->get_width();
-    width = 1;
-    break;
-  case oTime:
-    width = child[0]->get_width() * child[1]->get_width();
-    break;
-  case oAdd:
-  case oMinus:
-    width = std::max(child[0]->get_width(), child[1]->get_width()) + 1;
-    break;
-  case oRS:
-  case oLRS:
-    child[1]->get_width();
-    width = child[0]->get_width();
-    break;
-  case oLS:
-    if(child[1]->is_valuable()) {
-      assert(child[1]->get_num() >= 0);
-      width = child[0]->get_width() + child[1]->get_num().get_value().get_ui();
-    } else {
-      // the maximal possible
-      width = child[0]->get_width() + (1 << child[1]->get_width()) - 1;
-    }
-    break;
-  case oLess:
-  case oLe:
-  case oGreat:
-  case oGe:
-  case oEq:
-  case oNeq:
-    child[0]->get_width();
-    child[1]->get_width();
-    width = 1;
-    break;
-  case oAnd:
-  case oXor:
-  case oNxor:
-  case oOr:
-  case oLAnd:
-  case oLOr:
-    width = std::max(child[0]->get_width(), child[1]->get_width());
-    break;
-  case oQuestion:
-    child[0]->get_width();
-    width = std::max(child[1]->get_width(), child[2]->get_width());
-    break;
-  default:// should not run to here
-    assert(0 == "wrong operation type");
-  }
-  return width;
-}
-
-void netlist::Operation::set_width(const unsigned int& w) {
-  if(width == w) return;
-  
-  // only set a new width when it is possible to reduce the width
-  switch(otype) {
-  case oNum:
-  case oVar:
-  case oCon:
-    if(data->get_width() > w)
-      data->set_width(w);
-    break;
-  case oUPos:
-  case oUNeg:
-  case oURev:
-    if(child[0]->get_width() > w)
-      child[0]->set_width(w);
-    break;
-  case oULRev:
-  case oUAnd:
-  case oUNand:
-  case oUOr:
-  case oUNor:
-  case oUXor:
-  case oUNxor:
-    // impossible to be less than 1
-    break;
-  case oTime:
-    // no way to reduce it at this level
-    break;
-  case oAdd:
-  case oMinus:
-    if(child[0]->get_width() > w)
-      child[0]->set_width(w);
-    if(child[1]->get_width() > w)
-      child[1]->set_width(w);
-    break;
-  case oRS:
-  case oLRS:
-    if(child[0]->get_width() > w)
-      child[0]->set_width(w);
-    break;
-  case oLS:
-    if(child[1]->is_valuable()) {
-      assert(child[1]->get_num() >= 0);
-      long nw = static_cast<long>(w) - child[1]->get_num().get_value().get_ui();
-      if(nw <= 0) {             // all shifted
-        data.reset(new Number(0));
-        child.clear();
-        otype = oNum;
-        valuable = true;
-      } else if(child[0]->get_width() > static_cast<unsigned int>(nw))
-        child[0]->set_width(static_cast<unsigned int>(nw));
-    } else {
-      if(child[0]->get_width() > w)
-      child[0]->set_width(w);
-    }
-    break;
-  case oLess:
-  case oLe:
-  case oGreat:
-  case oGe:
-  case oEq:
-  case oNeq:
-    // impossible to be less than 1
-    break;
-  case oAnd:
-  case oXor:
-  case oNxor:
-  case oOr:
-  case oLAnd:
-  case oLOr:
-    if(child[0]->get_width() > w)
-      child[0]->set_width(w);
-    if(child[1]->get_width() > w)
-      child[1]->set_width(w);
-    break;
-  case oQuestion:
-    if(child[1]->get_width() > w)
-      child[1]->set_width(w);
-    if(child[2]->get_width() > w)
-      child[2]->set_width(w);
-    break;
-  default:// should not run to here
-    assert(0 == "wrong operation type");
-  }
-
-  width = w;
 }
 
 void netlist::Operation::scan_vars(std::set<string>& t_vars, std::set<string>& d_vars, std::set<string>& c_vars, bool ctl) const {
@@ -728,6 +480,76 @@ void netlist::Operation::scan_vars(std::set<string>& t_vars, std::set<string>& d
   }
 }
 
+void netlist::Operation::replace_variable(const VIdentifier& var, const Number& num) {
+  switch(otype) {
+  case oVar: {
+    if(get_var() == var) {      // found rand replace
+      otype = oNum;
+      data = shared_ptr<NetComp>(new Number(num));
+      valuable = true;
+    } else {
+      get_var().replace_variable(var, num);
+    }
+    break;
+  }
+  case oCon: {
+    get_con().replace_variable(var, num);
+    break;
+  }
+  case oNULL:
+  case oNum:
+  case oFun: break;
+  case oUPos:
+  case oUNeg:
+  case oULRev:
+  case oURev:
+  case oUAnd:
+  case oUNand:
+  case oUOr:
+  case oUNor:
+  case oUXor:
+  case oUNxor: {
+    child[0]->replace_variable(var, num);
+    break;
+  }
+  case oPower:
+  case oTime:
+  case oDiv:
+  case oMode:
+  case oAdd:
+  case oMinus:
+  case oRS:
+  case oLS:
+  case oLRS:
+  case oLess:
+  case oLe:
+  case oGreat:
+  case oGe:
+  case oEq:
+  case oNeq:
+  case oCEq:
+  case oCNeq:
+  case oAnd:
+  case oXor:
+  case oNxor:
+  case oOr:
+  case oLAnd:
+  case oLOr: {
+    child[0]->replace_variable(var, num);
+    child[1]->replace_variable(var, num);
+    break;
+  }
+  case oQuestion: {
+    child[0]->replace_variable(var, num);
+    child[1]->replace_variable(var, num);
+    child[2]->replace_variable(var, num);
+    break;    
+  }
+  default:
+    assert(0 == "wrong operation type!");
+  }
+}
+
 void netlist::Operation::reduce_Num() {
   assert(child.size() == 0);
   valuable = true;
@@ -758,7 +580,7 @@ void netlist::Operation::reduce_Var() {
 // unary +
 void netlist::Operation::reduce_UPos() {
   assert(child.size() == 1);
-  assert(child[0].use_count() != 0);
+  assert(child[0]);
   child[0]->reduce();
   *this = *(child[0]);
   return;
@@ -767,7 +589,7 @@ void netlist::Operation::reduce_UPos() {
 // unary -
 void netlist::Operation::reduce_UNeg() {
   assert(child.size() == 1);
-  assert(child[0].use_count() != 0);
+  assert(child[0]);
   child[0]->reduce();
   if(child[0]->is_valuable()) {
     data.reset(new Number(-child[0]->get_num()));
@@ -780,7 +602,7 @@ void netlist::Operation::reduce_UNeg() {
 // unary !
 void netlist::Operation::reduce_ULRev() {
   assert(child.size() == 1);
-  assert(child[0].use_count() != 0);
+  assert(child[0]);
   child[0]->reduce();
   if(child[0]->is_valuable()) {
     data.reset(new Number(!(child[0]->get_num())));
@@ -793,7 +615,7 @@ void netlist::Operation::reduce_ULRev() {
 // unary ~
 void netlist::Operation::reduce_URev() {
   assert(child.size() == 1);
-  assert(child[0].use_count() != 0);
+  assert(child[0]);
   child[0]->reduce();
   if(child[0]->is_valuable()) {
     data.reset(new Number(~(child[0]->get_num())));
@@ -806,7 +628,7 @@ void netlist::Operation::reduce_URev() {
 // unary &
 void netlist::Operation::reduce_UAnd() {
   assert(child.size() == 1);
-  assert(child[0].use_count() != 0);
+  assert(child[0]);
   child[0]->reduce();
   if(child[0]->is_valuable()) {
     data.reset(new Number(op_uand(child[0]->get_num())));
@@ -819,7 +641,7 @@ void netlist::Operation::reduce_UAnd() {
 // unary ~&
 void netlist::Operation::reduce_UNand() {
   assert(child.size() == 1);
-  assert(child[0].use_count() != 0);
+  assert(child[0]);
   child[0]->reduce();
   if(child[0]->is_valuable()) {
     data.reset(new Number(~op_uand(child[0]->get_num())));
@@ -832,7 +654,7 @@ void netlist::Operation::reduce_UNand() {
 // unary |
 void netlist::Operation::reduce_UOr() {
   assert(child.size() == 1);
-  assert(child[0].use_count() != 0);
+  assert(child[0]);
   child[0]->reduce();
   if(child[0]->is_valuable()) {
     data.reset(new Number(op_uor(child[0]->get_num())));
@@ -845,7 +667,7 @@ void netlist::Operation::reduce_UOr() {
 // unary ~|
 void netlist::Operation::reduce_UNor() {
   assert(child.size() == 1);
-  assert(child[0].use_count() != 0);
+  assert(child[0]);
   child[0]->reduce();
   if(child[0]->is_valuable()) {
     data.reset(new Number(~op_uor(child[0]->get_num())));
@@ -858,7 +680,7 @@ void netlist::Operation::reduce_UNor() {
 // unary ^
 void netlist::Operation::reduce_UXor() {
   assert(child.size() == 1);
-  assert(child[0].use_count() != 0);
+  assert(child[0]);
   child[0]->reduce();
   if(child[0]->is_valuable()) {
     data.reset(new Number(op_uxor(child[0]->get_num())));
@@ -871,7 +693,7 @@ void netlist::Operation::reduce_UXor() {
 // unary ~^
 void netlist::Operation::reduce_UNxor() {
   assert(child.size() == 1);
-  assert(child[0].use_count() != 0);
+  assert(child[0]);
   child[0]->reduce();
   if(child[0]->is_valuable()) {
     data.reset(new Number(~op_uxor(child[0]->get_num())));
@@ -884,8 +706,8 @@ void netlist::Operation::reduce_UNxor() {
 // **
 void netlist::Operation::reduce_Power() {
   assert(child.size() == 2);
-  assert(child[0].use_count() != 0);
-  assert(child[1].use_count() != 0);
+  assert(child[0]);
+  assert(child[1]);
   child[0]->reduce();
   child[1]->reduce();
   if(child[0]->is_valuable() && child[1]->is_valuable()) {
@@ -903,8 +725,8 @@ void netlist::Operation::reduce_Power() {
 // *
 void netlist::Operation::reduce_Time() {
   assert(child.size() == 2);
-  assert(child[0].use_count() != 0);
-  assert(child[1].use_count() != 0);
+  assert(child[0]);
+  assert(child[1]);
   child[0]->reduce();
   child[1]->reduce();
   if(child[0]->is_valuable() && child[1]->is_valuable()) {
@@ -918,8 +740,8 @@ void netlist::Operation::reduce_Time() {
 // /
 void netlist::Operation::reduce_Div() {
   assert(child.size() == 2);
-  assert(child[0].use_count() != 0);
-  assert(child[1].use_count() != 0);
+  assert(child[0]);
+  assert(child[1]);
   child[0]->reduce();
   child[1]->reduce();
   if(child[0]->is_valuable() && child[1]->is_valuable()) {
@@ -933,8 +755,8 @@ void netlist::Operation::reduce_Div() {
 // %
 void netlist::Operation::reduce_Mode() {
   assert(child.size() == 2);
-  assert(child[0].use_count() != 0);
-  assert(child[1].use_count() != 0);
+  assert(child[0]);
+  assert(child[1]);
   child[0]->reduce();
   child[1]->reduce();
   if(child[0]->is_valuable() && child[1]->is_valuable()) {
@@ -949,8 +771,8 @@ void netlist::Operation::reduce_Mode() {
 // +
 void netlist::Operation::reduce_Add() {
   assert(child.size() == 2);
-  assert(child[0].use_count() != 0);
-  assert(child[1].use_count() != 0);
+  assert(child[0]);
+  assert(child[1]);
   child[0]->reduce();
   child[1]->reduce();
   if(child[0]->is_valuable() && child[1]->is_valuable()) {
@@ -964,8 +786,8 @@ void netlist::Operation::reduce_Add() {
 // -
 void netlist::Operation::reduce_Minus() {
   assert(child.size() == 2);
-  assert(child[0].use_count() != 0);
-  assert(child[1].use_count() != 0);
+  assert(child[0]);
+  assert(child[1]);
   child[0]->reduce();
   child[1]->reduce();
   if(child[0]->is_valuable() && child[1]->is_valuable()) {
@@ -979,8 +801,8 @@ void netlist::Operation::reduce_Minus() {
 // >>
 void netlist::Operation::reduce_RS() {
   assert(child.size() == 2);
-  assert(child[0].use_count() != 0);
-  assert(child[1].use_count() != 0);
+  assert(child[0]);
+  assert(child[1]);
   child[0]->reduce();
   child[1]->reduce();
   if(child[0]->is_valuable() && child[1]->is_valuable()) {
@@ -994,8 +816,8 @@ void netlist::Operation::reduce_RS() {
 // <<
 void netlist::Operation::reduce_LS() {
   assert(child.size() == 2);
-  assert(child[0].use_count() != 0);
-  assert(child[1].use_count() != 0);
+  assert(child[0]);
+  assert(child[1]);
   child[0]->reduce();
   child[1]->reduce();
   if(child[0]->is_valuable() && child[1]->is_valuable()) {
@@ -1009,8 +831,8 @@ void netlist::Operation::reduce_LS() {
 // >>>
 void netlist::Operation::reduce_LRS() {
   assert(child.size() == 2);
-  assert(child[0].use_count() != 0);
-  assert(child[1].use_count() != 0);
+  assert(child[0]);
+  assert(child[1]);
   child[0]->reduce();
   child[1]->reduce();
   if(child[0]->is_valuable() && child[1]->is_valuable()) {
@@ -1024,8 +846,8 @@ void netlist::Operation::reduce_LRS() {
 // <
 void netlist::Operation::reduce_Less() {
   assert(child.size() == 2);
-  assert(child[0].use_count() != 0);
-  assert(child[1].use_count() != 0);
+  assert(child[0]);
+  assert(child[1]);
   child[0]->reduce();
   child[1]->reduce();
   if(child[0]->is_valuable() && child[1]->is_valuable()) {
@@ -1039,8 +861,8 @@ void netlist::Operation::reduce_Less() {
 // <=
 void netlist::Operation::reduce_Le() {
   assert(child.size() == 2);
-  assert(child[0].use_count() != 0);
-  assert(child[1].use_count() != 0);
+  assert(child[0]);
+  assert(child[1]);
   child[0]->reduce();
   child[1]->reduce();
   if(child[0]->is_valuable() && child[1]->is_valuable()) {
@@ -1054,8 +876,8 @@ void netlist::Operation::reduce_Le() {
 // >
 void netlist::Operation::reduce_Great() {
   assert(child.size() == 2);
-  assert(child[0].use_count() != 0);
-  assert(child[1].use_count() != 0);
+  assert(child[0]);
+  assert(child[1]);
   child[0]->reduce();
   child[1]->reduce();
   if(child[0]->is_valuable() && child[1]->is_valuable()) {
@@ -1069,8 +891,8 @@ void netlist::Operation::reduce_Great() {
 // >=
 void netlist::Operation::reduce_Ge() {
   assert(child.size() == 2);
-  assert(child[0].use_count() != 0);
-  assert(child[1].use_count() != 0);
+  assert(child[0]);
+  assert(child[1]);
   child[0]->reduce();
   child[1]->reduce();
   if(child[0]->is_valuable() && child[1]->is_valuable()) {
@@ -1084,8 +906,8 @@ void netlist::Operation::reduce_Ge() {
 // ==
 void netlist::Operation::reduce_Eq() {
   assert(child.size() == 2);
-  assert(child[0].use_count() != 0);
-  assert(child[1].use_count() != 0);
+  assert(child[0]);
+  assert(child[1]);
   child[0]->reduce();
   child[1]->reduce();
   if(child[0]->is_valuable() && child[1]->is_valuable()) {
@@ -1100,8 +922,8 @@ void netlist::Operation::reduce_Eq() {
 // !=
 void netlist::Operation::reduce_Neq() {
   assert(child.size() == 2);
-  assert(child[0].use_count() != 0);
-  assert(child[1].use_count() != 0);
+  assert(child[0]);
+  assert(child[1]);
   child[0]->reduce();
   child[1]->reduce();
   if(child[0]->is_valuable() && child[1]->is_valuable()) {
@@ -1115,8 +937,8 @@ void netlist::Operation::reduce_Neq() {
 // ===
 void netlist::Operation::reduce_CEq() {
   assert(child.size() == 2);
-  assert(child[0].use_count() != 0);
-  assert(child[1].use_count() != 0);
+  assert(child[0]);
+  assert(child[1]);
   child[0]->reduce();
   child[1]->reduce();
   if(child[0]->is_valuable() && child[1]->is_valuable()) {
@@ -1130,8 +952,8 @@ void netlist::Operation::reduce_CEq() {
 // !==
 void netlist::Operation::reduce_CNeq() {
   assert(child.size() == 2);
-  assert(child[0].use_count() != 0);
-  assert(child[1].use_count() != 0);
+  assert(child[0]);
+  assert(child[1]);
   child[0]->reduce();
   child[1]->reduce();
   if(child[0]->is_valuable() && child[1]->is_valuable()) {
@@ -1145,8 +967,8 @@ void netlist::Operation::reduce_CNeq() {
 // &
 void netlist::Operation::reduce_And() {
   assert(child.size() == 2);
-  assert(child[0].use_count() != 0);
-  assert(child[1].use_count() != 0);
+  assert(child[0]);
+  assert(child[1]);
   child[0]->reduce();
   child[1]->reduce();
   if(child[0]->is_valuable() && child[1]->is_valuable()) {
@@ -1160,8 +982,8 @@ void netlist::Operation::reduce_And() {
 // ^
 void netlist::Operation::reduce_Xor() {
   assert(child.size() == 2);
-  assert(child[0].use_count() != 0);
-  assert(child[1].use_count() != 0);
+  assert(child[0]);
+  assert(child[1]);
   child[0]->reduce();
   child[1]->reduce();
   if(child[0]->is_valuable() && child[1]->is_valuable()) {
@@ -1175,8 +997,8 @@ void netlist::Operation::reduce_Xor() {
 // ~^
 void netlist::Operation::reduce_Nxor() {
   assert(child.size() == 2);
-  assert(child[0].use_count() != 0);
-  assert(child[1].use_count() != 0);
+  assert(child[0]);
+  assert(child[1]);
   child[0]->reduce();
   child[1]->reduce();
   if(child[0]->is_valuable() && child[1]->is_valuable()) {
@@ -1190,8 +1012,8 @@ void netlist::Operation::reduce_Nxor() {
 // |
 void netlist::Operation::reduce_Or() {
   assert(child.size() == 2);
-  assert(child[0].use_count() != 0);
-  assert(child[1].use_count() != 0);
+  assert(child[0]);
+  assert(child[1]);
   child[0]->reduce();
   child[1]->reduce();
   if(child[0]->is_valuable() && child[1]->is_valuable()) {
@@ -1205,8 +1027,8 @@ void netlist::Operation::reduce_Or() {
 // &&
 void netlist::Operation::reduce_LAnd() {
   assert(child.size() == 2);
-  assert(child[0].use_count() != 0);
-  assert(child[1].use_count() != 0);
+  assert(child[0]);
+  assert(child[1]);
   child[0]->reduce();
   child[1]->reduce();
   if(child[0]->is_valuable() && child[1]->is_valuable()) {
@@ -1240,8 +1062,8 @@ void netlist::Operation::reduce_LAnd() {
 // ||
 void netlist::Operation::reduce_LOr() {
   assert(child.size() == 2);
-  assert(child[0].use_count() != 0);
-  assert(child[1].use_count() != 0);
+  assert(child[0]);
+  assert(child[1]);
   child[0]->reduce();
   child[1]->reduce();
   if(child[0]->is_valuable() && child[1]->is_valuable()) {
@@ -1275,9 +1097,9 @@ void netlist::Operation::reduce_LOr() {
 // ?:
 void netlist::Operation::reduce_Question() {
   assert(child.size() == 3);
-  assert(child[0].use_count() != 0);
-  assert(child[1].use_count() != 0);
-  assert(child[2].use_count() != 0);
+  assert(child[0]);
+  assert(child[1]);
+  assert(child[2]);
   child[0]->reduce();
   child[1]->reduce();
   child[2]->reduce();

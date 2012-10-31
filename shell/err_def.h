@@ -96,6 +96,26 @@ ERR_DEFINE("ELAB-EXPRESSION-3",
            EError,   1,
            "\"%1%\" is not supported yet. Variable division/modulate operation is not synthesisable.");
 
+ERR_DEFINE("ELAB-FOR-0",
+           EError,   0,
+           "for statement must have a initial assignment.");
+
+ERR_DEFINE("ELAB-FOR-1",
+           EError,   1,
+           "cannot evaluate the initial assignment \"%1%\" of the for statement");
+
+ERR_DEFINE("ELAB-FOR-2",
+           EError,   1,
+           "cannot handle multiple variable initial assignment \"%1%\" of the for statement");
+
+ERR_DEFINE("ELAB-FOR-3",
+           EError,   1,
+           "cannot evaluate the condition \"%1%\" of the for statement");
+
+ERR_DEFINE("ELAB-FOR-4",
+           EError,   1,
+           "cannot evaluate the increment assignment \"%1%\" of the for statement");
+
 ERR_DEFINE("ELAB-IF-0", 
            EError,   0, 
            "illegal place for an if statement.");
@@ -154,6 +174,11 @@ ERR_DEFINE("ELAB-VAR-3",
 ERR_DEFINE("ELAB-VAR-4",
            EError,   2,
            "variable \"%1%\" is out of the range definition of \"%2%\".");
+
+// wire/reg has no driver
+ERR_DEFINE("ELAB-VAR-5",
+           EError,   1,
+           "variable \"%1%\" has an illegal range definition.");
 
 ERR_DEFINE("SDFG-ANALYSE-0", 
            EInfo,   1, 
@@ -249,6 +274,10 @@ ERR_DEFINE("SYN-MODULE-1",
 ERR_DEFINE("SYN-MODULE-2", 
            EError,   1, 
            "module \"%1%\" is a black-box.");
+
+ERR_DEFINE("SYN-MODULE-3", 
+           EInfo,   2, 
+           "module \"%1%\" is added to library \"%2%\".");
 
 ERR_DEFINE("SYN-NUM-0",    
            EError,   1, 

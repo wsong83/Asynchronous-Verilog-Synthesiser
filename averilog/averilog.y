@@ -64,9 +64,9 @@
   
   yyscan_t avscanner;
 
-  void averilog::av_parser::error (const location_type&, const string&) {
-    //av_env.error(loc, "PARSER-0");
-    //cout << msg << endl;
+  void averilog::av_parser::error (const location_type& loc, const string& msg) {
+    av_env.error(loc, "PARSER-0");
+    cout << msg << endl;
   }
   
 #define Lib (*(av_env.curLib))
@@ -280,7 +280,6 @@
 %type <tListInst>       module_instantiation
 %type <tListInst>       n_input_gate_instances
 %type <tListInst>       n_output_gate_instances
-%type <tListPort>       list_of_port_identifiers
 %type <tListParaAssign> list_of_parameter_assignments 
 %type <tListParaAssign> named_parameter_assignments
 %type <tListParaAssign> ordered_parameter_assignments
@@ -290,6 +289,7 @@
 %type <tListPortConn>   ordered_port_connections
 %type <tListPortConn>   output_terminals
 %type <tListPortDecl>   input_declaration
+%type <tListPortDecl>   list_of_port_identifiers
 %type <tListPortDecl>   output_declaration
 %type <tListVar>        list_of_variable_identifiers
 %type <tListVarDecl>    list_of_variable_declarations
@@ -337,12 +337,14 @@ module_declaration
     {
       shared_ptr<Module> m(new Module(@$, $2, $4));
       if(!Lib.insert(m)) av_env.error(@$, "SYN-MODULE-0", $2.name); 
+      av_env.error("SYN-MODULE-3", m->name.name, Lib.name);
       //cout<< *m;
     }
     | "module" module_identifier '(' list_of_port_identifiers ')' ';' module_items "endmodule"
     { 
       shared_ptr<Module> m(new Module(@$, $2, $4, $7));
       if(!Lib.insert(m)) av_env.error(@$, "SYN-MODULE-0", $2.name); 
+      av_env.error("SYN-MODULE-3", m->name.name, Lib.name);
       //cout<< *m;
     }
     | "module" module_identifier '#' '(' parameter_declaration ')' '(' list_of_port_identifiers ')' ';'
@@ -350,6 +352,7 @@ module_declaration
     {
       shared_ptr<Module> m(new Module(@$, $2, $5, $8, $11));
       if(!Lib.insert(m)) av_env.error(@$, "SYN-MODULE-0", $2.name); 
+      av_env.error("SYN-MODULE-3", m->name.name, Lib.name);
       //cout<< *m;
     }
     ;
@@ -387,21 +390,28 @@ parameter_declaration
 input_declaration 
     : "input" list_of_port_identifiers
     {
-      BOOST_FOREACH(const VIdentifier& it, $2) {
-        shared_ptr<Port> cp(new Port(it.loc, it));
-        cp->set_in();
-        $$.push_back(cp);
+      bool undired = true;
+      BOOST_FOREACH(shared_ptr<Port> it, $2) {
+        if(undired && it->get_dir() == -2) {
+          it->set_in();
+        } else {
+          undired = false;
+        }
+        $$.push_back(it);
       }
     }
     | "input" '[' expression ':' expression ']' list_of_port_identifiers
     {      
-      
-      BOOST_FOREACH(const VIdentifier& it, $7) {
-        shared_ptr<Port> cp( new Port(it.loc, it));
-        cp->set_in();
-        pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
-        cp->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@2+@6, m)));
-        $$.push_back(cp);
+      bool undired = true;
+      BOOST_FOREACH(shared_ptr<Port> it, $7) {
+        if(undired && it->get_dir() == -2) {
+          it->set_in();
+          pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
+          it->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@2+@6, m)));
+        } else {
+          undired = false;
+        }
+        $$.push_back(it);
       }
     }  
     ;
@@ -409,20 +419,56 @@ input_declaration
 output_declaration 
     : "output" list_of_port_identifiers
     {
-      BOOST_FOREACH(const VIdentifier& it, $2) {
-        shared_ptr<Port> cp( new Port(it.loc, it));
-        cp->set_out();
-        $$.push_back(cp);
+      bool undired = true;
+      BOOST_FOREACH(shared_ptr<Port> it, $2) {
+        if(undired && it->get_dir() == -2) {
+          it->set_out();
+        } else {
+          undired = false;
+        }
+        $$.push_back(it);
       }
     }
     | "output" '[' expression ':' expression ']' list_of_port_identifiers
     {
-      BOOST_FOREACH(const VIdentifier& it, $7) {
-        shared_ptr<Port> cp( new Port(it.loc, it));
-        cp->set_out();
-        pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
-        cp->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@2+@6,m)));
-        $$.push_back(cp);
+      bool undired = true;
+      BOOST_FOREACH(shared_ptr<Port> it, $7) {
+        if(undired && it->get_dir() == -2) {
+          it->set_out();
+          pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
+          it->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@2+@6,m)));
+        } else {
+          undired = false;
+        }
+        $$.push_back(it);
+      }
+    }  
+    | "output" "reg" list_of_port_identifiers
+    {
+      bool undired = true;
+      BOOST_FOREACH(shared_ptr<Port> it, $3) {
+        if(undired && it->get_dir() == -2) {
+          it->set_out();
+          it->ptype = 1;          /* reg */
+        } else {
+          undired = false;
+        }
+        $$.push_back(it);
+      }
+    }
+    | "output" "reg" '[' expression ':' expression ']' list_of_port_identifiers
+    {
+      bool undired = true;
+      BOOST_FOREACH(shared_ptr<Port> it, $8) {
+        if(undired && it->get_dir() == -2) {
+          it->set_out();
+          it->ptype = 1;          /* reg */
+          pair<shared_ptr<Expression>, shared_ptr<Expression> > m($4, $6);
+          it->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@3+@7,m)));
+        } else {
+          undired = false;
+        }
+        $$.push_back(it);
       }
     }  
     ;
@@ -517,9 +563,29 @@ list_of_param_assignments
     ;
 
 list_of_port_identifiers 
-    : port_identifier                              { $$.push_back($1); }
-    | list_of_port_identifiers ',' port_identifier { $$.push_back($3); }
+    : port_identifier
+    { 
+      $$.push_back(shared_ptr<Port>(new Port($1.loc, $1))); 
+    }
+    | input_declaration
+    { $$ = $1; }
+    | output_declaration
+    { $$ = $1; }
+    | list_of_port_identifiers ',' port_identifier 
+    { 
+      $$.push_back(shared_ptr<Port>(new Port($3.loc, $3))); 
+    }
+    | list_of_port_identifiers ',' input_declaration
+    { 
+      $$.insert($$.end(), $3.begin(), $3.end()); 
+    }
+    | list_of_port_identifiers ',' output_declaration
+    { 
+      $$.insert($$.end(), $3.begin(), $3.end()); 
+    }
+    | error
     ;
+
 
 list_of_variable_identifiers 
     : variable_identifier
@@ -824,8 +890,41 @@ list_of_net_assignments
 
 //A.6.2 Procedural blocks and assignments
 always_construct 
-    : "always" '@' '(' event_expressions ')' statement_or_null   { $$.reset(new SeqBlock(@$, $4, $6)); } 
-    | "always" statement                                         { $$.reset(new SeqBlock(@$, *$2));    }
+    : "always" '@' '(' '*' ')' statement
+    { 
+      $$.reset(new SeqBlock(@$, *$6));
+      std::set<string> targets, csrc;
+      $$->scan_vars(targets, csrc, csrc, false);
+      bool sensitive = false;
+      BOOST_FOREACH(const string& v, csrc) {
+        if(!$$->db_var.count(VIdentifier(v))) {
+          $$->slist_level.push_back(shared_ptr<Expression>(new Expression(VIdentifier(v))));
+          sensitive = true;
+        }
+      }
+      $$->sensitive = sensitive;
+    }
+    | "always" '@' '(' event_expressions ')' statement_or_null
+    { 
+      $$.reset(new SeqBlock(@$, $4, $6)); 
+    }
+    | "always" '@' '*' statement 
+    { 
+      $$.reset(new SeqBlock(@$, *$4)); 
+      std::set<string> targets, csrc;
+      $$->scan_vars(targets, csrc, csrc, false);
+      bool sensitive = false;
+      BOOST_FOREACH(const string& v, csrc) {
+        if(!$$->db_var.count(VIdentifier(v))) {
+          $$->slist_level.push_back(shared_ptr<Expression>(new Expression(VIdentifier(v))));
+        }
+      }
+      $$->sensitive = sensitive;
+    }
+    | "always" statement
+    { 
+      $$.reset(new SeqBlock(@$, *$2));
+    }
     ;
 
 blocking_assignment 
@@ -869,7 +968,6 @@ statement
     | "begin" list_of_variable_declarations statements "end" 
     { 
       $$.reset(new Block(@$));
-      $$->set_blocked();
       $$->add_list<Variable>($2);
       $$->add_statements($3);
       $$->elab_inparse();

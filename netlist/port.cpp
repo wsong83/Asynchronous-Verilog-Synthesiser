@@ -36,15 +36,17 @@ using std::string;
 using boost::shared_ptr;
 using shell::location;
 using std::vector;
+using std::map;
+using std::list;
 
 netlist::Port::Port(const VIdentifier& pid)
-  : NetComp(tPort), name(pid), dir(0) {}
+  : NetComp(tPort), name(*(pid.deep_copy())), ptype(0), dir(-2) {}
 
 netlist::Port::Port(const location& lloc, const VIdentifier& pid)
-  : NetComp(tPort, lloc), name(pid), dir(0) {}
+  : NetComp(tPort, lloc), name(*(pid.deep_copy())), ptype(0), dir(-2) {}
 
 netlist::Port::Port(const location& lloc)
-  : NetComp(tPort, lloc), dir(0) {}
+  : NetComp(tPort, lloc), ptype(0), dir(-2) {}
 
 void netlist::Port::set_father(Block *pf) {
   if(father == pf) return;
@@ -52,12 +54,18 @@ void netlist::Port::set_father(Block *pf) {
   name.set_father(pf);
 }
 
-bool netlist::Port::check_inparse() {
-  shared_ptr<Variable> m = father->gfind_var(VIdentifier(name.name));
-  if(m.use_count() == 0) {      // port without wire/reg definition
-    G_ENV->error(loc, "SYN-PORT-2", name.name);
-    father->db_var.insert(VIdentifier(name.name), shared_ptr<Variable>( new Variable(*this)));
-  }
+void netlist::Port::db_register(int) {
+  if(dir <= 0) name.db_register(0);
+  if(dir >= 0) name.db_register(1);
+}
+
+void netlist::Port::db_expunge() {
+  name.db_expunge();
+}
+
+bool netlist::Port::elaborate(std::set<shared_ptr<NetComp> >&,
+                              map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > >&) {
+  name.reduce();
   return true;
 }
 
@@ -67,6 +75,7 @@ Port* netlist::Port::deep_copy() const {
   rv->name = *mname;
   delete mname;
   rv->dir = dir;
+  rv->ptype = ptype;
   return rv;
 }      
 
@@ -87,10 +96,4 @@ ostream& netlist::Port::streamout(ostream& os, unsigned int indent) const {
 
   return os;
 
-}
-
-bool netlist::Port::elaborate(elab_result_t &result, ctype_t, const vector<NetComp *>&) {
-  result = ELAB_Normal;
-  name.set_pcomp(this);
-  return name.elaborate(result, tPort);
 }

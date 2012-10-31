@@ -43,21 +43,17 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
-    NETLIST_CHECK_INPARSE_DECL;
     virtual LConcatenation* deep_copy() const;
-    virtual void db_register(int iod = 0);
-    virtual void db_expunge();
-    NETLIST_ELABORATE_DECL;
-    NETLIST_SET_ALWAYS_POINTER_DECL;
-    NETLIST_SET_WIDTH_DECL;
-    NETLIST_GET_WIDTH_DECL;
+    NETLIST_DB_DECL;
     NETLIST_SCAN_VARS;
+    NETLIST_REPLACE_VARIABLE;
 
     // helpers
     bool is_valid() const { return valid; }
     unsigned int size() const { return data.size(); }
     VIdentifier& front() { return data.front(); }
     const VIdentifier& front() const { return data.front(); }
+    void reduce();
 
     // data
     std::list<VIdentifier> data; /* store the list of variable identifiers, wires or registers */

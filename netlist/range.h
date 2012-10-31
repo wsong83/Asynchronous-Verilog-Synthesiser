@@ -39,7 +39,7 @@ namespace netlist {
   class Range : public NetComp , public RangeArrayCommon{
   public:
     // constructors
-    Range() : NetComp(tRange), dim(false), rtype(TR_Err) { }
+    Range();
     Range(const mpz_class&);	/* select by a fix number */
     Range(const shell::location&, const mpz_class&);	/* select by a fix number */
     Range(const Number&, const Number&);	/* select by a fix number */
@@ -65,6 +65,7 @@ namespace netlist {
     std::pair<long, long> get_plain_range() const;
     Range const_copy(bool tree = false, const Range& maxRange = Range()) const; // copy the const content
     Range& const_reduce(const Range& maxRange = Range());   // symbolic reduce
+    void reduce(bool);                                      // reduce expressions or variables
     Range op_and(const Range&) const;           /* helper for operator & */
     Range op_and_tree(const Range&) const;      /* & calculation in tree structure */
     Range op_or(const Range&) const;            /* helper for operator | */
@@ -81,16 +82,14 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
-    NETLIST_CHECK_INPARSE_DECL;
     virtual Range* deep_copy() const;
-    virtual void db_register(int iod = 1);
-    virtual void db_expunge();
-    NETLIST_ELABORATE_DECL;
+    NETLIST_DB_DECL;
     unsigned int get_width() const;   // only the range
     unsigned int get_width(const Range&) const; // considering child
     unsigned int get_width(const Range&); // considering child
     void set_width(const unsigned int&, const Range&);
     NETLIST_SCAN_VARS;
+    NETLIST_REPLACE_VARIABLE;
 
   private:
     Number c;                          /* constant */

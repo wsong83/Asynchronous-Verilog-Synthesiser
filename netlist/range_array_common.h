@@ -34,8 +34,8 @@ namespace netlist {
 
   class RangeArrayCommon {
   public:
-    RangeArrayCommon() {}
-    RangeArrayCommon(const std::list<boost::shared_ptr<Range> >& rhs) : child(rhs) {}
+    RangeArrayCommon();
+    RangeArrayCommon(const std::list<boost::shared_ptr<Range> >&);
 
     // helpers
     bool is_valuable() const;
@@ -63,23 +63,24 @@ namespace netlist {
     // the symbolic reduce function used to range list
     std::list<boost::shared_ptr<Range> > const_reduce(std::list<boost::shared_ptr<Range> >&,
                                                       const Range& maxRange) const;
+    // try to reduce expressions and variables
+    void reduce(bool);
     // add another level of dimension as the top level
     void add_low_dimension(const boost::shared_ptr<Range>&);
 
     // inherit from NetComp, actually not
     NETLIST_SET_FATHER_DECL;
-    NETLIST_CHECK_INPARSE_DECL;
     std::list<boost::shared_ptr<Range> > deep_copy() const;
-    void db_register(int iod = 1);
-    void db_expunge();
-    virtual bool elaborate(NetComp::elab_result_t &, const NetComp::ctype_t mctype, const std::vector<NetComp *>& fp);
+    NETLIST_DB_DECL;
     unsigned int get_width(const Range&) const; // considering child
     unsigned int get_width(const Range&); // considering child
     void set_width(const unsigned int&, const Range&);
     void scan_vars(std::set<std::string>&, std::set<std::string>& dsrc, std::set<std::string>& csrc, bool ctl) const;
+    void replace_variable(const VIdentifier&, const Number&);
     
   protected:
     std::list<boost::shared_ptr<Range> > child; // the range expressions of the lower dimension
+    unsigned int width;
 
   private:
     // re-order a list of range expressions

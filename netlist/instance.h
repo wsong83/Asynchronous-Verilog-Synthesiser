@@ -57,15 +57,14 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
-    NETLIST_CHECK_INPARSE_DECL;
     virtual Instance* deep_copy() const;
-    virtual void db_register(int iod = 1);
-    virtual void db_expunge();
+    NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
     // used to add new module to the elaboration process
     bool elaborate(std::deque<boost::shared_ptr<Module> >&, 
                    std::map<MIdentifier, boost::shared_ptr<Module> > &);
     NETLIST_GEN_SDFG;
+    NETLIST_REPLACE_VARIABLE;
 
     // helpers
     void set_mname(const MIdentifier& mod_name) { mname = mod_name; }

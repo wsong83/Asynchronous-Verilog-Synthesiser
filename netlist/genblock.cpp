@@ -43,6 +43,9 @@ using std::pair;
 using shell::location;
 using std::for_each;
 
+netlist::GenBlock::GenBlock() 
+  : Block(tGenBlock) {}
+
 netlist::GenBlock::GenBlock(const Block& body)
   : Block(body)
 {
@@ -80,134 +83,6 @@ ostream& netlist::GenBlock::streamout(ostream& os, unsigned int indent, bool fl_
   return os;
 }
 
-void netlist::GenBlock::elab_inparse() {
-  
-  list<shared_ptr<NetComp> >::iterator it, end;
-  for(it=statements.begin(), end=statements.end(); it!=end; it++) {
-    if(elab_inparse_item(*it)) {
-      // the item should be removed
-      it = statements.erase(it);
-      it--;
-      end = statements.end();
-    }
-  }
-  
-  blocked = true;               // generate block is always blocked
-
-  // set the father pointers
-  set_father();
-}
-
-bool netlist::GenBlock::elab_inparse_item( const shared_ptr<NetComp>& it) {
-  // return true when this item should be removed from the statement list
-  
-  switch(it->get_type()) {
-  case tAssign: {
-    SP_CAST(m, Assign, it);
-    m->set_name(new_BId());
-    db_other.insert(m->name, m);
-    return false;
-  }
-  case tGenBlock:
-  case tSeqBlock: {
-    SP_CAST(m, Block, it);
-    if(!m->is_named()) {
-      m->set_default_name(new_BId());
-      db_other.insert(m->name, m);
-    } else {
-      shared_ptr<NetComp> item = find_item(m->name);
-      if(item.use_count() != 0) { // name conflicts
-        if((item->get_type() == tBlock || 
-            item->get_type() == tSeqBlock || 
-            item->get_type() == tGenBlock
-            ) && 
-           (static_pointer_cast<Block>(item))->is_named()
-           ) { // really conflict with a named block
-          G_ENV->error(m->loc, "SYN-BLOCK-0", m->name.name, toString(item->loc));
-          while(find_item(++(m->name)).use_count() != 0) {}
-          db_other.insert(m->name, m);
-        } else { // conflict with an unnamed block
-          item = db_other.swap(m->name, m);
-          elab_inparse_item(item);
-        }
-      } else {
-        db_other.insert(m->name, m);
-      }
-    }
-    return false;
-  }
-  case tCase: {
-    SP_CAST(m, CaseState, it);
-    m->set_name(new_BId());
-    db_other.insert(m->name, m);
-    return false;
-  }
-  case tFor: {
-    SP_CAST(m, ForState, it);
-    m->set_name(new_BId());
-    db_other.insert(m->name, m);
-    return false;
-  }
-  case tIf: {
-    SP_CAST(m, IfState, it);
-    m->set_name(new_BId());
-    db_other.insert(m->name, m);
-    return false;
-  }
-  case tInstance: {
-    SP_CAST(m, Instance, it);
-    if(!m->is_named()) {
-      G_ENV->error(m->loc, "SYN-INST-1");
-      m->set_default_name(new_IId());
-      db_instance.insert(m->name, m);
-    } else {
-      shared_ptr<Instance> mm = db_instance.find(m->name);
-      if(mm.use_count() != 0) {
-        if(mm->is_named()) {
-          G_ENV->error(m->loc, "SYN-INST-0", m->name.name, toString(mm->loc));
-          while(db_instance.find(++(m->name)).use_count() != 0) {}
-          db_instance.insert(m->name, m);
-        } else {                  // conflict with an unnamed instance
-          mm = db_instance.swap(m->name, m);
-          elab_inparse_item(mm);
-        }
-      } else {
-        db_instance.insert(m->name, m);
-      }
-    }                 
-    return false;
-  }
-  case tWhile: {
-    SP_CAST(m, WhileState, it);
-    m->set_name(new_BId());
-    db_other.insert(m->name, m);
-    return false;
-  }
-  case tVariable: {
-    SP_CAST(m, Variable, it);
-    shared_ptr<Variable> mm = find_var(m->name);
-    if(mm.use_count() != 0) {
-      G_ENV->error(m->loc, "SYN-VAR-1", m->name.name, toString(mm->loc));
-    } else {
-      switch(m->get_vtype()) {
-      case Variable::TWire:
-      case Variable::TReg: 
-      case Variable::TParam: {
-        db_var.insert(m->name, m);
-        break;
-      }
-      default:
-        G_ENV->error(m->loc, "SYN-VAR-0", m->name.name);
-      }
-    }
-    return true;
-  }
-  default:
-    G_ENV->error(it->loc, "SYN-MODULE-1");
-    return true;
-  }
-}
-
 GenBlock* netlist::GenBlock::deep_copy() const {
   GenBlock* rv = new GenBlock();
   rv->loc = loc;
@@ -222,7 +97,6 @@ GenBlock* netlist::GenBlock::deep_copy() const {
   rv->unnamed_block = unnamed_block;
   rv->unnamed_instance = unnamed_instance;
   rv->unnamed_var = unnamed_var;
-  rv->blocked = blocked;
 
   rv->set_father();
   rv->elab_inparse();
@@ -232,14 +106,14 @@ GenBlock* netlist::GenBlock::deep_copy() const {
 void netlist::GenBlock::db_register(int) {
   // the item in statements are duplicated in db_instance and db_other, therefore, only statements are executed
   // initialization of the variables in ablock are ignored as they are wire, reg and integers
-  for_each(db_var.begin_order(), db_var.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  for_each(db_var.begin_order(), db_var.end_order(), [](pair<const VIdentifier, shared_ptr<Variable> >& m) {
       m.second->db_register(1);
     });
   BOOST_FOREACH(shared_ptr<NetComp>& m, statements) m->db_register(1);
 }
 
 void netlist::GenBlock::db_expunge() {
-  for_each(db_var.begin_order(), db_var.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  for_each(db_var.begin_order(), db_var.end_order(), [](pair<const VIdentifier, shared_ptr<Variable> >& m) {
       m.second->db_expunge();
     });
   BOOST_FOREACH(shared_ptr<NetComp>& m, statements) m->db_expunge();

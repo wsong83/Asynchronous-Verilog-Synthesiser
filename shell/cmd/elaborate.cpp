@@ -252,7 +252,7 @@ bool shell::CMD::CMDElaborate::exec (const std::string& str, Env * pEnv){
     string param_str;
     if(!curDgn->db_param.empty()) {
       param_str = " with parameters \"";
-      list<pair<netlist::VIdentifier, shared_ptr<netlist::Variable> > >::const_iterator it, end;
+      list<pair<const netlist::VIdentifier, shared_ptr<netlist::Variable> > >::const_iterator it, end;
       it = curDgn->db_param.begin_order();
       end = curDgn->db_param.end_order();
       while(it!=end) {
