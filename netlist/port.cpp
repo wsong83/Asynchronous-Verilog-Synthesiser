@@ -36,12 +36,14 @@ using std::string;
 using boost::shared_ptr;
 using shell::location;
 using std::vector;
+using std::map;
+using std::list;
 
 netlist::Port::Port(const VIdentifier& pid)
-  : NetComp(tPort), name(pid), ptype(0), dir(-2) {}
+  : NetComp(tPort), name(*(pid.deep_copy())), ptype(0), dir(-2) {}
 
 netlist::Port::Port(const location& lloc, const VIdentifier& pid)
-  : NetComp(tPort, lloc), name(pid), ptype(0), dir(-2) {}
+  : NetComp(tPort, lloc), name(*(pid.deep_copy())), ptype(0), dir(-2) {}
 
 netlist::Port::Port(const location& lloc)
   : NetComp(tPort, lloc), ptype(0), dir(-2) {}
@@ -59,6 +61,12 @@ void netlist::Port::db_register(int) {
 
 void netlist::Port::db_expunge() {
   name.db_expunge();
+}
+
+bool netlist::Port::elaborate(std::set<shared_ptr<NetComp> >&,
+                              map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > >&) {
+  name.reduce();
+  return true;
 }
 
 Port* netlist::Port::deep_copy() const {

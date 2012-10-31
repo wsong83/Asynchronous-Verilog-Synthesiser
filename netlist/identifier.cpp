@@ -359,6 +359,7 @@ Number netlist::VIdentifier::get_value() const {
 }
 
 void netlist::VIdentifier::reduce() {
+  m_range.reduce();
   m_select.reduce();
 }
 

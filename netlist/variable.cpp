@@ -51,7 +51,7 @@ netlist::Variable::Variable(const shell::location& lloc)
   : NetComp(tVariable, lloc), uid(0) {}
 
 netlist::Variable::Variable(const VIdentifier& id, vtype_t mtype)
-  : NetComp(tVariable), vtype(mtype), name(id), uid(0) {}
+  : NetComp(tVariable), vtype(mtype), name(*(id.deep_copy())), uid(0) {}
 
 netlist::Variable::Variable(const Port& p)
   : NetComp(tVariable, p.loc), vtype(TWire), uid(0) 
@@ -62,14 +62,14 @@ netlist::Variable::Variable(const Port& p)
 }
 
 netlist::Variable::Variable(const shell::location& lloc, const VIdentifier& id, vtype_t mtype)
-  : NetComp(tVariable, lloc), vtype(mtype), name(id), uid(0) {}
+  : NetComp(tVariable, lloc), vtype(mtype), name(*(id.deep_copy())), uid(0) {}
 
 netlist::Variable::Variable(const VIdentifier& id, const shared_ptr<Expression>& expp, vtype_t mtype)
-  : NetComp(tVariable), vtype(mtype), name(id), uid(0), exp(expp) {}
+  : NetComp(tVariable), vtype(mtype), name(*(id.deep_copy())), exp(expp), uid(0) {}
 
 netlist::Variable::Variable(const shell::location& lloc, const VIdentifier& id, 
                             const shared_ptr<Expression>& expp, vtype_t mtype)
-  : NetComp(tVariable, lloc), vtype(mtype), name(id), uid(0), exp(expp) {}
+  : NetComp(tVariable, lloc), vtype(mtype), name(*(id.deep_copy())), exp(expp), uid(0) {}
 
 void netlist::Variable::set_value(const Number& num) {
   if(exp) exp->db_expunge();
@@ -213,7 +213,8 @@ bool netlist::Variable::elaborate(std::set<shared_ptr<NetComp> >&,
     return false;  
   }
 
-  update();
+  if(vtype == TParam)
+    update();
 
   return true;
 }

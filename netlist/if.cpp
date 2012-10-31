@@ -108,12 +108,8 @@ ostream& netlist::IfState::streamout(ostream& os, unsigned int indent, bool fl_p
   ifcase->streamout(os, indent, true);
 
   if(!elsecase) return os;
-
   os << string(indent, ' ') << "else ";
-  if(!elsecase->is_blocked() && (elsecase->front()->get_type() == NetComp::tIf)) {
-    static_pointer_cast<IfState>(elsecase->front())->streamout(os, indent, true);
-  } else
-    elsecase->streamout(os, indent, true);
+  elsecase->streamout(os, indent, true, true);
   
   return os;
 

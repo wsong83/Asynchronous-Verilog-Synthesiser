@@ -73,6 +73,7 @@ namespace netlist {
     VIdentifier name;
     std::map<unsigned int, VIdentifier *> fan[2]; /* fan[0] for fanin, fan[1] for fanout */
     unsigned int get_id();
+    boost::shared_ptr<Expression> exp;
 
   private:
 
@@ -80,7 +81,6 @@ namespace netlist {
     bool driver_and_load_checker() const;
 
     unsigned int uid;
-    boost::shared_ptr<Expression> exp;
   };
 
   NETLIST_STREAMOUT(Variable);

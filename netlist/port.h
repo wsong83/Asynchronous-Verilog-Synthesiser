@@ -43,6 +43,7 @@ namespace netlist {
     NETLIST_SET_FATHER_DECL;
     virtual Port* deep_copy() const;
     NETLIST_DB_DECL;
+    NETLIST_ELABORATE_DECL;
    
     // helpers
     void set_in() { dir = -1; }

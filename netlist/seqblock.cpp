@@ -184,7 +184,6 @@ SeqBlock* netlist::SeqBlock::deep_copy() const {
   rv->unnamed_block = unnamed_block;
   rv->unnamed_instance = unnamed_instance;
   rv->unnamed_var = unnamed_var;
-  rv->blocked = blocked;
 
   // data in SeqBlock
   rv->sensitive = sensitive;

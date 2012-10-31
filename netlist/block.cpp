@@ -47,28 +47,28 @@ using shell::location;
 using std::for_each;
 
 netlist::Block::Block() 
-  : NetComp(tBlock), named(false), blocked(false) {}
+  : NetComp(tBlock), named(false) {}
 
 netlist::Block::Block(const shell::location& lloc) 
-  : NetComp(tBlock, lloc), named(false), blocked(false) {}
+  : NetComp(tBlock, lloc), named(false) {}
 
 netlist::Block::Block(ctype_t t, const BIdentifier& nm) 
-  : NetComp(t), name(nm), named(true), blocked(true) {}
+  : NetComp(t), name(nm), named(true) {}
 
 netlist::Block::Block(ctype_t t, const shell::location& lloc, const BIdentifier& nm) 
-  : NetComp(t, lloc), name(nm), named(true), blocked(true) {}
+  : NetComp(t, lloc), name(nm), named(true) {}
 
 netlist::Block::Block(const BIdentifier& nm) 
-  : NetComp(tBlock), name(nm), named(true), blocked(true) {}
+  : NetComp(tBlock), name(nm), named(true) {}
 
 netlist::Block::Block(const shell::location& lloc, const BIdentifier& nm) 
-  : NetComp(tBlock, lloc), name(nm), named(true), blocked(true) {}
+  : NetComp(tBlock, lloc), name(nm), named(true) {}
 
 netlist::Block::Block(NetComp::ctype_t t) 
-  : NetComp(t), named(false), blocked(false) {}
+  : NetComp(t), named(false) {}
 
 netlist::Block::Block(NetComp::ctype_t t, const shell::location& lloc) 
-  : NetComp(t, lloc), named(false), blocked(false) {}
+  : NetComp(t, lloc), named(false) {}
 
 bool netlist::Block::add(const shared_ptr<NetComp>& dd) {
   statements.push_back(dd);
@@ -146,7 +146,7 @@ bool netlist::Block::add_for(const location& lloc, const shared_ptr<Assign>& ini
 }
 
 bool netlist::Block::add_statements(const shared_ptr<Block>& body) {
-  if(body->is_blocked()) {
+  if(body->is_named()) {
     statements.push_back(body);
   } else {
     statements.splice(statements.end(), body->statements);
@@ -187,29 +187,25 @@ ostream& netlist::Block::streamout(ostream& os, unsigned int indent) const {
   return os;
 }
 
-ostream& netlist::Block::streamout(ostream& os, unsigned int indent, bool fl_prefix) const {
+ostream& netlist::Block::streamout(ostream& os, unsigned int indent, bool fl_prefix, bool is_else) const {
 
   if(!fl_prefix) os << string(indent, ' ');
 
   // the body part
-  if(!blocked)  {
-    if(statements.front()->get_type() == NetComp::tBlock)
-      static_pointer_cast<Block>(statements.front())->streamout(os, indent, true);
-    else {
-      os << endl;
-      statements.front()->streamout(os, indent+2);
-      if(statements.front()->get_type() == NetComp::tAssign &&
-         !(static_pointer_cast<Assign>(statements.front())->is_continuous()))
-        os << ";" << endl;
-    }
-  } else {
+  if(named || (!db_var.empty()) || (!db_instance.empty()) || (statements.size() != 1)) {
     os << "begin";
     if(named) os << ": " << name;
     os << endl;
-    
+  
     db_var.streamout(os, indent+2);
     if(db_var.size() > 0) os << endl;
+  } else if((!is_else) || (statements.front()->get_type() != tIf))
+    os << endl;
 
+
+
+  if(named || (!db_var.empty()) || (!db_instance.empty()) || (statements.size() != 1) || 
+     (!is_else) || (statements.front()->get_type() != tIf)) {
     // statements
     ctype_t mt = tUnknown;
     BOOST_FOREACH(const shared_ptr<NetComp>& it, statements) {
@@ -223,8 +219,12 @@ ostream& netlist::Block::streamout(ostream& os, unsigned int indent, bool fl_pre
          !(static_pointer_cast<Assign>(it)->is_continuous()))
         os << ";" << endl;
     }
+  } else {                      // if following an else
+    boost::static_pointer_cast<IfState>(statements.front())->streamout(os, indent, true);
+  }
+
+  if(named || (!db_var.empty()) || (!db_instance.empty()) || (statements.size() != 1))
     os << string(indent, ' ') << "end" << endl;
-  }   
   return os;
 }
 
@@ -238,6 +238,11 @@ void netlist::Block::elab_inparse() {
       if(find_var(m->name)) {
         G_ENV->error(m->loc, "SYN-VAR-1", m->name.name, toString(find_var(m->name)->loc));
       } else {
+        // check initial value
+        if((m->vtype != Variable::TParam) && m->exp) {
+          G_ENV->error(m->loc, "SYN-VAR-4", m->name.name);
+          m->exp.reset();
+        }
         db_var.insert(m->name, m);
         to_del.insert(st);
       }
@@ -296,7 +301,6 @@ Block* netlist::Block::deep_copy() const {
   rv->unnamed_block = unnamed_block;
   rv->unnamed_instance = unnamed_instance;
   rv->unnamed_var = unnamed_var;
-  rv->blocked = blocked;
   
   rv->set_father();
   rv->elab_inparse();
@@ -306,6 +310,7 @@ Block* netlist::Block::deep_copy() const {
 void netlist::Block::set_father() {
   // macros defined in database.h
   DATABASE_SET_FATHER_FUN(db_var, VIdentifier, Variable, this);
+  DATABASE_SET_FATHER_FUN(db_instance, IIdentifier, Instance, this);
   BOOST_FOREACH(shared_ptr<NetComp> st, statements) {
     st->set_father(this);
   }

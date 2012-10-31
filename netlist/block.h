@@ -118,11 +118,9 @@ namespace netlist {
     virtual void elab_inparse(); /* resolve the content in statements during parsing */
 
     // helpers
-    virtual void set_name(const BIdentifier& nm) { name = nm; named=true; blocked = true; }
+    virtual void set_name(const BIdentifier& nm) { name = nm; named=true;}
     void set_default_name(const BIdentifier& nm) { name = nm; }
-    virtual void set_blocked() { blocked = true; }
     bool is_named() const { return named; }
-    bool is_blocked() const { return blocked; }
     /* return a pointer of the top-level module */
     virtual Block* get_module() { 
       if(father != NULL) return father->get_module();
@@ -136,7 +134,7 @@ namespace netlist {
     virtual boost::shared_ptr<Variable>  find_var       (const VIdentifier&) const; /* find a variable */
     /* find a variable in the global environment, up to the module level */
     virtual boost::shared_ptr<Variable>  gfind_var      (const VIdentifier&) const; 
-    virtual std::ostream& streamout(std::ostream& os, unsigned int indent, bool fl_prefix) const;
+    virtual std::ostream& streamout(std::ostream& os, unsigned int indent, bool fl_prefix, bool is_else = false) const;
     const boost::shared_ptr<NetComp>& front() const { return statements.front(); }
     boost::shared_ptr<NetComp>& front() { return statements.front(); }
     virtual void set_father();  /* set the father pointer to all sub-elements */
@@ -166,7 +164,6 @@ namespace netlist {
     VIdentifier unnamed_var;
 
     bool named;                 /* true when named */
-    bool blocked;               /* user used begin and end for this block */
     
   };
 

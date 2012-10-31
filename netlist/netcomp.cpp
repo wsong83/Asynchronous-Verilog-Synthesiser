@@ -63,7 +63,7 @@ NetComp* netlist::NetComp::deep_copy() const { /* deep copy a netlist component 
 }
 
 void netlist::NetComp::set_father(Block* pf) {
-  if(ctype == tNumber) {
+  if((ctype == tNumber) || (ctype == tBlock)) {
     // here a naked pointer is used because tranfer this to shared_ptr is too complicated to be employed
     father = pf;
   } else {
