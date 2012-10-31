@@ -191,9 +191,10 @@ namespace SDFG {
 
     std::map<std::string, vertex_descriptor> node_map;
     std::map<unsigned int, vertex_descriptor> index_map;
+    std::map<unsigned int, edge_descriptor> edge_map;
 
-    dfgGraph() : father(NULL), node_index(0) {}
-    dfgGraph(const std::string& n) : father(NULL), name(n), node_index(0) {}
+    dfgGraph() : father(NULL) {}
+    dfgGraph(const std::string& n) : father(NULL), name(n) {}
 
     // add nodes and edges
     void add_node(boost::shared_ptr<dfgNode>);
@@ -307,9 +308,6 @@ namespace SDFG {
     // other
     std::string get_full_name() const;
 
-  private:
-    unsigned int node_index;   // when nodes are stored in listS, vertext_descriptors are no longer
-                                // integers, thereofer, separated indices must be generated and stored 
   };
 
   boost::shared_ptr<dfgGraph> read(std::istream&);
