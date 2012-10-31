@@ -126,6 +126,10 @@ RangeArray& netlist::RangeArray::const_reduce(const RangeArray& maxRange) {
   return *this;
 }
 
+void netlist::RangeArray::reduce(bool dim) {
+  RangeArrayCommon::reduce(dim);
+}
+
 RangeArray netlist::RangeArray::op_and(const RangeArray& rhs) const {
   RangeArray rv;
   rv.child = RangeArrayCommon::op_and(rhs.child);

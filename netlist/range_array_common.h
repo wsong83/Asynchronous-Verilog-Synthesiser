@@ -63,6 +63,8 @@ namespace netlist {
     // the symbolic reduce function used to range list
     std::list<boost::shared_ptr<Range> > const_reduce(std::list<boost::shared_ptr<Range> >&,
                                                       const Range& maxRange) const;
+    // try to reduce expressions and variables
+    void reduce(bool);
     // add another level of dimension as the top level
     void add_low_dimension(const boost::shared_ptr<Range>&);
 

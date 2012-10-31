@@ -156,7 +156,6 @@ ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
   }
 
   // instances
-  os << db_instance.size() << endl;
   if(db_instance.size() > 0) {
     os << endl;
     db_instance.streamout(os, indent+2);
@@ -385,7 +384,7 @@ bool netlist::Module::elaborate(std::deque<shared_ptr<Module> >& mfifo,
   BOOST_FOREACH(const VIdentifier& m, var_to_be_removed) 
     db_param.erase(m);
   
-  //if(!db_param.empty()) std::cout << *this << endl;
+  if(!db_param.empty()) std::cout << *this << endl;
   assert(db_param.empty());
 
   // add called modules (instances) to the module queue in cmd/elaborate

@@ -359,8 +359,7 @@ Number netlist::VIdentifier::get_value() const {
 }
 
 void netlist::VIdentifier::reduce() {
-  m_range.const_reduce(RangeArray());
-  m_select.const_reduce(RangeArray());
+  m_select.reduce();
 }
 
 void netlist::VIdentifier::set_father(Block *pf) {

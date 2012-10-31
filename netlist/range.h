@@ -65,6 +65,7 @@ namespace netlist {
     std::pair<long, long> get_plain_range() const;
     Range const_copy(bool tree = false, const Range& maxRange = Range()) const; // copy the const content
     Range& const_reduce(const Range& maxRange = Range());   // symbolic reduce
+    void reduce(bool);                                      // reduce expressions or variables
     Range op_and(const Range&) const;           /* helper for operator & */
     Range op_and_tree(const Range&) const;      /* & calculation in tree structure */
     Range op_or(const Range&) const;            /* helper for operator | */

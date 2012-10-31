@@ -578,6 +578,49 @@ Range& netlist::Range::const_reduce(const Range& maxRange) {
   return *this;
 }
 
+void netlist::Range::reduce(bool dim) {
+  switch(rtype) {
+  case TR_Range: {
+    r.first->reduce();
+    r.second->reduce();
+    if(r.first->is_valuable() && r.second->is_valuable()) {
+      Number h = r.first->get_value();
+      Number l = r.second->get_value();
+      if(!dim && h == l) {
+        rtype = TR_Const;
+        c = h;
+      } else if(h <= l) {
+        rtype = TR_CRange;
+        cr.first = l;
+        cr.second = h;
+      } else {
+        rtype = TR_CRange;
+        cr.first = h;
+        cr.second = l;
+      }
+    }
+    break;
+  }
+  case TR_Var: {
+    v->reduce();
+    if(v->is_valuable()) {
+      rtype = TR_Const;
+      c = v->get_value();
+    }
+    break;
+  }
+  case TR_Const:
+  case TR_CRange:
+    break;
+  default:
+    child.clear();
+  }
+
+  if(child.size()) {          // non-leaf
+    RangeArrayCommon::reduce(dim);
+  }
+}
+
 ostream& netlist::Range::streamout(ostream& os, unsigned int indent, const string& prefix, bool decl, bool dim_or_range) const {
   std::ostringstream sos;
   sos << string(indent, ' ') << prefix;

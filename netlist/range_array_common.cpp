@@ -153,6 +153,11 @@ void netlist::RangeArrayCommon::const_reduce(const Range& maxRange) {
   child = const_reduce(child, maxRange);
 }
 
+void netlist::RangeArrayCommon::reduce(bool dim) {
+  BOOST_FOREACH(shared_ptr<Range> r, child)
+    r->reduce(dim);
+}
+
 void netlist::RangeArrayCommon::add_low_dimension(const shared_ptr<Range>& rhs) {
   if(child.empty()) child.push_back(rhs);
   else {

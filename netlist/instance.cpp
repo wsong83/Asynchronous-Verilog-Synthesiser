@@ -206,7 +206,7 @@ ostream& netlist::Instance::streamout(ostream& os, unsigned int indent) const {
       else
         break;
     }
-    os << ");" << endl;
+    os << ");" << endl <<endl;
   }
   return os;
 }

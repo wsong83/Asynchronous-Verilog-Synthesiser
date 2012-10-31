@@ -201,7 +201,7 @@ void netlist::Variable::db_expunge() {
 
 bool netlist::Variable::elaborate(std::set<shared_ptr<NetComp> >&,
                                   map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > >&) {
-  name.get_range().const_reduce(RangeArray());
+  name.get_range().reduce(true);
 
   if(!name.get_range().is_valuable()) {
     G_ENV->error(loc, "ELAB-RANGE-0", name.name);

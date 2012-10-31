@@ -56,6 +56,8 @@ namespace netlist {
     RangeArray deep_object_copy() const;
     // reduce a variable range array to a symbolic one
     RangeArray& const_reduce(const RangeArray& mxRange);
+    // try to reduce expressions and variables
+    void reduce(bool dim = false);
     // return the shared area of two range arrays
     RangeArray op_and(const RangeArray&) const;
     // return the combined area of two range arrays
