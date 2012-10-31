@@ -119,14 +119,9 @@ namespace netlist {
     
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
-    NETLIST_CHECK_INPARSE_DECL;
     NETLIST_STREAMOUT_DECL;
     virtual Operation* deep_copy() const; 
-    virtual void db_register(int iod = 1);
-    virtual void db_expunge();
-    NETLIST_ELABORATE_DECL;
-    NETLIST_SET_WIDTH_DECL;
-    NETLIST_GET_WIDTH_DECL;
+    NETLIST_DB_DECL;
     NETLIST_SCAN_VARS;
     NETLIST_REPLACE_VARIABLE;
 

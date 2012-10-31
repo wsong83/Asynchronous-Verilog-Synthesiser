@@ -32,19 +32,24 @@
 using namespace netlist;
 using std::ostream;
 using std::string;
+using std::list;
 using std::vector;
 using std::pair;
 using std::for_each;
 using boost::shared_ptr;
 using shell::location;
 
+netlist::RangeArray::RangeArray() : NetComp(tRangeArray), const_reduced(false){}
+
+netlist::RangeArray::RangeArray(const list<shared_ptr<Range> >& rhs) 
+  : NetComp(tRangeArray), RangeArrayCommon(rhs), const_reduced(false){ }
+
 bool netlist::RangeArray::is_valuable() {
   // if once const reduced, it must be valuable
   if(const_reduced || child.empty() ) return true;
   
   // otherwise check it
-  bool rv = true;
-  rv = RangeArrayCommon::is_valuable();
+  bool rv = RangeArrayCommon::is_valuable();
 
   if(rv) const_reduced = true;
   return rv;
@@ -121,6 +126,10 @@ RangeArray& netlist::RangeArray::const_reduce(const RangeArray& maxRange) {
   return *this;
 }
 
+void netlist::RangeArray::reduce(bool dim) {
+  RangeArrayCommon::reduce(dim);
+}
+
 RangeArray netlist::RangeArray::op_and(const RangeArray& rhs) const {
   RangeArray rv;
   rv.child = RangeArrayCommon::op_and(rhs.child);
@@ -189,10 +198,6 @@ ostream& RangeArray::streamout (ostream& os, unsigned int indent) const {
   return RangeArrayCommon::streamout(os, indent, "");
 }
 
-bool netlist::RangeArray::check_inparse() {
-  return RangeArrayCommon::check_inparse();
-}
-
 RangeArray* netlist::RangeArray::deep_copy() const {
   RangeArray* rv = new RangeArray();
   for_each(child.begin(), child.end(), [&](const shared_ptr<Range>& m) {
@@ -209,10 +214,6 @@ void netlist::RangeArray::db_register(int iod) {
 
 void netlist::RangeArray::db_expunge() {
   RangeArrayCommon::db_expunge();
-}
-
-bool netlist::RangeArray::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
-  return RangeArrayCommon::elaborate(result, mctype, fp);
 }
 
 unsigned int netlist::RangeArray::get_width(const RangeArray& r) const {

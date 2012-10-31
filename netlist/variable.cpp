@@ -36,6 +36,7 @@ using namespace netlist;
 using std::ostream;
 using std::endl;
 using std::pair;
+using std::list;
 using std::string;
 using boost::shared_ptr;
 using std::map;
@@ -43,14 +44,41 @@ using std::vector;
 using std::deque;
 
 
+netlist::Variable::Variable() 
+  : NetComp(tVariable), uid(0) {}
+
+netlist::Variable::Variable(const shell::location& lloc) 
+  : NetComp(tVariable, lloc), uid(0) {}
+
+netlist::Variable::Variable(const VIdentifier& id, vtype_t mtype)
+  : NetComp(tVariable), vtype(mtype), name(*(id.deep_copy())), uid(0) {}
+
+netlist::Variable::Variable(const Port& p)
+  : NetComp(tVariable, p.loc), vtype(TWire), uid(0) 
+{
+  VIdentifier *newName = p.name.deep_copy();
+  name = *newName;
+  delete newName;
+}
+
+netlist::Variable::Variable(const shell::location& lloc, const VIdentifier& id, vtype_t mtype)
+  : NetComp(tVariable, lloc), vtype(mtype), name(*(id.deep_copy())), uid(0) {}
+
+netlist::Variable::Variable(const VIdentifier& id, const shared_ptr<Expression>& expp, vtype_t mtype)
+  : NetComp(tVariable), vtype(mtype), name(*(id.deep_copy())), exp(expp), uid(0) {}
+
+netlist::Variable::Variable(const shell::location& lloc, const VIdentifier& id, 
+                            const shared_ptr<Expression>& expp, vtype_t mtype)
+  : NetComp(tVariable, lloc), vtype(mtype), name(*(id.deep_copy())), exp(expp), uid(0) {}
+
 void netlist::Variable::set_value(const Number& num) {
-  if(exp.use_count()!=0) exp->db_expunge();
+  if(exp) exp->db_expunge();
   exp.reset(new Expression(num));
   update();
 }
 
 void netlist::Variable::set_value(const VIdentifier& var) {
-  if(exp.use_count()!=0) exp->db_expunge();
+  if(exp) exp->db_expunge();
   VIdentifier * varp = var.deep_copy();
   exp.reset(new Expression(*varp));
   exp->db_register(1);
@@ -59,23 +87,23 @@ void netlist::Variable::set_value(const VIdentifier& var) {
 }
 
 void netlist::Variable::set_value(const shared_ptr<Expression>& mexp) {
-  if(exp.use_count()!=0) exp->db_expunge();
+  if(exp) exp->db_expunge();
   exp.reset(mexp->deep_copy());
   exp->db_register(1);
   update();
 }
 
 bool netlist::Variable::update() {
-  if(exp.use_count() == 0) return false; // no need to update
+  if(!exp) return false; // no need to update
 
   exp->reduce();
   if(!exp->is_valuable()) return false;
 
   Number m = exp->get_value();
   exp.reset(new Expression(m));
-  map<unsigned int, VIdentifier *>::iterator it, end;
-  for(it=fan[1].begin(), end=fan[1].end(); it != end; it++) {
-    it->second->set_value(m);
+  typedef pair<const unsigned int, VIdentifier *> fan_type;
+  BOOST_FOREACH(fan_type f, fan[1]) {
+    f.second->set_value(m);
   }
   return true;
 }
@@ -84,7 +112,7 @@ void netlist::Variable::set_father(Block *pf) {
   if(father == pf) return;
   father = pf;
   name.set_father(pf);
-  if(exp.use_count() != 0) exp->set_father(pf);
+  if(exp) exp->set_father(pf);
 }
 
 ostream& netlist::Variable::streamout(ostream& os, unsigned int indent) const {
@@ -100,14 +128,9 @@ ostream& netlist::Variable::streamout(ostream& os, unsigned int indent) const {
   }
   name.get_range().RangeArrayCommon::streamout(os, 0, "", true, false); // show range of declaration 
   name.get_range().RangeArrayCommon::streamout(os, 1, name.name, true, true); // show dimension of declaration
-  if(exp.use_count() != 0) { os << " = " << *exp; }
+  if(exp) { os << " = " << *exp; }
   os << ";" << endl;
   return os;
-}
-
-bool netlist::Variable::check_inparse() {
-  if(exp.use_count() != 0) return exp->check_inparse();
-  else return true;
 }
 
 unsigned int netlist::Variable::get_id() {
@@ -159,7 +182,7 @@ Variable* netlist::Variable::deep_copy() const {
   VIdentifier * newid = name.deep_copy();
   Variable *rv = new Variable(loc, *newid, vtype);
   delete newid;
-  if(exp.use_count() != 0) rv->exp.reset(exp->deep_copy());
+  if(exp) rv->exp.reset(exp->deep_copy());
 
   // every time a variable is deep copied, all fan-in and -out connections are lost and need to regenerated
  
@@ -168,97 +191,32 @@ Variable* netlist::Variable::deep_copy() const {
 
 void netlist::Variable::db_register(int) {
   name.db_register(1);
-  if(exp.use_count() != 0) exp->db_register(1);
+  if(exp) exp->db_register(1);
 }
 
 void netlist::Variable::db_expunge() {
   name.db_expunge();
-  if(exp.use_count() != 0) exp->db_expunge();
+  if(exp) exp->db_expunge();
 }
 
-bool netlist::Variable::elaborate(elab_result_t &result, const ctype_t, const vector<NetComp *>&) {
-  bool rv = true;                    // the return value
-  result = ELAB_Normal;
+bool netlist::Variable::elaborate(std::set<shared_ptr<NetComp> >&,
+                                  map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > >&) {
+  name.get_range().reduce(true);
 
-  // check type
-  if(vtype == TVar) {
-    rv = false;
-    assert(0 == "unknown variable type, which should not happen in practical cases.");
-  }
-
-  // elaborate the identifier
-  if((vtype == TWire || vtype == TReg) && exp) {
-    G_ENV->error(exp->loc, "SYN-VAR-4", name.name);
-    exp->db_expunge();
-    exp.reset();
-  }
-  rv &= name.elaborate(result, tVariable);
-  rv &= name.get_range().elaborate(result, tVariable);
-  rv &= name.get_range().is_valuable();
-  rv &= name.get_range().is_declaration();
-  assert(rv);                   // not sure why it can goes wrong so assert first
-
-  //for_each(fan[1].begin(), fan[1].end(), [](pair<const unsigned int, VIdentifier *>& m) {
-  //  std::cout << m.second << "(" << m.second << ") :" << *(m.second->father);
-  //  });
-
-  return rv;
-}
-
-bool netlist::Variable::check_post_elaborate() {
-
-  bool  rv = true;
-
-  // get the normalized max range
-  RangeArray maxRange = name.get_range().const_copy(name.get_range());
-
-  // check all fanin and fanout are not out-of-range
-  for_each(fan[0].begin(), fan[0].end(), 
-           [&](pair<const unsigned int, VIdentifier *>& m) {
-             rv &= maxRange >= 
-               m.second->get_select().const_copy(maxRange);
-             if(!rv) {
-               G_ENV->error(m.second->loc, "ELAB-VAR-4", 
-                            toString(*(m.second)), toString(name.get_range()));
-             }
-           });
-
-  for_each(fan[1].begin(), fan[1].end(), 
-           [&](pair<const unsigned int, VIdentifier *>& m) {
-             //std::cout << m.second << "(" << m.second << ") :" << *(m.second->father);
-             rv &= maxRange >= 
-               m.second->get_select().const_copy(maxRange);
-             if(!rv) {
-               G_ENV->error(m.second->loc, "ELAB-VAR-4", 
-                            toString(*(m.second)), toString(name.get_range()));
-             }
-           });
-
-  // check fan-in and fan-out
-  switch(vtype) {
-  case TWire: {
-    rv = driver_and_load_checker();
-    if(!rv) break;
-    
-    // TODO:
-    //  check whether it is a continueous assignment,
-    //  an input port or an output port of an instance.
-    
-    break;
-  }
-  case TReg: {
-    rv = driver_and_load_checker();
-    if(!rv) break;
-    // TODO:
-    //  check whether it is a blocked or non-blocked assignment in a always block.
-    break;
-  }
-  case TParam:
-  case TGenvar:
-  default: ;
+  if(!name.get_range().is_valuable()) {
+    G_ENV->error(loc, "ELAB-RANGE-0", name.name);
+    return false;
   }
   
-  return rv;
+  if(!name.get_range().is_declaration()) {
+    G_ENV->error(loc, "ELAB-VAR-5", name.name);
+    return false;  
+  }
+
+  if(vtype == TParam)
+    update();
+
+  return true;
 }
 
 // used in shell/cmd/elaborate.cpp
@@ -267,136 +225,6 @@ string netlist::Variable::get_short_string() const {
   rv += "=";
   rv += toString(*exp);
   return rv;
-}
-
-bool netlist::Variable::driver_and_load_checker() const {
-  bool rv = true; 
-  RangeArray maxRange = name.get_range().const_copy(name.get_range()); // add [0:0] is 1-bit
-
-  // checking loads
-  RangeArray rangeLoad;
-  rangeLoad.set_empty();
-  const VIdentifier * namep = &name;
-  for_each(fan[1].begin(), fan[1].end(), 
-           [&](const pair<const unsigned int, VIdentifier *>& m) {
-             if(m.second == namep) return; // do not count the name in variable as a fan-out
-             rangeLoad = rangeLoad.op_or(m.second->get_select().const_copy(maxRange));
-           });
-  rangeLoad = maxRange - rangeLoad;
-
-  if(!rangeLoad.is_empty()) {
-    std::ostringstream sos;
-    rangeLoad.RangeArrayCommon::streamout(sos, 0, name.name);
-    G_ENV->error(loc, "ELAB-VAR-2", sos.str());
-    // no laod is not serious problem, rv is not changed
-  }
-
-  map<unsigned long, pair<SeqBlock*, RangeArray> > driverMapSeq; // seq-blocks
-  map<unsigned long, pair<VIdentifier*, RangeArray> > driverMapAssign; // assigns
-  RangeArray assignRange;
-  assignRange.set_empty();
-  for_each
-    (fan[0].begin(), fan[0].end(), 
-     [&](const pair<const unsigned int, VIdentifier*>& m) {
-      if(m.second->get_alwaysp() != NULL) { // seq-blocks
-        unsigned long malwaysp = (unsigned long)(m.second->get_alwaysp());
-        driverMapSeq[malwaysp].second = driverMapSeq[malwaysp].second.op_or(m.second->get_select().const_copy(maxRange));
-        // add up the assign range
-        assignRange = assignRange.op_or(m.second->get_select().const_copy(maxRange));
-      } else {                  // assigns
-        unsigned long mvarp = (unsigned long)(m.second);
-        driverMapAssign[mvarp].second = driverMapAssign[mvarp].second.op_or(m.second->get_select().const_copy(maxRange));
-        // add up the assign range
-        assignRange = assignRange.op_or(m.second->get_select().const_copy(maxRange));
-      }
-    });
-  
-  // check no driver
-  RangeArray rangeNoDriver = maxRange - assignRange;
-  rangeLoad = rangeNoDriver & rangeLoad; // no driver but no load range
-  rangeNoDriver = rangeNoDriver - rangeLoad; // really some useful signal but no load
-  if(!rangeNoDriver.is_empty()) {
-    std::ostringstream sos;
-    rangeNoDriver.RangeArrayCommon::streamout(sos, 0, name.name);
-    G_ENV->error(loc, "ELAB-VAR-0", sos.str());
-    return false;
-  }
-  if(!rangeLoad.is_empty()) {
-    std::ostringstream sos;
-    rangeLoad.RangeArrayCommon::streamout(sos, 0, name.name);
-    G_ENV->error(loc, "ELAB-VAR-3", sos.str());
-    //return false;  // no driver but no load is not a problem
-  }
-
-  // multi-driver check
-  if(driverMapSeq.size() > 0 && driverMapAssign.size() > 0) { // both seq and assign
-    G_ENV->error(loc, "ELAB-VAR-1", name.name, 
-                 toString(driverMapSeq.begin()->second.first->loc),
-                 toString(driverMapAssign.begin()->second.first->loc)
-                 );
-    return false;
-  }
-
-  
-  if(driverMapSeq.size() > 1) { // sequential
-    map<unsigned long, pair<SeqBlock*, RangeArray> >::iterator mit, mend;
-    map<unsigned long, pair<SeqBlock*, RangeArray> >::iterator nit, nend;
-    for(mit=driverMapSeq.begin(), mend=driverMapSeq.end(); mit != mend; mit++) {
-      for(nit=driverMapSeq.begin(), nend=driverMapSeq.end(); nit != nend; nit++) {
-        if(mit->first != nit->first && // not the same sequential block
-           !mit->second.second.op_and(nit->second.second).is_empty() // have shared area
-           ) {
-          // they have shared range
-          G_ENV->error(loc, "ELAB-VAR-1", name.name, 
-                       toString(mit->second.first->loc),
-                       toString(nit->second.first->loc)
-                       );
-          return false;
-        }
-      }
-    }
-  } // if(driverMapSeq.size() > 1)
-
-  if(driverMapAssign.size() > 1) { // continuous
-    map<unsigned long, pair<VIdentifier*, RangeArray> >::iterator mit, mend;
-    map<unsigned long, pair<VIdentifier*, RangeArray> >::iterator nit, nend;
-    for(mit=driverMapAssign.begin(), mend=driverMapAssign.end(); mit != mend; mit++) {
-      for(nit=driverMapAssign.begin(), nend=driverMapAssign.end(); nit != nend; nit++) {
-        if(mit->first != nit->first && // not the same assignment
-           !mit->second.second.op_and(nit->second.second).is_empty() // have shared area
-           ) {
-          // they have shared range
-          G_ENV->error(loc, "ELAB-VAR-1", name.name, 
-                       toString(mit->second.first->loc),
-                       toString(nit->second.first->loc)
-                       );
-          return false;
-        }
-      }
-    }
-  } // if(driverMapAssign.size() > 1)
-                  
-  return rv;
-}
-
-unsigned int netlist::Variable::get_width() {
-  if(width) return width;
-  else {
-    if(!name.get_range().RangeArrayCommon::is_empty())
-      width = name.get_range().get_width(name.get_range());
-    else width = 1;
-    return width;
-  }
-}
-
-void netlist::Variable::set_width(const unsigned int& w) {
-  if(width == w) return;
-  else {
-    assert(w <= get_width());
-    assert(!name.get_range().RangeArrayCommon::is_empty());
-    name.get_range().set_width(w, name.get_range());
-    width = w;
-  }
 }
 
 void netlist::Variable::replace_variable(const VIdentifier& var, const Number& num) {

@@ -968,7 +968,6 @@ statement
     | "begin" list_of_variable_declarations statements "end" 
     { 
       $$.reset(new Block(@$));
-      $$->set_blocked();
       $$->add_list<Variable>($2);
       $$->add_statements($3);
       $$->elab_inparse();

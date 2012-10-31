@@ -460,8 +460,10 @@ void SDFG::dfgGraph::add_node(shared_ptr<dfgNode> node) {
   node_map[node->get_hier_name()] = node->id;
   node->pg = this;
   // generate and store an index
-  node->node_index = ++node_index;
-  index_map[node_index] = node->id;
+  unsigned int m_index = shash(node->get_hier_name());
+  while(index_map.count(m_index)) ++m_index;
+  node->node_index = m_index;
+  index_map[m_index] = node->id;
 }
 
 shared_ptr<dfgNode> SDFG::dfgGraph::add_node(const string& n, dfgNode::node_type_t t) {
@@ -483,6 +485,9 @@ void SDFG::dfgGraph::add_edge(shared_ptr<dfgEdge> edge, const vertex_descriptor&
   boost::tie(edge->id, added) = boost::add_edge(src, snk, bg_);
   edges[edge->id] = edge;
   edge->pg = this;
+  unsigned int m_index = shash(nodes[src]->get_hier_name() + nodes[snk]->get_hier_name());
+  while(edge_map.count(m_index)) ++m_index;
+  edge_map[m_index] = edge->id;
 }
 
 shared_ptr<dfgEdge> SDFG::dfgGraph::add_edge(const string& n, dfgEdge::edge_type_t t, const string& src, const string& snk) {
@@ -1375,20 +1380,20 @@ void SDFG::dfgGraph::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<df
   xnode.append_attribute("name") = name.c_str();
   
   // write all nodes to the graph
-  for_each(nodes.begin(), nodes.end(), 
-           [&](const pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
+  for_each(index_map.begin(), index_map.end(), 
+           [&](const pair<const unsigned int, const vertex_descriptor>& m) {
                pugi::xml_node node = xnode.append_child("node");
-               node.append_attribute("id") = m.second->node_index;
-               m.second->write(node, GList);
+               node.append_attribute("id") = nodes.find(m.second)->second->node_index;
+               nodes.find(m.second)->second->write(node, GList);
              });
            
   // write all edges to the graph
-  for_each(edges.begin(), edges.end(), 
-           [&](const pair<const edge_descriptor, shared_ptr<dfgEdge> >& m) {
+  for_each(edge_map.begin(), edge_map.end(), 
+           [&](const pair<const unsigned int, edge_descriptor>& m) {
                pugi::xml_node node = xnode.append_child("edge");
-               node.append_attribute("source") = get_source(m.first)->node_index;
-               node.append_attribute("target") = get_target(m.first)->node_index;
-               m.second->write(node);
+               node.append_attribute("source") = get_source(m.second)->node_index;
+               node.append_attribute("target") = get_target(m.second)->node_index;
+               edges.find(m.second)->second->write(node);
              });
 }
 

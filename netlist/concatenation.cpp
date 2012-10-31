@@ -39,11 +39,28 @@ using boost::shared_ptr;
 using std::list;
 using std::for_each;
 
+netlist::ConElem::ConElem() : father(NULL), width(0) {}
+
+netlist::ConElem::ConElem(const shell::location& lloc) : loc(lloc), father(NULL), width(0){}
+
+netlist::ConElem::ConElem(const shared_ptr<Expression>& expr, const list<shared_ptr<ConElem> >& elems)
+  : exp(expr), con(elems), father(NULL), width(0) {}
+
+netlist::ConElem::ConElem(const shell::location& lloc, const shared_ptr<Expression>& expr, 
+                          const list<shared_ptr<ConElem> >& elems)
+  : exp(expr), con(elems), loc(lloc), father(NULL), width(0) {}
+
+netlist::ConElem::ConElem(const shared_ptr<Expression>& expr)
+  : exp(expr), father(NULL), width(0) {}
+
+netlist::ConElem::ConElem(const shell::location& lloc, const shared_ptr<Expression>& expr)
+  : exp(expr), loc(lloc), father(NULL), width(0) {}
+
 void netlist::ConElem::reduce() {
   exp->reduce();
-  for_each(con.begin(), con.end(), [](shared_ptr<ConElem>& m) {
-      m->reduce(); 
-    });
+  BOOST_FOREACH(shared_ptr<ConElem>& m, con) {
+    m->reduce(); 
+  }
 }
 
 void netlist::ConElem::scan_vars(std::set<string>& t_vars, std::set<string>& d_vars, std::set<string>& c_vars, bool ctl) const {
@@ -88,9 +105,9 @@ ConElem* netlist::ConElem::deep_copy() const {
   ConElem* rv = new ConElem();
   rv->loc = loc;
   rv->exp = shared_ptr<Expression>(exp->deep_copy());
-  list<shared_ptr<ConElem> >::const_iterator it, end;
-  for(it=con.begin(), end=con.end(); it!=end; it++)
-    rv->con.push_back(shared_ptr<ConElem>((*it)->deep_copy()));
+  BOOST_FOREACH(shared_ptr<ConElem> ce, con) {
+    rv->con.push_back(shared_ptr<ConElem>(ce->deep_copy()));
+  }
   return rv;
 }
 
@@ -98,64 +115,23 @@ void netlist::ConElem::set_father(Block *pf) {
   if(father == pf) return;
   father = pf;
   exp->set_father(pf);
-  list<shared_ptr<ConElem> >::iterator it, end;
-  for(it=con.begin(), end=con.end(); it!=end; it++)
-    (*it)->set_father(pf);
-}
-
-bool netlist::ConElem::check_inparse() {
-  bool rv = true;
-  rv &= exp->check_inparse();
-  list<shared_ptr<ConElem> >::iterator it, end;
-  for(it=con.begin(), end=con.end(); it!=end; it++)
-    rv &= (*it)->check_inparse();
-  return rv;
+  BOOST_FOREACH(shared_ptr<ConElem> ce, con) {
+    ce->set_father(pf);
+  }
 }
 
 void netlist::ConElem::db_register(int iod) {
   exp->db_register(iod);
-  for_each(con.begin(), con.end(), [&](shared_ptr<ConElem>& m) {m->db_register(iod);});
+  BOOST_FOREACH(shared_ptr<ConElem> ce, con) {
+    ce->db_register(iod);
+  }
 }
 
 void netlist::ConElem::db_expunge() {
   exp->db_expunge();
-  for_each(con.begin(), con.end(), [](shared_ptr<ConElem>& m) {m->db_expunge();});
-}
-
-bool netlist::ConElem::elaborate(NetComp::elab_result_t &result) {
-  bool rv = true;
-  result = NetComp::ELAB_Normal;
-
-  rv &= exp->elaborate(result);
-  if(!rv) return false;
-  
-  for_each(con.begin(), con.end(), [&](shared_ptr<ConElem>& m) {
-      rv &= m->elaborate(result);
-    });
-  if(!rv) return false;
-
-  reduce();
-  
-  // check
-  if(con.size() != 0 && !exp->is_valuable()) {
-    G_ENV->error(exp->loc, "ELAB-EXPRESSION-0", toString(*exp));
-    return false;
+  BOOST_FOREACH(shared_ptr<ConElem> ce, con) {
+    ce->db_expunge();
   }
-
-  return rv;
-}
-
-unsigned int netlist::ConElem::get_width() {
-  if(width) return width;
-  assert(con.size() == 0);
-  width = exp->get_width();
-  return width;
-}
-
-void netlist::ConElem::set_width(const unsigned int& w) {
-  if(width == w) return;
-  assert(exp->get_width() > w);
-  exp->set_width(w);
 }
 
 ostream& netlist::Concatenation::streamout(ostream& os, unsigned int indent) const {
@@ -182,8 +158,9 @@ ostream& netlist::Concatenation::streamout(ostream& os, unsigned int indent) con
     
 Concatenation& netlist::Concatenation::operator+ (const shared_ptr<Concatenation>& rhs) {
   list<shared_ptr<ConElem> >::iterator it, end;
-  for(it=rhs->data.begin(), end=rhs->data.end(); it != end; it++)
-    *this + *it;
+  BOOST_FOREACH(shared_ptr<ConElem> ce, rhs->data) {
+    operator+(ce);
+  }
   return *this;
 }
 
@@ -283,31 +260,17 @@ void netlist::Concatenation::replace_variable(const VIdentifier& var, const Numb
   }
 }
 
-bool netlist::Concatenation::elaborate(elab_result_t &result, const ctype_t, const vector<NetComp *>&) {
-  bool rv = true;
-  result = ELAB_Normal;
-  for_each(data.begin(), data.end(), [&](shared_ptr<ConElem>& m){
-      rv &= m->elaborate(result);
-    });
-  if(!rv) return false;
-
-  reduce();
-  
-  return rv;
-}
-
 void netlist::Concatenation::db_register(int iod) {
-  for_each(data.begin(), data.end(), [&](shared_ptr<ConElem>& m) {m->db_register(iod);});
+  BOOST_FOREACH(shared_ptr<ConElem> d, data) d->db_register(iod);
 }
 
 void netlist::Concatenation::db_expunge() {
-  for_each(data.begin(), data.end(), [](shared_ptr<ConElem>& m) {m->db_expunge();});
+  BOOST_FOREACH(shared_ptr<ConElem> d, data) d->db_expunge();
 }
 
 Concatenation* netlist::Concatenation::deep_copy() const {
   Concatenation* rv = new Concatenation();
   rv->loc = loc;
-  rv->width = width;
   BOOST_FOREACH(const shared_ptr<ConElem>& m, data)
     rv->data.push_back(shared_ptr<ConElem>(m->deep_copy()));
   return rv;
@@ -316,44 +279,5 @@ Concatenation* netlist::Concatenation::deep_copy() const {
 void netlist::Concatenation::set_father(Block *pf) {
   if(father == pf) return;
   father = pf;
-  list<shared_ptr<ConElem> >::iterator it, end;
-  for(it=data.begin(), end=data.end(); it!=end; it++)
-    (*it)->set_father(pf);
-}
-
-bool netlist::Concatenation::check_inparse() {
-  bool rv = true;
-  list<shared_ptr<ConElem> >::iterator it, end;
-  for(it=data.begin(), end=data.end(); it!=end; it++)
-    rv &= (*it)->check_inparse();
-
-  return rv;
-}
-
-unsigned int netlist::Concatenation::get_width() {
-  if(width) return width;
-  BOOST_FOREACH(shared_ptr<ConElem>& m, data)
-    width += m->get_width();
-  return width;
-}
-
-void netlist::Concatenation::set_width(const unsigned int& w) {
-  if(width == w) return;
-  assert(w < get_width());
-  unsigned int wm = w;
-  list<shared_ptr<ConElem> >::reverse_iterator it, end;
-  for(it=data.rbegin(), end=data.rend(); it!=end; it++) {
-    if(wm >= (*it)->get_width()) 
-      wm -= (*it)->get_width();
-    else {
-      if(wm == 0) break;
-      else {
-        (*it)->set_width(wm);
-        wm = 0;
-      }
-    }
-  }
-  if(it != end) 
-    data.erase(data.begin(), it.base()); // ATTN: it is a reverse_iterator
-  width = w;
+  BOOST_FOREACH(shared_ptr<ConElem> d, data) d->set_father(pf);
 }

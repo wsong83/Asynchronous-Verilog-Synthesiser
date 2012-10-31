@@ -218,7 +218,7 @@ shared_ptr<netlist::NetComp> shell::Env::hierarchical_search(const string& m) co
   
   // the first level
   // assuming it is an item of current design
-  if(curDgn.use_count() != 0) {
+  if(curDgn) {
     rv = curDgn->search(*it);
   }
 
@@ -248,16 +248,16 @@ shared_ptr<netlist::Module> shell::Env::find_module(const netlist::MIdentifier& 
   shared_ptr<netlist::Module> rv;
   
   // first try to find it in the current library
-  if(curLib.use_count() != 0) {
+  if(curLib) {
     rv = curLib->find(key);
-    if(rv.use_count() != 0) return rv;
+    if(rv) return rv;
   }
 
   // search it in all link library
   map<string, shared_ptr<netlist::Library> >::const_iterator it, end;
   for(it=link_lib.begin(), end=link_lib.end(); it!=end; it++) {
     rv = it->second->find(key);
-    if(rv.use_count() != 0) return rv;
+    if(rv) return rv;
   }
 
   return rv;                    // return an empty pointer as failed

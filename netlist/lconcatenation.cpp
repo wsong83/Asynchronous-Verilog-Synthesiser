@@ -79,12 +79,6 @@ void netlist::LConcatenation::set_father(Block *pf) {
   BOOST_FOREACH(VIdentifier& it, data) it.set_father(pf);
 }
 
-bool netlist::LConcatenation::check_inparse() {
-  bool rv = true;
-  BOOST_FOREACH(VIdentifier& it, data) rv &= it.check_inparse();
-  return rv;
-}
-
 ostream& netlist::LConcatenation::streamout(ostream& os, unsigned int indent) const {
   assert(valid);
 
@@ -130,50 +124,6 @@ void netlist::LConcatenation::db_expunge() {
   BOOST_FOREACH(VIdentifier& m, data) m.db_expunge();
 }
 
-bool netlist::LConcatenation::elaborate(elab_result_t &result, const ctype_t, const vector<NetComp *>& fp) {
-  bool rv = true;
-  result = ELAB_Normal;
-
-  assert(valid && data.size() > 0);
-
-  BOOST_FOREACH(VIdentifier& m, data) 
-    rv &= m.elaborate(result, tLConcatenation, fp);
-
-  return rv;
-}
-
-void netlist::LConcatenation::set_always_pointer(SeqBlock *p) {
-  BOOST_FOREACH(VIdentifier& m, data) m.set_always_pointer(p);
-}
-
-unsigned int netlist::LConcatenation::get_width() {
-  if(width) return width;
-  BOOST_FOREACH(VIdentifier& m, data)
-    width += m.get_width();
-  return width;
-}
-
-void netlist::LConcatenation::set_width(const unsigned int& w) {
-  if(width == w) return;
-  assert(w < get_width());
-  unsigned int wm = w;
-  list<VIdentifier>::reverse_iterator it, end;
-  for(it=data.rbegin(), end=data.rend(); it!=end; it++) {
-    if(wm >= it->get_width()) 
-      wm -= it->get_width();
-    else {
-      if(wm == 0) break;
-      else {
-        it->set_width(wm);
-        wm = 0;
-      }
-    }
-  }
-  if(it != end) 
-    data.erase(data.begin(), it.base()); // ATTN: it is a reverse_iterator
-  width = w;
-}
-
 void netlist::LConcatenation::scan_vars(std::set<string>& target,
                                         std::set<string>&,
                                         std::set<string>& control,
@@ -187,4 +137,9 @@ void netlist::LConcatenation::replace_variable(const VIdentifier& var, const Num
   BOOST_FOREACH(VIdentifier& d, data) {
     d.replace_variable(var, num);
   }
+}
+
+void netlist::LConcatenation::reduce() {
+  BOOST_FOREACH(VIdentifier& v, data) 
+    v.reduce();
 }

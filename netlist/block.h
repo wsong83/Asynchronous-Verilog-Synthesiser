@@ -35,20 +35,14 @@ namespace netlist {
   class Block : public NetComp {
   public:
     // constructors
-    Block() : NetComp(tBlock), named(false), blocked(false) {}
-    Block(const shell::location& lloc) : NetComp(tBlock, lloc), named(false), blocked(false) {}
-    Block(ctype_t t, const BIdentifier& nm) 
-      : NetComp(t), name(nm), named(true), blocked(true) {}
-    Block(ctype_t t, const shell::location& lloc, const BIdentifier& nm) 
-      : NetComp(t, lloc), name(nm), named(true), blocked(true) {}
-    Block(const BIdentifier& nm) 
-      : NetComp(tBlock), name(nm), named(true), blocked(true) {}
-    Block(const shell::location& lloc, const BIdentifier& nm) 
-      : NetComp(tBlock, lloc), name(nm), named(true), blocked(true) {}
-    Block(NetComp::ctype_t t) 
-      : NetComp(t), named(false), blocked(false) {}
-    Block(NetComp::ctype_t t, const shell::location& lloc) 
-      : NetComp(t, lloc), named(false), blocked(false) {}
+    Block();
+    Block(const shell::location&);
+    Block(ctype_t, const BIdentifier&);
+    Block(ctype_t, const shell::location&, const BIdentifier&);
+    Block(const BIdentifier&);
+    Block(const shell::location&, const BIdentifier&);
+    Block(NetComp::ctype_t);
+    Block(NetComp::ctype_t, const shell::location&);
 
     /* add a general statement to this block */
     virtual bool add(const boost::shared_ptr<NetComp>&); 
@@ -124,11 +118,9 @@ namespace netlist {
     virtual void elab_inparse(); /* resolve the content in statements during parsing */
 
     // helpers
-    virtual void set_name(const BIdentifier& nm) { name = nm; named=true; blocked = true; }
+    virtual void set_name(const BIdentifier& nm) { name = nm; named=true;}
     void set_default_name(const BIdentifier& nm) { name = nm; }
-    virtual void set_blocked() { blocked = true; }
     bool is_named() const { return named; }
-    bool is_blocked() const { return blocked; }
     /* return a pointer of the top-level module */
     virtual Block* get_module() { 
       if(father != NULL) return father->get_module();
@@ -138,25 +130,21 @@ namespace netlist {
     BIdentifier& new_BId();     /* generate an unused block id */
     IIdentifier& new_IId();     /* generate an unused instance id*/
     VIdentifier& new_VId();     /* generate an unused variable id */
-    virtual boost::shared_ptr<NetComp>   find_item      (const BIdentifier&) const; /* find an item in db_other */
     virtual boost::shared_ptr<Instance>  find_instance  (const IIdentifier&) const; /* find an instance */
     virtual boost::shared_ptr<Variable>  find_var       (const VIdentifier&) const; /* find a variable */
     /* find a variable in the global environment, up to the module level */
     virtual boost::shared_ptr<Variable>  gfind_var      (const VIdentifier&) const; 
-    virtual std::ostream& streamout(std::ostream& os, unsigned int indent, bool fl_prefix) const;
+    virtual std::ostream& streamout(std::ostream& os, unsigned int indent, bool fl_prefix, bool is_else = false) const;
     const boost::shared_ptr<NetComp>& front() const { return statements.front(); }
     boost::shared_ptr<NetComp>& front() { return statements.front(); }
     virtual void set_father();  /* set the father pointer to all sub-elements */
     
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
-    NETLIST_CHECK_INPARSE_DECL;
     using NetComp::set_father;
     virtual Block* deep_copy() const;
-    virtual void db_register(int iod = 1);
-    virtual void db_expunge();
+    NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
-    NETLIST_SET_ALWAYS_POINTER_DECL;
     using NetComp::gen_sdfg;
     NETLIST_SCAN_VARS;
     NETLIST_GEN_SDFG;
@@ -167,7 +155,6 @@ namespace netlist {
     std::list<boost::shared_ptr<NetComp> > statements;   /* a general list to stor the statements */
     DataBase<VIdentifier, Variable, true>  db_var;       /* variables */
     DataBase<IIdentifier, Instance>        db_instance;  /* module instances */
-    DataBase<BIdentifier, NetComp>         db_other;     /* non-block statements, including assignements, if, etc. */
     
   protected:
 
@@ -177,11 +164,7 @@ namespace netlist {
     VIdentifier unnamed_var;
 
     bool named;                 /* true when named */
-    bool blocked;               /* user used begin and end for this block */
     
-    // helper in elab_inparse
-    bool elab_inparse_item (const boost::shared_ptr<NetComp>&, std::list<boost::shared_ptr<NetComp> >::iterator&);
-
   };
 
   NETLIST_STREAMOUT(Block);

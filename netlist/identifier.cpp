@@ -47,6 +47,12 @@ using shell::location;
 using std::pair;
 
 ////////////////////////////// Base class /////////////////
+netlist::Identifier::Identifier() {}
+
+netlist::Identifier::Identifier(NetComp::ctype_t ctype) : NetComp(ctype) {}
+
+netlist::Identifier::Identifier(NetComp::ctype_t ctype, const shell::location& lloc) : NetComp(ctype, lloc) {}
+
 netlist::Identifier::Identifier(ctype_t ctype, const string& nm)
   : NetComp(ctype), name(nm)
 {
@@ -128,6 +134,8 @@ BIdentifier& netlist::BIdentifier::operator++ () {
 }
 
 //////////////////////////////// Function identifier /////////////////
+netlist::FIdentifier::FIdentifier() : Identifier(NetComp::tFuncName) { }
+
 netlist::FIdentifier::FIdentifier(const string& nm)
   : Identifier(tFuncName, nm) {  }
 
@@ -136,6 +144,12 @@ netlist::FIdentifier::FIdentifier(const location& lloc, const string& nm)
 
 
 //////////////////////////////// Module identifier /////////////////
+netlist::MIdentifier::MIdentifier() 
+  : Identifier(tModuleName), numbered(false) {}
+
+netlist::MIdentifier::MIdentifier(const shell::location& lloc) 
+  : Identifier(tModuleName, lloc), numbered(false) {}
+
 netlist::MIdentifier::MIdentifier(const string& nm)
   : Identifier(tModuleName, nm), numbered(false) {  }
 
@@ -221,6 +235,12 @@ IIdentifier& netlist::IIdentifier::add_prefix(const Identifier& prefix) {
 }
 
 //////////////////////////////// port identifier /////////////////
+netlist::PoIdentifier::PoIdentifier() 
+  : Identifier(NetComp::tPortName) {}
+
+netlist::PoIdentifier::PoIdentifier(const shell::location& lloc) 
+  : Identifier(NetComp::tPortName, lloc) {}
+
 netlist::PoIdentifier::PoIdentifier(const string& nm)
   : Identifier(tPortName, nm) {  }
 
@@ -247,28 +267,28 @@ ostream& netlist::PoIdentifier::streamout(ostream& os, unsigned int indent) cons
 
 //////////////////////////////// variable identifier /////////////////
 netlist::VIdentifier::VIdentifier()
-  : Identifier(tVarName, "n_0"), numbered(true), pcomp(NULL), uid(0), alwaysp(NULL) {  }
+  : Identifier(tVarName, "n_0"), numbered(true), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const location& lloc)
-  : Identifier(tVarName, lloc, "n_0"), numbered(true), pcomp(NULL), uid(0), alwaysp(NULL) {  }
+  : Identifier(tVarName, lloc, "n_0"), numbered(true), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const string& nm)
-  : Identifier(tVarName, nm), numbered(false), pcomp(NULL), uid(0), alwaysp(NULL) {  }
+  : Identifier(tVarName, nm), numbered(false), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const location& lloc, const string& nm)
-  : Identifier(tVarName, lloc, nm), numbered(false), pcomp(NULL), uid(0), alwaysp(NULL) {  }
+  : Identifier(tVarName, lloc, nm), numbered(false), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const averilog::avID& id)
-  : Identifier(tVarName, id.name), numbered(false), pcomp(NULL), uid(0), alwaysp(NULL) { }
+  : Identifier(tVarName, id.name), numbered(false), uid(0) { }
 
 netlist::VIdentifier::VIdentifier(const location& lloc, const averilog::avID& id)
-  : Identifier(tVarName, lloc, id.name), numbered(false), pcomp(NULL), uid(0), alwaysp(NULL) { }
+  : Identifier(tVarName, lloc, id.name), numbered(false), uid(0) { }
 
 netlist::VIdentifier::VIdentifier(const string& nm, const RangeArray& rg)
-  : Identifier(tVarName, nm), m_range(rg), numbered(false), pcomp(NULL), uid(0), alwaysp(NULL) {  }
+  : Identifier(tVarName, nm), m_range(rg), numbered(false), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const location& lloc, const string& nm, const RangeArray& rg)
-  : Identifier(tVarName, lloc, nm), m_range(rg), numbered(false), pcomp(NULL), uid(0), alwaysp(NULL) {  }
+  : Identifier(tVarName, lloc, nm), m_range(rg), numbered(false), uid(0) {  }
 
 netlist::VIdentifier::~VIdentifier() {
   db_expunge();
@@ -308,7 +328,7 @@ bool netlist::VIdentifier::is_valuable() const {
 Number netlist::VIdentifier::get_value() const {
   assert(value.is_valid());
   assert(m_select.RangeArrayCommon::is_empty() || // no selector
-         (pvar.use_count() != 0 && uid != 0 && m_select.is_valuable())); // otherwise the parent variable is set
+         (pvar && uid != 0 && m_select.is_valuable())); // otherwise the parent variable is set
   
   if(m_select.RangeArrayCommon::is_empty()) return value;
 
@@ -337,33 +357,17 @@ Number netlist::VIdentifier::get_value() const {
   if(str_size == 0) return 0;
   else return Number(txt_value.substr(str_range.first, str_size));
 }
-  
+
+void netlist::VIdentifier::reduce() {
+  m_range.reduce();
+  m_select.reduce();
+}
 
 void netlist::VIdentifier::set_father(Block *pf) {
   if(father == pf) return;
   Identifier::set_father(pf);
   m_range.set_father(pf);
   m_select.set_father(pf);
-}
-
-void netlist::VIdentifier::set_always_pointer(SeqBlock* p) {
-  alwaysp = p;
-}
-
-bool netlist::VIdentifier::check_inparse() {
-  bool rv = true;
-
-  // check whether the variable is declared before use
-  if((father->gfind_var(*this)).use_count() == 0) {
-    G_ENV->error(loc, "SYN-VAR-3", name);
-    father->get_module()->db_var.insert(*this, shared_ptr<Variable>(new Variable(loc, *this, Variable::TWire)));
-    rv = false;
-  }
-  
-  rv &= m_range.check_inparse();
-  rv &= m_select.check_inparse();
-
-  return rv;
 }
 
 ostream& netlist::VIdentifier::streamout(ostream& os, unsigned int indent) const {
@@ -395,7 +399,7 @@ void netlist::VIdentifier::db_register(int iod) {
   shared_ptr<Variable> mvar;
   if(uid == 0) { // the root Variable unkown yet, need to find it out
     mvar = father->gfind_var(*this);
-    if(mvar.use_count() == 0) { // this variable is not defined yet
+    if(!mvar) { // this variable is not defined yet
       // not sure whether this is needed.
       // so assert it 
       assert(0 == "really need to define a new variable! Analyse this case...");
@@ -434,100 +438,6 @@ VIdentifier* netlist::VIdentifier::deep_copy() const {
   return rv;
 }
   
-bool netlist::VIdentifier::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
-  bool rv = true;
-  result = ELAB_Normal;
-  
-  // check the basic link info.
-  assert(uid != 0);
-  assert(pvar.use_count() != 0); // variable registered
-    
-  // depending on the type of linked component, checking range and selector
-  switch(mctype) {
-  case tUnknown :
-    assert(0 == "the linked component should not be an unkown component!");
-    rv = false;
-    break;
-  case tExp: {
-    // for an expression, no range is used
-    assert(m_range.size() == 0);
-    rv &= m_select.elaborate(result, mctype, fp);
-    if(!rv) break;
-    // check slection
-    rv &= m_select.is_selection();
-    if(!rv) {
-      G_ENV->error(loc, "ELAB-RANGE-1", toString(m_select));
-      break;
-    }
-    // check slection in range
-    rv &= pvar->name.get_range() >= m_select.const_copy(pvar->name.get_range());
-    if (!rv) {
-      G_ENV->error(loc, "ELAB-VAR-4", toString(*this), toString(pvar->name.get_range()));
-      break;
-    }
-    break;
-  }
-  case tPort: 
-  case tVariable: {
-    // for a port, range should be resolved numbers
-    assert(m_select.size() == 0);
-    rv &= m_range.elaborate(result);
-    rv &= m_range.is_valuable();
-    if(!rv) { G_ENV->error(loc, "ELAB-RANGE-0", name); }
-    break;
-  }
-  case tLConcatenation: {
-    // for a left-side concatenation, select should be resolved numbers
-    assert(m_range.size() == 0);
-    rv &= m_select.elaborate(result);
-    // check slection
-    rv &= m_select.is_selection();
-    if(!rv) {
-      G_ENV->error(loc, "ELAB-RANGE-1", toString(m_select));
-      break;
-    }
-    // check slection in range
-    rv &= pvar->name.get_range() >= m_select.const_copy(pvar->name.get_range());
-    if (!rv) {
-      G_ENV->error(loc, "ELAB-VAR-4", toString(*this), toString(pvar->name.get_range()));
-      break;
-    }
-    break;
-  }    
-  default:
-    assert(0 == "this type of component has not been processed here!");
-    rv=false;
-  }
-
-  return rv;
-}
-
-unsigned int netlist::VIdentifier::get_width() {
-  if(width) return width;
-  else {
-    assert((pvar.use_count() != 0) && (uid != 0));
-    if(m_select.RangeArrayCommon::is_empty())
-      width = pvar->get_width();
-    else if(!pvar->name.get_range().RangeArrayCommon::is_empty())
-      width = m_select.get_width(pvar->name.get_range());
-    else width = 1;
-  }
-  return width;
-}
-
-void netlist::VIdentifier::set_width(const unsigned int& w) {
-  if(width == w) return;
-  else {
-    assert(w <= get_width());
-    assert((pvar.use_count() != 0) && (uid != 0));
-    if(m_select.RangeArrayCommon::is_empty())
-      m_select = pvar->name.get_range().deep_object_copy();
-
-    m_select.set_width(w, pvar->name.get_range());
-    width = w;
-  }
-}
-
 void netlist::VIdentifier::scan_vars(std::set<string>& target,
                                      std::set<string>& dsource,
                                      std::set<string>& control,

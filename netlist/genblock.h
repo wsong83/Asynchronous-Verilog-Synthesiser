@@ -34,13 +34,12 @@ namespace netlist{
   class GenBlock : public Block {
   public:
     // constructors
-    GenBlock() : Block(tGenBlock) {}
+    GenBlock();
     GenBlock(const Block& body);
     GenBlock(const shell::location& lloc, const Block& body);
     
     // helpers
     virtual std::ostream& streamout(std::ostream&, unsigned int, bool) const;    
-    virtual void elab_inparse();        /* resolve the content during parsing */
     using Block::set_father;
 
     // inherit from NetComp
@@ -50,7 +49,6 @@ namespace netlist{
     virtual void db_expunge();
 
   private:
-    bool elab_inparse_item( const boost::shared_ptr<NetComp>&);
 
   };
   NETLIST_STREAMOUT(GenBlock);

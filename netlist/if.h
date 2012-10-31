@@ -34,31 +34,12 @@ namespace netlist {
   class IfState : public NetComp {
   public:
     // constructors
-    IfState() : NetComp(tIf), named(false) {}
-    IfState(const shell::location& lloc) : NetComp(tIf, lloc), named(false) {}
-    IfState(
-            const boost::shared_ptr<Expression>& exp, 
-            const boost::shared_ptr<Block>& m_ifcase, 
-            const boost::shared_ptr<Block>& m_elsecase
-            );
-
-    IfState(
-            const shell::location& lloc,
-            const boost::shared_ptr<Expression>& exp, 
-            const boost::shared_ptr<Block>& m_ifcase, 
-            const boost::shared_ptr<Block>& m_elsecase
-            );
-
-    IfState(
-            const boost::shared_ptr<Expression>& exp, 
-            const boost::shared_ptr<Block>& m_ifcase 
-            );
-
-    IfState(
-            const shell::location& lloc,
-            const boost::shared_ptr<Expression>& exp, 
-            const boost::shared_ptr<Block>& m_ifcase 
-            );
+    IfState();
+    IfState(const shell::location&);
+    IfState(const boost::shared_ptr<Expression>&, const boost::shared_ptr<Block>&, const boost::shared_ptr<Block>&);
+    IfState(const shell::location&, const boost::shared_ptr<Expression>&, const boost::shared_ptr<Block>&, const boost::shared_ptr<Block>&);
+    IfState(const boost::shared_ptr<Expression>&, const boost::shared_ptr<Block>&);
+    IfState(const shell::location&, const boost::shared_ptr<Expression>&, const boost::shared_ptr<Block>&);
 
     // helpers
     virtual std::ostream& streamout(std::ostream&, unsigned int, bool) const; /* the streamout with first line prefix control */
@@ -68,12 +49,9 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
-    NETLIST_CHECK_INPARSE_DECL;
     virtual IfState* deep_copy() const;
-    virtual void db_register(int iod = 1);
-    virtual void db_expunge();
+    NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
-    NETLIST_SET_ALWAYS_POINTER_DECL;
     NETLIST_SCAN_VARS;
     NETLIST_GEN_SDFG;
     NETLIST_REPLACE_VARIABLE;

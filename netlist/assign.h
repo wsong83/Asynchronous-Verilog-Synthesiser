@@ -39,19 +39,10 @@ namespace netlist {
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
-    NETLIST_CHECK_INPARSE_DECL;
     NETLIST_SET_FATHER_DECL;
     virtual Assign* deep_copy() const;
-    virtual void db_register(int) { 
-      if(lval.use_count() != 0) lval->db_register(0); 
-      if(rexp.use_count() != 0) rexp->db_register(1); 
-    }
-    virtual void db_expunge() { 
-      if(lval.use_count() != 0) lval->db_expunge(); 
-      if(rexp.use_count() != 0) rexp->db_expunge(); 
-    }
+    NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
-    NETLIST_SET_ALWAYS_POINTER_DECL;
     NETLIST_SCAN_VARS;
     NETLIST_GEN_SDFG;
     NETLIST_REPLACE_VARIABLE;

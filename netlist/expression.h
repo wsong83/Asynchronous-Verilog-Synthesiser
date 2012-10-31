@@ -34,8 +34,8 @@ namespace netlist {
   class Expression : public NetComp {
   public:
     // constructors
-    Expression() : NetComp(tExp) {}
-    Expression(const shell::location& lloc) : NetComp(tExp, lloc) {}
+    Expression();
+    Expression(const shell::location& lloc);
     Expression(const Number&);	// a number is an expression
     Expression(const shell::location& lloc, const Number&);	// a number is an expression
     Expression(const VIdentifier&); // a variable/parameter is an expression
@@ -64,13 +64,8 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
-    NETLIST_CHECK_INPARSE_DECL;
     virtual Expression* deep_copy() const;
-    virtual void db_register(int iod = 1);
-    virtual void db_expunge();
-    NETLIST_ELABORATE_DECL;
-    NETLIST_SET_WIDTH_DECL;
-    NETLIST_GET_WIDTH_DECL;
+    NETLIST_DB_DECL;
     NETLIST_SCAN_VARS;
     NETLIST_REPLACE_VARIABLE;
     

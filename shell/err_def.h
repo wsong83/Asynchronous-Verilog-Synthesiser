@@ -175,6 +175,11 @@ ERR_DEFINE("ELAB-VAR-4",
            EError,   2,
            "variable \"%1%\" is out of the range definition of \"%2%\".");
 
+// wire/reg has no driver
+ERR_DEFINE("ELAB-VAR-5",
+           EError,   1,
+           "variable \"%1%\" has an illegal range definition.");
+
 ERR_DEFINE("SDFG-ANALYSE-0", 
            EInfo,   1, 
            "a loop is detected: %1%");

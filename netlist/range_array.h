@@ -36,9 +36,8 @@ namespace netlist {
   class RangeArray : public NetComp, public RangeArrayCommon {
   public:
     // constructors
-    RangeArray() : NetComp(tRangeArray), const_reduced(false){}
-    RangeArray(const std::list<boost::shared_ptr<Range> >& rhs) 
-      : NetComp(tRangeArray), RangeArrayCommon(rhs), const_reduced(false){ } /* valuable needs to be calculated!! */
+    RangeArray();
+    RangeArray(const std::list<boost::shared_ptr<Range> >&); /* valuable needs to be calculated!! */
 
     // helpers
     bool is_empty() const { return child.size() == 1 && child.front()->is_empty(); } 
@@ -57,6 +56,8 @@ namespace netlist {
     RangeArray deep_object_copy() const;
     // reduce a variable range array to a symbolic one
     RangeArray& const_reduce(const RangeArray& mxRange);
+    // try to reduce expressions and variables
+    void reduce(bool dim = false);
     // return the shared area of two range arrays
     RangeArray op_and(const RangeArray&) const;
     // return the combined area of two range arrays
@@ -75,11 +76,8 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
-    NETLIST_CHECK_INPARSE_DECL;
     RangeArray* deep_copy() const;
-    virtual void db_register(int iod = 1);
-    virtual void db_expunge();
-    NETLIST_ELABORATE_DECL;
+    NETLIST_DB_DECL;
     unsigned int get_width(const RangeArray&) const;
     unsigned int get_width(const RangeArray&);
     void set_width(const unsigned int&, const RangeArray&);

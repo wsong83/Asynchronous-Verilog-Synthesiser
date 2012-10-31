@@ -39,6 +39,7 @@ using std::string;
 using std::vector;
 using boost::shared_ptr;
 using std::list;
+using std::map;
 using std::pair;
 using shell::location;
 using std::for_each;
@@ -170,37 +171,6 @@ void netlist::SeqBlock::set_father(Block *pf) {
     it->set_father(pf);
 }
 
-bool netlist::SeqBlock::check_inparse() {
-  bool rv = true;
-  {
-    list<pair<bool, shared_ptr<Expression> > >::iterator it, end;
-    for(it=slist_pulse.begin(), end=slist_pulse.end(); it!=end; it++)
-      rv &= it->second->check_inparse();
-  }
-
-  BOOST_FOREACH(shared_ptr<Expression>& it, slist_level)
-    rv &= it->check_inparse();
-
-  rv &= Block::check_inparse();
-
-  return rv;
-}
-
-void netlist::SeqBlock::elab_inparse() {
-  if(!(slist_pulse.empty() || slist_level.empty())) // none list is empty
-    G_ENV->error(loc, "SYN-BLOCK-1", name.name);
-
-  if(slist_pulse.empty() && slist_level.empty())
-    G_ENV->error(loc, "SYN-BLOCK-2", name.name);
-
-  // just use the elab_inparse of Block is fine for always blocks
-  Block::elab_inparse();
-
-  // make sure it is blocked
-  blocked = true;
-
-}
-
 SeqBlock* netlist::SeqBlock::deep_copy() const {
   SeqBlock* rv = new SeqBlock();
   rv->loc = loc;
@@ -214,7 +184,6 @@ SeqBlock* netlist::SeqBlock::deep_copy() const {
   rv->unnamed_block = unnamed_block;
   rv->unnamed_instance = unnamed_instance;
   rv->unnamed_var = unnamed_var;
-  rv->blocked = blocked;
 
   // data in SeqBlock
   rv->sensitive = sensitive;
@@ -225,15 +194,13 @@ SeqBlock* netlist::SeqBlock::deep_copy() const {
     rv->slist_level.push_back(shared_ptr<Expression>(m->deep_copy()));
 
   rv->set_father();
-  rv->elab_inparse();
-  rv->set_always_pointer(rv);     // set the always pointer for multi-driver test
   return rv;
 }
 
 void netlist::SeqBlock::db_register(int) {
   // the item in statements are duplicated in db_instance and db_other, therefore, only statements are executed
   // initialization of the variables in ablock are ignored as they are wire, reg and integers
-  for_each(db_var.begin_order(), db_var.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  for_each(db_var.begin_order(), db_var.end_order(), [](pair<const VIdentifier, shared_ptr<Variable> >& m) {
       m.second->db_register(1);
     });
   BOOST_FOREACH(shared_ptr<NetComp>& m, statements) m->db_register(1);
@@ -244,7 +211,7 @@ void netlist::SeqBlock::db_register(int) {
 }
 
 void netlist::SeqBlock::db_expunge() {
-  for_each(db_var.begin_order(), db_var.end_order(), [](pair<VIdentifier, shared_ptr<Variable> >& m) {
+  for_each(db_var.begin_order(), db_var.end_order(), [](pair<const VIdentifier, shared_ptr<Variable> >& m) {
       m.second->db_expunge();
     });
   BOOST_FOREACH(shared_ptr<NetComp>& m, statements) m->db_expunge();
@@ -254,39 +221,23 @@ void netlist::SeqBlock::db_expunge() {
   BOOST_FOREACH(shared_ptr<Expression>& m, slist_level) m->db_expunge();
 }
 
-bool netlist::SeqBlock::elaborate(elab_result_t &result, const ctype_t mctype, const vector<NetComp *>& fp) {
-  bool rv = true;
-  result = ELAB_Normal;
-  vector<NetComp *> elab_vect = fp;
-  elab_vect.push_back(this);
+bool netlist::SeqBlock::elaborate(std::set<shared_ptr<NetComp> >&,
+                                  map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > >&) {
 
-  // check the father component
-  if(!(
-       mctype == tModule ||     // a sequential block can be defined in a module
-       mctype == tGenBlock      // a sequential block can be defined in a generate block
-       )) {
-    G_ENV->error(loc, "ELAB-BLOCK-0");
-    return false;
-  }
+  std::set<shared_ptr<NetComp> > to_del;
+  map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add;
 
-  // elaborate all internal items
-  // check all variables
-  for_each(db_var.begin_order(), db_var.end_order(), 
-           [&](pair<VIdentifier, shared_ptr<Variable> >& m) {
-             rv &= m.second->elaborate(result, tSeqBlock, elab_vect);
-           });
-  if(!rv) return rv;
+  // variables
+  list<pair<const VIdentifier, shared_ptr<Variable> > >::iterator vit, vend;
+  for(vit = db_var.begin_order(), vend = db_var.end_order(); vit!=vend; ++vit)
+    if(!vit->second->elaborate(to_del, to_add))
+      return false;
 
   // elaborate the internals
-  std::set<shared_ptr<NetComp> > to_del;
-  std::map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add;
   BOOST_FOREACH(shared_ptr<NetComp> m, statements) {
-    rv &= m->elaborate(result, tSeqBlock, elab_vect);
-    if(result == ELAB_UNFOLDED_FOR) {
-      to_del.insert(m);
-    }
+    if(!m->elaborate(to_del, to_add))
+      return false;
   }
-  if(!rv) return rv;
 
   typedef pair<const shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add_type;
   BOOST_FOREACH(to_add_type m, to_add) {
@@ -305,16 +256,7 @@ bool netlist::SeqBlock::elaborate(elab_result_t &result, const ctype_t mctype, c
     statements.erase(std::find(statements.begin(), statements.end(), m));
   }
 
-  // final check
-  // to do what?
-
-  return rv;
-}
-
-void netlist::SeqBlock::set_always_pointer(SeqBlock *p) {
-  for_each(db_other.begin(), db_other.end(), [&](pair<const BIdentifier, shared_ptr<NetComp> >& m) {
-      m.second->set_always_pointer(p);
-    });
+  return true;
 }
 
 void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G, 
