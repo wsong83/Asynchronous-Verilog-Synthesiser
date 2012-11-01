@@ -229,8 +229,34 @@ ostream& netlist::Block::streamout(ostream& os, unsigned int indent, bool fl_pre
 }
 
 void netlist::Block::elab_inparse() {
+  // step 1, handle embedded blocks
   std::set<shared_ptr<NetComp> > to_del;
+  map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add;
+  BOOST_FOREACH(shared_ptr<NetComp> st, statements) {
+    switch(st->get_type()) {
+    case tBlock: {
+      SP_CAST(m, Block, st);
+      if(!m->is_named()) {
+        m->elab_inparse();
+        to_add[m] = m->statements;
+        to_del.insert(m);
+      }
+      break;
+    }
+    default:;
+    }
+  }
 
+  typedef pair<const shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add_type;
+  BOOST_FOREACH(to_add_type m, to_add) {
+    statements.splice(std::find(statements.begin(), statements.end(), m.first), m.second);
+  }
+
+  BOOST_FOREACH(shared_ptr<NetComp> m, to_del) {
+    statements.erase(std::find(statements.begin(), statements.end(), m));
+  }
+  
+  // second step, do the classification
   BOOST_FOREACH(shared_ptr<NetComp> st, statements) {
     switch(st->get_type()) {
     case tVariable: {
@@ -357,7 +383,7 @@ bool netlist::Block::elaborate(std::set<shared_ptr<NetComp> >&,
       if(st->get_type() == tVariable) {
         SP_CAST(mvar, Variable, st);
         db_var.insert(mvar->name, mvar);
-      } else {
+      } else{
         statements.insert(it, st);
       }
     }
@@ -367,6 +393,17 @@ bool netlist::Block::elaborate(std::set<shared_ptr<NetComp> >&,
     statements.erase(std::find(statements.begin(), statements.end(), m));
   }
   
+  // instance
+  map<IIdentifier, shared_ptr<Instance> >::iterator iit, iend;
+  for(iit = db_instance.begin(), iend = db_instance.end(); iit!=iend; ++iit)
+    if(!iit->second->elaborate(to_del, to_add))
+      return false;
+
+  // re-classify staements
+  elab_inparse();
+  // block structure may be changed
+  set_father();
+
   return true;
 }
 

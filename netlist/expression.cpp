@@ -112,6 +112,14 @@ Number netlist::Expression::get_value() const {
   return eqn->get_num();
 }
 
+bool netlist::Expression::is_variable() const {
+  return eqn->get_type() == Operation::oVar;
+}
+
+VIdentifier netlist::Expression::get_variable() const {
+  return eqn->get_var();
+}
+
 bool netlist::Expression::is_singular() const {
   assert(eqn);
   return ((eqn->get_type() > Operation::oNULL) && (eqn->get_type() <= Operation::oFun));
