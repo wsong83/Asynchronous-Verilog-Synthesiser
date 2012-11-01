@@ -220,26 +220,23 @@ Instance* netlist::Instance::deep_copy() const {
   rv->type = type;
   //rv->module_ptr = module_ptr;
 
-  // lambda expression, need C++0x support
-  for_each(port_list.begin(), port_list.end(), [rv](const shared_ptr<PortConn>& comp) { 
-      rv->port_list.push_back(shared_ptr<PortConn>(comp->deep_copy())); 
-    });
-  
-  for_each(para_list.begin(), para_list.end(), [rv](const shared_ptr<ParaConn>& comp) { 
-      rv->para_list.push_back(shared_ptr<ParaConn>(comp->deep_copy())); 
-    });
+  BOOST_FOREACH(const shared_ptr<PortConn>& p, port_list)
+    rv->port_list.push_back(shared_ptr<PortConn>(p->deep_copy()));
+
+  BOOST_FOREACH(const shared_ptr<ParaConn>& p, para_list)
+    rv->para_list.push_back(shared_ptr<ParaConn>(p->deep_copy()));
     
   return rv;
 }
 
 void netlist::Instance::db_register(int) {
-  for_each(port_list.begin(), port_list.end(), [](shared_ptr<PortConn>& m) {m->db_register(1);});
-  for_each(para_list.begin(), para_list.end(), [](shared_ptr<ParaConn>& m) {m->db_register(1);});
+  BOOST_FOREACH(shared_ptr<PortConn> p, port_list) p->db_register(1);
+  BOOST_FOREACH(shared_ptr<ParaConn> p, para_list) p->db_register(1); 
 }
 
 void netlist::Instance::db_expunge() {
-  for_each(port_list.begin(), port_list.end(), [](shared_ptr<PortConn>& m) {m->db_expunge();});
-  for_each(para_list.begin(), para_list.end(), [](shared_ptr<ParaConn>& m) {m->db_expunge();});
+  BOOST_FOREACH(shared_ptr<PortConn> p, port_list) p->db_expunge();
+  BOOST_FOREACH(shared_ptr<ParaConn> p, para_list) p->db_expunge(); 
 }
 
 bool netlist::Instance::update_ports() {
@@ -263,8 +260,10 @@ bool netlist::Instance::update_ports() {
   return true;
 }
 
-bool netlist::Instance::elaborate(std::set<shared_ptr<NetComp> >&,
-                                  map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > >&) {
+bool netlist::Instance::elaborate(std::set<shared_ptr<NetComp> >& to_del,
+                                  map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > >& to_add) {
+  BOOST_FOREACH(shared_ptr<PortConn> p, port_list) if(!p->elaborate(to_del, to_add)) return false;
+  BOOST_FOREACH(shared_ptr<ParaConn> p, para_list) if(!p->elaborate(to_del, to_add)) return false;
   return true;
 }
 
@@ -291,13 +290,19 @@ bool netlist::Instance::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
   set_mname(newName);
 
   // check the new name in module map
-  if(mmap.count(newName))
-    return true;                // the module is already elaborated or scheduled to be elaborated
+  if(!mmap.count(newName)) {
+    // if not elaborated yet, add it to the map and the module queue
+    shared_ptr<Module> newModule(tarModule->deep_copy());
+    mfifo.push_back(newModule);
+    mmap[newName] = newModule;
+    
+    // set up the parameters
+    BOOST_FOREACH(shared_ptr<ParaConn> p, para_list) {
+      newModule->db_param.find(p->pname)->set_value(p->num);
+    }
+  }
 
-  // if not elaborated yet, add it to the map and the module queue
-  shared_ptr<Module> newModule(tarModule->deep_copy());
-  mfifo.push_back(newModule);
-  mmap[newName] = newModule;
+  para_list.clear();
 
   return rv;
 

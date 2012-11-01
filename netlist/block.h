@@ -114,7 +114,8 @@ namespace netlist {
     bool add_for(const shell::location& lloc, const boost::shared_ptr<Assign>&, 
                  const boost::shared_ptr<Expression>&, const boost::shared_ptr<Assign>&, const boost::shared_ptr<Block>&);
 
-    bool add_statements(const boost::shared_ptr<Block>&); /* add several statements */
+    bool add_statements(const boost::shared_ptr<Block>&);    /* add several statements */
+    
     virtual void elab_inparse(); /* resolve the content in statements during parsing */
 
     // helpers

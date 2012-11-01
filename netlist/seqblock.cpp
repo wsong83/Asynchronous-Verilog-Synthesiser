@@ -221,44 +221,6 @@ void netlist::SeqBlock::db_expunge() {
   BOOST_FOREACH(shared_ptr<Expression>& m, slist_level) m->db_expunge();
 }
 
-bool netlist::SeqBlock::elaborate(std::set<shared_ptr<NetComp> >&,
-                                  map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > >&) {
-
-  std::set<shared_ptr<NetComp> > to_del;
-  map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add;
-
-  // variables
-  list<pair<const VIdentifier, shared_ptr<Variable> > >::iterator vit, vend;
-  for(vit = db_var.begin_order(), vend = db_var.end_order(); vit!=vend; ++vit)
-    if(!vit->second->elaborate(to_del, to_add))
-      return false;
-
-  // elaborate the internals
-  BOOST_FOREACH(shared_ptr<NetComp> m, statements) {
-    if(!m->elaborate(to_del, to_add))
-      return false;
-  }
-
-  typedef pair<const shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add_type;
-  BOOST_FOREACH(to_add_type m, to_add) {
-    list<shared_ptr<NetComp> >::iterator it = std::find(statements.begin(), statements.end(), m.first);
-    BOOST_FOREACH(shared_ptr<NetComp> st, m.second) {
-      if(st->get_type() == tVariable) {
-        SP_CAST(mvar, Variable, st);
-        db_var.insert(mvar->name, mvar);
-      } else {
-        statements.insert(it, st);
-      }
-    }
-  }
-
-  BOOST_FOREACH(shared_ptr<NetComp> m, to_del) {
-    statements.erase(std::find(statements.begin(), statements.end(), m));
-  }
-
-  return true;
-}
-
 void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G, 
                                  const std::set<string>&,
                                  const std::set<string>&,

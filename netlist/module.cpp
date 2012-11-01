@@ -394,6 +394,13 @@ bool netlist::Module::elaborate(std::deque<shared_ptr<Module> >& mfifo,
     rv &= m->elaborate(to_del, to_add);
   if(!rv) return rv;
   
+  // elaborate the variables in instances
+  for_each(db_instance.begin(), db_instance.end(), 
+           [&](pair<const IIdentifier, shared_ptr<Instance> >& m) {
+             rv &= m.second->elaborate(to_del, to_add);
+           });
+  if(!rv) return rv;
+
   //std::cout << "after statements elaboration: " << std::endl << *this;
   
   // add called modules (instances) to the module queue in cmd/elaborate
