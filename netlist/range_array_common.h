@@ -75,7 +75,7 @@ namespace netlist {
     unsigned int get_width(const Range&) const; // considering child
     unsigned int get_width(const Range&); // considering child
     void set_width(const unsigned int&, const Range&);
-    void scan_vars(std::set<std::string>&, std::set<std::string>& dsrc, std::set<std::string>& csrc, bool ctl) const;
+    NETLIST_SCAN_VARS;
     void replace_variable(const VIdentifier&, const Number&);
     
   protected:

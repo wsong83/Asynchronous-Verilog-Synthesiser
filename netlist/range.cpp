@@ -786,19 +786,16 @@ void netlist::Range::set_width(const unsigned int& w, const Range& r) {
   width = w;
 }
 
-void netlist::Range::scan_vars(std::set<string>& target,
-                               std::set<string>& dsrc,
-                               std::set<string>& csrc,
-                               bool ctl) const {
+void netlist::Range::scan_vars(scan_var_type& svar, bool ctl) const {
   if(rtype == TR_Var)
-    v->scan_vars(target, dsrc, csrc, ctl);
+    v->scan_vars(svar, ctl);
   
   if(rtype == TR_Range) {
-    r.first->scan_vars(target, dsrc, csrc, ctl);
-    r.second->scan_vars(target, dsrc, csrc, ctl);
+    r.first->scan_vars(svar, ctl);
+    r.second->scan_vars(svar, ctl);
   }
 
-  RangeArrayCommon::scan_vars(target, dsrc, csrc, ctl);
+  RangeArrayCommon::scan_vars(svar, ctl);
     
 }
 

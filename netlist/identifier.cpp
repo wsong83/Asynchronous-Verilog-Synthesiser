@@ -438,16 +438,13 @@ VIdentifier* netlist::VIdentifier::deep_copy() const {
   return rv;
 }
   
-void netlist::VIdentifier::scan_vars(std::set<string>& target,
-                                     std::set<string>& dsource,
-                                     std::set<string>& control,
-                                     bool ctl) const {
+void netlist::VIdentifier::scan_vars(scan_var_type& svar, bool ctl) const {
   if(ctl)
-    control.insert(name);
+    svar[""].get<1>().insert(name);
   else
-    dsource.insert(name);
+    svar[""].get<2>().insert(name);
 
-  get_select().scan_vars(target, dsource, control, true);
+  get_select().scan_vars(svar, true);
 }
 
 void netlist::VIdentifier::replace_variable(const VIdentifier& var, const Number& num) {

@@ -896,7 +896,7 @@ always_construct
       NetComp::scan_var_type svar;
       $$->scan_vars(svar, false);
       bool sensitive = false;
-      BOOST_FOREACH(const string& v, svar.begin()->second.get<2>()) {
+      BOOST_FOREACH(const string& v, svar[""].get<2>()) {
         if(!$$->db_var.count(VIdentifier(v))) {
           $$->slist_level.push_back(shared_ptr<Expression>(new Expression(VIdentifier(v))));
           sensitive = true;
@@ -914,7 +914,7 @@ always_construct
       NetComp::scan_var_type svar;
       $$->scan_vars(svar, false);
       bool sensitive = false;
-      BOOST_FOREACH(const string& v, svar.begin()->second.get<2>()) {
+      BOOST_FOREACH(const string& v, svar[""].get<2>()) {
         if(!$$->db_var.count(VIdentifier(v))) {
           $$->slist_level.push_back(shared_ptr<Expression>(new Expression(VIdentifier(v))));
         }

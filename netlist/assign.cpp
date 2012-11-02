@@ -93,12 +93,17 @@ bool netlist::Assign::elaborate(std::set<shared_ptr<NetComp> >&,
 }
 
 
-void netlist::Assign::scan_vars(std::set<string>& target,
-                                std::set<string>& dsrc,
-                                std::set<string>& csrc,
-                                bool ctl) const {
-  lval->scan_vars(target, dsrc, csrc, ctl);
-  rexp->scan_vars(target, dsrc, csrc, ctl);
+void netlist::Assign::scan_vars(scan_type_type& svar, bool) const {
+  scan_var_type lvar, rvar;
+  lval->scan_vars(lvar, false);
+  rexp->scan_vars(rvar, false);
+  std::set<string> d = rvar[""].get<2>();
+  d.insert(rvar[""].get<0>().begin(), rvar[""].get<0>().end());
+  std::set<string> c = rvar[""].get<1>();
+  BOOST_FOREACH(const string& t, lvar[""].get<2>()) {
+    svar[t].get<0>().insert(d.begin(), d.end());
+    svar[t].get<1>().insert(c.begin(), c.end());
+  }
 }
 
 Assign* netlist::Assign::deep_copy() const {
@@ -114,11 +119,9 @@ Assign* netlist::Assign::deep_copy() const {
 }
 
 void netlist::Assign::gen_sdfg(shared_ptr<SDFG::dfgGraph> G, 
-                               const std::set<string>&,
-                               const std::set<string>&,
-                               const std::set<string>&) {
-  std::set<string> t, d, c;     // local version
-  scan_vars(t, d, c, false);
+                               scan_var_type& svar) {
+  scan_var_type mvar;     // local version
+  scan_vars(mvar, false);
 
   BOOST_FOREACH(const string& m, t) {
     BOOST_FOREACH(const string& sig, d) {

@@ -407,24 +407,19 @@ bool netlist::Block::elaborate(std::set<shared_ptr<NetComp> >&,
   return true;
 }
 
-void netlist::Block::scan_vars(std::set<string>& target,
-                               std::set<string>& dsrc,
-                               std::set<string>& csrc,
-                               bool ctl) const {
+void netlist::Block::scan_vars(scan_var_type& svar, bool ctl) const {
   BOOST_FOREACH(const shared_ptr<NetComp>& m, statements) {
-    m->scan_vars(target, dsrc, csrc, ctl);
+    m->scan_vars(svar, ctl);
   }
 }
 
 void netlist::Block::gen_sdfg(shared_ptr<SDFG::dfgGraph> G, 
-                              const std::set<string>& target,
-                              const std::set<string>&,
-                              const std::set<string>&) {
+                              scan_var_type& svar) {
   assert(db_var.empty());
   assert(db_instance.empty());
 
-  std::set<string> t, d, c;     // local version
-  scan_vars(t, d, c, false);
+  scan_var_type mvar;     // local version
+  scan_vars(mvar, false);
   
   // for all targets not in t, there is a self-loop
   if(t.size() < target.size()) { // self loop

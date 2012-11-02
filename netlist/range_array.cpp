@@ -235,11 +235,8 @@ void netlist::RangeArray::set_width(const unsigned int& w, const RangeArray& r) 
   }
 }
 
-void netlist::RangeArray::scan_vars(std::set<string>& target,
-                                    std::set<string>& dsrc,
-                                    std::set<string>& csrc,
-                                    bool ctl) const {
-  RangeArrayCommon::scan_vars(target, dsrc, csrc, ctl);
+void netlist::RangeArray::scan_vars(scan_var_type& svar, bool ctl) const {
+  RangeArrayCommon::scan_vars(svar, ctl);
 }
 
 void netlist::RangeArray::replace_variable(const VIdentifier& var, const Number& num) {

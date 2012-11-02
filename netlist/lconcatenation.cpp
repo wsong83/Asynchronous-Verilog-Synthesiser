@@ -124,12 +124,9 @@ void netlist::LConcatenation::db_expunge() {
   BOOST_FOREACH(VIdentifier& m, data) m.db_expunge();
 }
 
-void netlist::LConcatenation::scan_vars(std::set<string>& target,
-                                        std::set<string>&,
-                                        std::set<string>& control,
-                                        bool ctl) const {
+void netlist::LConcatenation::scan_vars(scan_var_type& svar, bool ctl) const {
   BOOST_FOREACH(const VIdentifier& m, data) {
-    m.scan_vars(target, target, control, ctl);
+    m.scan_vars(svar, ctl);
   }
 }
 
