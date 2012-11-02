@@ -416,14 +416,14 @@ void netlist::Operation::reduce() {
   }
 }
 
-void netlist::Operation::scan_vars(std::set<string>& t_vars, std::set<string>& d_vars, std::set<string>& c_vars, bool ctl) const {
+void netlist::Operation::scan_vars(scan_var_type& svar, bool ctl) const {
   switch(otype) {
   case oVar: {
-    get_var().scan_vars(t_vars, d_vars, c_vars, ctl);
+    get_var().scan_vars(svar, ctl);
     break;
   }
   case oCon: {
-    get_con().scan_vars(t_vars, d_vars, c_vars, ctl);
+    get_con().scan_vars(svar, ctl);
     break;
   }
   case oNULL:
@@ -439,7 +439,7 @@ void netlist::Operation::scan_vars(std::set<string>& t_vars, std::set<string>& d
   case oUNor:
   case oUXor:
   case oUNxor: {
-    child[0]->scan_vars(t_vars, d_vars, c_vars, ctl);
+    child[0]->scan_vars(svar, ctl);
     break;
   }
   case oPower:
@@ -465,14 +465,14 @@ void netlist::Operation::scan_vars(std::set<string>& t_vars, std::set<string>& d
   case oOr:
   case oLAnd:
   case oLOr: {
-    child[0]->scan_vars(t_vars, d_vars, c_vars, ctl);
-    child[1]->scan_vars(t_vars, d_vars, c_vars, ctl);
+    child[0]->scan_vars(svar, ctl);
+    child[1]->scan_vars(svar, ctl);
     break;
   }
   case oQuestion: {
-    child[0]->scan_vars(t_vars, d_vars, c_vars, true);
-    child[1]->scan_vars(t_vars, d_vars, c_vars, ctl);
-    child[2]->scan_vars(t_vars, d_vars, c_vars, ctl);
+    child[0]->scan_vars(svar, true);
+    child[1]->scan_vars(svar, ctl);
+    child[2]->scan_vars(svar, ctl);
     break;    
   }
   default:

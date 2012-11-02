@@ -30,6 +30,7 @@
 #define AV_H_AV_NETCOMP_
 
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/tuple/tuple.hpp>
 #include "shell/location.h"
 #include <set>
 
@@ -89,17 +90,12 @@ namespace SDFG {
 #ifndef NETLIST_GEN_SDFG
 #define NETLIST_GEN_SDFG                                   \
   virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>, \
-                        const std::set<std::string>&,      \
-                        const std::set<std::string>&,      \
-                        const std::set<std::string>&); 
+                        scan_var_type&); 
 #endif
 
 #ifndef NETLIST_SCAN_VARS
 #define NETLIST_SCAN_VARS                          \
-  virtual void scan_vars(std::set<std::string>&,   \
-                         std::set<std::string>&,   \
-                         std::set<std::string>&,   \
-                         bool) const;
+  virtual void scan_vars(NetComp::scan_var_type&, bool) const;
 #endif
 
 #ifndef NETLIST_REPLACE_VARIABLE
@@ -145,7 +141,14 @@ namespace netlist{
     virtual void set_width(const unsigned int&);
     virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>, const std::set<std::string>&,
                           const std::set<std::string>&, const std::set<std::string>&);
-    virtual void scan_vars(std::set<std::string>&, std::set<std::string>&, std::set<std::string>&, bool) const; 
+    typedef std::map<std::string, 
+                     boost::tuple<
+                       std::set<std::string>,  
+                       std::set<std::string>, 
+                       std::set<std::string> 
+                       > 
+                     > scan_var_type;
+    virtual void scan_vars(scan_var_type&, bool) const; 
     boost::shared_ptr<NetComp> get_sp();
 
   protected:

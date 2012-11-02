@@ -63,12 +63,12 @@ void netlist::ConElem::reduce() {
   }
 }
 
-void netlist::ConElem::scan_vars(std::set<string>& t_vars, std::set<string>& d_vars, std::set<string>& c_vars, bool ctl) const {
+void netlist::ConElem::scan_vars(NetComp::scan_var_type& svar, bool ctl) const {
   if(exp)
-    exp->scan_vars(t_vars, d_vars, c_vars, ctl);
+    exp->scan_vars(svar, ctl);
   
   BOOST_FOREACH(shared_ptr<ConElem> m, con) {
-    m->scan_vars(t_vars, d_vars, c_vars, ctl);
+    m->scan_vars(svar, ctl);
   }
 }
 
@@ -248,9 +248,9 @@ void netlist::Concatenation::reduce() {
   }
 }
 
-void netlist::Concatenation::scan_vars(std::set<string>& t_vars, std::set<string>& d_vars, std::set<string>& c_vars, bool ctl) const {
+void netlist::Concatenation::scan_vars(scan_var_type& svar, bool ctl) const {
   BOOST_FOREACH(shared_ptr<ConElem> m, data) {
-    m->scan_vars(t_vars, d_vars, c_vars, ctl);
+    m->scan_vars(svar, ctl);
   }
 }
 
