@@ -35,6 +35,9 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
+// pugixml library
+#include "pugixml/pugixml.hpp"
+
 namespace SDFG {
 
   // forward declaration
@@ -60,6 +63,9 @@ namespace SDFG {
     //helpers
     RTree * deep_copy() const;
     boost::shared_ptr<RTree> get_sp();
+
+    // debug I/O
+    void write(pugi::xml_node&, pugi::xml_node&, unsigned int&) const;
   };
 
   class RForest {
@@ -74,10 +80,12 @@ namespace SDFG {
     RForest * deep_copy() const;
     
     // functions
-    void add(shared_ptr<RForest>, std::list<shared_ptr<RForest> >); // add an case/if statement
-    void add(shared_ptr<RForest>); // add a parallel statement
-    void combine(std::list<shared_ptr<RForest> > ); // using the control forests to combine branches
-    
+    void add(boost::shared_ptr<RForest>, std::list<boost::shared_ptr<RForest> >); // add an case/if statement
+    void add(boost::shared_ptr<RForest>); // add a parallel statement
+    void combine(std::list<boost::shared_ptr<RForest> > ); // using the control forests to combine branches
+
+    // debug I/O
+    void write(std::ostream&) const;
   };
 
 }

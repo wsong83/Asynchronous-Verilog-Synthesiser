@@ -52,6 +52,31 @@ RTree* SDFG::RTree::deep_copy() const {
   return rv;
 }
 
+void SDFG::RTree::write(pugi::xml_node& g, pugi::xml_node& father, unsigned int& index) const {
+  string name;
+  BOOST_FOREACH(const string& s, sig)
+    name += s + ";";
+  name.erase(name.size() - 1);
+
+  // add this node
+  pugi::xml_node cnode = g.append_child("node");
+  cnode.append_attribute("id") = index++;
+  cnode.append_attribute("name") = name;
+  cnode.append_attribute("type") = unknown;
+  
+  // add arc
+  pugi::xml_node carc = g.append_child("edge");
+  carc.append_attribute("source") = cnode.attribute("id");
+  carc.append_attribute("target") = father.attribute("id");
+  if(type == RT_CTL)
+    carc.append_attribute("type") = "control";
+  else
+    carc.append_attribute("type") = "data";
+
+  // connect all child
+  BOOST_FOREACH(const shared_ptr<RTree>& t, child)
+    t->write(g, cnode, index);
+}
 
 /////////////////////////////////////////////////////////////////////////////
 /********        relation forest                                    ********/
@@ -89,6 +114,35 @@ void SDFG::RForest::combine(std::list<shared_ptr<RForest> > branches) {
   
   // build up the tree
   BOOST_FOREACH(const string& t, targets) {
-    
+    // build up the control for this node
+    tree[t] = shared_ptr<RTree>(ctree.deep_copy());
+    BOOST_FOREACH(shared_ptr<RForest> f, branches) {
+      if(f->tree.count(t)) {
+        tree[t]->child->push_back(shared_ptr<RTree>(f->tree[t]->deep_copy()));
+      } else {
+        tree[t]->child->push_back(shared_ptr<RTree>()); // empty shared_ptr to represent self loop
+      }
+    }
   }
 }
+
+void SDFG::RForest::write(std::ostream& os) const {
+  unsigned int i = 0;
+  pugi::xml_document sdfg_file;       // using the pugixml library
+  pugi::xml_node node_xml = sdfg_file.append_child(pugi::node_declaration);
+  node_xml.append_attribute("version") = "1.0";
+  node_xml.append_attribute("encoding") = "UTF-8";
+  pugi::xml_node xgraph = sdfg_file.append_child("graph");
+
+  // write out all trees
+  BOOST_FOREACH(const tree_map_type& t, tree) {
+    pugixml::xml_node subtree = xgraph.append_child("node");
+    subtree.append_attribute("id") = i++;
+    subtree.append_attribute("name") = t.first.c_str();
+    subtree.append_attribute("type") = "unknown";
+    t.second->write(xgraph, subtree, i);
+  }
+
+  sdfg_file.save(os);
+}
+
