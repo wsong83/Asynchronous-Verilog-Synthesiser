@@ -27,21 +27,68 @@
  */
 
 #include "rtree.hpp"
+#include <boost/foreach.hpp>
 
 using namespace SDFG;
 using std::string;
 using std::list;
 using boost::shared_ptr;
 
+/////////////////////////////////////////////////////////////////////////////
+/********        relation tree nodes                                ********/
+/////////////////////////////////////////////////////////////////////////////
 SDFG::RTree::RTree()
   : type(RT_DF) {}
 
 SDFG::RTree::RTree(node_type_t t)
   : type(t) {}
 
+RTree* SDFG::RTree::deep_copy() const {
+  RTree* rv = new RTree(type);
+  rv->sig = sig;
+  BOOST_FOREACH(const shared_ptr<RTree>& m, child) {
+    rv->child.push_back(shared_ptr<RTree>(m->deep_copy()));
+  }
+  return rv;
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+/********        relation forest                                    ********/
+/////////////////////////////////////////////////////////////////////////////
+
 SDFG::RForest::RForest(bool d_init) {
   if(d_init) {
     tree["@CTL"] = shared_ptr<RTree>(new RTree(RTree::RT_CTL));
-    tree["@CTL"] = shared_ptr<RTree>(new RTree(RTree::RT_DATA));
+    tree["@DATA"] = shared_ptr<RTree>(new RTree(RTree::RT_DATA));
+  }
+}
+
+RForest* SDFG::RForest::deep_copy() const {
+  RForest* rv = new RForest();
+  BOOST_FOREACH(const tree_map_type& m, tree) {
+    rv->tree[m.first] = shared_ptr<RTree>(m.second->deep_copy());
+  }
+  return rv;
+}
+
+void SDFG::RForest::combine(std::list<shared_ptr<RForest> > branches) {
+  // ATTN: assuming this forest is representing the control signals
+  
+  // get a combined target signal map
+  std::set<string> targets;
+  BOOST_FOREACH(shared_ptr<RForest> f, branches) {
+    BOOST_FOREACH(tree_map_type t, f->tree) {
+      targets.insert(t.first);
+    }
+  }
+
+  // fetch the control tree
+  shared_ptr<RTree> ctree = tree["@CTL"];
+  tree.erase("@CTL");
+  
+  // build up the tree
+  BOOST_FOREACH(const string& t, targets) {
+    
   }
 }

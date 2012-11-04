@@ -113,24 +113,6 @@ Assign* netlist::Assign::deep_copy() const {
   return rv;
 }
 
-void netlist::Assign::gen_sdfg(shared_ptr<SDFG::dfgGraph> G, 
-                               scan_var_type& svar) {
-  scan_var_type mvar;     // local version
-  scan_vars(mvar, false);
-
-  BOOST_FOREACH(const string& m, t) {
-    BOOST_FOREACH(const string& sig, d) {
-      if(!G->exist(sig, m, SDFG::dfgEdge::SDFG_DP)) 
-        G->add_edge(sig, SDFG::dfgEdge::SDFG_DP, sig, m);
-    }
-    
-    BOOST_FOREACH(const string& sig, c) {
-      if(!G->exist(sig, m, SDFG::dfgEdge::SDFG_CTL)) 
-        G->add_edge(sig, SDFG::dfgEdge::SDFG_CTL, sig, m);
-    }
-  }
-}
-
 void netlist::Assign::replace_variable(const VIdentifier& var, const Number& num) {
   lval->replace_variable(var, num);
   rexp->replace_variable(var, num);

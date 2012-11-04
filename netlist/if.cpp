@@ -30,6 +30,7 @@
 #include "shell/env.h"
 #include <boost/foreach.hpp>
 #include "sdfg/sdfg.hpp"
+#include "sdfg/rtree.hpp"
 
 using namespace netlist;
 using std::ostream;
@@ -157,43 +158,21 @@ bool netlist::IfState::elaborate(std::set<shared_ptr<NetComp> >& to_del,
   return true;
 }
 
-void netlist::IfState::scan_vars(std::set<string>& target,
-                                 std::set<string>& dsrc,
-                                 std::set<string>& csrc,
-                                 bool ctl) const {
-  exp->scan_vars(csrc, csrc, csrc, true);
-  ifcase->scan_vars(target, dsrc, csrc, ctl);
-  if(elsecase)
-    elsecase->scan_vars(target, dsrc, csrc, ctl);
-}
+void netlist::IfState::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
+  shared_ptr<SDFG::RForest> exprf(new SDFG::RForest(true));
+  exp->scan_vars(exprf, true);
+  
+  shared_ptr<SDFG::RForest> ifrf(new SDFG::RForest());
+  ifcase->scan_vars(ifrf, false);
+  
+  shared_ptr<SDFG::RForest> elserf(new SDFG::RForest());
+  if(elsecase) elsecase->scan_vars(elserf, false);
 
-void netlist::IfState::gen_sdfg(shared_ptr<SDFG::dfgGraph> G, 
-                                const std::set<string>& target,
-                                const std::set<string>&,
-                                const std::set<string>&) {
-  std::set<string> t, d, c;     // local version
-  scan_vars(t, d, c, false);
+  list<shared_ptr<SDFG::RForest> > branches;
+  branches.push_back(ifrf);
+  branches.push_back(elserf);
 
-  // add control signals
-  std::set<string> csig;
-  exp->scan_vars(csig, csig, csig, true);
-  BOOST_FOREACH(const string& m, target) {
-    BOOST_FOREACH(const string& sig, csig) {
-      if(!G->exist(sig, m, SDFG::dfgEdge::SDFG_CTL))
-        G->add_edge(sig, SDFG::dfgEdge::SDFG_CTL, sig, m);
-    }
-  }
-
-  // do the rest
-  ifcase->gen_sdfg(G, t, d, c);
-  if(elsecase)
-    elsecase->gen_sdfg(G, t, d, c);
-  else {                        // no else, self-loop
-    BOOST_FOREACH(const string& m, t) {
-      if(!G->exist(m, m, SDFG::dfgEdge::SDFG_DP))
-        G->add_edge(m, SDFG::dfgEdge::SDFG_DP, m, m);
-    }
-  }
+  rf->add(exprf, branches);
 }
 
 void netlist::IfState::replace_variable(const VIdentifier& var, const Number& num) {

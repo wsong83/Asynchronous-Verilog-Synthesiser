@@ -31,6 +31,7 @@
 #include "shell/env.h"
 #include <algorithm>
 #include <boost/foreach.hpp>
+#include "sdfg/rtree.hpp"
 #include "sdfg/sdfg.hpp"
 
 using namespace netlist;
@@ -221,6 +222,12 @@ void netlist::SeqBlock::db_expunge() {
   BOOST_FOREACH(shared_ptr<Expression>& m, slist_level) m->db_expunge();
 }
 
+void netlist::SeqBlock::scan_vars(shared_ptr<SDFG::RForest>, bool) const {
+  shared_ptr<SDFG::RForest> rf(new SDFG::RForest());
+  Block::scan_vars(rf, false);
+}
+
+/*
 void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G, 
                                  const std::set<string>&,
                                  const std::set<string>&,
@@ -283,6 +290,7 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G,
     }
   }
 }
+*/
 
 void netlist::SeqBlock::replace_variable(const VIdentifier& var, const Number& num) {
   BOOST_FOREACH(shared_ptr<Expression> sl, slist_level) {

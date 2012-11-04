@@ -58,15 +58,26 @@ namespace SDFG {
     RTree(node_type_t);
 
     //helpers
+    RTree * deep_copy() const;
     boost::shared_ptr<RTree> get_sp();
   };
 
   class RForest {
   public:
     std::map<std::string, boost::shared_ptr<RTree> > tree;
+    typedef std::pair<const std::string, boost::shared_ptr<RTree> > tree_map_type;
 
     // constructore
     RForest(bool d_init = false);
+
+    // helpers
+    RForest * deep_copy() const;
+    
+    // functions
+    void add(shared_ptr<RForest>, std::list<shared_ptr<RForest> >); // add an case/if statement
+    void add(shared_ptr<RForest>); // add a parallel statement
+    void combine(std::list<shared_ptr<RForest> > ); // using the control forests to combine branches
+    
   };
 
 }
