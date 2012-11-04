@@ -32,7 +32,7 @@
 #include <list>
 #include <string>
 #include <utility>
-#include <boost/shared_ptr>
+#include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
 namespace SDFG {
@@ -52,15 +52,21 @@ namespace SDFG {
 
     std::list<boost::shared_ptr<RTree> > child; // child nodes
     std::set<std::string> sig;  // signals in this node
+    
+    // constructor
+    RTree();
+    RTree(node_type_t);
 
     //helpers
-    const std::string get_name() const;
     boost::shared_ptr<RTree> get_sp();
   };
 
   class RForest {
   public:
     std::map<std::string, boost::shared_ptr<RTree> > tree;
+
+    // constructore
+    RForest(bool d_init = false);
   };
 
 }

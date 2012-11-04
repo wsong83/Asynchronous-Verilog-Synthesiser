@@ -37,6 +37,7 @@
 
 #include "component.h"
 #include "shell/env.h"
+#include "sdfg/rtree.hpp"
 
 using namespace netlist;
 using std::ostream;
@@ -438,13 +439,13 @@ VIdentifier* netlist::VIdentifier::deep_copy() const {
   return rv;
 }
   
-void netlist::VIdentifier::scan_vars(scan_var_type& svar, bool ctl) const {
+void netlist::VIdentifier::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
   if(ctl)
-    svar[""].get<1>().insert(name);
+    rf->tree["@CTL"]->sig.insert(name);
   else
-    svar[""].get<2>().insert(name);
+    rf->tree["@DATA"]->sig.insert(name);
 
-  get_select().scan_vars(svar, true);
+  get_select().scan_vars(rf, true);
 }
 
 void netlist::VIdentifier::replace_variable(const VIdentifier& var, const Number& num) {

@@ -28,14 +28,13 @@
 
 #include "component.h"
 #include "shell/env.h"
-#include "sdfg/sdfg.hpp"
+#include "sdfg/rtree.hpp"
 #include <algorithm>
 #include <stack>
 #include <set>
 #include <boost/foreach.hpp>
 
 using namespace netlist;
-using namespace SDFG;
 using std::ostream;
 using std::string;
 using boost::shared_ptr;
@@ -214,25 +213,10 @@ Expression* netlist::Expression::deep_copy() const {
   return rv;
 }
 
-void netlist::Expression::scan_vars(scan_var_type& svar, bool ctl) const {
-  eqn->scan_vars(svar, ctl);
+void netlist::Expression::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
+  eqn->scan_vars(rf, ctl);
 }
 
 void netlist::Expression::replace_variable(const VIdentifier& var, const Number& num) {
   eqn->replace_variable(var, num);
-}
-
-void netlist::Expression::gen_sdfg_node(shared_ptr<dfgGraph> G, shared_ptr<dfgNode> node) {
-  
-  // scan for all variables
-  scan_var_type svar;
-  eqn->scan_vars(svar, false);
-
-  // add edges according to the scan results
-  BOOST_FOREACH(const string& m, svar[""].get<2>()) {
-    G->add_edge(m, dfgEdge::SDFG_DP, m, node->name);
-  }
-  BOOST_FOREACH(const string& m, svar[""].get<1>()) {
-    G->add_edge(m, dfgEdge::SDFG_CTL, m, node->name);
-  }
 }

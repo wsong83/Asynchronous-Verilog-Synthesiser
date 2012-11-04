@@ -90,8 +90,7 @@ namespace SDFG {
 
 #ifndef NETLIST_GEN_SDFG
 #define NETLIST_GEN_SDFG                                   \
-  virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>, \
-                        scan_var_type&); 
+  virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>); 
 #endif
 
 #ifndef NETLIST_SCAN_VARS
@@ -140,9 +139,8 @@ namespace netlist{
                            std::map<boost::shared_ptr<NetComp>, std::list<boost::shared_ptr<NetComp> > >&);
     virtual unsigned int get_width();
     virtual void set_width(const unsigned int&);
-    virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>, const std::set<std::string>&,
-                          const std::set<std::string>&, const std::set<std::string>&);
-    virtual void scan_vars(boost::shared_ptr<RForest>, bool) const; 
+    virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>);
+    virtual void scan_vars(boost::shared_ptr<SDFG::RForest>, bool) const; 
     boost::shared_ptr<NetComp> get_sp();
 
   protected:

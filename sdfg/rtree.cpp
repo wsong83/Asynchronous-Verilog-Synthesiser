@@ -33,7 +33,15 @@ using std::string;
 using std::list;
 using boost::shared_ptr;
 
-const string& SDFG::RTree::get_name() const {
-  return sig.empty() ? "" : sig.front();
-}
+SDFG::RTree::RTree()
+  : type(RT_DF) {}
 
+SDFG::RTree::RTree(node_type_t t)
+  : type(t) {}
+
+SDFG::RForest::RForest(bool d_init) {
+  if(d_init) {
+    tree["@CTL"] = shared_ptr<RTree>(new RTree(RTree::RT_CTL));
+    tree["@CTL"] = shared_ptr<RTree>(new RTree(RTree::RT_DATA));
+  }
+}

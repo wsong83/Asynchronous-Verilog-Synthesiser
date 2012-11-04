@@ -29,6 +29,7 @@
 #include "component.h"
 #include "shell/env.h"
 #include "sdfg/sdfg.hpp"
+#include "sdfg/rtree.hpp"
 #include <boost/foreach.hpp>
 
 using namespace netlist;
@@ -93,17 +94,11 @@ bool netlist::Assign::elaborate(std::set<shared_ptr<NetComp> >&,
 }
 
 
-void netlist::Assign::scan_vars(scan_type_type& svar, bool) const {
-  scan_var_type lvar, rvar;
-  lval->scan_vars(lvar, false);
-  rexp->scan_vars(rvar, false);
-  std::set<string> d = rvar[""].get<2>();
-  d.insert(rvar[""].get<0>().begin(), rvar[""].get<0>().end());
-  std::set<string> c = rvar[""].get<1>();
-  BOOST_FOREACH(const string& t, lvar[""].get<2>()) {
-    svar[t].get<0>().insert(d.begin(), d.end());
-    svar[t].get<1>().insert(c.begin(), c.end());
-  }
+void netlist::Assign::scan_vars(shared_ptr<SDFG::RForest> rf, bool) const {
+  shared_ptr<SDFG::RForest> lrf(new SDFG::RForest());
+  shared_ptr<SDFG::RForest> rrf(new SDFG::RForest(true));
+  lval->scan_vars(lrf, false);
+  rexp->scan_vars(rrf, false);
 }
 
 Assign* netlist::Assign::deep_copy() const {
