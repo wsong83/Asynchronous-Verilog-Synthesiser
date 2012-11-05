@@ -31,9 +31,9 @@
 
 #include <list>
 #include <string>
-#include <utility>
+#include <set>
+#include <map>
 #include <boost/shared_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
 
 // pugixml library
 #include "pugixml/pugixml.hpp"
@@ -44,13 +44,12 @@ namespace SDFG {
   class RTee;
   class RForest;
 
-  class RTree : public boost::enable_shared_from_this<RTree> {
+  class RTree {
   public:
     enum node_type_t {
       RT_DF                  = 0x00001, // default, unknown type
       RT_DATA                = 0x00002, // data
-      RT_CTL                 = 0x00004, // control
-      RT_TARGET              = 0x80000  // root
+      RT_CTL                 = 0x00004  // control
     } type;
 
     std::list<boost::shared_ptr<RTree> > child; // child nodes
@@ -62,7 +61,13 @@ namespace SDFG {
 
     //helpers
     RTree * deep_copy() const;
-    boost::shared_ptr<RTree> get_sp();
+    
+    // functions
+    void build(boost::shared_ptr<RForest>);        // build up a relation tree using the forest of an expression
+    void insert_default(boost::shared_ptr<RTree>); // insert a default statement to all self loops
+    void append(boost::shared_ptr<RTree>);         // append a leaf to all control leaves
+    void get_control(std::set<std::string>&) const; // get the control signals of a target
+    void get_data(std::set<std::string>&) const; // get the control signals of a target
 
     // debug I/O
     void write(pugi::xml_node&, pugi::xml_node&, unsigned int&) const;
@@ -80,9 +85,12 @@ namespace SDFG {
     RForest * deep_copy() const;
     
     // functions
+    void build(boost::shared_ptr<RForest>, boost::shared_ptr<RForest>); // build up a statement with lval and right expression
     void add(boost::shared_ptr<RForest>, std::list<boost::shared_ptr<RForest> >); // add an case/if statement
     void add(boost::shared_ptr<RForest>); // add a parallel statement
     void combine(std::list<boost::shared_ptr<RForest> > ); // using the control forests to combine branches
+    std::set<std::string> get_control(const std::string&) const; // get the control signals of a target
+    std::set<std::string> get_data(const std::string&) const; // get the control signals of a target
 
     // debug I/O
     void write(std::ostream&) const;

@@ -99,6 +99,9 @@ void netlist::Assign::scan_vars(shared_ptr<SDFG::RForest> rf, bool) const {
   shared_ptr<SDFG::RForest> rrf(new SDFG::RForest(true));
   lval->scan_vars(lrf, false);
   rexp->scan_vars(rrf, false);
+  shared_ptr<SDFG::RForest> crf(new SDFG::RForest());
+  crf->build(lrf, rrf);
+  rf->add(crf);
 }
 
 Assign* netlist::Assign::deep_copy() const {

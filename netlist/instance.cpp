@@ -307,7 +307,7 @@ bool netlist::Instance::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
   return rv;
 
 }
-
+/*
 void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G, 
                                  const std::set<string>&,
                                  const std::set<string>&,
@@ -356,7 +356,7 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G,
     }
   }
 }
-
+*/
 void netlist::Instance::replace_variable(const VIdentifier& var, const Number& num) {
   BOOST_FOREACH(shared_ptr<PortConn> pc, port_list) {
     pc->replace_variable(var, num);

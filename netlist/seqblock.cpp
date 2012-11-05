@@ -227,35 +227,38 @@ void netlist::SeqBlock::scan_vars(shared_ptr<SDFG::RForest>, bool) const {
   Block::scan_vars(rf, false);
 }
 
-/*
-void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G, 
-                                 const std::set<string>&,
-                                 const std::set<string>&,
-                                 const std::set<string>&) {
+void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
   assert(db_var.empty());
   assert(db_instance.empty());
 
-  std::set<string> targets, data_sources, ctl_sources, slist;
+  shared_ptr<SDFG::RForest> rf;
+  Block::scan_vars(rf, false);
+  std::set<string> cset;        // to store all control signals
 
-  // scan signals
-  BOOST_FOREACH(shared_ptr<NetComp>& m, statements) {
-    m->scan_vars(targets, data_sources, ctl_sources, false);
+  BOOST_FOREACH(SDFG::RForest::tree_map_type& t, rf->tree) {
+    std::set<string> csig = rf->get_control(t.first);
+    if(!slist_pulse.empty()) cset.insert(csig.begin(), csig.end());
+    std::set<string> dsig = rf->get_data(t.first);
+    BOOST_FOREACH(const string& s, csig) {
+      G->add_edge(s, SDFG::dfgEdge::SDFG_CTL, s, t.first);
+    }
+    BOOST_FOREACH(const string& s, dsig) {
+      if(s != "") G->add_edge(s, SDFG::dfgEdge::SDFG_DATA, s, t.first);
+      else        G->add_edge(t.first, SDFG::dfgEdge::SDFG_DATA, t.first, t.first); // self-loop
+    }
   }
 
-  BOOST_FOREACH(shared_ptr<NetComp>& m, statements) {
-    m->gen_sdfg(G, targets, data_sources, ctl_sources);
-  }
 
   if(!slist_pulse.empty()) {    // ff
     assert(slist_pulse.size() <= 2 && slist_pulse.size() >= 1);
+    shared_ptr<SDFG::RForest> slsig(new SDFG::RForest());
+    typedef pair<bool, shared_ptr<Expression> > slist_type;
+    BOOST_FOREACH(slist_type& sl, slist_pulse) {
+      sl.second->scan_vars(slsig, true);
+    }
 
-    // fetch the sensitive list
-    for_each(slist_pulse.begin(), slist_pulse.end(), 
-             [&](pair<bool, shared_ptr<Expression> >& m) {
-               m.second->scan_vars(slist, slist, slist, true);
-               });
-    
     std::set<string> clks, rsts;
+
     for_each(slist.begin(), slist.end(), 
              [&](const string& m) {
                if(ctl_sources.count(m)) // rst signals must be used in the control statements

@@ -273,10 +273,13 @@ bool netlist::CaseState::elaborate(std::set<shared_ptr<NetComp> >& to_del,
 void netlist::CaseState::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
   shared_ptr<SDFG::RForest> exprf(new SDFG::RForest(true));
   exp->scan_vars(exprf, true);
+  list<shared_ptr<SDFG::RForest> > branches;
   BOOST_FOREACH(const shared_ptr<CaseItem>& m, cases) {
-    m->scan_vars(rf, ctl);
+    shared_ptr<SDFG::RForest> mrf(new SDFG::RForest());
+    m->scan_vars(mrf, ctl);
+    branches.push_back(mrf);
   }
-  
+  rf->add(exprf, branches);
 }
 
 void netlist::CaseState::replace_variable(const VIdentifier& var, const Number& num) {

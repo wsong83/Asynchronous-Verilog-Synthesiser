@@ -446,7 +446,7 @@ void netlist::Module::get_hier(list<shared_ptr<Module> >& mfifo,
   BOOST_FOREACH(shared_ptr<Module>& m, myqueue) 
     m->get_hier(mfifo, mmap);
 }
-
+/*
 shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
   if(!quiet)
     G_ENV->error("SDFG-EXTRACT-1", name.name);
@@ -512,7 +512,7 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
 
   return G;
 }
-
+*/
 void netlist::Module::init_port_list(const list<shared_ptr<Port> >& port_list) {
   BOOST_FOREACH(shared_ptr<Port> m, port_list) {
     if(!db_port.find(m->name)) {
