@@ -159,6 +159,27 @@ netlist::SeqBlock::SeqBlock(const location& lloc, const Block& body)
   elab_inparse();
 }
 
+void netlist::SeqBlock::elab_inparse() {
+  Block::elab_inparse();
+
+  // handle sensitive list
+  if(slist_level.size() == 1 && slist_level.front()->is_variable() && slist_level.front()->get_variable().name == "*") {
+    // automatic sensitive list filling
+    slist_level.clear();
+    shared_ptr<SDFG::RForest> rf(new SDFG::RForest());
+    Block::scan_vars(rf, false);
+    std::set<string> cset;
+    BOOST_FOREACH(SDFG::RForest::tree_map_type& t, rf->tree) {
+      std::set<string> csig = rf->get_control(t.first);
+      cset.insert(csig.begin(), csig.end());
+    }
+    BOOST_FOREACH(const string& s, cset) {
+      VIdentifier signal(s);
+      slist_level.push_back(shared_ptr<Expression>(new Expression(signal)));
+    }
+  }
+}
+
 void netlist::SeqBlock::set_father(Block *pf) {
   if(father == pf) return;
   father = pf;
@@ -231,7 +252,7 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
   assert(db_var.empty());
   assert(db_instance.empty());
 
-  shared_ptr<SDFG::RForest> rf;
+  shared_ptr<SDFG::RForest> rf(new SDFG::RForest());
   Block::scan_vars(rf, false);
   std::set<string> cset;        // to store all control signals
 
@@ -243,8 +264,8 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
       G->add_edge(s, SDFG::dfgEdge::SDFG_CTL, s, t.first);
     }
     BOOST_FOREACH(const string& s, dsig) {
-      if(s != "") G->add_edge(s, SDFG::dfgEdge::SDFG_DATA, s, t.first);
-      else        G->add_edge(t.first, SDFG::dfgEdge::SDFG_DATA, t.first, t.first); // self-loop
+      if(s != "") G->add_edge(s, SDFG::dfgEdge::SDFG_DP, s, t.first);
+      else        G->add_edge(t.first, SDFG::dfgEdge::SDFG_DP, t.first, t.first); // self-loop
     }
   }
 
@@ -259,41 +280,39 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
 
     std::set<string> clks, rsts;
 
-    for_each(slist.begin(), slist.end(), 
-             [&](const string& m) {
-               if(ctl_sources.count(m)) // rst signals must be used in the control statements
-                 rsts.insert(m);
-               else             // clock signals are not shown in the control list
-                 clks.insert(m);
-             });
+    BOOST_FOREACH(const string& s, slsig->tree["@CTL"]->sig) {
+      if(cset.count(s))
+        rsts.insert(s);
+      else
+        clks.insert(s);
+    }
 
     assert(clks.size() == 1);
     assert(rsts.size() <= 1);
     
     // handle the nodes
-    BOOST_FOREACH(const string& m, targets) {
-      shared_ptr<SDFG::dfgNode> node = G->get_node(m);
+    BOOST_FOREACH(SDFG::RForest::tree_map_type& t, rf->tree) {
+      shared_ptr<SDFG::dfgNode> node = G->get_node(t.first);
       assert(node);
       node->type = SDFG::dfgNode::SDFG_FF;
       // handle the reset signals
-      if(rsts.size() > 0 && G->exist(*(rsts.begin()), m, SDFG::dfgEdge::SDFG_CTL))
-        G->get_edge(*(rsts.begin()), m)->type = SDFG::dfgEdge::SDFG_RST;
+      if(rsts.size() > 0 && G->exist(*(rsts.begin()), t.first, SDFG::dfgEdge::SDFG_CTL))
+        G->get_edge(*(rsts.begin()), t.first, SDFG::dfgEdge::SDFG_CTL)->type = SDFG::dfgEdge::SDFG_RST;
       
       // handle clock
       string clk_name = *(clks.begin());
-      G->add_edge(clk_name, SDFG::dfgEdge::SDFG_CLK, clk_name, m);
+      G->add_edge(clk_name, SDFG::dfgEdge::SDFG_CLK, clk_name, t.first);
     }
   } else {                      // combinational
     // handle the nodes
-    BOOST_FOREACH(const string& m, targets) {
-      if(G->exist(m, m))
-        G->get_node(m)->type = SDFG::dfgNode::SDFG_LATCH; // self-loop means latch
+    BOOST_FOREACH(SDFG::RForest::tree_map_type& t, rf->tree) {
+      if(G->exist(t.first, t.first))
+        G->get_node(t.first)->type = SDFG::dfgNode::SDFG_LATCH; // self-loop means latch
       else
-        G->get_node(m)->type = SDFG::dfgNode::SDFG_COMB;
+        G->get_node(t.first)->type = SDFG::dfgNode::SDFG_COMB;
     }
   }
 }
-*/
 
 void netlist::SeqBlock::replace_variable(const VIdentifier& var, const Number& num) {
   BOOST_FOREACH(shared_ptr<Expression> sl, slist_level) {

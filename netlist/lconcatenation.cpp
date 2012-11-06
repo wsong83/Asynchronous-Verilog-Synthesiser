@@ -127,11 +127,15 @@ void netlist::LConcatenation::db_expunge() {
 
 void netlist::LConcatenation::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
   BOOST_FOREACH(const VIdentifier& m, data) {
-    shared_ptr<SDFG::RForest> mrf(new SDFG::RForest(true));
+    shared_ptr<SDFG::RForest> mrf(new SDFG::RForest());
     m.scan_vars(mrf, ctl);
-    shared_ptr<SDFG::RTree> mt(new SDFG::RTree());
-    mt->build(mrf);
-    rf->tree[m.name]=mt;
+    if(mrf->tree.count("@CTL")) {
+      shared_ptr<SDFG::RTree> mc(new SDFG::RTree(SDFG::RTree::RT_CTL));
+      mc->sig = mrf->tree["@CTL"]->sig;
+      rf->tree[m.name] = mc;
+    } else {
+      rf->tree[m.name] = shared_ptr<SDFG::RTree>();
+    }
   }
 }
 

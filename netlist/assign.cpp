@@ -93,10 +93,25 @@ bool netlist::Assign::elaborate(std::set<shared_ptr<NetComp> >&,
   return true;
 }
 
+void netlist::Assign::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
+  shared_ptr<SDFG::RForest> rf(new SDFG::RForest());
+  scan_vars(rf, false);
+  
+  BOOST_FOREACH(SDFG::RForest::tree_map_type& t, rf->tree) {
+    std::set<string> csig = rf->get_control(t.first);
+    std::set<string> dsig = rf->get_data(t.first);
+    BOOST_FOREACH(const string& s, csig) {
+      G->add_edge(s, SDFG::dfgEdge::SDFG_CTL, s, t.first);
+    }
+    BOOST_FOREACH(const string& s, dsig) {
+      G->add_edge(s, SDFG::dfgEdge::SDFG_DP, s, t.first);
+    }
+  }  
+}
 
 void netlist::Assign::scan_vars(shared_ptr<SDFG::RForest> rf, bool) const {
   shared_ptr<SDFG::RForest> lrf(new SDFG::RForest());
-  shared_ptr<SDFG::RForest> rrf(new SDFG::RForest(true));
+  shared_ptr<SDFG::RForest> rrf(new SDFG::RForest());
   lval->scan_vars(lrf, false);
   rexp->scan_vars(rrf, false);
   shared_ptr<SDFG::RForest> crf(new SDFG::RForest());

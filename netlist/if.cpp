@@ -158,16 +158,16 @@ bool netlist::IfState::elaborate(std::set<shared_ptr<NetComp> >& to_del,
   return true;
 }
 
-void netlist::IfState::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
-  shared_ptr<SDFG::RForest> exprf(new SDFG::RForest(true));
+void netlist::IfState::scan_vars(shared_ptr<SDFG::RForest> rf, bool) const {
+  shared_ptr<SDFG::RForest> exprf(new SDFG::RForest());
   exp->scan_vars(exprf, true);
   
   shared_ptr<SDFG::RForest> ifrf(new SDFG::RForest());
   ifcase->scan_vars(ifrf, false);
-  
+    
   shared_ptr<SDFG::RForest> elserf(new SDFG::RForest());
   if(elsecase) elsecase->scan_vars(elserf, false);
-
+  
   list<shared_ptr<SDFG::RForest> > branches;
   branches.push_back(ifrf);
   branches.push_back(elserf);

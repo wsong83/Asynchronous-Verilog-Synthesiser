@@ -440,10 +440,13 @@ VIdentifier* netlist::VIdentifier::deep_copy() const {
 }
   
 void netlist::VIdentifier::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
-  if(ctl)
+  if(ctl) {
+    if(!rf->tree["@CTL"]) rf->tree["@CTL"].reset(new SDFG::RTree(SDFG::RTree::RT_CTL));
     rf->tree["@CTL"]->sig.insert(name);
-  else
+  } else {
+    if(!rf->tree["@DATA"]) rf->tree["@DATA"].reset(new SDFG::RTree(SDFG::RTree::RT_DATA));
     rf->tree["@DATA"]->sig.insert(name);
+  }
 
   get_select().scan_vars(rf, true);
 }

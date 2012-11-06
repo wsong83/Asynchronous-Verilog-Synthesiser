@@ -28,6 +28,7 @@
 
 #include "rtree.hpp"
 #include <boost/foreach.hpp>
+#include <boost/format.hpp>
 
 using namespace SDFG;
 using std::string;
@@ -47,19 +48,22 @@ RTree* SDFG::RTree::deep_copy() const {
   RTree* rv = new RTree(type);
   rv->sig = sig;
   BOOST_FOREACH(const shared_ptr<RTree>& m, child) {
-    rv->child.push_back(shared_ptr<RTree>(m->deep_copy()));
+    if(m)
+      rv->child.push_back(shared_ptr<RTree>(m->deep_copy()));
+    else          // possible self-loop
+      rv->child.push_back(shared_ptr<RTree>());
   }
   return rv;
 }
 
 void SDFG::RTree::build(shared_ptr<RForest> rexp) {
-  if(rexp->tree.count("@CTL")) {
+  if(rexp->tree["@CTL"]) {
     sig = rexp->tree["@CTL"]->sig;
     type = RT_CTL;
-    if(rexp->tree.count("@DATA"))
+    if(rexp->tree["@DATA"])
       child.push_back(shared_ptr<RTree>(rexp->tree["@DATA"]->deep_copy()));
   } else {
-    if(rexp->tree.count("@DATA"))
+    if(rexp->tree["@DATA"])
       sig = rexp->tree["@DATA"]->sig;
     type = RT_DATA;
   }
@@ -105,9 +109,14 @@ void SDFG::RTree::get_data(std::set<string>& sigset) const {
 
 void SDFG::RTree::write(pugi::xml_node& g, pugi::xml_node& father, unsigned int& index) const {
   string name;
-  BOOST_FOREACH(const string& s, sig)
-    name += s + ";";
-  name.erase(name.size() - 1);
+  if(sig.empty()) {
+    // const numbers
+    name = "@const " + boost::str(boost::format("%u") % index);
+  } else {
+    BOOST_FOREACH(const string& s, sig)
+      name += s + ";";
+      name.erase(name.size() - 1);
+  }
 
   // add this node
   pugi::xml_node cnode = g.append_child("node");
@@ -117,16 +126,27 @@ void SDFG::RTree::write(pugi::xml_node& g, pugi::xml_node& father, unsigned int&
   
   // add arc
   pugi::xml_node carc = g.append_child("edge");
-  carc.append_attribute("source") = cnode.attribute("id");
-  carc.append_attribute("target") = father.attribute("id");
+  carc.append_attribute("source") = cnode.attribute("id").value();
+  carc.append_attribute("target") = father.attribute("id").value();
   if(type == RT_CTL)
     carc.append_attribute("type") = "control";
   else
     carc.append_attribute("type") = "data";
 
   // connect all child
-  BOOST_FOREACH(const shared_ptr<RTree>& t, child)
-    t->write(g, cnode, index);
+  BOOST_FOREACH(const shared_ptr<RTree>& t, child) {
+    if(t) t->write(g, cnode, index);
+    else {                      // possible self-loop
+      pugi::xml_node sloop_node = g.append_child("node");
+      sloop_node.append_attribute("id") = index++;
+      sloop_node.append_attribute("name") = ("* " + boost::str(boost::format("%u") % (index-1))).c_str();
+      sloop_node.append_attribute("type") = "unknown";
+      pugi::xml_node sloop_arc = g.append_child("edge");
+      sloop_arc.append_attribute("source") = sloop_node.attribute("id").value();
+      sloop_arc.append_attribute("target") = cnode.attribute("id").value();
+      sloop_arc.append_attribute("type") = "data";
+    }
+  }
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -172,7 +192,7 @@ void SDFG::RForest::add(shared_ptr<RForest> f) {
   BOOST_FOREACH(tree_map_type& t, f->tree) {
     if(tree.count(t.first)) {
       // use the tree in this as default
-      shared_ptr<RTree> dftree(tree[t.first]->deep_copy());
+      shared_ptr<RTree> dftree = tree[t.first];
       tree[t.first] = t.second;
       t.second->insert_default(dftree);
     } else {
@@ -213,7 +233,7 @@ void SDFG::RForest::combine(list<shared_ptr<RForest> > branches) {
 std::set<string> SDFG::RForest::get_control(const string& target) const {
   std::set<string> rv;
   if(tree.count(target)) {
-    tree[target]->get_control(rv);
+    tree.find(target)->second->get_control(rv);
   }
   return rv;
 }
@@ -221,7 +241,7 @@ std::set<string> SDFG::RForest::get_control(const string& target) const {
 std::set<string> SDFG::RForest::get_data(const string& target) const {
   std::set<string> rv;
   if(tree.count(target)) {
-    tree[target]->get_data(rv);
+    tree.find(target)->second->get_data(rv);
   }
   return rv;
 }
@@ -240,7 +260,7 @@ void SDFG::RForest::write(std::ostream& os) const {
     subtree.append_attribute("id") = i++;
     subtree.append_attribute("name") = t.first.c_str();
     subtree.append_attribute("type") = "unknown";
-    t.second->write(xgraph, subtree, i);
+    if(t.second) t.second->write(xgraph, subtree, i);
   }
 
   sdfg_file.save(os);
