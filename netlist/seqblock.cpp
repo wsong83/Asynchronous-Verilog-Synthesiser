@@ -255,6 +255,7 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
   shared_ptr<SDFG::RForest> rf(new SDFG::RForest());
   Block::scan_vars(rf, false);
   std::set<string> cset;        // to store all control signals
+  //rf->write(std::cout);
 
   BOOST_FOREACH(SDFG::RForest::tree_map_type& t, rf->tree) {
     std::set<string> csig = rf->get_control(t.first);

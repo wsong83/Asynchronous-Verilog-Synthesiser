@@ -52,7 +52,7 @@ namespace SDFG {
       RT_CTL                 = 0x00004  // control
     } type;
 
-    std::list<boost::shared_ptr<RTree> > child; // child nodes
+    std::set<boost::shared_ptr<RTree> > child; // child nodes
     std::set<std::string> sig;  // signals in this node
     
     // constructor

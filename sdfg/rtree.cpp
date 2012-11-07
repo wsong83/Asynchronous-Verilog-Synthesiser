@@ -49,9 +49,9 @@ RTree* SDFG::RTree::deep_copy() const {
   rv->sig = sig;
   BOOST_FOREACH(const shared_ptr<RTree>& m, child) {
     if(m)
-      rv->child.push_back(shared_ptr<RTree>(m->deep_copy()));
+      rv->child.insert(shared_ptr<RTree>(m->deep_copy()));
     else          // possible self-loop
-      rv->child.push_back(shared_ptr<RTree>());
+      rv->child.insert(shared_ptr<RTree>());
   }
   return rv;
 }
@@ -61,7 +61,7 @@ void SDFG::RTree::build(shared_ptr<RForest> rexp) {
     sig = rexp->tree["@CTL"]->sig;
     type = RT_CTL;
     if(rexp->tree["@DATA"])
-      child.push_back(shared_ptr<RTree>(rexp->tree["@DATA"]->deep_copy()));
+      child.insert(shared_ptr<RTree>(rexp->tree["@DATA"]->deep_copy()));
   } else {
     if(rexp->tree["@DATA"])
       sig = rexp->tree["@DATA"]->sig;
@@ -70,15 +70,19 @@ void SDFG::RTree::build(shared_ptr<RForest> rexp) {
 }
 
 void SDFG::RTree::insert_default(shared_ptr<RTree> t) {
-  BOOST_FOREACH(shared_ptr<RTree> c, child) {
+  std::set<shared_ptr<RTree> > mchild = child;
+  BOOST_FOREACH(shared_ptr<RTree> c, mchild) {
     if(c) c->insert_default(t);
-    else  c.reset(t->deep_copy());
+    else  {
+      child.erase(c);
+      child.insert(shared_ptr<RTree>(t->deep_copy()));
+    }
   }
 }
 
 void SDFG::RTree::append(shared_ptr<RTree> leaf) {
   if(child.empty()) {
-    child.push_back(shared_ptr<RTree>(leaf->deep_copy()));
+    child.insert(shared_ptr<RTree>(leaf->deep_copy()));
   } else {
     BOOST_FOREACH(shared_ptr<RTree> c, child) {
       c->append(leaf);
@@ -222,9 +226,9 @@ void SDFG::RForest::combine(list<shared_ptr<RForest> > branches) {
     tree[t] = shared_ptr<RTree>(ctree->deep_copy());
     BOOST_FOREACH(shared_ptr<RForest> f, branches) {
       if(f->tree.count(t)) {
-        tree[t]->child.push_back(shared_ptr<RTree>(f->tree[t]->deep_copy()));
+        tree[t]->child.insert(shared_ptr<RTree>(f->tree[t]->deep_copy()));
       } else {
-        tree[t]->child.push_back(shared_ptr<RTree>()); // empty shared_ptr to represent self loop
+        tree[t]->child.insert(shared_ptr<RTree>()); // empty shared_ptr to represent self loop
       }
     }
   }
