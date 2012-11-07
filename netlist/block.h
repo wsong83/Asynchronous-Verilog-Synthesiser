@@ -148,7 +148,6 @@ namespace netlist {
     NETLIST_ELABORATE_DECL;
     using NetComp::gen_sdfg;
     NETLIST_SCAN_VARS;
-    NETLIST_GEN_SDFG;
     NETLIST_REPLACE_VARIABLE;
 
     // data

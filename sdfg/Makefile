@@ -27,12 +27,15 @@
 INCDIRS = -I./ -I../ -I$(OGDF_PATH)
 
 # actions
-all: sdfg.o sdfg_avs.o
+all: sdfg.o sdfg_avs.o rtree.o
 
 sdfg.o: sdfg.cpp sdfg.hpp
 	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
 
 sdfg_avs.o: sdfg_avs.cpp sdfg.hpp
+	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
+
+rtree.o: rtree.cpp rtree.hpp sdfg.hpp
 	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
 
 .PHONY: clean

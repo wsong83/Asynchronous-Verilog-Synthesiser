@@ -29,6 +29,7 @@
 #include "component.h"
 #include "shell/env.h"
 #include <boost/foreach.hpp>
+#include "sdfg/rtree.hpp"
 #include "sdfg/sdfg.hpp"
 
 using namespace netlist;
@@ -308,10 +309,7 @@ bool netlist::Instance::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
 
 }
 
-void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G, 
-                                 const std::set<string>&,
-                                 const std::set<string>&,
-                                 const std::set<string>&) {
+void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
 
   // find out the node
   shared_ptr<dfgNode> node = G->get_node(name.name);
@@ -322,7 +320,16 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G,
       switch(m->type) {
       case PortConn::CEXP: {    // expression
         shared_ptr<dfgNode> exp_node = G->add_node(UniName::uni_name(), dfgNode::SDFG_COMB);
-        m->exp->gen_sdfg_node(G, exp_node);
+        shared_ptr<SDFG::RForest> rf(new SDFG::RForest());
+        m->exp->scan_vars(rf, false);
+        if(rf->tree.count("@CTL"))
+          BOOST_FOREACH(const string& s, rf->tree["@CTL"]->sig) {
+            G->add_edge(s, SDFG::dfgEdge::SDFG_CTL, s, exp_node->name);
+          }
+        if(rf->tree.count("@DATA"))
+          BOOST_FOREACH(const string& s, rf->tree["@DATA"]->sig) {
+            G->add_edge(s, SDFG::dfgEdge::SDFG_DP, s, exp_node->name);
+          }
         G->add_edge(exp_node->name, dfgEdge::SDFG_DF, exp_node->name, node->name);
         node->add_port_sig(m->pname.name + "_P", exp_node->name);
         break;
