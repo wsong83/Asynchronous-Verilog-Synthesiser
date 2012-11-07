@@ -525,6 +525,8 @@ void netlist::Module::init_port_list(const list<shared_ptr<Port> >& port_list) {
       else {
         db_var.insert(pp->name, shared_ptr<Variable>(new Variable(pp->loc, pp->name, Variable::TWire)));
       }
+      if(pp->is_signed())
+        db_var.find(pp->name)->set_signed();
     }
   }
 }

@@ -62,6 +62,7 @@ namespace netlist {
     void set_reg() { vtype = TReg; }
     void set_para() { vtype = TParam; }
     void set_genvar() { vtype = TGenvar; }
+    void set_signed() { signed_flag = true; }
     vtype_t get_vtype() const { return vtype; }
     bool update();  /* recalculate the value and update all fanouts, true when it is reduced to a number */
     bool is_valuable() const {  return exp ? exp->is_valuable() : false; }
@@ -81,6 +82,8 @@ namespace netlist {
     bool driver_and_load_checker() const;
 
     unsigned int uid;
+    
+    bool signed_flag;
   };
 
   NETLIST_STREAMOUT(Variable);
