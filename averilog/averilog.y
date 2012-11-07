@@ -892,17 +892,10 @@ list_of_net_assignments
 always_construct 
     : "always" '@' '(' '*' ')' statement
     { 
-      $$.reset(new SeqBlock(@$, *$6));
-      std::set<string> targets, csrc;
-      $$->scan_vars(targets, csrc, csrc, false);
-      bool sensitive = false;
-      BOOST_FOREACH(const string& v, csrc) {
-        if(!$$->db_var.count(VIdentifier(v))) {
-          $$->slist_level.push_back(shared_ptr<Expression>(new Expression(VIdentifier(v))));
-          sensitive = true;
-        }
-      }
-      $$->sensitive = sensitive;
+      list<pair<int, shared_ptr<Expression> > > slist;
+      VIdentifier wild("*");
+      slist.push_back(pair<int, shared_ptr<Expression> >(0, shared_ptr<Expression>(new Expression(wild))));
+      $$.reset(new SeqBlock(@$, slist, $6));
     }
     | "always" '@' '(' event_expressions ')' statement_or_null
     { 
@@ -910,16 +903,10 @@ always_construct
     }
     | "always" '@' '*' statement 
     { 
-      $$.reset(new SeqBlock(@$, *$4)); 
-      std::set<string> targets, csrc;
-      $$->scan_vars(targets, csrc, csrc, false);
-      bool sensitive = false;
-      BOOST_FOREACH(const string& v, csrc) {
-        if(!$$->db_var.count(VIdentifier(v))) {
-          $$->slist_level.push_back(shared_ptr<Expression>(new Expression(VIdentifier(v))));
-        }
-      }
-      $$->sensitive = sensitive;
+      list<pair<int, shared_ptr<Expression> > > slist;
+      VIdentifier wild("*");
+      slist.push_back(pair<int, shared_ptr<Expression> >(0, shared_ptr<Expression>(new Expression(wild))));
+      $$.reset(new SeqBlock(@$, slist, $4));
     }
     | "always" statement
     { 

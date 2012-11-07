@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <set>
 #include <boost/foreach.hpp>
+#include "sdfg/rtree.hpp"
 #include "sdfg/sdfg.hpp"
 
 using namespace netlist;
@@ -139,31 +140,8 @@ bool netlist::CaseItem::elaborate(std::set<shared_ptr<NetComp> >& to_del,
   return true;
 }
 
-void netlist::CaseItem::scan_vars(std::set<string>& target,
-                                  std::set<string>& dsrc,
-                                  std::set<string>& csrc,
-                                  bool ctl) const {
-  body->scan_vars(target, dsrc, csrc, ctl);
-}
-
-void netlist::CaseItem::gen_sdfg(shared_ptr<SDFG::dfgGraph> G, 
-                                 const std::set<string>& target,
-                                 const std::set<string>&,
-                                 const std::set<string>&) {
-  std::set<string> t, d, c;     // local version
-  scan_vars(t, d, c, false);
-  
-  // for all targets not in t, there is a self-loop
-  if(t.size() < target.size()) { // self loop
-    BOOST_FOREACH(const string& m, target) {
-      if(!t.count(m)) {         // the signal to have self-loop
-        if(!G->exist(m, m, SDFG::dfgEdge::SDFG_DP)) 
-          G->add_edge(m, SDFG::dfgEdge::SDFG_DP, m, m);
-      }
-    }
-  }
-  
-  body->gen_sdfg(G, t, d, c);
+void netlist::CaseItem::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
+  body->scan_vars(rf, ctl);
 }
 
 void netlist::CaseItem::replace_variable(const VIdentifier& var, const Number& num) {
@@ -292,40 +270,16 @@ bool netlist::CaseState::elaborate(std::set<shared_ptr<NetComp> >& to_del,
 
 } 
 
-void netlist::CaseState::scan_vars(std::set<string>& target,
-                                   std::set<string>& dsrc,
-                                   std::set<string>& csrc,
-                                   bool ctl) const {
-  exp->scan_vars(csrc, csrc, csrc, true);
+void netlist::CaseState::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
+  shared_ptr<SDFG::RForest> exprf(new SDFG::RForest());
+  exp->scan_vars(exprf, true);
+  list<shared_ptr<SDFG::RForest> > branches;
   BOOST_FOREACH(const shared_ptr<CaseItem>& m, cases) {
-    m->scan_vars(target, dsrc, csrc, ctl);
+    shared_ptr<SDFG::RForest> mrf(new SDFG::RForest());
+    m->scan_vars(mrf, ctl);
+    branches.push_back(mrf);
   }
-  
-}
-
-void netlist::CaseState::gen_sdfg(shared_ptr<SDFG::dfgGraph> G, 
-                              const std::set<string>& target,
-                              const std::set<string>&,
-                              const std::set<string>&) {
-  
-  std::set<string> t, d, c;     // local version
-  scan_vars(t, d, c, false);
-  
-  // add control signals
-  BOOST_FOREACH(const string& m, target) {
-    BOOST_FOREACH(const string& csig, c) {
-      if(!G->exist(csig, m, SDFG::dfgEdge::SDFG_CTL))
-        G->add_edge(csig, SDFG::dfgEdge::SDFG_CTL, csig, m);
-    }
-  }
-
-  // the case items
-  BOOST_FOREACH(shared_ptr<CaseItem>& m, cases) {
-    m->gen_sdfg(G, t, d, c);
-  }
-
-  // check whether there is a default
-  // do not do it now
+  rf->add(exprf, branches);
 }
 
 void netlist::CaseState::replace_variable(const VIdentifier& var, const Number& num) {

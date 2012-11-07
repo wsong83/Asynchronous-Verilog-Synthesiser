@@ -27,6 +27,7 @@
  */
 
 #include "component.h"
+#include "sdfg/rtree.hpp"
 #include <boost/foreach.hpp>
 
 using namespace netlist;
@@ -274,12 +275,9 @@ void netlist::RangeArrayCommon::set_width(const unsigned int& w, const Range& r)
   //width = w;  // RangeArrayCommon does not have a width member as it is a shared base class
 }
 
-void netlist::RangeArrayCommon::scan_vars(std::set<string>& target,
-                                          std::set<string>& dsrc,
-                                          std::set<string>& csrc,
-                                          bool ctl) const {
+void netlist::RangeArrayCommon::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
   BOOST_FOREACH(const shared_ptr<Range> m, child) {
-    m->scan_vars(target, dsrc, csrc, ctl);
+    m->scan_vars(rf, ctl);
   }
 }
 

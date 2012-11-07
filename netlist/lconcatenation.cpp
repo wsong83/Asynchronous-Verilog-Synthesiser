@@ -27,6 +27,7 @@
  */
 
 #include "component.h"
+#include "sdfg/rtree.hpp"
 #include <algorithm>
 #include <boost/foreach.hpp>
 
@@ -124,12 +125,17 @@ void netlist::LConcatenation::db_expunge() {
   BOOST_FOREACH(VIdentifier& m, data) m.db_expunge();
 }
 
-void netlist::LConcatenation::scan_vars(std::set<string>& target,
-                                        std::set<string>&,
-                                        std::set<string>& control,
-                                        bool ctl) const {
+void netlist::LConcatenation::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
   BOOST_FOREACH(const VIdentifier& m, data) {
-    m.scan_vars(target, target, control, ctl);
+    shared_ptr<SDFG::RForest> mrf(new SDFG::RForest());
+    m.scan_vars(mrf, ctl);
+    if(mrf->tree.count("@CTL")) {
+      shared_ptr<SDFG::RTree> mc(new SDFG::RTree(SDFG::RTree::RT_CTL));
+      mc->sig = mrf->tree["@CTL"]->sig;
+      rf->tree[m.name] = mc;
+    } else {
+      rf->tree[m.name] = shared_ptr<SDFG::RTree>();
+    }
   }
 }
 

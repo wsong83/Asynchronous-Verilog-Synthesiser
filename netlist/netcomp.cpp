@@ -116,15 +116,12 @@ void netlist::NetComp::set_width(const unsigned int&) {
   assert(0 == "set_width() of NetComp is used");
 }
 
-void netlist::NetComp::gen_sdfg(shared_ptr<SDFG::dfgGraph>,
-                                const std::set<string>&,
-                                const std::set<string>&,
-                                const std::set<string>&) {
+void netlist::NetComp::gen_sdfg(shared_ptr<SDFG::dfgGraph>) {
   std::cerr << "ERROR!!, the gen_sdfg() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << endl;
   assert(0 == "gen_sdfg() of NetComp is used");
 } 
 
-void netlist::NetComp::scan_vars(std::set<string>&, std::set<string>&, std::set<string>&, bool) const {
+void netlist::NetComp::scan_vars(boost::shared_ptr<SDFG::RForest>, bool) const {
   std::cerr << "ERROR!!, the scan_vars() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << endl;
   assert(0 == "scan_vars() of NetComp is used");
 }

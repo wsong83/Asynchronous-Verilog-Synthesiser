@@ -29,6 +29,7 @@
 #include "component.h"
 #include "shell/env.h"
 #include "sdfg/sdfg.hpp"
+#include "sdfg/rtree.hpp"
 #include <boost/foreach.hpp>
 
 using namespace netlist;
@@ -92,13 +93,30 @@ bool netlist::Assign::elaborate(std::set<shared_ptr<NetComp> >&,
   return true;
 }
 
+void netlist::Assign::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
+  shared_ptr<SDFG::RForest> rf(new SDFG::RForest());
+  scan_vars(rf, false);
+  
+  BOOST_FOREACH(SDFG::RForest::tree_map_type& t, rf->tree) {
+    std::set<string> csig = rf->get_control(t.first);
+    std::set<string> dsig = rf->get_data(t.first);
+    BOOST_FOREACH(const string& s, csig) {
+      G->add_edge(s, SDFG::dfgEdge::SDFG_CTL, s, t.first);
+    }
+    BOOST_FOREACH(const string& s, dsig) {
+      G->add_edge(s, SDFG::dfgEdge::SDFG_DP, s, t.first);
+    }
+  }  
+}
 
-void netlist::Assign::scan_vars(std::set<string>& target,
-                                std::set<string>& dsrc,
-                                std::set<string>& csrc,
-                                bool ctl) const {
-  lval->scan_vars(target, dsrc, csrc, ctl);
-  rexp->scan_vars(target, dsrc, csrc, ctl);
+void netlist::Assign::scan_vars(shared_ptr<SDFG::RForest> rf, bool) const {
+  shared_ptr<SDFG::RForest> lrf(new SDFG::RForest());
+  shared_ptr<SDFG::RForest> rrf(new SDFG::RForest());
+  lval->scan_vars(lrf, false);
+  rexp->scan_vars(rrf, false);
+  shared_ptr<SDFG::RForest> crf(new SDFG::RForest());
+  crf->build(lrf, rrf);
+  rf->add(crf);
 }
 
 Assign* netlist::Assign::deep_copy() const {
@@ -111,26 +129,6 @@ Assign* netlist::Assign::deep_copy() const {
   rv->named = named;
   rv->continuous = continuous;
   return rv;
-}
-
-void netlist::Assign::gen_sdfg(shared_ptr<SDFG::dfgGraph> G, 
-                               const std::set<string>&,
-                               const std::set<string>&,
-                               const std::set<string>&) {
-  std::set<string> t, d, c;     // local version
-  scan_vars(t, d, c, false);
-
-  BOOST_FOREACH(const string& m, t) {
-    BOOST_FOREACH(const string& sig, d) {
-      if(!G->exist(sig, m, SDFG::dfgEdge::SDFG_DP)) 
-        G->add_edge(sig, SDFG::dfgEdge::SDFG_DP, sig, m);
-    }
-    
-    BOOST_FOREACH(const string& sig, c) {
-      if(!G->exist(sig, m, SDFG::dfgEdge::SDFG_CTL)) 
-        G->add_edge(sig, SDFG::dfgEdge::SDFG_CTL, sig, m);
-    }
-  }
 }
 
 void netlist::Assign::replace_variable(const VIdentifier& var, const Number& num) {
