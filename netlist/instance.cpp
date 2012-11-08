@@ -45,6 +45,15 @@ using std::pair;
 using shell::location;
 
 
+netlist::Instance::Instance()
+  : NetComp(tInstance), type(unknown_inst), named(false) {}
+
+netlist::Instance::Instance(const IIdentifier& nm, const list<shared_ptr<PortConn> >& polist)
+  : NetComp(tInstance), name(nm), port_list(polist), type(unknown_inst), named(true) { }
+
+netlist::Instance::Instance(const shell::location& lloc, const IIdentifier& nm, const list<shared_ptr<PortConn> >& polist)
+  : NetComp(tInstance, lloc), name(nm), port_list(polist), type(unknown_inst), named(true) { }
+
 netlist::Instance::Instance(const IIdentifier& nm, const list<shared_ptr<PortConn> >& polist, type_t itype)
   : NetComp(tInstance), name(nm), port_list(polist), type(itype), named(true) {
   switch(itype) {
@@ -62,8 +71,7 @@ netlist::Instance::Instance(const IIdentifier& nm, const list<shared_ptr<PortCon
   }
 }
 
-netlist::Instance::Instance(
-                            const location& lloc,
+netlist::Instance::Instance(const location& lloc,
                             const IIdentifier& nm, 
                             const list<shared_ptr<PortConn> >& polist, 
                             type_t itype
@@ -121,8 +129,7 @@ netlist::Instance::Instance(const list<shared_ptr<PortConn> >& polist, type_t it
   }
 }
 
-netlist::Instance::Instance(
-                            const location& lloc, 
+netlist::Instance::Instance(const location& lloc, 
                             const list<shared_ptr<PortConn> >& polist, 
                             type_t itype
                             )
@@ -241,39 +248,52 @@ void netlist::Instance::db_expunge() {
 }
 
 bool netlist::Instance::update_ports() {
-  // find the module
-  shared_ptr<Module> modp = G_ENV->find_module(mname);
-  if(modp.use_count() == 0) {
-    G_ENV->error(loc, "ELAB-INST-0", mname.name);
-    return false;
-  }
-
-  // update port directions
-  list<shared_ptr<PortConn> >::iterator it, end;
-  for(it=port_list.begin(), end=port_list.end(); it!=end; it++) {
-    shared_ptr<Port> portp = modp->find_port((*it)->pname);
-    if(portp.use_count() == 0) {
-      G_ENV->error(loc, "ELAB-INST-1", (*it)->pname.name, mname.name);
+  switch(type) {
+  case prim_in_inst:
+  case prim_out_inst: break;    // already set in initialisation
+  case unknown_inst:
+  case modu_inst: {
+    // find the module
+    shared_ptr<Module> modp = G_ENV->find_module(mname);
+    if(modp.use_count() == 0) {
+      G_ENV->error(loc, "ELAB-INST-0", mname.name);
       return false;
+      // in the future, should check for cell library for library cells
     } else {
-      (*it)->set_dir(portp->get_dir());
+      type = modu_inst;
     }
-  }
-
-  // connect unnamed parameters if they are unnamed
-  if(!para_list.empty() && !para_list.front()->is_named()) {
-    assert(para_list.size() == modp->db_param.size());
-    list<shared_ptr<ParaConn> >::iterator pit, pend;
-    list<pair<const VIdentifier, shared_ptr<Variable> > >::iterator mit, mend;
-    pit = para_list.begin(); 
-    pend = para_list.end(); 
-    mit = modp->db_param.begin_order();
-    mend = modp->db_param.end_order();
-    for(; pit != pend; ++pit, ++mit) {
-      (*pit)->pname = mit->second->name;
+    
+    // update port directions
+    list<shared_ptr<PortConn> >::iterator it, end;
+    for(it=port_list.begin(), end=port_list.end(); it!=end; it++) {
+      shared_ptr<Port> portp = modp->find_port((*it)->pname);
+      if(portp.use_count() == 0) {
+        G_ENV->error(loc, "ELAB-INST-1", (*it)->pname.name, mname.name);
+        return false;
+      } else {
+        (*it)->set_dir(portp->get_dir());
+      }
     }
+    
+    // connect unnamed parameters if they are unnamed
+    if(!para_list.empty() && !para_list.front()->is_named()) {
+      assert(para_list.size() == modp->db_param.size());
+      list<shared_ptr<ParaConn> >::iterator pit, pend;
+      list<pair<const VIdentifier, shared_ptr<Variable> > >::iterator mit, mend;
+      pit = para_list.begin(); 
+      pend = para_list.end(); 
+      mit = modp->db_param.begin_order();
+      mend = modp->db_param.end_order();
+      for(; pit != pend; ++pit, ++mit) {
+        (*pit)->pname = mit->second->name;
+      }
+    }
+    break;
   }
-
+  case gate_inst:
+  default:;
+  }
+  
   return true;
 }
 
@@ -288,34 +308,36 @@ bool netlist::Instance::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
                                   std::map<MIdentifier, boost::shared_ptr<Module> > & mmap) {
   bool rv = true;
 
-  // find the module in library
-  shared_ptr<Module> tarModule = G_ENV->find_module(mname);
-  if(tarModule.use_count() == 0) {
-    G_ENV->error(loc,"ELAB-INST-0", mname.name);
-    return false;
-  }
-
-  // calculate the new name
-  string newName;
-  rv &= tarModule->calculate_name(newName, para_list);
-  if(!rv) {
-    G_ENV->error(loc, "ELAB-INST-2", mname.name);
-    return false;
-  }
-  
-  // update the module name
-  set_mname(newName);
-
-  // check the new name in module map
-  if(!mmap.count(newName)) {
-    // if not elaborated yet, add it to the map and the module queue
-    shared_ptr<Module> newModule(tarModule->deep_copy());
-    mfifo.push_back(newModule);
-    mmap[newName] = newModule;
+  if(type == modu_inst) {
+    // find the module in library
+    shared_ptr<Module> tarModule = G_ENV->find_module(mname);
+    if(tarModule.use_count() == 0) {
+      G_ENV->error(loc,"ELAB-INST-0", mname.name);
+      return false;
+    }
     
-    // set up the parameters
-    BOOST_FOREACH(shared_ptr<ParaConn> p, para_list) {
-      newModule->db_param.find(p->pname)->set_value(p->num);
+    // calculate the new name
+    string newName;
+    rv &= tarModule->calculate_name(newName, para_list);
+    if(!rv) {
+      G_ENV->error(loc, "ELAB-INST-2", mname.name);
+      return false;
+    }
+    
+    // update the module name
+    set_mname(newName);
+    
+    // check the new name in module map
+    if(!mmap.count(newName)) {
+      // if not elaborated yet, add it to the map and the module queue
+      shared_ptr<Module> newModule(tarModule->deep_copy());
+      mfifo.push_back(newModule);
+      mmap[newName] = newModule;
+      
+      // set up the parameters
+      BOOST_FOREACH(shared_ptr<ParaConn> p, para_list) {
+        newModule->db_param.find(p->pname)->set_value(p->num);
+      }
     }
   }
 
@@ -330,7 +352,7 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
   // find out the node
   shared_ptr<dfgNode> node = G->get_node(name.name);
   assert(node);
-
+  
   BOOST_FOREACH(shared_ptr<PortConn> m, port_list) {
     if(m->get_dir() <= 0) {     // input
       switch(m->type) {
@@ -379,7 +401,7 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
         assert(0 == "port type wrong, output cannot be expression or number.");
       }
     }
-  }
+  }       
 }
 
 void netlist::Instance::replace_variable(const VIdentifier& var, const Number& num) {
@@ -389,4 +411,8 @@ void netlist::Instance::replace_variable(const VIdentifier& var, const Number& n
   BOOST_FOREACH(shared_ptr<ParaConn> pc, para_list) {
     pc->replace_variable(var, num);
   }
+}
+
+void netlist::Instance::set_mname(const MIdentifier& mod_name) {
+  mname = mod_name;
 }

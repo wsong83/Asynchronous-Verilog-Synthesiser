@@ -117,6 +117,7 @@ void SDFG::dfgNode::graphic_init() {
     case SDFG_COMB:    bbox = pair<double, double>(40.0, 25.0); break;
     case SDFG_FF:      bbox = pair<double, double>(20.0, 20.0); break;
     case SDFG_MODULE:  bbox = pair<double, double>(60.0, 35.0); break;
+    case SDFG_GATE:    bbox = pair<double, double>(35.0, 35.0); break;
     case SDFG_IPORT:   bbox = pair<double, double>(20.0, 20.0); break;
     case SDFG_OPORT:   bbox = pair<double, double>(20.0, 20.0); break;
     case SDFG_PORT:    bbox = pair<double, double>(30.0, 30.0); break;
@@ -132,6 +133,7 @@ void SDFG::dfgNode::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<dfg
   case SDFG_FF:      stype = "ff";      break;
   case SDFG_LATCH:   stype = "latch";   break;
   case SDFG_MODULE:  stype = "module";  break;
+  case SDFG_GATE:    stype = "gate";    break;
   case SDFG_IPORT:   stype = "iport";   break;
   case SDFG_OPORT:   stype = "oport";   break;
   case SDFG_PORT:    stype = "port";    break;
@@ -172,11 +174,12 @@ void SDFG::dfgNode::write(void *pnode, ogdf::GraphAttributes *pga) {
 
 
 bool SDFG::dfgNode::read(const pugi::xml_node& xnode) {
-  if(1 == 0) {
+  if(0 == 0) {
     show_hash("combi");         // 0x3dfb7169
     show_hash("ff");            // 0x00003366
     show_hash("latch");         // 0xcc3d31e8
     show_hash("module");        // 0xfc9d7666
+    show_hash("gate");          // 0x
     show_hash("iport");         // 0x9e1bf974
     show_hash("oport");         // 0xfe1bf974
     show_hash("port");          // 0x0e1bf974

@@ -492,13 +492,18 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
   // put all modules into the graph
   for_each(db_instance.begin(), db_instance.end(),
            [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
-             shared_ptr<dfgNode> n = G->add_node(m.first.name, dfgNode::SDFG_MODULE);
-             n->ptr = m.second;
-             shared_ptr<Module> subMod = G_ENV->find_module(m.second->mname);
-             if(subMod) { // has sub-module
-               n->child_name = m.second->mname.name;
-               n->child = subMod->extract_sdfg(quiet);
-               n->child->father = n.get();
+             if(m->type == Instance::modu_inst) {
+               shared_ptr<dfgNode> n = G->add_node(m.first.name, dfgNode::SDFG_MODULE);
+               n->ptr = m.second;
+               shared_ptr<Module> subMod = G_ENV->find_module(m.second->mname);
+               if(subMod) { // has sub-module
+                 n->child_name = m.second->mname.name;
+                 n->child = subMod->extract_sdfg(quiet);
+                 n->child->father = n.get();
+               }
+             } else {           // gate
+               shared_ptr<dfgNode> n = G->add_node(m.first.name, dfgNode::SDFG_GATE);
+               n->ptr = m.second;
              }
            });
 

@@ -85,9 +85,10 @@ namespace SDFG {
       SDFG_FF             = 0x00020, // flip-flop
       SDFG_LATCH          = 0x00040, // latch ?!
       SDFG_MODULE         = 0x00080, // module entity
-      SDFG_IPORT          = 0x00500, // input port
-      SDFG_OPORT          = 0x00600, // output port
-      SDFG_PORT           = 0x00400  // all ports
+      SDFG_GATE           = 0x00080, // gate
+      SDFG_IPORT          = 0x00a00, // input port
+      SDFG_OPORT          = 0x00c00, // output port
+      SDFG_PORT           = 0x00800  // all ports
     } type;
 
     // only available in register graph
