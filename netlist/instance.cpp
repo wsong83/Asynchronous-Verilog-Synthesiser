@@ -241,12 +241,14 @@ void netlist::Instance::db_expunge() {
 }
 
 bool netlist::Instance::update_ports() {
+  // find the module
   shared_ptr<Module> modp = G_ENV->find_module(mname);
   if(modp.use_count() == 0) {
     G_ENV->error(loc, "ELAB-INST-0", mname.name);
     return false;
   }
 
+  // update port directions
   list<shared_ptr<PortConn> >::iterator it, end;
   for(it=port_list.begin(), end=port_list.end(); it!=end; it++) {
     shared_ptr<Port> portp = modp->find_port((*it)->pname);
@@ -255,6 +257,20 @@ bool netlist::Instance::update_ports() {
       return false;
     } else {
       (*it)->set_dir(portp->get_dir());
+    }
+  }
+
+  // connect unnamed parameters if they are unnamed
+  if(!para_list.empty() && !para_list.front()->is_named()) {
+    assert(para_list.size() == modp->db_param.size());
+    list<shared_ptr<ParaConn> >::iterator pit, pend;
+    list<pair<const VIdentifier, shared_ptr<Variable> > >::iterator mit, mend;
+    pit = para_list.begin(); 
+    pend = para_list.end(); 
+    mit = modp->db_param.begin_order();
+    mend = modp->db_param.end_order();
+    for(; pit != pend; ++pit, ++mit) {
+      (*pit)->pname = mit->second->name;
     }
   }
 
@@ -322,14 +338,16 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
         shared_ptr<dfgNode> exp_node = G->add_node(UniName::uni_name(), dfgNode::SDFG_COMB);
         shared_ptr<SDFG::RForest> rf(new SDFG::RForest());
         m->exp->scan_vars(rf, false);
-        if(rf->tree.count("@CTL"))
+        if(rf->tree.count("@CTL")) {
           BOOST_FOREACH(const string& s, rf->tree["@CTL"]->sig) {
             G->add_edge(s, SDFG::dfgEdge::SDFG_CTL, s, exp_node->name);
           }
-        if(rf->tree.count("@DATA"))
+        }
+        if(rf->tree.count("@DATA")) {
           BOOST_FOREACH(const string& s, rf->tree["@DATA"]->sig) {
             G->add_edge(s, SDFG::dfgEdge::SDFG_DP, s, exp_node->name);
           }
+        }
         G->add_edge(exp_node->name, dfgEdge::SDFG_DF, exp_node->name, node->name);
         node->add_port_sig(m->pname.name + "_P", exp_node->name);
         break;

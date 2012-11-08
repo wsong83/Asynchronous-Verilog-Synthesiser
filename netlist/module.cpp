@@ -352,6 +352,7 @@ bool netlist::Module::elaborate(std::deque<shared_ptr<Module> >& mfifo,
 
   // before register all variable, update the port direction of all instance
   // as it will affect the direction of wires
+  // also connect unnamed parameteres before db_register
   for_each(db_instance.begin(), db_instance.end(), [&](pair<const IIdentifier, shared_ptr<Instance> >& m) {
       rv &= m.second->update_ports();
     });
