@@ -85,9 +85,10 @@ namespace SDFG {
       SDFG_FF             = 0x00020, // flip-flop
       SDFG_LATCH          = 0x00040, // latch ?!
       SDFG_MODULE         = 0x00080, // module entity
-      SDFG_IPORT          = 0x00500, // input port
-      SDFG_OPORT          = 0x00600, // output port
-      SDFG_PORT           = 0x00400  // all ports
+      SDFG_GATE           = 0x00100, // gate
+      SDFG_IPORT          = 0x00a00, // input port
+      SDFG_OPORT          = 0x00c00, // output port
+      SDFG_PORT           = 0x00800  // all ports
     } type;
 
     // only available in register graph
@@ -114,9 +115,6 @@ namespace SDFG {
     std::pair<double, double> position; // graphic position
     std::pair<double, double> bbox;     // bounding box
     void graphic_init();                // set initial graphic info.
-
-    void simplify(std::set<boost::shared_ptr<dfgNode> >&, bool); // remove unused nodes
-    void path_deduction(std::set<boost::shared_ptr<dfgNode> >&, bool); // deduce the type of paths
 
   private:
     void out_path_type_update(std::list<boost::shared_ptr<dfgPath> >&,
@@ -298,12 +296,8 @@ namespace SDFG {
     bool read(ogdf::Graph* const, ogdf::GraphAttributes* const);
 
     // analyse functions
-    void simplify(bool); // remove unused node and edges, call this one when it is the top
-    void simplify(std::set<boost::shared_ptr<dfgNode> >&, bool); // remove unused node and edges
-    void path_deduction(bool); // deduce the type of paths, call this one when it is the top
-    void path_deduction(std::set<boost::shared_ptr<dfgNode> >&, bool); // deduce the type of paths
     boost::shared_ptr<dfgGraph> get_reg_graph() const; // extract a register only graph from the DFG
-    std::list<std::list<boost::shared_ptr<dfgNode> > > get_fsm_groups() const; // extract fsms from regg and dfg
+    std::list<std::list<boost::shared_ptr<dfgNode> > > get_fsm_groups(bool) const; // extract fsms from regg and dfg
 
     // other
     std::string get_full_name() const;

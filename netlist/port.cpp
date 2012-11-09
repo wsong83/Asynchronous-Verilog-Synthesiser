@@ -40,13 +40,13 @@ using std::map;
 using std::list;
 
 netlist::Port::Port(const VIdentifier& pid)
-  : NetComp(tPort), name(*(pid.deep_copy())), ptype(0), dir(-2) {}
+  : NetComp(tPort), name(*(pid.deep_copy())), ptype(0), dir(-2), signed_flag(false) {}
 
 netlist::Port::Port(const location& lloc, const VIdentifier& pid)
-  : NetComp(tPort, lloc), name(*(pid.deep_copy())), ptype(0), dir(-2) {}
+  : NetComp(tPort, lloc), name(*(pid.deep_copy())), ptype(0), dir(-2), signed_flag(false) {}
 
 netlist::Port::Port(const location& lloc)
-  : NetComp(tPort, lloc), ptype(0), dir(-2) {}
+  : NetComp(tPort, lloc), ptype(0), dir(-2), signed_flag(false) {}
 
 void netlist::Port::set_father(Block *pf) {
   if(father == pf) return;
@@ -90,10 +90,10 @@ ostream& netlist::Port::streamout(ostream& os, unsigned int indent) const {
   else
     os << "UNKOWN_port ";
 
+  if(signed_flag) os << "signed ";
   name.get_range().RangeArrayCommon::streamout(os, 0, "", true, false); // show range of declaration 
   name.get_range().RangeArrayCommon::streamout(os, 1, name.name, true, true); // show dimension of declaration
   os << ";" << endl;
 
   return os;
-
 }

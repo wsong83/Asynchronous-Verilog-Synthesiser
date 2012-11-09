@@ -50,6 +50,8 @@ namespace netlist {
     void set_out() { dir = 1; }
     void set_inout() { dir = 0; }
     void set_dir(int mdir) { dir = mdir; }
+    void set_signed() { signed_flag = true; }
+    bool is_signed() const { return signed_flag; }
     int get_dir() const { return dir;}
     bool is_in() const { return dir == -1; }
     bool is_out() const { return dir == 1; }
@@ -59,6 +61,7 @@ namespace netlist {
     int ptype;                  /* 0, unknown/wire; 1 reg */
   private:
     int dir;                    /* -1 in, 0 inout, 1 out, -2 default */
+    bool signed_flag;
   };
   NETLIST_STREAMOUT(Port);
 
