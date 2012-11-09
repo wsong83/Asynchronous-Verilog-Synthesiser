@@ -492,7 +492,7 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
   // put all modules into the graph
   for_each(db_instance.begin(), db_instance.end(),
            [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
-             if(m->type == Instance::modu_inst) {
+             if(m.second->type == Instance::modu_inst) {
                shared_ptr<dfgNode> n = G->add_node(m.first.name, dfgNode::SDFG_MODULE);
                n->ptr = m.second;
                shared_ptr<Module> subMod = G_ENV->find_module(m.second->mname);

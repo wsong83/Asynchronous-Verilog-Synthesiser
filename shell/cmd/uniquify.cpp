@@ -165,65 +165,67 @@ bool shell::CMD::CMDUniquify::exec(const std::string& str, Env * pEnv) {
     process_module_list.pop_front();
     for_each(cur_modu->db_instance.begin(), cur_modu->db_instance.end(),
              [&](std::pair<const netlist::IIdentifier, shared_ptr<netlist::Instance> >& m) {
-               //std::cout << m.second->mname << endl;
-               shared_ptr<netlist::Module> pm = gEnv.find_module(m.second->mname);
-               if(existed_module_set.count(m.second->mname) || arg.bForce) { // existed or forced
-                 if(!pm) { // black box
-                   if(arg.bBBox) { // rename even it is a black box
+               if(m.second->type == netlist::Instance::modu_inst) {
+                 //std::cout << m.second->mname << endl;
+                 shared_ptr<netlist::Module> pm = gEnv.find_module(m.second->mname);
+                 if(existed_module_set.count(m.second->mname) || arg.bForce) { // existed or forced
+                   if(!pm) { // black box
+                     if(arg.bBBox) { // rename even it is a black box
+                       // get a new name
+                       if(!mname_map.count(m.second->mname))
+                         mname_map[m.second->mname] = m.second->mname;
+                       while(true) {
+                         ++mname_map[m.second->mname];
+                         if(gEnv.find_module(mname_map[m.second->mname]))
+                           continue;
+                         else
+                           break;
+                       }
+                       
+                       // report
+                       if(!arg.bQuiet) {
+                         gEnv.stdOs << "rename module \"" 
+                                    << m.second->mname 
+                                    << "\" to \"" 
+                                    << mname_map[m.second->mname].name
+                                    << "\"." << endl;
+                       }
+                       
+                       // rename
+                       m.second->set_mname(mname_map[m.second->mname]);      // update the name in the instance
+                     }
+                     
+                     existed_module_set.insert(m.second->mname);
+                   } else {     // normal module
+                     shared_ptr<netlist::Module> new_pm(pm->deep_copy()); // make a duplicate
                      // get a new name
-                     if(!mname_map.count(m.second->mname))
-                       mname_map[m.second->mname] = m.second->mname;
+                     if(!mname_map.count(pm->name))
+                       mname_map[pm->name] = pm->name;
                      while(true) {
-                       ++mname_map[m.second->mname];
-                       if(gEnv.find_module(mname_map[m.second->mname]))
+                       ++mname_map[pm->name];
+                       if(gEnv.find_module(mname_map[pm->name]))
                          continue;
                        else
                          break;
                      }
                      
-                     // report
                      if(!arg.bQuiet) {
                        gEnv.stdOs << "rename module \"" 
-                                  << m.second->mname 
+                                  << new_pm->name.name 
                                   << "\" to \"" 
-                                  << mname_map[m.second->mname].name
+                                  << mname_map[pm->name].name
                                   << "\"." << endl;
                      }
-                     
-                     // rename
-                     m.second->set_mname(mname_map[m.second->mname]);      // update the name in the instance
+                     new_pm->set_name(mname_map[pm->name]);  // set a new name
+                     gEnv.curLib->insert(new_pm);            // store it in current library
+                     m.second->set_mname(new_pm->name);      // update the name in the instance
+                     process_module_list.push_back(new_pm->name);
+                     existed_module_set.insert(new_pm->name);
                    }
-                   
+                 } else {
+                   process_module_list.push_back(m.second->mname);
                    existed_module_set.insert(m.second->mname);
-                 } else {     // normal module
-                   shared_ptr<netlist::Module> new_pm(pm->deep_copy()); // make a duplicate
-                   // get a new name
-                   if(!mname_map.count(pm->name))
-                     mname_map[pm->name] = pm->name;
-                   while(true) {
-                     ++mname_map[pm->name];
-                     if(gEnv.find_module(mname_map[pm->name]))
-                       continue;
-                     else
-                       break;
-                   }
-                   
-                   if(!arg.bQuiet) {
-                     gEnv.stdOs << "rename module \"" 
-                                << new_pm->name.name 
-                                << "\" to \"" 
-                                << mname_map[pm->name].name
-                                << "\"." << endl;
-                   }
-                   new_pm->set_name(mname_map[pm->name]);  // set a new name
-                   gEnv.curLib->insert(new_pm);            // store it in current library
-                   m.second->set_mname(new_pm->name);      // update the name in the instance
-                   process_module_list.push_back(new_pm->name);
-                   existed_module_set.insert(new_pm->name);
                  }
-               } else {
-                 process_module_list.push_back(m.second->mname);
-                 existed_module_set.insert(m.second->mname);
                }
              });
   }

@@ -408,7 +408,10 @@ void netlist::VIdentifier::db_register(int iod) {
       // define the variable in the lowest block as a wire
       mvar.reset(new Variable(*this, Variable::TWire));
       //mvar->name.db_expunge();  // why do I need to expunge it?
-      father->db_var.insert(mvar->name, mvar);
+      bool rv = father->db_var.insert(mvar->name, mvar);
+      assert(rv);
+      mvar->set_father(father);
+      mvar->db_register(1);
     }
   } else {
     mvar = pvar;
