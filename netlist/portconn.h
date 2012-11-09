@@ -90,6 +90,7 @@ namespace netlist {
     NETLIST_REPLACE_VARIABLE;
     virtual PortConn* deep_copy() const;
     NETLIST_DB_DECL;
+    NETLIST_ELABORATE_DECL;
     NETLIST_STREAMOUT_DECL;
 
     // date
@@ -124,6 +125,7 @@ namespace netlist {
     NETLIST_REPLACE_VARIABLE;
     virtual ParaConn* deep_copy() const;
     NETLIST_DB_DECL;
+    NETLIST_ELABORATE_DECL;
     NETLIST_STREAMOUT_DECL;
     
     // data

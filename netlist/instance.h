@@ -34,20 +34,9 @@ namespace netlist {
   public:
     enum type_t { unknown_inst, modu_inst, prim_in_inst, prim_out_inst, gate_inst};
  
-    Instance()
-      : NetComp(tInstance), type(unknown_inst), named(false) {}
-
-    Instance(const IIdentifier& nm, const std::list<boost::shared_ptr<PortConn> >& polist)
-      : NetComp(tInstance), name(nm), port_list(polist), type(unknown_inst), named(true) { }
-
-    Instance(
-            const shell::location& lloc, 
-            const IIdentifier& nm, 
-            const std::list<boost::shared_ptr<PortConn> >& polist
-            )
-      : NetComp(tInstance, lloc), name(nm), port_list(polist), 
-      type(unknown_inst), named(true) { }
-
+    Instance();
+    Instance(const IIdentifier&, const std::list<boost::shared_ptr<PortConn> >&);
+    Instance(const shell::location&, const IIdentifier&, const std::list<boost::shared_ptr<PortConn> >&);
     // for primary gates in most cases
     Instance(const IIdentifier&, const std::list<boost::shared_ptr<PortConn> >&, type_t);
     Instance(const shell::location&, const IIdentifier&, const std::list<boost::shared_ptr<PortConn> >&, type_t);
@@ -67,7 +56,7 @@ namespace netlist {
     NETLIST_REPLACE_VARIABLE;
 
     // helpers
-    void set_mname(const MIdentifier& mod_name) { mname = mod_name; }
+    void set_mname(const MIdentifier&);
     void set_name(const IIdentifier& nm) { name = nm; named=true; }
     void set_default_name(const IIdentifier& nm) {name = nm; }
     //void set_module_ptr(const boost::shared_ptr<Module>& mp) { module_ptr = mp;}

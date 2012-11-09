@@ -173,7 +173,7 @@
 %token kRepeat         "repeat"       /* not supported yet */
 %token kScalared       "scalared"     /* not supported yet */
 %token kShowcancelled  "showcancelled" /* not supported yet */
-%token kSigned         "signed"       /* not supported yet */
+%token kSigned         "signed"
 %token kSmall          "small"        /* not supported yet */
 %token kSpecify        "specify"      /* not supported yet */
 %token kSpecparam      "specparam"    /* not supported yet */
@@ -194,7 +194,7 @@
 %token kWand           "wand"         /* not supported yet */
 %token kWeak0          "weak0"        /* not supported yet */
 %token kWeak1          "weak1"        /* not supported yet */
-%token kWhile          "while"        /* not supported yet */
+%token kWhile          "while" 
 %token kWire           "wire"
 %token kWor            "wor"          /* not supported yet */
 
@@ -414,6 +414,21 @@ input_declaration
         $$.push_back(it);
       }
     }  
+    | "input" "signed" '[' expression ':' expression ']' list_of_port_identifiers
+    {      
+      bool undired = true;
+      BOOST_FOREACH(shared_ptr<Port> it, $8) {
+        if(undired && it->get_dir() == -2) {
+          it->set_in();
+          pair<shared_ptr<Expression>, shared_ptr<Expression> > m($4, $6);
+          it->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@3+@7, m)));
+        } else {
+          undired = false;
+        }
+        it->set_signed();
+        $$.push_back(it);
+      }
+    }  
     ;
 
 output_declaration 
@@ -440,6 +455,21 @@ output_declaration
         } else {
           undired = false;
         }
+        $$.push_back(it);
+      }
+    }  
+    | "output" "signed" '[' expression ':' expression ']' list_of_port_identifiers
+    {
+      bool undired = true;
+      BOOST_FOREACH(shared_ptr<Port> it, $8) {
+        if(undired && it->get_dir() == -2) {
+          it->set_out();
+          pair<shared_ptr<Expression>, shared_ptr<Expression> > m($4, $6);
+          it->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@3+@7,m)));
+        } else {
+          undired = false;
+        }
+        it->set_signed();
         $$.push_back(it);
       }
     }  
@@ -471,6 +501,22 @@ output_declaration
         $$.push_back(it);
       }
     }  
+    | "output" "reg" "signed" '[' expression ':' expression ']' list_of_port_identifiers
+    {
+      bool undired = true;
+      BOOST_FOREACH(shared_ptr<Port> it, $9) {
+        if(undired && it->get_dir() == -2) {
+          it->set_out();
+          it->ptype = 1;          /* reg */
+          pair<shared_ptr<Expression>, shared_ptr<Expression> > m($5, $7);
+          it->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@4+@8,m)));
+        } else {
+          undired = false;
+        }
+        it->set_signed();
+        $$.push_back(it);
+      }
+    }  
     ;
 
 // A.2.1.3 Type declarations
@@ -499,6 +545,20 @@ variable_declaration
         $$.back()->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@2+@6, m)));
       }
     }
+    | "wire" "signed" '[' expression ':' expression ']' list_of_variable_identifiers
+    {
+      list<pair<VIdentifier, shared_ptr<Expression> > >::iterator it, end;
+      for(it=$8.begin(), end=$8.end(); it!=end; it++){
+        $$.push_back(shared_ptr<Variable>(new Variable(it->first.loc, 
+                                                       it->first, it->second, Variable::TWire)));
+        $$.back()->name.get_range() = $$.back()->name.get_select();
+        $$.back()->name.get_select().clear();
+        $$.back()->name.get_range().set_dim();
+        pair<shared_ptr<Expression>, shared_ptr<Expression> > m($4, $6);
+        $$.back()->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@3+@7, m)));
+        $$.back()->set_signed();
+      }
+    }
     | "reg" list_of_variable_identifiers 
     {
       list<pair<VIdentifier, shared_ptr<Expression> > >::iterator it, end;
@@ -522,6 +582,21 @@ variable_declaration
         $$.back()->name.get_range().set_dim();
         pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
         $$.back()->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@2+@6, m)));
+      }
+    }
+    | "reg" "signed" '[' expression ':' expression ']' list_of_variable_identifiers
+    {
+      list<pair<VIdentifier, shared_ptr<Expression> > >::iterator it, end;
+      for(it=$8.begin(), end=$8.end(); it!=end; it++){
+        $$.push_back(shared_ptr<Variable>(new Variable(it->first.loc, 
+                                                       it->first, it->second, Variable::TReg)));
+        $$.back()->name.get_range() = $$.back()->name.get_select();
+        $$.back()->name.get_select().clear();
+        vector<shared_ptr<Range> >::iterator rg_it, rg_end;
+        $$.back()->name.get_range().set_dim();
+        pair<shared_ptr<Expression>, shared_ptr<Expression> > m($4, $6);
+        $$.back()->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@3+@7, m)));
+        $$.back()->set_signed();
       }
     }
     | "genvar" list_of_variable_identifiers
@@ -892,17 +967,10 @@ list_of_net_assignments
 always_construct 
     : "always" '@' '(' '*' ')' statement
     { 
-      $$.reset(new SeqBlock(@$, *$6));
-      std::set<string> targets, csrc;
-      $$->scan_vars(targets, csrc, csrc, false);
-      bool sensitive = false;
-      BOOST_FOREACH(const string& v, csrc) {
-        if(!$$->db_var.count(VIdentifier(v))) {
-          $$->slist_level.push_back(shared_ptr<Expression>(new Expression(VIdentifier(v))));
-          sensitive = true;
-        }
-      }
-      $$->sensitive = sensitive;
+      list<pair<int, shared_ptr<Expression> > > slist;
+      VIdentifier wild("*");
+      slist.push_back(pair<int, shared_ptr<Expression> >(0, shared_ptr<Expression>(new Expression(wild))));
+      $$.reset(new SeqBlock(@$, slist, $6));
     }
     | "always" '@' '(' event_expressions ')' statement_or_null
     { 
@@ -910,16 +978,10 @@ always_construct
     }
     | "always" '@' '*' statement 
     { 
-      $$.reset(new SeqBlock(@$, *$4)); 
-      std::set<string> targets, csrc;
-      $$->scan_vars(targets, csrc, csrc, false);
-      bool sensitive = false;
-      BOOST_FOREACH(const string& v, csrc) {
-        if(!$$->db_var.count(VIdentifier(v))) {
-          $$->slist_level.push_back(shared_ptr<Expression>(new Expression(VIdentifier(v))));
-        }
-      }
-      $$->sensitive = sensitive;
+      list<pair<int, shared_ptr<Expression> > > slist;
+      VIdentifier wild("*");
+      slist.push_back(pair<int, shared_ptr<Expression> >(0, shared_ptr<Expression>(new Expression(wild))));
+      $$.reset(new SeqBlock(@$, slist, $4));
     }
     | "always" statement
     { 

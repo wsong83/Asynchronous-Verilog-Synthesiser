@@ -30,6 +30,7 @@
 #define AV_H_AV_NETCOMP_
 
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/tuple/tuple.hpp>
 #include "shell/location.h"
 #include <set>
 
@@ -38,6 +39,7 @@ namespace SDFG {
   class dfgNode;
   class dfgEdge;
   class dfgGraph;
+  class RForest;
 }
 
 // function macro for stream out operator <<
@@ -88,18 +90,12 @@ namespace SDFG {
 
 #ifndef NETLIST_GEN_SDFG
 #define NETLIST_GEN_SDFG                                   \
-  virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>, \
-                        const std::set<std::string>&,      \
-                        const std::set<std::string>&,      \
-                        const std::set<std::string>&); 
+  virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>); 
 #endif
 
 #ifndef NETLIST_SCAN_VARS
 #define NETLIST_SCAN_VARS                          \
-  virtual void scan_vars(std::set<std::string>&,   \
-                         std::set<std::string>&,   \
-                         std::set<std::string>&,   \
-                         bool) const;
+  virtual void scan_vars(boost::shared_ptr<SDFG::RForest>, bool) const;
 #endif
 
 #ifndef NETLIST_REPLACE_VARIABLE
@@ -143,9 +139,8 @@ namespace netlist{
                            std::map<boost::shared_ptr<NetComp>, std::list<boost::shared_ptr<NetComp> > >&);
     virtual unsigned int get_width();
     virtual void set_width(const unsigned int&);
-    virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>, const std::set<std::string>&,
-                          const std::set<std::string>&, const std::set<std::string>&);
-    virtual void scan_vars(std::set<std::string>&, std::set<std::string>&, std::set<std::string>&, bool) const; 
+    virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>);
+    virtual void scan_vars(boost::shared_ptr<SDFG::RForest>, bool) const; 
     boost::shared_ptr<NetComp> get_sp();
 
   protected:

@@ -27,6 +27,7 @@
  */
 
 #include "component.h"
+#include "sdfg/rtree.hpp"
 
 using namespace netlist;
 using std::ostream;
@@ -786,19 +787,16 @@ void netlist::Range::set_width(const unsigned int& w, const Range& r) {
   width = w;
 }
 
-void netlist::Range::scan_vars(std::set<string>& target,
-                               std::set<string>& dsrc,
-                               std::set<string>& csrc,
-                               bool ctl) const {
+void netlist::Range::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
   if(rtype == TR_Var)
-    v->scan_vars(target, dsrc, csrc, ctl);
+    v->scan_vars(rf, ctl);
   
   if(rtype == TR_Range) {
-    r.first->scan_vars(target, dsrc, csrc, ctl);
-    r.second->scan_vars(target, dsrc, csrc, ctl);
+    r.first->scan_vars(rf, ctl);
+    r.second->scan_vars(rf, ctl);
   }
 
-  RangeArrayCommon::scan_vars(target, dsrc, csrc, ctl);
+  RangeArrayCommon::scan_vars(rf, ctl);
     
 }
 

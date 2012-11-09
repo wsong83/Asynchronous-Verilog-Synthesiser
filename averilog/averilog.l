@@ -108,6 +108,7 @@ operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
 "parameter" { return token::kParameter; }
 "posedge"   { return token::kPosedge; }
 "reg"       { return token::kReg;   }
+"signed"    { return token::kSigned;}
 "while"     { return token::kWhile; }
 "wire"      { return token::kWire;  }
 "and"       { return token::pAnd;   }

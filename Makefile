@@ -36,10 +36,10 @@ export OGDF_PATH = $(PWD)/../OGDF
 
 ifeq ($(TARGET),RELEASE)
 	export OGDF_LIB = $(OGDF_PATH)/_release/libOGDF.a
-	export CXXFLAGS = -std=c++0x -Wall -Wextra -o2
+	export CXXFLAGS = -std=c++0x -Wall -Wextra -o2 -DNDEBUG
 else
 	export OGDF_LIB = $(OGDF_PATH)/_debug/libOGDF.a
-	export CXXFLAGS = -std=c++0x -Wall -Wextra -g
+	export CXXFLAGS = -std=c++0x -Wall -Wextra -g3
 endif
 
 export LINKFLAGS = -lboost_regex -lgmpxx -lgmp -lboost_system -lboost_filesystem -lboost_program_options -ltcl -lboost_graph -lpthread $(OGDF_LIB)

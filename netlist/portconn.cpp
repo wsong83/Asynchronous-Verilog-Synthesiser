@@ -30,6 +30,9 @@
 
 using namespace netlist;
 using boost::shared_ptr;
+using std::list;
+using std::pair;
+using std::map;
 
 
 netlist::PortConn::PortConn(const shared_ptr<Expression>& exp, int dir_m)
@@ -148,6 +151,36 @@ void netlist::PortConn::db_expunge() {
   }
 }
 
+bool netlist::PortConn::elaborate(std::set<shared_ptr<NetComp> >&,
+                                  map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > >&) {
+  switch(type) {
+  case CEXP: {
+    exp->reduce();
+    if(exp->is_valuable()) {
+      type = CNUM;
+      num = exp->get_value();
+      exp.reset();
+    } else if(exp->is_variable()) {
+      type = CVAR;
+      var = exp->get_variable();
+      exp.reset();
+    }
+    break;
+  }
+  case CVAR: {
+    var.reduce();
+    if(var.is_valuable()) {
+      type = CNUM;
+      num = var.get_value();
+      var.db_expunge();
+    }
+    break;
+  }
+  default: ;
+  }
+  return true;
+}
+
 std::ostream& netlist::PortConn::streamout (std::ostream& os, unsigned int) const {
   if(named) os << "." << pname.name << "(";
   switch(type) {
@@ -233,6 +266,36 @@ void netlist::ParaConn::db_expunge() {
   }
 }
 
+bool netlist::ParaConn::elaborate(std::set<shared_ptr<NetComp> >&,
+                                  map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > >&) {
+  switch(type) {
+  case CEXP: {
+    exp->reduce();
+    if(exp->is_valuable()) {
+      type = CNUM;
+      num = exp->get_value();
+      exp.reset();
+    } else if(exp->is_variable()) {
+      type = CVAR;
+      var = exp->get_variable();
+      exp.reset();
+    }
+    break;
+  }
+  case CVAR: {
+    var.reduce();
+    if(var.is_valuable()) {
+      type = CNUM;
+      num = var.get_value();
+      var.db_expunge();
+    }
+    break;
+  }
+  default: ;
+  }
+  return true;
+}
+
 void netlist::ParaConn::replace_variable(const VIdentifier& v, const Number& n) {
   switch(type) {
   case CEXP:
@@ -262,5 +325,3 @@ std::ostream& netlist::ParaConn::streamout (std::ostream& os, unsigned int) cons
   if(named) os << ")";
   return os;
 }
-
-

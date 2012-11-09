@@ -27,6 +27,7 @@
  */
 
 #include "component.h"
+#include "sdfg/rtree.hpp"
 #include <algorithm>
 
 using namespace netlist;
@@ -235,11 +236,8 @@ void netlist::RangeArray::set_width(const unsigned int& w, const RangeArray& r) 
   }
 }
 
-void netlist::RangeArray::scan_vars(std::set<string>& target,
-                                    std::set<string>& dsrc,
-                                    std::set<string>& csrc,
-                                    bool ctl) const {
-  RangeArrayCommon::scan_vars(target, dsrc, csrc, ctl);
+void netlist::RangeArray::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
+  RangeArrayCommon::scan_vars(rf, ctl);
 }
 
 void netlist::RangeArray::replace_variable(const VIdentifier& var, const Number& num) {

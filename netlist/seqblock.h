@@ -48,6 +48,7 @@ namespace netlist{
     
     // helpers
     virtual std::ostream& streamout(std::ostream&, unsigned int, bool) const;
+    virtual void elab_inparse(); /* resolve the content in statements during parsing */
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
@@ -55,7 +56,7 @@ namespace netlist{
     using Block::set_father;
     virtual SeqBlock* deep_copy() const;
     NETLIST_DB_DECL;
-    NETLIST_ELABORATE_DECL;
+    NETLIST_SCAN_VARS;
     NETLIST_GEN_SDFG;
     NETLIST_REPLACE_VARIABLE;
     

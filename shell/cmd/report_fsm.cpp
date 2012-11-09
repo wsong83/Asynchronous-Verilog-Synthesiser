@@ -55,10 +55,12 @@ namespace {
 
   struct Argument {
     bool bHelp;                 // show help information
+    bool bVerbose;              // show extra information
     std::string sDesign;        // target design
     
     Argument() : 
       bHelp(false),
+      bVerbose(false),
       sDesign("") {}
   };
 }
@@ -67,6 +69,7 @@ BOOST_FUSION_ADAPT_STRUCT
 (
  Argument,
  (bool, bHelp)
+ (bool, bVerbose)
  (std::string, sDesign)
  )
 
@@ -85,8 +88,9 @@ namespace {
       using namespace qi::labels;
 
       args = lit('-') >> 
-        ( (lit("help")   >> blanks)                         [at_c<0>(_r1) = true] ||
-          (lit("design") >> blanks >> identifier >> blanks) [at_c<1>(_r1) = _1]
+        ( (lit("help")    >> blanks)                        [at_c<0>(_r1) = true] ||
+          (lit("verbose") >> blanks)                        [at_c<1>(_r1) = true] ||
+          (lit("design") >> blanks >> identifier >> blanks) [at_c<2>(_r1) = _1]
           );
       
       start = *(args(_val));
@@ -110,6 +114,7 @@ void shell::CMD::CMDReportFSM::help(Env& gEnv) {
   gEnv.stdOs << "    report_fsm [options]" << endl;
   gEnv.stdOs << "Options:" << endl;
   gEnv.stdOs << "   -help                show this help information." << endl;
+  gEnv.stdOs << "   -verbose             show extra information." << endl;
   gEnv.stdOs << "   -design ID           design name if not the current design." << endl;
 }
 
@@ -160,7 +165,7 @@ bool shell::CMD::CMDReportFSM::exec ( const std::string& str, Env * pEnv){
   }
   
   // do the FSM extraction
-  list<list<shared_ptr<SDFG::dfgNode> > > fsmg = G->get_fsm_groups();
+  list<list<shared_ptr<SDFG::dfgNode> > > fsmg = G->get_fsm_groups(arg.bVerbose);
 
   unsigned int index = 0;
   BOOST_FOREACH(list<shared_ptr<SDFG::dfgNode> >& g, fsmg) {

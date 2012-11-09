@@ -43,8 +43,8 @@ namespace netlist {
     virtual Assign* deep_copy() const;
     NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
-    NETLIST_SCAN_VARS;
     NETLIST_GEN_SDFG;
+    NETLIST_SCAN_VARS;
     NETLIST_REPLACE_VARIABLE;
 
     // helpers

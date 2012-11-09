@@ -31,7 +31,7 @@
 #include "shell/env.h"
 #include <algorithm>
 #include <boost/foreach.hpp>
-#include "sdfg/sdfg.hpp"
+#include "sdfg/rtree.hpp"
 
 using namespace netlist;
 using std::ostream;
@@ -229,8 +229,34 @@ ostream& netlist::Block::streamout(ostream& os, unsigned int indent, bool fl_pre
 }
 
 void netlist::Block::elab_inparse() {
+  // step 1, handle embedded blocks
   std::set<shared_ptr<NetComp> > to_del;
+  map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add;
+  BOOST_FOREACH(shared_ptr<NetComp> st, statements) {
+    switch(st->get_type()) {
+    case tBlock: {
+      SP_CAST(m, Block, st);
+      if(!m->is_named()) {
+        m->elab_inparse();
+        to_add[m] = m->statements;
+        to_del.insert(m);
+      }
+      break;
+    }
+    default:;
+    }
+  }
 
+  typedef pair<const shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add_type;
+  BOOST_FOREACH(to_add_type m, to_add) {
+    statements.splice(std::find(statements.begin(), statements.end(), m.first), m.second);
+  }
+
+  BOOST_FOREACH(shared_ptr<NetComp> m, to_del) {
+    statements.erase(std::find(statements.begin(), statements.end(), m));
+  }
+  
+  // second step, do the classification
   BOOST_FOREACH(shared_ptr<NetComp> st, statements) {
     switch(st->get_type()) {
     case tVariable: {
@@ -357,7 +383,7 @@ bool netlist::Block::elaborate(std::set<shared_ptr<NetComp> >&,
       if(st->get_type() == tVariable) {
         SP_CAST(mvar, Variable, st);
         db_var.insert(mvar->name, mvar);
-      } else {
+      } else{
         statements.insert(it, st);
       }
     }
@@ -367,42 +393,24 @@ bool netlist::Block::elaborate(std::set<shared_ptr<NetComp> >&,
     statements.erase(std::find(statements.begin(), statements.end(), m));
   }
   
+  // instance
+  map<IIdentifier, shared_ptr<Instance> >::iterator iit, iend;
+  for(iit = db_instance.begin(), iend = db_instance.end(); iit!=iend; ++iit)
+    if(!iit->second->elaborate(to_del, to_add))
+      return false;
+
+  // re-classify staements
+  elab_inparse();
+  // block structure may be changed
+  set_father();
+
   return true;
 }
 
-void netlist::Block::scan_vars(std::set<string>& target,
-                               std::set<string>& dsrc,
-                               std::set<string>& csrc,
-                               bool ctl) const {
+void netlist::Block::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
   BOOST_FOREACH(const shared_ptr<NetComp>& m, statements) {
-    m->scan_vars(target, dsrc, csrc, ctl);
+    m->scan_vars(rf, ctl);
   }
-}
-
-void netlist::Block::gen_sdfg(shared_ptr<SDFG::dfgGraph> G, 
-                              const std::set<string>& target,
-                              const std::set<string>&,
-                              const std::set<string>&) {
-  assert(db_var.empty());
-  assert(db_instance.empty());
-
-  std::set<string> t, d, c;     // local version
-  scan_vars(t, d, c, false);
-  
-  // for all targets not in t, there is a self-loop
-  if(t.size() < target.size()) { // self loop
-    BOOST_FOREACH(const string& m, target) {
-      if(!t.count(m)) {         // the signal to have self-loop
-        if(!G->exist(m, m, SDFG::dfgEdge::SDFG_DP)) 
-          G->add_edge(m, SDFG::dfgEdge::SDFG_DP, m, m);
-      }
-    }
-  }
-
-  BOOST_FOREACH(shared_ptr<NetComp>& m, statements) {
-    m->gen_sdfg(G, t, d, c);
-  }
-
 }
 
 void netlist::Block::replace_variable(const VIdentifier& var, const Number& num) {

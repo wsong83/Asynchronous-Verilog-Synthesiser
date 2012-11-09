@@ -125,10 +125,6 @@ bool netlist::ForState::elaborate(std::set<shared_ptr<NetComp> >& to_del,
   VIdentifier& var = init->lval->front();
   Number num = init->rexp->get_value();
 
-  // get the place to insert
-  list<shared_ptr<NetComp> >::iterator ithis = std::find(father->statements.begin(), father->statements.end(), get_sp());
-  assert(ithis != father->statements.end());
-
   // unfold the for statement
   shared_ptr<Expression> m_cond(cond->deep_copy());
   m_cond->replace_variable(var, num);
@@ -141,7 +137,7 @@ bool netlist::ForState::elaborate(std::set<shared_ptr<NetComp> >& to_del,
   while(m_cond->get_value().is_true()) {
     shared_ptr<Block> m_blk(body->deep_copy());
     m_blk->replace_variable(var, num);
-    father->statements.insert(ithis, m_blk);
+    to_add[get_sp()].push_back(m_blk);
     m_blk->set_father(father);
     m_blk->db_register(1);
     m_blk->elaborate(to_del, to_add);
@@ -166,7 +162,10 @@ bool netlist::ForState::elaborate(std::set<shared_ptr<NetComp> >& to_del,
     m_cond->reduce();
   }
 
-return true;
+  // delete this
+  to_del.insert(get_sp());
+
+  return true;
 }
 
 void netlist::ForState::replace_variable(const VIdentifier& var, const Number& num) {

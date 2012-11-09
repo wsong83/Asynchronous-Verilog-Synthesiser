@@ -49,11 +49,12 @@ namespace netlist {
     // helpers
     bool is_valuable() const;    // check valuable
     Number get_value() const;    // fetch the value if valuable
+    bool is_variable() const;    // check whether is variable
+    VIdentifier get_variable() const; // father the variable
     bool is_singular() const;    // the expression is a number, concatenation, variable or function call
     Operation& get_op();             // get the private operation for read/write
     const Operation& get_op() const; // read the private operation
     void reduce();               // try to reduce the equation
-    virtual void gen_sdfg_node(boost::shared_ptr<SDFG::dfgGraph>, boost::shared_ptr<SDFG::dfgNode>);
     
     // develope the equation
     void append(Operation::operation_t);

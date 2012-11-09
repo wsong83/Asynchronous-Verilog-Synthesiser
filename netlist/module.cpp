@@ -352,6 +352,7 @@ bool netlist::Module::elaborate(std::deque<shared_ptr<Module> >& mfifo,
 
   // before register all variable, update the port direction of all instance
   // as it will affect the direction of wires
+  // also connect unnamed parameteres before db_register
   for_each(db_instance.begin(), db_instance.end(), [&](pair<const IIdentifier, shared_ptr<Instance> >& m) {
       rv &= m.second->update_ports();
     });
@@ -394,6 +395,13 @@ bool netlist::Module::elaborate(std::deque<shared_ptr<Module> >& mfifo,
     rv &= m->elaborate(to_del, to_add);
   if(!rv) return rv;
   
+  // elaborate the variables in instances
+  for_each(db_instance.begin(), db_instance.end(), 
+           [&](pair<const IIdentifier, shared_ptr<Instance> >& m) {
+             rv &= m.second->elaborate(to_del, to_add);
+           });
+  if(!rv) return rv;
+
   //std::cout << "after statements elaboration: " << std::endl << *this;
   
   // add called modules (instances) to the module queue in cmd/elaborate
@@ -484,23 +492,28 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
   // put all modules into the graph
   for_each(db_instance.begin(), db_instance.end(),
            [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
-             shared_ptr<dfgNode> n = G->add_node(m.first.name, dfgNode::SDFG_MODULE);
-             n->ptr = m.second;
-             shared_ptr<Module> subMod = G_ENV->find_module(m.second->mname);
-             if(subMod) { // has sub-module
-               n->child_name = m.second->mname.name;
-               n->child = subMod->extract_sdfg(quiet);
-               n->child->father = n.get();
+             if(m.second->type == Instance::modu_inst) {
+               shared_ptr<dfgNode> n = G->add_node(m.first.name, dfgNode::SDFG_MODULE);
+               n->ptr = m.second;
+               shared_ptr<Module> subMod = G_ENV->find_module(m.second->mname);
+               if(subMod) { // has sub-module
+                 n->child_name = m.second->mname.name;
+                 n->child = subMod->extract_sdfg(quiet);
+                 n->child->father = n.get();
+               }
+             } else {           // gate
+               shared_ptr<dfgNode> n = G->add_node(m.first.name, dfgNode::SDFG_GATE);
+               n->ptr = m.second;
              }
            });
 
   // now cope with internal structures
   BOOST_FOREACH(shared_ptr<NetComp>& m, statements) {
-    m->gen_sdfg(G, std::set<string>(), std::set<string>(), std::set<string>());
+    m->gen_sdfg(G);
   }
   for_each(db_instance.begin(), db_instance.end(),
            [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
-             m.second->gen_sdfg(G, std::set<string>(), std::set<string>(), std::set<string>());
+             m.second->gen_sdfg(G);
            });
 
   return G;
@@ -518,6 +531,8 @@ void netlist::Module::init_port_list(const list<shared_ptr<Port> >& port_list) {
       else {
         db_var.insert(pp->name, shared_ptr<Variable>(new Variable(pp->loc, pp->name, Variable::TWire)));
       }
+      if(pp->is_signed())
+        db_var.find(pp->name)->set_signed();
     }
   }
 }

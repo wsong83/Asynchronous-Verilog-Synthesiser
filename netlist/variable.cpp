@@ -45,16 +45,16 @@ using std::deque;
 
 
 netlist::Variable::Variable() 
-  : NetComp(tVariable), uid(0) {}
+  : NetComp(tVariable), uid(0), signed_flag(false) {}
 
 netlist::Variable::Variable(const shell::location& lloc) 
-  : NetComp(tVariable, lloc), uid(0) {}
+  : NetComp(tVariable, lloc), uid(0), signed_flag(false) {}
 
 netlist::Variable::Variable(const VIdentifier& id, vtype_t mtype)
-  : NetComp(tVariable), vtype(mtype), name(*(id.deep_copy())), uid(0) {}
+  : NetComp(tVariable), vtype(mtype), name(*(id.deep_copy())), uid(0), signed_flag(false) {}
 
 netlist::Variable::Variable(const Port& p)
-  : NetComp(tVariable, p.loc), vtype(TWire), uid(0) 
+  : NetComp(tVariable, p.loc), vtype(TWire), uid(0), signed_flag(false) 
 {
   VIdentifier *newName = p.name.deep_copy();
   name = *newName;
@@ -62,14 +62,14 @@ netlist::Variable::Variable(const Port& p)
 }
 
 netlist::Variable::Variable(const shell::location& lloc, const VIdentifier& id, vtype_t mtype)
-  : NetComp(tVariable, lloc), vtype(mtype), name(*(id.deep_copy())), uid(0) {}
+  : NetComp(tVariable, lloc), vtype(mtype), name(*(id.deep_copy())), uid(0), signed_flag(false) {}
 
 netlist::Variable::Variable(const VIdentifier& id, const shared_ptr<Expression>& expp, vtype_t mtype)
-  : NetComp(tVariable), vtype(mtype), name(*(id.deep_copy())), exp(expp), uid(0) {}
+  : NetComp(tVariable), vtype(mtype), name(*(id.deep_copy())), exp(expp), uid(0), signed_flag(false) {}
 
 netlist::Variable::Variable(const shell::location& lloc, const VIdentifier& id, 
                             const shared_ptr<Expression>& expp, vtype_t mtype)
-  : NetComp(tVariable, lloc), vtype(mtype), name(*(id.deep_copy())), exp(expp), uid(0) {}
+  : NetComp(tVariable, lloc), vtype(mtype), name(*(id.deep_copy())), exp(expp), uid(0), signed_flag(false) {}
 
 void netlist::Variable::set_value(const Number& num) {
   if(exp) exp->db_expunge();
@@ -126,6 +126,7 @@ ostream& netlist::Variable::streamout(ostream& os, unsigned int indent) const {
   case TGenvar: os << "genvar ";    break;
   default: assert(0 == "uninitialized variable!");
   }
+  if(signed_flag) os << "signed ";
   name.get_range().RangeArrayCommon::streamout(os, 0, "", true, false); // show range of declaration 
   name.get_range().RangeArrayCommon::streamout(os, 1, name.name, true, true); // show dimension of declaration
   if(exp) { os << " = " << *exp; }
@@ -183,7 +184,7 @@ Variable* netlist::Variable::deep_copy() const {
   Variable *rv = new Variable(loc, *newid, vtype);
   delete newid;
   if(exp) rv->exp.reset(exp->deep_copy());
-
+  rv->signed_flag = signed_flag;
   // every time a variable is deep copied, all fan-in and -out connections are lost and need to regenerated
  
   return rv;
