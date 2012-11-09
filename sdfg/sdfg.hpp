@@ -93,6 +93,7 @@ namespace SDFG {
 
     // only available in register graph
     std::list<boost::shared_ptr<dfgPath> > opath, ipath; // record all output/input paths to avoid recalculation
+    std::list<boost::shared_ptr<dfgPath> > opath_f, ipath_f; // record all output/input paths get from fast algorithm to avoid recalculation
 
 
     dfgNode(): pg(NULL), node_index(0), type(SDFG_DF), position(0,0), bbox(0,0) {}
@@ -111,6 +112,10 @@ namespace SDFG {
     void add_port_sig(const std::string&, const std::string&); // add a certain port connection
     std::list<boost::shared_ptr<dfgPath> >& get_out_paths(); // return all output paths from this register/port
     std::list<boost::shared_ptr<dfgPath> >& get_in_paths(); // return all input paths to this register/port
+    // return all output paths from this register/port, faster algorithm
+    std::list<boost::shared_ptr<dfgPath> >& get_out_paths_fast(); 
+    // return all input paths to this register/port, fast algorithm
+    std::list<boost::shared_ptr<dfgPath> >& get_in_paths(); 
 
     std::pair<double, double> position; // graphic position
     std::pair<double, double> bbox;     // bounding box

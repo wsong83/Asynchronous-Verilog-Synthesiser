@@ -83,6 +83,38 @@ list<shared_ptr<dfgPath> >& SDFG::dfgNode::get_out_paths() {
   return opath;
 }
 
+list<shared_ptr<dfgPath> >& SDFG::dfgNode::get_out_paths_fast() {
+  if(opath_f.empty()) {
+    shared_ptr<dfgPath> mp(new dfgPath());       // main path 
+    shared_ptr<dfgNode> pn = pg->get_node(id);   // this node
+
+    // cache
+    map<shared_ptr<dfgNode>, map<shared_ptr<dfgNode>, int > > rmap; // node relation map
+    
+    // initial operation
+    map<shared_ptr<sdfgNode>, int> tmap; // type map for next nodes
+    list<shared_ptr<dfgEdge> > oe_list = pg->get_out_edges_cb(id); // out edge list
+    BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
+      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e->id);
+      BOOST_FOREACH(shared_ptr<dfgNode> n, tar_list) {
+        if(tmap.count(n))
+          tmap[n] |= e->type;
+        else
+          tmap[n] = e->type;
+      }
+    }
+
+    // visit all out nodes
+    for_each(tmap.begin(), tmap.end(),
+             [&](pair<const shared_ptr<dfgNode>, int>& m) {
+               shared_ptr<dfgPath> p(new dfgPath(*mp));
+               p->push_back(pn, m.second);
+               m.first->out_path_type_update_fast(opath_f, p, rmap);
+             });
+  }
+  return opath_f;
+}
+
 list<shared_ptr<dfgPath> >& SDFG::dfgNode::get_in_paths() {
   if(ipath.empty()) {
     // return value and the main path
@@ -169,6 +201,37 @@ void SDFG::dfgNode::out_path_type_update(list<shared_ptr<dfgPath> >& rv, // retu
   if(rv.size() == rv_size) {         // this is a dead node
     dnode_set.insert(pn);
     rmap.erase(pn);
+  }
+
+}
+
+int SDFG::dfgNode::out_path_type_update(list<shared_ptr<dfgPath> >& rv, // return path group
+                                         shared_ptr<dfgPath>& cp, // current path
+                                         map<shared_ptr<dfgNode>, map<shared_ptr<dfgNode>, int > >& rmap) {
+  
+  // this node
+  shared_ptr<dfgNode> pn = pg->get_node(id);
+  
+  // check node type
+  if((pn->type & (SDFG_FF|SDFG_LATCH))         || // register
+     (pn->type & SDFG_PORT && !pn->pg->father)    // top-level output
+     ) {  // ending point
+    shared_ptr<dfgPath> mp(new dfgPath());
+    cp->tar = pn;
+    mp->src = cp->src;
+    mp->tar = pn;
+    mp->type = cp->type;
+    rv.push_back(mp);
+    rmap[cp->path.back().first][pn] = cp->path.back().second;
+    //std::cout << "    " << pn->get_hier_name()  << " : " << rv.size() << ":" << cp->path.size() << std::endl;
+    return;
+  }
+
+  // no loop assert
+  if(cp->node_set.count(pn)) {
+    cp->tar = pn;
+    G_ENV->error("SDFG-ANALYSE-0", toString(*cp));
+    return;
   }
 
 }
