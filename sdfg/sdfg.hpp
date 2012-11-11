@@ -135,6 +135,10 @@ namespace SDFG {
                                    boost::shared_ptr<dfgPath>&,
                                    std::map<boost::shared_ptr<dfgNode>, 
                                             std::map<boost::shared_ptr<dfgNode>, int> >&);
+    void in_path_type_update_fast(std::map<boost::shared_ptr<dfgNode>, int>&,
+                                  boost::shared_ptr<dfgPath>&,
+                                  std::map<boost::shared_ptr<dfgNode>, 
+                                           std::map<boost::shared_ptr<dfgNode>, int> >&);
   };
 
   class dfgEdge {
@@ -306,6 +310,7 @@ namespace SDFG {
     // analyse functions
     boost::shared_ptr<dfgGraph> get_reg_graph() const; // extract a register only graph from the DFG
     std::list<std::list<boost::shared_ptr<dfgNode> > > get_fsm_groups(bool) const; // extract fsms from regg and dfg
+    std::list<std::list<boost::shared_ptr<dfgNode> > > get_fsm_groups_fast(bool) const; // extract fsms from regg and dfg, the fast algorithm
 
     // other
     std::string get_full_name() const;
