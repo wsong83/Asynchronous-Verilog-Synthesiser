@@ -422,9 +422,7 @@ std::ostream& SDFG::dfgPath::streamout(std::ostream& os) const {
     }
 
     os << src->get_full_name() << "->" << tar->get_full_name() << " (" << stype << "): " << std::endl;
-    if(path.empty())
-      os << src->get_full_name() << " > ... > " << tar->get_full_name();
-    else {
+    if(!path.empty() && path.size() > 1) {
       BOOST_FOREACH(const path_type& m, path) {
         string stype;
         if(m.second == dfgEdge::SDFG_DF) stype = "DF";
@@ -442,8 +440,8 @@ std::ostream& SDFG::dfgPath::streamout(std::ostream& os) const {
         os << m.first->get_full_name() << "(" << stype << ")";
       }
       os << tar->get_full_name();
+      os << std::endl;
     }
-    os << std::endl;
   }
 
   return os;
