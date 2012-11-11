@@ -59,6 +59,7 @@ namespace {
     std::string sTarget;        // target node
     std::string sDesign;        // target design
     int nMax;                   // the maximal number of paths to be reported
+    bool bFast;                 // use fast algorithm
     std::string sOutput;        // output file name
     
     Argument() : 
@@ -67,6 +68,7 @@ namespace {
       sTarget(""),
       sDesign(""),
       nMax(-1),
+      bFast(false),
       sOutput("") {}
   };
 }
@@ -79,6 +81,7 @@ BOOST_FUSION_ADAPT_STRUCT
  (std::string, sTarget)
  (std::string, sDesign)
  (int, nMax)
+ (bool, bFast)
  (std::string, sOutput)
  )
 
@@ -102,7 +105,8 @@ namespace {
           (lit("to")     >> blanks >> identifier >> blanks) [at_c<2>(_r1) = _1]   ||
           (lit("design") >> blanks >> identifier >> blanks) [at_c<3>(_r1) = _1]   ||
           (lit("max")    >> blanks >> qi::uint_  >> blanks) [at_c<4>(_r1) = _1]   ||
-          (lit("output") >> blanks >> filename >> blanks)   [at_c<5>(_r1) = _1]
+          (lit("fast")   >> blanks)                         [at_c<5>(_r1) = true] ||
+          (lit("output") >> blanks >> filename >> blanks)   [at_c<6>(_r1) = _1]
           );
       
       start = +(args(_val));
@@ -131,6 +135,7 @@ void shell::CMD::CMDReportDFGPath::help(Env& gEnv) {
   gEnv.stdOs << "   -to ID               path ending points (FF/output)." << endl;
   gEnv.stdOs << "   -design ID           design name if not the current design." << endl;
   gEnv.stdOs << "   -max N               the maximal number of paths to be reported." << endl;
+  gEnv.stdOs << "   -fast                use the fast algorithm which ommitting intermediate nodes." << endl;
   gEnv.stdOs << "   -output file_name    specify an output file." << endl;
 }
 
@@ -226,7 +231,7 @@ bool shell::CMD::CMDReportDFGPath::exec ( const std::string& str, Env * pEnv){
 
   if(!sources.empty()) {
     BOOST_FOREACH(shared_ptr<SDFG::dfgNode> s, sources) {
-      list<shared_ptr<SDFG::dfgPath> >& mp = s->get_out_paths();
+      list<shared_ptr<SDFG::dfgPath> > mp = arg.bFast ? s->get_out_paths_fast() : s->get_out_paths();
       BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, mp) {
         if(targets.empty() || targets.count(p->tar)) {
            if(plist.size() < (arg.nMax < 0 ? 10 : arg.nMax))
@@ -239,7 +244,7 @@ bool shell::CMD::CMDReportDFGPath::exec ( const std::string& str, Env * pEnv){
     }
   } else {
     BOOST_FOREACH(shared_ptr<SDFG::dfgNode> t, targets) {
-      list<shared_ptr<SDFG::dfgPath> >& mp = t->get_in_paths();
+      list<shared_ptr<SDFG::dfgPath> > mp = arg.bFast ? t->get_in_paths_fast() : t->get_in_paths();
       BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, mp) {
         if(sources.empty() || sources.count(p->tar)) {
            if(plist.size() < (arg.nMax < 0 ? 10 : arg.nMax))
