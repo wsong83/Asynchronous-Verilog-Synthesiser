@@ -378,19 +378,13 @@ void SDFG::dfgPath::push_back(boost::shared_ptr<dfgNode> n, int et) {
   if(path.empty())
     src = n;
   path.push_back(path_type(n, et));
-  if((type & et) & dfgEdge::SDFG_DP)
-    type |= et;
-  else
-    type = et;
+  type = cal_type(type, et);
   node_set.insert(n);
 }
-
+  
 void SDFG::dfgPath::push_front(boost::shared_ptr<dfgNode> n, int et) {
   path.push_front(path_type(n, et));
-  if((type & et) & dfgEdge::SDFG_DP)
-    type |= et;
-  else if(type == 0)
-    type = et;
+  type = cal_type(et, type);
   node_set.insert(n);
   src = n;
 }
@@ -398,10 +392,7 @@ void SDFG::dfgPath::push_front(boost::shared_ptr<dfgNode> n, int et) {
 void SDFG::dfgPath::combine(boost::shared_ptr<dfgPath> p) {
   tar = p->tar;
   path.insert(path.end(), p->path.begin(), p->path.end());
-  if((type & p->type) & dfgEdge::SDFG_DP)
-    type |= p->type;
-  else
-    type = p->type;
+  type = cal_type(type, p->type);
 }
 
 std::ostream& SDFG::dfgPath::streamout(std::ostream& os) const {
@@ -445,6 +436,42 @@ std::ostream& SDFG::dfgPath::streamout(std::ostream& os) const {
   }
 
   return os;
+}
+ 
+int SDFG::dfgPath::cal_type(const int& t0, const int& t1) {
+  int tt = (t0 << 12 )| t1;
+  switch(tt) {
+  case 0x000000:   return 0x000;
+  case 0x000010:   return 0x010; // data
+  case 0x000080:   return 0x080; // control
+  case 0x000090:   return 0x090; // control/data
+  case 0x0000a0:   return 0x0a0; // clk
+  case 0x0000c0:   return 0x0c0; // rst
+  case 0x010000:   return 0x010; // data
+  case 0x010010:   return 0x010; // data
+  case 0x010080:   return 0x080; // control
+  case 0x010090:   return 0x090; // control/data
+  case 0x0100a0:   return 0x0a0; // clk
+  case 0x0100c0:   return 0x0c0; // rst
+  case 0x080000:   return 0x080; // control
+  case 0x080010:   return 0x080; // control
+  case 0x080080:   return 0x080; // control
+  case 0x080090:   return 0x080; // control
+  case 0x0800a0:   return 0x0a0; // clk
+  case 0x0800c0:   return 0x0c0; // rst
+  case 0x090000:   return 0x090; // control/data
+  case 0x090010:   return 0x090; // control/data
+  case 0x090080:   return 0x080; // control
+  case 0x090090:   return 0x090; // control/data
+  case 0x0900a0:   return 0x0a0; // clk
+  case 0x0900c0:   return 0x0c0; // rst
+  case 0x0a0000:   return 0x0a0; // clk
+  case 0x0c0000:   return 0x0c0; // rst
+  default:
+    std::cout << std::hex << tt << std::endl; 
+    assert(0 == "impossible type calculation");
+    return t1;
+  }
 }
 
 /////////////////////////////////////////////////////////////////////////////

@@ -148,7 +148,7 @@ namespace SDFG {
     std::string name;           // edge name
     edge_descriptor id;         // edge id
     enum edge_type_t {
-      SDFG_DF             = 0x00001, // default, unknown yet
+      SDFG_DF             = 0x00000, // default, unknown yet
       SDFG_DP             = 0x00010, // data path
       SDFG_CTL            = 0x00080, // control path
       SDFG_CLK            = 0x000a0, // clk
@@ -181,6 +181,7 @@ namespace SDFG {
     void push_back(boost::shared_ptr<dfgNode>, int);
     void push_front(boost::shared_ptr<dfgNode>, int);
     void combine(boost::shared_ptr<dfgPath>);
+    static int cal_type(const int&, const int&); // calculate the type
 
     // stream out
     std::ostream& streamout(std::ostream&) const;
