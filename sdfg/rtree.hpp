@@ -79,7 +79,7 @@ namespace SDFG {
     typedef std::pair<const std::string, boost::shared_ptr<RTree> > tree_map_type;
 
     // constructore
-    RForest(bool d_init = false);
+    //RForest(bool d_init = false);
 
     // helpers
     RForest * deep_copy() const;

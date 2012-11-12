@@ -156,13 +156,14 @@ void SDFG::RTree::write(pugi::xml_node& g, pugi::xml_node& father, unsigned int&
 /////////////////////////////////////////////////////////////////////////////
 /********        relation forest                                    ********/
 /////////////////////////////////////////////////////////////////////////////
-
+/*
 SDFG::RForest::RForest(bool d_init) {
   if(d_init) {
     tree["@CTL"] = shared_ptr<RTree>(new RTree(RTree::RT_CTL));
     tree["@DATA"] = shared_ptr<RTree>(new RTree(RTree::RT_DATA));
   }
 }
+*/
 
 RForest* SDFG::RForest::deep_copy() const {
   RForest* rv = new RForest();

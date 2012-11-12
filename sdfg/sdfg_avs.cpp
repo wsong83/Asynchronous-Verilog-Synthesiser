@@ -709,13 +709,13 @@ list<list<shared_ptr<dfgNode> > > SDFG::dfgGraph::get_fsm_groups_fast(bool verbo
   // report fakes, debug
   if(verbose) {
     BOOST_FOREACH(shared_ptr<dfgNode> n, fakes) {
-      std::cout << n->get_hier_name() << " is a fake FSM." << std::endl;
+      std::cout << n->get_full_name() << " is a fake FSM." << std::endl;
     }
   }
   
   // remove fake fsms
   BOOST_FOREACH(shared_ptr<dfgNode> n, ffsm) {
-    if(verbose) std::cout << n->get_hier_name() << " is a fake FSM." << std::endl;
+    if(verbose) std::cout << n->get_full_name() << " is a fake FSM." << std::endl;
     pfsm.erase(n);
   }
 
