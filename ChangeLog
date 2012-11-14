@@ -1,3 +1,7 @@
+##### Wed 14/11/2012
+* FSM extraction should be considered ready for now.
+  Start to think about state enumeration (state space exploration).
+
 ##### Wed 07/11/2012
 * Using relation tree to tell detailed signal dependence
 * However, range is not supported!

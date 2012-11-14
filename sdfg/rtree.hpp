@@ -64,10 +64,11 @@ namespace SDFG {
     
     // functions
     void build(boost::shared_ptr<RForest>);        // build up a relation tree using the forest of an expression
-    void insert_default(boost::shared_ptr<RTree>); // insert a default statement to all self loops
+    bool insert_default(boost::shared_ptr<RTree>); // insert a default statement to all self loops
     void append(boost::shared_ptr<RTree>);         // append a leaf to all control leaves
     void get_control(std::set<std::string>&) const; // get the control signals of a target
-    void get_data(std::set<std::string>&) const; // get the control signals of a target
+    void get_data(std::set<std::string>&) const;   // get the control signals of a target
+    void combine(boost::shared_ptr<RTree>, boost::shared_ptr<RTree>); // combine two trees 
 
     // debug I/O
     void write(pugi::xml_node&, pugi::xml_node&, unsigned int&) const;
