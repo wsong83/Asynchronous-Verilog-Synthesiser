@@ -69,15 +69,18 @@ void SDFG::RTree::build(shared_ptr<RForest> rexp) {
   }
 }
 
-void SDFG::RTree::insert_default(shared_ptr<RTree> t) {
+bool SDFG::RTree::insert_default(shared_ptr<RTree> t) {
+  bool inserted = false;
   std::set<shared_ptr<RTree> > mchild = child;
   BOOST_FOREACH(shared_ptr<RTree> c, mchild) {
-    if(c) c->insert_default(t);
+    if(c) inserted |= c->insert_default(t);
     else  {
       child.erase(c);
       child.insert(shared_ptr<RTree>(t->deep_copy()));
+      inserted = true;
     }
   }
+  return inserted;
 }
 
 void SDFG::RTree::append(shared_ptr<RTree> leaf) {
@@ -108,6 +111,50 @@ void SDFG::RTree::get_data(std::set<string>& sigset) const {
     BOOST_FOREACH(const shared_ptr<RTree>& t, child)
       if(t) t->get_data(sigset);
       else sigset.insert("");
+  }
+}
+
+void SDFG::RTree::combine(shared_ptr<RTree> t0, shared_ptr<RTree> t1) {
+  switch(t0->type) {
+  case RT_DATA: {
+    if(t0->sig.empty()) {
+      sig = t1->sig;
+      child = t1->child;
+      type = RT_DATA;
+    } else { 
+      switch(t1->type) {
+      case RT_DATA: {
+        sig.insert(t0->sig.begin(), t0->sig.end());
+        sig.insert(t1->sig.begin(), t1->sig.end());
+        type = RT_DATA;
+        break;
+      }
+      case RT_CTL: {
+        t1->child.insert(t0);
+        sig = t1->sig;
+        child = t1->child;
+        type = RT_CTL;
+        break;
+      }
+      default: {
+        assert(0 == "cannot combine these two trees");
+        break;
+      }
+      }
+    }
+    break;
+  }
+  case RT_CTL: {
+    t0->child.insert(t1);
+    sig = t0->sig;
+    child = t0->child;
+    type = RT_CTL;
+    break;
+  }
+  default: {
+    assert(0 == "cannot combine these two trees");
+    break;
+  }
   }
 }
 
@@ -156,13 +203,14 @@ void SDFG::RTree::write(pugi::xml_node& g, pugi::xml_node& father, unsigned int&
 /////////////////////////////////////////////////////////////////////////////
 /********        relation forest                                    ********/
 /////////////////////////////////////////////////////////////////////////////
-
+/*
 SDFG::RForest::RForest(bool d_init) {
   if(d_init) {
     tree["@CTL"] = shared_ptr<RTree>(new RTree(RTree::RT_CTL));
     tree["@DATA"] = shared_ptr<RTree>(new RTree(RTree::RT_DATA));
   }
 }
+*/
 
 RForest* SDFG::RForest::deep_copy() const {
   RForest* rv = new RForest();
@@ -198,7 +246,14 @@ void SDFG::RForest::add(shared_ptr<RForest> f) {
       // use the tree in this as default
       shared_ptr<RTree> dftree = tree[t.first];
       tree[t.first] = t.second;
-      t.second->insert_default(dftree);
+      if(!t.second->insert_default(dftree)) {
+        if(!dftree->insert_default(t.second)) {
+          shared_ptr<RTree> mtree(new RTree());
+          mtree->combine(dftree, t.second); // compromised behavioral as there is no range check
+          dftree = mtree;
+        }
+        tree[t.first] = dftree;
+      }
     } else {
       tree[t.first] = t.second;
     }
