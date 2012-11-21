@@ -114,9 +114,13 @@ void netlist::Assign::scan_vars(shared_ptr<SDFG::RForest> rf, bool) const {
   shared_ptr<SDFG::RForest> rrf(new SDFG::RForest());
   lval->scan_vars(lrf, false);
   rexp->scan_vars(rrf, false);
+  //std::cout << "rhs expression:" << *rexp << std::endl;
+  //rrf->write(std::cout);
   shared_ptr<SDFG::RForest> crf(new SDFG::RForest());
   crf->build(lrf, rrf);
   rf->add(crf);
+  //std::cout << *this << std::endl;
+  //rf->write(std::cout);
 }
 
 Assign* netlist::Assign::deep_copy() const {
