@@ -946,6 +946,11 @@ bool SDFG::dfgGraph::exist(const string& src, const string& tar, dfgEdge::edge_t
     return false;
 }
 
+bool SDFG::dfgGraph::exist(shared_ptr<dfgNode> src, shared_ptr<dfgNode> tar) const {
+  if(src && tar) return exist(src->id, tar->id);
+  else return false;
+}
+
 bool SDFG::dfgGraph::exist(shared_ptr<dfgNode> src, shared_ptr<dfgNode> tar, dfgEdge::edge_type_t tt) const {
   if(src && tar) return exist(src->id, tar->id, tt);
   else return false;

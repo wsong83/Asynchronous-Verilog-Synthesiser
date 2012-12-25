@@ -194,6 +194,45 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_in_paths_fast() {
   return rv;
 }
 
+list<shared_ptr<dfgPath> > SDFG::dfgNode::get_self_path() {
+  typedef pair<const shared_ptr<dfgNode>, int> rmap_data_type;
+  shared_ptr<dfgNode> pn = pg->get_node(id);   // this node
+  shared_ptr<dfgPath> mp(new dfgPath());       // main path 
+  if(self_f.empty()) {
+    // cache
+    map<shared_ptr<dfgNode>, map<shared_ptr<dfgNode>, int > > rmap; // node relation map
+    
+    // initial operation
+    map<shared_ptr<dfgNode>, int> tmap; // type map for next nodes
+    list<shared_ptr<dfgEdge> > oe_list = pg->get_out_edges_cb(id); // out edge list
+    BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
+      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e->id);
+      BOOST_FOREACH(shared_ptr<dfgNode> n, tar_list) {
+	if(tmap.count(n))
+	  tmap[n] |= e->type;
+	else
+	  tmap[n] = e->type;
+      }
+    }
+
+    // visit all out nodes
+    BOOST_FOREACH(rmap_data_type& m, tmap) {
+      shared_ptr<dfgPath> p(new dfgPath(*mp));
+      p->push_back(pn, m.second);
+      m.first->self_path_update(self_f, p, rmap,0);
+    }
+  }
+
+  list<shared_ptr<dfgPath> > rv;
+  BOOST_FOREACH(rmap_data_type& m, self_f) {
+    shared_ptr<dfgPath> mp(new dfgPath());
+    mp->push_back(pn, m.second);
+    mp->tar = m.first;
+    rv.push_back(mp);
+  }
+  return rv;
+}
+
 void SDFG::dfgNode::out_path_type_update(list<shared_ptr<dfgPath> >& rv, // return path group
                                          shared_ptr<dfgPath>& cp, // current path
                                          map<shared_ptr<dfgNode>, map<shared_ptr<dfgNode>, int > >& rmap,
@@ -414,6 +453,73 @@ void SDFG::dfgNode::in_path_type_update_fast(map<shared_ptr<dfgNode>, int>& rv, 
           if(rmap[pn].count(m.first)) rmap[pn][m.first] |= dfgPath::cal_type(m.second, t.second);
           else                        rmap[pn][m.first] = dfgPath::cal_type(m.second, t.second);
         }
+      }
+    }
+  }
+}
+
+void SDFG::dfgNode::self_path_update(map<shared_ptr<dfgNode>, int>& rv, // return path group
+				     shared_ptr<dfgPath>& cp, // current path
+				     map<shared_ptr<dfgNode>, map<shared_ptr<dfgNode>, int > >& rmap,
+				     unsigned int level) {
+  
+  // this node
+  shared_ptr<dfgNode> pn = pg->get_node(id);
+  
+  // check node type
+  if((pn->type & (SDFG_FF|SDFG_LATCH))         || // register
+     (pn->type & SDFG_PORT && level==0)           // top-level output
+     ) {  // ending point
+    if(pn == cp->src) {
+      if(rv.count(pn)) rv[pn] |= cp->type;
+      else             rv[pn] = cp->type;
+      rmap[cp->path.back().first][pn] = cp->path.back().second;
+    }
+    return;
+  }
+
+  // no loop assert
+  if(cp->node_set.count(pn)) {
+    cp->tar = pn;
+    G_ENV->error("SDFG-ANALYSE-0", toString(*cp));
+    return;
+  }
+
+  typedef pair<const shared_ptr<dfgNode>, int> rmap_data_type;
+  if(rmap.count(pn)) {          // visited
+    BOOST_FOREACH(rmap_data_type& t, rmap[pn]) {
+      shared_ptr<dfgPath> p(new dfgPath(*cp));
+      p->push_back(t.first, t.second);
+      rv[t.first] |= p->type;
+    }
+  } else {         // new node
+    map<shared_ptr<dfgNode>, int> tmap; // type map for next nodes
+    list<shared_ptr<dfgEdge> > oe_list = pg->get_out_edges_cb(id); // out edge list
+    BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
+      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e->id);
+      BOOST_FOREACH(shared_ptr<dfgNode> n, tar_list) {
+        if(tmap.count(n))
+          tmap[n] |= e->type;
+        else
+          tmap[n] = e->type;
+      }
+    }
+    
+    // visit all out nodes
+    BOOST_FOREACH(rmap_data_type& t, tmap) {
+      shared_ptr<dfgPath> p(new dfgPath(*cp));
+      p->push_back(pn, t.second);
+      if(pn->pg->exist(pn, t.first))
+        t.first->self_path_update(rv, p, rmap, level);
+      else if(pn->type & SDFG_PORT)
+        t.first->self_path_update(rv, p, rmap, level-1);
+      else
+        t.first->self_path_update(rv, p, rmap, level+1);
+
+      // update rmap
+      BOOST_FOREACH(rmap_data_type& m, rmap[t.first]) {
+        if(rmap[pn].count(m.first)) rmap[pn][m.first] |= dfgPath::cal_type(t.second, m.second);
+        else                        rmap[pn][m.first] = dfgPath::cal_type(t.second, m.second);
       }
     }
   }
@@ -656,9 +762,9 @@ list<list<shared_ptr<dfgNode> > > SDFG::dfgGraph::get_fsm_groups_fast(bool verbo
       regn++;
       std::set<shared_ptr<dfgNode> > tar_set;
       tar_set.insert(cn);
-      list<shared_ptr<dfgPath> > pathlist = cn->get_out_paths_fast();
+      list<shared_ptr<dfgPath> > pathlist = cn->get_self_path();
       BOOST_FOREACH(shared_ptr<dfgPath> p, pathlist) {
-        if((p->tar == cn) && (p->type & dfgEdge::SDFG_CTL)) {
+        if(p->type & dfgEdge::SDFG_CTL) {
           pfsm.insert(cn);
           pfsmn++;
           goto NODE_ACCEPTED;

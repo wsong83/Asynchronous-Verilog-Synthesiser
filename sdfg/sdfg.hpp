@@ -93,7 +93,7 @@ namespace SDFG {
 
     // only available in register graph
     std::list<boost::shared_ptr<dfgPath> > opath, ipath; // record all output/input paths to avoid recalculation
-    std::map<boost::shared_ptr<dfgNode>, int> opath_f, ipath_f; // record all output/input paths get from fast algorithm to avoid recalculation
+    std::map<boost::shared_ptr<dfgNode>, int> opath_f, ipath_f, self_f; // record all output/input paths get from fast algorithm to avoid recalculation
 
 
     dfgNode(): pg(NULL), node_index(0), type(SDFG_DF), position(0,0), bbox(0,0) {}
@@ -116,6 +116,8 @@ namespace SDFG {
     std::list<boost::shared_ptr<dfgPath> > get_out_paths_fast(); 
     // return all input paths to this register/port, fast algorithm
     std::list<boost::shared_ptr<dfgPath> > get_in_paths_fast(); 
+    // return all self control paths that inside this module
+    std::list<boost::shared_ptr<dfgPath> > get_self_path();
 
     std::pair<double, double> position; // graphic position
     std::pair<double, double> bbox;     // bounding box
@@ -135,6 +137,11 @@ namespace SDFG {
                                    boost::shared_ptr<dfgPath>&,
                                    std::map<boost::shared_ptr<dfgNode>, 
                                             std::map<boost::shared_ptr<dfgNode>, int> >&);
+    void self_path_update(std::map<boost::shared_ptr<dfgNode>, int>&,
+                          boost::shared_ptr<dfgPath>&,
+                          std::map<boost::shared_ptr<dfgNode>, 
+                                   std::map<boost::shared_ptr<dfgNode>, int> >&,
+                          unsigned int level);
     void in_path_type_update_fast(std::map<boost::shared_ptr<dfgNode>, int>&,
                                   boost::shared_ptr<dfgPath>&,
                                   std::map<boost::shared_ptr<dfgNode>, 
