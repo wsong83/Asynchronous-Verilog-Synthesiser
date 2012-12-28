@@ -311,10 +311,11 @@ void SDFG::dfgEdge::write(pugi::xml_node& xnode) const {
   xnode.append_attribute("name") = name.c_str();
   string stype;
   switch(type) {
-  case SDFG_DP:     stype = "data";     break;
-  case SDFG_CTL:    stype = "control";  break;
-  case SDFG_CLK:    stype = "clk";      break;
-  case SDFG_RST:    stype = "rst";      break;
+  case SDFG_DP:     stype = "data";      break;
+  case SDFG_DDP:    stype = "self-data"; break;
+  case SDFG_CTL:    stype = "control";   break;
+  case SDFG_CLK:    stype = "clk";       break;
+  case SDFG_RST:    stype = "rst";       break;
   default:          stype = "unknown";
   }
   xnode.append_attribute("type") = stype.c_str();
@@ -339,6 +340,7 @@ void SDFG::dfgEdge::write(void *pedge, ogdf::GraphAttributes *pga) {
 bool SDFG::dfgEdge::read(const pugi::xml_node& xnode) {
   if(1 == 0) {
     show_hash("data");          // 0x0c987a61
+    show_hash("self-data");     // 0xdc983be0
     show_hash("control");       // 0xee9cb7ef
     show_hash("clk");           // 0x0018f66b
     show_hash("rst");           // 0x001cb9f4
@@ -347,6 +349,7 @@ bool SDFG::dfgEdge::read(const pugi::xml_node& xnode) {
 
   name = xnode.attribute("name").as_string();
   switch(shash(xnode.attribute("type").as_string())) {
+  case 0xdc983be0: type = SDFG_DDP; break;
   case 0x0c987a61: type = SDFG_DP;  break;
   case 0xee9cb7ef: type = SDFG_CTL; break;
   case 0x0018f66b: type = SDFG_CLK; break;
@@ -354,7 +357,6 @@ bool SDFG::dfgEdge::read(const pugi::xml_node& xnode) {
   case 0xbddbfb6d: type = SDFG_DF;  break;
   default: assert(0 == 1); return false;
   }
-
   return true;
 }
 
@@ -402,6 +404,7 @@ std::ostream& SDFG::dfgPath::streamout(std::ostream& os) const {
     if(type == dfgEdge::SDFG_DF) stype = "DF";
     else {
       if(type & dfgEdge::SDFG_DP) stype = "DP";
+      if(type & dfgEdge::SDFG_DDP) stype = stype = stype = stype.empty() ? "DDP" : stype + "|DDP";
       if(type & dfgEdge::SDFG_CTL) {
         if((type & dfgEdge::SDFG_CLK) == dfgEdge::SDFG_CLK) 
           stype = stype.empty() ? "CLK" : stype + "|CLK";
@@ -419,6 +422,7 @@ std::ostream& SDFG::dfgPath::streamout(std::ostream& os) const {
         if(m.second == dfgEdge::SDFG_DF) stype = "DF";
         else {
           if(m.second & dfgEdge::SDFG_DP) stype = "DP";
+          if(m.second & dfgEdge::SDFG_DDP) stype = stype = stype.empty() ? "DDP" : stype + "|DDP";
           if(m.second & dfgEdge::SDFG_CTL) {
             if((m.second & dfgEdge::SDFG_CLK) == dfgEdge::SDFG_CLK) 
               stype = stype.empty() ? "CLK" : stype + "|CLK";
@@ -442,29 +446,47 @@ int SDFG::dfgPath::cal_type(const int& t0, const int& t1) {
   int tt = (t0 << 12 )| t1;
   switch(tt) {
   case 0x000000:   return 0x000;
+  case 0x000001:   return 0x001; // self-data
   case 0x000010:   return 0x010; // data
+  case 0x000011:   return 0x011; // data/self-data
   case 0x000080:   return 0x080; // control
+  case 0x000081:   return 0x081; // control/self-data
   case 0x000090:   return 0x090; // control/data
+  case 0x000091:   return 0x091; // control/data/self-data
   case 0x0000a0:   return 0x0a0; // clk
   case 0x0000c0:   return 0x0c0; // rst
+  case 0x001000:   return 0x001; // self-data
+  case 0x001001:   return 0x001; // self-data
   case 0x010000:   return 0x010; // data
   case 0x010010:   return 0x010; // data
+//  case 0x010011:   return 0x010; // data
   case 0x010080:   return 0x080; // control
+//  case 0x010081:   return 0x080; // control
   case 0x010090:   return 0x090; // control/data
+//  case 0x010091:   return 0x090; // control/data
   case 0x0100a0:   return 0x0a0; // clk
   case 0x0100c0:   return 0x0c0; // rst
+  case 0x011000:   return 0x011; // data/self-data
   case 0x080000:   return 0x080; // control
   case 0x080010:   return 0x080; // control
+//  case 0x080011:   return 0x080; // control
   case 0x080080:   return 0x080; // control
+//  case 0x080081:   return 0x080; // control
   case 0x080090:   return 0x080; // control
+//  case 0x080091:   return 0x080; // control
   case 0x0800a0:   return 0x0a0; // clk
   case 0x0800c0:   return 0x0c0; // rst
+  case 0x081000:   return 0x081; // control/self-data
   case 0x090000:   return 0x090; // control/data
   case 0x090010:   return 0x090; // control/data
+//  case 0x090011:   return 0x090; // control/data
   case 0x090080:   return 0x080; // control
+//  case 0x090081:   return 0x080; // control
   case 0x090090:   return 0x090; // control/data
+//  case 0x090091:   return 0x090; // control/data
   case 0x0900a0:   return 0x0a0; // clk
   case 0x0900c0:   return 0x0c0; // rst
+  case 0x091000:   return 0x091; // control/data/self-data
   case 0x0a0000:   return 0x0a0; // clk
   case 0x0c0000:   return 0x0c0; // rst
   default:
@@ -1351,7 +1373,7 @@ bool SDFG::dfgGraph::layout(ogdf::Graph* pg, ogdf::GraphAttributes *pga) {
                    m.second->bend.push_back(pair<double, double>
                                             (node->position.first+G_NODE_H * G_NODE_DIST * 0.5,
                                              node->position.second - G_NODE_H * G_NODE_DIST*0.866));
-                 } else if(m.second->type == dfgEdge::SDFG_DP) { // data
+                 } else if(m.second->type == dfgEdge::SDFG_DP || m.second->type == dfgEdge::SDFG_DDP) { // data
                    m.second->bend.push_back(pair<double, double>
                                             (node->position.first-G_NODE_H * G_NODE_DIST,
                                              node->position.second));

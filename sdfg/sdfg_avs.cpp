@@ -208,10 +208,10 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_self_path() {
     BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
       list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e->id);
       BOOST_FOREACH(shared_ptr<dfgNode> n, tar_list) {
-	if(tmap.count(n))
-	  tmap[n] |= e->type;
-	else
-	  tmap[n] = e->type;
+        //if(n != pn) {  // remove self loop
+          if(tmap.count(n)) tmap[n] |= e->type;
+          else              tmap[n] = e->type;
+        //}
       }
     }
 
@@ -304,7 +304,8 @@ void SDFG::dfgNode::out_path_type_update_fast(map<shared_ptr<dfgNode>, int>& rv,
      ) {  // ending point
     if(rv.count(pn)) rv[pn] |= cp->type;
     else             rv[pn] = cp->type;
-    rmap[cp->path.back().first][pn] = cp->path.back().second;
+    if(cp->path.back().first != pn)
+        rmap[cp->path.back().first][pn] = cp->path.back().second;
     //std::cout << "    " << pn->get_hier_name()  << " : " << rv.size() << ":" << cp->path.size() << std::endl;
     return;
   }
@@ -416,7 +417,8 @@ void SDFG::dfgNode::in_path_type_update_fast(map<shared_ptr<dfgNode>, int>& rv, 
      ) {  // ending point
     if(rv.count(pn)) rv[pn] |= cp->type;
     else             rv[pn] = cp->type;
-    rmap[cp->path.back().first][pn] = cp->path.back().second;
+    if(cp->path.back().first != pn)
+        rmap[cp->path.back().first][pn] = cp->path.back().second;
     //std::cout << "    " << pn->get_hier_name()  << " : " << rv.size() << ":" << cp->path.size() << std::endl;
     return;
   }
@@ -471,9 +473,10 @@ void SDFG::dfgNode::self_path_update(map<shared_ptr<dfgNode>, int>& rv, // retur
      (pn->type & SDFG_PORT && level==0)           // top-level output
      ) {  // ending point
     if(pn == cp->src) {
-      if(rv.count(pn)) rv[pn] |= cp->type;
+      if(rv.count(pn)) rv[pn] |= cp->type;        // save it into rv
       else             rv[pn] = cp->type;
-      rmap[cp->path.back().first][pn] = cp->path.back().second;
+      if(cp->path.back().first != pn)
+        rmap[cp->path.back().first][pn] = cp->path.back().second;  // rmap should record a type for the source
     }
     return;
   }
@@ -764,7 +767,7 @@ list<list<shared_ptr<dfgNode> > > SDFG::dfgGraph::get_fsm_groups_fast(bool verbo
       tar_set.insert(cn);
       list<shared_ptr<dfgPath> > pathlist = cn->get_self_path();
       BOOST_FOREACH(shared_ptr<dfgPath> p, pathlist) {
-        if(p->type & dfgEdge::SDFG_CTL) {
+        if(p->type & (dfgEdge::SDFG_CTL|dfgEdge::SDFG_DP)) {
           pfsm.insert(cn);
           pfsmn++;
           goto NODE_ACCEPTED;

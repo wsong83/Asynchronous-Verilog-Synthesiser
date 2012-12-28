@@ -156,6 +156,7 @@ namespace SDFG {
     edge_descriptor id;         // edge id
     enum edge_type_t {
       SDFG_DF             = 0x00000, // default, unknown yet
+      SDFG_DDP            = 0x00001, // default data loop
       SDFG_DP             = 0x00010, // data path
       SDFG_CTL            = 0x00080, // control path
       SDFG_CLK            = 0x000a0, // clk
