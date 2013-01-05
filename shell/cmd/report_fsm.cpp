@@ -170,17 +170,20 @@ bool shell::CMD::CMDReportFSM::exec ( const std::string& str, Env * pEnv){
   }
   
   // do the FSM extraction
-  list<list<shared_ptr<SDFG::dfgNode> > > fsmg = 
+  std::set<shared_ptr<SDFG::dfgNode> > fsms = 
     arg.bFast? 
     G->get_fsm_groups_fast(arg.bVerbose) : 
     G->get_fsm_groups(arg.bVerbose);
 
+  // reorder the set using names rather than pointers
+  std::set<string> fsm_str;
+  BOOST_FOREACH(shared_ptr<SDFG::dfgNode> pfsm, fsms)
+    fsm_str.insert(pfsm->get_full_name());
+
   unsigned int index = 0;
-  BOOST_FOREACH(list<shared_ptr<SDFG::dfgNode> >& g, fsmg) {
+  BOOST_FOREACH(const string& fsm_name, fsm_str) {
     gEnv.stdOs << "[" << ++index << "]  ";
-    BOOST_FOREACH(shared_ptr<SDFG::dfgNode>& n, g) {
-      gEnv.stdOs << n->get_full_name() << " ";
-    }
+    gEnv.stdOs <<  fsm_name << " ";
     gEnv.stdOs << endl;
   }
 
