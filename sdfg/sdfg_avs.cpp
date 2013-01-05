@@ -601,6 +601,31 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_reg_graph() const {
   return ng;
 }
 
+shared_ptr<dfgGraph> SDFG::dfgGraph::build_reg_graph(const std::set<shared_ptr<dfgNode> >& rlist) const {
+
+  // new register graph
+  shared_ptr<dfgGraph> ng(new dfgGraph(name));
+  map<shared_ptr<dfgNode>, shared_ptr<dfgNode> > node_translate_map;
+
+  // add all nodes to the graph
+  BOOST_FOREACH(shared_ptr<dfgNode> nd, rlist) {
+    shared_ptr<dfgNode> nnode(nd->copy());
+    nnode->set_hier_name(nd->get_full_name());
+    ng->add_node(nnode);
+    node_translate_map[nd] = nnode;
+  }
+  
+  // connect the nodes
+  BOOST_FOREACH(shared_ptr<dfgNode> nd, rlist) {
+    list<shared_ptr<dfgPath> > plist = nd->get_out_paths_fast();
+    BOOST_FOREACH(shared_ptr<dfgPath> p, plist) {
+      if(p->tar != nd && node_translate_map.count(p->tar))
+        ng->add_edge(nd->get_full_name(), dfgEdge::SDFG_CTL, node_translate_map[nd]->id, node_translate_map[p->tar]->id);
+    }
+  }
+  return ng;
+}
+
 std::set<shared_ptr<dfgNode> > SDFG::dfgGraph::get_fsm_groups(bool verbose) const {
   // find all registers who has self-loops
   list<shared_ptr<dfgNode> > nlist;

@@ -318,6 +318,7 @@ namespace SDFG {
 
     // analyse functions
     boost::shared_ptr<dfgGraph> get_reg_graph() const; // extract a register only graph from the DFG
+    boost::shared_ptr<dfgGraph> build_reg_graph(const std::set<boost::shared_ptr<dfgNode> >& ) const; // build up a reg connection graph for certain registers 
     std::set<boost::shared_ptr<dfgNode> > get_fsm_groups(bool) const; // extract fsms from regg and dfg
     std::set<boost::shared_ptr<dfgNode> > get_fsm_groups_fast(bool) const; // extract fsms from regg and dfg, the fast algorithm
 
