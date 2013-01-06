@@ -62,7 +62,7 @@ list<shared_ptr<dfgPath> >& SDFG::dfgNode::get_out_paths() {
     // build up the relation map
     list<shared_ptr<dfgEdge> > oe_list = pg->get_out_edges_cb(id); // out edge list
     BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
-      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e->id);
+      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e);
       BOOST_FOREACH(shared_ptr<dfgNode> n, tar_list) {
         if(rmap[pn].count(n))
           rmap[pn][n] |= e->type;
@@ -95,7 +95,7 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_out_paths_fast() {
     map<shared_ptr<dfgNode>, int> tmap; // type map for next nodes
     list<shared_ptr<dfgEdge> > oe_list = pg->get_out_edges_cb(id); // out edge list
     BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
-      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e->id);
+      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e);
       BOOST_FOREACH(shared_ptr<dfgNode> n, tar_list) {
         if(tmap.count(n))
           tmap[n] |= e->type;
@@ -137,7 +137,7 @@ list<shared_ptr<dfgPath> >& SDFG::dfgNode::get_in_paths() {
     // build up the relation map
     list<shared_ptr<dfgEdge> > ie_list = pg->get_in_edges_cb(id); // in edge list
     BOOST_FOREACH(shared_ptr<dfgEdge> e, ie_list) {
-      shared_ptr<dfgNode> src = e->pg->get_source_cb(e->id);
+      shared_ptr<dfgNode> src = e->pg->get_source_cb(e);
       if(rmap[pn].count(src))
         rmap[pn][src] |= e->type;
       else
@@ -169,7 +169,7 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_in_paths_fast() {
     map<shared_ptr<dfgNode>, int> tmap; // type map for next nodes
     list<shared_ptr<dfgEdge> > ie_list = pg->get_in_edges_cb(id); // in edge list
     BOOST_FOREACH(shared_ptr<dfgEdge> e, ie_list) {
-      shared_ptr<dfgNode> src = e->pg->get_source_cb(e->id);
+      shared_ptr<dfgNode> src = e->pg->get_source_cb(e);
       if(tmap.count(src))
         tmap[src] |= e->type;
       else
@@ -206,7 +206,7 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_self_path() {
     map<shared_ptr<dfgNode>, int> tmap; // type map for next nodes
     list<shared_ptr<dfgEdge> > oe_list = pg->get_out_edges_cb(id); // out edge list
     BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
-      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e->id);
+      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e);
       BOOST_FOREACH(shared_ptr<dfgNode> n, tar_list) {
         //if(n != pn) {  // remove self loop
           if(tmap.count(n)) tmap[n] |= e->type;
@@ -265,7 +265,7 @@ void SDFG::dfgNode::out_path_type_update(list<shared_ptr<dfgPath> >& rv, // retu
   if(!rmap.count(pn)) {         // new node
     list<shared_ptr<dfgEdge> > oe_list = pg->get_out_edges_cb(id); // out edge list
     BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
-      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e->id);
+      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e);
       BOOST_FOREACH(shared_ptr<dfgNode> n, tar_list) {
         if(rmap[pn].count(n))
           rmap[pn][n] |= e->type;
@@ -328,7 +328,7 @@ void SDFG::dfgNode::out_path_type_update_fast(map<shared_ptr<dfgNode>, int>& rv,
     map<shared_ptr<dfgNode>, int> tmap; // type map for next nodes
     list<shared_ptr<dfgEdge> > oe_list = pg->get_out_edges_cb(id); // out edge list
     BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
-      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e->id);
+      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e);
       BOOST_FOREACH(shared_ptr<dfgNode> n, tar_list) {
         if(tmap.count(n))
           tmap[n] |= e->type;
@@ -375,7 +375,7 @@ void SDFG::dfgNode::in_path_type_update(list<shared_ptr<dfgPath> >& rv, // retur
   if(!rmap.count(pn)) {         // new node
     list<shared_ptr<dfgEdge> > ie_list = pg->get_in_edges_cb(id); // out edge list
     BOOST_FOREACH(shared_ptr<dfgEdge> e, ie_list) {
-      shared_ptr<dfgNode> src = e->pg->get_source_cb(e->id);
+      shared_ptr<dfgNode> src = e->pg->get_source_cb(e);
       if(rmap[pn].count(src))
         rmap[pn][src] |= e->type;
       else
@@ -434,7 +434,7 @@ void SDFG::dfgNode::in_path_type_update_fast(map<shared_ptr<dfgNode>, int>& rv, 
     map<shared_ptr<dfgNode>, int> tmap; // type map for next nodes
     list<shared_ptr<dfgEdge> > ie_list = pg->get_in_edges_cb(id); // out edge list
     BOOST_FOREACH(shared_ptr<dfgEdge> e, ie_list) {
-      shared_ptr<dfgNode> src = e->pg->get_source_cb(e->id);
+      shared_ptr<dfgNode> src = e->pg->get_source_cb(e);
       if(tmap.count(src))
         tmap[src] |= e->type;
       else
@@ -499,7 +499,7 @@ void SDFG::dfgNode::self_path_update(map<shared_ptr<dfgNode>, int>& rv, // retur
     map<shared_ptr<dfgNode>, int> tmap; // type map for next nodes
     list<shared_ptr<dfgEdge> > oe_list = pg->get_out_edges_cb(id); // out edge list
     BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
-      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e->id);
+      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e);
       BOOST_FOREACH(shared_ptr<dfgNode> n, tar_list) {
         if(tmap.count(n))
           tmap[n] |= e->type;
@@ -620,7 +620,7 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::build_reg_graph(const std::set<shared_ptr<d
     list<shared_ptr<dfgPath> > plist = nd->get_out_paths_fast();
     BOOST_FOREACH(shared_ptr<dfgPath> p, plist) {
       if(p->tar != nd && node_translate_map.count(p->tar))
-        ng->add_edge(nd->get_full_name(), dfgEdge::SDFG_CTL, node_translate_map[nd]->id, node_translate_map[p->tar]->id);
+        ng->add_edge(nd->get_full_name(), dfgEdge::SDFG_CTL, node_translate_map[nd], node_translate_map[p->tar]);
     }
   }
   return ng;

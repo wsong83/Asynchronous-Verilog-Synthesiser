@@ -459,31 +459,22 @@ int SDFG::dfgPath::cal_type(const int& t0, const int& t1) {
   case 0x001001:   return 0x001; // self-data
   case 0x010000:   return 0x010; // data
   case 0x010010:   return 0x010; // data
-//  case 0x010011:   return 0x010; // data
   case 0x010080:   return 0x080; // control
-//  case 0x010081:   return 0x080; // control
   case 0x010090:   return 0x090; // control/data
-//  case 0x010091:   return 0x090; // control/data
   case 0x0100a0:   return 0x0a0; // clk
   case 0x0100c0:   return 0x0c0; // rst
   case 0x011000:   return 0x011; // data/self-data
   case 0x080000:   return 0x080; // control
   case 0x080010:   return 0x080; // control
-//  case 0x080011:   return 0x080; // control
   case 0x080080:   return 0x080; // control
-//  case 0x080081:   return 0x080; // control
   case 0x080090:   return 0x080; // control
-//  case 0x080091:   return 0x080; // control
   case 0x0800a0:   return 0x0a0; // clk
   case 0x0800c0:   return 0x0c0; // rst
   case 0x081000:   return 0x081; // control/self-data
   case 0x090000:   return 0x090; // control/data
   case 0x090010:   return 0x090; // control/data
-//  case 0x090011:   return 0x090; // control/data
   case 0x090080:   return 0x080; // control
-//  case 0x090081:   return 0x080; // control
   case 0x090090:   return 0x090; // control/data
-//  case 0x090091:   return 0x090; // control/data
   case 0x0900a0:   return 0x0a0; // clk
   case 0x0900c0:   return 0x0c0; // rst
   case 0x091000:   return 0x091; // control/data/self-data
@@ -576,14 +567,14 @@ void SDFG::dfgGraph::remove_node(vertex_descriptor nid) {
   {
     list<shared_ptr<dfgEdge> > elist = get_out_edges(nid);
     BOOST_FOREACH(shared_ptr<dfgEdge> m, elist)
-      remove_edge(m->id);
+      remove_edge(m);
   }
 
   // remove all input edges
   {
     list<shared_ptr<dfgEdge> > elist = get_in_edges(nid);
     BOOST_FOREACH(shared_ptr<dfgEdge> m, elist)
-      remove_edge(m->id);
+      remove_edge(m);
   }
 
   // remove the node
@@ -700,8 +691,8 @@ list<shared_ptr<dfgNode> > SDFG::dfgGraph::flatten() const{
            [&](const pair<const edge_descriptor, shared_ptr<dfgEdge> >& m) {
              father->pg->add_edge(fnodes[get_source_id(m.first)]->get_hier_name(), 
                                   m.second->type, 
-                                  fnodes[get_source_id(m.first)]->id,
-                                  fnodes[get_target_id(m.first)]->id
+                                  fnodes[get_source_id(m.first)],
+                                  fnodes[get_target_id(m.first)]
                                   );
            });
 
@@ -709,20 +700,16 @@ list<shared_ptr<dfgNode> > SDFG::dfgGraph::flatten() const{
   for_each(nodes.begin(), nodes.end(),
            [&](const pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
                if(m.second->type == dfgNode::SDFG_IPORT) {
-                 shared_ptr<dfgNode> src = get_in_nodes_cb(m.second->id).front();
+                 shared_ptr<dfgNode> src = get_in_nodes_cb(m.second).front();
                  father->pg->add_edge(src->get_hier_name(), 
-                                      get_in_edges_cb(m.second->id).front()->type,
-                                      src->id,
-                                      fnodes[m.first]->id
-                                      );
+                                      get_in_edges_cb(m.second).front()->type,
+                                      src, fnodes[m.first]);
                }
                if(m.second->type == dfgNode::SDFG_OPORT) {
-                 shared_ptr<dfgNode> tar = get_out_nodes_cb(m.second->id).front();
+                 shared_ptr<dfgNode> tar = get_out_nodes_cb(m.second).front();
                  father->pg->add_edge(fnodes[m.first]->get_hier_name(), 
-                                      get_out_edges_cb(m.second->id).front()->type,
-                                      fnodes[m.first]->id,
-                                      tar->id
-                                      );
+                                      get_out_edges_cb(m.second).front()->type,
+                                      fnodes[m.first], tar->id);
                }
                if(m.second->type == dfgNode::SDFG_PORT) {
                  // manually find out all the edges and connect them
@@ -739,20 +726,17 @@ list<shared_ptr<dfgNode> > SDFG::dfgGraph::flatten() const{
                        oit != oend; ++oit) { 
                      father->pg->add_edge(fnodes[m.first]->get_hier_name(), 
                                           father->pg->edges.find(*oit)->second->type,
-                                          fnodes[m.first]->id,
-                                          snode->id);
+                                          fnodes[m.first], snode);
                    }
                    // input
                    for(boost::tie(oit, oend) = 
-                         boost::edge_range(
-                                           snode->id,
+                         boost::edge_range(snode->id,
                                            father->id,
                                            father->pg->bg_);
                        oit != oend; ++oit) { 
                      father->pg->add_edge(snode->get_hier_name(), 
                                           father->pg->edges.find(*oit)->second->type,
-                                          snode->id,
-                                          fnodes[m.first]->id);
+                                          snode, fnodes[m.first]);
                    }
                  }
                }             
