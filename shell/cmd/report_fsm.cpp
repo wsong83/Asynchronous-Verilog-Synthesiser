@@ -187,5 +187,20 @@ bool shell::CMD::CMDReportFSM::exec ( const std::string& str, Env * pEnv){
     gEnv.stdOs << endl;
   }
 
+  // build the fsm connection graph
+  shared_ptr<SDFG::dfgGraph> fsm_graph = G->build_reg_graph(fsms);
+
+  // specify the output file name
+  string outputFileName = designName + ".fsm";
+
+  // open the file
+  ofstream fhandler;
+  fhandler.open(system_complete(outputFileName), std::ios_base::out|std::ios_base::trunc);
+
+  fsm_graph->write(fhandler);
+  fhandler.close();
+  
+  gEnv.stdOs << "write the FSM connection graph to " << outputFileName << endl;
+  
   return true;
 }

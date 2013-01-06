@@ -214,25 +214,37 @@ namespace SDFG {
 
     dfgGraph() : father(NULL) {}
     dfgGraph(const std::string& n) : father(NULL), name(n) {}
-
+    
     // add nodes and edges
     void add_node(boost::shared_ptr<dfgNode>);
     boost::shared_ptr<dfgNode> add_node(const std::string&, dfgNode::node_type_t);
-    void add_edge(boost::shared_ptr<dfgEdge>, const std::string&, const std::string&);
-    void add_edge(boost::shared_ptr<dfgEdge>, const vertex_descriptor&, const vertex_descriptor&);
-    boost::shared_ptr<dfgEdge> add_edge(const std::string&, dfgEdge::edge_type_t, const std::string&, const std::string&);
-    boost::shared_ptr<dfgEdge> add_edge(const std::string&, dfgEdge::edge_type_t, const vertex_descriptor&, const vertex_descriptor&);
+    template<typename T1, typename T2>
+    void add_edge(boost::shared_ptr<dfgEdge> pedge, T1 n1, T2 n2) { 
+      add_edge(pedge, to_id(n1), to_id(n2));
+    }
+    void add_edge(boost::shared_ptr<dfgEdge>, vertex_descriptor, vertex_descriptor);
+    boost::shared_ptr<dfgEdge> add_edge(const std::string&, dfgEdge::edge_type_t, vertex_descriptor, vertex_descriptor);
+    template<typename T1, typename T2>
+    boost::shared_ptr<dfgEdge> add_edge(const std::string& ename, dfgEdge::edge_type_t etype, T1 n1, T2 n2) {
+      return add_edge(ename, etype, to_id(n1), to_id(n2));
+    }
 
     // remove nodes and edges
-    void remove_node(boost::shared_ptr<dfgNode>);
-    void remove_node(const std::string&);
-    void remove_node(const vertex_descriptor&);
-    void remove_edge(boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgNode>); // !! remove all edge between these two nodes
-    void remove_edge(const std::string&, const std::string&); // !! remove all edge between these two nodes
-    void remove_edge(const vertex_descriptor&, const vertex_descriptor&); // !! remove all edge between these two nodes
-    void remove_edge(boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgNode>, dfgEdge::edge_type_t);
-    void remove_edge(const std::string&, const std::string&, dfgEdge::edge_type_t);
-    void remove_edge(const vertex_descriptor&, const vertex_descriptor&, dfgEdge::edge_type_t);
+    template<typename T>
+    void remove_node(T n) {
+      remove_node(to_id(n));
+    }
+    void remove_node(vertex_descriptor);
+    template<typename T1, typename T2>
+    void remove_edge(T1 n1, T2 n2) { // !! remove all edge between n1 and n2
+      remove_edge(to_id(n1), to_id(n2));
+    }
+    void remove_edge(vertex_descriptor, vertex_descriptor);
+    template<typename T1, typename T2>
+    void remove_edge(T1 n1, T2 n2, dfgEdge::edge_type_t etype) {
+      remove_edge(to_id(n1), to_id(n2), etype);
+    }
+    void remove_edge(vertex_descriptor, vertex_descriptor, dfgEdge::edge_type_t);
     void remove_edge(boost::shared_ptr<dfgEdge>);
     void remove_edge(const edge_descriptor&);
     void remove_port(const std::string&);
@@ -242,12 +254,21 @@ namespace SDFG {
 
     // get nodes and edges
     boost::shared_ptr<dfgEdge> get_edge(const edge_descriptor&) const;
-    boost::shared_ptr<dfgEdge> get_edge(const std::string&, const std::string&) const;   // return a random one if multiple
-    boost::shared_ptr<dfgEdge> get_edge(const vertex_descriptor&, const vertex_descriptor&) const;   // return a random one if multiple
-    boost::shared_ptr<dfgEdge> get_edge(const std::string&, const std::string&, dfgEdge::edge_type_t) const;
-    boost::shared_ptr<dfgEdge> get_edge(const vertex_descriptor&, const vertex_descriptor&, dfgEdge::edge_type_t) const;
-    boost::shared_ptr<dfgNode> get_node(const vertex_descriptor&) const;
-    boost::shared_ptr<dfgNode> get_node(const std::string&) const;
+    template<typename T1, typename T2>
+    boost::shared_ptr<dfgEdge> get_edge(T1 n1, T2 n2) const {   // return a random one if multiple
+      return get_edge(to_id(n1), to_id(n2));
+    }
+    boost::shared_ptr<dfgEdge> get_edge(vertex_descriptor, vertex_descriptor) const;   // return a random one if multiple
+    template<typename T1, typename T2>
+    boost::shared_ptr<dfgEdge> get_edge(T1 n1, T2 n2, dfgEdge::edge_type_t etype) const {
+      return get_edge(to_id(n1), to_id(n2), etype);
+    }  
+    boost::shared_ptr<dfgEdge> get_edge(vertex_descriptor, vertex_descriptor, dfgEdge::edge_type_t) const;
+    template<typename T> 
+    boost::shared_ptr<dfgNode> get_node(T n) const {
+      return get_node(to_id(n));
+    }
+    boost::shared_ptr<dfgNode> get_node(vertex_descriptor) const;
     boost::shared_ptr<dfgNode> get_source(const edge_descriptor&) const;
     boost::shared_ptr<dfgNode> get_source(boost::shared_ptr<dfgEdge>) const;
     boost::shared_ptr<dfgNode> get_source_cb(const edge_descriptor&) const;
@@ -261,17 +282,22 @@ namespace SDFG {
     boost::shared_ptr<dfgNode> search_node(const std::string&) const;
 
     // existance check
-    bool exist(const std::string&, const std::string&) const;   // edge
-    bool exist(const std::string&, const std::string&, dfgEdge::edge_type_t) const; // edge 
-    bool exist(const vertex_descriptor&, const vertex_descriptor&) const; // edge 
-    bool exist(const vertex_descriptor&, const vertex_descriptor&, dfgEdge::edge_type_t) const; // edge 
-    bool exist(boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgNode>) const; // edge 
-    bool exist(boost::shared_ptr<dfgNode>, boost::shared_ptr<dfgNode>, dfgEdge::edge_type_t) const; // edge 
-    bool exist(const edge_descriptor&) const;
-    bool exist(boost::shared_ptr<dfgEdge>) const;
-    bool exist(const vertex_descriptor&) const;
-    bool exist(boost::shared_ptr<dfgNode>) const;
-    bool exist(const std::string&) const;   // node
+    template<typename T1, typename T2>
+    bool exist(T1 n1, T2 n2) const {
+        return exist(to_id(n1), to_id(n2));
+    }
+    bool exist(vertex_descriptor, vertex_descriptor) const; // edge 
+    template<typename T1, typename T2>
+    bool exist(T1 n1, T2 n2, dfgEdge::edge_type_t etype) const {
+        return exist(to_id(n1), to_id(n2), etype);
+    }
+    bool exist(vertex_descriptor, vertex_descriptor, dfgEdge::edge_type_t) const; // edge 
+    template<typename T>
+    bool exist(T n) const {
+      return exist(to_id(n));
+    }
+    bool exist(vertex_descriptor) const;
+    bool exist(edge_descriptor) const;
 
     // traverse
     unsigned int size_out_edges(const vertex_descriptor&) const;
@@ -324,9 +350,18 @@ namespace SDFG {
 
     // other
     std::string get_full_name() const;
+    
+  private:
+    // convert types to id
+    vertex_descriptor to_id(const std::string&) const; 
+    vertex_descriptor to_id(boost::shared_ptr<dfgNode>) const;
+    vertex_descriptor to_id(const vertex_descriptor&) const; 
+    edge_descriptor to_id(boost::shared_ptr<dfgEdge>) const;
+    edge_descriptor to_id(const edge_descriptor&) const; 
 
   };
-
+  
+    
   boost::shared_ptr<dfgGraph> read(std::istream&);
 }
 

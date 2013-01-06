@@ -29,7 +29,7 @@ TARGET = DEBUG
 
 export BISON_EXE = bison
 export FLEX_EXE = flex
-export CXX = g++
+export CXX = ccache g++
 
 # OGDF library
 export OGDF_PATH = $(PWD)/../OGDF
