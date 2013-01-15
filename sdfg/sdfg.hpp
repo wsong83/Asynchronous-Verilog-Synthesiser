@@ -154,6 +154,8 @@ namespace SDFG {
     dfgGraph* pg;               // a pointer pointing to the father Graph
     std::string name;           // edge name
     edge_descriptor id;         // edge id
+    unsigned int edge_index;   // when nodes are stored in listS, vertext_descriptors are no longer
+                                // integers, thereofer, separated indices must be generated and stored 
     enum edge_type_t {
       SDFG_DF             = 0x00000, // default, unknown yet
       SDFG_DDP            = 0x00001, // default data loop
@@ -348,6 +350,7 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     boost::shared_ptr<dfgGraph> build_reg_graph(const std::set<boost::shared_ptr<dfgNode> >& ) const; // build up a reg connection graph for certain registers 
     std::set<boost::shared_ptr<dfgNode> > get_fsm_groups(bool) const; // extract fsms from regg and dfg
     std::set<boost::shared_ptr<dfgNode> > get_fsm_groups_fast(bool) const; // extract fsms from regg and dfg, the fast algorithm
+    void fsm_simplify();  // simplify the FSM connection graph
 
     // other
     std::string get_full_name() const;
@@ -358,7 +361,8 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     vertex_descriptor to_id(boost::shared_ptr<dfgNode>) const;
     vertex_descriptor to_id(const vertex_descriptor&) const; 
     edge_descriptor to_id(boost::shared_ptr<dfgEdge>) const;
-    edge_descriptor to_id(const edge_descriptor&) const; 
+    edge_descriptor to_id(const edge_descriptor&) const;
+    boost::shared_ptr<dfgNode> fsm_simplify_node(boost::shared_ptr<dfgNode>);  // simply the connection for a single FSM register
 
   };
 

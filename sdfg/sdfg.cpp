@@ -547,6 +547,7 @@ void SDFG::dfgGraph::add_edge(shared_ptr<dfgEdge> edge, vertex_descriptor src, v
   edge->pg = this;
   unsigned int m_index = shash(nodes[src]->get_hier_name() + nodes[snk]->get_hier_name());
   while(edge_map.count(m_index)) ++m_index;
+  edge->edge_index = m_index;
   edge_map[m_index] = edge->id;
 }
 shared_ptr<dfgEdge> SDFG::dfgGraph::add_edge(const string& n, dfgEdge::edge_type_t t, vertex_descriptor src, vertex_descriptor snk) {
@@ -580,6 +581,7 @@ void SDFG::dfgGraph::remove_node(vertex_descriptor nid) {
   // remove the node
   node_map.erase(pn->get_hier_name());
   nodes.erase(nid);
+  index_map.erase(pn->node_index);
   boost::remove_vertex(nid, bg_);
   pn->pg = NULL;                    // make sure it cannot access graph
 
@@ -630,6 +632,7 @@ void SDFG::dfgGraph::remove_edge(edge_descriptor eid) {
       tar->remove_port_sig(src->get_hier_name(), -1); // input
 
     edges.erase(eid);
+    edge_map.erase(pe->edge_index);
     boost::remove_edge(eid, bg_);
     pe->pg = NULL;
   }

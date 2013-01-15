@@ -202,5 +202,12 @@ bool shell::CMD::CMDReportFSM::exec ( const std::string& str, Env * pEnv){
   
   gEnv.stdOs << "write the FSM connection graph to " << outputFileName << endl;
   
+  outputFileName = designName + ".fsm.sim";
+  fhandler.open(system_complete(outputFileName), std::ios_base::out|std::ios_base::trunc);
+  fsm_graph->fsm_simplify();
+  fsm_graph->write(fhandler);
+  fhandler.close();
+  gEnv.stdOs << "write the simplified FSM connection graph to " << outputFileName << endl;
+  
   return true;
 }

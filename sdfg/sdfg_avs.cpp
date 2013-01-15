@@ -813,3 +813,59 @@ std::set<shared_ptr<dfgNode> > SDFG::dfgGraph::get_fsm_groups_fast(bool verbose)
 
   return pfsm;
 }
+
+void SDFG::dfgGraph::fsm_simplify() {  // simplify the FSM connection graph
+  std::set<shared_ptr<dfgNode> > node_set;
+  std::list<shared_ptr<dfgNode> > node_list;
+  typedef pair<const vertex_descriptor, shared_ptr<dfgNode> > node_record_type;
+  BOOST_FOREACH(const node_record_type& n, nodes) {
+    node_set.insert(n.second);
+    node_list.push_back(n.second);
+  }
+  
+  while(!node_list.empty()) {
+    shared_ptr<dfgNode> node = node_list.front();
+    node_list.pop_front();
+    node_set.erase(node);
+    shared_ptr<dfgNode> rvn = fsm_simplify_node(node);
+    if(rvn && !node_set.count(rvn)) {
+      node_set.insert(rvn);
+      node_list.push_back(rvn);
+    }
+  }  
+}
+
+shared_ptr<dfgNode> SDFG::dfgGraph::fsm_simplify_node(shared_ptr<dfgNode> n) {  // simply the connection for a single FSM register
+  std::set<shared_ptr<dfgNode> > rv;
+  std::list<shared_ptr<dfgNode> > nlist = get_out_nodes(n);
+  BOOST_FOREACH(shared_ptr<dfgNode> nxt, nlist) {
+    if(exist(n, nxt) && exist(nxt, n)) {  // loop control
+      rv.insert(nxt);  // rerun the next node
+      
+      // reconnect all input
+      std::list<shared_ptr<dfgNode> > input_list = get_in_nodes(n);
+      BOOST_FOREACH(shared_ptr<dfgNode> inp_node, input_list) {
+        if(inp_node != nxt && !exist(inp_node, nxt))
+          add_edge(inp_node->get_hier_name(), get_edge(inp_node, n)->type, inp_node, nxt);
+        remove_edge(inp_node, n);
+      }
+      
+      // reconnect all output
+      BOOST_FOREACH(shared_ptr<dfgNode> outp_node, nlist) {
+        if(outp_node != nxt && !exist(nxt, outp_node))
+          add_edge(n->get_hier_name(), get_edge(n, outp_node)->type, nxt, outp_node);
+        remove_edge(n, outp_node);
+      }
+      
+      // connect this node to the next node
+      remove_edge(n, nxt);
+      remove_edge(nxt, n);
+      add_edge(n->get_hier_name(), dfgEdge::SDFG_DF, n, nxt);
+      return nxt;
+    }
+  }
+  return shared_ptr<dfgNode>();
+}
+      
+             
+       
