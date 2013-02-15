@@ -734,7 +734,7 @@ std::set<shared_ptr<dfgNode> > SDFG::dfgGraph::get_fsm_groups_fast(bool verbose)
       nlist.push_back(nr.second);
   }
 
-  std::set<shared_ptr<dfgNode> > fakes; // for debug reasons
+  std::set<shared_ptr<dfgNode> > fakes_co, fakes_di; // for debug reasons
   while(!nlist.empty()) {
     shared_ptr<dfgNode> cn = nlist.front();
     nlist.pop_front();
@@ -751,7 +751,6 @@ std::set<shared_ptr<dfgNode> > SDFG::dfgGraph::get_fsm_groups_fast(bool verbose)
           goto NODE_ACCEPTED;
         }
       }
-      fakes.insert(cn); // for debug
     } else {
       // must be module
       if(cn->child) {
@@ -768,7 +767,6 @@ std::set<shared_ptr<dfgNode> > SDFG::dfgGraph::get_fsm_groups_fast(bool verbose)
 
   // remove fake FSMs
   // must have control output to other node
-  std::set<shared_ptr<dfgNode> > ffsm; // fake FSMs
   BOOST_FOREACH(shared_ptr<dfgNode> n, pfsm) {
     list<shared_ptr<dfgPath> > po = n->get_out_paths_fast();
     BOOST_FOREACH(shared_ptr<dfgPath>p, po) {
@@ -777,7 +775,7 @@ std::set<shared_ptr<dfgNode> > SDFG::dfgGraph::get_fsm_groups_fast(bool verbose)
       }
     }
     // a true FSM should have jump out already
-    ffsm.insert(n);
+    fakes_co.insert(n);
     continue;
 
   FSM_HAS_OUT_CTL:
@@ -786,23 +784,20 @@ std::set<shared_ptr<dfgNode> > SDFG::dfgGraph::get_fsm_groups_fast(bool verbose)
     BOOST_FOREACH(shared_ptr<dfgPath> p, pi) {
       if(p->type & dfgEdge::SDFG_DP) {
         if(p->src != n) {
-          ffsm.insert(n);
+          fakes_di.insert(n);
           break;
         }
       }
     }
   }
 
-  // report fakes, debug
-  if(verbose) {
-    BOOST_FOREACH(shared_ptr<dfgNode> n, fakes) {
-      std::cout << n->get_full_name() << " is a fake FSM." << std::endl;
-    }
-  }
-  
   // remove fake fsms
-  BOOST_FOREACH(shared_ptr<dfgNode> n, ffsm) {
-    if(verbose) std::cout << n->get_full_name() << " is a fake FSM." << std::endl;
+  BOOST_FOREACH(shared_ptr<dfgNode> n, fakes_co) {
+    if(verbose) std::cout << n->get_full_name() << " is a fake FSM without control outputs." << std::endl;
+    pfsm.erase(n);
+  }
+  BOOST_FOREACH(shared_ptr<dfgNode> n, fakes_di) {
+    if(verbose) std::cout << n->get_full_name() << " is a fake FSM with data inputs." << std::endl;
     pfsm.erase(n);
   }
 
