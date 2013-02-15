@@ -195,7 +195,7 @@ Module* netlist::Module::deep_copy() const {
 
   // SDFG
   rv->DFG = DFG;
-  rv->RG = RG;
+  rv->RRG = RRG;
 
   return rv;
 }
