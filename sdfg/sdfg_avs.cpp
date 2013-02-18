@@ -580,9 +580,9 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_RRG() const {
       else if(p->type & dfgEdge::SDFG_DDP)
         ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_DDP, cn->get_full_name(), p->tar->get_full_name());
 
-      if(p->type & dfgEdge::SDFG_RST == dfgEdge::SDFG_RST)
+      if((p->type & dfgEdge::SDFG_RST) == dfgEdge::SDFG_RST)
         ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_RST, cn->get_full_name(), p->tar->get_full_name());
-      else if(p->type & dfgEdge::SDFG_CLK == dfgEdge::SDFG_CLK)
+      else if((p->type & dfgEdge::SDFG_CLK) == dfgEdge::SDFG_CLK)
         ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_CLK, cn->get_full_name(), p->tar->get_full_name());
       else if(p->type & dfgEdge::SDFG_CTL)
         ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_CTL, cn->get_full_name(), p->tar->get_full_name());
@@ -665,20 +665,19 @@ std::set<shared_ptr<dfgNode> > SDFG::dfgGraph::get_fsm_groups(bool verbose, shar
     
     // check control output
     unsigned int etype = dfgEdge::SDFG_DF;
-    BOOST_FOREACH(shared_ptr<dfgEdge> e, RRG->get_out_edges(n->get_hier_name())) {
-      if(RRG->get_target(e)->get_hier_name() != n->get_hier_name()) 
+    BOOST_FOREACH(shared_ptr<dfgEdge> e, RRG->get_out_edges(n->get_full_name())) {
+      if(RRG->get_target(e)->get_hier_name() != n->get_full_name()) 
         etype |= e->type;
     }
 
     if(!(etype & dfgEdge::SDFG_CTL)) {
       fakes_co.insert(n);
-      std::cout << n->get_hier_name() << etype << std::endl;
       continue;
     }
 
     etype = dfgEdge::SDFG_DF;
-    BOOST_FOREACH(shared_ptr<dfgEdge> e, RRG->get_in_edges(n->get_hier_name())) {
-      if(RRG->get_source(e)->get_hier_name() != n->get_hier_name()) 
+    BOOST_FOREACH(shared_ptr<dfgEdge> e, RRG->get_in_edges(n->get_full_name())) {
+      if(RRG->get_source(e)->get_hier_name() != n->get_full_name()) 
         etype |= e->type;
     }
     
