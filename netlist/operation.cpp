@@ -471,64 +471,9 @@ void netlist::Operation::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const
     break;
   }
   case oQuestion: {
-    shared_ptr<SDFG::RForest> eqnrf(new SDFG::RForest());
-    shared_ptr<SDFG::RForest> arf(new SDFG::RForest());
-    shared_ptr<SDFG::RForest> brf(new SDFG::RForest());
-    child[0]->scan_vars(eqnrf, ctl);
-    child[1]->scan_vars(arf, ctl);
-    child[2]->scan_vars(brf, ctl);
-    if(ctl) {                   // ctl expression
-      if(!rf->tree.count("@CTL")) {
-        rf->tree["@CTL"] = shared_ptr<SDFG::RTree>(new SDFG::RTree(SDFG::RTree::RT_CTL));
-      }
-      if(eqnrf->tree.count("@CTL")) {
-        rf->tree["@CTL"]->sig.insert(eqnrf->tree["@CTL"]->sig.begin(), eqnrf->tree["@CTL"]->sig.end());
-      }
-      if(arf->tree.count("@CTL")) {
-        rf->tree["@CTL"]->sig.insert(arf->tree["@CTL"]->sig.begin(), arf->tree["@CTL"]->sig.end());
-      }
-      if(brf->tree.count("@CTL")) {
-        rf->tree["@CTL"]->sig.insert(brf->tree["@CTL"]->sig.begin(), brf->tree["@CTL"]->sig.end());
-      }
-      if(rf->tree["@CTL"]->sig.empty()) {
-        rf->tree.erase("@CTL");
-      }
-    } else {                    // normal expression
-      if(arf->tree.empty() && brf->tree.empty()) { // const selection
-        rf.reset(new SDFG::RForest(*eqnrf));
-      } else {
-        if(!rf->tree.count("@CTL")) {
-          rf->tree["@CTL"] = shared_ptr<SDFG::RTree>(new SDFG::RTree(SDFG::RTree::RT_CTL));
-        }
-        if(!rf->tree.count("@DATA")) {
-          rf->tree["@DATA"] = shared_ptr<SDFG::RTree>(new SDFG::RTree(SDFG::RTree::RT_DATA));
-        }
-        if(eqnrf->tree.count("@CTL")) {
-          rf->tree["@CTL"]->sig.insert(eqnrf->tree["@CTL"]->sig.begin(), eqnrf->tree["@CTL"]->sig.end());
-        }
-        if(arf->tree.count("@CTL")) {
-          rf->tree["@CTL"]->sig.insert(arf->tree["@CTL"]->sig.begin(), arf->tree["@CTL"]->sig.end());
-        }
-        if(brf->tree.count("@CTL")) {
-          rf->tree["@CTL"]->sig.insert(brf->tree["@CTL"]->sig.begin(), brf->tree["@CTL"]->sig.end());
-        }
-        if(eqnrf->tree.count("@DATA")) {
-          rf->tree["@CTL"]->sig.insert(eqnrf->tree["@DATA"]->sig.begin(), eqnrf->tree["@DATA"]->sig.end());
-        }
-        if(arf->tree.count("@DATA")) {
-          rf->tree["@DATA"]->sig.insert(arf->tree["@DATA"]->sig.begin(), arf->tree["@DATA"]->sig.end());
-        }
-        if(brf->tree.count("@DATA")) {
-          rf->tree["@DATA"]->sig.insert(brf->tree["@DATA"]->sig.begin(), brf->tree["@DATA"]->sig.end());
-        }
-        if(rf->tree["@CTL"]->sig.empty()) {
-          rf->tree.erase("@CTL");
-        }
-        if(rf->tree["@DATA"]->sig.empty()) {
-          rf->tree.erase("@DATA");
-        }        
-      }
-    }
+    child[0]->scan_vars(rf, true);
+    child[1]->scan_vars(rf, ctl);
+    child[2]->scan_vars(rf, ctl);
     break;    
   }
   default:

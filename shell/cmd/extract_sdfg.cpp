@@ -183,11 +183,10 @@ void shell::CMD::CMDExtractSDFG::exec ( const std::string& str, Env * pEnv){
   } else {
     CMDUniquify::exec("-quiet", pEnv);
   }
-  shared_ptr<SDFG::dfgGraph> g = tarDesign->extract_sdfg(arg.bQuiet);
+  
+  if(!tarDesign->DFG)
+    tarDesign->DFG = tarDesign->extract_sdfg(arg.bQuiet);
 
-  g->write(fhandler);
+  tarDesign->DFG->write(fhandler);
   fhandler.close();
-
-  // store it in the target module
-  tarDesign->DFG = g;
 }

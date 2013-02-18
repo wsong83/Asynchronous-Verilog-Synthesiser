@@ -266,7 +266,7 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
     }
     BOOST_FOREACH(const string& s, dsig) {
       if(s != "") G->add_edge(s, SDFG::dfgEdge::SDFG_DP, s, t.first);
-      else        G->add_edge(t.first, SDFG::dfgEdge::SDFG_DP, t.first, t.first); // self-loop
+      else        G->add_edge(t.first, SDFG::dfgEdge::SDFG_DDP, t.first, t.first); // self-loop
     }
   }
 
