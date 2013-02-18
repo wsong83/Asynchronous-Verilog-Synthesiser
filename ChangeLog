@@ -1,3 +1,7 @@
+##### Sat 05/01/2013
+* Seems FSM detection is ready for use.
+  Set up a new branch to detect the partition boundary.
+
 ##### Wed 14/11/2012
 * FSM extraction should be considered ready for now.
   Start to think about state enumeration (state space exploration).

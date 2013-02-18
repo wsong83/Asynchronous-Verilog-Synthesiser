@@ -62,7 +62,7 @@ list<shared_ptr<dfgPath> >& SDFG::dfgNode::get_out_paths() {
     // build up the relation map
     list<shared_ptr<dfgEdge> > oe_list = pg->get_out_edges_cb(id); // out edge list
     BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
-      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e->id);
+      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e);
       BOOST_FOREACH(shared_ptr<dfgNode> n, tar_list) {
         if(rmap[pn].count(n))
           rmap[pn][n] |= e->type;
@@ -95,7 +95,7 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_out_paths_fast() {
     map<shared_ptr<dfgNode>, int> tmap; // type map for next nodes
     list<shared_ptr<dfgEdge> > oe_list = pg->get_out_edges_cb(id); // out edge list
     BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
-      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e->id);
+      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e);
       BOOST_FOREACH(shared_ptr<dfgNode> n, tar_list) {
         if(tmap.count(n))
           tmap[n] |= e->type;
@@ -137,7 +137,7 @@ list<shared_ptr<dfgPath> >& SDFG::dfgNode::get_in_paths() {
     // build up the relation map
     list<shared_ptr<dfgEdge> > ie_list = pg->get_in_edges_cb(id); // in edge list
     BOOST_FOREACH(shared_ptr<dfgEdge> e, ie_list) {
-      shared_ptr<dfgNode> src = e->pg->get_source_cb(e->id);
+      shared_ptr<dfgNode> src = e->pg->get_source_cb(e);
       if(rmap[pn].count(src))
         rmap[pn][src] |= e->type;
       else
@@ -169,7 +169,7 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_in_paths_fast() {
     map<shared_ptr<dfgNode>, int> tmap; // type map for next nodes
     list<shared_ptr<dfgEdge> > ie_list = pg->get_in_edges_cb(id); // in edge list
     BOOST_FOREACH(shared_ptr<dfgEdge> e, ie_list) {
-      shared_ptr<dfgNode> src = e->pg->get_source_cb(e->id);
+      shared_ptr<dfgNode> src = e->pg->get_source_cb(e);
       if(tmap.count(src))
         tmap[src] |= e->type;
       else
@@ -206,7 +206,7 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_self_path() {
     map<shared_ptr<dfgNode>, int> tmap; // type map for next nodes
     list<shared_ptr<dfgEdge> > oe_list = pg->get_out_edges_cb(id); // out edge list
     BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
-      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e->id);
+      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e);
       BOOST_FOREACH(shared_ptr<dfgNode> n, tar_list) {
         //if(n != pn) {  // remove self loop
           if(tmap.count(n)) tmap[n] |= e->type;
@@ -265,7 +265,7 @@ void SDFG::dfgNode::out_path_type_update(list<shared_ptr<dfgPath> >& rv, // retu
   if(!rmap.count(pn)) {         // new node
     list<shared_ptr<dfgEdge> > oe_list = pg->get_out_edges_cb(id); // out edge list
     BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
-      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e->id);
+      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e);
       BOOST_FOREACH(shared_ptr<dfgNode> n, tar_list) {
         if(rmap[pn].count(n))
           rmap[pn][n] |= e->type;
@@ -328,7 +328,7 @@ void SDFG::dfgNode::out_path_type_update_fast(map<shared_ptr<dfgNode>, int>& rv,
     map<shared_ptr<dfgNode>, int> tmap; // type map for next nodes
     list<shared_ptr<dfgEdge> > oe_list = pg->get_out_edges_cb(id); // out edge list
     BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
-      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e->id);
+      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e);
       BOOST_FOREACH(shared_ptr<dfgNode> n, tar_list) {
         if(tmap.count(n))
           tmap[n] |= e->type;
@@ -375,7 +375,7 @@ void SDFG::dfgNode::in_path_type_update(list<shared_ptr<dfgPath> >& rv, // retur
   if(!rmap.count(pn)) {         // new node
     list<shared_ptr<dfgEdge> > ie_list = pg->get_in_edges_cb(id); // out edge list
     BOOST_FOREACH(shared_ptr<dfgEdge> e, ie_list) {
-      shared_ptr<dfgNode> src = e->pg->get_source_cb(e->id);
+      shared_ptr<dfgNode> src = e->pg->get_source_cb(e);
       if(rmap[pn].count(src))
         rmap[pn][src] |= e->type;
       else
@@ -434,7 +434,7 @@ void SDFG::dfgNode::in_path_type_update_fast(map<shared_ptr<dfgNode>, int>& rv, 
     map<shared_ptr<dfgNode>, int> tmap; // type map for next nodes
     list<shared_ptr<dfgEdge> > ie_list = pg->get_in_edges_cb(id); // out edge list
     BOOST_FOREACH(shared_ptr<dfgEdge> e, ie_list) {
-      shared_ptr<dfgNode> src = e->pg->get_source_cb(e->id);
+      shared_ptr<dfgNode> src = e->pg->get_source_cb(e);
       if(tmap.count(src))
         tmap[src] |= e->type;
       else
@@ -499,7 +499,7 @@ void SDFG::dfgNode::self_path_update(map<shared_ptr<dfgNode>, int>& rv, // retur
     map<shared_ptr<dfgNode>, int> tmap; // type map for next nodes
     list<shared_ptr<dfgEdge> > oe_list = pg->get_out_edges_cb(id); // out edge list
     BOOST_FOREACH(shared_ptr<dfgEdge> e, oe_list) {
-      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e->id);
+      list<shared_ptr<dfgNode> > tar_list = e->pg->get_target_cb(e);
       BOOST_FOREACH(shared_ptr<dfgNode> n, tar_list) {
         if(tmap.count(n))
           tmap[n] |= e->type;
@@ -543,206 +543,82 @@ void SDFG::dfgNode::self_path_update(map<shared_ptr<dfgNode>, int>& rv, // retur
 // analyse functions
 ///////////////////////////////
 
-shared_ptr<dfgGraph> SDFG::dfgGraph::get_reg_graph() const {
+shared_ptr<dfgGraph> SDFG::dfgGraph::get_RRG() const {
 
   // new register graph
   shared_ptr<dfgGraph> ng(new dfgGraph(name));
 
   // node to visit
-  list<shared_ptr<dfgNode> > node_next;
+  list<shared_ptr<dfgNode> > nlist;
 
-  // find out all ports and put it in the new graph
-  for_each(nodes.begin(), nodes.end(),
-           [&](const pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
-             if(m.second->type & dfgNode::SDFG_PORT) {
-               node_next.push_back(m.second);
-               shared_ptr<dfgNode> nnode(m.second->copy());
-               nnode->set_hier_name(m.second->get_full_name());
-               ng->add_node(nnode);
-             }
-           });
-  
-  // buld a new graph
-  while(!node_next.empty()) {
-    // fetch current node
-    shared_ptr<dfgNode> cnode = node_next.front();
-    node_next.pop_front();
-
-    // get the paths
-    list<shared_ptr<dfgPath> >& plist = cnode->get_out_paths();
-    BOOST_FOREACH(shared_ptr<dfgPath> p, plist) {
-      if(p->type) {
-        // add new node if it is new
-        if(!ng->exist(p->tar->get_full_name())) { // new node
-          node_next.push_back(p->tar);
-          shared_ptr<dfgNode> nnode(p->tar->copy());
-          nnode->set_hier_name(p->tar->get_full_name());
-          ng->add_node(nnode);
-        }
-        
-        // add path
-        if((p->type & dfgEdge::SDFG_DP) == dfgEdge::SDFG_DP)
-          ng->add_edge(cnode->get_full_name(), dfgEdge::SDFG_DP, cnode->get_full_name(), p->tar->get_full_name());
-        else if(p->type & dfgEdge::SDFG_DF)
-          ng->add_edge(cnode->get_full_name(), dfgEdge::SDFG_DF, cnode->get_full_name(), p->tar->get_full_name());
-
-        if((p->type & dfgEdge::SDFG_RST) == dfgEdge::SDFG_RST)
-          ng->add_edge(cnode->get_full_name(), dfgEdge::SDFG_RST, cnode->get_full_name(), p->tar->get_full_name());
-        else if((p->type & dfgEdge::SDFG_CLK) == dfgEdge::SDFG_CLK)
-          ng->add_edge(cnode->get_full_name(), dfgEdge::SDFG_CLK, cnode->get_full_name(), p->tar->get_full_name());
-        else if(p->type & dfgEdge::SDFG_CTL)
-          ng->add_edge(cnode->get_full_name(), dfgEdge::SDFG_CTL, cnode->get_full_name(), p->tar->get_full_name());
-      }
+  typedef pair<const vertex_descriptor, shared_ptr<dfgNode> > node_record_type;
+  BOOST_FOREACH(node_record_type nr, nodes) {
+    if(nr.second->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_PORT)) {
+      nlist.push_back(nr.second);
+      // add the node to the new RRG
+      shared_ptr<dfgNode> nnode(nr.second->copy());
+      nnode->set_hier_name(nr.second->get_full_name());
+      ng->add_node(nnode);
     }
-    
+  }
+
+  while(!nlist.empty()) {
+    shared_ptr<dfgNode> cn = nlist.front();
+    nlist.pop_front();
+    list<shared_ptr<dfgPath> > po = cn->get_out_paths_fast();
+    BOOST_FOREACH(shared_ptr<dfgPath>p, po) {
+      if(!ng->exist(p->tar->get_full_name())) { // add the new node to the RRG
+        shared_ptr<dfgNode> nnode(p->tar->copy());
+        nnode->set_hier_name(p->tar->get_full_name());
+        ng->add_node(nnode);
+        nlist.push_back(p->tar);
+      }
+
+      // add arcs
+      if(p->type & dfgEdge::SDFG_DP)
+        ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_DP, cn->get_full_name(), p->tar->get_full_name());
+      else if(p->type & dfgEdge::SDFG_DDP)
+        ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_DDP, cn->get_full_name(), p->tar->get_full_name());
+
+      if((p->type & dfgEdge::SDFG_RST) == dfgEdge::SDFG_RST)
+        ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_RST, cn->get_full_name(), p->tar->get_full_name());
+      else if((p->type & dfgEdge::SDFG_CLK) == dfgEdge::SDFG_CLK)
+        ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_CLK, cn->get_full_name(), p->tar->get_full_name());
+      else if(p->type & dfgEdge::SDFG_CTL)
+        ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_CTL, cn->get_full_name(), p->tar->get_full_name());
+    }
   }
 
   // return the graph
   return ng;
 }
 
-list<list<shared_ptr<dfgNode> > > SDFG::dfgGraph::get_fsm_groups(bool verbose) const {
-  // find all registers who has self-loops
-  list<shared_ptr<dfgNode> > nlist;
-  std::set<shared_ptr<dfgNode> > pfsm; // potential FSMs
-  unsigned int noden = 0;              // total number of nodes 
-  unsigned int regn = 0;               // total number of registers
-  unsigned int pfsmn = 0;              // total number of potential FSMs
-  typedef pair<const vertex_descriptor, shared_ptr<dfgNode> > node_record_type;
-  BOOST_FOREACH(node_record_type nr, nodes) {
-    noden++;
-    if(nr.second->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_MODULE))
-      nlist.push_back(nr.second);
-  }
+shared_ptr<dfgGraph> SDFG::dfgGraph::build_reg_graph(const std::set<shared_ptr<dfgNode> >& rlist) const {
 
-  std::set<shared_ptr<dfgNode> > fakes; // for debug reasons
-  while(!nlist.empty()) {
-    shared_ptr<dfgNode> cn = nlist.front();
-    nlist.pop_front();
-    //if(verbose) std::cout << "analyse the paths of " << cn->get_hier_name() << std::endl;
-    if(cn->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH)) { // register
-      regn++;
-      std::set<shared_ptr<dfgNode> > tar_set;
-      tar_set.insert(cn);
-      list<shared_ptr<dfgPath> >& pathlist = cn->get_out_paths();
-      BOOST_FOREACH(shared_ptr<dfgPath> p, pathlist) {
-        if((p->tar == cn) && (p->type & dfgEdge::SDFG_CTL)) {
-          pfsm.insert(cn);
-          pfsmn++;
-          goto NODE_ACCEPTED;
-        }
-      }
-      fakes.insert(cn); // for debug
-    } else {
-      // must be module
-      if(cn->child) {
-        BOOST_FOREACH(node_record_type nr, cn->child->nodes) {
-          noden++;
-          if(nr.second->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_MODULE))
-            nlist.push_back(nr.second);
-        }
-      }
-    }
-  NODE_ACCEPTED:
-    continue;
-  }
+  // new register graph
+  shared_ptr<dfgGraph> ng(new dfgGraph(name));
+  map<shared_ptr<dfgNode>, shared_ptr<dfgNode> > node_translate_map;
 
-  // remove fake FSMs
-  // must have control output to other node
-  std::set<shared_ptr<dfgNode> > ffsm; // fake FSMs
-  BOOST_FOREACH(shared_ptr<dfgNode> n, pfsm) {
-    list<shared_ptr<dfgPath> >& po = n->get_out_paths();
-    BOOST_FOREACH(shared_ptr<dfgPath>p, po) {
-      if((p->tar != n) && (p->type & dfgEdge::SDFG_CTL)) {
-        goto FSM_HAS_OUT_CTL;
-      }
-    }
-    // a true FSM should have jump out already
-    ffsm.insert(n);
-    continue;
-
-  FSM_HAS_OUT_CTL:
-    // all data input should be const(omitted), itself
-    list<shared_ptr<dfgPath> >& pi = n->get_in_paths();
-    BOOST_FOREACH(shared_ptr<dfgPath> p, pi) {
-      if(p->type & dfgEdge::SDFG_DP) {
-        if(p->src != n) {
-          ffsm.insert(n);
-          break;
-        }
-      }
-    }
-  }
-
-  // report fakes, debug
-  if(verbose) {
-    BOOST_FOREACH(shared_ptr<dfgNode> n, fakes) {
-      std::cout << n->get_hier_name() << " is a fake FSM." << std::endl;
-    }
+  // add all nodes to the graph
+  BOOST_FOREACH(shared_ptr<dfgNode> nd, rlist) {
+    shared_ptr<dfgNode> nnode(nd->copy());
+    nnode->set_hier_name(nd->get_full_name());
+    ng->add_node(nnode);
+    node_translate_map[nd] = nnode;
   }
   
-  // remove fake fsms
-  BOOST_FOREACH(shared_ptr<dfgNode> n, ffsm) {
-    if(verbose) std::cout << n->get_hier_name() << " is a fake FSM." << std::endl;
-    pfsm.erase(n);
-  }
-
-  // figure out the relations of FSMs
-  unsigned int number_of_groups = 0;
-  map<shared_ptr<dfgNode>, unsigned int> group_map;
-  BOOST_FOREACH(shared_ptr<dfgNode> n, pfsm) {
-    if(group_map.count(n)) continue;
- 
-    // get all the FSMs connected
-    unsigned int gid = 0;
-    std::set<shared_ptr<dfgNode> > connected_fsm;
-    BOOST_FOREACH(shared_ptr<dfgPath> p, n->get_out_paths()) {
-      if(pfsm.count(p->tar)) {  // it is a FSM
-        connected_fsm.insert(p->tar);
-        if(group_map.count(p->tar)) { // try to get a group id
-          if(gid == 0 || gid >= group_map[p->tar])
-            gid = group_map[p->tar];
-        }
-      }
-    }
-    BOOST_FOREACH(shared_ptr<dfgPath> p, n->get_in_paths()) {
-      if(pfsm.count(p->src)) {  // it is a FSM
-        connected_fsm.insert(p->tar);
-        if(group_map.count(p->src)) { // try to get a group id
-          if(gid == 0 || gid >= group_map[p->src])
-            gid = group_map[p->tar];
-        }
-      }
-    }
-    if(gid == 0) gid = ++number_of_groups;
-    group_map[n] = gid;
-    BOOST_FOREACH(shared_ptr<dfgNode> n, connected_fsm) {
-      group_map[n] = gid;
+  // connect the nodes
+  BOOST_FOREACH(shared_ptr<dfgNode> nd, rlist) {
+    list<shared_ptr<dfgPath> > plist = nd->get_out_paths_fast();
+    BOOST_FOREACH(shared_ptr<dfgPath> p, plist) {
+      if(p->tar != nd && node_translate_map.count(p->tar))
+        ng->add_edge(nd->get_full_name(), dfgEdge::SDFG_CTL, node_translate_map[nd], node_translate_map[p->tar]);
     }
   }
-
-  map<unsigned int, list<shared_ptr<dfgNode> > > fmap;
-  typedef pair<const shared_ptr<dfgNode>, unsigned int> group_map_type;
-  BOOST_FOREACH(group_map_type gm, group_map) {
-    fmap[gm.second].push_back(gm.first);
-  }
-
-  list<list<shared_ptr<dfgNode> > > rv;
-  typedef pair<const unsigned int, list<shared_ptr<dfgNode> > > fmap_type;
-  BOOST_FOREACH(fmap_type fm, fmap) {
-    rv.push_back(fm.second);
-  }
-
-  // report:
-  std::cout << "\n\nSUMMARY:" << std::endl;
-  std::cout << "In a design of " << noden << " nodes, " << regn << " nodes are registers." << std::endl;
-  std::cout << "Find " << pfsmn << " potential FSMs but finally reduce to " << pfsm.size() << " in "
-            << rv.size() << " groups:" << std::endl; 
-
-  return rv;
+  return ng;
 }
 
-list<list<shared_ptr<dfgNode> > > SDFG::dfgGraph::get_fsm_groups_fast(bool verbose) const {
+std::set<shared_ptr<dfgNode> > SDFG::dfgGraph::get_fsm_groups(bool verbose, shared_ptr<dfgGraph> RRG) const {
   // find all registers who has self-loops
   list<shared_ptr<dfgNode> > nlist;
   std::set<shared_ptr<dfgNode> > pfsm; // potential FSMs
@@ -756,24 +632,21 @@ list<list<shared_ptr<dfgNode> > > SDFG::dfgGraph::get_fsm_groups_fast(bool verbo
       nlist.push_back(nr.second);
   }
 
-  std::set<shared_ptr<dfgNode> > fakes; // for debug reasons
+  std::set<shared_ptr<dfgNode> > fakes_co, fakes_di; // for debug reasons
   while(!nlist.empty()) {
     shared_ptr<dfgNode> cn = nlist.front();
     nlist.pop_front();
     //if(verbose) std::cout << "analyse the paths of " << cn->get_hier_name() << std::endl;
     if(cn->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH)) { // register
       regn++;
-      std::set<shared_ptr<dfgNode> > tar_set;
-      tar_set.insert(cn);
       list<shared_ptr<dfgPath> > pathlist = cn->get_self_path();
       BOOST_FOREACH(shared_ptr<dfgPath> p, pathlist) {
         if(p->type & (dfgEdge::SDFG_CTL|dfgEdge::SDFG_DP)) {
           pfsm.insert(cn);
           pfsmn++;
-          goto NODE_ACCEPTED;
+          break;
         }
       }
-      fakes.insert(cn); // for debug
     } else {
       // must be module
       if(cn->child) {
@@ -784,101 +657,107 @@ list<list<shared_ptr<dfgNode> > > SDFG::dfgGraph::get_fsm_groups_fast(bool verbo
         }
       }
     }
-  NODE_ACCEPTED:
-    continue;
   }
 
   // remove fake FSMs
   // must have control output to other node
-  std::set<shared_ptr<dfgNode> > ffsm; // fake FSMs
   BOOST_FOREACH(shared_ptr<dfgNode> n, pfsm) {
-    list<shared_ptr<dfgPath> > po = n->get_out_paths_fast();
-    BOOST_FOREACH(shared_ptr<dfgPath>p, po) {
-      if((p->tar != n) && (p->type & dfgEdge::SDFG_CTL)) {
-        goto FSM_HAS_OUT_CTL;
-      }
+    
+    // check control output
+    unsigned int etype = dfgEdge::SDFG_DF;
+    BOOST_FOREACH(shared_ptr<dfgEdge> e, RRG->get_out_edges(n->get_full_name())) {
+      if(RRG->get_target(e)->get_hier_name() != n->get_full_name()) 
+        etype |= e->type;
     }
-    // a true FSM should have jump out already
-    ffsm.insert(n);
-    continue;
 
-  FSM_HAS_OUT_CTL:
-    // all data input should be const(omitted), itself
-    list<shared_ptr<dfgPath> > pi = n->get_in_paths_fast();
-    BOOST_FOREACH(shared_ptr<dfgPath> p, pi) {
-      if(p->type & dfgEdge::SDFG_DP) {
-        if(p->src != n) {
-          ffsm.insert(n);
-          break;
-        }
-      }
+    if(!(etype & dfgEdge::SDFG_CTL)) {
+      fakes_co.insert(n);
+      continue;
     }
-  }
 
-  // report fakes, debug
-  if(verbose) {
-    BOOST_FOREACH(shared_ptr<dfgNode> n, fakes) {
-      std::cout << n->get_full_name() << " is a fake FSM." << std::endl;
+    etype = dfgEdge::SDFG_DF;
+    BOOST_FOREACH(shared_ptr<dfgEdge> e, RRG->get_in_edges(n->get_full_name())) {
+      if(RRG->get_source(e)->get_hier_name() != n->get_full_name()) 
+        etype |= e->type;
+    }
+    
+    if(etype & dfgEdge::SDFG_DP) {
+      fakes_di.insert(n);
+      continue;
     }
   }
   
   // remove fake fsms
-  BOOST_FOREACH(shared_ptr<dfgNode> n, ffsm) {
-    if(verbose) std::cout << n->get_full_name() << " is a fake FSM." << std::endl;
+  BOOST_FOREACH(shared_ptr<dfgNode> n, fakes_co) {
+    if(verbose) std::cout << n->get_full_name() << " is a fake FSM without control outputs." << std::endl;
     pfsm.erase(n);
   }
-
-  // figure out the relations of FSMs
-  unsigned int number_of_groups = 0;
-  map<shared_ptr<dfgNode>, unsigned int> group_map;
-  BOOST_FOREACH(shared_ptr<dfgNode> n, pfsm) {
-    if(group_map.count(n)) continue;
- 
-    // get all the FSMs connected
-    unsigned int gid = 0;
-    std::set<shared_ptr<dfgNode> > connected_fsm;
-    BOOST_FOREACH(shared_ptr<dfgPath> p, n->get_out_paths_fast()) {
-      if(pfsm.count(p->tar)) {  // it is a FSM
-        connected_fsm.insert(p->tar);
-        if(group_map.count(p->tar)) { // try to get a group id
-          if(gid == 0 || gid >= group_map[p->tar])
-            gid = group_map[p->tar];
-        }
-      }
-    }
-    BOOST_FOREACH(shared_ptr<dfgPath> p, n->get_in_paths_fast()) {
-      if(pfsm.count(p->src)) {  // it is a FSM
-        connected_fsm.insert(p->tar);
-        if(group_map.count(p->src)) { // try to get a group id
-          if(gid == 0 || gid >= group_map[p->src])
-            gid = group_map[p->tar];
-        }
-      }
-    }
-    if(gid == 0) gid = ++number_of_groups;
-    group_map[n] = gid;
-    BOOST_FOREACH(shared_ptr<dfgNode> n, connected_fsm) {
-      group_map[n] = gid;
-    }
-  }
-
-  map<unsigned int, list<shared_ptr<dfgNode> > > fmap;
-  typedef pair<const shared_ptr<dfgNode>, unsigned int> group_map_type;
-  BOOST_FOREACH(group_map_type gm, group_map) {
-    fmap[gm.second].push_back(gm.first);
-  }
-
-  list<list<shared_ptr<dfgNode> > > rv;
-  typedef pair<const unsigned int, list<shared_ptr<dfgNode> > > fmap_type;
-  BOOST_FOREACH(fmap_type fm, fmap) {
-    rv.push_back(fm.second);
+  
+  BOOST_FOREACH(shared_ptr<dfgNode> n, fakes_di) {
+    if(verbose) std::cout << n->get_full_name() << " is a fake FSM with data inputs." << std::endl;
+    pfsm.erase(n);
   }
 
   // report:
   std::cout << "\n\nSUMMARY:" << std::endl;
   std::cout << "In a design of " << noden << " nodes, " << regn << " nodes are registers." << std::endl;
-  std::cout << "Find " << pfsmn << " potential FSMs but finally reduce to " << pfsm.size() << " in "
-            << rv.size() << " groups:" << std::endl; 
+  std::cout << "Find " << pfsmn << " potential FSMs but finally reduce to " << pfsm.size() << " FSM registers." << std::endl; 
 
-  return rv;
+  return pfsm;
 }
+
+void SDFG::dfgGraph::fsm_simplify() {  // simplify the FSM connection graph
+  std::set<shared_ptr<dfgNode> > node_set;
+  std::list<shared_ptr<dfgNode> > node_list;
+  typedef pair<const vertex_descriptor, shared_ptr<dfgNode> > node_record_type;
+  BOOST_FOREACH(const node_record_type& n, nodes) {
+    node_set.insert(n.second);
+    node_list.push_back(n.second);
+  }
+  
+  while(!node_list.empty()) {
+    shared_ptr<dfgNode> node = node_list.front();
+    node_list.pop_front();
+    node_set.erase(node);
+    shared_ptr<dfgNode> rvn = fsm_simplify_node(node);
+    if(rvn && !node_set.count(rvn)) {
+      node_set.insert(rvn);
+      node_list.push_back(rvn);
+    }
+  }  
+}
+
+shared_ptr<dfgNode> SDFG::dfgGraph::fsm_simplify_node(shared_ptr<dfgNode> n) {  // simply the connection for a single FSM register
+  std::set<shared_ptr<dfgNode> > rv;
+  std::list<shared_ptr<dfgNode> > nlist = get_out_nodes(n);
+  BOOST_FOREACH(shared_ptr<dfgNode> nxt, nlist) {
+    if(exist(n, nxt) && exist(nxt, n)) {  // loop control
+      rv.insert(nxt);  // rerun the next node
+      
+      // reconnect all input
+      std::list<shared_ptr<dfgNode> > input_list = get_in_nodes(n);
+      BOOST_FOREACH(shared_ptr<dfgNode> inp_node, input_list) {
+        if(inp_node != nxt && !exist(inp_node, nxt))
+          add_edge(inp_node->get_hier_name(), get_edge(inp_node, n)->type, inp_node, nxt);
+        remove_edge(inp_node, n);
+      }
+      
+      // reconnect all output
+      BOOST_FOREACH(shared_ptr<dfgNode> outp_node, nlist) {
+        if(outp_node != nxt && !exist(nxt, outp_node))
+          add_edge(n->get_hier_name(), get_edge(n, outp_node)->type, nxt, outp_node);
+        remove_edge(n, outp_node);
+      }
+      
+      // connect this node to the next node
+      remove_edge(n, nxt);
+      remove_edge(nxt, n);
+      add_edge(n->get_hier_name(), dfgEdge::SDFG_DF, n, nxt);
+      return nxt;
+    }
+  }
+  return shared_ptr<dfgNode>();
+}
+      
+             
+       

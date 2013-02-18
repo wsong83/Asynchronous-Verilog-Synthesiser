@@ -160,29 +160,47 @@ bool shell::CMD::CMDReportFSM::exec ( const std::string& str, Env * pEnv){
     return false;
   }
 
-  // check DFG is ready
-  shared_ptr<SDFG::dfgGraph> G;
-  if(!tarDesign->DFG) {
-    gEnv.stdOs << "Error: DFG is not extracted for the target design \"" << designName << "\"." << endl;
-    return false;
-  } else {
-    G = tarDesign->DFG;
-  }
+  // make sure DFG and RRG are ready
+  if(!tarDesign->DFG) tarDesign->DFG = tarDesign->extract_sdfg(true);
+  if(!tarDesign->RRG) tarDesign->RRG = tarDesign->DFG->get_RRG();
   
   // do the FSM extraction
-  list<list<shared_ptr<SDFG::dfgNode> > > fsmg = 
-    arg.bFast? 
-    G->get_fsm_groups_fast(arg.bVerbose) : 
-    G->get_fsm_groups(arg.bVerbose);
+  std::set<shared_ptr<SDFG::dfgNode> > fsms = 
+    tarDesign->DFG->get_fsm_groups(arg.bVerbose, tarDesign->RRG);
+
+  // reorder the set using names rather than pointers
+  std::set<string> fsm_str;
+  BOOST_FOREACH(shared_ptr<SDFG::dfgNode> pfsm, fsms)
+    fsm_str.insert(pfsm->get_full_name());
 
   unsigned int index = 0;
-  BOOST_FOREACH(list<shared_ptr<SDFG::dfgNode> >& g, fsmg) {
+  BOOST_FOREACH(const string& fsm_name, fsm_str) {
     gEnv.stdOs << "[" << ++index << "]  ";
-    BOOST_FOREACH(shared_ptr<SDFG::dfgNode>& n, g) {
-      gEnv.stdOs << n->get_full_name() << " ";
-    }
+    gEnv.stdOs <<  fsm_name << " ";
     gEnv.stdOs << endl;
   }
 
+  // build the fsm connection graph
+  //shared_ptr<SDFG::dfgGraph> fsm_graph = G->build_reg_graph(fsms);
+
+  // specify the output file name
+  //string outputFileName = designName + ".fsm";
+
+  // open the file
+  //ofstream fhandler;
+  //fhandler.open(system_complete(outputFileName), std::ios_base::out|std::ios_base::trunc);
+
+  //fsm_graph->write(fhandler);
+  //fhandler.close();
+  
+  //gEnv.stdOs << "write the FSM connection graph to " << outputFileName << endl;
+  
+  //outputFileName = designName + ".fsm.sim";
+  //fhandler.open(system_complete(outputFileName), std::ios_base::out|std::ios_base::trunc);
+  //fsm_graph->fsm_simplify();
+  //fsm_graph->write(fhandler);
+  //fhandler.close();
+  //gEnv.stdOs << "write the simplified FSM connection graph to " << outputFileName << endl;
+  
   return true;
 }

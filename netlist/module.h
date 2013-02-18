@@ -88,7 +88,7 @@ namespace netlist {
 
     // DFG graphs
     boost::shared_ptr<SDFG::dfgGraph> DFG; // the DFG graph of this module (sub-module is embedded, so it is a full graph)
-    boost::shared_ptr<SDFG::dfgGraph> RG;  // the register graph of this module
+    boost::shared_ptr<SDFG::dfgGraph> RRG; // the register relation graph of this module
 
   private:
     // only used in constructors
