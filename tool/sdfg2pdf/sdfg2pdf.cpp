@@ -423,3 +423,4 @@ QPainterPath make_arrow(double x0, double y0, double x1, double y1) {
   QTransform rotateTran(cos(angle), sin(angle), -sin(angle), cos(angle), x1, y1);
   return rotateTran.map(m);
 }
+
