@@ -162,47 +162,58 @@ bool netlist::CaseItem::is_match(const Number& val) const {
   return rv;
 }
 
+netlist::CaseState::CaseState()
+  : NetComp(tCase), named(false), case_type(CASE_DEFAULT) 
+{}
+
+netlist::CaseState::CaseState(const shell::location& lloc)
+  : NetComp(tCase, lloc), named(false), case_type(CASE_DEFAULT) 
+{}
+
 netlist::CaseState::CaseState(const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, 
-                              const shared_ptr<CaseItem>& ditem, bool mcasex)
-  : NetComp(tCase), exp(exp), cases(citems), named(false), casex(mcasex) 
+                              const shared_ptr<CaseItem>& ditem, case_type_t mcase)
+  : NetComp(tCase), exp(exp), cases(citems), named(false), case_type(mcase) 
 {
   cases.push_back(ditem);
 }
 
 netlist::CaseState::CaseState(const shell::location& lloc, const shared_ptr<Expression>& exp, 
                               const list<shared_ptr<CaseItem> >& citems, const shared_ptr<CaseItem>& ditem, 
-                              bool mcasex)
-  : NetComp(tCase, lloc), exp(exp), cases(citems), named(false), casex(mcasex) 
+                              case_type_t mcase)
+  : NetComp(tCase, lloc), exp(exp), cases(citems), named(false), case_type(mcase) 
 {
   cases.push_back(ditem);
 }
 
 netlist::CaseState::CaseState(const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, 
-                              bool mcasex)
-  : NetComp(tCase), exp(exp), cases(citems), named(false), casex(mcasex) {} 
+                              case_type_t mcase)
+  : NetComp(tCase), exp(exp), cases(citems), named(false), case_type(mcase) {} 
 
 netlist::CaseState::CaseState(const shell::location& lloc, const shared_ptr<Expression>& exp, 
-                              const list<shared_ptr<CaseItem> >& citems, bool mcasex)
-  : NetComp(tCase, lloc), exp(exp), cases(citems), named(false), casex(mcasex) {} 
+                              const list<shared_ptr<CaseItem> >& citems, case_type_t mcase)
+  : NetComp(tCase, lloc), exp(exp), cases(citems), named(false), case_type(mcase) {} 
 
 netlist::CaseState::CaseState(const shared_ptr<Expression>& exp, const shared_ptr<CaseItem>& ditem, 
-                              bool mcasex)
-  : NetComp(tCase), exp(exp), named(false), casex(mcasex) 
+                              case_type_t mcase)
+  : NetComp(tCase), exp(exp), named(false), case_type(mcase) 
 {
   cases.push_back(ditem);
 }
 
 netlist::CaseState::CaseState(const shell::location& lloc, const shared_ptr<Expression>& exp, 
-                              const shared_ptr<CaseItem>& ditem, bool mcasex)
-  : NetComp(tCase, lloc), exp(exp), named(false), casex(mcasex) 
+                              const shared_ptr<CaseItem>& ditem, case_type_t mcase)
+  : NetComp(tCase, lloc), exp(exp), named(false), case_type(mcase) 
 {
   cases.push_back(ditem);
 }
 
 ostream& netlist::CaseState::streamout (ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
-  if(casex) os << "casex(" << *exp << ")" << endl;
-  else      os << "case("  << *exp << ")" << endl;
+  switch(case_type) {
+  case CASE_X: os << "casex(" << *exp << ")" << endl; break;
+  case CASE_Z: os << "casez(" << *exp << ")" << endl; break;
+  default:     os << "case("  << *exp << ")" << endl; break;
+  }
   BOOST_FOREACH(const shared_ptr<CaseItem>& it, cases)
     it->streamout(os, indent+2);
   os << string(indent, ' ') << "endcase" << endl;
@@ -222,7 +233,7 @@ CaseState* netlist::CaseState::deep_copy() const {
   CaseState* rv = new CaseState(loc);
   rv->name = name;
   rv->named = named;
-  rv->casex = casex;
+  rv->case_type = case_type;
   if(exp) rv->exp.reset(exp->deep_copy());
   BOOST_FOREACH(const shared_ptr<CaseItem>& m, cases)
     rv->cases.push_back(shared_ptr<CaseItem>(m->deep_copy()));

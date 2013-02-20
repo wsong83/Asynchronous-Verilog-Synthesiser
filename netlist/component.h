@@ -82,6 +82,19 @@ namespace netlist {
   // assign.h
   class Assign;
 
+  // case.h
+  class CaseState;
+  class CaseItem;
+
+  // if.h
+  class IfState;
+
+  // while.h
+  class WhileState;
+
+  // for.h
+  class ForState;
+
   // block.h
   class Block;
 
@@ -100,19 +113,6 @@ namespace netlist {
 
   // seqblock.h
   class SeqBlock;
-
-  // case.h
-  class CaseState;
-  class CaseItem;
-
-  // if.h
-  class IfState;
-
-  // while.h
-  class WhileState;
-
-  // for.h
-  class ForState;
 
   // library.h
   class Library;
@@ -142,16 +142,16 @@ namespace netlist {
 #include "port.h"
 #include "variable.h"
 #include "assign.h"
+#include "case.h"
+#include "if.h"
+#include "while.h"
+#include "for.h"
 #include "block.h"
 #include "module.h"
 #include "instance.h"
 #include "portconn.h"
 #include "genblock.h"
 #include "seqblock.h"
-#include "case.h"
-#include "if.h"
-#include "while.h"
-#include "for.h"
 #include "library.h"
 #include "uni_name.h"
 

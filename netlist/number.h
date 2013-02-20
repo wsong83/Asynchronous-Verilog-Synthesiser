@@ -62,7 +62,8 @@ namespace netlist {
         std::string::npos != txt_value.find('x') ||
         std::string::npos != txt_value.find('X') ||
         std::string::npos != txt_value.find('z') ||
-        std::string::npos != txt_value.find('Z');
+        std::string::npos != txt_value.find('Z') ||
+        std::string::npos != txt_value.find('?');
     }
     Number addition (const Number& rhs) const;
     Number minus (const Number& rhs) const;

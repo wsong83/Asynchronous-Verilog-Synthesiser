@@ -75,32 +75,32 @@ bool netlist::Block::add(const shared_ptr<NetComp>& dd) {
   return true;
 }
 
-bool netlist::Block::add_case(const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, const shared_ptr<CaseItem>& ditem, bool m_casex) {
+bool netlist::Block::add_case(const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, const shared_ptr<CaseItem>& ditem, CaseState::case_type_t m_casex) {
   statements.push_back(shared_ptr<CaseState>( new CaseState(exp, citems, ditem, m_casex)));
   return true;
 }
 
-bool netlist::Block::add_case(const location& lloc, const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, const shared_ptr<CaseItem>& ditem, bool m_casex) {
+bool netlist::Block::add_case(const location& lloc, const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, const shared_ptr<CaseItem>& ditem, CaseState::case_type_t m_casex) {
   statements.push_back(shared_ptr<CaseState>( new CaseState(lloc, exp, citems, ditem, m_casex)));
   return true;
 }
 
-bool netlist::Block::add_case(const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, bool m_casex) {
+bool netlist::Block::add_case(const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, CaseState::case_type_t m_casex) {
   statements.push_back(shared_ptr<CaseState>( new CaseState(exp, citems, m_casex)));
   return true;
 }
 
-bool netlist::Block::add_case(const location& lloc, const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, bool m_casex) {
+bool netlist::Block::add_case(const location& lloc, const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, CaseState::case_type_t m_casex) {
   statements.push_back(shared_ptr<CaseState>( new CaseState(lloc, exp, citems, m_casex)));
   return true;
 }
 
-bool netlist::Block::add_case(const shared_ptr<Expression>& exp, const shared_ptr<CaseItem>& ditem, bool m_casex) {
+bool netlist::Block::add_case(const shared_ptr<Expression>& exp, const shared_ptr<CaseItem>& ditem, CaseState::case_type_t m_casex) {
   statements.push_back(shared_ptr<CaseState>( new CaseState(exp, ditem, m_casex)));
   return true;
 }
 
-bool netlist::Block::add_case(const location& lloc, const shared_ptr<Expression>& exp, const shared_ptr<CaseItem>& ditem, bool m_casex) {
+bool netlist::Block::add_case(const location& lloc, const shared_ptr<Expression>& exp, const shared_ptr<CaseItem>& ditem, CaseState::case_type_t m_casex) {
   statements.push_back(shared_ptr<CaseState>( new CaseState(lloc, exp, ditem, m_casex)));
   return true;
 }

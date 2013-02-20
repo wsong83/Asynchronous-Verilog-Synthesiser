@@ -259,8 +259,11 @@ bool netlist::Number::bin2num(const char *text, const int txt_leng, const int st
     else if(text[i] == 'x' || text[i] == 'X') {
       m.push_back('x');
       v = false;
-    } else if(text[i] == 'z' || text[i] == 'z') {
+    } else if(text[i] == 'z' || text[i] == 'Z') {
       m.push_back('z');
+      v = false;
+    } else if(text[i] == '?') {
+      m.push_back('?');
       v = false;
     } else if(text[i] != '_')
       return false;		// wrong format
@@ -301,8 +304,11 @@ bool netlist::Number::oct2num(const char *text, const int txt_leng, const int st
     else if(text[i] == 'x' || text[i] == 'X') {
       m.push_back('x');
       v = false;
-    } else if(text[i] == 'z' || text[i] == 'z') {
+    } else if(text[i] == 'z' || text[i] == 'Z') {
       m.push_back('z');
+      v = false;
+    } else if(text[i] == '?') {
+      m.push_back('?');
       v = false;
     } else if(text[i] != '_')
       return false;		// wrong format
@@ -361,8 +367,11 @@ bool netlist::Number::hex2num(const char *text, const int txt_leng, const int st
     else if(text[i] == 'x' || text[i] == 'X') {
       m.push_back('x');
       v = false;
-    } else if(text[i] == 'z' || text[i] == 'z') {
+    } else if(text[i] == 'z' || text[i] == 'Z') {
       m.push_back('z');
+      v = false;
+    } else if(text[i] == '?') {
+      m.push_back('?');
       v = false;
     } else if(text[i] != '_')
       return false;		// wrong format
@@ -402,6 +411,7 @@ bool netlist::Number::hex2num(const char *text, const int txt_leng, const int st
       case 'X': txt_value += "xxxx"; break;
       case 'z':
       case 'Z': txt_value += "zzzz"; break;
+      case '?': txt_value += "????"; break;
       }
   }
   
@@ -412,7 +422,7 @@ bool netlist::Number::hex2num(const char *text, const int txt_leng, const int st
 
 bool netlist::Number::check_valuable() {
   for(unsigned int i=0; i<txt_value.size(); i++)
-    if(txt_value[i] == 'x' || txt_value[i] == 'z') {
+    if(txt_value[i] == 'x' || txt_value[i] == 'z' || txt_value[i] == '?') {
       valuable = false;
       return false;
     }
@@ -585,7 +595,8 @@ Number netlist::operator|| (const Number& lhs, const Number& rhs) {
 bool netlist::operator== (const Number& lhs, const Number& rhs) {
   if(Number::trim_zeros(lhs.get_txt_value()) == Number::trim_zeros(rhs.get_txt_value()) && 
      string::npos == lhs.get_txt_value().find('x') &&
-     string::npos == lhs.get_txt_value().find('z'))
+     string::npos == lhs.get_txt_value().find('z') &&
+     string::npos == lhs.get_txt_value().find('?'))
     return true;
   else
     return false;
@@ -595,7 +606,8 @@ bool netlist::operator!= (const Number& lhs, const Number& rhs) {
   assert(lhs.is_valuable() && rhs.is_valuable()); // the result may be wrong when x or z exists
   if(Number::trim_zeros(lhs.get_txt_value()) != Number::trim_zeros(rhs.get_txt_value()) && 
      string::npos == lhs.get_txt_value().find('x') &&
-     string::npos == lhs.get_txt_value().find('z'))
+     string::npos == lhs.get_txt_value().find('z') &&
+     string::npos == lhs.get_txt_value().find('?'))
     return true;
   else
     return false;

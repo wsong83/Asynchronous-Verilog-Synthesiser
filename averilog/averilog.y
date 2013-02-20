@@ -289,6 +289,7 @@
 %type <tListPortConn>   ordered_port_connections
 %type <tListPortConn>   output_terminals
 %type <tListPortDecl>   input_declaration
+%type <tListPortDecl>   inout_declaration
 %type <tListPortDecl>   list_of_port_identifiers
 %type <tListPortDecl>   output_declaration
 %type <tListVar>        list_of_variable_identifiers
@@ -340,6 +341,13 @@ module_declaration
       av_env.error("SYN-MODULE-3", m->name.name, Lib.name);
       //cout<< *m;
     }
+    | "module" module_identifier '(' ')' ';' module_items "endmodule"                   
+    {
+      shared_ptr<Module> m(new Module(@$, $2, $6));
+      if(!Lib.insert(m)) av_env.error(@$, "SYN-MODULE-0", $2.name); 
+      av_env.error("SYN-MODULE-3", m->name.name, Lib.name);
+      //cout<< *m;
+    }
     | "module" module_identifier '(' list_of_port_identifiers ')' ';' module_items "endmodule"
     { 
       shared_ptr<Module> m(new Module(@$, $2, $4, $7));
@@ -364,6 +372,7 @@ module_item
     : parameter_declaration ';'  { $$.reset(new Block()); $$->add_list<Variable>($1); }
     | input_declaration ';'      { $$.reset(new Block()); $$->add_list<Port>($1);     }
     | output_declaration ';'     { $$.reset(new Block()); $$->add_list<Port>($1);     }
+    | inout_declaration ';'      { $$.reset(new Block()); $$->add_list<Port>($1);     }
     | variable_declaration ';'   { $$.reset(new Block()); $$->add_list<Variable>($1); }
     | function_declaration
     | continuous_assign          { $$.reset(new Block()); $$->add_list<Assign>($1);   }
@@ -517,7 +526,79 @@ output_declaration
         $$.push_back(it);
       }
     }  
+    | "output" "wire" list_of_port_identifiers
+    {
+      bool undired = true;
+      BOOST_FOREACH(shared_ptr<Port> it, $3) {
+        if(undired && it->get_dir() == -2) {
+          it->set_out();
+          it->ptype = 0;          /* reg */
+        } else {
+          undired = false;
+        }
+        $$.push_back(it);
+      }
+    }
+    | "output" "wire" '[' expression ':' expression ']' list_of_port_identifiers
+    {
+      bool undired = true;
+      BOOST_FOREACH(shared_ptr<Port> it, $8) {
+        if(undired && it->get_dir() == -2) {
+          it->set_out();
+          it->ptype = 0;          /* reg */
+          pair<shared_ptr<Expression>, shared_ptr<Expression> > m($4, $6);
+          it->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@3+@7,m)));
+        } else {
+          undired = false;
+        }
+        $$.push_back(it);
+      }
+    }  
+    | "output" "wire" "signed" '[' expression ':' expression ']' list_of_port_identifiers
+    {
+      bool undired = true;
+      BOOST_FOREACH(shared_ptr<Port> it, $9) {
+        if(undired && it->get_dir() == -2) {
+          it->set_out();
+          it->ptype = 0;          /* reg */
+          pair<shared_ptr<Expression>, shared_ptr<Expression> > m($5, $7);
+          it->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@4+@8,m)));
+        } else {
+          undired = false;
+        }
+        it->set_signed();
+        $$.push_back(it);
+      }
+    }  
     ;
+
+inout_declaration 
+    : "inout" list_of_port_identifiers
+    {
+      bool undired = true;
+      BOOST_FOREACH(shared_ptr<Port> it, $2) {
+        if(undired && it->get_dir() == -2) {
+          it->set_inout();
+        } else {
+          undired = false;
+        }
+        $$.push_back(it);
+      }
+    }
+    | "inout" '[' expression ':' expression ']' list_of_port_identifiers
+    {
+      bool undired = true;
+      BOOST_FOREACH(shared_ptr<Port> it, $7) {
+        if(undired && it->get_dir() == -2) {
+          it->set_inout();
+          pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
+          it->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@2+@6,m)));
+        } else {
+          undired = false;
+        }
+        $$.push_back(it);
+      }
+    }  
 
 // A.2.1.3 Type declarations
 variable_declaration 
@@ -906,11 +987,17 @@ generate_item
     | "case" '(' expression ')' generate_case_items "default" generate_item_or_null "endcase"
     { shared_ptr<CaseItem> m(new CaseItem(@7, $7)); $$.reset(new Block()); $$->add_case(@$, $3, $5, m); }
     | "casex" '(' expression ')' "default"  generate_item_or_null "endcase"
-    { shared_ptr<CaseItem> m(new CaseItem(@6, $6)); $$.reset(new Block()); $$->add_case(@$, $3, m, true); }
+    { shared_ptr<CaseItem> m(new CaseItem(@6, $6)); $$.reset(new Block()); $$->add_case(@$, $3, m, CaseState::CASE_X); }
     | "casex" '(' expression ')' generate_case_items "endcase"
-    { $$.reset(new Block()); $$->add_case(@$, $3, $5, true); }
+    { $$.reset(new Block()); $$->add_case(@$, $3, $5, CaseState::CASE_X); }
     | "casex" '(' expression ')' generate_case_items "default" generate_item_or_null "endcase"
-    { shared_ptr<CaseItem> m(new CaseItem(@7, $7)); $$.reset(new Block()); $$->add_case(@$, $3, $5, m, true); }
+    { shared_ptr<CaseItem> m(new CaseItem(@7, $7)); $$.reset(new Block()); $$->add_case(@$, $3, $5, m, CaseState::CASE_X); }
+    | "casez" '(' expression ')' "default"  generate_item_or_null "endcase"
+    { shared_ptr<CaseItem> m(new CaseItem(@6, $6)); $$.reset(new Block()); $$->add_case(@$, $3, m, CaseState::CASE_Z); }
+    | "casez" '(' expression ')' generate_case_items "endcase"
+    { $$.reset(new Block()); $$->add_case(@$, $3, $5, CaseState::CASE_Z); }
+    | "casez" '(' expression ')' generate_case_items "default" generate_item_or_null "endcase"
+    { shared_ptr<CaseItem> m(new CaseItem(@7, $7)); $$.reset(new Block()); $$->add_case(@$, $3, $5, m, CaseState::CASE_Z); }
     | "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' "begin" ':' block_identifier generate_item_or_null "end"
     { $$.reset(new Block()); $12->set_name($11); $$->add_for(@$, $3, $5, $7, $12); }
     | "begin" generate_items "end" { $$.reset(new Block());  shared_ptr<GenBlock> m(new GenBlock(@$, *$2)); $$->add(m);}
@@ -1013,10 +1100,15 @@ statement
     | "case" '(' expression ')' case_items "default" statement_or_null "endcase" 
     { shared_ptr<CaseItem> m(new CaseItem(@$, $7)); $$.reset(new Block()); $$->add_case(@$, $3, $5, m); }
     | "casex" '(' expression ')' "default" statement_or_null "endcase" 
-    { shared_ptr<CaseItem> m(new CaseItem(@$, $6)); $$.reset(new Block()); $$->add_case(@$, $3, m, true); }
-    | "casex" '(' expression ')' case_items "endcase" { $$.reset(new Block()); $$->add_case(@$, $3, $5, true); }
+    { shared_ptr<CaseItem> m(new CaseItem(@$, $6)); $$.reset(new Block()); $$->add_case(@$, $3, m, CaseState::CASE_X); }
+    | "casex" '(' expression ')' case_items "endcase" { $$.reset(new Block()); $$->add_case(@$, $3, $5, CaseState::CASE_X); }
     | "casex" '(' expression ')' case_items "default" statement_or_null "endcase" 
-    { shared_ptr<CaseItem> m(new CaseItem(@$, $7)); $$.reset(new Block()); $$->add_case(@$, $3, $5, m, true); }
+    { shared_ptr<CaseItem> m(new CaseItem(@$, $7)); $$.reset(new Block()); $$->add_case(@$, $3, $5, m, CaseState::CASE_X); }
+    | "casez" '(' expression ')' "default" statement_or_null "endcase" 
+    { shared_ptr<CaseItem> m(new CaseItem(@$, $6)); $$.reset(new Block()); $$->add_case(@$, $3, m, CaseState::CASE_Z); }
+    | "casez" '(' expression ')' case_items "endcase" { $$.reset(new Block()); $$->add_case(@$, $3, $5, CaseState::CASE_Z); }
+    | "casez" '(' expression ')' case_items "default" statement_or_null "endcase" 
+    { shared_ptr<CaseItem> m(new CaseItem(@$, $7)); $$.reset(new Block()); $$->add_case(@$, $3, $5, m, CaseState::CASE_Z); }
     | "if" '(' expression ')' statement_or_null 
     { $$.reset(new Block()); $$->add_if(@$, $3, $5); }
     | "if" '(' expression ')' statement_or_null "else" statement_or_null  
