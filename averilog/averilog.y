@@ -1012,7 +1012,7 @@ generate_item
     { $$.reset(new Block()); $$->add_case(@$, $3, $5, CaseState::CASE_Z); }
     | "casez" '(' expression ')' generate_case_items "default" generate_item_or_null "endcase"
     { shared_ptr<CaseItem> m(new CaseItem(@7, $7)); $$.reset(new Block()); $$->add_case(@$, $3, $5, m, CaseState::CASE_Z); }
-    | "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' "begin" ':' block_identifier generate_item_or_null "end"
+    | "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' "begin" ':' block_identifier generate_items "end"
     { $$.reset(new Block()); $12->set_name($11); $$->add_for(@$, $3, $5, $7, $12); }
     | "begin" generate_items "end" { $$.reset(new Block());  shared_ptr<GenBlock> m(new GenBlock(@$, *$2)); $$->add(m);}
     | "begin" ':' block_identifier generate_items "end" { $$.reset(new Block()); shared_ptr<GenBlock> m(new GenBlock(@$, *$4)); m->set_name($3); $$->add(m);}

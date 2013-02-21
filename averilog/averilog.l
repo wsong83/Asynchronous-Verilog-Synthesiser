@@ -153,8 +153,8 @@ operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
 {ws}        { /* white space, do nothing */ }
 "\n"        { yylloc->lines();       }
 
-"`line "[^\n]*[\n] { averilog::file_line_updater(yylloc, string(yytext, yyleng)); }
-"`timescale"{ws}[0-9fpuns/]+ { /* timescale is ignored */ }
+"`line "[^\n]* { averilog::file_line_updater(yylloc, string(yytext, yyleng)); }
+"`timescale"[^\n]*+ { /* timescale is ignored */ }
 "#"({decimal}|{sid})  { /* time delay is ignored */ }
 
 %%
