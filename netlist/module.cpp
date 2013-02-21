@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -329,7 +329,7 @@ void netlist::Module::elab_inparse() {
   std::set<VIdentifier> to_del_var;
   typedef pair<const VIdentifier, shared_ptr<Variable> > var_type;
   BOOST_FOREACH(var_type var, db_var.db_list) {
-    if(var.second->get_vtype() == Variable::TParam) {
+    if(var.second->get_vtype() == Variable::TParam || var.second->get_vtype() == Variable::TLParam) {
       db_param.insert(var.first, var.second);
       to_del_var.insert(var.first);
     }

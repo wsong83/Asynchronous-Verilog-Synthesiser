@@ -8,7 +8,7 @@
 
 %{
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -105,6 +105,7 @@ operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
 "inout"     { return token::kInout; }
 "input"     { return token::kInput; }
 "integer"   { return token::kInteger; }
+"localparam"   { return token::kLocalparam; }
 "module"    { return token::kModule; }
 "negedge"   { return token::kNegedge; }
 "output"    { return token::kOutput; }

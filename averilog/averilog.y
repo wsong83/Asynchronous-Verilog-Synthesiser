@@ -13,7 +13,7 @@
 %debug
 %{
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -154,7 +154,7 @@
 %token kLarge          "large"        /* not supported yet */
 %token kLiblist        "liblist"      /* not supported yet */
 %token kLibrary        "library"      /* not supported yet */
-%token kLocalparam     "localparam"   /* not supported yet */
+%token kLocalparam     "localparam" 
 %token kMacromodule    "macromodule"  
 %token kMedium         "medium"       /* not supported yet */
 %token kModule         "module"
@@ -295,7 +295,9 @@
 %type <tListVar>        list_of_variable_identifiers
 %type <tListVarDecl>    list_of_variable_declarations
 %type <tListVarDecl>    variable_declaration
+%type <tListVarDecl>    list_of_localparam_assignments
 %type <tListVarDecl>    list_of_param_assignments
+%type <tListVarDecl>    localparam_declaration
 %type <tListVarDecl>    parameter_declaration
 %type <tModuleName>     module_identifier
 %type <tModuleName>     n_input_gatetype
@@ -370,6 +372,7 @@ module_declaration
 // A.1.5 Module items
 module_item
     : parameter_declaration ';'  { $$.reset(new Block()); $$->add_list<Variable>($1); }
+    | localparam_declaration ';' { $$.reset(new Block()); $$->add_list<Variable>($1); }
     | input_declaration ';'      { $$.reset(new Block()); $$->add_list<Port>($1);     }
     | output_declaration ';'     { $$.reset(new Block()); $$->add_list<Port>($1);     }
     | inout_declaration ';'      { $$.reset(new Block()); $$->add_list<Port>($1);     }
@@ -393,6 +396,10 @@ module_items
 // A.2.1.1 Module parameter declarations
 parameter_declaration
     : "parameter" list_of_param_assignments { $$ = $2; }
+    ;
+
+localparam_declaration
+    : "localparam" list_of_localparam_assignments { $$ = $2; }
     ;
 
 // A.2.1.2 Port declarations
@@ -716,6 +723,13 @@ list_of_param_assignments
     { $$.push_back(shared_ptr<Variable>(new Variable(@$, $1,$3,Variable::TParam))); }
     | list_of_param_assignments ',' parameter_identifier '=' expression
     { $$.push_back(shared_ptr<Variable>(new Variable(@3+@5, $3,$5,Variable::TParam))); }
+    ;
+
+list_of_localparam_assignments 
+    : parameter_identifier '=' expression
+    { $$.push_back(shared_ptr<Variable>(new Variable(@$, $1,$3,Variable::TLParam))); }
+    | list_of_localparam_assignments ',' parameter_identifier '=' expression
+    { $$.push_back(shared_ptr<Variable>(new Variable(@3+@5, $3,$5,Variable::TLParam))); }
     ;
 
 list_of_port_identifiers 

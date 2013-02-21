@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -131,6 +131,10 @@ ERR_DEFINE("ELAB-INST-1",
 ERR_DEFINE("ELAB-INST-2", 
            EError,   1, 
            "fail to resolved the parameter assignment of module \"%1%\".");
+
+ERR_DEFINE("ELAB-INST-3", 
+           EError,   0, 
+           "the number of unnamed parameters does not match.");
 
 // a parameter of a module cannot be resolved to a number when trying to elaborate it
 ERR_DEFINE("ELAB-PARA-0", 
