@@ -70,6 +70,9 @@ namespace netlist {
   // array of range expressions
   class RangeArray;
 
+  // function
+  class Function;
+
   // expression.h
   class Expression;		/* expressions */
 
@@ -147,6 +150,7 @@ namespace netlist {
 #include "while.h"
 #include "for.h"
 #include "block.h"
+#include "function.h"
 #include "module.h"
 #include "instance.h"
 #include "portconn.h"

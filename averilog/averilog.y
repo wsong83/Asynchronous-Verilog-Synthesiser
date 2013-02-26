@@ -248,14 +248,16 @@
  // type definitions
 %type <tAssign>         blocking_assignment
 %type <tAssign>         nonblocking_assignment
-%type <tBlock>          statements
-%type <tBlock>          statement
-%type <tBlock>          statement_or_null 
+%type <tBlock>          function_item_declaration
 %type <tBlock>          generate_item
 %type <tBlock>          generate_items
 %type <tBlock>          generate_item_or_null
+%type <tBlock>          list_of_function_item_declaration
 %type <tBlock>          module_item
 %type <tBlock>          module_items
+%type <tBlock>          statements
+%type <tBlock>          statement
+%type <tBlock>          statement_or_null 
 %type <tBlockName>      block_identifier
 %type <tCaseItem>       case_item
 %type <tCaseItem>       generate_case_item
@@ -263,6 +265,8 @@
 %type <tExp>            expression
 %type <tExp>            primary
 %type <tEvent>          event_expression
+%type <tFuncName>       function_identifier
+%type <tFunction>       function_declaration
 %type <tGenBlock>       generated_instantiation
 %type <tInstance>       module_instance
 %type <tInstance>       n_input_gate_instance
@@ -779,28 +783,96 @@ function_declaration
         list_of_function_item_declaration
         statement
       "endfunction"
+    {
+      $$.reset(new Function(@$, $2));
+      $$->add_statements($4);
+      $$->add_statements($5);
+    }
+    | "function" '[' expression ':' expression ']' function_identifier ';'
+        list_of_function_item_declaration
+        statement
+      "endfunction"
+    {
+      $$.reset(new Function(@$, $7));
+      $$->add_statements($9);
+      $$->add_statements($10);
+      $$->set_return($3, $5);
+    }
     | "function" "automatic" function_identifier ';'
         list_of_function_item_declaration
         statement
       "endfunction"
+    {
+      $$.reset(new Function(@$, $3));
+      $$->add_statements($5);
+      $$->add_statements($6);
+      $$->set_automatic();
+    }
+    | "function" "automatic" '[' expression ':' expression ']' function_identifier ';'
+        list_of_function_item_declaration
+        statement
+      "endfunction"
+    {
+      $$.reset(new Function(@$, $8));
+      $$->add_statements($10);
+      $$->add_statements($11);
+      $$->set_return($4, $6);
+      $$->set_automatic();
+    }
     | "function" function_identifier '(' list_of_port_identifiers ')' ';'
-        list_of_function_item_declaration
+        list_of_variable_declarations
         statement
       "endfunction"
+    {
+      $$.reset(new Function(@$, $2));
+      $$->set_inputs($4);
+      $$->add_list<Variable>($7);
+      $$->add_statements($8);
+    }
+    | "function" '[' expression ':' expression ']' function_identifier '(' list_of_port_identifiers ')' ';'
+        list_of_variable_declarations
+        statement
+      "endfunction"
+    {
+      $$.reset(new Function(@$, $7));
+      $$->set_inputs($9);
+      $$->add_list<Variable>($12);
+      $$->add_statements($13);
+      $$->set_return($3, $5);
+    }
     | "function" "automatic" function_identifier '(' list_of_port_identifiers ')' ';'
-        list_of_function_item_declaration
+        list_of_variable_declarations
         statement
       "endfunction"
+    {
+      $$.reset(new Function(@$, $3));
+      $$->set_inputs($5);
+      $$->add_list<Variable>($8);
+      $$->add_statements($9);
+      $$->set_automatic();
+    }
+    | "function" "automatic" '[' expression ':' expression ']' function_identifier '(' list_of_port_identifiers ')' ';'
+        list_of_variable_declarations
+        statement
+      "endfunction"
+    {
+      $$.reset(new Function(@$, $8));
+      $$->set_inputs($10);
+      $$->add_list<Variable>($13);
+      $$->add_statements($14);
+      $$->set_return($4, $6);
+      $$->set_automatic();
+    }
     ;
 
 list_of_function_item_declaration
-    : function_item_declaration
-    | list_of_function_item_declaration function_item_declaration
+    : function_item_declaration  { $$.reset(new Block()); $$->add_statements($1); }
+    | list_of_function_item_declaration function_item_declaration { $$->add_statements($2); }
     ;
 
 function_item_declaration 
-    : input_declaration ';'
-    | variable_declaration ';'
+    : input_declaration ';'     { $$.reset(new Block()); $$->add_list<Port>($1); }
+    | variable_declaration ';'  { $$.reset(new Block()); $$->add_list<Variable>($1); }
     ;
 
 //A.3 Primitive instances
@@ -1293,7 +1365,7 @@ block_identifier
     ;
 
 function_identifier 
-    : identifier
+    : identifier            { $$ = FIdentifier(@$, $1); }
     ;
 
 module_identifier

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -37,6 +37,7 @@ enum ctype_t {
   tExp,                     /* expression */
   tFor,                     /* for statement */
   tFuncName,                /* function name */
+  tFunction,                /* function */
   tGenBlock,                /* heneration block */
   tIf,                      /* if statement */
   tInstance,                /* module instance */
@@ -73,6 +74,7 @@ std::string get_type_name() const {
   case tExp:             rv = "Expression";              break;
   case tFor:             rv = "For Statement";           break;
   case tFuncName:        rv = "Function Name";           break;
+  case tFunction:        rv = "Function";                break;
   case tGenBlock:        rv = "Generate Block";          break;
   case tIf:              rv = "If Statement";            break;
   case tInstance:        rv = "Instance";                break;
