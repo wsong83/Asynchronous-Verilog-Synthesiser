@@ -107,3 +107,116 @@ void netlist::Function::set_father(Block *pf) {
   if(father == pf) return;
   father = pf;
 }
+
+ostream& netlist::Function::streamout(ostream& os, unsigned int indent) const {
+  streamout(os, indent, false);
+  return os;
+}
+
+ostream& netlist::Function::streamout(ostream& os, unsigned int indent, bool fl_prefix) const {
+  
+  if(!fl_prefix) os << string(indent, ' ');
+
+  os << "function" ;
+  
+  if(!rtype.get_range().is_empty())
+    os << " " << rtype.get_range() ;
+
+  os << fname << endl;
+
+  // ports and variables
+  db_port.streamout(os, indent+2);
+  db_var.streamout(os, indent+2);
+  
+  // statements
+  if(statements.size() != 1)
+    os << string(indent, ' ') << "begin" << endl;
+
+  BOOST_FOREACH(const shared_ptr<NetComp>& it, statements)
+    it->streamout(os, indent+2);
+  
+  if(statements.size() != 1)
+    os << string(indent, ' ') << "end" << endl;
+
+  os << string(indent, ' ') << "endfunction" << endl;
+
+  return os;
+}
+ 
+Function* netlist::Function::deep_copy() const {
+  Function* rv = new Function();
+  
+  rv->loc = loc;
+  rv->name = name;
+  rv->named = named;
+
+  // data in Block
+  BOOST_FOREACH(const shared_ptr<NetComp>& comp, statements)
+    rv->statements.push_back(shared_ptr<NetComp>(comp->deep_copy()));
+  DATABASE_DEEP_COPY_FUN(db_var,      VIdentifier, Variable,  rv->db_var       );
+  rv->unnamed_block = unnamed_block;
+  rv->unnamed_instance = unnamed_instance;
+  rv->unnamed_var = unnamed_var;
+
+  // data in Function
+  rv->fname = fname;
+  DATABASE_DEEP_COPY_FUN(db_port,      VIdentifier, Port,   rv->db_port        );
+  rv->automatic = automatic;
+  rv->rtype = rtype;
+
+  rv->set_father();
+  return rv;
+}
+
+void netlist::Function::db_register(int) {
+  for_each(db_var.begin_order(), db_var.end_order(), [](pair<const VIdentifier, shared_ptr<Variable> >& m) {
+      m.second->db_register(1);
+    });
+  BOOST_FOREACH(shared_ptr<NetComp>& m, statements) m->db_register(1);
+}
+
+
+void netlist::Function::db_expunge() {
+  for_each(db_var.begin_order(), db_var.end_order(), [](pair<const VIdentifier, shared_ptr<Variable> >& m) {
+      m.second->db_expunge();
+    });
+  BOOST_FOREACH(shared_ptr<NetComp>& m, statements) m->db_expunge();
+}
+
+bool netlist::Function::elaborate(std::set<shared_ptr<NetComp> >&,
+                                  map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > >&) {
+  bool rv = true;
+  std::set<shared_ptr<NetComp> > to_del;
+  map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add;
+  
+  // link all variables
+  db_register(0);
+
+  // check all variables
+  for_each(db_port.begin_order(), db_port.end_order(), [&](pair<const VIdentifier, shared_ptr<Port> >& m) {
+      rv &= m.second->elaborate(to_del, to_add);
+    });
+  //std::cout << "after port elaboration: " << std::endl << *this;
+  if(!rv) return rv;
+
+  // check variables
+  for_each(db_var.begin_order(), db_var.end_order(), [&](pair<const VIdentifier, shared_ptr<Variable> >& m) {
+      rv &= m.second->elaborate(to_del, to_add);
+    });
+  if(!rv) return rv;
+
+  // elaborate the internals
+  BOOST_FOREACH(shared_ptr<NetComp>& m, statements) 
+    rv &= m->elaborate(to_del, to_add);
+  if(!rv) return rv;
+  
+  // remove useless variables
+  list<VIdentifier> var_to_be_removed;
+  for_each(db_var.begin_order(), db_var.end_order(), [&](pair<const VIdentifier, shared_ptr<Variable> >& m) {
+      if(m.second->is_useless()) var_to_be_removed.push_back(m.first);
+    });
+  BOOST_FOREACH(const VIdentifier& m, var_to_be_removed) 
+    db_var.erase(m);
+
+  return rv;
+}

@@ -42,16 +42,20 @@ namespace netlist{
     DataBase<VIdentifier, Port, true>      db_port;
 
     // inherited from NetComp
+    NETLIST_STREAMOUT_DECL;
+    virtual std::ostream& streamout(std::ostream&, unsigned int, bool) const;
     virtual void elab_inparse(); /* resolve the content in statements during parsing */
     NETLIST_SET_FATHER_DECL;
     virtual void set_father();   /* set the father pointer to all sub-elements */
-
+    virtual Function* deep_copy() const;
+    NETLIST_DB_DECL;
+    NETLIST_ELABORATE_DECL;
 
     // helpers
     void set_return(boost::shared_ptr<Expression>, boost::shared_ptr<Expression>); // return a value with a range
     void set_automatic() {automatic = true; }   // automatic function
     void set_inputs(const std::list<boost::shared_ptr<netlist::Port> >&); // set the input ports
-    void add_input(shared_ptr<Port>&); // add a single input port
+    void add_input(boost::shared_ptr<Port>&); // add a single input port
 
   protected:
     bool automatic;             // default 0, (automatic function?)
