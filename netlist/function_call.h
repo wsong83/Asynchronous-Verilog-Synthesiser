@@ -44,9 +44,17 @@ namespace netlist {
     //NETLIST_SCAN_VARS;
     //NETLIST_REPLACE_VARIABLE;
 
+    // helpers
+    void reduce();
+    Number get_value() const;
+    bool is_valuable() const;
+
     // data
     FIdentifier fname;          // function name
     std::list<boost::shared_ptr<Expression> > args; // arguments
+
+  private:
+    bool valuable;
 
   };
 

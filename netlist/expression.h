@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -44,6 +44,7 @@ namespace netlist {
     Expression(const shell::location& lloc, const boost::shared_ptr<Concatenation>&); // a concatenation is an expression
     Expression(const boost::shared_ptr<LConcatenation>&); // some times need to convert a lvalue back to expression
     Expression(const shell::location& lloc, const boost::shared_ptr<LConcatenation>&); // some times need to convert a lvalue back to expression
+    Expression(const shell::location& lloc, const boost::shared_ptr<FuncCall>&); // a function call
     virtual ~Expression();
 
     // helpers

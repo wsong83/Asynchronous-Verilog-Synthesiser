@@ -50,6 +50,7 @@ namespace averilog {
     boost::shared_ptr<netlist::Concatenation>                           tConcatenation;
     boost::shared_ptr<netlist::Expression>                              tExp;
     std::pair<int, boost::shared_ptr<netlist::Expression> >             tEvent;
+    boost::shared_ptr<netlist::FuncCall>                                tFuncCall;
     netlist::FIdentifier                                                tFuncName;
     boost::shared_ptr<netlist::Function>                                tFunction;
     boost::shared_ptr<netlist::GenBlock>                                tGenBlock;

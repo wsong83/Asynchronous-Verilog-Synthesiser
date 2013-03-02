@@ -265,6 +265,7 @@
 %type <tExp>            expression
 %type <tExp>            primary
 %type <tEvent>          event_expression
+%type <tFuncCall>       function_call
 %type <tFuncName>       function_identifier
 %type <tFunction>       function_declaration
 %type <tGenBlock>       generated_instantiation
@@ -1284,6 +1285,9 @@ concatenation
 // A.8.2 Function calls
 function_call
     : function_identifier '(' expressions ')'
+    {
+      $$.reset(new FuncCall(@$, $1, $3));
+    }
     ;
 
 //A.8.3 Expressions
@@ -1343,7 +1347,7 @@ primary
       $$.reset( new Expression(@$, $1));
     }
     | concatenation      { $$.reset( new Expression(@$, $1)); }
-    | function_call
+    | function_call      { $$.reset( new Expression(@$, $1)); }
     | '(' expression ')'  { $$ = $2; $$->loc = @$; }
     ;
 

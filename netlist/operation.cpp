@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -114,6 +114,10 @@ netlist::Operation::Operation(const location& lloc, const shared_ptr<LConcatenat
     }
   }
 }
+
+netlist::Operation::Operation(const location& lloc, const shared_ptr<FuncCall>& fc)
+  : NetComp(tOperation, lloc), otype(oFun), valuable(false), data(static_pointer_cast<NetComp>(fc))
+{ }
 
 netlist::Operation::Operation(operation_t op, const boost::shared_ptr<Operation>& exp)
   : NetComp(tOperation, exp->loc), otype(op), valuable(false)
@@ -378,6 +382,7 @@ void netlist::Operation::reduce() {
   case oNum:      reduce_Num();      break;
   case oVar:      reduce_Var();      break;
   case oCon:      reduce_Con();      break;
+  case oFun:      reduce_Fun();      break;
   case oUPos:     reduce_UPos();     break;
   case oUNeg:     reduce_UNeg();     break;
   case oULRev:    reduce_ULRev();    break;
@@ -565,6 +570,17 @@ void netlist::Operation::reduce_Con() {
     otype = oNum;
     valuable = true;
   }  
+}
+
+void netlist::Operation::reduce_Fun() {
+  assert(child.size() == 0);
+  SP_CAST(m, FuncCall, data);
+  m->reduce();
+  if(m->is_valuable()) {
+    data.reset(new Number(m->get_value()));
+    otype = oNum;
+    valuable = true;
+  }
 }
 
 void netlist::Operation::reduce_Var() {

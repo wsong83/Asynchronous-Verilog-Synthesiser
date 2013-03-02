@@ -44,10 +44,10 @@ using std::map;
 using shell::location;
 
 netlist::FuncCall::FuncCall()
-  : NetComp(tFuncCall) {}
+  : NetComp(tFuncCall), valuable(false) {}
 
 netlist::FuncCall::FuncCall(const location& mloc, const FIdentifier& mfn, const list<shared_ptr<Expression> >& margs)
-  : NetComp(tFuncCall, mloc), fname(mfn), args(margs) {} 
+  : NetComp(tFuncCall, mloc), fname(mfn), args(margs), valuable(false) {} 
 
 void netlist::FuncCall::set_father(Block *pf) {
   if(father == pf) return;
@@ -71,6 +71,7 @@ FuncCall* netlist::FuncCall::deep_copy() const {
   FuncCall* rv = new FuncCall();
   rv->loc = loc;
   rv->fname = fname;
+  rv->valuable = valuable;
   BOOST_FOREACH(shared_ptr<Expression> arg, args) 
     rv->args.push_back(shared_ptr<Expression>(arg->deep_copy()));
   return rv;
@@ -87,3 +88,21 @@ void netlist::FuncCall::db_expunge() {
     arg->db_expunge();
 }
 
+void netlist::FuncCall::reduce() {
+  valuable = true;
+  BOOST_FOREACH(shared_ptr<Expression> exp, args) {
+    exp->reduce();
+    valuable &= exp->is_valuable();
+  }
+}
+
+bool netlist::FuncCall::is_valuable() const {
+  return valuable;
+}
+
+Number netlist::FuncCall::get_value() const {
+  // find out the function
+  // execute the fucntion
+  // return the value
+  return Number(0);
+}
