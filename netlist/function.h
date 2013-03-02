@@ -59,7 +59,7 @@ namespace netlist{
 
   protected:
     bool automatic;             // default 0, (automatic function?)
-    VIdentifier rtype;           // type of the return value
+    RangeArray rtype;           // type of the return value
 
 
   };

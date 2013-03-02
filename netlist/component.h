@@ -73,6 +73,9 @@ namespace netlist {
   // function
   class Function;
 
+  // function call
+  class FuncCall;
+
   // expression.h
   class Expression;		/* expressions */
 
@@ -142,6 +145,7 @@ namespace netlist {
 #include "range.h"
 #include "range_array.h"
 #include "identifier.h"
+#include "function_call.h"
 #include "port.h"
 #include "variable.h"
 #include "assign.h"

@@ -38,6 +38,7 @@ enum ctype_t {
   tFor,                     /* for statement */
   tFuncName,                /* function name */
   tFunction,                /* function */
+  tFuncCall,                /* function call */
   tGenBlock,                /* heneration block */
   tIf,                      /* if statement */
   tInstance,                /* module instance */
@@ -75,6 +76,7 @@ std::string get_type_name() const {
   case tFor:             rv = "For Statement";           break;
   case tFuncName:        rv = "Function Name";           break;
   case tFunction:        rv = "Function";                break;
+  case tFuncCall:        rv = "Function Call";           break;
   case tGenBlock:        rv = "Generate Block";          break;
   case tIf:              rv = "If Statement";            break;
   case tInstance:        rv = "Instance";                break;

@@ -381,7 +381,7 @@ module_item
     | output_declaration ';'     { $$.reset(new Block()); $$->add_list<Port>($1);     }
     | inout_declaration ';'      { $$.reset(new Block()); $$->add_list<Port>($1);     }
     | variable_declaration ';'   { $$.reset(new Block()); $$->add_list<Variable>($1); }
-    | function_declaration
+    | function_declaration       { $$.reset(new Block()); $$->add($1);                }
     | continuous_assign          { $$.reset(new Block()); $$->add_list<Assign>($1);   }
     | gate_instantiation         { $$.reset(new Block()); $$->add_list<Instance>($1); }
     | module_instantiation       { $$.reset(new Block()); $$->add_list<Instance>($1); }
@@ -1163,7 +1163,10 @@ always_construct
     ;
 
 blocking_assignment 
-    : variable_lvalue '=' expression  { $3->reduce(); $$.reset(new Assign(@$, $1, $3, true));}
+    : variable_lvalue '=' expression  { 
+      $3->reduce(); 
+      $$.reset(new Assign(@$, $1, $3, true));
+    }
     ;
 
 nonblocking_assignment 

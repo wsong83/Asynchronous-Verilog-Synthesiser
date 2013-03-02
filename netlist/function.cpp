@@ -54,7 +54,7 @@ netlist::Function::Function(const shell::location& lloc, const FIdentifier& nm)
 
 void netlist::Function::set_return(boost::shared_ptr<Expression> lhs, boost::shared_ptr<Expression> rhs) {
   shared_ptr<Range> r(new Range(Range_Exp(lhs, rhs)));
-  rtype.get_range().add_range(r);
+  rtype.add_range(r);
 }
 
 void netlist::Function::set_inputs(const list<shared_ptr<Port> >& plist) {
@@ -119,8 +119,8 @@ ostream& netlist::Function::streamout(ostream& os, unsigned int indent, bool fl_
 
   os << "function" ;
   
-  if(!rtype.get_range().is_empty())
-    os << " " << rtype.get_range() ;
+  if(!rtype.is_empty())
+    os << " " << rtype ;
 
   os << fname << endl;
 
