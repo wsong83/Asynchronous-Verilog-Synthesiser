@@ -348,7 +348,7 @@ bool netlist::Module::elaborate(std::deque<shared_ptr<Module> >& mfifo,
   std::set<shared_ptr<NetComp> > to_del;
   map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add;
 
-  //std::cout << "elab " << name.name << std::endl;
+  std::cout << "elab " << name.name << std::endl;
 
   // before register all variable, update the port direction of all instance
   // as it will affect the direction of wires
@@ -410,6 +410,8 @@ bool netlist::Module::elaborate(std::deque<shared_ptr<Module> >& mfifo,
              rv &= m.second->elaborate(mfifo, mmap);
            });
   
+  if(!rv) return rv;
+
   // remove useless variables
   list<VIdentifier> var_to_be_removed;
   for_each(db_var.begin_order(), db_var.end_order(), [&](pair<const VIdentifier, shared_ptr<Variable> >& m) {

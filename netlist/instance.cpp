@@ -309,6 +309,8 @@ bool netlist::Instance::elaborate(std::set<shared_ptr<NetComp> >& to_del,
 
 bool netlist::Instance::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo, 
                                   std::map<MIdentifier, boost::shared_ptr<Module> > & mmap) {
+  std::cout << "instance elaboration " << mname << std::endl;
+
   bool rv = true;
 
   if(type == modu_inst) {
