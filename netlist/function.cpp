@@ -54,7 +54,7 @@ netlist::Function::Function(const shell::location& lloc, const FIdentifier& nm)
 
 void netlist::Function::set_return(boost::shared_ptr<Expression> lhs, boost::shared_ptr<Expression> rhs) {
   shared_ptr<Range> r(new Range(Range_Exp(lhs, rhs)));
-  rtype.add_range(r);
+  rtype.add_low_dimension(r);
 }
 
 void netlist::Function::set_inputs(const list<shared_ptr<Port> >& plist) {
@@ -162,7 +162,7 @@ Function* netlist::Function::deep_copy() const {
   rv->fname = fname;
   DATABASE_DEEP_COPY_FUN(db_port,      VIdentifier, Port,   rv->db_port        );
   rv->automatic = automatic;
-  rv->rtype = rtype;
+  rv->rtype = rtype.deep_object_copy();
 
   rv->set_father();
   return rv;

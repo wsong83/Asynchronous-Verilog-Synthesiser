@@ -401,10 +401,26 @@ module_items
 // A.2.1.1 Module parameter declarations
 parameter_declaration
     : "parameter" list_of_param_assignments { $$ = $2; }
+    | "parameter" '[' expression ':' expression ']' list_of_param_assignments
+    {
+      $$ = $7;
+      BOOST_FOREACH(shared_ptr<Variable> p, $$) {
+        pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
+        p->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@2+@6, m)));
+      }
+    }
     ;
 
 localparam_declaration
     : "localparam" list_of_localparam_assignments { $$ = $2; }
+    | "localparam" '[' expression ':' expression ']' list_of_localparam_assignments
+    {
+      $$ = $7;
+      BOOST_FOREACH(shared_ptr<Variable> p, $$) {
+        pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
+        p->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@2+@6, m)));
+      }
+    }
     ;
 
 // A.2.1.2 Port declarations
