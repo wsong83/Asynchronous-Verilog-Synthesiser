@@ -295,11 +295,13 @@ bool netlist::Module::calculate_name( string& newName,
   newName = tmpModule->name.name;
   for_each(tmpModule->db_param.begin_order(), tmpModule->db_param.end_order(), 
            [&](pair<const VIdentifier, shared_ptr<Variable> >& m) {
-             rv &= m.second->update();
-             if(!rv) 
-               G_ENV->error(m.second->loc, "ELAB-PARA-0", m.second->name.name, tmpModule->name.name);
-             else
-               newName += string("_") + m.second->name.name + m.second->get_value().get_value().get_str();
+             if(rv && m.second->vtype == Variable::TParam) {
+               rv &= m.second->update();
+               if(!rv) 
+                 G_ENV->error(m.second->loc, "ELAB-PARA-0", m.second->name.name, tmpModule->name.name);
+               else
+                 newName += string("_") + m.second->name.name + m.second->get_value().get_value().get_str();
+             }
            });
   return rv;
 }

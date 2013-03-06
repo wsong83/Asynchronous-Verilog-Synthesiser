@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <boost/foreach.hpp>
 #include "component.h"
+#include "shell/env.h"
 
 using namespace netlist;
 using std::ostream;
@@ -162,7 +163,11 @@ netlist::Number::Number(const location& lloc, const string& txt)
 }
 
 mpz_class netlist::Number::get_value() const {
-  if(sign_flag && txt_value.size() > 0 && txt_value[0] == '1') { // signed negative number
+  if(!valuable) {
+    G_ENV->error(loc, "ELAB-NUM-0", get_txt_value());
+    return mpz_class(0);
+  }
+  else if(sign_flag && txt_value.size() > 0 && txt_value[0] == '1') { // signed negative number
     mpz_class k(txt_value.c_str(), 2);
     k = (~k + 1);
     string result = "-" + k.get_str(2);

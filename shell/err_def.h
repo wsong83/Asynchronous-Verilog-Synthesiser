@@ -136,6 +136,10 @@ ERR_DEFINE("ELAB-INST-3",
            EError,   0, 
            "the number of unnamed parameters does not match.");
 
+ERR_DEFINE("ELAB-NUM-0",    
+           EError,   1, 
+           "cannot get a decimal value from number \"%1%\".");
+
 // a parameter of a module cannot be resolved to a number when trying to elaborate it
 ERR_DEFINE("ELAB-PARA-0", 
            EError,   2, 

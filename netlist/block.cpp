@@ -265,7 +265,7 @@ void netlist::Block::elab_inparse() {
         G_ENV->error(m->loc, "SYN-VAR-1", m->name.name, toString(find_var(m->name)->loc));
       } else {
         // check initial value
-        if((m->vtype != Variable::TParam) && m->exp) {
+        if(m->vtype != Variable::TParam && m->vtype != Variable::TLParam && m->exp) {
           G_ENV->error(m->loc, "SYN-VAR-4", m->name.name);
           m->exp.reset();
         }

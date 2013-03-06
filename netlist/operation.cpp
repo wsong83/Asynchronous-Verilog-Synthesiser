@@ -217,7 +217,8 @@ string netlist::Operation::toString() const {
   switch(otype) {
   case oNum: 
   case oVar: 
-  case oCon:    return ::toString(*data);
+  case oCon:
+  case oFun:    return ::toString(*data);
   case oUPos:   return ::toString(*(child[0]));
   case oUNeg:   op = "-";   goto UNARY0;
   case oULRev:  op = "!";   goto UNARY0;

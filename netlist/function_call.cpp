@@ -107,3 +107,5 @@ Number netlist::FuncCall::get_value() const {
   assert(0 == "right now get the value of a function call is not available!");
   return Number(0);
 }
+
+

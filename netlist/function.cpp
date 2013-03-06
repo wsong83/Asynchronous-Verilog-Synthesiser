@@ -122,7 +122,7 @@ ostream& netlist::Function::streamout(ostream& os, unsigned int indent, bool fl_
   if(!rtype.is_empty())
     os << " " << rtype ;
 
-  os << fname << endl;
+  os << " " << fname << endl;
 
   // ports and variables
   db_port.streamout(os, indent+2);
