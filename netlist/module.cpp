@@ -166,6 +166,12 @@ ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
     db_instance.streamout(os, indent+2);
   }
 
+  // functions
+  for_each(db_func.begin(), db_func.end(), [&](const pair<const FIdentifier, shared_ptr<Function> >& m) {
+      os << endl;
+      m.second->streamout(os, indent+2);
+    });
+  
   os << endl << string(indent, ' ') << "endmodule" << endl << endl;
   return os;
 }

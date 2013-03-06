@@ -38,6 +38,7 @@ using std::endl;
 using std::string;
 using std::vector;
 using boost::shared_ptr;
+using boost::static_pointer_cast;
 using std::list;
 using std::pair;
 using std::map;
@@ -126,17 +127,28 @@ ostream& netlist::Function::streamout(ostream& os, unsigned int indent, bool fl_
 
   // ports and variables
   db_port.streamout(os, indent+2);
-  db_var.streamout(os, indent+2);
+  for_each(db_var.begin_order(), db_var.end_order(), [&](const pair<const VIdentifier, shared_ptr<Variable> > & m) {
+        if(!db_port.count(m.first))
+          m.second->streamout(os, indent+2);
+      });
+  //db_var.streamout(os, indent+2);
   
-  // statements
-  if(statements.size() != 1)
-    os << string(indent, ' ') << "begin" << endl;
+  // the body part
+  os << string(indent, ' ') << "begin" << endl;
 
-  BOOST_FOREACH(const shared_ptr<NetComp>& it, statements)
+  ctype_t mt = tUnknown;
+  BOOST_FOREACH(const shared_ptr<NetComp>& it, statements) {
+    ctype_t mt_nxt = it->get_type();
+    if(mt != mt_nxt || mt != tAssign) {
+      if(mt != tUnknown) os << endl;
+      mt = mt_nxt;
+    } 
     it->streamout(os, indent+2);
+    if(it->get_type() == NetComp::tAssign && !(static_pointer_cast<Assign>(it)->is_continuous()))
+      os << ";" << endl;
+  }
   
-  if(statements.size() != 1)
-    os << string(indent, ' ') << "end" << endl;
+  os << string(indent, ' ') << "end" << endl;
 
   os << string(indent, ' ') << "endfunction" << endl;
 

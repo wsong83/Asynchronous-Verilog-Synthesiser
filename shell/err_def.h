@@ -261,6 +261,10 @@ ERR_DEFINE("SYN-FILE-0",
            EError,   0, 
            "file terminated in multi-line comments.");
 
+ERR_DEFINE("SYN-FUNC-0",   
+           EError,   2, 
+           "function \"%1%\" is already defined at %2%.");
+
 // duplicated instance name. The name of the duplicated instance will be numbered
 ERR_DEFINE("SYN-INST-0",   
            EError,   2, 

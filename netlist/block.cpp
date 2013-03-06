@@ -301,6 +301,17 @@ void netlist::Block::elab_inparse() {
       to_del.insert(st);
       break;
     }
+    case tFunction: {
+      SP_CAST(m, Function, st);
+      if(db_func.count(m->fname)) {
+        G_ENV->error(m->loc, "SYN-FUNC-0", m->fname.name, toString(db_func.find(m->fname)->loc));
+      } else {
+        m->elab_inparse();
+        db_func.insert(m->fname, m);
+      }
+      to_del.insert(st);
+      break;
+    }
     default: ;
     }
   }
