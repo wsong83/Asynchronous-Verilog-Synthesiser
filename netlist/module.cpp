@@ -356,7 +356,7 @@ bool netlist::Module::elaborate(std::deque<shared_ptr<Module> >& mfifo,
   std::set<shared_ptr<NetComp> > to_del;
   map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add;
 
-  std::cout << "elab " << name.name << std::endl;
+  //std::cout << "elab " << name.name << std::endl;
 
   // before register all variable, update the port direction of all instance
   // as it will affect the direction of wires

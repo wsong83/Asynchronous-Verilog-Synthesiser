@@ -154,7 +154,7 @@ operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
 "\n"        { yylloc->lines();       }
 
 "`line "[^\n]* { averilog::file_line_updater(yylloc, string(yytext, yyleng)); }
-"`timescale"[^\n]*+ { /* timescale is ignored */ }
+"`timescale"[^\n]+ { /* timescale is ignored */ }
 "#"({decimal}|{sid})  { /* time delay is ignored */ }
 
 %%

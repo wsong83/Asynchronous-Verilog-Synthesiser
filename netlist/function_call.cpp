@@ -52,6 +52,9 @@ netlist::FuncCall::FuncCall(const location& mloc, const FIdentifier& mfn, const 
 void netlist::FuncCall::set_father(Block *pf) {
   if(father == pf) return;
   father = pf;
+  fname.set_father(pf);
+  BOOST_FOREACH(shared_ptr<Expression> arg, args)
+    arg->set_father(pf);
 }
 
 ostream& netlist::FuncCall::streamout(ostream& os, unsigned int indent) const {
@@ -107,5 +110,3 @@ Number netlist::FuncCall::get_value() const {
   assert(0 == "right now get the value of a function call is not available!");
   return Number(0);
 }
-
-
