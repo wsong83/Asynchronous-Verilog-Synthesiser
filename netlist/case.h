@@ -67,22 +67,23 @@ namespace netlist{
 
   class CaseState : public NetComp {
   public:
+    enum case_type_t {CASE_DEFAULT, CASE_X, CASE_Z};
     // constructors
-    NETLIST_DEFAULT_CON(CaseState, tCase);
-    NETLIST_DEFAULT_CON_WL(CaseState, tCase);
+    CaseState();
+    CaseState(const shell::location&);
     CaseState(const boost::shared_ptr<Expression>&, const std::list<boost::shared_ptr<CaseItem> >&, 
-              const boost::shared_ptr<CaseItem>&, bool mcasex = false);
+              const boost::shared_ptr<CaseItem>&, case_type_t mcase = CASE_DEFAULT);
     CaseState(const shell::location&, const boost::shared_ptr<Expression>&, 
               const std::list<boost::shared_ptr<CaseItem> >&, const boost::shared_ptr<CaseItem>&, 
-              bool mcasex = false);
+              case_type_t mcase = CASE_DEFAULT);
     CaseState(const boost::shared_ptr<Expression>&, const std::list<boost::shared_ptr<CaseItem> >&, 
-              bool mcasex = false);
+              case_type_t mcase = CASE_DEFAULT);
     CaseState(const shell::location&, const boost::shared_ptr<Expression>&, 
-              const std::list<boost::shared_ptr<CaseItem> >&, bool mcasex = false);
+              const std::list<boost::shared_ptr<CaseItem> >&, case_type_t mcase = CASE_DEFAULT);
     CaseState(const boost::shared_ptr<Expression>&, const boost::shared_ptr<CaseItem>&, 
-              bool mcasex = false);
+              case_type_t mcase = CASE_DEFAULT);
     CaseState(const shell::location&, const boost::shared_ptr<Expression>&, 
-              const boost::shared_ptr<CaseItem>&, bool mcasex = false);
+              const boost::shared_ptr<CaseItem>&, case_type_t mcase = CASE_DEFAULT);
 
     // helpers
     NETLIST_STREAMOUT_DECL;
@@ -92,7 +93,6 @@ namespace netlist{
     NETLIST_ELABORATE_DECL;
     void set_name(const BIdentifier& nm) {name = nm; named=true;}
     bool is_named() const { return named; }
-    bool is_casex() const { return casex; }
     NETLIST_SCAN_VARS;
     NETLIST_REPLACE_VARIABLE;
     
@@ -103,7 +103,7 @@ namespace netlist{
     
   private:
     bool named;
-    bool casex;
+    case_type_t case_type;
 
   };
   NETLIST_STREAMOUT(CaseState);

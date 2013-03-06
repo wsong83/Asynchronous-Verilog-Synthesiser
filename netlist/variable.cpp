@@ -97,7 +97,12 @@ bool netlist::Variable::update() {
   if(!exp) return false; // no need to update
 
   exp->reduce();
-  if(!exp->is_valuable()) return false;
+  if(!exp->is_valuable()) {
+#ifndef NDEBUG
+    std::cout << *exp << std::endl;
+#endif
+    return false;
+  }
 
   Number m = exp->get_value();
   exp.reset(new Expression(m));
@@ -123,6 +128,7 @@ ostream& netlist::Variable::streamout(ostream& os, unsigned int indent) const {
   case TWire:   os << "wire ";      break;
   case TReg:    os << "reg ";       break;
   case TParam:  os << "parameter "; break;
+  case TLParam: os << "localparam "; break;
   case TGenvar: os << "genvar ";    break;
   default: assert(0 == "uninitialized variable!");
   }

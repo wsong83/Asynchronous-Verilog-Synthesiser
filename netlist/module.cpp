@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -166,6 +166,12 @@ ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
     db_instance.streamout(os, indent+2);
   }
 
+  // functions
+  for_each(db_func.begin(), db_func.end(), [&](const pair<const FIdentifier, shared_ptr<Function> >& m) {
+      os << endl;
+      m.second->streamout(os, indent+2);
+    });
+  
   os << endl << string(indent, ' ') << "endmodule" << endl << endl;
   return os;
 }
@@ -295,11 +301,13 @@ bool netlist::Module::calculate_name( string& newName,
   newName = tmpModule->name.name;
   for_each(tmpModule->db_param.begin_order(), tmpModule->db_param.end_order(), 
            [&](pair<const VIdentifier, shared_ptr<Variable> >& m) {
-             rv &= m.second->update();
-             if(!rv) 
-               G_ENV->error(m.second->loc, "ELAB-PARA-0", m.second->name.name, tmpModule->name.name);
-             else
-               newName += string("_") + m.second->name.name + m.second->get_value().get_value().get_str();
+             if(rv && m.second->vtype == Variable::TParam) {
+               rv &= m.second->update();
+               if(!rv) 
+                 G_ENV->error(m.second->loc, "ELAB-PARA-0", m.second->name.name, tmpModule->name.name);
+               else
+                 newName += string("_") + m.second->name.name + m.second->get_value().get_value().get_str();
+             }
            });
   return rv;
 }
@@ -329,7 +337,7 @@ void netlist::Module::elab_inparse() {
   std::set<VIdentifier> to_del_var;
   typedef pair<const VIdentifier, shared_ptr<Variable> > var_type;
   BOOST_FOREACH(var_type var, db_var.db_list) {
-    if(var.second->get_vtype() == Variable::TParam) {
+    if(var.second->get_vtype() == Variable::TParam || var.second->get_vtype() == Variable::TLParam) {
       db_param.insert(var.first, var.second);
       to_del_var.insert(var.first);
     }
@@ -410,6 +418,8 @@ bool netlist::Module::elaborate(std::deque<shared_ptr<Module> >& mfifo,
              rv &= m.second->elaborate(mfifo, mmap);
            });
   
+  if(!rv) return rv;
+
   // remove useless variables
   list<VIdentifier> var_to_be_removed;
   for_each(db_var.begin_order(), db_var.end_order(), [&](pair<const VIdentifier, shared_ptr<Variable> >& m) {

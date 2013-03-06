@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -50,7 +50,9 @@ namespace averilog {
     boost::shared_ptr<netlist::Concatenation>                           tConcatenation;
     boost::shared_ptr<netlist::Expression>                              tExp;
     std::pair<int, boost::shared_ptr<netlist::Expression> >             tEvent;
+    boost::shared_ptr<netlist::FuncCall>                                tFuncCall;
     netlist::FIdentifier                                                tFuncName;
+    boost::shared_ptr<netlist::Function>                                tFunction;
     boost::shared_ptr<netlist::GenBlock>                                tGenBlock;
     averilog::avID                                                      tID;      
     boost::shared_ptr<netlist::Instance>                                tInstance;
@@ -82,3 +84,6 @@ namespace averilog {
 
 
 #endif
+// Local Variables:
+// mode: c++
+// End:

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -62,7 +62,8 @@ namespace netlist {
         std::string::npos != txt_value.find('x') ||
         std::string::npos != txt_value.find('X') ||
         std::string::npos != txt_value.find('z') ||
-        std::string::npos != txt_value.find('Z');
+        std::string::npos != txt_value.find('Z') ||
+        std::string::npos != txt_value.find('?');
     }
     Number addition (const Number& rhs) const;
     Number minus (const Number& rhs) const;

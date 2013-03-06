@@ -13,7 +13,7 @@
 %debug
 %{
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -154,7 +154,7 @@
 %token kLarge          "large"        /* not supported yet */
 %token kLiblist        "liblist"      /* not supported yet */
 %token kLibrary        "library"      /* not supported yet */
-%token kLocalparam     "localparam"   /* not supported yet */
+%token kLocalparam     "localparam" 
 %token kMacromodule    "macromodule"  
 %token kMedium         "medium"       /* not supported yet */
 %token kModule         "module"
@@ -248,14 +248,16 @@
  // type definitions
 %type <tAssign>         blocking_assignment
 %type <tAssign>         nonblocking_assignment
-%type <tBlock>          statements
-%type <tBlock>          statement
-%type <tBlock>          statement_or_null 
+%type <tBlock>          function_item_declaration
 %type <tBlock>          generate_item
 %type <tBlock>          generate_items
 %type <tBlock>          generate_item_or_null
+%type <tBlock>          list_of_function_item_declaration
 %type <tBlock>          module_item
 %type <tBlock>          module_items
+%type <tBlock>          statements
+%type <tBlock>          statement
+%type <tBlock>          statement_or_null 
 %type <tBlockName>      block_identifier
 %type <tCaseItem>       case_item
 %type <tCaseItem>       generate_case_item
@@ -263,6 +265,9 @@
 %type <tExp>            expression
 %type <tExp>            primary
 %type <tEvent>          event_expression
+%type <tFuncCall>       function_call
+%type <tFuncName>       function_identifier
+%type <tFunction>       function_declaration
 %type <tGenBlock>       generated_instantiation
 %type <tInstance>       module_instance
 %type <tInstance>       n_input_gate_instance
@@ -289,12 +294,15 @@
 %type <tListPortConn>   ordered_port_connections
 %type <tListPortConn>   output_terminals
 %type <tListPortDecl>   input_declaration
+%type <tListPortDecl>   inout_declaration
 %type <tListPortDecl>   list_of_port_identifiers
 %type <tListPortDecl>   output_declaration
 %type <tListVar>        list_of_variable_identifiers
 %type <tListVarDecl>    list_of_variable_declarations
 %type <tListVarDecl>    variable_declaration
+%type <tListVarDecl>    list_of_localparam_assignments
 %type <tListVarDecl>    list_of_param_assignments
+%type <tListVarDecl>    localparam_declaration
 %type <tListVarDecl>    parameter_declaration
 %type <tModuleName>     module_identifier
 %type <tModuleName>     n_input_gatetype
@@ -340,6 +348,13 @@ module_declaration
       av_env.error("SYN-MODULE-3", m->name.name, Lib.name);
       //cout<< *m;
     }
+    | "module" module_identifier '(' ')' ';' module_items "endmodule"                   
+    {
+      shared_ptr<Module> m(new Module(@$, $2, $6));
+      if(!Lib.insert(m)) av_env.error(@$, "SYN-MODULE-0", $2.name); 
+      av_env.error("SYN-MODULE-3", m->name.name, Lib.name);
+      //cout<< *m;
+    }
     | "module" module_identifier '(' list_of_port_identifiers ')' ';' module_items "endmodule"
     { 
       shared_ptr<Module> m(new Module(@$, $2, $4, $7));
@@ -362,10 +377,12 @@ module_declaration
 // A.1.5 Module items
 module_item
     : parameter_declaration ';'  { $$.reset(new Block()); $$->add_list<Variable>($1); }
+    | localparam_declaration ';' { $$.reset(new Block()); $$->add_list<Variable>($1); }
     | input_declaration ';'      { $$.reset(new Block()); $$->add_list<Port>($1);     }
     | output_declaration ';'     { $$.reset(new Block()); $$->add_list<Port>($1);     }
+    | inout_declaration ';'      { $$.reset(new Block()); $$->add_list<Port>($1);     }
     | variable_declaration ';'   { $$.reset(new Block()); $$->add_list<Variable>($1); }
-    | function_declaration
+    | function_declaration       { $$.reset(new Block()); $$->add($1);                }
     | continuous_assign          { $$.reset(new Block()); $$->add_list<Assign>($1);   }
     | gate_instantiation         { $$.reset(new Block()); $$->add_list<Instance>($1); }
     | module_instantiation       { $$.reset(new Block()); $$->add_list<Instance>($1); }
@@ -384,6 +401,26 @@ module_items
 // A.2.1.1 Module parameter declarations
 parameter_declaration
     : "parameter" list_of_param_assignments { $$ = $2; }
+    | "parameter" '[' expression ':' expression ']' list_of_param_assignments
+    {
+      $$ = $7;
+      BOOST_FOREACH(shared_ptr<Variable> p, $$) {
+        pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
+        p->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@2+@6, m)));
+      }
+    }
+    ;
+
+localparam_declaration
+    : "localparam" list_of_localparam_assignments { $$ = $2; }
+    | "localparam" '[' expression ':' expression ']' list_of_localparam_assignments
+    {
+      $$ = $7;
+      BOOST_FOREACH(shared_ptr<Variable> p, $$) {
+        pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
+        p->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@2+@6, m)));
+      }
+    }
     ;
 
 // A.2.1.2 Port declarations
@@ -517,7 +554,79 @@ output_declaration
         $$.push_back(it);
       }
     }  
+    | "output" "wire" list_of_port_identifiers
+    {
+      bool undired = true;
+      BOOST_FOREACH(shared_ptr<Port> it, $3) {
+        if(undired && it->get_dir() == -2) {
+          it->set_out();
+          it->ptype = 0;          /* reg */
+        } else {
+          undired = false;
+        }
+        $$.push_back(it);
+      }
+    }
+    | "output" "wire" '[' expression ':' expression ']' list_of_port_identifiers
+    {
+      bool undired = true;
+      BOOST_FOREACH(shared_ptr<Port> it, $8) {
+        if(undired && it->get_dir() == -2) {
+          it->set_out();
+          it->ptype = 0;          /* reg */
+          pair<shared_ptr<Expression>, shared_ptr<Expression> > m($4, $6);
+          it->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@3+@7,m)));
+        } else {
+          undired = false;
+        }
+        $$.push_back(it);
+      }
+    }  
+    | "output" "wire" "signed" '[' expression ':' expression ']' list_of_port_identifiers
+    {
+      bool undired = true;
+      BOOST_FOREACH(shared_ptr<Port> it, $9) {
+        if(undired && it->get_dir() == -2) {
+          it->set_out();
+          it->ptype = 0;          /* reg */
+          pair<shared_ptr<Expression>, shared_ptr<Expression> > m($5, $7);
+          it->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@4+@8,m)));
+        } else {
+          undired = false;
+        }
+        it->set_signed();
+        $$.push_back(it);
+      }
+    }  
     ;
+
+inout_declaration 
+    : "inout" list_of_port_identifiers
+    {
+      bool undired = true;
+      BOOST_FOREACH(shared_ptr<Port> it, $2) {
+        if(undired && it->get_dir() == -2) {
+          it->set_inout();
+        } else {
+          undired = false;
+        }
+        $$.push_back(it);
+      }
+    }
+    | "inout" '[' expression ':' expression ']' list_of_port_identifiers
+    {
+      bool undired = true;
+      BOOST_FOREACH(shared_ptr<Port> it, $7) {
+        if(undired && it->get_dir() == -2) {
+          it->set_inout();
+          pair<shared_ptr<Expression>, shared_ptr<Expression> > m($3, $5);
+          it->name.get_range().add_low_dimension(shared_ptr<Range>(new Range(@2+@6,m)));
+        } else {
+          undired = false;
+        }
+        $$.push_back(it);
+      }
+    }  
 
 // A.2.1.3 Type declarations
 variable_declaration 
@@ -637,6 +746,13 @@ list_of_param_assignments
     { $$.push_back(shared_ptr<Variable>(new Variable(@3+@5, $3,$5,Variable::TParam))); }
     ;
 
+list_of_localparam_assignments 
+    : parameter_identifier '=' expression
+    { $$.push_back(shared_ptr<Variable>(new Variable(@$, $1,$3,Variable::TLParam))); }
+    | list_of_localparam_assignments ',' parameter_identifier '=' expression
+    { $$.push_back(shared_ptr<Variable>(new Variable(@3+@5, $3,$5,Variable::TLParam))); }
+    ;
+
 list_of_port_identifiers 
     : port_identifier
     { 
@@ -684,28 +800,96 @@ function_declaration
         list_of_function_item_declaration
         statement
       "endfunction"
+    {
+      $$.reset(new Function(@$, $2));
+      $$->add_statements($4);
+      $$->add_statements($5);
+    }
+    | "function" '[' expression ':' expression ']' function_identifier ';'
+        list_of_function_item_declaration
+        statement
+      "endfunction"
+    {
+      $$.reset(new Function(@$, $7));
+      $$->add_statements($9);
+      $$->add_statements($10);
+      $$->set_return($3, $5);
+    }
     | "function" "automatic" function_identifier ';'
         list_of_function_item_declaration
         statement
       "endfunction"
+    {
+      $$.reset(new Function(@$, $3));
+      $$->add_statements($5);
+      $$->add_statements($6);
+      $$->set_automatic();
+    }
+    | "function" "automatic" '[' expression ':' expression ']' function_identifier ';'
+        list_of_function_item_declaration
+        statement
+      "endfunction"
+    {
+      $$.reset(new Function(@$, $8));
+      $$->add_statements($10);
+      $$->add_statements($11);
+      $$->set_return($4, $6);
+      $$->set_automatic();
+    }
     | "function" function_identifier '(' list_of_port_identifiers ')' ';'
-        list_of_function_item_declaration
+        list_of_variable_declarations
         statement
       "endfunction"
+    {
+      $$.reset(new Function(@$, $2));
+      $$->set_inputs($4);
+      $$->add_list<Variable>($7);
+      $$->add_statements($8);
+    }
+    | "function" '[' expression ':' expression ']' function_identifier '(' list_of_port_identifiers ')' ';'
+        list_of_variable_declarations
+        statement
+      "endfunction"
+    {
+      $$.reset(new Function(@$, $7));
+      $$->set_inputs($9);
+      $$->add_list<Variable>($12);
+      $$->add_statements($13);
+      $$->set_return($3, $5);
+    }
     | "function" "automatic" function_identifier '(' list_of_port_identifiers ')' ';'
-        list_of_function_item_declaration
+        list_of_variable_declarations
         statement
       "endfunction"
+    {
+      $$.reset(new Function(@$, $3));
+      $$->set_inputs($5);
+      $$->add_list<Variable>($8);
+      $$->add_statements($9);
+      $$->set_automatic();
+    }
+    | "function" "automatic" '[' expression ':' expression ']' function_identifier '(' list_of_port_identifiers ')' ';'
+        list_of_variable_declarations
+        statement
+      "endfunction"
+    {
+      $$.reset(new Function(@$, $8));
+      $$->set_inputs($10);
+      $$->add_list<Variable>($13);
+      $$->add_statements($14);
+      $$->set_return($4, $6);
+      $$->set_automatic();
+    }
     ;
 
 list_of_function_item_declaration
-    : function_item_declaration
-    | list_of_function_item_declaration function_item_declaration
+    : function_item_declaration  { $$.reset(new Block()); $$->add_statements($1); }
+    | list_of_function_item_declaration function_item_declaration { $$->add_statements($2); }
     ;
 
 function_item_declaration 
-    : input_declaration ';'
-    | variable_declaration ';'
+    : input_declaration ';'     { $$.reset(new Block()); $$->add_list<Port>($1); }
+    | variable_declaration ';'  { $$.reset(new Block()); $$->add_list<Variable>($1); }
     ;
 
 //A.3 Primitive instances
@@ -906,12 +1090,18 @@ generate_item
     | "case" '(' expression ')' generate_case_items "default" generate_item_or_null "endcase"
     { shared_ptr<CaseItem> m(new CaseItem(@7, $7)); $$.reset(new Block()); $$->add_case(@$, $3, $5, m); }
     | "casex" '(' expression ')' "default"  generate_item_or_null "endcase"
-    { shared_ptr<CaseItem> m(new CaseItem(@6, $6)); $$.reset(new Block()); $$->add_case(@$, $3, m, true); }
+    { shared_ptr<CaseItem> m(new CaseItem(@6, $6)); $$.reset(new Block()); $$->add_case(@$, $3, m, CaseState::CASE_X); }
     | "casex" '(' expression ')' generate_case_items "endcase"
-    { $$.reset(new Block()); $$->add_case(@$, $3, $5, true); }
+    { $$.reset(new Block()); $$->add_case(@$, $3, $5, CaseState::CASE_X); }
     | "casex" '(' expression ')' generate_case_items "default" generate_item_or_null "endcase"
-    { shared_ptr<CaseItem> m(new CaseItem(@7, $7)); $$.reset(new Block()); $$->add_case(@$, $3, $5, m, true); }
-    | "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' "begin" ':' block_identifier generate_item_or_null "end"
+    { shared_ptr<CaseItem> m(new CaseItem(@7, $7)); $$.reset(new Block()); $$->add_case(@$, $3, $5, m, CaseState::CASE_X); }
+    | "casez" '(' expression ')' "default"  generate_item_or_null "endcase"
+    { shared_ptr<CaseItem> m(new CaseItem(@6, $6)); $$.reset(new Block()); $$->add_case(@$, $3, m, CaseState::CASE_Z); }
+    | "casez" '(' expression ')' generate_case_items "endcase"
+    { $$.reset(new Block()); $$->add_case(@$, $3, $5, CaseState::CASE_Z); }
+    | "casez" '(' expression ')' generate_case_items "default" generate_item_or_null "endcase"
+    { shared_ptr<CaseItem> m(new CaseItem(@7, $7)); $$.reset(new Block()); $$->add_case(@$, $3, $5, m, CaseState::CASE_Z); }
+    | "for" '(' blocking_assignment ';' expression ';' blocking_assignment ')' "begin" ':' block_identifier generate_items "end"
     { $$.reset(new Block()); $12->set_name($11); $$->add_for(@$, $3, $5, $7, $12); }
     | "begin" generate_items "end" { $$.reset(new Block());  shared_ptr<GenBlock> m(new GenBlock(@$, *$2)); $$->add(m);}
     | "begin" ':' block_identifier generate_items "end" { $$.reset(new Block()); shared_ptr<GenBlock> m(new GenBlock(@$, *$4)); m->set_name($3); $$->add(m);}
@@ -990,7 +1180,10 @@ always_construct
     ;
 
 blocking_assignment 
-    : variable_lvalue '=' expression  { $3->reduce(); $$.reset(new Assign(@$, $1, $3, true));}
+    : variable_lvalue '=' expression  { 
+      $3->reduce(); 
+      $$.reset(new Assign(@$, $1, $3, true));
+    }
     ;
 
 nonblocking_assignment 
@@ -1013,10 +1206,15 @@ statement
     | "case" '(' expression ')' case_items "default" statement_or_null "endcase" 
     { shared_ptr<CaseItem> m(new CaseItem(@$, $7)); $$.reset(new Block()); $$->add_case(@$, $3, $5, m); }
     | "casex" '(' expression ')' "default" statement_or_null "endcase" 
-    { shared_ptr<CaseItem> m(new CaseItem(@$, $6)); $$.reset(new Block()); $$->add_case(@$, $3, m, true); }
-    | "casex" '(' expression ')' case_items "endcase" { $$.reset(new Block()); $$->add_case(@$, $3, $5, true); }
+    { shared_ptr<CaseItem> m(new CaseItem(@$, $6)); $$.reset(new Block()); $$->add_case(@$, $3, m, CaseState::CASE_X); }
+    | "casex" '(' expression ')' case_items "endcase" { $$.reset(new Block()); $$->add_case(@$, $3, $5, CaseState::CASE_X); }
     | "casex" '(' expression ')' case_items "default" statement_or_null "endcase" 
-    { shared_ptr<CaseItem> m(new CaseItem(@$, $7)); $$.reset(new Block()); $$->add_case(@$, $3, $5, m, true); }
+    { shared_ptr<CaseItem> m(new CaseItem(@$, $7)); $$.reset(new Block()); $$->add_case(@$, $3, $5, m, CaseState::CASE_X); }
+    | "casez" '(' expression ')' "default" statement_or_null "endcase" 
+    { shared_ptr<CaseItem> m(new CaseItem(@$, $6)); $$.reset(new Block()); $$->add_case(@$, $3, m, CaseState::CASE_Z); }
+    | "casez" '(' expression ')' case_items "endcase" { $$.reset(new Block()); $$->add_case(@$, $3, $5, CaseState::CASE_Z); }
+    | "casez" '(' expression ')' case_items "default" statement_or_null "endcase" 
+    { shared_ptr<CaseItem> m(new CaseItem(@$, $7)); $$.reset(new Block()); $$->add_case(@$, $3, $5, m, CaseState::CASE_Z); }
     | "if" '(' expression ')' statement_or_null 
     { $$.reset(new Block()); $$->add_if(@$, $3, $5); }
     | "if" '(' expression ')' statement_or_null "else" statement_or_null  
@@ -1103,6 +1301,9 @@ concatenation
 // A.8.2 Function calls
 function_call
     : function_identifier '(' expressions ')'
+    {
+      $$.reset(new FuncCall(@$, $1, $3));
+    }
     ;
 
 //A.8.3 Expressions
@@ -1162,7 +1363,7 @@ primary
       $$.reset( new Expression(@$, $1));
     }
     | concatenation      { $$.reset( new Expression(@$, $1)); }
-    | function_call
+    | function_call      { $$.reset( new Expression(@$, $1)); }
     | '(' expression ')'  { $$ = $2; $$->loc = @$; }
     ;
 
@@ -1187,7 +1388,7 @@ block_identifier
     ;
 
 function_identifier 
-    : identifier
+    : identifier            { $$ = FIdentifier(@$, $1); }
     ;
 
 module_identifier

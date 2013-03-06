@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -89,6 +89,7 @@ namespace netlist {
     Operation(const shell::location&, const boost::shared_ptr<Concatenation>&);
     Operation(const boost::shared_ptr<LConcatenation>&);
     Operation(const shell::location&, const boost::shared_ptr<LConcatenation>&);
+    Operation(const shell::location&, const boost::shared_ptr<FuncCall>&);
     Operation(const shell::location&, operation_t, 
               const boost::shared_ptr<Operation>&); // (op)(exp)
     Operation(operation_t, const boost::shared_ptr<Operation>&); // (op)(exp)
@@ -135,6 +136,7 @@ namespace netlist {
     void reduce_Num();
     void reduce_Var();
     void reduce_Con();
+    void reduce_Fun();
     void reduce_UPos();
     void reduce_UNeg();
     void reduce_ULRev();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -70,6 +70,12 @@ namespace netlist {
   // array of range expressions
   class RangeArray;
 
+  // function
+  class Function;
+
+  // function call
+  class FuncCall;
+
   // expression.h
   class Expression;		/* expressions */
 
@@ -81,6 +87,19 @@ namespace netlist {
 
   // assign.h
   class Assign;
+
+  // case.h
+  class CaseState;
+  class CaseItem;
+
+  // if.h
+  class IfState;
+
+  // while.h
+  class WhileState;
+
+  // for.h
+  class ForState;
 
   // block.h
   class Block;
@@ -100,19 +119,6 @@ namespace netlist {
 
   // seqblock.h
   class SeqBlock;
-
-  // case.h
-  class CaseState;
-  class CaseItem;
-
-  // if.h
-  class IfState;
-
-  // while.h
-  class WhileState;
-
-  // for.h
-  class ForState;
 
   // library.h
   class Library;
@@ -139,19 +145,21 @@ namespace netlist {
 #include "range.h"
 #include "range_array.h"
 #include "identifier.h"
+#include "function_call.h"
 #include "port.h"
 #include "variable.h"
 #include "assign.h"
+#include "case.h"
+#include "if.h"
+#include "while.h"
+#include "for.h"
 #include "block.h"
+#include "function.h"
 #include "module.h"
 #include "instance.h"
 #include "portconn.h"
 #include "genblock.h"
 #include "seqblock.h"
-#include "case.h"
-#include "if.h"
-#include "while.h"
-#include "for.h"
 #include "library.h"
 #include "uni_name.h"
 

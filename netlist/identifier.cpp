@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -143,6 +143,8 @@ netlist::FIdentifier::FIdentifier(const string& nm)
 netlist::FIdentifier::FIdentifier(const location& lloc, const string& nm)
   : Identifier(tFuncName, lloc, nm) {  }
 
+netlist::FIdentifier::FIdentifier(const location& lloc, const averilog::avID &id)
+  : Identifier(tFuncName, lloc, id.name) {  }
 
 //////////////////////////////// Module identifier /////////////////
 netlist::MIdentifier::MIdentifier() 

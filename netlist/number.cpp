@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <boost/foreach.hpp>
 #include "component.h"
+#include "shell/env.h"
 
 using namespace netlist;
 using std::ostream;
@@ -162,7 +163,11 @@ netlist::Number::Number(const location& lloc, const string& txt)
 }
 
 mpz_class netlist::Number::get_value() const {
-  if(sign_flag && txt_value.size() > 0 && txt_value[0] == '1') { // signed negative number
+  if(!valuable) {
+    G_ENV->error(loc, "ELAB-NUM-0", get_txt_value());
+    return mpz_class(0);
+  }
+  else if(sign_flag && txt_value.size() > 0 && txt_value[0] == '1') { // signed negative number
     mpz_class k(txt_value.c_str(), 2);
     k = (~k + 1);
     string result = "-" + k.get_str(2);
@@ -259,8 +264,11 @@ bool netlist::Number::bin2num(const char *text, const int txt_leng, const int st
     else if(text[i] == 'x' || text[i] == 'X') {
       m.push_back('x');
       v = false;
-    } else if(text[i] == 'z' || text[i] == 'z') {
+    } else if(text[i] == 'z' || text[i] == 'Z') {
       m.push_back('z');
+      v = false;
+    } else if(text[i] == '?') {
+      m.push_back('?');
       v = false;
     } else if(text[i] != '_')
       return false;		// wrong format
@@ -301,8 +309,11 @@ bool netlist::Number::oct2num(const char *text, const int txt_leng, const int st
     else if(text[i] == 'x' || text[i] == 'X') {
       m.push_back('x');
       v = false;
-    } else if(text[i] == 'z' || text[i] == 'z') {
+    } else if(text[i] == 'z' || text[i] == 'Z') {
       m.push_back('z');
+      v = false;
+    } else if(text[i] == '?') {
+      m.push_back('?');
       v = false;
     } else if(text[i] != '_')
       return false;		// wrong format
@@ -361,8 +372,11 @@ bool netlist::Number::hex2num(const char *text, const int txt_leng, const int st
     else if(text[i] == 'x' || text[i] == 'X') {
       m.push_back('x');
       v = false;
-    } else if(text[i] == 'z' || text[i] == 'z') {
+    } else if(text[i] == 'z' || text[i] == 'Z') {
       m.push_back('z');
+      v = false;
+    } else if(text[i] == '?') {
+      m.push_back('?');
       v = false;
     } else if(text[i] != '_')
       return false;		// wrong format
@@ -402,6 +416,7 @@ bool netlist::Number::hex2num(const char *text, const int txt_leng, const int st
       case 'X': txt_value += "xxxx"; break;
       case 'z':
       case 'Z': txt_value += "zzzz"; break;
+      case '?': txt_value += "????"; break;
       }
   }
   
@@ -412,7 +427,7 @@ bool netlist::Number::hex2num(const char *text, const int txt_leng, const int st
 
 bool netlist::Number::check_valuable() {
   for(unsigned int i=0; i<txt_value.size(); i++)
-    if(txt_value[i] == 'x' || txt_value[i] == 'z') {
+    if(txt_value[i] == 'x' || txt_value[i] == 'z' || txt_value[i] == '?') {
       valuable = false;
       return false;
     }
@@ -585,7 +600,8 @@ Number netlist::operator|| (const Number& lhs, const Number& rhs) {
 bool netlist::operator== (const Number& lhs, const Number& rhs) {
   if(Number::trim_zeros(lhs.get_txt_value()) == Number::trim_zeros(rhs.get_txt_value()) && 
      string::npos == lhs.get_txt_value().find('x') &&
-     string::npos == lhs.get_txt_value().find('z'))
+     string::npos == lhs.get_txt_value().find('z') &&
+     string::npos == lhs.get_txt_value().find('?'))
     return true;
   else
     return false;
@@ -595,7 +611,8 @@ bool netlist::operator!= (const Number& lhs, const Number& rhs) {
   assert(lhs.is_valuable() && rhs.is_valuable()); // the result may be wrong when x or z exists
   if(Number::trim_zeros(lhs.get_txt_value()) != Number::trim_zeros(rhs.get_txt_value()) && 
      string::npos == lhs.get_txt_value().find('x') &&
-     string::npos == lhs.get_txt_value().find('z'))
+     string::npos == lhs.get_txt_value().find('z') &&
+     string::npos == lhs.get_txt_value().find('?'))
     return true;
   else
     return false;
