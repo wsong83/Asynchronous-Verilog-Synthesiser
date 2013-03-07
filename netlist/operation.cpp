@@ -202,6 +202,16 @@ const Concatenation& netlist::Operation::get_con() const{
   return *(static_pointer_cast<Concatenation>(data));
 }
 
+FuncCall& netlist::Operation::get_fun() {
+  assert(otype == oFun);
+  return *(static_pointer_cast<FuncCall>(data));
+}
+
+const FuncCall& netlist::Operation::get_fun() const{
+  assert(otype == oFun);
+  return *(static_pointer_cast<FuncCall>(data));
+}
+
 VIdentifier& netlist::Operation::get_var(){
   assert(otype == oVar);
   return *(static_pointer_cast<VIdentifier>(data));
@@ -434,8 +444,11 @@ void netlist::Operation::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const
     break;
   }
   case oNULL:
-  case oNum:
-  case oFun: break;
+  case oNum: break;
+  case oFun: {
+    get_fun().scan_vars(rf, ctl);
+    break;
+  }
   case oUPos:
   case oUNeg:
   case oULRev:
@@ -504,8 +517,11 @@ void netlist::Operation::replace_variable(const VIdentifier& var, const Number& 
     break;
   }
   case oNULL:
-  case oNum:
-  case oFun: break;
+  case oNum: break;
+  case oFun: {
+    get_fun().replace_variable(var, num);
+    break;
+  }
   case oUPos:
   case oUNeg:
   case oULRev:

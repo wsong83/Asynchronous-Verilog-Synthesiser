@@ -113,6 +113,8 @@ namespace netlist {
     const Number& get_num() const;
     Concatenation& get_con();
     const Concatenation& get_con() const;
+    FuncCall& get_fun();
+    const FuncCall& get_fun() const;
     VIdentifier& get_var();
     const VIdentifier& get_var() const;
     void reduce();

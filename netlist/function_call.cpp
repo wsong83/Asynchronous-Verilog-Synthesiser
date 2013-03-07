@@ -110,3 +110,15 @@ Number netlist::FuncCall::get_value() const {
   assert(0 == "right now get the value of a function call is not available!");
   return Number(0);
 }
+
+void netlist::FuncCall::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
+  BOOST_FOREACH(shared_ptr<Expression> exp, args) {
+    exp->scan_vars(rf, ctl);
+  }
+}
+
+void netlist::FuncCall::replace_variable(const VIdentifier& var, const Number& num) {
+  BOOST_FOREACH(shared_ptr<Expression> exp, args) {
+    exp->replace_variable(var, num);
+  }
+}
