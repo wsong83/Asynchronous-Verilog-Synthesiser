@@ -115,6 +115,8 @@ void netlist::FuncCall::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const 
   BOOST_FOREACH(shared_ptr<Expression> exp, args) {
     exp->scan_vars(rf, ctl);
   }
+  //std::cout << "function ------------>" << std::endl; 
+  //rf->write(std::cout);
 }
 
 void netlist::FuncCall::replace_variable(const VIdentifier& var, const Number& num) {
