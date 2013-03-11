@@ -41,8 +41,8 @@ namespace netlist {
     NETLIST_STREAMOUT_DECL;
     virtual FuncCall* deep_copy() const;
     NETLIST_DB_DECL;
-    //NETLIST_SCAN_VARS;
-    //NETLIST_REPLACE_VARIABLE;
+    NETLIST_SCAN_VARS;
+    NETLIST_REPLACE_VARIABLE;
 
     // helpers
     void reduce();

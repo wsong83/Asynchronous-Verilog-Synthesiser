@@ -243,31 +243,39 @@ void netlist::SeqBlock::db_expunge() {
   BOOST_FOREACH(shared_ptr<Expression>& m, slist_level) m->db_expunge();
 }
 
-void netlist::SeqBlock::scan_vars(shared_ptr<SDFG::RForest>, bool) const {
-  shared_ptr<SDFG::RForest> rf(new SDFG::RForest());
+
+void netlist::SeqBlock::scan_vars(shared_ptr<SDFG::RForest> rf, bool) const {
   Block::scan_vars(rf, false);
+  //std::cout << "always@ ------->" << *this << std::endl;
+  //rf->write(std::cout);
 }
+
 
 void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
   assert(db_var.empty());
   assert(db_instance.empty());
 
   shared_ptr<SDFG::RForest> rf(new SDFG::RForest());
-  Block::scan_vars(rf, false);
+  scan_vars(rf, false);
   std::set<string> cset;        // to store all control signals
-  //rf->write(std::cout);
-
+  
   BOOST_FOREACH(SDFG::RForest::tree_map_type& t, rf->tree) {
+    //std::cout << "target ->" << " " << t.first << std::endl;
     std::set<string> csig = rf->get_control(t.first);
     if(!slist_pulse.empty()) cset.insert(csig.begin(), csig.end());
     std::set<string> dsig = rf->get_data(t.first);
+    //std::cout << "ctl: ";
     BOOST_FOREACH(const string& s, csig) {
       G->add_edge(s, SDFG::dfgEdge::SDFG_CTL, s, t.first);
+      //std::cout << s << " ";
     }
+    //std::cout << "data: " ;
     BOOST_FOREACH(const string& s, dsig) {
       if(s != "") G->add_edge(s, SDFG::dfgEdge::SDFG_DP, s, t.first);
       else        G->add_edge(t.first, SDFG::dfgEdge::SDFG_DDP, t.first, t.first); // self-loop
+      //std::cout << s << " ";
     }
+    //std::cout << std::endl;
   }
 
 
