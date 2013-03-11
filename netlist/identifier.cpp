@@ -454,7 +454,8 @@ void netlist::VIdentifier::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) con
     rf->tree["@DATA"]->sig.insert(name);
   }
 
-  get_select().scan_vars(rf, ctl);
+  //get_select().scan_vars(rf, ctl);
+  get_select().scan_vars(rf, true);
 }
 
 void netlist::VIdentifier::replace_variable(const VIdentifier& var, const Number& num) {
