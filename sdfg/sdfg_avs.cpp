@@ -543,6 +543,86 @@ void SDFG::dfgNode::self_path_update(map<shared_ptr<dfgNode>, int>& rv, // retur
 // analyse functions
 ///////////////////////////////
 
+shared_ptr<dfgGraph> SDFG::dfgGraph::get_datapath() const {
+
+  // new register graph
+  shared_ptr<dfgGraph> ng(new dfgGraph(name));
+
+  // iterate all nodes for data nodes
+  std::set<shared_ptr<dfgNode> > data_nodes; 
+  typedef pair<const vertex_descriptor, shared_ptr<dfgNode> > node_record_type;
+  BOOST_FOREACH(node_record_type n, nodes) {
+    if(n.second->type & (dfgNode::SDFG_COMB|dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_GATE)) {
+      bool keep = false;
+      BOOST_FOREACH(shared_ptr<dfgEdge> e, get_in_edges(n.second)) {
+        if(e->type & dfgEdge::SDFG_DP) {
+          keep = true;
+          break;
+        }
+      }
+      if(!keep) {
+        BOOST_FOREACH(shared_ptr<dfgEdge> e, get_out_edges(n.second)) {
+          if(e->type & dfgEdge::SDFG_DP) {
+            keep = true;
+            break;
+          }
+        }
+      }
+      if(keep)
+        data_nodes.insert(n.second);
+    } else if(n.second->type & (dfgNode::SDFG_MODULE|dfgNode::SDFG_PORT))
+      data_nodes.insert(n.second);
+  }
+
+  // get all related nodes
+  std::set<shared_ptr<dfgNode> > related_nodes;
+  BOOST_FOREACH(node_record_type n, nodes) {
+    if(data_nodes.count(n.second)) {
+      related_nodes.insert(n.second);
+    } 
+
+    bool keep = false;
+    BOOST_FOREACH(shared_ptr<dfgNode> nn, get_in_nodes(n.second)) {
+      if(data_nodes.count(nn)) {
+        keep = true;
+        break;
+      }
+    }
+    if(!keep) {
+      BOOST_FOREACH(shared_ptr<dfgNode> nn, get_out_nodes(n.second)) {
+        if(data_nodes.count(nn)) {
+          keep = true;
+          break;
+        }
+      }
+    }
+    if(keep)
+      related_nodes.insert(n.second);
+  }
+  
+  // rebuild the graph
+  BOOST_FOREACH(shared_ptr<dfgNode> n, related_nodes) {
+    shared_ptr<dfgNode> nnode(n->copy());
+    if(n->type & dfgNode::SDFG_MODULE)
+      nnode->child = nnode->child->get_datapath();
+    ng->add_node(nnode);
+  }
+  BOOST_FOREACH(shared_ptr<dfgNode> n, related_nodes) {
+    BOOST_FOREACH(shared_ptr<dfgEdge> e, get_in_edges(n)) {
+      if((e->type != dfgEdge::SDFG_RST) && (e->type != dfgEdge::SDFG_CLK) && related_nodes.count(get_source(e))) {
+        ng->add_edge(e->name, e->type, get_source(e)->get_hier_name(), n->get_hier_name());
+      }
+    }
+    BOOST_FOREACH(shared_ptr<dfgEdge> e, get_out_edges(n)) {
+      if((e->type != dfgEdge::SDFG_RST) && (e->type != dfgEdge::SDFG_CLK) && related_nodes.count(get_target(e))) {
+        ng->add_edge(e->name, e->type, n->get_hier_name(), get_target(e)->get_hier_name());
+      }
+    }    
+  }
+  return ng;
+}
+
+
 shared_ptr<dfgGraph> SDFG::dfgGraph::get_RRG() const {
 
   // new register graph
