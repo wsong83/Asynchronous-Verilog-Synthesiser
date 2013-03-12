@@ -110,42 +110,43 @@ namespace SDFG {
     void set_hier_name(const std::string&);       // set the hierarchical name
     void remove_port_sig(const std::string&, int); // remove a certain port signal
     void add_port_sig(const std::string&, const std::string&); // add a certain port connection
-    std::list<boost::shared_ptr<dfgPath> >& get_out_paths(); // return all output paths from this register/port
-    std::list<boost::shared_ptr<dfgPath> >& get_in_paths(); // return all input paths to this register/port
+    std::list<boost::shared_ptr<dfgPath> >& get_out_paths_cb(); // return all output paths from this register/port
+    std::list<boost::shared_ptr<dfgPath> >& get_in_paths_cb(); // return all input paths to this register/port
     // return all output paths from this register/port, faster algorithm
-    std::list<boost::shared_ptr<dfgPath> > get_out_paths_fast(); 
+    std::list<boost::shared_ptr<dfgPath> > get_out_paths_fast_cb(); 
     // return all input paths to this register/port, fast algorithm
-    std::list<boost::shared_ptr<dfgPath> > get_in_paths_fast(); 
+    std::list<boost::shared_ptr<dfgPath> > get_in_paths_fast_cb(); 
     // return all self control paths that inside this module
-    std::list<boost::shared_ptr<dfgPath> > get_self_path();
+    std::list<boost::shared_ptr<dfgPath> > get_self_path_cb();
 
     std::pair<double, double> position; // graphic position
     std::pair<double, double> bbox;     // bounding box
     void graphic_init();                // set initial graphic info.
 
   private:
-    void out_path_type_update(std::list<boost::shared_ptr<dfgPath> >&,
-                              boost::shared_ptr<dfgPath>&,
-                              std::map<boost::shared_ptr<dfgNode>, std::map<boost::shared_ptr<dfgNode>, int> >&,
-                              std::set<boost::shared_ptr<dfgNode> >&); // helper for get_out_paths()
+    void out_path_type_update_cb(std::list<boost::shared_ptr<dfgPath> >&,
+                                 boost::shared_ptr<dfgPath>&,
+                                 std::map<boost::shared_ptr<dfgNode>, 
+                                          std::map<boost::shared_ptr<dfgNode>, int> >&,
+                                 std::set<boost::shared_ptr<dfgNode> >&); // helper for get_out_paths()
 
-    void in_path_type_update(std::list<boost::shared_ptr<dfgPath> >&,
+    void in_path_type_update_cb(std::list<boost::shared_ptr<dfgPath> >&,
+                                boost::shared_ptr<dfgPath>&,
+                                std::map<boost::shared_ptr<dfgNode>, std::map<boost::shared_ptr<dfgNode>, int> >&,
+                                std::set<boost::shared_ptr<dfgNode> >&); // helper for get_in_paths()
+    void out_path_type_update_fast_cb(std::map<boost::shared_ptr<dfgNode>, int>&,
+                                      boost::shared_ptr<dfgPath>&,
+                                      std::map<boost::shared_ptr<dfgNode>, 
+                                               std::map<boost::shared_ptr<dfgNode>, int> >&);
+    void self_path_update_cb(std::map<boost::shared_ptr<dfgNode>, int>&,
                              boost::shared_ptr<dfgPath>&,
-                             std::map<boost::shared_ptr<dfgNode>, std::map<boost::shared_ptr<dfgNode>, int> >&,
-                             std::set<boost::shared_ptr<dfgNode> >&); // helper for get_in_paths()
-    void out_path_type_update_fast(std::map<boost::shared_ptr<dfgNode>, int>&,
-                                   boost::shared_ptr<dfgPath>&,
-                                   std::map<boost::shared_ptr<dfgNode>, 
-                                            std::map<boost::shared_ptr<dfgNode>, int> >&);
-    void self_path_update(std::map<boost::shared_ptr<dfgNode>, int>&,
-                          boost::shared_ptr<dfgPath>&,
-                          std::map<boost::shared_ptr<dfgNode>, 
-                                   std::map<boost::shared_ptr<dfgNode>, int> >&,
-                          unsigned int level);
-    void in_path_type_update_fast(std::map<boost::shared_ptr<dfgNode>, int>&,
-                                  boost::shared_ptr<dfgPath>&,
-                                  std::map<boost::shared_ptr<dfgNode>, 
-                                           std::map<boost::shared_ptr<dfgNode>, int> >&);
+                             std::map<boost::shared_ptr<dfgNode>, 
+                                      std::map<boost::shared_ptr<dfgNode>, int> >&,
+                             unsigned int level);
+    void in_path_type_update_fast_cb(std::map<boost::shared_ptr<dfgNode>, int>&,
+                                     boost::shared_ptr<dfgPath>&,
+                                     std::map<boost::shared_ptr<dfgNode>, 
+                                              std::map<boost::shared_ptr<dfgNode>, int> >&);
   };
 
   class dfgEdge {
@@ -347,6 +348,7 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
 
     // analyse functions
     boost::shared_ptr<dfgGraph> get_datapath() const; // extract all datapaths from an SDFG
+    boost::shared_ptr<dfgGraph> get_hier_RRG() const; // get a hierarchical RRG from any SDFG
     boost::shared_ptr<dfgGraph> get_RRG() const; // extract the register relation graph from a signal level DFG
     boost::shared_ptr<dfgGraph> build_reg_graph(const std::set<boost::shared_ptr<dfgNode> >& ) const; // build up a reg connection graph for certain registers 
     std::set<boost::shared_ptr<dfgNode> > get_fsm_groups(bool, boost::shared_ptr<dfgGraph>) const; // extract fsms from RRG and DFG
@@ -363,6 +365,8 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     edge_descriptor to_id(boost::shared_ptr<dfgEdge>) const;
     edge_descriptor to_id(const edge_descriptor&) const;
     boost::shared_ptr<dfgNode> fsm_simplify_node(boost::shared_ptr<dfgNode>);  // simply the connection for a single FSM register
+    std::list<boost::shared_ptr<dfgNode> > get_list_of_nodes(unsigned int) const; // get a list of nodes of certain types
+    std::list<boost::shared_ptr<dfgNode> > get_list_of_nodes(unsigned int, const dfgGraph&) const; // get a list of nodes of certain types
 
   };
 

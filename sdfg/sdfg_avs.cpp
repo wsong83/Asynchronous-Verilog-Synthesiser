@@ -48,7 +48,7 @@ using std::list;
 /********        Node                                               ********/
 /////////////////////////////////////////////////////////////////////////////
 
-list<shared_ptr<dfgPath> >& SDFG::dfgNode::get_out_paths() {
+list<shared_ptr<dfgPath> >& SDFG::dfgNode::get_out_paths_cb() {
   if(opath.empty()) {
     // return value and the main path
     shared_ptr<dfgPath> mp(new dfgPath());       // main path
@@ -76,13 +76,13 @@ list<shared_ptr<dfgPath> >& SDFG::dfgNode::get_out_paths() {
     BOOST_FOREACH(rmap_data_type& m, rmap[pn]) {
       shared_ptr<dfgPath> p(new dfgPath(*mp));
       p->push_back(pn, m.second);
-      m.first->out_path_type_update(opath, p, rmap, dnode_set);
+      m.first->out_path_type_update_cb(opath, p, rmap, dnode_set);
     }
   }
   return opath;
 }
 
-list<shared_ptr<dfgPath> > SDFG::dfgNode::get_out_paths_fast() {
+list<shared_ptr<dfgPath> > SDFG::dfgNode::get_out_paths_fast_cb() {
   typedef pair<const shared_ptr<dfgNode>, int> rmap_data_type;
   shared_ptr<dfgNode> pn = pg->get_node(id);   // this node
   if(opath_f.empty()) {
@@ -108,7 +108,7 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_out_paths_fast() {
     BOOST_FOREACH(rmap_data_type& m, tmap) {
       shared_ptr<dfgPath> p(new dfgPath(*mp));
       p->push_back(pn, m.second);
-      m.first->out_path_type_update_fast(opath_f, p, rmap);
+      m.first->out_path_type_update_fast_cb(opath_f, p, rmap);
     }
   }
 
@@ -122,7 +122,7 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_out_paths_fast() {
   return rv;
 }
 
-list<shared_ptr<dfgPath> >& SDFG::dfgNode::get_in_paths() {
+list<shared_ptr<dfgPath> >& SDFG::dfgNode::get_in_paths_cb() {
   if(ipath.empty()) {
     // return value and the main path
     shared_ptr<dfgPath> mp(new dfgPath());       // main path
@@ -149,13 +149,13 @@ list<shared_ptr<dfgPath> >& SDFG::dfgNode::get_in_paths() {
     BOOST_FOREACH(rmap_data_type& m, rmap[pn]) {
       shared_ptr<dfgPath> p(new dfgPath(*mp));
       p->push_front(m.first, m.second);
-      m.first->in_path_type_update(ipath, p, rmap, dnode_set);
+      m.first->in_path_type_update_cb(ipath, p, rmap, dnode_set);
     }
   }
   return ipath;
 }
 
-list<shared_ptr<dfgPath> > SDFG::dfgNode::get_in_paths_fast() {
+list<shared_ptr<dfgPath> > SDFG::dfgNode::get_in_paths_fast_cb() {
   typedef pair<const shared_ptr<dfgNode>, int> rmap_data_type;
   shared_ptr<dfgNode> pn = pg->get_node(id);   // this node
   if(ipath_f.empty()) {
@@ -180,7 +180,7 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_in_paths_fast() {
     BOOST_FOREACH(rmap_data_type& m, tmap) {
       shared_ptr<dfgPath> p(new dfgPath(*mp));
       p->push_front(m.first, m.second);
-      m.first->in_path_type_update_fast(ipath_f, p, rmap);
+      m.first->in_path_type_update_fast_cb(ipath_f, p, rmap);
     }
   }
 
@@ -194,7 +194,7 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_in_paths_fast() {
   return rv;
 }
 
-list<shared_ptr<dfgPath> > SDFG::dfgNode::get_self_path() {
+list<shared_ptr<dfgPath> > SDFG::dfgNode::get_self_path_cb() {
   typedef pair<const shared_ptr<dfgNode>, int> rmap_data_type;
   shared_ptr<dfgNode> pn = pg->get_node(id);   // this node
   shared_ptr<dfgPath> mp(new dfgPath());       // main path 
@@ -219,7 +219,7 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_self_path() {
     BOOST_FOREACH(rmap_data_type& m, tmap) {
       shared_ptr<dfgPath> p(new dfgPath(*mp));
       p->push_back(pn, m.second);
-      m.first->self_path_update(self_f, p, rmap,0);
+      m.first->self_path_update_cb(self_f, p, rmap,0);
     }
   }
 
@@ -233,7 +233,7 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_self_path() {
   return rv;
 }
 
-void SDFG::dfgNode::out_path_type_update(list<shared_ptr<dfgPath> >& rv, // return path group
+void SDFG::dfgNode::out_path_type_update_cb(list<shared_ptr<dfgPath> >& rv, // return path group
                                          shared_ptr<dfgPath>& cp, // current path
                                          map<shared_ptr<dfgNode>, map<shared_ptr<dfgNode>, int > >& rmap,
                                          std::set<shared_ptr<dfgNode> >& dnode_set) {
@@ -280,7 +280,7 @@ void SDFG::dfgNode::out_path_type_update(list<shared_ptr<dfgPath> >& rv, // retu
   BOOST_FOREACH(rmap_data_type& m, rmap[pn]) {
     shared_ptr<dfgPath> p(new dfgPath(*cp));
     p->push_back(pn, m.second);
-    m.first->out_path_type_update(rv, p, rmap, dnode_set);
+    m.first->out_path_type_update_cb(rv, p, rmap, dnode_set);
   }
 
   if(rv.size() == rv_size) {         // this is a dead node
@@ -290,7 +290,7 @@ void SDFG::dfgNode::out_path_type_update(list<shared_ptr<dfgPath> >& rv, // retu
 
 }
 
-void SDFG::dfgNode::out_path_type_update_fast(map<shared_ptr<dfgNode>, int>& rv, // return path group
+void SDFG::dfgNode::out_path_type_update_fast_cb(map<shared_ptr<dfgNode>, int>& rv, // return path group
                                               shared_ptr<dfgPath>& cp, // current path
                                               map<shared_ptr<dfgNode>, map<shared_ptr<dfgNode>, int > >& rmap) {
   
@@ -341,7 +341,7 @@ void SDFG::dfgNode::out_path_type_update_fast(map<shared_ptr<dfgNode>, int>& rv,
     BOOST_FOREACH(rmap_data_type& t, tmap) {
       shared_ptr<dfgPath> p(new dfgPath(*cp));
       p->push_back(pn, t.second);
-      t.first->out_path_type_update_fast(rv, p, rmap);
+      t.first->out_path_type_update_fast_cb(rv, p, rmap);
       // update rmap
       BOOST_FOREACH(rmap_data_type& m, rmap[t.first]) {
         if(rmap[pn].count(m.first)) rmap[pn][m.first] |= dfgPath::cal_type(t.second, m.second);
@@ -351,7 +351,7 @@ void SDFG::dfgNode::out_path_type_update_fast(map<shared_ptr<dfgNode>, int>& rv,
   }
 }
 
-void SDFG::dfgNode::in_path_type_update(list<shared_ptr<dfgPath> >& rv, // return path group
+void SDFG::dfgNode::in_path_type_update_cb(list<shared_ptr<dfgPath> >& rv, // return path group
                                         shared_ptr<dfgPath>& cp, // current path
                                         map<shared_ptr<dfgNode>, map<shared_ptr<dfgNode>, int > >& rmap,
                                         std::set<shared_ptr<dfgNode> >& dnode_set) {
@@ -393,7 +393,7 @@ void SDFG::dfgNode::in_path_type_update(list<shared_ptr<dfgPath> >& rv, // retur
     } else {
       shared_ptr<dfgPath> p(new dfgPath(*cp));
       p->push_front(m.first, m.second);
-      m.first->in_path_type_update(rv, p, rmap, dnode_set);
+      m.first->in_path_type_update_cb(rv, p, rmap, dnode_set);
     }
   }
 
@@ -403,7 +403,7 @@ void SDFG::dfgNode::in_path_type_update(list<shared_ptr<dfgPath> >& rv, // retur
   }
 }
 
-void SDFG::dfgNode::in_path_type_update_fast(map<shared_ptr<dfgNode>, int>& rv, // return path group
+void SDFG::dfgNode::in_path_type_update_fast_cb(map<shared_ptr<dfgNode>, int>& rv, // return path group
                                               shared_ptr<dfgPath>& cp, // current path
                                               map<shared_ptr<dfgNode>, map<shared_ptr<dfgNode>, int > >& rmap) {
   
@@ -449,7 +449,7 @@ void SDFG::dfgNode::in_path_type_update_fast(map<shared_ptr<dfgNode>, int>& rv, 
       } else {
         shared_ptr<dfgPath> p(new dfgPath(*cp));
         p->push_front(t.first, t.second);
-        t.first->in_path_type_update_fast(rv, p, rmap);
+        t.first->in_path_type_update_fast_cb(rv, p, rmap);
         // update rmap
         BOOST_FOREACH(rmap_data_type& m, rmap[t.first]) {
           if(rmap[pn].count(m.first)) rmap[pn][m.first] |= dfgPath::cal_type(m.second, t.second);
@@ -460,7 +460,7 @@ void SDFG::dfgNode::in_path_type_update_fast(map<shared_ptr<dfgNode>, int>& rv, 
   }
 }
 
-void SDFG::dfgNode::self_path_update(map<shared_ptr<dfgNode>, int>& rv, // return path group
+void SDFG::dfgNode::self_path_update_cb(map<shared_ptr<dfgNode>, int>& rv, // return path group
 				     shared_ptr<dfgPath>& cp, // current path
 				     map<shared_ptr<dfgNode>, map<shared_ptr<dfgNode>, int > >& rmap,
 				     unsigned int level) {
@@ -513,11 +513,11 @@ void SDFG::dfgNode::self_path_update(map<shared_ptr<dfgNode>, int>& rv, // retur
       shared_ptr<dfgPath> p(new dfgPath(*cp));
       p->push_back(pn, t.second);
       if(pn->pg->exist(pn, t.first))
-        t.first->self_path_update(rv, p, rmap, level);
+        t.first->self_path_update_cb(rv, p, rmap, level);
       else if(pn->type & SDFG_PORT)
-        t.first->self_path_update(rv, p, rmap, level-1);
+        t.first->self_path_update_cb(rv, p, rmap, level-1);
       else
-        t.first->self_path_update(rv, p, rmap, level+1);
+        t.first->self_path_update_cb(rv, p, rmap, level+1);
 
       // update rmap
       BOOST_FOREACH(rmap_data_type& m, rmap[t.first]) {
@@ -551,28 +551,30 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_datapath() const {
   // iterate all nodes for data nodes
   std::set<shared_ptr<dfgNode> > data_nodes; 
   typedef pair<const vertex_descriptor, shared_ptr<dfgNode> > node_record_type;
-  BOOST_FOREACH(node_record_type n, nodes) {
-    if(n.second->type & (dfgNode::SDFG_COMB|dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_GATE)) {
-      bool keep = false;
-      BOOST_FOREACH(shared_ptr<dfgEdge> e, get_in_edges(n.second)) {
+  BOOST_FOREACH(shared_ptr<dfgNode> n, 
+                get_list_of_nodes(dfgNode::SDFG_COMB|dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_GATE)) {
+    bool keep = false;
+    BOOST_FOREACH(shared_ptr<dfgEdge> e, get_in_edges(n)) {
+      if(e->type & dfgEdge::SDFG_DP) {
+        keep = true;
+        break;
+      }
+    }
+    if(!keep) {
+      BOOST_FOREACH(shared_ptr<dfgEdge> e, get_out_edges(n)) {
         if(e->type & dfgEdge::SDFG_DP) {
           keep = true;
           break;
         }
       }
-      if(!keep) {
-        BOOST_FOREACH(shared_ptr<dfgEdge> e, get_out_edges(n.second)) {
-          if(e->type & dfgEdge::SDFG_DP) {
-            keep = true;
-            break;
-          }
-        }
-      }
-      if(keep)
-        data_nodes.insert(n.second);
-    } else if(n.second->type & (dfgNode::SDFG_MODULE|dfgNode::SDFG_PORT))
-      data_nodes.insert(n.second);
-  }
+    }
+    if(keep)
+      data_nodes.insert(n);
+  } 
+
+  // also add module and ports to the graph
+  list<shared_ptr<dfgNode> > m_list = get_list_of_nodes(dfgNode::SDFG_MODULE|dfgNode::SDFG_PORT);
+  data_nodes.insert(m_list.begin(), m_list.end());
 
   // get all related nodes
   std::set<shared_ptr<dfgNode> > related_nodes;
@@ -622,12 +624,11 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_datapath() const {
   return ng;
 }
 
-
-shared_ptr<dfgGraph> SDFG::dfgGraph::get_RRG() const {
+shared_ptr<dfgGraph> SDFG::dfgGraph::get_hier_RRG() const {
 
   // new register graph
   shared_ptr<dfgGraph> ng(new dfgGraph(name));
-
+  
   // node to visit
   list<shared_ptr<dfgNode> > nlist;
 
@@ -642,10 +643,29 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_RRG() const {
     }
   }
 
+
+  return ng;
+
+}
+
+shared_ptr<dfgGraph> SDFG::dfgGraph::get_RRG() const {
+
+  // new register graph
+  shared_ptr<dfgGraph> ng(new dfgGraph(name));
+
+  // node to visit
+  list<shared_ptr<dfgNode> > nlist = get_list_of_nodes(dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_PORT);
+
+  BOOST_FOREACH(shared_ptr<dfgNode> nr, nlist) {
+    shared_ptr<dfgNode> nnode(nr->copy());
+    nnode->set_hier_name(nr->get_full_name());
+    ng->add_node(nnode);
+  }
+  
   while(!nlist.empty()) {
     shared_ptr<dfgNode> cn = nlist.front();
     nlist.pop_front();
-    list<shared_ptr<dfgPath> > po = cn->get_out_paths_fast();
+    list<shared_ptr<dfgPath> > po = cn->get_out_paths_fast_cb();
     BOOST_FOREACH(shared_ptr<dfgPath>p, po) {
       if(!ng->exist(p->tar->get_full_name())) { // add the new node to the RRG
         shared_ptr<dfgNode> nnode(p->tar->copy());
@@ -689,7 +709,7 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::build_reg_graph(const std::set<shared_ptr<d
   
   // connect the nodes
   BOOST_FOREACH(shared_ptr<dfgNode> nd, rlist) {
-    list<shared_ptr<dfgPath> > plist = nd->get_out_paths_fast();
+    list<shared_ptr<dfgPath> > plist = nd->get_out_paths_fast_cb();
     BOOST_FOREACH(shared_ptr<dfgPath> p, plist) {
       if(p->tar != nd && node_translate_map.count(p->tar))
         ng->add_edge(nd->get_full_name(), dfgEdge::SDFG_CTL, node_translate_map[nd], node_translate_map[p->tar]);
@@ -700,11 +720,12 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::build_reg_graph(const std::set<shared_ptr<d
 
 std::set<shared_ptr<dfgNode> > SDFG::dfgGraph::get_fsm_groups(bool verbose, shared_ptr<dfgGraph> RRG) const {
   // find all registers who has self-loops
-  list<shared_ptr<dfgNode> > nlist;
+  list<shared_ptr<dfgNode> > nlist = get_list_of_nodes(dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_MODULE);
+  unsigned int noden = nlist.size();   // number of nodes
   std::set<shared_ptr<dfgNode> > pfsm; // potential FSMs
-  unsigned int noden = 0;              // total number of nodes 
   unsigned int regn = 0;               // total number of registers
   unsigned int pfsmn = 0;              // total number of potential FSMs
+  
   typedef pair<const vertex_descriptor, shared_ptr<dfgNode> > node_record_type;
   BOOST_FOREACH(node_record_type nr, nodes) {
     noden++;
@@ -719,7 +740,7 @@ std::set<shared_ptr<dfgNode> > SDFG::dfgGraph::get_fsm_groups(bool verbose, shar
     //if(verbose) std::cout << "analyse the paths of " << cn->get_hier_name() << std::endl;
     if(cn->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH)) { // register
       regn++;
-      list<shared_ptr<dfgPath> > pathlist = cn->get_self_path();
+      list<shared_ptr<dfgPath> > pathlist = cn->get_self_path_cb();
       BOOST_FOREACH(shared_ptr<dfgPath> p, pathlist) {
         if(p->type & (dfgEdge::SDFG_CTL|dfgEdge::SDFG_DP)) {
           pfsm.insert(cn);
@@ -730,11 +751,10 @@ std::set<shared_ptr<dfgNode> > SDFG::dfgGraph::get_fsm_groups(bool verbose, shar
     } else {
       // must be module
       if(cn->child) {
-        BOOST_FOREACH(node_record_type nr, cn->child->nodes) {
-          noden++;
-          if(nr.second->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_MODULE))
-            nlist.push_back(nr.second);
-        }
+        list<shared_ptr<dfgNode> > m_list = 
+          get_list_of_nodes(dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_MODULE, *(cn->child));
+        noden += m_list.size();
+        nlist.splice(nlist.end(), m_list);
       }
     }
   }
@@ -839,5 +859,17 @@ shared_ptr<dfgNode> SDFG::dfgGraph::fsm_simplify_node(shared_ptr<dfgNode> n) {  
   return shared_ptr<dfgNode>();
 }
       
-             
+list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_list_of_nodes(unsigned int types) const {
+  list<shared_ptr<dfgNode> > nlist;
+  typedef pair<const vertex_descriptor, shared_ptr<dfgNode> > node_record_type;
+  BOOST_FOREACH(node_record_type nr, nodes) {
+    if(nr.second->type & types) nlist.push_back(nr.second);
+  }
+  return nlist;
+}
+
+list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_list_of_nodes(unsigned int types, const dfgGraph& G) const {
+  return G.get_list_of_nodes(types);
+}
+
        
