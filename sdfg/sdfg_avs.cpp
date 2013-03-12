@@ -630,19 +630,55 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_hier_RRG() const {
   shared_ptr<dfgGraph> ng(new dfgGraph(name));
   
   // node to visit
-  list<shared_ptr<dfgNode> > nlist;
+  list<shared_ptr<dfgNode> > nlist = 
+    get_list_of_nodes(dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_PORT);
+  list<shared_ptr<dfgNode> > mlist = 
+    get_list_of_nodes(dfgNode::SDFG_MODULE);
 
-  typedef pair<const vertex_descriptor, shared_ptr<dfgNode> > node_record_type;
-  BOOST_FOREACH(node_record_type nr, nodes) {
-    if(nr.second->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_PORT)) {
-      nlist.push_back(nr.second);
-      // add the node to the new RRG
-      shared_ptr<dfgNode> nnode(nr.second->copy());
-      nnode->set_hier_name(nr.second->get_full_name());
-      ng->add_node(nnode);
+  // add node to the new graph
+  BOOST_FOREACH(shared_ptr<dfgNode> nr, nlist)
+    copy_a_node(ng, nr);
+
+  // add modules
+  BOOST_FOREACH(shared_ptr<dfgNode> nr, mlist) {
+    shared_ptr<dfgNode> nnode = copy_a_node(ng, nr)
+    nndoe->child = nr->child->get_hier_RRG();
+    BOOST_FOREACH(shared_ptr<dfgNode> m, get_in_nodes(nr)) {
+      if(!ng->exist(m->get_full_name())) {
+        copy_a_node()
+      }
     }
   }
-
+  
+  
+  
+  while(!nlist.empty()) {
+    if(cn->type != dfgNode::SDFG_OPORT){ // IPORT, FF and Latch
+      BOOST_FOREACH(shared_ptr<dfgPath> po, cn->get_out_paths_fast()) {
+        if(!ng->exist(p->tar->get_full_name())) { // node not existed yet, add it
+          shared_ptr<dfgNode> mNode = p->tar;     // the path ending node
+          shared_ptr<dfgNode> nnode(mNode->copy());
+          nnode->set_hier_name(mNode->get_full_name());
+          ng->add_node(nnode);
+          list<shared_ptr<dfgNode> > tars = get_out_nodes(mNode); // check it is connected to a module
+          assert(tars.size() == 1 && 
+                 tars.front()->type & dfgNode::SDFG_MODULE && 
+                 ng->exist(tars.front()->get_full_name()));
+          // add an arc
+          ng->add_edge(nnode->get_full_name(), dfgEdge::SDFG_DF, nnode, tars.front());
+        }
+        
+        // add arcs
+        if(p->type & dfgEdge::SDFG_DP)
+          ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_DP, cn->get_full_name(), p->tar->get_full_name());
+        else if(p->type & dfgEdge::SDFG_DDP)
+          ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_DDP, cn->get_full_name(), p->tar->get_full_name());
+        
+        if(p->type & dfgEdge::SDFG_CTL)
+          ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_CTL, cn->get_full_name(), p->tar->get_full_name());
+      }
+    }  
+  }
 
   return ng;
 
@@ -872,4 +908,9 @@ list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_list_of_nodes(unsigned int types,
   return G.get_list_of_nodes(types);
 }
 
-       
+shared_ptr<dfgNode> SDFG::dfgGraph::copy_a_node(shared_ptr<dfgGraph> G, shared_ptr<dfgNode> cn) const {
+  shared_ptr<dfgNode> nnode(cn->copy());
+  nnode->set_hier_name(cn->get_full_name());
+  G->add_node(nnode);
+  return nnode;
+}

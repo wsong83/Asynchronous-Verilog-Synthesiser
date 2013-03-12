@@ -367,6 +367,7 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     boost::shared_ptr<dfgNode> fsm_simplify_node(boost::shared_ptr<dfgNode>);  // simply the connection for a single FSM register
     std::list<boost::shared_ptr<dfgNode> > get_list_of_nodes(unsigned int) const; // get a list of nodes of certain types
     std::list<boost::shared_ptr<dfgNode> > get_list_of_nodes(unsigned int, const dfgGraph&) const; // get a list of nodes of certain types
+    boost::shared_ptr<dfgNode> copy_a_node(shared_ptr<dfgGraph>, shared_ptr<dfgNode>) const; // copy a node from this graph to a new graph and return the pointer of the new node
 
   };
 
