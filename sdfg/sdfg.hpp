@@ -114,6 +114,8 @@ namespace SDFG {
     std::list<boost::shared_ptr<dfgPath> >& get_in_paths_cb(); // return all input paths to this register/port
     // return all output paths from this register/port, faster algorithm
     std::list<boost::shared_ptr<dfgPath> > get_out_paths_fast_cb(); 
+    // return all output paths inside this module
+    std::list<boost::shared_ptr<dfgPath> > get_out_path_fast();
     // return all input paths to this register/port, fast algorithm
     std::list<boost::shared_ptr<dfgPath> > get_in_paths_fast_cb(); 
     // return all self control paths that inside this module
@@ -367,7 +369,7 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     boost::shared_ptr<dfgNode> fsm_simplify_node(boost::shared_ptr<dfgNode>);  // simply the connection for a single FSM register
     std::list<boost::shared_ptr<dfgNode> > get_list_of_nodes(unsigned int) const; // get a list of nodes of certain types
     std::list<boost::shared_ptr<dfgNode> > get_list_of_nodes(unsigned int, const dfgGraph&) const; // get a list of nodes of certain types
-    boost::shared_ptr<dfgNode> copy_a_node(shared_ptr<dfgGraph>, shared_ptr<dfgNode>) const; // copy a node from this graph to a new graph and return the pointer of the new node
+    boost::shared_ptr<dfgNode> copy_a_node(boost::shared_ptr<dfgGraph>, boost::shared_ptr<dfgNode>) const; // copy a node from this graph to a new graph and return the pointer of the new node
 
   };
 

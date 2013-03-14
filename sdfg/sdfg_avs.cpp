@@ -641,41 +641,35 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_hier_RRG() const {
 
   // add modules
   BOOST_FOREACH(shared_ptr<dfgNode> nr, mlist) {
-    shared_ptr<dfgNode> nnode = copy_a_node(ng, nr)
-    nndoe->child = nr->child->get_hier_RRG();
+    shared_ptr<dfgNode> nnode = copy_a_node(ng, nr);
+    nnode->child = nr->child->get_hier_RRG();
     BOOST_FOREACH(shared_ptr<dfgNode> m, get_in_nodes(nr)) {
-      if(!ng->exist(m->get_full_name())) {
-        copy_a_node()
-      }
+      if(!ng->exist(m->get_full_name()))
+        copy_a_node(ng, m);
+      ng->add_edge(m->get_full_name(), dfgEdge::SDFG_DF, m->get_full_name(), nr->get_full_name());
     }
+    BOOST_FOREACH(shared_ptr<dfgNode> m, get_out_nodes(nr)) {
+      if(!ng->exist(m->get_full_name())) {
+        copy_a_node(ng, m);
+        nlist.push_back(m);
+      }
+      ng->add_edge(nr->get_full_name(), dfgEdge::SDFG_DF, nr->get_full_name(), m->get_full_name());
+    }    
   }
-  
-  
-  
+
   while(!nlist.empty()) {
+    shared_ptr<dfgNode> cn = nlist.front();
+    nlist.pop_front();
     if(cn->type != dfgNode::SDFG_OPORT){ // IPORT, FF and Latch
       BOOST_FOREACH(shared_ptr<dfgPath> po, cn->get_out_paths_fast()) {
-        if(!ng->exist(p->tar->get_full_name())) { // node not existed yet, add it
-          shared_ptr<dfgNode> mNode = p->tar;     // the path ending node
-          shared_ptr<dfgNode> nnode(mNode->copy());
-          nnode->set_hier_name(mNode->get_full_name());
-          ng->add_node(nnode);
-          list<shared_ptr<dfgNode> > tars = get_out_nodes(mNode); // check it is connected to a module
-          assert(tars.size() == 1 && 
-                 tars.front()->type & dfgNode::SDFG_MODULE && 
-                 ng->exist(tars.front()->get_full_name()));
-          // add an arc
-          ng->add_edge(nnode->get_full_name(), dfgEdge::SDFG_DF, nnode, tars.front());
-        }
-        
         // add arcs
-        if(p->type & dfgEdge::SDFG_DP)
-          ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_DP, cn->get_full_name(), p->tar->get_full_name());
-        else if(p->type & dfgEdge::SDFG_DDP)
-          ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_DDP, cn->get_full_name(), p->tar->get_full_name());
+        if(po->type & dfgEdge::SDFG_DP)
+          ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_DP, cn->get_full_name(), po->tar->get_full_name());
+        else if(po->type & dfgEdge::SDFG_DDP)
+          ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_DDP, cn->get_full_name(), po->tar->get_full_name());
         
-        if(p->type & dfgEdge::SDFG_CTL)
-          ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_CTL, cn->get_full_name(), p->tar->get_full_name());
+        if(po->type & dfgEdge::SDFG_CTL)
+          ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_CTL, cn->get_full_name(), po->tar->get_full_name());
       }
     }  
   }
@@ -692,11 +686,8 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_RRG() const {
   // node to visit
   list<shared_ptr<dfgNode> > nlist = get_list_of_nodes(dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_PORT);
 
-  BOOST_FOREACH(shared_ptr<dfgNode> nr, nlist) {
-    shared_ptr<dfgNode> nnode(nr->copy());
-    nnode->set_hier_name(nr->get_full_name());
-    ng->add_node(nnode);
-  }
+  BOOST_FOREACH(shared_ptr<dfgNode> nr, nlist) 
+    copy_a_node(ng, nr);
   
   while(!nlist.empty()) {
     shared_ptr<dfgNode> cn = nlist.front();
@@ -704,9 +695,7 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_RRG() const {
     list<shared_ptr<dfgPath> > po = cn->get_out_paths_fast_cb();
     BOOST_FOREACH(shared_ptr<dfgPath>p, po) {
       if(!ng->exist(p->tar->get_full_name())) { // add the new node to the RRG
-        shared_ptr<dfgNode> nnode(p->tar->copy());
-        nnode->set_hier_name(p->tar->get_full_name());
-        ng->add_node(nnode);
+        copy_a_node(ng, p->tar);
         nlist.push_back(p->tar);
       }
 
@@ -736,12 +725,8 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::build_reg_graph(const std::set<shared_ptr<d
   map<shared_ptr<dfgNode>, shared_ptr<dfgNode> > node_translate_map;
 
   // add all nodes to the graph
-  BOOST_FOREACH(shared_ptr<dfgNode> nd, rlist) {
-    shared_ptr<dfgNode> nnode(nd->copy());
-    nnode->set_hier_name(nd->get_full_name());
-    ng->add_node(nnode);
-    node_translate_map[nd] = nnode;
-  }
+  BOOST_FOREACH(shared_ptr<dfgNode> nd, rlist)
+    node_translate_map[nd] = copy_a_node(ng, nd);
   
   // connect the nodes
   BOOST_FOREACH(shared_ptr<dfgNode> nd, rlist) {
