@@ -20,8 +20,8 @@
  */
 
 /* 
- * extract the SDFG of a module
- * 25/06/2012   Wei Song
+ * extract the SDFG of a modulethe data paths from an SDFG
+ * 11/03/2013   Wei Song
  *
  *
  */
@@ -114,22 +114,22 @@ namespace {
   };
 }
 
-const std::string shell::CMD::CMDExtractSDFG::name = "extract_sdfg"; 
-const std::string shell::CMD::CMDExtractSDFG::description = 
-  "extract the SDFG of a module.";
+const std::string shell::CMD::CMDExtractDatapath::name = "extract_datapath"; 
+const std::string shell::CMD::CMDExtractDatapath::description = 
+  "extract the datapaths from an SDFG.";
 
-void shell::CMD::CMDExtractSDFG::help(Env& gEnv) {
+void shell::CMD::CMDExtractDatapath::help(Env& gEnv) {
   gEnv.stdOs << name << ": " << description << endl;
-  gEnv.stdOs << "    extract_sdfg [options] [design_name]" << endl;
+  gEnv.stdOs << "    extract_datapath [options] [design_name]" << endl;
   gEnv.stdOs << "    design_name         the design to be extracted (default the current design)" << endl;
   gEnv.stdOs << "Options:" << endl;
   gEnv.stdOs << "   -help                show this help information." << endl;
-  gEnv.stdOs << "   -quiet               suppress the uniquifying information." << endl;
+  gEnv.stdOs << "   -quiet               suppress the optimization information." << endl;
   gEnv.stdOs << "   -output file_name    specify the output file name." << endl;
-  gEnv.stdOs << "                        (in default is \"design_name.sdfg\")" << endl;
+  gEnv.stdOs << "                        (in default is \"design_name.datapath\")" << endl;
 }
 
-void shell::CMD::CMDExtractSDFG::exec ( const std::string& str, Env * pEnv){
+void shell::CMD::CMDExtractDatapath::exec ( const std::string& str, Env * pEnv){
 
   using std::string;
 
@@ -142,8 +142,8 @@ void shell::CMD::CMDExtractSDFG::exec ( const std::string& str, Env * pEnv){
   bool r = qi::parse(it, end, parser, arg);
 
   if(!r || it != end) {
-    gEnv.stdOs << "Error: Wrong command syntax error! See usage by extract_sdfg -help." << endl;
-    gEnv.stdOs << "    extract_sdfg [options] [design_name]" << endl;
+    gEnv.stdOs << "Error: Wrong command syntax error! See usage by extract_datapath -help." << endl;
+    gEnv.stdOs << "    extract_datapath [options] [design_name]" << endl;
     return;
   }
 
@@ -168,25 +168,18 @@ void shell::CMD::CMDExtractSDFG::exec ( const std::string& str, Env * pEnv){
 
   // specify the output file name
   string outputFileName;
-  if(arg.sOutput.empty()) outputFileName = designName + ".sdfg";
+  if(arg.sOutput.empty()) outputFileName = designName + ".datapath";
   else outputFileName = arg.sOutput;
 
   // open the file
   ofstream fhandler;
   fhandler.open(system_complete(outputFileName), std::ios_base::out|std::ios_base::trunc);
 
-  // extract SDFG
-  // make sure it is uniquified
-  if(!arg.bQuiet) {
-    gEnv.error("SDFG-EXTRACT-0");
-    CMDUniquify::exec("", pEnv);
-  } else {
-    CMDUniquify::exec("-quiet", pEnv);
-  }
-  
-  if(!tarDesign->DFG)
-    tarDesign->DFG = tarDesign->extract_sdfg(arg.bQuiet);
+  // make sure DFG is ready
+  if(!tarDesign->DFG) tarDesign->DFG = tarDesign->extract_sdfg(true);
 
-  tarDesign->DFG->write(fhandler);
+  tarDesign->DFG->get_datapath()->write(fhandler);
+
   fhandler.close();
+  gEnv.stdOs << "write the datapaths to " << outputFileName << endl;
 }

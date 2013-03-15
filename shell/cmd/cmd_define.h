@@ -53,6 +53,7 @@ namespace shell {
     NEW_TCL_CMD(std::string, CMDEcho);
     NEW_TCL_CMD(bool, CMDElaborate);
     NEW_TCL_CMD(void, CMDExit);
+    NEW_TCL_CMD(void, CMDExtractDatapath);
     NEW_TCL_CMD(void, CMDExtractRRG);
     NEW_TCL_CMD(void, CMDExtractSDFG);
     NEW_TCL_CMD(bool, CMDReportDFGPath);

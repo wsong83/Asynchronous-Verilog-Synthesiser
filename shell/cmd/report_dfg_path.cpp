@@ -231,7 +231,7 @@ bool shell::CMD::CMDReportDFGPath::exec ( const std::string& str, Env * pEnv){
 
   if(!sources.empty()) {
     BOOST_FOREACH(shared_ptr<SDFG::dfgNode> s, sources) {
-      list<shared_ptr<SDFG::dfgPath> > mp = arg.bFast ? s->get_out_paths_fast() : s->get_out_paths();
+      list<shared_ptr<SDFG::dfgPath> > mp = arg.bFast ? s->get_out_paths_fast_cb() : s->get_out_paths_cb();
       BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, mp) {
         if(targets.empty() || targets.count(p->tar)) {
            if(plist.size() < (arg.nMax < 0 ? 10 : arg.nMax))
@@ -244,7 +244,7 @@ bool shell::CMD::CMDReportDFGPath::exec ( const std::string& str, Env * pEnv){
     }
   } else {
     BOOST_FOREACH(shared_ptr<SDFG::dfgNode> t, targets) {
-      list<shared_ptr<SDFG::dfgPath> > mp = arg.bFast ? t->get_in_paths_fast() : t->get_in_paths();
+      list<shared_ptr<SDFG::dfgPath> > mp = arg.bFast ? t->get_in_paths_fast_cb() : t->get_in_paths_cb();
       BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, mp) {
         if(sources.empty() || sources.count(p->tar)) {
            if(plist.size() < (arg.nMax < 0 ? 10 : arg.nMax))
