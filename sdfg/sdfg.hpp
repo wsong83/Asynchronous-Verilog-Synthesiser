@@ -115,7 +115,7 @@ namespace SDFG {
     // return all output paths from this register/port, faster algorithm
     std::list<boost::shared_ptr<dfgPath> > get_out_paths_fast_cb(); 
     // return all output paths inside this module
-    std::list<boost::shared_ptr<dfgPath> > get_out_path_fast();
+    std::list<boost::shared_ptr<dfgPath> > get_out_paths_fast();
     // return all input paths to this register/port, fast algorithm
     std::list<boost::shared_ptr<dfgPath> > get_in_paths_fast_cb(); 
     // return all self control paths that inside this module
@@ -130,12 +130,16 @@ namespace SDFG {
                                  boost::shared_ptr<dfgPath>&,
                                  std::map<boost::shared_ptr<dfgNode>, 
                                           std::map<boost::shared_ptr<dfgNode>, int> >&,
-                                 std::set<boost::shared_ptr<dfgNode> >&); // helper for get_out_paths()
+      std::set<boost::shared_ptr<dfgNode> >&); // helper for get_out_paths()
 
     void in_path_type_update_cb(std::list<boost::shared_ptr<dfgPath> >&,
                                 boost::shared_ptr<dfgPath>&,
                                 std::map<boost::shared_ptr<dfgNode>, std::map<boost::shared_ptr<dfgNode>, int> >&,
                                 std::set<boost::shared_ptr<dfgNode> >&); // helper for get_in_paths()
+    void out_path_type_update_fast(std::map<boost::shared_ptr<dfgNode>, int>&,
+                                   boost::shared_ptr<dfgPath>&,
+                                   std::map<boost::shared_ptr<dfgNode>, 
+                                            std::map<boost::shared_ptr<dfgNode>, int> >&);
     void out_path_type_update_fast_cb(std::map<boost::shared_ptr<dfgNode>, int>&,
                                       boost::shared_ptr<dfgPath>&,
                                       std::map<boost::shared_ptr<dfgNode>, 
