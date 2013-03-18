@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -28,6 +28,10 @@
 
 #ifndef AV_H_VA_REGISTER_
 #define AV_H_VA_REGISTER_
+
+namespace SDFG {
+  class dfgNode;
+}
 
 namespace netlist {
   
@@ -76,6 +80,7 @@ namespace netlist {
     std::map<unsigned int, VIdentifier *> fan[2]; /* fan[0] for fanin, fan[1] for fanout */
     unsigned int get_id();
     boost::shared_ptr<Expression> exp;
+    boost::shared_ptr<SDFG::dfgNode> pDFGNode; // the corresponding node in the DFG
 
   private:
 

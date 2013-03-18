@@ -108,6 +108,7 @@ void netlist::Assign::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
     BOOST_FOREACH(const string& s, dsig) {
       G->add_edge(s, SDFG::dfgEdge::SDFG_DP, s, t.first);
     }
+    G->get_node(t.first)->ptr.insert(get_sp());
   }  
 }
 

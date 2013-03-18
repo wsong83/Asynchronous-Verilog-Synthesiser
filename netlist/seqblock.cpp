@@ -276,6 +276,7 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
       //std::cout << s << " ";
     }
     //std::cout << std::endl;
+    G->get_node(t.first)->ptr.insert(get_sp());
   }
 
 
