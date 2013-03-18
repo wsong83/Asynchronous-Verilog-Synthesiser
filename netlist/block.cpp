@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -75,32 +75,32 @@ bool netlist::Block::add(const shared_ptr<NetComp>& dd) {
   return true;
 }
 
-bool netlist::Block::add_case(const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, const shared_ptr<CaseItem>& ditem, bool m_casex) {
+bool netlist::Block::add_case(const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, const shared_ptr<CaseItem>& ditem, CaseState::case_type_t m_casex) {
   statements.push_back(shared_ptr<CaseState>( new CaseState(exp, citems, ditem, m_casex)));
   return true;
 }
 
-bool netlist::Block::add_case(const location& lloc, const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, const shared_ptr<CaseItem>& ditem, bool m_casex) {
+bool netlist::Block::add_case(const location& lloc, const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, const shared_ptr<CaseItem>& ditem, CaseState::case_type_t m_casex) {
   statements.push_back(shared_ptr<CaseState>( new CaseState(lloc, exp, citems, ditem, m_casex)));
   return true;
 }
 
-bool netlist::Block::add_case(const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, bool m_casex) {
+bool netlist::Block::add_case(const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, CaseState::case_type_t m_casex) {
   statements.push_back(shared_ptr<CaseState>( new CaseState(exp, citems, m_casex)));
   return true;
 }
 
-bool netlist::Block::add_case(const location& lloc, const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, bool m_casex) {
+bool netlist::Block::add_case(const location& lloc, const shared_ptr<Expression>& exp, const list<shared_ptr<CaseItem> >& citems, CaseState::case_type_t m_casex) {
   statements.push_back(shared_ptr<CaseState>( new CaseState(lloc, exp, citems, m_casex)));
   return true;
 }
 
-bool netlist::Block::add_case(const shared_ptr<Expression>& exp, const shared_ptr<CaseItem>& ditem, bool m_casex) {
+bool netlist::Block::add_case(const shared_ptr<Expression>& exp, const shared_ptr<CaseItem>& ditem, CaseState::case_type_t m_casex) {
   statements.push_back(shared_ptr<CaseState>( new CaseState(exp, ditem, m_casex)));
   return true;
 }
 
-bool netlist::Block::add_case(const location& lloc, const shared_ptr<Expression>& exp, const shared_ptr<CaseItem>& ditem, bool m_casex) {
+bool netlist::Block::add_case(const location& lloc, const shared_ptr<Expression>& exp, const shared_ptr<CaseItem>& ditem, CaseState::case_type_t m_casex) {
   statements.push_back(shared_ptr<CaseState>( new CaseState(lloc, exp, ditem, m_casex)));
   return true;
 }
@@ -265,7 +265,7 @@ void netlist::Block::elab_inparse() {
         G_ENV->error(m->loc, "SYN-VAR-1", m->name.name, toString(find_var(m->name)->loc));
       } else {
         // check initial value
-        if((m->vtype != Variable::TParam) && m->exp) {
+        if(m->vtype != Variable::TParam && m->vtype != Variable::TLParam && m->exp) {
           G_ENV->error(m->loc, "SYN-VAR-4", m->name.name);
           m->exp.reset();
         }
@@ -298,6 +298,17 @@ void netlist::Block::elab_inparse() {
         }
       }
       db_instance.insert(m->name, m);
+      to_del.insert(st);
+      break;
+    }
+    case tFunction: {
+      SP_CAST(m, Function, st);
+      if(db_func.count(m->fname)) {
+        G_ENV->error(m->loc, "SYN-FUNC-0", m->fname.name, toString(db_func.find(m->fname)->loc));
+      } else {
+        m->elab_inparse();
+        db_func.insert(m->fname, m);
+      }
       to_del.insert(st);
       break;
     }

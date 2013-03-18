@@ -20,8 +20,8 @@
  */
 
 /* 
- * report the FSMs found in a design
- * 17/10/2012   Wei Song
+ * extract the register relation graph from a DFG
+ * 09/10/2012   Wei Song
  *
  *
  */
@@ -55,15 +55,15 @@ namespace {
 
   struct Argument {
     bool bHelp;                 // show help information
-    bool bFast;                 // use the fast algorithm
-    bool bVerbose;              // show extra information
-    std::string sDesign;        // target design
+    //bool bQuiet;                // suppress information
+    std::string sDesign;        // target design to be written out
+    std::string sOutput;        // output file name
     
     Argument() : 
       bHelp(false),
-      bFast(false),
-      bVerbose(false),
-      sDesign("") {}
+      //bQuiet(false),
+      sDesign(""),
+      sOutput("") {}
   };
 }
 
@@ -71,9 +71,8 @@ BOOST_FUSION_ADAPT_STRUCT
 (
  Argument,
  (bool, bHelp)
- (bool, bFast)
- (bool, bVerbose)
  (std::string, sDesign)
+ (std::string, sOutput)
  )
 
 namespace {
@@ -91,39 +90,44 @@ namespace {
       using namespace qi::labels;
 
       args = lit('-') >> 
-        ( (lit("help")    >> blanks)                        [at_c<0>(_r1) = true] ||
-          (lit("fast")    >> blanks)                        [at_c<1>(_r1) = true] ||
-          (lit("verbose") >> blanks)                        [at_c<2>(_r1) = true] ||
-          (lit("design") >> blanks >> identifier >> blanks) [at_c<3>(_r1) = _1]
+        ( (lit("help")              >> blanks) [at_c<0>(_r1) = true]  ||
+          //(lit("quiet")             >> blanks) [at_c<3>(_r1) = true]  ||
+          (lit("output") >> blanks >> filename >> blanks) [at_c<2>(_r1) = _1]
           );
       
-      start = *(args(_val));
-
+      start = 
+        *(args(_val))
+        >> -(identifier >> blanks) [at_c<1>(_val) = _1] 
+        >> *(args(_val))
+        ;
 
 #ifdef BOOST_SPIRIT_QI_DEBUG
       BOOST_SPIRIT_DEBUG_NODE(args);
       BOOST_SPIRIT_DEBUG_NODE(start);
+      BOOST_SPIRIT_DEBUG_NODE(text);
+      BOOST_SPIRIT_DEBUG_NODE(blanks);
       BOOST_SPIRIT_DEBUG_NODE(identifier);
+      BOOST_SPIRIT_DEBUG_NODE(filename);
 #endif
     }
   };
 }
 
-const std::string shell::CMD::CMDReportFSM::name = "report_fsm"; 
-const std::string shell::CMD::CMDReportFSM::description = 
-  "report the FSMs in a design.";
+const std::string shell::CMD::CMDExtractRRG::name = "extract_rrg"; 
+const std::string shell::CMD::CMDExtractRRG::description = 
+  "extract a register relation graph (RRG) from the SDFG of a module.";
 
-void shell::CMD::CMDReportFSM::help(Env& gEnv) {
+void shell::CMD::CMDExtractRRG::help(Env& gEnv) {
   gEnv.stdOs << name << ": " << description << endl;
-  gEnv.stdOs << "    report_fsm [options]" << endl;
+  gEnv.stdOs << "    extract_rrg [options] [design_name]" << endl;
+  gEnv.stdOs << "    design_name         the design to be extracted (default the current design)" << endl;
   gEnv.stdOs << "Options:" << endl;
   gEnv.stdOs << "   -help                show this help information." << endl;
-  gEnv.stdOs << "   -fast                use the fast algorithm." << endl;
-  gEnv.stdOs << "   -verbose             show extra information." << endl;
-  gEnv.stdOs << "   -design ID           design name if not the current design." << endl;
+  gEnv.stdOs << "   -output file_name    specify the output file name." << endl;
+  gEnv.stdOs << "                        (in default is \"design_name.sdfg\")" << endl;
 }
 
-bool shell::CMD::CMDReportFSM::exec ( const std::string& str, Env * pEnv){
+void shell::CMD::CMDExtractRRG::exec ( const std::string& str, Env * pEnv){
 
   using std::string;
 
@@ -136,17 +140,17 @@ bool shell::CMD::CMDReportFSM::exec ( const std::string& str, Env * pEnv){
   bool r = qi::parse(it, end, parser, arg);
 
   if(!r || it != end) {
-    gEnv.stdOs << "Error: Wrong command syntax error! See usage by report_fsm -help." << endl;
-    gEnv.stdOs << "    report_fsm [options]" << endl;
-    return false;
+    gEnv.stdOs << "Error: Wrong command syntax error! See usage by extract_sdfg -help." << endl;
+    gEnv.stdOs << "    extract_sdfg [options] [design_name]" << endl;
+    return;
   }
 
   if(arg.bHelp) {        // print help information
     help(gEnv);
-    return true;
+    return;
   }
 
-  // find the target design
+  // settle the design to be extracted
   string designName;
   shared_ptr<netlist::Module> tarDesign;
   if(arg.sDesign.empty()) {
@@ -157,50 +161,28 @@ bool shell::CMD::CMDReportFSM::exec ( const std::string& str, Env * pEnv){
   tarDesign = gEnv.find_module(designName);
   if(tarDesign.use_count() == 0) {
     gEnv.stdOs << "Error: Failed to find the target design \"" << designName << "\"." << endl;
-    return false;
+    return;
   }
-
-  // make sure DFG and RRG are ready
-  if(!tarDesign->DFG) tarDesign->DFG = tarDesign->extract_sdfg(true);
-  if(!tarDesign->RRG) tarDesign->RRG = tarDesign->DFG->get_RRG();
-  
-  // do the FSM extraction
-  std::set<shared_ptr<SDFG::dfgNode> > fsms = 
-    tarDesign->DFG->get_fsm_groups(arg.bVerbose, tarDesign->RRG);
-
-  // reorder the set using names rather than pointers
-  std::set<string> fsm_str;
-  BOOST_FOREACH(shared_ptr<SDFG::dfgNode> pfsm, fsms)
-    fsm_str.insert(pfsm->get_full_name());
-
-  unsigned int index = 0;
-  BOOST_FOREACH(const string& fsm_name, fsm_str) {
-    gEnv.stdOs << "[" << ++index << "]  ";
-    gEnv.stdOs <<  fsm_name << " ";
-    gEnv.stdOs << endl;
+  if(!tarDesign->DFG) {
+    gEnv.stdOs << "Error: No DFG has been extracted for the target design \"" << designName << "\"." << endl;
+    return;
   }
-
-  // build the fsm connection graph
-  shared_ptr<SDFG::dfgGraph> fsm_graph = tarDesign->RRG->build_reg_graph(fsms);
 
   // specify the output file name
-  string outputFileName = designName + ".fsm";
+  string outputFileName;
+  if(arg.sOutput.empty()) outputFileName = designName + ".rrg";
+  else outputFileName = arg.sOutput;
 
   // open the file
   ofstream fhandler;
   fhandler.open(system_complete(outputFileName), std::ios_base::out|std::ios_base::trunc);
 
-  fsm_graph->write(fhandler);
+  // extract the register graph
+  // make sure there is a DFG attached to the module
+  if(!tarDesign->RRG)
+    tarDesign->RRG = tarDesign->DFG->get_RRG();
+
+  tarDesign->RRG->write(fhandler);
+  gEnv.stdOs << "write the register relation graph to " << outputFileName << endl;
   fhandler.close();
-  
-  gEnv.stdOs << "write the FSM connection graph to " << outputFileName << endl;
-  
-  //outputFileName = designName + ".fsm.sim";
-  //fhandler.open(system_complete(outputFileName), std::ios_base::out|std::ios_base::trunc);
-  //fsm_graph->fsm_simplify();
-  //fsm_graph->write(fhandler);
-  //fhandler.close();
-  //gEnv.stdOs << "write the simplified FSM connection graph to " << outputFileName << endl;
-  
-  return true;
 }

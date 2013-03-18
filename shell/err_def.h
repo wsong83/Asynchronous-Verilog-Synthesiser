@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -132,6 +132,14 @@ ERR_DEFINE("ELAB-INST-2",
            EError,   1, 
            "fail to resolved the parameter assignment of module \"%1%\".");
 
+ERR_DEFINE("ELAB-INST-3", 
+           EError,   0, 
+           "the number of unnamed parameters does not match.");
+
+ERR_DEFINE("ELAB-NUM-0",    
+           EError,   1, 
+           "cannot get a decimal value from number \"%1%\".");
+
 // a parameter of a module cannot be resolved to a number when trying to elaborate it
 ERR_DEFINE("ELAB-PARA-0", 
            EError,   2, 
@@ -252,6 +260,10 @@ ERR_DEFINE("SYN-BLOCK-2",
 ERR_DEFINE("SYN-FILE-0",   
            EError,   0, 
            "file terminated in multi-line comments.");
+
+ERR_DEFINE("SYN-FUNC-0",   
+           EError,   2, 
+           "function \"%1%\" is already defined at %2%.");
 
 // duplicated instance name. The name of the duplicated instance will be numbered
 ERR_DEFINE("SYN-INST-0",   

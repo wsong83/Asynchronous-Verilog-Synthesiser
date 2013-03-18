@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -59,32 +59,32 @@ namespace netlist {
     /* add a general case statement */
     bool add_case(const boost::shared_ptr<Expression>&, 
                   const std::list<boost::shared_ptr<CaseItem> >&, const boost::shared_ptr<CaseItem>&,
-                  bool m_casex = false); 
+                  CaseState::case_type_t m_casex = CaseState::CASE_DEFAULT); 
     
     /* add a general case statement */
     bool add_case(const shell::location& lloc, const boost::shared_ptr<Expression>&, 
                   const std::list<boost::shared_ptr<CaseItem> >&, const boost::shared_ptr<CaseItem>&,
-                  bool m_casex = false);
+                  CaseState::case_type_t m_casex = CaseState::CASE_DEFAULT);
  
     /* add a case statement without default */
     bool add_case(const boost::shared_ptr<Expression>&, 
                   const std::list<boost::shared_ptr<CaseItem> >&,
-                  bool m_casex = false);
+                  CaseState::case_type_t m_casex = CaseState::CASE_DEFAULT);
 
     /* add a case statement without default */
     bool add_case(const shell::location& lloc, const boost::shared_ptr<Expression>&, 
                   const std::list<boost::shared_ptr<CaseItem> >&,
-                  bool m_casex = false); 
+                  CaseState::case_type_t m_casex = CaseState::CASE_DEFAULT); 
 
     /* add a case statement only with a default case, odd! */
     bool add_case(const boost::shared_ptr<Expression>&, 
                   const boost::shared_ptr<CaseItem>&,
-                  bool m_casex = false);
+                  CaseState::case_type_t m_casex = CaseState::CASE_DEFAULT);
 
     /* add a case statement only with a default case, odd! */
     bool add_case(const shell::location& lloc, const boost::shared_ptr<Expression>&, 
                   const boost::shared_ptr<CaseItem>&,
-                  bool m_casex = false);
+                  CaseState::case_type_t m_casex = CaseState::CASE_DEFAULT);
 
     /* add an if statement with else case */
     bool add_if(const boost::shared_ptr<Expression>&, 
@@ -155,6 +155,7 @@ namespace netlist {
     std::list<boost::shared_ptr<NetComp> > statements;   /* a general list to stor the statements */
     DataBase<VIdentifier, Variable, true>  db_var;       /* variables */
     DataBase<IIdentifier, Instance>        db_instance;  /* module instances */
+    DataBase<FIdentifier, Function>        db_func;      /* functions */
     
   protected:
 

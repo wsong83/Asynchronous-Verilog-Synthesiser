@@ -77,6 +77,7 @@ namespace {
   FUNC_WRAPPER     (std::string,  CMDEcho            )
   FUNC_WRAPPER     (bool,         CMDElaborate       )
   FUNC_WRAPPER_VOID(              CMDExit            )
+  FUNC_WRAPPER_VOID(              CMDExtractDatapath )
   FUNC_WRAPPER_VOID(              CMDExtractRRG      )
   FUNC_WRAPPER_VOID(              CMDExtractSDFG     )
   FUNC_WRAPPER_VOID(              CMDHelp            )
@@ -160,6 +161,7 @@ bool shell::Env::initialise() {
   AVS_ENV_ADD_TCL_CMD(CMDCurrentDesign);
   AVS_ENV_ADD_TCL_CMD(CMDEcho);
   AVS_ENV_ADD_TCL_CMD(CMDElaborate);
+  AVS_ENV_ADD_TCL_CMD(CMDExtractDatapath);
   AVS_ENV_ADD_TCL_CMD(CMDExtractRRG);
   AVS_ENV_ADD_TCL_CMD(CMDExtractSDFG);
   AVS_ENV_ADD_TCL_CMD(CMDHelp);

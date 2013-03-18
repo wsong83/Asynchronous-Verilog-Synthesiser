@@ -8,7 +8,7 @@
 
 %{
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -49,9 +49,10 @@ typedef averilog::av_parser::token token;
 
 ws          [ \t\b\f\r]+
 dig_d       [0-9]
-dig_h       [a-fxzA-FXZ0-9]
+dig_h       [a-fxzA-FXZ0-9?]
 dec         {dig_d}({dig_d}*_?)*
 fnum        {dec}?\'[bdohBDOH]{dig_h}({dig_h}*_?)*
+decimal     {dec}(\.{dec})?
 sid         [a-zA-Z_][a-zA-Z0-9_$]*
 escid	    \\[^ \t\f\r\n]+
 identifier  {sid}|{escid}
@@ -88,6 +89,7 @@ operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
 "begin"     { return token::kBegin; }
 "case"      { return token::kCase;  }
 "casex"     { return token::kCasex; }
+"casez"     { return token::kCasez; }
 "default"   { return token::kDefault; }
 "else"      { return token::kElse;  }
 "end"       { return token::kEnd;   }
@@ -100,8 +102,10 @@ operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
 "generate"  { return token::kGenerate; }
 "genvar"    { return token::kGenvar; }
 "if"        { return token::kIf;    }
+"inout"     { return token::kInout; }
 "input"     { return token::kInput; }
 "integer"   { return token::kInteger; }
+"localparam"   { return token::kLocalparam; }
 "module"    { return token::kModule; }
 "negedge"   { return token::kNegedge; }
 "output"    { return token::kOutput; }
@@ -149,8 +153,8 @@ operator    [}{;:\[\],()#=@&!?<>|^~+*/-]
 {ws}        { /* white space, do nothing */ }
 "\n"        { yylloc->lines();       }
 
-"`line "[^\n]*[\n] { averilog::file_line_updater(yylloc, string(yytext, yyleng)); }
-"`timescale"{ws}[0-9fpuns/] { /* timescale is ignored */ }
-"#"{ws}*[0-9]+(\.[0-9]*)?   { /* time delay is ignored */ }
+"`line "[^\n]* { averilog::file_line_updater(yylloc, string(yytext, yyleng)); }
+"`timescale"[^\n]+ { /* timescale is ignored */ }
+"#"({decimal}|{sid})  { /* time delay is ignored */ }
 
 %%

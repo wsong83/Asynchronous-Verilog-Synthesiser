@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -277,7 +277,6 @@ bool netlist::Instance::update_ports() {
     
     // connect unnamed parameters if they are unnamed
     if(!para_list.empty() && !para_list.front()->is_named()) {
-      assert(para_list.size() == modp->db_param.size());
       list<shared_ptr<ParaConn> >::iterator pit, pend;
       list<pair<const VIdentifier, shared_ptr<Variable> > >::iterator mit, mend;
       pit = para_list.begin(); 
@@ -285,7 +284,11 @@ bool netlist::Instance::update_ports() {
       mit = modp->db_param.begin_order();
       mend = modp->db_param.end_order();
       for(; pit != pend; ++pit, ++mit) {
+        while(mit->second->vtype != Variable::TParam) ++mit;
         (*pit)->pname = mit->second->name;
+      }
+      if(pit!=pend || mit!=mend) { // number of the unnamed parameters do not match
+        G_ENV->error(loc, "ELAB-INST-3");
       }
     }
     break;
@@ -306,6 +309,8 @@ bool netlist::Instance::elaborate(std::set<shared_ptr<NetComp> >& to_del,
 
 bool netlist::Instance::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo, 
                                   std::map<MIdentifier, boost::shared_ptr<Module> > & mmap) {
+  //std::cout << "instance elaboration " << mname << std::endl;
+
   bool rv = true;
 
   if(type == modu_inst) {

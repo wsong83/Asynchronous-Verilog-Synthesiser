@@ -20,33 +20,50 @@
  */
 
 /* 
- * Components needed in av_parser
- * 17/02/2012   Wei Song
+ * A function call in an expression
+ * 28/02/2013   Wei Song
  *
  *
  */
 
-#ifndef AV_H_AV_COMPONENT_
-#define AV_H_AV_COMPONENT_
+#ifndef AV_H_FUNC_CALL
+#define AV_H_FUNC_CALL
 
-#include <string>
+namespace netlist {
 
-namespace averilog {
-
-  class avID {  // identifier without dimension decalration
+  class FuncCall : public NetComp {
   public:
-    std::string name;
-    avID() {}
-    avID(char* text, int leng)
-      : name(text,leng) {}
+    FuncCall();
+    FuncCall(const shell::location&, const FIdentifier&, const std::list<boost::shared_ptr<Expression> >&);
+
+    // inherit from NetComp
+    NETLIST_SET_FATHER_DECL;
+    NETLIST_STREAMOUT_DECL;
+    virtual FuncCall* deep_copy() const;
+    NETLIST_DB_DECL;
+    NETLIST_SCAN_VARS;
+    NETLIST_REPLACE_VARIABLE;
+
+    // helpers
+    void reduce();
+    Number get_value() const;
+    bool is_valuable() const;
+
+    // data
+    FIdentifier fname;          // function name
+    std::list<boost::shared_ptr<Expression> > args; // arguments
+
+  private:
+    bool valuable;
+
   };
 
-  std::ostream& operator<< (std::ostream&, const avID&);
-
+  NETLIST_STREAMOUT(FuncCall);
+  
 }
 
-
 #endif
+
 // Local Variables:
 // mode: c++
 // End:

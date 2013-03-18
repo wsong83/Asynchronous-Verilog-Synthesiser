@@ -39,3 +39,4 @@ sdfg2pdf:
 clean:
 	$(MAKE) -C sdfg2pdf distclean
 	-rm ../bin/sdfg2pdf
+

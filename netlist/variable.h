@@ -35,7 +35,7 @@ namespace netlist {
   public:
 
     enum vtype_t {
-      TVar, TWire, TReg, TParam, TGenvar
+      TVar, TWire, TReg, TParam, TLParam, TGenvar
     } vtype;
 
     Variable();
@@ -61,6 +61,7 @@ namespace netlist {
     void set_wire() { vtype = TWire; }
     void set_reg() { vtype = TReg; }
     void set_para() { vtype = TParam; }
+    void set_local_para() { vtype = TLParam; }
     void set_genvar() { vtype = TGenvar; }
     void set_signed() { signed_flag = true; }
     vtype_t get_vtype() const { return vtype; }

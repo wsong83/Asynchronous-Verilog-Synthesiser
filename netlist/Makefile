@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+# Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
 #    Advanced Processor Technologies Group, School of Computer Science
 #    University of Manchester, Manchester M13 9PL UK
 #
@@ -27,8 +27,8 @@
 INCDIRS = -I./ -I../
 
 # targets
-TARGETS = operation.o number.o concatenation.o lconcatenation.o identifier.o \
-	      range.o range_array.o range_array_common.o expression.o port.o portconn.o \
+TARGETS = operation.o number.o concatenation.o function.o function_call.o lconcatenation.o \
+          identifier.o range.o range_array.o range_array_common.o expression.o port.o portconn.o \
           variable.o assign.o block.o seqblock.o genblock.o case.o if.o \
 	      while.o for.o module.o netcomp.o instance.o library.o uni_name.o
 

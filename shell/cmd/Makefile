@@ -27,7 +27,7 @@
 INCDIRS = -I./ -I../../ -I../../cpptcl/
 
 # targets
-TARGETS = analyze.o current_design.o echo.o elaborate.o exit.o extract_rrg.o extract_sdfg.o help.o report_dfg_path.o report_fsm.o report_netlist.o shell.o suppress_message.o uniquify.o write.o
+TARGETS = analyze.o current_design.o echo.o elaborate.o exit.o extract_rrg.o extract_sdfg.o extract_datapath.o help.o report_dfg_path.o report_fsm.o report_netlist.o shell.o suppress_message.o uniquify.o write.o
 HEADERS = $(wildcard ./*.h)
 HEADERS += ../env.h
 
