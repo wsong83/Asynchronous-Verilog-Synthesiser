@@ -38,6 +38,7 @@
 #include "component.h"
 #include "shell/env.h"
 #include "sdfg/rtree.hpp"
+#include "sdfg/sdfg.hpp"
 
 using namespace netlist;
 using std::ostream;
@@ -365,6 +366,14 @@ void netlist::VIdentifier::reduce() {
   m_range.reduce();
   m_select.reduce();
 }
+
+std::set<shared_ptr<NetComp> >  netlist::VIdentifier::get_drivers() const {
+  assert(pvar);
+  assert(pvar->pDFGNode);
+  assert(pvar->pDFGNode->ptr.size());
+  return pvar->pDFGNode->ptr;
+}
+
 
 void netlist::VIdentifier::set_father(Block *pf) {
   if(father == pf) return;
