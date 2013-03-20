@@ -36,6 +36,7 @@
 
 // namespace State Space Analysis (SSA)
 namespace SSA {
+  const std::string SSA_STATE_NAME_DEFAULT("state"); // the default name of state in the SSA namesapce
   class StateTransfer {
   public:
     enum st_type_t {
@@ -60,7 +61,8 @@ namespace SSA {
     boost::shared_ptr<netlist::Expression> get_next_exp() const;
     
     typedef std::map<netlist::VIdentifier, netlist::Number> SSA_ENV;
-    std::pair<bool, netlist::Number> get_next_state(const SSA_ENV&) const; // calculating the next state, if not met with the condition, return false in the pair
+    typedef std::pair<const netlist::VIdentifier, netlist::Number> SSA_ENV_TYPE;
+    std::pair<bool, netlist::Number> get_next_state(const SSA_ENV&, const netlist::Number& cstate = netlist::Number(0)) const; // calculating the next state, if not met with the condition, return false in the pair
     void append_condition(const netlist::Operation&, boost::shared_ptr<netlist::Expression>); // add more clauses in the condition
     
     std::ostream& streamout (std::ostream& os) const; 

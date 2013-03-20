@@ -28,6 +28,7 @@
 
 #include "netlist/component.h"
 #include "state_transfer.hpp"
+#include <boost/foreach.hpp>
 
 using namespace SSA;
 using namespace netlist;
@@ -78,8 +79,40 @@ shared_ptr<Expression> SSA::StateTransfer::get_next_exp() const {
 }
 
 // core function, to calculate the next state and for state traversal
-pair<bool, Number> SSA::StateTransfer::get_next_state(const SSA_ENV& senv) const{
+pair<bool, Number> SSA::StateTransfer::get_next_state(const SSA_ENV& senv, const Number& cstate) const{
+  pair<bool, Number> rv(false, Number()); // return value
+  // get a copy of the condition expression
+  shared_ptr<Expression> m_exp(condition->deep_copy());
+  // replace all variables in the environment
+  BOOST_FOREACH(SSA_ENV_TYPE r, senv) {
+    m_exp->replace_variable(r.first, r.second);
+  }
+  m_exp->reduce();
   
+  if(!m_exp->is_valuable() || !m_exp->get_value().is_true())
+    return rv;
+  
+  switch(type) {
+  case SSA_CONST: rv.first = true; rv.second = next_state; break;
+  case SSA_DELTA: rv.first = true; rv.second = cstate + next_delta; break;
+  case SSA_EXP: {
+    // copy next_exp
+    m_exp.reset(next_exp->deep_copy());
+    // replace environment
+    BOOST_FOREACH(SSA_ENV_TYPE r, senv) {
+      m_exp->replace_variable(r.first, r.second);
+    }
+    // replace current state
+    m_exp->replace_variable(VIdentifier(SSA_STATE_NAME_DEFAULT), cstate);
+    if(m_exp->is_valuable() && m_exp->get_value().is_true()) {
+      rv.first = true; rv.second = m_exp->get_value();
+    }
+    break;
+  }
+  default:
+    assert(0 == "wrong state transfer type");
+  }
+  return rv;
 }
 
 
