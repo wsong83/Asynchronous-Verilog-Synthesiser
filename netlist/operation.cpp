@@ -1147,40 +1147,37 @@ void netlist::Operation::reduce_Question() {
   }
 }
 
-pair<bool, list<OpPair> > 
-netlist::Operation::extract_ssa_condition( const VIdentifier& sname) const {
-  pair<bool, list<OpPair> > rv(true, list<OpPair>());
+list<OpPair> netlist::Operation::extract_ssa_condition( const VIdentifier& sname) const {
+  list<OpPair> rv;
   switch(otype) {
   case oNum: {
-    rv.second.push_back(OpPair(shared_ptr<Operation>(), 
-                               static_pointer_cast<Operation>(get_sp()))
-                        ); 
+    rv.push_back(OpPair(shared_ptr<Operation>(), shared_ptr<Operation>(deep_copy()))); 
     break;
   }
   case oVar: {
-    if(get_var() == sname) {
-      rv.second.push_back(OpPair(static_pointer_cast<Operation>(get_sp()),
-                                 shared_ptr<Operation>())
-                          ); 
-    } else {
-      rv.second.push_back(OpPair(shared_ptr<Operation>(), 
-                                 static_pointer_cast<Operation>(get_sp()))
-                          ); 
+    if(get_var() == sname)
+      rv.push_back(OpPair(shared_ptr<Operation>(deep_copy()),shared_ptr<Operation>())); 
+    else
+      rv.push_back(OpPair(shared_ptr<Operation>(), shared_ptr<Operation>(deep_copy()))); 
     }
     break;
   }
   case oCon:
-  case oFun: {                  // concatenation and function should not be something include the state
-    rv.second.push_back(OpPair(shared_ptr<Operation>(), 
-                               static_pointer_cast<Operation>(get_sp()))
-                        ); 
+  case oFun: {
+    rv.push_back(shared_ptr<Operation>(), shared_ptr<Operation>(deep_copy()))); 
     break;
   }
   case oUPos: { // +(xx) return xx;
     return child[0]->extract_ssa_condition(sname);
   }
-  case oUNeg:     reduce_UNeg();     break;
-  case oULRev:    reduce_ULRev();    break;
+  case oUNeg: {                 // not likely to have state in this
+    rv.push_back(shared_ptr<Operation>(), shared_ptr<Operation>(deep_copy()))); 
+    break;
+  }
+  case oULRev: {
+    list<OpPair> tmp = child[0]->extract_ssa_condition(sname);
+    break;
+  }
   case oURev:     reduce_URev();     break;
   case oUAnd:     reduce_UAnd();     break;
   case oUNand:    reduce_UNand();    break;
@@ -1216,4 +1213,8 @@ netlist::Operation::extract_ssa_condition( const VIdentifier& sname) const {
     assert(0 == "wrong operation type");
   }
 
+}
+
+void netlist::Operation::convert_ULRev() {
+  
 }

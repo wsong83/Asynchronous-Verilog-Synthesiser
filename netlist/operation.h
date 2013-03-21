@@ -133,7 +133,7 @@ namespace netlist {
 
     // state space analysis
     // extract the SSA condition
-    std::pair<bool, std::list<OpPair> > extract_ssa_condition(const VIdentifier&) const;
+    std::list<OpPair> extract_ssa_condition(const VIdentifier&) const;
 
   private:
     operation_t otype;
@@ -180,6 +180,9 @@ namespace netlist {
     void reduce_LAnd();
     void reduce_LOr();
     void reduce_Question();
+
+    // convert the operator to lower level
+    void convert_ULRev();
   };
 
   NETLIST_STREAMOUT(Operation);
