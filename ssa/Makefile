@@ -27,7 +27,7 @@
 INCDIRS = -I./ -I../
 
 # targets
-TARGETS = state_transfer.o 
+TARGETS = state_transfer.o state_space.o
 #state_transfer_graph.o 
 
 HEADERS = $(wildcard ./*.hpp)

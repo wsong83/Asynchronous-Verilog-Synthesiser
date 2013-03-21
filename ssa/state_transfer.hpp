@@ -36,7 +36,6 @@
 
 // namespace State Space Analysis (SSA)
 namespace SSA {
-  const std::string SSA_STATE_NAME_DEFAULT("state"); // the default name of state in the SSA namesapce
   class StateTransfer {
   public:
     enum st_type_t {
@@ -47,9 +46,10 @@ namespace SSA {
 
     // constructors
     StateTransfer();            // default constructor
-    StateTransfer(st_type_t, const netlist::Number&, 
+    StateTransfer(const std::string&);
+    StateTransfer(const std::string&, st_type_t, const netlist::Number&, 
                   const boost::shared_ptr<netlist::Expression>& expr = boost::shared_ptr<netlist::Expression>());
-    StateTransfer(boost::shared_ptr<netlist::Expression>, 
+    StateTransfer(const std::string&, boost::shared_ptr<netlist::Expression>, 
                   const boost::shared_ptr<netlist::Expression>& expr = boost::shared_ptr<netlist::Expression>());
     
     // helpers
@@ -70,8 +70,9 @@ namespace SSA {
   private:
     netlist::Number next_state;          // the next state
     netlist::Number next_delta;          // delta to calculate the next state
-    boost::shared_ptr<netlist::Expression> next_exp;   // the expression to calculate the next state (normally not an FSM), the name for current state will be "state"
+    boost::shared_ptr<netlist::Expression> next_exp;   // the expression to calculate the next state (normally not an FSM)
     boost::shared_ptr<netlist::Expression> condition;  // the condition when this state transfer is executed 
+    std::string cname;                   // the name of the controller
 
   };
 

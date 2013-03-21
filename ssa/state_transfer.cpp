@@ -35,14 +35,18 @@ using namespace netlist;
 using boost::shared_ptr;
 using std::pair;
 using std::map;
+using std::string;
 
 SSA::StateTransfer::StateTransfer()
-  : type(SSA_CONST) {}
+  : type(SSA_CONST), cname("state") {}
 
 
-SSA::StateTransfer::StateTransfer(st_type_t tt, const Number& nstate, 
+SSA::StateTransfer::StateTransfer(const string& cn)
+  : type(SSA_CONST), cname(cn) {}
+
+SSA::StateTransfer::StateTransfer(const string& cn, st_type_t tt, const Number& nstate, 
                                   const shared_ptr<Expression>& expr)
-  : type(tt), condition(expr->deep_copy())
+  : type(tt), condition(expr->deep_copy()), cname(cn)
 {
   switch(tt) {
   case SSA_CONST: next_state = nstate; break;
@@ -52,9 +56,9 @@ SSA::StateTransfer::StateTransfer(st_type_t tt, const Number& nstate,
   }
 }
 
-SSA::StateTransfer::StateTransfer(shared_ptr<Expression> next_expr, 
+SSA::StateTransfer::StateTransfer(const string& cn, shared_ptr<Expression> next_expr, 
                                   const shared_ptr<Expression>& expr) 
-  : type(SSA_EXP), condition(expr->deep_copy())
+  : type(SSA_EXP), condition(expr->deep_copy()), cname(cn)
 {
   next_exp.reset(next_expr->deep_copy());
 }
@@ -103,7 +107,7 @@ pair<bool, Number> SSA::StateTransfer::get_next_state(const SSA_ENV& senv, const
       m_exp->replace_variable(r.first, r.second);
     }
     // replace current state
-    m_exp->replace_variable(VIdentifier(SSA_STATE_NAME_DEFAULT), cstate);
+    m_exp->replace_variable(VIdentifier(cname), cstate);
     if(m_exp->is_valuable() && m_exp->get_value().is_true()) {
       rv.first = true; rv.second = m_exp->get_value();
     }
@@ -123,7 +127,7 @@ void SSA::StateTransfer::append_condition(const Operation& op, shared_ptr<Expres
 std::ostream& SSA::StateTransfer::streamout (std::ostream& os) const {
   switch(type) {
   case SSA_CONST: os << "<" << next_state; break;
-  case SSA_DELTA: os << "<state + " << next_delta; break;
+  case SSA_DELTA: os << "<" << cname << " + " << next_delta; break;
   case SSA_EXP:   os << next_exp; break;
   default: assert(0 == "wrong state transfer type");
   }
