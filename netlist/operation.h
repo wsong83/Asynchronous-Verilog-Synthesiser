@@ -33,6 +33,9 @@
 
 namespace netlist {
 
+  // operation pair
+  typedef std::pair<boost::shared_ptr<Operation>, boost::shared_ptr<Operation> > OpPair;
+
   class Operation : public NetComp {
   public:
     enum operation_t {
@@ -127,6 +130,10 @@ namespace netlist {
     NETLIST_DB_DECL;
     NETLIST_SCAN_VARS;
     NETLIST_REPLACE_VARIABLE;
+
+    // state space analysis
+    // extract the SSA condition
+    std::pair<bool, std::list<OpPair> > extract_ssa_condition(const VIdentifier&) const;
 
   private:
     operation_t otype;

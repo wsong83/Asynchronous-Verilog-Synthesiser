@@ -31,6 +31,7 @@
 #include "sdfg/rtree.hpp"
 #include <boost/foreach.hpp>
 #include <algorithm>
+#include <boost/tuple/tuple.hpp>
 
 using namespace netlist;
 using std::ostream;
@@ -1146,3 +1147,73 @@ void netlist::Operation::reduce_Question() {
   }
 }
 
+pair<bool, list<OpPair> > 
+netlist::Operation::extract_ssa_condition( const VIdentifier& sname) const {
+  pair<bool, list<OpPair> > rv(true, list<OpPair>());
+  switch(otype) {
+  case oNum: {
+    rv.second.push_back(OpPair(shared_ptr<Operation>(), 
+                               static_pointer_cast<Operation>(get_sp()))
+                        ); 
+    break;
+  }
+  case oVar: {
+    if(get_var() == sname) {
+      rv.second.push_back(OpPair(static_pointer_cast<Operation>(get_sp()),
+                                 shared_ptr<Operation>())
+                          ); 
+    } else {
+      rv.second.push_back(OpPair(shared_ptr<Operation>(), 
+                                 static_pointer_cast<Operation>(get_sp()))
+                          ); 
+    }
+    break;
+  }
+  case oCon:
+  case oFun: {                  // concatenation and function should not be something include the state
+    rv.second.push_back(OpPair(shared_ptr<Operation>(), 
+                               static_pointer_cast<Operation>(get_sp()))
+                        ); 
+    break;
+  }
+  case oUPos: { // +(xx) return xx;
+    return child[0]->extract_ssa_condition(sname);
+  }
+  case oUNeg:     reduce_UNeg();     break;
+  case oULRev:    reduce_ULRev();    break;
+  case oURev:     reduce_URev();     break;
+  case oUAnd:     reduce_UAnd();     break;
+  case oUNand:    reduce_UNand();    break;
+  case oUOr:      reduce_UOr();      break;
+  case oUNor:     reduce_UNor();     break;
+  case oUXor:     reduce_UXor();     break;
+  case oUNxor:    reduce_UNxor();    break;
+  case oPower:    reduce_Power();    break;
+  case oTime:     reduce_Time();     break;
+  case oDiv:      reduce_Div();      break;
+  case oMode:     reduce_Mode();     break;
+  case oAdd:      reduce_Add();      break;
+  case oMinus:    reduce_Minus();    break;
+  case oRS:       reduce_RS();       break;
+  case oLS:       reduce_LS();       break;
+  case oLRS:      reduce_LRS();      break;
+  case oLess:     reduce_Less();     break;
+  case oLe:       reduce_Le();       break;
+  case oGreat:    reduce_Great();    break;
+  case oGe:       reduce_Ge();       break;
+  case oEq:       reduce_Eq();       break;
+  case oNeq:      reduce_Neq();      break;
+  case oCEq:      reduce_CEq();      break;
+  case oCNeq:     reduce_CNeq();     break;
+  case oAnd:      reduce_And();      break;
+  case oXor:      reduce_Xor();      break;
+  case oNxor:     reduce_Nxor();     break;
+  case oOr:       reduce_Or();       break;
+  case oLAnd:     reduce_LAnd();     break;
+  case oLOr:      reduce_LOr();      break;
+  case oQuestion: reduce_Question(); break;
+  default:  // should not run to here
+    assert(0 == "wrong operation type");
+  }
+
+}

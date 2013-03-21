@@ -33,6 +33,7 @@
 #include <stack>
 #include <set>
 #include <boost/foreach.hpp>
+#include <boost/tuple/tuple.hpp>
 
 using namespace netlist;
 using std::ostream;
@@ -102,6 +103,12 @@ netlist::Expression::Expression(const location& lloc, const shared_ptr<FuncCall>
   : NetComp(tExp, lloc)
 {
   eqn.reset(new Operation(lloc, fc));
+}
+
+netlist::Expression::Expression(shared_ptr<Operation> e) 
+  : NetComp(tExp, e->loc)
+{
+  eqn = e;
 }
 
 netlist::Expression::~Expression() {}
@@ -225,4 +232,17 @@ void netlist::Expression::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) cons
 
 void netlist::Expression::replace_variable(const VIdentifier& var, const Number& num) {
   eqn->replace_variable(var, num);
+}
+
+pair<bool, list<SSA_CONDITION_TYPE> > 
+netlist::Expression::extract_ssa_condition( const VIdentifier& sname) const {
+  bool extractable = false;
+  list<OpPair> conditions;
+  boost::tie(extractable, conditions) = eqn->extract_ssa_condition(sname);
+  pair<bool, list<SSA_CONDITION_TYPE> > rv(extractable, list<SSA_CONDITION_TYPE>());
+  BOOST_FOREACH(OpPair p, conditions) {
+    rv.second.push_back(SSA_CONDITION_TYPE(shared_ptr<Expression>(new Expression(p.first)),
+                                           shared_ptr<Expression>(new Expression(p.second))));
+  }
+  return rv;
 }
