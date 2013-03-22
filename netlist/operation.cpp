@@ -1147,74 +1147,106 @@ void netlist::Operation::reduce_Question() {
   }
 }
 
-list<OpPair> netlist::Operation::extract_ssa_condition( const VIdentifier& sname) const {
+
+list<OpPair> netlist::Operation::breakToCases() const {
   list<OpPair> rv;
   switch(otype) {
-  case oNum: {
-    rv.push_back(OpPair(shared_ptr<Operation>(), shared_ptr<Operation>(deep_copy()))); 
+  case oNum:
+  case oVar:
+  case oCon:
+  case oFun: 
+    rv.push_back(OpPair(shared_ptr<Operation>(), shared_ptr<Operation>(deep_copy())));
     break;
-  }
-  case oVar: {
-    if(get_var() == sname)
-      rv.push_back(OpPair(shared_ptr<Operation>(deep_copy()),shared_ptr<Operation>())); 
-    else
-      rv.push_back(OpPair(shared_ptr<Operation>(), shared_ptr<Operation>(deep_copy()))); 
+  case oUPos: 
+    rv = child[0]->breakToCases(); 
+    break;
+  case oUNeg: 
+  case oULRev: 
+  case oURev:
+  case oUAnd:
+  case oUNand:
+  case oUOr:
+  case oUNor:
+  case oUXor:
+  case oUNxor: {
+    BOOST_FOREACH(OpPair p, child[0]->breakToCases()) {
+      p.second.reset(new Operation(otype, p.second));
+      p.second->reduce();
+      rv.push_back(p);
     }
     break;
   }
-  case oCon:
-  case oFun: {
-    rv.push_back(shared_ptr<Operation>(), shared_ptr<Operation>(deep_copy()))); 
+  case oPower:   
+  case oTime:   
+  case oDiv:   
+  case oMode:   
+  case oAdd:   
+  case oMinus: 
+  case oRS:
+  case oLS:
+  case oLRS:
+  case oLess:
+  case oLe:
+  case oGreat:
+  case oGe:
+  case oEq:
+  case oNeq:
+  case oCEq:
+  case oCNeq:
+  case oAnd:
+  case oXor:
+  case oNxor:
+  case oOr:
+  case oLAnd:
+  case oLOr: {
+    list<OpPair> lop1 = child[1]->breakToCases();
+    BOOST_FOREACH(OpPair p0, child[0]->breakToCases()) {
+      BOOST_FOREACH(OpPair p1, lop1) {
+        shared_ptr<Operation> np0_1(p0.first->deep_copy());
+        shared_ptr<Operation> np0_2(p0.second->deep_copy());
+        shared_ptr<Operation> np1_1(p1.first->deep_copy());
+        shared_ptr<Operation> np1_2(p1.second->deep_copy());
+        shared_ptr<Operation> np_1(new Operation(oLAnd, np0_1, np1_1));
+        shared_ptr<Operation> np_2(new Operation(otype, np0_2, np1_2));
+        np_1->reduce();
+        np_2->reduce();
+        rv.push_back(OpPair(np_1, np_2));
+      }
+    }
     break;
   }
-  case oUPos: { // +(xx) return xx;
-    return child[0]->extract_ssa_condition(sname);
+  case oQuestion: {
+    list<OpPair> lop1 = child[1]->breakToCases();
+    list<OpPair> lop2 = child[2]->breakToCases();
+    
+    BOOST_FOREACH(OpPair p0, child[0]->breakToCases()) {
+      BOOST_FOREACH(OpPair p1, lop1) {
+        shared_ptr<Operation> np0_1(p0.first->deep_copy());
+        shared_ptr<Operation> np0_2(p0.second->deep_copy());
+        shared_ptr<Operation> np1_1(p1.first->deep_copy());
+        shared_ptr<Operation> np1_2(p1.second->deep_copy());
+        shared_ptr<Operation> np_1(new Operation(oLAnd, np0_1, np0_2));
+        np_1.reset(new Operation(oLAnd, np_1, np1_1)); // np_1 = np0_1 && np0_2 && np1_1
+        np_1->reduce();
+        rv.push_back(OpPair(np_1, np1_2));
+      }
+      BOOST_FOREACH(OpPair p1, lop2) {
+        shared_ptr<Operation> np0_1(p0.first->deep_copy());
+        shared_ptr<Operation> np0_2(p0.second->deep_copy());
+        shared_ptr<Operation> np1_1(p1.first->deep_copy());
+        shared_ptr<Operation> np1_2(p1.second->deep_copy());
+        np0_2.reset(new Operation(oULRev, np0_2));
+        shared_ptr<Operation> np_1(new Operation(oLAnd, np0_1, np0_2));
+        np_1.reset(new Operation(oLAnd, np_1, np1_1)); // np_1 = np0_1 && !np0_2 && np1_1
+        np_1->reduce();
+        rv.push_back(OpPair(np_1, np1_2));
+      }        
+    }
   }
-  case oUNeg: {                 // not likely to have state in this
-    rv.push_back(shared_ptr<Operation>(), shared_ptr<Operation>(deep_copy()))); 
-    break;
-  }
-  case oULRev: {
-    list<OpPair> tmp = child[0]->extract_ssa_condition(sname);
-    break;
-  }
-  case oURev:     reduce_URev();     break;
-  case oUAnd:     reduce_UAnd();     break;
-  case oUNand:    reduce_UNand();    break;
-  case oUOr:      reduce_UOr();      break;
-  case oUNor:     reduce_UNor();     break;
-  case oUXor:     reduce_UXor();     break;
-  case oUNxor:    reduce_UNxor();    break;
-  case oPower:    reduce_Power();    break;
-  case oTime:     reduce_Time();     break;
-  case oDiv:      reduce_Div();      break;
-  case oMode:     reduce_Mode();     break;
-  case oAdd:      reduce_Add();      break;
-  case oMinus:    reduce_Minus();    break;
-  case oRS:       reduce_RS();       break;
-  case oLS:       reduce_LS();       break;
-  case oLRS:      reduce_LRS();      break;
-  case oLess:     reduce_Less();     break;
-  case oLe:       reduce_Le();       break;
-  case oGreat:    reduce_Great();    break;
-  case oGe:       reduce_Ge();       break;
-  case oEq:       reduce_Eq();       break;
-  case oNeq:      reduce_Neq();      break;
-  case oCEq:      reduce_CEq();      break;
-  case oCNeq:     reduce_CNeq();     break;
-  case oAnd:      reduce_And();      break;
-  case oXor:      reduce_Xor();      break;
-  case oNxor:     reduce_Nxor();     break;
-  case oOr:       reduce_Or();       break;
-  case oLAnd:     reduce_LAnd();     break;
-  case oLOr:      reduce_LOr();      break;
-  case oQuestion: reduce_Question(); break;
   default:  // should not run to here
     assert(0 == "wrong operation type");
   }
 
-}
+  return rv;
 
-void netlist::Operation::convert_ULRev() {
-  
 }

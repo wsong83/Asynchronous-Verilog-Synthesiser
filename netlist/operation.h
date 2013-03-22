@@ -132,8 +132,8 @@ namespace netlist {
     NETLIST_REPLACE_VARIABLE;
 
     // state space analysis
-    // extract the SSA condition
-    std::list<OpPair> extract_ssa_condition(const VIdentifier&) const;
+    std::list<OpPair> breakToCases() const; // break the expression of a tree of blocks into cases
+    
 
   private:
     operation_t otype;

@@ -238,11 +238,5 @@ pair<bool, list<SSA_CONDITION_TYPE> >
 netlist::Expression::extract_ssa_condition( const VIdentifier& sname) const {
   bool extractable = false;
   list<OpPair> conditions;
-  boost::tie(extractable, conditions) = eqn->extract_ssa_condition(sname);
-  pair<bool, list<SSA_CONDITION_TYPE> > rv(extractable, list<SSA_CONDITION_TYPE>());
-  BOOST_FOREACH(OpPair p, conditions) {
-    rv.second.push_back(SSA_CONDITION_TYPE(shared_ptr<Expression>(new Expression(p.first)),
-                                           shared_ptr<Expression>(new Expression(p.second))));
-  }
-  return rv;
+  // a lot to be implemented here
 }
