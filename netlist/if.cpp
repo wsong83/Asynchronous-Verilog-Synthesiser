@@ -181,3 +181,22 @@ void netlist::IfState::replace_variable(const VIdentifier& var, const Number& nu
   if(elsecase) elsecase->replace_variable(var, num);
 }
 
+shared_ptr<Expression> netlist::IfState::get_combined_expression(const VIdentifier& target) const {
+  shared_ptr<Expression> if_exp = ifcase->get_combined_expression(target);
+  shared_ptr<Expression> else_exp = elsecase->get_combined_expression(target);
+  shared_ptr<Expression> rv;
+  if(if_exp || else_exp) {
+    if(if_exp) {
+      if(else_exp) 
+        rv = exp->deep_copy()->append(Operation::oQuestion, *if_exp, *else_exp);
+      else {
+        Expression self_loop(target);
+        rv = exp->deep_copy()->append(Operation::oQuestion, *if_exp, self_loop);
+      }
+    } else {
+      Expression self_loop(target);
+      rv = exp->deep_copy()->append(Operation::oQuestion, self_loop, *else_exp);      
+    }
+  }
+  return rv;
+}

@@ -160,33 +160,37 @@ void netlist::Expression::db_expunge() {
   eqn->db_expunge();
 }
 
-void netlist::Expression::append(Operation::operation_t otype) {
+shared_ptr<Expression> netlist::Expression::append(Operation::operation_t otype) {
   assert(tExp == ctype);     // this object whould be valid
   assert(otype >= Operation::oUPos && otype < Operation::oPower);
   assert(eqn);
 
   eqn.reset(new Operation(otype, eqn));
+  return shared_from_this();
 }
 
-void netlist::Expression::append(Operation::operation_t otype, Expression& d1) {
+shared_ptr<Expression> netlist::Expression::append(Operation::operation_t otype, Expression& d1) {
   assert(tExp == ctype);     // this object whould be valid
   assert(otype >= Operation::oPower && otype < Operation::oQuestion);
   assert(eqn);
 
   eqn.reset(new Operation(otype, eqn, d1.eqn));
+  return shared_from_this();
 }
 
-void netlist::Expression::append(Operation::operation_t otype, Expression& d1, Expression& d2) {
+shared_ptr<Expression> netlist::Expression::append(Operation::operation_t otype, Expression& d1, Expression& d2) {
   assert(tExp == ctype);     // this object whould be valid
   assert(otype >= Operation::oQuestion);
   assert(eqn);
 
   eqn.reset(new Operation(otype, eqn, d1.eqn, d2.eqn));
+  return shared_from_this();
 }
 
-void netlist::Expression::concatenate(const Expression& rhs) {
+shared_ptr<Expression> netlist::Expression::concatenate(const Expression& rhs) {
   assert(eqn->is_valuable() && rhs.eqn->is_valuable());
   eqn->get_num().concatenate(rhs.eqn->get_num());
+  return shared_from_this();
 }
 
 Expression& netlist::operator+ (Expression& lhs, Expression& rhs) {

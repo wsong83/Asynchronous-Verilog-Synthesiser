@@ -100,6 +100,7 @@ namespace netlist{
     BIdentifier name;           /* dummy name for search index */
     boost::shared_ptr<Expression> exp;
     std::list<boost::shared_ptr<CaseItem> > cases;
+    virtual boost::shared_ptr<Expression> get_combined_expression(const VIdentifier&) const;
     
   private:
     bool named;

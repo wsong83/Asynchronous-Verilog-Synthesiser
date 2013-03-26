@@ -334,3 +334,5 @@ void netlist::SeqBlock::replace_variable(const VIdentifier& var, const Number& n
   }
   Block::replace_variable(var, num);
 }
+
+
