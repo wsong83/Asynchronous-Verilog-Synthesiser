@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -142,6 +142,7 @@ namespace netlist{
     virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>);
     virtual void scan_vars(boost::shared_ptr<SDFG::RForest>, bool) const; 
     boost::shared_ptr<NetComp> get_sp();
+    virtual boost::shared_ptr<Expression> get_combined_expression(const VIdentifier&) const;
 
   protected:
     Block* father;              /* the pointer pointed to the father block */

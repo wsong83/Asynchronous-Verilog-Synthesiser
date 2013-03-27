@@ -166,7 +166,7 @@ shared_ptr<Expression> netlist::Expression::append(Operation::operation_t otype)
   assert(eqn);
 
   eqn.reset(new Operation(otype, eqn));
-  return shared_from_this();
+  return boost::static_pointer_cast<Expression>(shared_from_this());
 }
 
 shared_ptr<Expression> netlist::Expression::append(Operation::operation_t otype, Expression& d1) {
@@ -175,7 +175,7 @@ shared_ptr<Expression> netlist::Expression::append(Operation::operation_t otype,
   assert(eqn);
 
   eqn.reset(new Operation(otype, eqn, d1.eqn));
-  return shared_from_this();
+  return boost::static_pointer_cast<Expression>(shared_from_this());
 }
 
 shared_ptr<Expression> netlist::Expression::append(Operation::operation_t otype, Expression& d1, Expression& d2) {
@@ -184,13 +184,13 @@ shared_ptr<Expression> netlist::Expression::append(Operation::operation_t otype,
   assert(eqn);
 
   eqn.reset(new Operation(otype, eqn, d1.eqn, d2.eqn));
-  return shared_from_this();
+  return boost::static_pointer_cast<Expression>(shared_from_this());
 }
 
 shared_ptr<Expression> netlist::Expression::concatenate(const Expression& rhs) {
   assert(eqn->is_valuable() && rhs.eqn->is_valuable());
   eqn->get_num().concatenate(rhs.eqn->get_num());
-  return shared_from_this();
+  return boost::static_pointer_cast<Expression>(shared_from_this());
 }
 
 Expression& netlist::operator+ (Expression& lhs, Expression& rhs) {
