@@ -306,21 +306,30 @@ void netlist::CaseState::replace_variable(const VIdentifier& var, const Number& 
 
 shared_ptr<Expression> netlist::CaseState::get_combined_expression(const VIdentifier& target) const {
   bool has_default = false;
+  bool target_found = false;
   typedef std::pair<list<shared_ptr<Expression> >, shared_ptr<Expression> > cexp_type;
   list<cexp_type> m_case_exps;
   BOOST_FOREACH(boost::shared_ptr<CaseItem> ct, cases) {
     m_case_exps.push_back(cexp_type(ct->exps, ct->body->get_combined_expression(target)));
+    
+    if((!target_found) && m_case_exps.back().second) 
+      target_found = true;
+    
     if(ct->is_default()) {
       has_default = true;
       break;
     }
   }
+
+  if(!target_found) return shared_ptr<Expression>(); // no target found at all
+  
   if(!has_default) 
     m_case_exps.push_back(cexp_type(list<shared_ptr<Expression> >(), 
                                     shared_ptr<Expression>(new Expression(target))
                                     ));
   
-  shared_ptr<Expression> rv(m_case_exps.back().second);
+  shared_ptr<Expression> rv = m_case_exps.back().second;
+  if(!rv) rv = shared_ptr<Expression>(new Expression(target));
   m_case_exps.pop_back();
   
   while(!m_case_exps.empty()) {
@@ -333,7 +342,12 @@ shared_ptr<Expression> netlist::CaseState::get_combined_expression(const VIdenti
         cond = case_exp;
       }
     }
-    rv = cond->append(Operation::oQuestion, *(m_case_exps.back().second), *rv);
+    if(m_case_exps.back().second)
+      rv = cond->append(Operation::oQuestion, *(m_case_exps.back().second), *rv);
+    else {
+      Expression self_loop(target);
+      rv = cond->append(Operation::oQuestion, self_loop, *rv);
+    }
     m_case_exps.pop_back();
   }
   

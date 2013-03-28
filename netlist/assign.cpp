@@ -142,3 +142,13 @@ void netlist::Assign::replace_variable(const VIdentifier& var, const Number& num
   lval->replace_variable(var, num);
   rexp->replace_variable(var, num);
 }
+
+shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifier& target) const {
+  shared_ptr<SDFG::RForest> lrf(new SDFG::RForest());
+  shared_ptr<Expression> rv;
+  lval->scan_vars(lrf, false);
+  if(lrf->tree.count(target.name)) {
+    rv.reset(rexp->deep_copy());
+  } 
+  return rv;
+}
