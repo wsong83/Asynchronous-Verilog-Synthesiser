@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -335,4 +335,7 @@ void netlist::SeqBlock::replace_variable(const VIdentifier& var, const Number& n
   Block::replace_variable(var, num);
 }
 
-
+void netlist::SeqBlock::ssa_analysis(const VIdentifier& sname) const {
+  shared_ptr<Expression> combi_exp = Block::get_combined_expression(sname);
+  combi_exp->extract_ssa_condition(sname);
+}
