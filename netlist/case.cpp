@@ -343,10 +343,10 @@ shared_ptr<Expression> netlist::CaseState::get_combined_expression(const VIdenti
       }
     }
     if(m_case_exps.back().second)
-      rv = cond->append(Operation::oQuestion, *(m_case_exps.back().second), *rv);
+      rv.reset(cond->append(Operation::oQuestion, *(m_case_exps.back().second), *rv));
     else {
       Expression self_loop(target);
-      rv = cond->append(Operation::oQuestion, self_loop, *rv);
+      rv.reset(cond->append(Operation::oQuestion, self_loop, *rv));
     }
     m_case_exps.pop_back();
   }

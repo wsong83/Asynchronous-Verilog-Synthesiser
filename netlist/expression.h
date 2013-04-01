@@ -61,10 +61,10 @@ namespace netlist {
     void reduce();               // try to reduce the equation
     
     // develope the equation
-    boost::shared_ptr<Expression> append(Operation::operation_t);
-    boost::shared_ptr<Expression> append(Operation::operation_t, Expression&);
-    boost::shared_ptr<Expression> append(Operation::operation_t, Expression&, Expression&);
-    boost::shared_ptr<Expression> concatenate(const Expression&); // concatenate the number in two expressions
+    Expression* append(Operation::operation_t);
+    Expression* append(Operation::operation_t, Expression&);
+    Expression* append(Operation::operation_t, Expression&, Expression&);
+    Expression* concatenate(const Expression&); // concatenate the number in two expressions
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;

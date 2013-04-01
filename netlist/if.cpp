@@ -188,15 +188,16 @@ shared_ptr<Expression> netlist::IfState::get_combined_expression(const VIdentifi
   if(if_exp || else_exp) {
     if(if_exp) {
       if(else_exp) 
-        rv = exp->deep_copy()->append(Operation::oQuestion, *if_exp, *else_exp);
+        rv.reset(exp->deep_copy()->append(Operation::oQuestion, *if_exp, *else_exp));
       else {
         Expression self_loop(target);
-        rv = exp->deep_copy()->append(Operation::oQuestion, *if_exp, self_loop);
+        rv.reset(exp->deep_copy()->append(Operation::oQuestion, *if_exp, self_loop));
       }
     } else {
       Expression self_loop(target);
-      rv = exp->deep_copy()->append(Operation::oQuestion, self_loop, *else_exp);      
+      rv.reset(exp->deep_copy()->append(Operation::oQuestion, self_loop, *else_exp));      
     }
   }
+  std::cout << "IfState: (target)" << target << " Exp: " << *rv << std::endl;
   return rv;
 }

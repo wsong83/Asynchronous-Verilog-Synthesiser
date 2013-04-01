@@ -212,7 +212,9 @@ bool shell::CMD::CMDReportFSM::exec ( const std::string& str, Env * pEnv){
       std::set<shared_ptr<netlist::NetComp> > node_set = tarDesign->RRG->get_node(fsm_name)->ptr;
       BOOST_FOREACH(shared_ptr<netlist::NetComp> pnode, node_set) {
         assert(pnode->get_type() == netlist::NetComp::tSeqBlock);
-        boost::static_pointer_cast<netlist::SeqBlock>(pnode)->ssa_analysis(netlist::VIdentifier(fsm_name));
+        // use the local name rather than the full name
+        boost::static_pointer_cast<netlist::SeqBlock>(pnode)->
+          ssa_analysis(netlist::VIdentifier(tarDesign->RRG->get_node(fsm_name)->name));
       }
     }
   }

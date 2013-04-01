@@ -441,6 +441,7 @@ shared_ptr<Expression> netlist::Block::get_combined_expression(const VIdentifier
       rv = mexp;
     }
   }
+  std::cout << "Block: (target)" << target << " Exp: " <<*rv << std::endl;
   return rv;
 }
 
