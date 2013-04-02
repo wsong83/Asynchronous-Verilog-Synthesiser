@@ -1301,7 +1301,6 @@ list<OpPair> netlist::Operation::breakToCases() const {
             rv.push_back(OpPair(np_1, np1_2));
           } else {
             shared_ptr<Operation> np0_2(p0.second->deep_copy());
-            np0_2.reset(new Operation(oULRev, np0_2));
             shared_ptr<Operation> np1_2(p1.second->deep_copy());
             rv.push_back(OpPair(np0_2, np1_2));            
           }

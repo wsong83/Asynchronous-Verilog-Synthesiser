@@ -76,7 +76,8 @@ namespace netlist {
 
     // state space analysis
     // extract the SSA condition
-    std::pair<bool, std::list<SSA_CONDITION_TYPE> > extract_ssa_condition(const VIdentifier&) const;
+    // std::pair<bool, std::list<SSA_CONDITION_TYPE> > 
+    void extract_ssa_condition(const VIdentifier&) const;
     
   private:
     // data
