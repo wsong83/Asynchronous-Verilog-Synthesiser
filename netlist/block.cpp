@@ -437,11 +437,16 @@ shared_ptr<Expression> netlist::Block::get_combined_expression(const VIdentifier
   BOOST_FOREACH(shared_ptr<NetComp> stm, statements) {
     shared_ptr<Expression> mexp = stm->get_combined_expression(target);
     if(mexp) {
+      if(rv) {
+        std::cout << "something is wrong about this." << std::endl;
+        std::cout << *rv << std::endl;
+        std::cout << *mexp << std::endl;
+      }
       assert(!rv);
       rv = mexp;
     }
   }
-  std::cout << "Block: (target)" << target << " Exp: " <<*rv << std::endl;
+  //std::cout << "Block: (target)" << target << " Exp: " <<*rv << std::endl;
   return rv;
 }
 

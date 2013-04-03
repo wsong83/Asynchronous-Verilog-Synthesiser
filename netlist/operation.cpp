@@ -1149,7 +1149,7 @@ void netlist::Operation::reduce_Question() {
 
 
 list<OpPair> netlist::Operation::breakToCases() const {
-  std::cout << "breakToCases: " << *this << std::endl;
+  //std::cout << "breakToCases: " << *this << std::endl;
   list<OpPair> rv;
   switch(otype) {
   case oNum:
@@ -1329,12 +1329,12 @@ list<OpPair> netlist::Operation::breakToCases() const {
     assert(0 == "wrong operation type");
   }
 
-  std::cout << "result: " << std::endl;
-  BOOST_FOREACH(OpPair p, rv) {
-    if(p.first)
-      std::cout << "[" << *(p.first) << "; " << *(p.second) << "]" << std::endl;
-    else
-      std::cout << "[" << "; " << *(p.second) << "]" << std::endl;
-  }
+  //std::cout << "result: " << std::endl;
+  //BOOST_FOREACH(OpPair p, rv) {
+  //  if(p.first)
+  //    std::cout << "[" << *(p.first) << "; " << *(p.second) << "]" << std::endl;
+  //  else
+  //    std::cout << "[" << "; " << *(p.second) << "]" << std::endl;
+  //}
   return rv;
 }

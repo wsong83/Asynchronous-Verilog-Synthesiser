@@ -305,6 +305,7 @@ void netlist::CaseState::replace_variable(const VIdentifier& var, const Number& 
 }
 
 shared_ptr<Expression> netlist::CaseState::get_combined_expression(const VIdentifier& target) const {
+  //std::cout << *this << std::endl;
   bool has_default = false;
   bool target_found = false;
   typedef std::pair<list<shared_ptr<Expression> >, shared_ptr<Expression> > cexp_type;
@@ -342,11 +343,14 @@ shared_ptr<Expression> netlist::CaseState::get_combined_expression(const VIdenti
         cond = case_exp;
       }
     }
-    if(m_case_exps.back().second)
-      rv.reset(cond->append(Operation::oQuestion, *(m_case_exps.back().second), *rv));
-    else {
+    if(m_case_exps.back().second) {
+      cond->append(Operation::oQuestion, *(m_case_exps.back().second), *rv);
+      //rv.reset(cond->append(Operation::oQuestion, *(m_case_exps.back().second), *rv));
+      rv = cond;
+    } else {
       Expression self_loop(target);
-      rv.reset(cond->append(Operation::oQuestion, self_loop, *rv));
+      cond->append(Operation::oQuestion, self_loop, *rv);
+      rv = cond;
     }
     m_case_exps.pop_back();
   }
