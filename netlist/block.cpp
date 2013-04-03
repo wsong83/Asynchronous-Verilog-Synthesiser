@@ -438,11 +438,9 @@ shared_ptr<Expression> netlist::Block::get_combined_expression(const VIdentifier
     shared_ptr<Expression> mexp = stm->get_combined_expression(target);
     if(mexp) {
       if(rv) {
-        std::cout << "something is wrong about this." << std::endl;
-        std::cout << *rv << std::endl;
-        std::cout << *mexp << std::endl;
+        G_ENV->error("ANA-SSA-0", toString(target), toString(*rv), toString(*mexp));
       }
-      assert(!rv);
+      //assert(!rv);
       rv = mexp;
     }
   }

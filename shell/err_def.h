@@ -44,6 +44,10 @@ ERR_DEFINE("PARSER-1",
            EInfo,   1, 
            "reading in \"%1%\".");
 
+ERR_DEFINE("ANA-SSA-0",
+           EInfo,   3,
+           "register \"%1%\" has two sequential assignements, which may confuse SSA analysis. (1) %2% (2) %3%");
+
 ERR_DEFINE("ELAB-0", 
            EInfo,   2, 
            "elaborating module \"%1%\"%2%.");
