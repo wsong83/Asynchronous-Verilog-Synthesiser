@@ -432,3 +432,19 @@ void netlist::Block::replace_variable(const VIdentifier& var, const Number& num)
   }
 }
 
+shared_ptr<Expression> netlist::Block::get_combined_expression(const VIdentifier& target) const {
+  shared_ptr<Expression> rv;
+  BOOST_FOREACH(shared_ptr<NetComp> stm, statements) {
+    shared_ptr<Expression> mexp = stm->get_combined_expression(target);
+    if(mexp) {
+      if(rv) {
+        G_ENV->error("ANA-SSA-0", toString(target), toString(*rv), toString(*mexp));
+      }
+      //assert(!rv);
+      rv = mexp;
+    }
+  }
+  //std::cout << "Block: (target)" << target << " Exp: " <<*rv << std::endl;
+  return rv;
+}
+

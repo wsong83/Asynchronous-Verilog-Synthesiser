@@ -30,6 +30,9 @@
 #define AV_H_EXPRESSION_
 
 namespace netlist {
+
+  // a condition for a sub-clause
+  typedef std::pair<boost::shared_ptr<Expression>, boost::shared_ptr<Expression> > SSA_CONDITION_TYPE;
   
   class Expression : public NetComp {
   public:
@@ -58,10 +61,10 @@ namespace netlist {
     void reduce();               // try to reduce the equation
     
     // develope the equation
-    void append(Operation::operation_t);
-    void append(Operation::operation_t, Expression&);
-    void append(Operation::operation_t, Expression&, Expression&);
-    void concatenate(const Expression&); // concatenate the number in two expressions
+    Expression* append(Operation::operation_t);
+    Expression* append(Operation::operation_t, Expression&);
+    Expression* append(Operation::operation_t, Expression&, Expression&);
+    Expression* concatenate(const Expression&); // concatenate the number in two expressions
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
@@ -70,9 +73,15 @@ namespace netlist {
     NETLIST_DB_DECL;
     NETLIST_SCAN_VARS;
     NETLIST_REPLACE_VARIABLE;
+
+    // state space analysis
+    // extract the SSA condition
+    // std::pair<bool, std::list<SSA_CONDITION_TYPE> > 
+    void extract_ssa_condition(const VIdentifier&) const;
     
   private:
     // data
+    Expression(boost::shared_ptr<Operation>); // internal use
     boost::shared_ptr<Operation> eqn;
     
   };

@@ -56,12 +56,14 @@ namespace {
   struct Argument {
     bool bHelp;                 // show help information
     bool bFast;                 // use the fast algorithm
+    bool bSpace;                // space analysis
     bool bVerbose;              // show extra information
     std::string sDesign;        // target design
     
     Argument() : 
       bHelp(false),
       bFast(false),
+      bSpace(false),
       bVerbose(false),
       sDesign("") {}
   };
@@ -72,6 +74,7 @@ BOOST_FUSION_ADAPT_STRUCT
  Argument,
  (bool, bHelp)
  (bool, bFast)
+ (bool, bSpace)
  (bool, bVerbose)
  (std::string, sDesign)
  )
@@ -93,8 +96,9 @@ namespace {
       args = lit('-') >> 
         ( (lit("help")    >> blanks)                        [at_c<0>(_r1) = true] ||
           (lit("fast")    >> blanks)                        [at_c<1>(_r1) = true] ||
-          (lit("verbose") >> blanks)                        [at_c<2>(_r1) = true] ||
-          (lit("design") >> blanks >> identifier >> blanks) [at_c<3>(_r1) = _1]
+          (lit("space")   >> blanks)                        [at_c<2>(_r1) = true] ||
+          (lit("verbose") >> blanks)                        [at_c<3>(_r1) = true] ||
+          (lit("design") >> blanks >> identifier >> blanks) [at_c<4>(_r1) = _1]
           );
       
       start = *(args(_val));
@@ -119,6 +123,7 @@ void shell::CMD::CMDReportFSM::help(Env& gEnv) {
   gEnv.stdOs << "Options:" << endl;
   gEnv.stdOs << "   -help                show this help information." << endl;
   gEnv.stdOs << "   -fast                use the fast algorithm." << endl;
+  gEnv.stdOs << "   -space               shown state space analyses." << endl;
   gEnv.stdOs << "   -verbose             show extra information." << endl;
   gEnv.stdOs << "   -design ID           design name if not the current design." << endl;
 }
@@ -201,6 +206,18 @@ bool shell::CMD::CMDReportFSM::exec ( const std::string& str, Env * pEnv){
   //fsm_graph->write(fhandler);
   //fhandler.close();
   //gEnv.stdOs << "write the simplified FSM connection graph to " << outputFileName << endl;
-  
+
+  if(arg.bSpace) { // show space
+    BOOST_FOREACH(const string& fsm_name, fsm_str) {
+      std::set<shared_ptr<netlist::NetComp> > node_set = tarDesign->RRG->get_node(fsm_name)->ptr;
+      BOOST_FOREACH(shared_ptr<netlist::NetComp> pnode, node_set) {
+        if(pnode->get_type() == netlist::NetComp::tSeqBlock)
+          // use the local name rather than the full name
+          boost::static_pointer_cast<netlist::SeqBlock>(pnode)->
+            ssa_analysis(netlist::VIdentifier(tarDesign->RRG->get_node(fsm_name)->name));
+      }
+    }
+  }
+
   return true;
 }
