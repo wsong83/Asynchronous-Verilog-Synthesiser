@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -276,6 +276,7 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
       //std::cout << s << " ";
     }
     //std::cout << std::endl;
+    G->get_node(t.first)->ptr.insert(get_sp());
   }
 
 
@@ -332,4 +333,11 @@ void netlist::SeqBlock::replace_variable(const VIdentifier& var, const Number& n
     sp.second->replace_variable(var, num);
   }
   Block::replace_variable(var, num);
+}
+
+void netlist::SeqBlock::ssa_analysis(const VIdentifier& sname) const {
+  //std::cout << *this << std::endl;
+  shared_ptr<Expression> combi_exp = Block::get_combined_expression(sname);
+  std::cout << *combi_exp << std::endl;
+  combi_exp->extract_ssa_condition(sname);
 }

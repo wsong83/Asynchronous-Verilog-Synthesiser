@@ -33,6 +33,7 @@
 #include <stack>
 #include <set>
 #include <boost/foreach.hpp>
+#include <boost/tuple/tuple.hpp>
 
 using namespace netlist;
 using std::ostream;
@@ -104,6 +105,12 @@ netlist::Expression::Expression(const location& lloc, const shared_ptr<FuncCall>
   eqn.reset(new Operation(lloc, fc));
 }
 
+netlist::Expression::Expression(shared_ptr<Operation> e) 
+  : NetComp(tExp, e->loc)
+{
+  eqn = e;
+}
+
 netlist::Expression::~Expression() {}
 
 bool netlist::Expression::is_valuable() const {
@@ -153,33 +160,37 @@ void netlist::Expression::db_expunge() {
   eqn->db_expunge();
 }
 
-void netlist::Expression::append(Operation::operation_t otype) {
+Expression* netlist::Expression::append(Operation::operation_t otype) {
   assert(tExp == ctype);     // this object whould be valid
   assert(otype >= Operation::oUPos && otype < Operation::oPower);
   assert(eqn);
 
   eqn.reset(new Operation(otype, eqn));
+  return this;
 }
 
-void netlist::Expression::append(Operation::operation_t otype, Expression& d1) {
+Expression* netlist::Expression::append(Operation::operation_t otype, Expression& d1) {
   assert(tExp == ctype);     // this object whould be valid
   assert(otype >= Operation::oPower && otype < Operation::oQuestion);
   assert(eqn);
 
   eqn.reset(new Operation(otype, eqn, d1.eqn));
+  return this;
 }
 
-void netlist::Expression::append(Operation::operation_t otype, Expression& d1, Expression& d2) {
+Expression* netlist::Expression::append(Operation::operation_t otype, Expression& d1, Expression& d2) {
   assert(tExp == ctype);     // this object whould be valid
   assert(otype >= Operation::oQuestion);
   assert(eqn);
 
   eqn.reset(new Operation(otype, eqn, d1.eqn, d2.eqn));
+  return this;
 }
 
-void netlist::Expression::concatenate(const Expression& rhs) {
+Expression* netlist::Expression::concatenate(const Expression& rhs) {
   assert(eqn->is_valuable() && rhs.eqn->is_valuable());
   eqn->get_num().concatenate(rhs.eqn->get_num());
+  return this;
 }
 
 Expression& netlist::operator+ (Expression& lhs, Expression& rhs) {
@@ -225,4 +236,22 @@ void netlist::Expression::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) cons
 
 void netlist::Expression::replace_variable(const VIdentifier& var, const Number& num) {
   eqn->replace_variable(var, num);
+}
+
+//pair<bool, list<SSA_CONDITION_TYPE> >
+void
+netlist::Expression::extract_ssa_condition( const VIdentifier& sname) const {
+  bool extractable = false;
+  list<OpPair> conditions = eqn->breakToCases();
+
+  // debug
+  std::cout << "SSA Conditions for \"" << sname << "\"" << std::endl;
+  BOOST_FOREACH(OpPair opair, conditions) {
+    if(opair.first)
+      std::cout << "[" << *(opair.first) << "] " << *(opair.second) << std::endl;
+    else
+      std::cout << "[] " << *(opair.second) << std::endl;
+  }
+  std::cout << std::endl;
+  // a lot to be implemented here
 }

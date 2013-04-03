@@ -31,6 +31,7 @@
 #include "sdfg/rtree.hpp"
 #include <boost/foreach.hpp>
 #include <algorithm>
+#include <boost/tuple/tuple.hpp>
 
 using namespace netlist;
 using std::ostream;
@@ -1146,3 +1147,194 @@ void netlist::Operation::reduce_Question() {
   }
 }
 
+
+list<OpPair> netlist::Operation::breakToCases() const {
+  //std::cout << "breakToCases: " << *this << std::endl;
+  list<OpPair> rv;
+  switch(otype) {
+  case oNum:
+  case oVar:
+  case oCon:
+  case oFun: 
+    rv.push_back(OpPair(shared_ptr<Operation>(), shared_ptr<Operation>(deep_copy())));
+    break;
+  case oUPos: 
+    rv = child[0]->breakToCases(); 
+    break;
+  case oUNeg: 
+  case oULRev: 
+  case oURev:
+  case oUAnd:
+  case oUNand:
+  case oUOr:
+  case oUNor:
+  case oUXor:
+  case oUNxor: {
+    BOOST_FOREACH(OpPair p, child[0]->breakToCases()) {
+      p.second.reset(new Operation(otype, p.second));
+      p.second->reduce();
+      rv.push_back(p);
+    }
+    break;
+  }
+  case oPower:   
+  case oTime:   
+  case oDiv:   
+  case oMode:   
+  case oAdd:   
+  case oMinus: 
+  case oRS:
+  case oLS:
+  case oLRS:
+  case oLess:
+  case oLe:
+  case oGreat:
+  case oGe:
+  case oEq:
+  case oNeq:
+  case oCEq:
+  case oCNeq:
+  case oAnd:
+  case oXor:
+  case oNxor:
+  case oOr:
+  case oLAnd:
+  case oLOr: {
+    list<OpPair> lop1 = child[1]->breakToCases();
+    BOOST_FOREACH(OpPair p0, child[0]->breakToCases()) {
+      if(p0.first) {
+        BOOST_FOREACH(OpPair p1, lop1) {
+          if(p1.first) {
+            shared_ptr<Operation> np0_1(p0.first->deep_copy());
+            shared_ptr<Operation> np0_2(p0.second->deep_copy());
+            shared_ptr<Operation> np1_1(p1.first->deep_copy());
+            shared_ptr<Operation> np1_2(p1.second->deep_copy());
+            shared_ptr<Operation> np_1(new Operation(oLAnd, np0_1, np1_1));
+            shared_ptr<Operation> np_2(new Operation(otype, np0_2, np1_2));
+            np_1->reduce();
+            np_2->reduce();
+            rv.push_back(OpPair(np_1, np_2));
+          } else {
+            shared_ptr<Operation> np0_1(p0.first->deep_copy());
+            shared_ptr<Operation> np0_2(p0.second->deep_copy());
+            shared_ptr<Operation> np1_2(p1.second->deep_copy());
+            shared_ptr<Operation> np_2(new Operation(otype, np0_2, np1_2));
+            np_2->reduce();
+            rv.push_back(OpPair(np0_1, np_2));            
+          }
+        }
+      } else {
+        BOOST_FOREACH(OpPair p1, lop1) {
+          if(p1.first) {
+            shared_ptr<Operation> np0_2(p0.second->deep_copy());
+            shared_ptr<Operation> np1_1(p1.first->deep_copy());
+            shared_ptr<Operation> np1_2(p1.second->deep_copy());
+            shared_ptr<Operation> np_2(new Operation(otype, np0_2, np1_2));
+            np_2->reduce();
+            rv.push_back(OpPair(np1_1, np_2));
+          } else {
+            shared_ptr<Operation> np0_2(p0.second->deep_copy());
+            shared_ptr<Operation> np1_2(p1.second->deep_copy());
+            shared_ptr<Operation> np_2(new Operation(otype, np0_2, np1_2));
+            np_2->reduce();
+            rv.push_back(OpPair(p1.first, np_2));            
+          }
+        }
+      }
+    }
+    break;
+  }
+  case oQuestion: {
+    list<OpPair> lop1 = child[1]->breakToCases();
+    list<OpPair> lop2 = child[2]->breakToCases();
+    
+    BOOST_FOREACH(OpPair p0, child[0]->breakToCases()) {
+      if(p0.first) {
+        BOOST_FOREACH(OpPair p1, lop1) {
+          if(p1.first) {
+            shared_ptr<Operation> np0_1(p0.first->deep_copy());
+            shared_ptr<Operation> np0_2(p0.second->deep_copy());
+            shared_ptr<Operation> np1_1(p1.first->deep_copy());
+            shared_ptr<Operation> np1_2(p1.second->deep_copy());
+            shared_ptr<Operation> np_1(new Operation(oLAnd, np0_1, np0_2));
+            np_1.reset(new Operation(oLAnd, np_1, np1_1)); // np_1 = np0_1 && np0_2 && np1_1
+            np_1->reduce();
+            rv.push_back(OpPair(np_1, np1_2));
+          } else {
+            shared_ptr<Operation> np0_1(p0.first->deep_copy());
+            shared_ptr<Operation> np0_2(p0.second->deep_copy());
+            shared_ptr<Operation> np1_2(p1.second->deep_copy());
+            shared_ptr<Operation> np_1(new Operation(oLAnd, np0_1, np0_2));
+            np_1->reduce();
+            rv.push_back(OpPair(np_1, np1_2));            
+          }
+        }
+        BOOST_FOREACH(OpPair p1, lop2) {
+          if(p1.first) {
+            shared_ptr<Operation> np0_1(p0.first->deep_copy());
+            shared_ptr<Operation> np0_2(p0.second->deep_copy());
+            shared_ptr<Operation> np1_1(p1.first->deep_copy());
+            shared_ptr<Operation> np1_2(p1.second->deep_copy());
+            np0_2.reset(new Operation(oULRev, np0_2));
+            shared_ptr<Operation> np_1(new Operation(oLAnd, np0_1, np0_2));
+            np_1.reset(new Operation(oLAnd, np_1, np1_1)); // np_1 = np0_1 && !np0_2 && np1_1
+            np_1->reduce();
+            rv.push_back(OpPair(np_1, np1_2));
+          } else {
+            shared_ptr<Operation> np0_1(p0.first->deep_copy());
+            shared_ptr<Operation> np0_2(p0.second->deep_copy());
+            shared_ptr<Operation> np1_2(p1.second->deep_copy());
+            np0_2.reset(new Operation(oULRev, np0_2));
+            shared_ptr<Operation> np_1(new Operation(oLAnd, np0_1, np0_2));
+            np_1->reduce();
+            rv.push_back(OpPair(np_1, np1_2));            
+          }
+        }        
+      } else {
+        BOOST_FOREACH(OpPair p1, lop1) {
+          if(p1.first) {
+            shared_ptr<Operation> np0_2(p0.second->deep_copy());
+            shared_ptr<Operation> np1_1(p1.first->deep_copy());
+            shared_ptr<Operation> np1_2(p1.second->deep_copy());
+            shared_ptr<Operation> np_1(new Operation(oLAnd, np0_2, np1_1));
+            np_1->reduce();
+            rv.push_back(OpPair(np_1, np1_2));
+          } else {
+            shared_ptr<Operation> np0_2(p0.second->deep_copy());
+            shared_ptr<Operation> np1_2(p1.second->deep_copy());
+            rv.push_back(OpPair(np0_2, np1_2));            
+          }
+        }
+        BOOST_FOREACH(OpPair p1, lop2) {
+          if(p1.first) {
+            shared_ptr<Operation> np0_2(p0.second->deep_copy());
+            shared_ptr<Operation> np1_1(p1.first->deep_copy());
+            shared_ptr<Operation> np1_2(p1.second->deep_copy());
+            np0_2.reset(new Operation(oULRev, np0_2));
+            shared_ptr<Operation> np_1(new Operation(oLAnd, np0_2, np1_1));
+            np_1->reduce();
+            rv.push_back(OpPair(np_1, np1_2));
+          } else {
+            shared_ptr<Operation> np0_2(p0.second->deep_copy());
+            np0_2.reset(new Operation(oULRev, np0_2));
+            shared_ptr<Operation> np1_2(p1.second->deep_copy());
+            rv.push_back(OpPair(np0_2, np1_2));            
+          }
+        }
+      }
+    }
+    break;
+  }
+  default:  // should not run to here
+    assert(0 == "wrong operation type");
+  }
+
+  //std::cout << "result: " << std::endl;
+  //BOOST_FOREACH(OpPair p, rv) {
+  //  if(p.first)
+  //    std::cout << "[" << *(p.first) << "; " << *(p.second) << "]" << std::endl;
+  //  else
+  //    std::cout << "[" << "; " << *(p.second) << "]" << std::endl;
+  //}
+  return rv;
+}

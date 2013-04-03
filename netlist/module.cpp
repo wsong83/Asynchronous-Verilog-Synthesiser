@@ -462,6 +462,9 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
   if(!quiet)
     G_ENV->error("SDFG-EXTRACT-1", name.name);
 
+  if(DFG) return DFG;
+
+  // else, build a new
   shared_ptr<dfgGraph> G(new dfgGraph(name.name));
   
   // put all ports into the list
@@ -473,14 +476,15 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
              case -1: n->type = dfgNode::SDFG_IPORT; break;
              default: ;
              }
-             n->ptr = m.second;
+             n->ptr.insert(m.second);
            });
 
   // put all signals into the list
   for_each(db_var.begin_order(), db_var.end_order(),
            [&](const pair<const VIdentifier, shared_ptr<Variable> >& m) {
              shared_ptr<dfgNode> n = G->add_node(m.first.name, dfgNode::SDFG_DF);
-             n->ptr = m.second;
+             n->ptr.insert(m.second);
+             m.second->pDFGNode = n;
            });
   
   // link port to signals
@@ -504,7 +508,7 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
            [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
              if(m.second->type == Instance::modu_inst) {
                shared_ptr<dfgNode> n = G->add_node(m.first.name, dfgNode::SDFG_MODULE);
-               n->ptr = m.second;
+               n->ptr.insert(m.second);
                shared_ptr<Module> subMod = G_ENV->find_module(m.second->mname);
                if(subMod) { // has sub-module
                  n->child_name = m.second->mname.name;
@@ -513,7 +517,7 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
                }
              } else {           // gate
                shared_ptr<dfgNode> n = G->add_node(m.first.name, dfgNode::SDFG_GATE);
-               n->ptr = m.second;
+               n->ptr.insert(m.second);
              }
            });
 
@@ -526,6 +530,7 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
              m.second->gen_sdfg(G);
            });
 
+  DFG = G;
   return G;
 }
 

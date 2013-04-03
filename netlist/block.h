@@ -149,7 +149,11 @@ namespace netlist {
     using NetComp::gen_sdfg;
     NETLIST_SCAN_VARS;
     NETLIST_REPLACE_VARIABLE;
-
+    
+    // analysis
+    // return the combined expression assigning a signal
+    virtual boost::shared_ptr<Expression> get_combined_expression(const VIdentifier&) const;  
+    
     // data
     BIdentifier name;
     std::list<boost::shared_ptr<NetComp> > statements;   /* a general list to stor the statements */

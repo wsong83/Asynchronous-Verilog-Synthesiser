@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -60,6 +60,10 @@ namespace netlist{
     NETLIST_GEN_SDFG;
     NETLIST_REPLACE_VARIABLE;
     
+
+    // state space analysis
+    void ssa_analysis(const VIdentifier& sname) const;
+
     // data
     bool sensitive;                                         /* whether this is a sensitive block, top level block */
     std::list<std::pair<bool, boost::shared_ptr<Expression> > > slist_pulse; /* pulse sensitive list */

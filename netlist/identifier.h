@@ -189,6 +189,7 @@ namespace netlist {
     bool db_registered() const { return uid != 0; }
     void reset_uid(unsigned int id) { uid = id; } /* only used by Variable::get_id() */
     void reduce();
+    std::set<boost::shared_ptr<NetComp> > get_drivers() const; // get the driving sequential block or continuous assignment of this variable
 
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;

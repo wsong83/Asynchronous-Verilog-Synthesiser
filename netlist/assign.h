@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -57,6 +57,7 @@ namespace netlist {
     BIdentifier name;                /* as a key in the database, it has no practical meaning */
     boost::shared_ptr<LConcatenation> lval; /* the left-value is a left-concatenation with one or multiple identifiers */
     boost::shared_ptr<Expression> rexp;     /* the right-side expression */
+    virtual boost::shared_ptr<Expression> get_combined_expression(const VIdentifier&) const;
 
   private:
     bool blocking;                   /* true when it is a blocking assignment */

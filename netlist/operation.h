@@ -33,6 +33,9 @@
 
 namespace netlist {
 
+  // operation pair
+  typedef std::pair<boost::shared_ptr<Operation>, boost::shared_ptr<Operation> > OpPair;
+
   class Operation : public NetComp {
   public:
     enum operation_t {
@@ -128,6 +131,10 @@ namespace netlist {
     NETLIST_SCAN_VARS;
     NETLIST_REPLACE_VARIABLE;
 
+    // state space analysis
+    std::list<OpPair> breakToCases() const; // break the expression of a tree of blocks into cases
+    
+
   private:
     operation_t otype;
     bool valuable;
@@ -173,6 +180,9 @@ namespace netlist {
     void reduce_LAnd();
     void reduce_LOr();
     void reduce_Question();
+
+    // convert the operator to lower level
+    void convert_ULRev();
   };
 
   NETLIST_STREAMOUT(Operation);

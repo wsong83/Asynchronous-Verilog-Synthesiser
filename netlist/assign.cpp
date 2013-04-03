@@ -108,6 +108,7 @@ void netlist::Assign::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
     BOOST_FOREACH(const string& s, dsig) {
       G->add_edge(s, SDFG::dfgEdge::SDFG_DP, s, t.first);
     }
+    G->get_node(t.first)->ptr.insert(get_sp());
   }  
 }
 
@@ -140,4 +141,14 @@ Assign* netlist::Assign::deep_copy() const {
 void netlist::Assign::replace_variable(const VIdentifier& var, const Number& num) {
   lval->replace_variable(var, num);
   rexp->replace_variable(var, num);
+}
+
+shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifier& target) const {
+  shared_ptr<SDFG::RForest> lrf(new SDFG::RForest());
+  shared_ptr<Expression> rv;
+  lval->scan_vars(lrf, false);
+  if(lrf->tree.count(target.name)) {
+    rv.reset(rexp->deep_copy());
+  } 
+  return rv;
 }
