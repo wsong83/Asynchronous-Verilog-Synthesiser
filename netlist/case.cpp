@@ -337,6 +337,8 @@ shared_ptr<Expression> netlist::CaseState::get_combined_expression(const VIdenti
     shared_ptr<Expression> cond;
     BOOST_FOREACH(shared_ptr<Expression> e, m_case_exps.back().first) {
       shared_ptr<Expression> case_exp(e->deep_copy());
+      shared_ptr<Expression> case_var(exp->deep_copy());
+      case_exp->append(Operation::oCEq, *case_var);
       if(cond) {
         cond->append(Operation::oLOr, *case_exp);
       } else {
