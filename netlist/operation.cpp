@@ -644,6 +644,14 @@ void netlist::Operation::reduce_ULRev() {
     child.clear();
     otype = oNum;
     valuable = true;
+  } else {                      // other type of reduction
+    switch(child[0]->otype) {
+    case oULRev:
+      *this = *(child[0]->child[0]);
+      break;
+    default:
+      /* nothing to do */;
+    }
   }
 }
 
