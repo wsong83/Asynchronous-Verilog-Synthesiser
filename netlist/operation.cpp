@@ -1253,82 +1253,50 @@ list<OpPair> netlist::Operation::breakToCases() const {
     break;
   }
   case oQuestion: {
-    list<OpPair> lop1 = child[1]->breakToCases();
-    list<OpPair> lop2 = child[2]->breakToCases();
+    list<OpPair> op0 = child[0]->breakToCases();
+    list<OpPair> op1 = child[1]->breakToCases();
+    list<OpPair> op2 = child[2]->breakToCases();
     
-    BOOST_FOREACH(OpPair p0, child[0]->breakToCases()) {
-      if(p0.first) {
-        BOOST_FOREACH(OpPair p1, lop1) {
-          if(p1.first) {
-            shared_ptr<Operation> np0_1(p0.first->deep_copy());
-            shared_ptr<Operation> np0_2(p0.second->deep_copy());
-            shared_ptr<Operation> np1_1(p1.first->deep_copy());
-            shared_ptr<Operation> np1_2(p1.second->deep_copy());
-            shared_ptr<Operation> np_1(new Operation(oLAnd, np0_1, np0_2));
-            np_1.reset(new Operation(oLAnd, np_1, np1_1)); // np_1 = np0_1 && np0_2 && np1_1
-            np_1->reduce();
-            rv.push_back(OpPair(np_1, np1_2));
-          } else {
-            shared_ptr<Operation> np0_1(p0.first->deep_copy());
-            shared_ptr<Operation> np0_2(p0.second->deep_copy());
-            shared_ptr<Operation> np1_2(p1.second->deep_copy());
-            shared_ptr<Operation> np_1(new Operation(oLAnd, np0_1, np0_2));
-            np_1->reduce();
-            rv.push_back(OpPair(np_1, np1_2));            
+    BOOST_FOREACH(OpPair A, op0) {
+      BOOST_FOREACH(OpPair B, op1) {
+        shared_ptr<Operation> d(B.second->deep_copy());
+        shared_ptr<Operation> bAs(A.second->deep_copy());
+        shared_ptr<Operation> c;
+        if(A.first) {
+          shared_ptr<Operation> bAf(A.first->deep_copy());
+          c.reset(new Operation(oLAnd, bAf, bAs));
+          if(B.first) {  // A.f && A.s && B.f  -> B.s
+            shared_ptr<Operation> bBf(B.first->deep_copy());
+            c.reset(new Operation(oLAnd, c, bBf));
+          } // else A.f && A.s  -> B.s     
+        } else {
+          if(B.first) {  // A.s && B.f -> B.s
+            shared_ptr<Operation> bBf(B.first->deep_copy());
+            c.reset(new Operation(oLAnd, bAs, bBf));
+          } else {       // A.s -> B.s
+            c = bAs;
           }
         }
-        BOOST_FOREACH(OpPair p1, lop2) {
-          if(p1.first) {
-            shared_ptr<Operation> np0_1(p0.first->deep_copy());
-            shared_ptr<Operation> np0_2(p0.second->deep_copy());
-            shared_ptr<Operation> np1_1(p1.first->deep_copy());
-            shared_ptr<Operation> np1_2(p1.second->deep_copy());
-            np0_2.reset(new Operation(oULRev, np0_2));
-            shared_ptr<Operation> np_1(new Operation(oLAnd, np0_1, np0_2));
-            np_1.reset(new Operation(oLAnd, np_1, np1_1)); // np_1 = np0_1 && !np0_2 && np1_1
-            np_1->reduce();
-            rv.push_back(OpPair(np_1, np1_2));
-          } else {
-            shared_ptr<Operation> np0_1(p0.first->deep_copy());
-            shared_ptr<Operation> np0_2(p0.second->deep_copy());
-            shared_ptr<Operation> np1_2(p1.second->deep_copy());
-            np0_2.reset(new Operation(oULRev, np0_2));
-            shared_ptr<Operation> np_1(new Operation(oLAnd, np0_1, np0_2));
-            np_1->reduce();
-            rv.push_back(OpPair(np_1, np1_2));            
-          }
-        }        
-      } else {
-        BOOST_FOREACH(OpPair p1, lop1) {
-          if(p1.first) {
-            shared_ptr<Operation> np0_2(p0.second->deep_copy());
-            shared_ptr<Operation> np1_1(p1.first->deep_copy());
-            shared_ptr<Operation> np1_2(p1.second->deep_copy());
-            shared_ptr<Operation> np_1(new Operation(oLAnd, np0_2, np1_1));
-            np_1->reduce();
-            rv.push_back(OpPair(np_1, np1_2));
-          } else {
-            shared_ptr<Operation> np0_2(p0.second->deep_copy());
-            shared_ptr<Operation> np1_2(p1.second->deep_copy());
-            rv.push_back(OpPair(np0_2, np1_2));            
-          }
+        rv.push_back(OpPair(c,d));
+      }
+      
+      BOOST_FOREACH(OpPair B, op2) {
+        shared_ptr<Operation> d(B.second->deep_copy());
+        shared_ptr<Operation> c;
+        if(A.first) {
+          shared_ptr<Operation> bAf(A.first->deep_copy());
+          c = bAf;
+          if(B.first) {  // A.f && B.f  -> B.s
+            shared_ptr<Operation> bBf(B.first->deep_copy());
+            c.reset(new Operation(oLAnd, c, bBf));
+          } // else A.f -> B.s     
+        } else {
+          if(B.first) {  // B.f -> B.s
+            shared_ptr<Operation> bBf(B.first->deep_copy());
+            c = bBf;
+          } // else B.s
         }
-        BOOST_FOREACH(OpPair p1, lop2) {
-          if(p1.first) {
-            shared_ptr<Operation> np0_2(p0.second->deep_copy());
-            shared_ptr<Operation> np1_1(p1.first->deep_copy());
-            shared_ptr<Operation> np1_2(p1.second->deep_copy());
-            np0_2.reset(new Operation(oULRev, np0_2));
-            shared_ptr<Operation> np_1(new Operation(oLAnd, np0_2, np1_1));
-            np_1->reduce();
-            rv.push_back(OpPair(np_1, np1_2));
-          } else {
-            shared_ptr<Operation> np0_2(p0.second->deep_copy());
-            np0_2.reset(new Operation(oULRev, np0_2));
-            shared_ptr<Operation> np1_2(p1.second->deep_copy());
-            rv.push_back(OpPair(np0_2, np1_2));            
-          }
-        }
+        rv.push_back(OpPair(c,d));
       }
     }
     break;
