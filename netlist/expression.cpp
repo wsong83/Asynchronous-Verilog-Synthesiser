@@ -245,7 +245,7 @@ netlist::Expression::extract_ssa_condition( const VIdentifier& sname) const {
   list<OpPair> conditions = eqn->breakToCases();
 
   // debug
-  std::cout << "SSA Conditions for \"" << sname << "\"" << std::endl;
+  //std::cout << "SSA Conditions for \"" << sname << "\"" << std::endl;
   BOOST_FOREACH(OpPair opair, conditions) {
     if(opair.first)
       std::cout << "[" << *(opair.first) << "] " << *(opair.second) << std::endl;
