@@ -62,7 +62,7 @@ namespace netlist{
     
 
     // state space analysis
-    void ssa_analysis(const VIdentifier& sname) const;
+    void ssa_analysis(const VIdentifier& sname);
 
     // data
     bool sensitive;                                         /* whether this is a sensitive block, top level block */

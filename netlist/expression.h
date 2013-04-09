@@ -78,7 +78,8 @@ namespace netlist {
     // extract the SSA condition
     // std::pair<bool, std::list<SSA_CONDITION_TYPE> > 
     void extract_ssa_condition(const VIdentifier&) const;
-    
+    void replace_variable(const VIdentifier&, boost::shared_ptr<Expression>); // replace a vid with an expression
+
   private:
     // data
     Expression(boost::shared_ptr<Operation>); // internal use

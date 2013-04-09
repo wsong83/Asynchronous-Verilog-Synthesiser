@@ -59,6 +59,8 @@ namespace netlist {
     /* elaborate the design */
     bool elaborate(std::deque<boost::shared_ptr<Module> >&,
                    std::map<MIdentifier, boost::shared_ptr<Module> > &); 
+    virtual boost::shared_ptr<NetComp> get_sp();
+    virtual Module* get_module();
 
     // helpers
     virtual void set_name(const MIdentifier& nm) { name = nm; named=true;}
@@ -68,8 +70,6 @@ namespace netlist {
     virtual boost::shared_ptr<Variable>  gfind_var      (const VIdentifier&) const; 
     virtual boost::shared_ptr<NetComp>   search         (const std::string&) const; /* find any item using its name */
     virtual void set_father();                             /* set the father pointer to all sub-elements */
-    /* return a pointer of the top-level module */
-    virtual Block* get_module() { return this; }
     /* calculate the module name according to the parameters */
     bool calculate_name( std::string&, 
                          const std::list<boost::shared_ptr<ParaConn> >& 

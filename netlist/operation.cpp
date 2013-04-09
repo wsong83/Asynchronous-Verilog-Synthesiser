@@ -574,6 +574,72 @@ void netlist::Operation::replace_variable(const VIdentifier& var, const Number& 
   }
 }
 
+void netlist::Operation::replace_variable(const VIdentifier& var, shared_ptr<Expression> reqn) {
+  switch(otype) {
+  case oVar: {
+    if(get_var() == var) {      // found rand replace
+      shared_ptr<Expression> tmp_exp(reqn->deep_copy());
+      *this = tmp_exp->get_op();
+    }
+    break;
+  }
+  case oCon: {
+    get_con().replace_variable(var, reqn);
+    break;
+  }
+  case oNULL:
+  case oNum: break;
+  case oUPos:
+  case oUNeg:
+  case oULRev:
+  case oURev:
+  case oUAnd:
+  case oUNand:
+  case oUOr:
+  case oUNor:
+  case oUXor:
+  case oUNxor: {
+    child[0]->replace_variable(var, reqn);
+    break;
+  }
+  case oPower:
+  case oTime:
+  case oDiv:
+  case oMode:
+  case oAdd:
+  case oMinus:
+  case oRS:
+  case oLS:
+  case oLRS:
+  case oLess:
+  case oLe:
+  case oGreat:
+  case oGe:
+  case oEq:
+  case oNeq:
+  case oCEq:
+  case oCNeq:
+  case oAnd:
+  case oXor:
+  case oNxor:
+  case oOr:
+  case oLAnd:
+  case oLOr: {
+    child[0]->replace_variable(var, reqn);
+    child[1]->replace_variable(var, reqn);
+    break;
+  }
+  case oQuestion: {
+    child[0]->replace_variable(var, reqn);
+    child[1]->replace_variable(var, reqn);
+    child[2]->replace_variable(var, reqn);
+    break;    
+  }
+  default:
+    assert(0 == "wrong operation type!");
+  }
+}
+
 void netlist::Operation::reduce_Num() {
   assert(child.size() == 0);
   valuable = true;

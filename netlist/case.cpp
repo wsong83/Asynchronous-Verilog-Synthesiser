@@ -304,7 +304,7 @@ void netlist::CaseState::replace_variable(const VIdentifier& var, const Number& 
   }
 }
 
-shared_ptr<Expression> netlist::CaseState::get_combined_expression(const VIdentifier& target) const {
+shared_ptr<Expression> netlist::CaseState::get_combined_expression(const VIdentifier& target) {
   //std::cout << *this << std::endl;
   bool has_default = false;
   bool target_found = false;
