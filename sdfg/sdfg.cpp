@@ -995,7 +995,7 @@ list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_in_nodes_cb(vertex_descriptor nid
     }
   } 
   
-  if(pn->type != dfgNode::SDFG_IPORT) { // have internal outputs
+  if(pn->type != dfgNode::SDFG_IPORT) { // have internal inputs
     GType::inv_adjacency_iterator nit, nend; //!! why inv_adjacency_iterator is in Graph instead of Trait?
     for(boost::tie(nit, nend) = boost::inv_adjacent_vertices(nid, bg_);
         nit != nend; ++nit) {
