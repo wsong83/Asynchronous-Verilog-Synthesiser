@@ -304,7 +304,7 @@ void netlist::CaseState::replace_variable(const VIdentifier& var, const Number& 
   }
 }
 
-shared_ptr<Expression> netlist::CaseState::get_combined_expression(const VIdentifier& target) const {
+shared_ptr<Expression> netlist::CaseState::get_combined_expression(const VIdentifier& target) {
   //std::cout << *this << std::endl;
   bool has_default = false;
   bool target_found = false;
@@ -337,6 +337,8 @@ shared_ptr<Expression> netlist::CaseState::get_combined_expression(const VIdenti
     shared_ptr<Expression> cond;
     BOOST_FOREACH(shared_ptr<Expression> e, m_case_exps.back().first) {
       shared_ptr<Expression> case_exp(e->deep_copy());
+      shared_ptr<Expression> case_var(exp->deep_copy());
+      case_exp->append(Operation::oCEq, *case_var);
       if(cond) {
         cond->append(Operation::oLOr, *case_exp);
       } else {

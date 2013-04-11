@@ -104,7 +104,7 @@ namespace SDFG {
     void write(void *, ogdf::GraphAttributes *);
     bool read(const pugi::xml_node&);
     bool read(void * const, ogdf::GraphAttributes * const);
-    boost::shared_ptr<dfgNode> flatten() const;   // move this node to one module higher
+    boost::shared_ptr<dfgNode> flatten() const;   // move this node to one module higher, not sure how this work, do not use it
     std::string get_hier_name() const;            // get the hierarchical name of the name
     std::string get_full_name() const;            // get the hierarchical name of the name
     void set_hier_name(const std::string&);       // set the hierarchical name
@@ -269,7 +269,7 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     void remove_port(const std::string&);
     
     // other modifications
-    std::list<boost::shared_ptr<dfgNode> > flatten() const;             // move all internal nodes to upper layer
+    std::list<boost::shared_ptr<dfgNode> > flatten() const;             // move all internal nodes to upper layer, not sure how it works, do not use it
 
     // get nodes and edges
     DFGG_FH_RF1(boost::shared_ptr<dfgEdge>, get_edge, const);

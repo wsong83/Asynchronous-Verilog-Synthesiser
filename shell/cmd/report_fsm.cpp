@@ -209,6 +209,7 @@ bool shell::CMD::CMDReportFSM::exec ( const std::string& str, Env * pEnv){
 
   if(arg.bSpace) { // show space
     BOOST_FOREACH(const string& fsm_name, fsm_str) {
+      gEnv.stdOs << "SSA Conditions for \"" << fsm_name << "\"" << std::endl;
       std::set<shared_ptr<netlist::NetComp> > node_set = tarDesign->RRG->get_node(fsm_name)->ptr;
       BOOST_FOREACH(shared_ptr<netlist::NetComp> pnode, node_set) {
         if(pnode->get_type() == netlist::NetComp::tSeqBlock)

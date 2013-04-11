@@ -441,6 +441,14 @@ bool netlist::Module::elaborate(std::deque<shared_ptr<Module> >& mfifo,
   return rv;
 }
 
+shared_ptr<NetComp> netlist::Module::get_sp() {
+  return shared_from_this();
+}
+
+Module* netlist::Module::get_module() {
+  return this;
+}
+
 void netlist::Module::get_hier(list<shared_ptr<Module> >& mfifo, 
                                std::set<MIdentifier> & mmap) const{
   list<shared_ptr<Module> > myqueue;

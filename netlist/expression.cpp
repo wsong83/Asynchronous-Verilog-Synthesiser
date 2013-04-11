@@ -238,6 +238,10 @@ void netlist::Expression::replace_variable(const VIdentifier& var, const Number&
   eqn->replace_variable(var, num);
 }
 
+void netlist::Expression::replace_variable(const VIdentifier& var, shared_ptr<Expression> rexp) {
+  eqn->replace_variable(var, rexp);
+}
+
 //pair<bool, list<SSA_CONDITION_TYPE> >
 void
 netlist::Expression::extract_ssa_condition( const VIdentifier& sname) const {
@@ -245,7 +249,7 @@ netlist::Expression::extract_ssa_condition( const VIdentifier& sname) const {
   list<OpPair> conditions = eqn->breakToCases();
 
   // debug
-  std::cout << "SSA Conditions for \"" << sname << "\"" << std::endl;
+  //std::cout << "SSA Conditions for \"" << sname << "\"" << std::endl;
   BOOST_FOREACH(OpPair opair, conditions) {
     if(opair.first)
       std::cout << "[" << *(opair.first) << "] " << *(opair.second) << std::endl;

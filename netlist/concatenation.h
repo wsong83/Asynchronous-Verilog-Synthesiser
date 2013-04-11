@@ -61,6 +61,7 @@ namespace netlist {
     NETLIST_DB_DECL;
     NETLIST_SCAN_VARS;
     NETLIST_REPLACE_VARIABLE;
+    void replace_variable(const VIdentifier&, boost::shared_ptr<Expression>); // replace a vid with an expression     
 
     boost::shared_ptr<Expression> exp;
     std::list<boost::shared_ptr<ConElem> > con;
@@ -93,6 +94,7 @@ namespace netlist {
     NETLIST_DB_DECL;
     NETLIST_SCAN_VARS;
     NETLIST_REPLACE_VARIABLE;
+    void replace_variable(const VIdentifier&, boost::shared_ptr<Expression>); // replace a vid with an expression 
 
     // data
     std::list<boost::shared_ptr<ConElem> > data;

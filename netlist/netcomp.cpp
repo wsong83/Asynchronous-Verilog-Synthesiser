@@ -126,12 +126,17 @@ void netlist::NetComp::scan_vars(boost::shared_ptr<SDFG::RForest>, bool) const {
   assert(0 == "scan_vars() of NetComp is used");
 }
     
-shared_ptr<NetComp> netlist::NetComp::get_sp() {
+shared_ptr<NetComp> netlist::NetComp::get_sp(){
   return shared_from_this();
 }
 
-shared_ptr<Expression> netlist::NetComp::get_combined_expression(const VIdentifier&) const {
+shared_ptr<Expression> netlist::NetComp::get_combined_expression(const VIdentifier&) {
   std::cerr << "ERROR!!, the get_combined_expression() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << endl;
   assert(0 == "get_combined_expression() of NetComp is used");
   return shared_ptr<Expression>();
+}
+
+Module* netlist::NetComp::get_module(){
+  if(father != NULL) return father->get_module();
+  else               return NULL;
 }
