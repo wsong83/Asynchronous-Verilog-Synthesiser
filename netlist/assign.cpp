@@ -160,7 +160,7 @@ shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifie
           bool found_source = false;
           while(!found_source) {
             assert(pnode);
-            std::cout << pnode->get_full_name() << std::endl;
+            //std::cout << pnode->get_full_name() << std::endl;
             switch(pnode->type) {
             case SDFG::dfgNode::SDFG_DF: {
               pnode = (pnode->pg->get_in_nodes_cb(pnode)).front();
@@ -189,7 +189,10 @@ shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifie
             shared_ptr<Expression> sig_exp;
             BOOST_FOREACH(shared_ptr<NetComp> ncomp, pnode->ptr) {
               if(ncomp->ctype != tVariable) {
-                sig_exp = ncomp->get_combined_expression(target);
+                //std::cout << *ncomp << std::endl;
+                //std::cout << pnode->name << std::endl;
+                sig_exp = ncomp->get_combined_expression(VIdentifier(pnode->name));
+                //std::cout << *sig_exp << std::endl;
                 break;
               }
             }
