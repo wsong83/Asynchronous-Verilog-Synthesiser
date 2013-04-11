@@ -133,7 +133,7 @@ namespace netlist {
 
     // state space analysis
     std::list<OpPair> breakToCases() const; // break the expression of a tree of blocks into cases
-    
+    void replace_variable(const VIdentifier&, boost::shared_ptr<Expression>); // replace a vid with an expression    
 
   private:
     operation_t otype;

@@ -969,7 +969,14 @@ list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_out_nodes_cb(vertex_descriptor ni
     GraphTraits::adjacency_iterator nit, nend;
     for(boost::tie(nit, nend) = boost::adjacent_vertices(nid, bg_);
         nit != nend; ++nit) {
-      rv.push_back(nodes.find(*nit)->second);
+      shared_ptr<dfgNode> osrc = nodes.find(*nit)->second;
+      if(osrc->type == dfgNode::SDFG_MODULE) { // it is a module entity, go further
+        BOOST_FOREACH(const string& sname, osrc->sig2port.find(pn->name)->second) {
+          rv.push_back(osrc->child->get_node(sname));
+        }
+      } else {
+        rv.push_back(osrc);
+      }
     }
   }
   return rv;
@@ -995,13 +1002,21 @@ list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_in_nodes_cb(vertex_descriptor nid
     }
   } 
   
-  if(pn->type != dfgNode::SDFG_IPORT) { // have internal outputs
+  if(pn->type != dfgNode::SDFG_IPORT) { // have internal inputs
     GType::inv_adjacency_iterator nit, nend; //!! why inv_adjacency_iterator is in Graph instead of Trait?
     for(boost::tie(nit, nend) = boost::inv_adjacent_vertices(nid, bg_);
         nit != nend; ++nit) {
-      rv.push_back(nodes.find(*nit)->second);
+      shared_ptr<dfgNode> isrc = nodes.find(*nit)->second;
+      if(isrc->type == dfgNode::SDFG_MODULE) { // it is a module entity, go further
+        BOOST_FOREACH(const string& sname, isrc->sig2port.find(pn->name)->second) {
+          rv.push_back(isrc->child->get_node(sname));
+        }
+      } else {
+        rv.push_back(isrc);
+      }
     }
   }
+
   return rv;
 }
 

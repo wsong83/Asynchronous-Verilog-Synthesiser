@@ -238,6 +238,10 @@ void netlist::Expression::replace_variable(const VIdentifier& var, const Number&
   eqn->replace_variable(var, num);
 }
 
+void netlist::Expression::replace_variable(const VIdentifier& var, shared_ptr<Expression> rexp) {
+  eqn->replace_variable(var, rexp);
+}
+
 //pair<bool, list<SSA_CONDITION_TYPE> >
 void
 netlist::Expression::extract_ssa_condition( const VIdentifier& sname) const {

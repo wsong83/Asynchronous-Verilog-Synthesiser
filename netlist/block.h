@@ -122,11 +122,6 @@ namespace netlist {
     virtual void set_name(const BIdentifier& nm) { name = nm; named=true;}
     void set_default_name(const BIdentifier& nm) { name = nm; }
     bool is_named() const { return named; }
-    /* return a pointer of the top-level module */
-    virtual Block* get_module() { 
-      if(father != NULL) return father->get_module();
-      else return NULL;
-    }
     
     BIdentifier& new_BId();     /* generate an unused block id */
     IIdentifier& new_IId();     /* generate an unused instance id*/
@@ -152,7 +147,7 @@ namespace netlist {
     
     // analysis
     // return the combined expression assigning a signal
-    virtual boost::shared_ptr<Expression> get_combined_expression(const VIdentifier&) const;  
+    virtual boost::shared_ptr<Expression> get_combined_expression(const VIdentifier&);  
     
     // data
     BIdentifier name;
