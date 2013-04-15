@@ -44,6 +44,8 @@
 #include "cmd/cmd_define.h"
 #include "macro_name.h"
 
+#include <ctime>
+
 using namespace shell;
 using std::endl;
 using std::cout;
@@ -84,6 +86,7 @@ namespace {
   FUNC_WRAPPER     (bool,         CMDReportDFGPath   )
   FUNC_WRAPPER     (bool,         CMDReportFSM       )
   FUNC_WRAPPER     (bool,         CMDReportNetlist   )
+  FUNC_WRAPPER     (bool,         CMDReportPorts     )
   FUNC_WRAPPER     (std::string,  CMDShell           )
   FUNC_WRAPPER     (bool,         CMDSuppressMessage )
   FUNC_WRAPPER     (bool,         CMDUniquify        )
@@ -168,6 +171,7 @@ bool shell::Env::initialise() {
   AVS_ENV_ADD_TCL_CMD(CMDReportDFGPath);
   AVS_ENV_ADD_TCL_CMD(CMDReportFSM);
   AVS_ENV_ADD_TCL_CMD(CMDReportNetlist);
+  AVS_ENV_ADD_TCL_CMD(CMDReportPorts);
   AVS_ENV_ADD_TCL_CMD(CMDShell);
   AVS_ENV_ADD_TCL_CMD(CMDSuppressMessage);
   AVS_ENV_ADD_TCL_CMD(CMDUniquify);
@@ -197,7 +201,15 @@ void shell::Env::show_cmd(bool first_time) {
   if(first_time) {
     stdOs << "       Asynchronous Verilog Synthesis (AVS) System      " << endl;
     stdOs << "--------------------------------------------------------" << endl;
-    stdOs << "Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk>   " << endl;
+
+    // get a time
+    std::time_t rawtime;
+    struct std::tm * timeinfo;
+    std::time (&rawtime);
+    timeinfo = std::localtime(&rawtime);
+
+    stdOs << "Copyright (c) 2011-" << timeinfo->tm_year + 1900;
+    stdOs << " Wei Song <songw@cs.man.ac.uk>   " << endl;
     stdOs << "  Compilation Date: " << __DATE__ << endl;
     stdOs << endl;
   } else {

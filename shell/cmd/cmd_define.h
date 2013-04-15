@@ -59,6 +59,7 @@ namespace shell {
     NEW_TCL_CMD(bool, CMDReportDFGPath);
     NEW_TCL_CMD(bool, CMDReportFSM);
     NEW_TCL_CMD(bool, CMDReportNetlist);
+    NEW_TCL_CMD(bool, CMDReportPorts);
     NEW_TCL_CMD(std::string, CMDShell);
     NEW_TCL_CMD(bool, CMDSuppressMessage);
     NEW_TCL_CMD(bool, CMDUniquify);
