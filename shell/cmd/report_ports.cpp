@@ -94,7 +94,7 @@ namespace {
           (lit("output") >> blanks >> filename >> blanks)   [at_c<2>(_r1) = _1]
           );
       
-      start = +(args(_val));
+      start = *(args(_val));
 
 #ifdef BOOST_SPIRIT_QI_DEBUG
       BOOST_SPIRIT_DEBUG_NODE(args);
@@ -166,7 +166,7 @@ bool shell::CMD::CMDReportPorts::exec ( const std::string& str, Env * pEnv){
   }
   
   // report the design with input/output ports, registers, and instances
-  gEnv.stdOs << "Module \"designName\":" << std::endl;
+  gEnv.stdOs << "Module \"" << designName << "\":" << std::endl;
   // report input ports
   gEnv.stdOs << "[Inputs]" << std::endl;
   netlist::DataBase<netlist::VIdentifier, netlist::Port, true>::DBTL::const_iterator pit, pend;
@@ -179,7 +179,7 @@ bool shell::CMD::CMDReportPorts::exec ( const std::string& str, Env * pEnv){
   gEnv.stdOs << std::endl;
   
   // report outputs
-  gEnv.stdOs << "[Outputs]" << std::endl;
+  gEnv.stdOs << "\n[Outputs]" << std::endl;
   for(pit = tarDesign->db_port.begin_order(), pend = tarDesign->db_port.end_order(); 
       pit != pend; ++pit) {
     if(pit->second->is_out() || pit->second->is_inout()) {
@@ -189,7 +189,7 @@ bool shell::CMD::CMDReportPorts::exec ( const std::string& str, Env * pEnv){
   gEnv.stdOs << std::endl;
   
   // report registers
-  gEnv.stdOs << "[Registers]" << std::endl;
+  gEnv.stdOs << "\n[Registers]" << std::endl;
   netlist::DataBase<netlist::VIdentifier, netlist::Variable, true>::DBTL::const_iterator vit, vend;
   for(vit = tarDesign->db_var.begin_order(), vend = tarDesign->db_var.end_order(); 
       vit != vend; ++vit) {
@@ -200,11 +200,11 @@ bool shell::CMD::CMDReportPorts::exec ( const std::string& str, Env * pEnv){
   gEnv.stdOs << std::endl;
   
   // report instances
-  gEnv.stdOs << "[Instances]" << std::endl;
+  gEnv.stdOs << "\n[Instances]" << std::endl;
   netlist::DataBase<netlist::IIdentifier, netlist::Instance>::DBTM::const_iterator iit, iend;
   for(iit = tarDesign->db_instance.begin(), iend = tarDesign->db_instance.end(); 
       iit != iend; ++iit) {
-    gEnv.stdOs << iit->second->name << "(" << iit->second->mname << "); ";
+    gEnv.stdOs << iit->second->name << "(" << iit->second->mname << "); " << std::endl;;
   }
   gEnv.stdOs << std::endl;
   
