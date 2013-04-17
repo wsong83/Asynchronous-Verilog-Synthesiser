@@ -164,6 +164,9 @@ bool shell::CMD::CMDReportPorts::exec ( const std::string& str, Env * pEnv){
   } else {
     G = tarDesign->DFG;
   }
+
+  // set of output ports
+  std::set<shared_ptr<netlist::Port> > op_set;
   
   // report the design with input/output ports, registers, and instances
   gEnv.stdOs << "Module \"" << designName << "\":" << std::endl;
@@ -184,6 +187,7 @@ bool shell::CMD::CMDReportPorts::exec ( const std::string& str, Env * pEnv){
       pit != pend; ++pit) {
     if(pit->second->is_out() || pit->second->is_inout()) {
       gEnv.stdOs << pit->second->name << "; ";
+      op_set.insert(pit->second);
     }
   }
   gEnv.stdOs << std::endl;
@@ -207,6 +211,15 @@ bool shell::CMD::CMDReportPorts::exec ( const std::string& str, Env * pEnv){
     gEnv.stdOs << iit->second->name << "(" << iit->second->mname << "); " << std::endl;;
   }
   gEnv.stdOs << std::endl;
+
+  // calculate the combined expressions
+  gEnv.stdOs << "\n[Port Expressions]" << std::endl;
+  BOOST_FOREACH(shared_ptr<netlist::Port> p, op_set) {
+    std::cout << "DBG: target " << p->name << std::endl;
+    shared_ptr<netlist::Expression> combi_exp = p->get_combined_expression(p->name);
+    std::cout << "DBG: " << *combi_exp << std::endl;
+    combi_exp->extract_ssa_condition(p->name);
+  }
   
   return true;
 }

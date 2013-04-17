@@ -28,6 +28,9 @@
 
 #include "component.h"
 #include "shell/env.h"
+#include "sdfg/sdfg.hpp"
+#include "sdfg/rtree.hpp"
+#include <boost/foreach.hpp>
 
 using namespace netlist;
 using std::ostream;
@@ -67,6 +70,60 @@ bool netlist::Port::elaborate(std::set<shared_ptr<NetComp> >&,
                               map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > >&) {
   name.reduce();
   return true;
+}
+
+shared_ptr<Expression> netlist::Port::get_combined_expression(const VIdentifier& target) {
+  shared_ptr<SDFG::dfgNode> pnode = get_module()->DFG->get_node(target.name);
+  shared_ptr<Expression> rv(new Expression(target));
+  assert(pnode);
+  bool found_source = false;
+  while(!found_source) {
+    assert(pnode);
+    std::cout << pnode->get_full_name() << std::endl;
+    switch(pnode->type) {
+    case SDFG::dfgNode::SDFG_DF: {
+      if(pnode->ptr.size() > 1) {
+        found_source = true;
+      } else {
+        pnode = (pnode->pg->get_in_nodes_cb(pnode)).front();
+      }
+      break;
+    }
+    case SDFG::dfgNode::SDFG_COMB:
+    case SDFG::dfgNode::SDFG_FF: {
+      found_source = true;
+      break;
+    }
+    case SDFG::dfgNode::SDFG_IPORT: 
+    case SDFG::dfgNode::SDFG_OPORT:   {
+      if((pnode->pg->get_in_nodes_cb(pnode)).size()) {
+        pnode = (pnode->pg->get_in_nodes_cb(pnode)).front(); // get the source from the higher hierarchy
+      } else {
+        found_source = true; // top level
+      }
+      break;
+    }
+    default:
+      assert(0 == "wrong type");
+    }
+  }
+  assert(pnode);
+  std::cout << pnode->get_full_name() << std::endl;
+  if(!(pnode->type & (SDFG::dfgNode::SDFG_FF | SDFG::dfgNode::SDFG_PORT))) {
+    shared_ptr<Expression> sig_exp;
+    BOOST_FOREACH(shared_ptr<NetComp> ncomp, pnode->ptr) {
+      if(ncomp->ctype != tVariable) {
+        //std::cout << *ncomp << std::endl;
+        //std::cout << pnode->name << std::endl;
+        sig_exp = ncomp->get_combined_expression(VIdentifier(pnode->name));
+        //std::cout << *sig_exp << std::endl;
+        break;
+      }
+    }
+    assert(sig_exp);
+    rv->replace_variable(target, sig_exp);
+  }
+  return rv;
 }
 
 Port* netlist::Port::deep_copy() const {
