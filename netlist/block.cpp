@@ -31,6 +31,7 @@
 #include "shell/env.h"
 #include <algorithm>
 #include <boost/foreach.hpp>
+#include "sdfg/sdfg.hpp"
 #include "sdfg/rtree.hpp"
 
 using namespace netlist;
@@ -432,13 +433,13 @@ void netlist::Block::replace_variable(const VIdentifier& var, const Number& num)
   }
 }
 
-shared_ptr<Expression> netlist::Block::get_combined_expression(const VIdentifier& target) {
+shared_ptr<Expression> netlist::Block::get_combined_expression(const VIdentifier& target, std::set<string> s_set) {
   shared_ptr<Expression> rv;
   BOOST_FOREACH(shared_ptr<NetComp> stm, statements) {
-    shared_ptr<Expression> mexp = stm->get_combined_expression(target);
+    shared_ptr<Expression> mexp = stm->get_combined_expression(target, s_set);
     if(mexp) {
       if(rv) {
-        G_ENV->error("ANA-SSA-0", toString(target), toString(*rv), toString(*mexp));
+        G_ENV->error("ANA-SSA-0", get_module()->DFG->get_node(target.name)->get_full_name(), toString(*rv), toString(*mexp));
       }
       //assert(!rv);
       rv = mexp;

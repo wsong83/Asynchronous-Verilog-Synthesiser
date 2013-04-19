@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -72,7 +72,7 @@ bool netlist::Port::elaborate(std::set<shared_ptr<NetComp> >&,
   return true;
 }
 
-shared_ptr<Expression> netlist::Port::get_combined_expression(const VIdentifier& target) {
+shared_ptr<Expression> netlist::Port::get_combined_expression(const VIdentifier& target, std::set<string> s_set) {
   shared_ptr<SDFG::dfgNode> pnode = get_module()->DFG->get_node(target.name);
   shared_ptr<Expression> rv(new Expression(target));
   assert(pnode);
@@ -108,20 +108,28 @@ shared_ptr<Expression> netlist::Port::get_combined_expression(const VIdentifier&
     }
   }
   assert(pnode);
-  std::cout << pnode->get_full_name() << std::endl;
-  if(!(pnode->type & (SDFG::dfgNode::SDFG_FF | SDFG::dfgNode::SDFG_PORT))) {
-    shared_ptr<Expression> sig_exp;
-    BOOST_FOREACH(shared_ptr<NetComp> ncomp, pnode->ptr) {
-      if(ncomp->ctype != tVariable) {
-        //std::cout << *ncomp << std::endl;
-        //std::cout << pnode->name << std::endl;
-        sig_exp = ncomp->get_combined_expression(VIdentifier(pnode->name));
-        //std::cout << *sig_exp << std::endl;
-        break;
+  if(pnode->type & SDFG::dfgNode::SDFG_LATCH) {
+    G_ENV->error("ANA-SSA-1", pnode->get_full_name(), get_module()->DFG->get_node(target.name)->get_full_name());
+  }
+  if(s_set.count(pnode->get_full_name())) {
+    G_ENV->error("ANA-SSA-2", pnode->get_full_name());
+  } else {
+    s_set.insert(pnode->get_full_name());
+    std::cout << pnode->get_full_name() << std::endl;
+    if(!(pnode->type & (SDFG::dfgNode::SDFG_FF | SDFG::dfgNode::SDFG_LATCH | SDFG::dfgNode::SDFG_PORT))) {
+      shared_ptr<Expression> sig_exp;
+      BOOST_FOREACH(shared_ptr<NetComp> ncomp, pnode->ptr) {
+        if(ncomp->ctype != tVariable) {
+          //std::cout << *ncomp << std::endl;
+          //std::cout << pnode->name << std::endl;
+          sig_exp = ncomp->get_combined_expression(VIdentifier(pnode->name), s_set);
+          //std::cout << *sig_exp << std::endl;
+          break;
+        }
       }
+      assert(sig_exp);
+      rv->replace_variable(target, sig_exp);
     }
-    assert(sig_exp);
-    rv->replace_variable(target, sig_exp);
   }
   return rv;
 }

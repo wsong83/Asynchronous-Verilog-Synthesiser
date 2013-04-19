@@ -54,7 +54,7 @@ namespace netlist {
     NETLIST_ELABORATE_DECL;
     NETLIST_SCAN_VARS;
     NETLIST_REPLACE_VARIABLE;
-    virtual boost::shared_ptr<Expression> get_combined_expression(const VIdentifier&);
+    virtual boost::shared_ptr<Expression> get_combined_expression(const VIdentifier&, std::set<std::string>);
 
     //data
     boost::shared_ptr<Expression> exp; /* the condition expression */

@@ -44,7 +44,7 @@ namespace netlist {
     virtual Port* deep_copy() const;
     NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
-    virtual boost::shared_ptr<Expression> get_combined_expression(const VIdentifier&);
+    virtual boost::shared_ptr<Expression> get_combined_expression(const VIdentifier&, std::set<std::string>);
    
     // helpers
     void set_in() { dir = -1; }

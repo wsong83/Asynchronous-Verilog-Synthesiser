@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -34,5 +34,7 @@
 // the maximal number of uids unused in a map (Variable) before a clean 
 #define MAX_NUMBER_UNUSED_IN_MAP 512
 
+// the maximal level of logic in the generation of combined expressions
+#define MAX_LEVEL_OF_COMBI_EXP 8
 
 #endif

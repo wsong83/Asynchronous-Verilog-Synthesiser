@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -143,7 +143,7 @@ void netlist::Assign::replace_variable(const VIdentifier& var, const Number& num
   rexp->replace_variable(var, num);
 }
 
-shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifier& target) {
+shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifier& target, std::set<string> s_set) {
   shared_ptr<SDFG::RForest> lrf(new SDFG::RForest());
   shared_ptr<SDFG::RForest> rrf(new SDFG::RForest());
   lval->scan_vars(lrf, false);
@@ -152,7 +152,8 @@ shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifie
   if(lrf->tree.count(target.name)) {
     rv.reset(rexp->deep_copy());
     // handle all signals in the expression
-    if(rrf->tree["@DATA"]) {
+    if(s_set.size() < MAX_LEVEL_OF_COMBI_EXP && rrf->tree["@DATA"]) {
+      std::cout << "the size of s_set " << s_set.size() << std::endl;
       BOOST_FOREACH(const string& sname, rrf->tree["@DATA"]->sig) {
         if(sname != target.name) { // other signals
           shared_ptr<SDFG::dfgNode> pnode = get_module()->DFG->get_node(sname);
@@ -163,11 +164,16 @@ shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifie
             //std::cout << pnode->get_full_name() << std::endl;
             switch(pnode->type) {
             case SDFG::dfgNode::SDFG_DF: {
-              pnode = (pnode->pg->get_in_nodes_cb(pnode)).front();
+              if(pnode->ptr.size() > 1) {
+                found_source = true;
+              } else {
+                pnode = (pnode->pg->get_in_nodes_cb(pnode)).front();
+              }
               break;
             }
             case SDFG::dfgNode::SDFG_COMB:
-            case SDFG::dfgNode::SDFG_FF: {
+            case SDFG::dfgNode::SDFG_FF:
+            case SDFG::dfgNode::SDFG_LATCH: {
               found_source = true;
               break;
             }
@@ -185,19 +191,28 @@ shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifie
             }
           }
           assert(pnode);
-          if(!(pnode->type & (SDFG::dfgNode::SDFG_FF | SDFG::dfgNode::SDFG_PORT))) {
-            shared_ptr<Expression> sig_exp;
-            BOOST_FOREACH(shared_ptr<NetComp> ncomp, pnode->ptr) {
-              if(ncomp->ctype != tVariable) {
-                //std::cout << *ncomp << std::endl;
-                //std::cout << pnode->name << std::endl;
-                sig_exp = ncomp->get_combined_expression(VIdentifier(pnode->name));
-                //std::cout << *sig_exp << std::endl;
-                break;
+          if(pnode->type & SDFG::dfgNode::SDFG_LATCH) {
+            G_ENV->error("ANA-SSA-1", pnode->get_full_name(), get_module()->DFG->get_node(sname)->get_full_name());
+          }
+          if(s_set.count(pnode->get_full_name())) {
+            G_ENV->error("ANA-SSA-2", pnode->get_full_name());
+          } else {
+            std::set<string> m_set = s_set;
+            m_set.insert(pnode->get_full_name());
+            if(!(pnode->type & (SDFG::dfgNode::SDFG_FF | SDFG::dfgNode::SDFG_LATCH | SDFG::dfgNode::SDFG_PORT))) {
+              shared_ptr<Expression> sig_exp;
+              BOOST_FOREACH(shared_ptr<NetComp> ncomp, pnode->ptr) {
+                if(ncomp->ctype != tVariable) {
+                  //std::cout << *ncomp << std::endl;
+                  //std::cout << pnode->name << std::endl;
+                  sig_exp = ncomp->get_combined_expression(VIdentifier(pnode->name), m_set);
+                  //std::cout << *sig_exp << std::endl;
+                  break;
+                }
               }
+              assert(sig_exp);
+              rv->replace_variable(VIdentifier(sname), sig_exp);
             }
-            assert(sig_exp);
-            rv->replace_variable(VIdentifier(sname), sig_exp);
           }
         }
       }

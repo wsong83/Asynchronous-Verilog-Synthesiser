@@ -56,11 +56,14 @@ namespace {
   struct Argument {
     bool bHelp;                 // show help information
     std::string sDesign;        // target design
+    std::string sPort;          // name of a port to be reported
     std::string sOutput;        // output file name
+    std::vector<std::string> svOmitPorts; // the ports to be omitted
     
     Argument() : 
       bHelp(false),
       sDesign(""),
+      sPort(""),
       sOutput("") {}
   };
 }
@@ -71,7 +74,9 @@ BOOST_FUSION_ADAPT_STRUCT
  Argument,
  (bool, bHelp)
  (std::string, sDesign)
+ (std::string, sPort)
  (std::string, sOutput)
+ (std::vector<std::string>, svOmitPorts)
  )
 
 namespace {
@@ -84,6 +89,7 @@ namespace {
     ArgParser() : ArgParser::base_type(start) {
       using qi::lit;
       using ascii::char_;
+      using phoenix::push_back;
       using ascii::space;
       using phoenix::at_c;
       using namespace qi::labels;
@@ -91,7 +97,9 @@ namespace {
       args = lit('-') >> 
         ( (lit("help")   >> blanks)                         [at_c<0>(_r1) = true] ||
           (lit("design") >> blanks >> identifier >> blanks) [at_c<1>(_r1) = _1]   ||
-          (lit("output") >> blanks >> filename >> blanks)   [at_c<2>(_r1) = _1]
+          (lit("port")   >> blanks >> identifier >> blanks) [at_c<2>(_r1) = _1]   ||
+          (lit("output") >> blanks >> filename >> blanks)   [at_c<3>(_r1) = _1]   ||
+          (lit("omit")   >> blanks >> identifier >> blanks) [push_back(at_c<4>(_r1), _1)]
           );
       
       start = *(args(_val));
@@ -112,11 +120,13 @@ const std::string shell::CMD::CMDReportPorts::description =
 
 void shell::CMD::CMDReportPorts::help(Env& gEnv) {
   gEnv.stdOs << name << ": " << description << endl;
-  gEnv.stdOs << "    report_ports -design ID [options]" << endl;
+  gEnv.stdOs << "    report_ports [options]" << endl;
   gEnv.stdOs << "Options:" << endl;
   gEnv.stdOs << "   -help                show this help information." << endl;
   gEnv.stdOs << "   -design ID           design name if not the current design." << endl;
+  gEnv.stdOs << "   -port ID             the port to be reported." << endl;
   gEnv.stdOs << "   -output file_name    specify an output file otherwise print out." << endl;
+  gEnv.stdOs << "   -omit ID             specify the ports to be omitted in the report." << endl;
 }
 
 bool shell::CMD::CMDReportPorts::exec ( const std::string& str, Env * pEnv){
@@ -215,8 +225,9 @@ bool shell::CMD::CMDReportPorts::exec ( const std::string& str, Env * pEnv){
   // calculate the combined expressions
   gEnv.stdOs << "\n[Port Expressions]" << std::endl;
   BOOST_FOREACH(shared_ptr<netlist::Port> p, op_set) {
+    std::set<string> m_set;
     std::cout << "DBG: target " << p->name << std::endl;
-    shared_ptr<netlist::Expression> combi_exp = p->get_combined_expression(p->name);
+    shared_ptr<netlist::Expression> combi_exp = p->get_combined_expression(p->name, m_set);
     std::cout << "DBG: " << *combi_exp << std::endl;
     combi_exp->extract_ssa_condition(p->name);
   }

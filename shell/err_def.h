@@ -48,6 +48,14 @@ ERR_DEFINE("ANA-SSA-0",
            EInfo,   3,
            "register \"%1%\" has two sequential assignements, which may confuse SSA analysis. \n(1) %2% \n(2) %3%");
 
+ERR_DEFINE("ANA-SSA-1",
+           EInfo,   2,
+           "latch \"%1%\" is used in the calculation for the combined expression assign \"%2%\", which may be a design error.");
+
+ERR_DEFINE("ANA-SSA-2",
+           EInfo,   2,
+           "loop break at \"%1%\" in the calculation of combined expression.");
+
 ERR_DEFINE("ELAB-0", 
            EInfo,   2, 
            "elaborating module \"%1%\"%2%.");
