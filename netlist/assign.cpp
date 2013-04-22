@@ -152,8 +152,9 @@ shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifie
   if(lrf->tree.count(target.name)) {
     rv.reset(rexp->deep_copy());
     // handle all signals in the expression
-    if(s_set.size() < MAX_LEVEL_OF_COMBI_EXP && rrf->tree["@DATA"]) {
-      std::cout << "the size of s_set " << s_set.size() << std::endl;
+    //if(s_set.size() < MAX_LEVEL_OF_COMBI_EXP && rrf->tree["@DATA"]) {
+    if(rrf->tree["@DATA"]) {
+      //std::cout << "the size of s_set " << s_set.size() << std::endl;
       BOOST_FOREACH(const string& sname, rrf->tree["@DATA"]->sig) {
         if(sname != target.name) { // other signals
           shared_ptr<SDFG::dfgNode> pnode = get_module()->DFG->get_node(sname);
@@ -199,6 +200,7 @@ shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifie
           } else {
             std::set<string> m_set = s_set;
             m_set.insert(pnode->get_full_name());
+            
             if(!(pnode->type & (SDFG::dfgNode::SDFG_FF | SDFG::dfgNode::SDFG_LATCH | SDFG::dfgNode::SDFG_PORT))) {
               shared_ptr<Expression> sig_exp;
               BOOST_FOREACH(shared_ptr<NetComp> ncomp, pnode->ptr) {

@@ -79,7 +79,7 @@ shared_ptr<Expression> netlist::Port::get_combined_expression(const VIdentifier&
   bool found_source = false;
   while(!found_source) {
     assert(pnode);
-    std::cout << pnode->get_full_name() << std::endl;
+    //std::cout << pnode->get_full_name() << std::endl;
     switch(pnode->type) {
     case SDFG::dfgNode::SDFG_DF: {
       if(pnode->ptr.size() > 1) {
@@ -115,7 +115,7 @@ shared_ptr<Expression> netlist::Port::get_combined_expression(const VIdentifier&
     G_ENV->error("ANA-SSA-2", pnode->get_full_name());
   } else {
     s_set.insert(pnode->get_full_name());
-    std::cout << pnode->get_full_name() << std::endl;
+    //std::cout << pnode->get_full_name() << std::endl;
     if(!(pnode->type & (SDFG::dfgNode::SDFG_FF | SDFG::dfgNode::SDFG_LATCH | SDFG::dfgNode::SDFG_PORT))) {
       shared_ptr<Expression> sig_exp;
       BOOST_FOREACH(shared_ptr<NetComp> ncomp, pnode->ptr) {

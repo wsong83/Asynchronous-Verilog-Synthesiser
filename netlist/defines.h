@@ -35,6 +35,6 @@
 #define MAX_NUMBER_UNUSED_IN_MAP 512
 
 // the maximal level of logic in the generation of combined expressions
-#define MAX_LEVEL_OF_COMBI_EXP 8
+#define MAX_LEVEL_OF_COMBI_EXP 20
 
 #endif
