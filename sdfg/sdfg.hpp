@@ -114,10 +114,14 @@ namespace SDFG {
     std::list<boost::shared_ptr<dfgPath> >& get_in_paths_cb(); // return all input paths to this register/port
     // return all output paths from this register/port, faster algorithm
     std::list<boost::shared_ptr<dfgPath> > get_out_paths_fast_cb(); 
+    // return all output paths from this register/port, inside the current module, faster algorithm
+    std::list<boost::shared_ptr<dfgPath> > get_out_paths_fast_im(); 
     // return all output paths inside this module
     std::list<boost::shared_ptr<dfgPath> > get_out_paths_fast();
     // return all input paths to this register/port, fast algorithm
     std::list<boost::shared_ptr<dfgPath> > get_in_paths_fast_cb(); 
+    // return all input paths from this register/port, inside the current module, faster algorithm
+    std::list<boost::shared_ptr<dfgPath> > get_in_paths_fast_im(); 
     // return all self control paths that inside this module
     std::list<boost::shared_ptr<dfgPath> > get_self_path_cb();
 
@@ -144,15 +148,25 @@ namespace SDFG {
                                       boost::shared_ptr<dfgPath>&,
                                       std::map<boost::shared_ptr<dfgNode>, 
                                                std::map<boost::shared_ptr<dfgNode>, int> >&);
+    void out_path_type_update_fast_im(std::map<boost::shared_ptr<dfgNode>, int>&,
+                                      boost::shared_ptr<dfgPath>&,
+                                      std::map<boost::shared_ptr<dfgNode>, 
+                                               std::map<boost::shared_ptr<dfgNode>, int> >&,
+                                      unsigned int);
     void self_path_update_cb(std::map<boost::shared_ptr<dfgNode>, int>&,
                              boost::shared_ptr<dfgPath>&,
                              std::map<boost::shared_ptr<dfgNode>, 
                                       std::map<boost::shared_ptr<dfgNode>, int> >&,
-                             unsigned int level);
+                             unsigned int);
     void in_path_type_update_fast_cb(std::map<boost::shared_ptr<dfgNode>, int>&,
                                      boost::shared_ptr<dfgPath>&,
                                      std::map<boost::shared_ptr<dfgNode>, 
                                               std::map<boost::shared_ptr<dfgNode>, int> >&);
+    void in_path_type_update_fast_im(std::map<boost::shared_ptr<dfgNode>, int>&,
+                                     boost::shared_ptr<dfgPath>&,
+                                     std::map<boost::shared_ptr<dfgNode>, 
+                                              std::map<boost::shared_ptr<dfgNode>, int> >&,
+                                     unsigned int);
   };
 
   class dfgEdge {

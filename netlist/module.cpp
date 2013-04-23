@@ -542,6 +542,26 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
   return G;
 }
 
+double netlist::Module::get_ratio_state_preserved_oport(std::set<VIdentifier>& oset) const {
+  assert(DFG);
+  unsigned int num_of_spports = 0; // number of state preserved ports
+  unsigned int num_of_oports = 0;  // number of output ports
+  DataBase<VIdentifier, Port, true>::DBTL::iterator pit, pend;
+  for(pit = db_port.begin_order(), pend = db_port.end_order(); pit != pend; ++pit) {
+    if(pit->second->get_dir >= 0) { // output or inout
+      num_of_oprts++;
+      shared_ptr<sdfg::dfgNode> pnode = DFG->get_node(pit->second->name.name + "_P");
+      assert(pnode);
+      list<shared_ptr<sdfg::dfgPath> > psources = pnode->get_in_paths_fast_im();
+      bool all_data_i_sp = true;
+      bool control_i_sp = false;
+      BOOST_FOREACH(shared_ptr<sdfg::dfgPath> p, psources) {
+        
+      }
+    }
+  }  
+}
+
 void netlist::Module::init_port_list(const list<shared_ptr<Port> >& port_list) {
   BOOST_FOREACH(shared_ptr<Port> m, port_list) {
     if(!db_port.find(m->name)) {

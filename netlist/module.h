@@ -81,6 +81,9 @@ namespace netlist {
     // extract data flow graph
     boost::shared_ptr<SDFG::dfgGraph> extract_sdfg(bool);
 
+    // return the ratio of state preserve output ports
+    double get_ratio_state_preserved_oport(std::set<VIdentifier>&) const;
+
     // data
     MIdentifier name;
     DataBase<VIdentifier, Port, true>      db_port;      /* input and output ports, ordered */
