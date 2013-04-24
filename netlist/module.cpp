@@ -542,24 +542,60 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
   return G;
 }
 
-double netlist::Module::get_ratio_state_preserved_oport(std::set<VIdentifier>& oset) const {
+double netlist::Module::get_ratio_state_preserved_oport(std::set<VIdentifier>& oset) {
   assert(DFG);
   unsigned int num_of_spports = 0; // number of state preserved ports
   unsigned int num_of_oports = 0;  // number of output ports
   DataBase<VIdentifier, Port, true>::DBTL::iterator pit, pend;
   for(pit = db_port.begin_order(), pend = db_port.end_order(); pit != pend; ++pit) {
-    if(pit->second->get_dir >= 0) { // output or inout
-      num_of_oprts++;
-      shared_ptr<sdfg::dfgNode> pnode = DFG->get_node(pit->second->name.name + "_P");
+    if(pit->second->get_dir() >= 0) { // output or inout
+      num_of_oports++;
+      shared_ptr<SDFG::dfgNode> pnode = DFG->get_node(pit->second->name.name + "_P");
       assert(pnode);
-      list<shared_ptr<sdfg::dfgPath> > psources = pnode->get_in_paths_fast_im();
+      list<shared_ptr<SDFG::dfgPath> > psources = pnode->get_in_paths_fast_im();
       bool all_data_i_sp = true;
       bool control_i_sp = false;
-      BOOST_FOREACH(shared_ptr<sdfg::dfgPath> p, psources) {
+      unsigned int num_of_idata = 0;
+      BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, psources) {
+        if(p->type & (SDFG::dfgEdge::SDFG_DP | SDFG::dfgEdge::SDFG_DDP)) {
+          num_of_idata++;
+          if(p->src->get_self_path_cb().size() == 0)
+            all_data_i_sp = false;
+        }
         
+        if((p->type & SDFG::dfgEdge::SDFG_CTL) && (p->src->get_self_path_cb().size() > 0))
+          control_i_sp = true;
       }
+
+      if((num_of_idata > 0 && all_data_i_sp) || (num_of_idata == 0 && control_i_sp))
+        num_of_spports++;
+      else
+        oset.insert(pit->second->name);
     }
-  }  
+  }
+  return (double)(num_of_spports) / num_of_oports;
+}
+
+void netlist::Module::cal_partition(const double& acc_ratio, std::ostream& ostm, bool verbose) {
+  DataBase<IIdentifier, Instance>::DBTM::iterator iit, iend;
+  for(iit = db_instance.begin(), iend = db_instance.end(); iit != iend; ++iit) {
+    if(iit->second->type == Instance::modu_inst) {
+      shared_ptr<Module> subMod = G_ENV->find_module(iit->second->mname);
+      subMod->cal_partition(acc_ratio, ostm, verbose);
+    }
+  }
+  if(DFG->father != NULL) {
+    std::set<VIdentifier> mset;
+    double r = get_ratio_state_preserved_oport(mset);
+    if(r >= acc_ratio || verbose) {
+      ostm << DFG->father->get_full_name() << "\t(" << name << ") with rate " << r << ": " << endl;
+      ostm << string(4, ' ');
+      BOOST_FOREACH(VIdentifier oport, mset) {
+        ostm << oport << "; ";
+      }
+      ostm << endl;
+    }
+  }
 }
 
 void netlist::Module::init_port_list(const list<shared_ptr<Port> >& port_list) {

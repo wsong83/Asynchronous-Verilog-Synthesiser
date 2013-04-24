@@ -115,7 +115,7 @@ namespace {
 
 const std::string shell::CMD::CMDReportPorts::name = "report_ports"; 
 const std::string shell::CMD::CMDReportPorts::description = 
-  "report paths in a DFG.";
+  "report the output ports of a design.";
 
 void shell::CMD::CMDReportPorts::help(Env& gEnv) {
   gEnv.stdOs << name << ": " << description << endl;

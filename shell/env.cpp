@@ -86,6 +86,7 @@ namespace {
   FUNC_WRAPPER     (bool,         CMDReportDFGPath   )
   FUNC_WRAPPER     (bool,         CMDReportFSM       )
   FUNC_WRAPPER     (bool,         CMDReportNetlist   )
+  FUNC_WRAPPER     (bool,         CMDReportPartition )
   FUNC_WRAPPER     (bool,         CMDReportPorts     )
   FUNC_WRAPPER     (std::string,  CMDShell           )
   FUNC_WRAPPER     (bool,         CMDSuppressMessage )
@@ -171,6 +172,7 @@ bool shell::Env::initialise() {
   AVS_ENV_ADD_TCL_CMD(CMDReportDFGPath);
   AVS_ENV_ADD_TCL_CMD(CMDReportFSM);
   AVS_ENV_ADD_TCL_CMD(CMDReportNetlist);
+  AVS_ENV_ADD_TCL_CMD(CMDReportPartition);
   AVS_ENV_ADD_TCL_CMD(CMDReportPorts);
   AVS_ENV_ADD_TCL_CMD(CMDShell);
   AVS_ENV_ADD_TCL_CMD(CMDSuppressMessage);
