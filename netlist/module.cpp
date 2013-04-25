@@ -609,6 +609,7 @@ void netlist::Module::scan_datapaths() {
   }
 
   // TODO: scan the current module
+  
 
 }
 

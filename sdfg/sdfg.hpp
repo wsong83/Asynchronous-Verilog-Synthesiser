@@ -267,6 +267,7 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     boost::shared_ptr<dfgEdge> add_edge(const std::string& ename, dfgEdge::edge_type_t etype, T1 n1, T2 n2) {
       return add_edge(ename, etype, to_id(n1), to_id(n2));
     }
+    void add_path(boost::shared_ptr<dfgPath>);
 
     // remove nodes and edges
     DFGG_FH_F1(remove_node,);
