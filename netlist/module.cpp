@@ -598,6 +598,20 @@ void netlist::Module::cal_partition(const double& acc_ratio, std::ostream& ostm,
   }
 }
 
+void netlist::Module::scan_datapaths() {
+  // scan all sub-modules
+  DataBase<IIdentifier, Instance>::DBTM::iterator iit, iend;
+  for(iit = db_instance.begin(), iend = db_instance.end(); iit != iend; ++iit) {
+    if(iit->second->type == Instance::modu_inst) {
+      shared_ptr<Module> subMod = G_ENV->find_module(iit->second->mname);
+      subMod->scan_datapaths();
+    }
+  }
+
+  // TODO: scan the current module
+
+}
+
 void netlist::Module::init_port_list(const list<shared_ptr<Port> >& port_list) {
   BOOST_FOREACH(shared_ptr<Port> m, port_list) {
     if(!db_port.find(m->name)) {
