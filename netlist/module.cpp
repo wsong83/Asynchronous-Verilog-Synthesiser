@@ -599,6 +599,9 @@ void netlist::Module::cal_partition(const double& acc_ratio, std::ostream& ostm,
 }
 
 void netlist::Module::scan_datapaths() {
+  if(DataDFG) return;
+  else DataDFG.reset(new SDFG::dfgGraph(DFG->name));
+  
   // scan all sub-modules
   DataBase<IIdentifier, Instance>::DBTM::iterator iit, iend;
   for(iit = db_instance.begin(), iend = db_instance.end(); iit != iend; ++iit) {
@@ -609,8 +612,27 @@ void netlist::Module::scan_datapaths() {
   }
 
   // TODO: scan the current module
-  
-
+  DataBase<VIdentifier, Port, true>::DBTL::iterator pit, pend;
+  for(pit = db_port.begin_order(), pend = db_port.end_order(); pit != pend; ++pit) {
+    if(pit->second->get_dir() <= 0) { // input or inout
+      shared_ptr<SDFG::dfgNode> psrc = DFG->get_node(pit->second->name.name + "_P");
+      assert(psrc);
+      list<shared_ptr<SDFG::dfgPath> > mpaths = psrc->get_out_paths_fast();
+      std::set<shared_ptr<SDFG::dfgNode> > visited, tovisit;
+      visited.insert(psrc);
+      BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, mpaths) {
+        if(p->type & (SDFG::dfgEdge::SDFG_DP|SDFG::dfgEdge::SDFG_DDP)) {
+          if(!visited.count(p->tar))
+            tovisit.insert(p->tar);
+          p->type &= (SDFG::dfgEdge::SDFG_DP|SDFG::dfgEdge::SDFG_DDP);
+          DataDFG->add_path(p);
+        }
+      }
+      while(!tovisit.empty()) {
+        
+      }
+    }
+  }
 }
 
 void netlist::Module::init_port_list(const list<shared_ptr<Port> >& port_list) {

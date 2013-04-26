@@ -424,6 +424,7 @@ void SDFG::dfgNode::out_path_type_update_fast(map<shared_ptr<dfgNode>, int>& rv,
   }
 
   if(pn->type & SDFG_MODULE) {  // module
+    std::cout << get_full_name() << std::endl;
     return;
   }
 
