@@ -159,11 +159,12 @@ bool shell::CMD::CMDReportPartition::exec ( const std::string& str, Env * pEnv){
 
   // check DFG is ready
   shared_ptr<SDFG::dfgGraph> G;
-  if(!tarDesign->DFG) {
-    gEnv.stdOs << "Error: DFG is not extracted for the target design \"" << designName << "\"." << endl;
+  if(!tarDesign->DataDFG) {
+    gEnv.stdOs << "Error: Data DFG is not extracted for the target design \"" << designName << "\"." << endl;
+    gEnv.stdOs << "       Use extract_datapath before report partition." << endl;
     return false;
   } else {
-    G = tarDesign->DFG;
+    G = tarDesign->DataDFG;
   }
 
   if(arg.sOutput.size() > 0) {

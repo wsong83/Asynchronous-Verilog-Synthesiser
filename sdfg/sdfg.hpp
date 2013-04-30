@@ -44,6 +44,7 @@
 // forward decalration
 namespace netlist {
   class NetComp;
+  class Module;
 }
 
 // forward declaration
@@ -243,6 +244,8 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     GType bg_;                  // BGL graph
     dfgNode* father;            // father when it is a entity of another module
     std::string name;           // description of this node
+    netlist::Module* pModule;   // a pointer to link back to the netlist Module represented by this DFG
+    
     
     std::map<edge_descriptor, boost::shared_ptr<dfgEdge> > edges;
     std::map<vertex_descriptor, boost::shared_ptr<dfgNode> > nodes;
@@ -251,8 +254,8 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     std::map<unsigned int, vertex_descriptor> index_map;
     std::map<unsigned int, edge_descriptor> edge_map;
 
-    dfgGraph() : father(NULL) {}
-    dfgGraph(const std::string& n) : father(NULL), name(n) {}
+    dfgGraph() : father(NULL), pModule(NULL) {}
+    dfgGraph(const std::string& n) : father(NULL), name(n), pModule(NULL) {}
     
     // add nodes and edges
     void add_node(boost::shared_ptr<dfgNode>);

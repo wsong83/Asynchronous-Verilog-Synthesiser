@@ -354,8 +354,8 @@ void SDFG::dfgNode::out_path_type_update_cb(list<shared_ptr<dfgPath> >& rv, // r
   shared_ptr<dfgNode> pn = pg->get_node(id);
   
   // check node type
-  if((pn->type & (SDFG_FF|SDFG_LATCH))         || // register
-     (pn->type & SDFG_PORT && !pn->pg->father)    // top-level output
+  if((type & (SDFG_FF|SDFG_LATCH))         || // register
+     pg->size_out_edges_cb(id) == 0           // top-level output
      ) {  // ending point
     cp->tar = pn;
     cp->node_set.clear();
@@ -412,19 +412,17 @@ void SDFG::dfgNode::out_path_type_update_fast(map<shared_ptr<dfgNode>, int>& rv,
   //std::cout << get_full_name() << std::endl;
   
   // check node type
-  if((pn->type & (SDFG_FF|SDFG_LATCH))         || // register
-     (pn->type & SDFG_PORT)                       // output
+  if((type & (SDFG_FF|SDFG_LATCH))         || // register
+     pg->size_out_edges(id) == 0              // output
      ) {  // ending point
     if(rv.count(pn)) rv[pn] |= cp->type;
     else             rv[pn] = cp->type;
     if(cp->path.back().first != pn)
       rmap[cp->path.back().first][pn] = cp->path.back().second;
-    //std::cout << "    " << pn->get_hier_name()  << " : " << rv.size() << ":" << cp->path.size() << std::endl;
     return;
   }
 
   if(pn->type & SDFG_MODULE) {  // module
-    std::cout << get_full_name() << std::endl;
     return;
   }
 
@@ -486,8 +484,8 @@ void SDFG::dfgNode::out_path_type_update_fast_cb(map<shared_ptr<dfgNode>, int>& 
   //std::cout << get_full_name() << std::endl;
   
   // check node type
-  if((pn->type & (SDFG_FF|SDFG_LATCH))         || // register
-     (pn->type & SDFG_PORT && !pn->pg->father)    // top-level output
+  if((type & (SDFG_FF|SDFG_LATCH))         || // register
+     pg->size_out_edges_cb(id) == 0           // top-level output
      ) {  // ending point
     if(rv.count(pn)) rv[pn] |= cp->type;
     else             rv[pn] = cp->type;
@@ -548,8 +546,9 @@ void SDFG::dfgNode::out_path_type_update_fast_im(map<shared_ptr<dfgNode>, int>& 
   //std::cout << get_full_name() << std::endl;
   
   // check node type
-  if((pn->type & (SDFG_FF|SDFG_LATCH))         || // register
-     (pn->type & SDFG_PORT && level==0)    // top-level output
+  if((type & (SDFG_FF|SDFG_LATCH))         || // register
+     (type & SDFG_PORT && level==0)        || // top-level output
+     pg->size_out_edges_cb(id) == 0           // top-level output
      ) {  // ending point
     if(rv.count(pn)) rv[pn] |= cp->type;
     else             rv[pn] = cp->type;
@@ -614,8 +613,8 @@ void SDFG::dfgNode::in_path_type_update_cb(list<shared_ptr<dfgPath> >& rv, // re
   shared_ptr<dfgNode> pn = pg->get_node(id);
 
   // check node type
-  if((pn->type & (SDFG_FF|SDFG_LATCH))         || // register
-     (pn->type & SDFG_PORT && !pn->pg->father)    // top-level input
+  if((type & (SDFG_FF|SDFG_LATCH))         || // register
+     pg->size_in_edges_cb(id) == 0            // top-level input
      ) {  // ending point
     cp->src = pn;
     cp->node_set.clear();
@@ -667,8 +666,8 @@ void SDFG::dfgNode::in_path_type_update_fast_cb(map<shared_ptr<dfgNode>, int>& r
   //std::cout << *cp << std::endl;
   
   // check node type
-  if((pn->type & (SDFG_FF|SDFG_LATCH))         || // register
-     (pn->type & SDFG_PORT && !pn->pg->father)    // top-level input
+  if((type & (SDFG_FF|SDFG_LATCH))         || // register
+     pg->size_in_edges_cb(id) == 0            // top-level input
      ) {  // ending point
     if(rv.count(pn)) rv[pn] |= cp->type;
     else             rv[pn] = cp->type;
@@ -725,8 +724,9 @@ void SDFG::dfgNode::in_path_type_update_fast_im(map<shared_ptr<dfgNode>, int>& r
   //std::cout << *cp << std::endl;
   
   // check node type
-  if((pn->type & (SDFG_FF|SDFG_LATCH))         || // register
-     (pn->type & SDFG_PORT && level==0)    // top-level input
+  if((type & (SDFG_FF|SDFG_LATCH))         || // register
+     (type & SDFG_PORT && level==0)        || // top-level input
+     pg->size_in_edges_cb(id) == 0 
      ) {  // ending point
     if(rv.count(pn)) rv[pn] |= cp->type;
     else             rv[pn] = cp->type;
@@ -789,7 +789,8 @@ void SDFG::dfgNode::self_path_update_cb(map<shared_ptr<dfgNode>, int>& rv, // re
   
   // check node type
   if((pn->type & (SDFG_FF|SDFG_LATCH))         || // register
-     (pn->type & SDFG_PORT && level==0)           // top-level output
+     (pn->type & SDFG_PORT && level==0)        || // top-level output
+     pg->size_out_edges_cb(id) == 0               // top-level output
      ) {  // ending point
     if(pn == cp->src) {
       if(rv.count(pn)) rv[pn] |= cp->type;        // save it into rv
@@ -924,8 +925,10 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_datapath() const {
   // rebuild the graph
   BOOST_FOREACH(shared_ptr<dfgNode> n, related_nodes) {
     shared_ptr<dfgNode> nnode(n->copy());
-    if(n->type & dfgNode::SDFG_MODULE)
+    if(n->type & dfgNode::SDFG_MODULE) {
       nnode->child = nnode->child->get_datapath();
+      nnode->child->father = nnode.get();
+    }
     ng->add_node(nnode);
   }
   BOOST_FOREACH(shared_ptr<dfgNode> n, related_nodes) {
@@ -940,7 +943,10 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_datapath() const {
       }
     }    
   }
-  return ng->get_hier_RRG();
+  
+  assert(pModule != NULL);
+  pModule->DataDFG = ng->get_hier_RRG();
+  return pModule->DataDFG;
 }
 
 shared_ptr<dfgGraph> SDFG::dfgGraph::get_hier_RRG() const {
@@ -976,11 +982,14 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_hier_RRG() const {
     }    
   }
 
+  // output paths
+  list<shared_ptr<dfgNode> > tmp_list = nlist;
   while(!nlist.empty()) {
     shared_ptr<dfgNode> cn = nlist.front();
     nlist.pop_front();
     if(cn->type != dfgNode::SDFG_OPORT){ // IPORT, FF and Latch
       BOOST_FOREACH(shared_ptr<dfgPath> po, cn->get_out_paths_fast()) {
+        if(!ng->exist(po->tar->get_full_name())) copy_a_node(ng, po->tar);
         // add arcs
         if(po->type & dfgEdge::SDFG_DP)
           ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_DP, cn->get_full_name(), po->tar->get_full_name());
@@ -993,9 +1002,32 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_hier_RRG() const {
         if(po->type == 0)
           ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_DF, cn->get_full_name(), po->tar->get_full_name());
       }
-    }  
+    }
   }
 
+  /*
+  nlist = tmp_list;
+  while(!nlist.empty()) {
+    shared_ptr<dfgNode> cn = nlist.front();
+    nlist.pop_front();
+    if(cn->type != dfgNode::SDFG_IPORT){ // OPORT, FF and Latch
+      BOOST_FOREACH(shared_ptr<dfgPath> po, cn->get_in_paths_fast()) {
+        if(!ng->exist(po->src->get_full_name())) copy_a_node(ng, po->src);
+        // add arcs
+        if(po->type & dfgEdge::SDFG_DP)
+          ng->add_edge(po->src->get_full_name(), dfgEdge::SDFG_DP, po->src->get_full_name(), cn->get_full_name());
+        else if(po->type & dfgEdge::SDFG_DDP)
+          ng->add_edge(po->src->get_full_name(), dfgEdge::SDFG_DDP, po->src->get_full_name(), cn->get_full_name());
+        
+        if(po->type & dfgEdge::SDFG_CTL)
+          ng->add_edge(po->src->get_full_name(), dfgEdge::SDFG_CTL, po->src->get_full_name(), cn->get_full_name());
+
+        if(po->type == 0)
+          ng->add_edge(po->src->get_full_name(), dfgEdge::SDFG_DF, po->src->get_full_name(), cn->get_full_name());
+      }
+    }
+  }
+  */
   return ng;
 
 }
