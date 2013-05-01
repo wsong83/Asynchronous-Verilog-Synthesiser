@@ -12,7 +12,8 @@ CONFIG += console
 CONFIG += qt debug warn_on
 
 # link to ogdf library
-LIBS += ../../sdfg/sdfg.o ../../pugixml/pugixml.o $${OGDF_PATH}/_debug/libOGDF.a
+LIBS += $$files(../../sdfg/dfg_*.o)
+LIBS += ../../pugixml/pugixml.o $${OGDF_PATH}/_debug/libOGDF.a
 LIBS += -lpthread 
 DEFINES += OGDF_DEBUG
 
