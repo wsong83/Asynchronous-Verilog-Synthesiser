@@ -520,6 +520,43 @@ shared_ptr<dfgNode> SDFG::dfgGraph::search_node(const string& nname) const {
 }
 
 ///////////////////////////////
+// clean up useless nodes
+///////////////////////////////
+void SDFG::dfgGraph::remove_useless_nodes() {
+  std::set<shared_ptr<dfgNode> > node_set;    // all the nodes to be checked
+  std::list<shared_ptr<dfgNode> > node_list;  // the list store the same set 
+
+  // put all nodes into the set
+  BOOST_FOREACH(nodes_map_type n, nodes) {
+    node_set.insert(n.second);
+    node_list.push_back(n.second);
+  }
+  
+  while(!node_set.empty()) {
+    // get the ndoe to be checked
+    shared_ptr<dfgNode> n = node_list.front();
+    node_list.pop_front();
+    node_set.erase(n);
+    
+    switch(n->type) {
+    case dfgNode::SDFG_IPORT: { // input port
+      if(size_out_edges_ns(n) == 0)
+        remove_node(n);         // an input port with no load should be removed
+      break;
+    }
+    case dfgNode::SDFG_MODULE: { // a module entity
+      break;
+    }
+    default: {                  // all other cases
+      if(size_out_edges_ns(n) == 0) {
+      }
+      break;
+    }
+    }
+  }
+}
+
+///////////////////////////////
 // existance check
 ///////////////////////////////
 bool SDFG::dfgGraph::exist(vertex_descriptor src, vertex_descriptor tar) const {
@@ -554,6 +591,18 @@ unsigned int SDFG::dfgGraph::size_out_edges(vertex_descriptor nid) const {
     return 0;
 }
 
+unsigned int SDFG::dfgGraph::size_out_edges_ns(vertex_descriptor nid) const {
+  unsigned int rv = 0;
+  if(nodes.count(nid)) {
+    GraphTraits::out_edge_iterator eit, eend;
+    for(boost::tie(eit, eend) = boost::out_edges(nid, bg_);
+        eit != eend; ++eit) {
+      if(boost::target(*eit, bg_) != nid) rv++;
+    }
+  }
+  return rv;
+}
+
 unsigned int SDFG::dfgGraph::size_out_edges_cb(vertex_descriptor nid) const {
   if(nodes.count(nid)) {
     shared_ptr<dfgNode> pn = nodes.find(nid)->second;
@@ -578,6 +627,18 @@ unsigned int SDFG::dfgGraph::size_in_edges(vertex_descriptor nid) const {
     return boost::in_degree(nid, bg_);
   else
     return 0;
+}
+
+unsigned int SDFG::dfgGraph::size_in_edges_ns(vertex_descriptor nid) const {
+  unsigned int rv = 0;
+  if(nodes.count(nid)) {
+    GraphTraits::in_edge_iterator eit, eend;
+    for(boost::tie(eit, eend) = boost::in_edges(nid, bg_);
+        eit != eend; ++eit) {
+      if(boost::source(*eit, bg_) != nid) rv++;
+    }
+  }
+  return rv;
 }
 
 unsigned int SDFG::dfgGraph::size_in_edges_cb(vertex_descriptor nid) const {
@@ -722,7 +783,6 @@ list<shared_ptr<dfgEdge> > SDFG::dfgGraph::get_in_edges(vertex_descriptor nid) c
     GraphTraits::in_edge_iterator eit, eend;
     for(boost::tie(eit, eend) = boost::in_edges(nid, bg_);
         eit != eend; ++eit) {
-      assert(nid == boost::target(*eit, bg_));
       rv.push_back(edges.find(*eit)->second);
     }
   }

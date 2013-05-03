@@ -64,6 +64,7 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     
     std::map<edge_descriptor, boost::shared_ptr<dfgEdge> > edges;
     std::map<vertex_descriptor, boost::shared_ptr<dfgNode> > nodes;
+    typedef std::pair<const vertex_descriptor, boost::shared_ptr<dfgNode> > nodes_map_type;
 
     std::map<std::string, vertex_descriptor> node_map;
     std::map<unsigned int, vertex_descriptor> index_map;
@@ -147,12 +148,16 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
 
     // traverse
     DFGG_FH_RF1(unsigned int, size_out_edges, const);
+    DFGG_FH_RF1(unsigned int, size_out_edges_ns, const);
     DFGG_FH_RF1(unsigned int, size_out_edges_cb, const);
     unsigned int size_out_edges(vertex_descriptor) const;
-    unsigned int size_out_edges_cb(vertex_descriptor) const;
+    unsigned int size_out_edges_ns(vertex_descriptor) const; // ns: none-self edges
+    unsigned int size_out_edges_cb(vertex_descriptor) const; // cb: cross-boundary
     DFGG_FH_RF1(unsigned int, size_in_edges, const);
+    DFGG_FH_RF1(unsigned int, size_in_edges_ns, const);
     DFGG_FH_RF1(unsigned int, size_in_edges_cb, const);
     unsigned int size_in_edges(vertex_descriptor) const;
+    unsigned int size_in_edges_ns(vertex_descriptor) const;
     unsigned int size_in_edges_cb(vertex_descriptor) const;
     DFGG_FH_RF1(std::list<boost::shared_ptr<dfgNode> >, get_out_nodes, const);
     DFGG_FH_RF1(std::list<boost::shared_ptr<dfgNode> >, get_out_nodes_cb, const);
