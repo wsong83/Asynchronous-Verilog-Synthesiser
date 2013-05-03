@@ -32,6 +32,8 @@
 #define YYSTYPE shell::CMD::cmd_token_type
 #undef BISON_LOCATION_HH
 #undef BISON_POSITION_HH
+#undef YY_LOCATION_HH
+#undef YY_POSITION_HH
 #include "command.hh"
 #undef YYSTYPE
 
