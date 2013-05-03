@@ -33,6 +33,8 @@
 
 #include <boost/foreach.hpp>
 
+#include "shell/env.h"
+
 using namespace SDFG;
 using boost::shared_ptr;
 using std::map;
