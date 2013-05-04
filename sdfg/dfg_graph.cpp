@@ -296,18 +296,18 @@ void SDFG::dfgGraph::remove_port(const std::string& pname) {
   if(father && father->port2sig.count(pname)) {
     string sname = father->port2sig[pname];
     // remove the port map connection
-    list<string>::iterator it, end;
-    for(it=father->sig2port[sname].begin(), end=father->sig2port[sname].end(); it!=end; ++it) {
-      if(*it == pname) {
-        father->sig2port[sname].erase(it);
+    BOOST_FOREACH(const string& sig, father->sig2port[sname]) {
+      if(sig == pname) {
+        father->sig2port[sname].erase(sig);
         break;
       }
     }
+
     // scan it again to get input/output count
     bool inpc = false;
     bool outpc = false;
-    for(it=father->sig2port[sname].begin(), end=father->sig2port[sname].end(); it!=end; ++it) {
-      switch(get_node(*it)->type) {
+    BOOST_FOREACH(const string& sig, father->sig2port[sname]) {
+      switch(get_node(sig)->type) {
       case dfgNode::SDFG_IPORT: inpc = true; break;
       case dfgNode::SDFG_OPORT: outpc = true; break;
       case dfgNode::SDFG_PORT:  inpc = true; outpc = true; break;
@@ -446,9 +446,9 @@ shared_ptr<dfgNode> SDFG::dfgGraph::get_source(edge_descriptor eid) const {
 shared_ptr<dfgNode> SDFG::dfgGraph::get_source_cb(edge_descriptor eid) const {
   shared_ptr<dfgNode> inode = get_source(eid);
   if(inode->type == dfgNode::SDFG_MODULE && inode->child) {
-    list<string> plist = inode->sig2port.find(get_target(eid)->get_hier_name())->second;
+    std::set<string> plist = inode->sig2port.find(get_target(eid)->get_hier_name())->second;
     if(!plist.empty()) {
-      BOOST_FOREACH(string& m, plist) {
+      BOOST_FOREACH(const string& m, plist) {
         shared_ptr<dfgNode> n = inode->child->get_node(m);
         if(n->type & dfgNode::SDFG_OPORT && n->type != dfgNode::SDFG_IPORT)
           return n;
@@ -471,9 +471,9 @@ list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_target_cb(edge_descriptor eid) co
   list<shared_ptr<dfgNode> > rv;
   shared_ptr<dfgNode> onode = get_target(eid);
   if(onode->type == dfgNode::SDFG_MODULE && onode->child) {
-    list<string> plist = onode->sig2port.find(get_source(eid)->get_hier_name())->second;
+    std::set<string> plist = onode->sig2port.find(get_source(eid)->get_hier_name())->second;
     if(!plist.empty()) {
-      BOOST_FOREACH(string& m, plist) {
+      BOOST_FOREACH(const string& m, plist) {
         shared_ptr<dfgNode> n = onode->child->get_node(m);
         if(n->type & dfgNode::SDFG_IPORT && n->type != dfgNode::SDFG_OPORT)
           rv.push_back(n);
@@ -527,7 +527,7 @@ void SDFG::dfgGraph::remove_useless_nodes() {
   std::list<shared_ptr<dfgNode> > node_list;  // the list store the same set 
 
   // put all nodes into the set
-  BOOST_FOREACH(nodes_map_type n, nodes) {
+  BOOST_FOREACH(const nodes_map_type& n, nodes) {
     node_set.insert(n.second);
     node_list.push_back(n.second);
   }

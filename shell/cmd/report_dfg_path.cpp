@@ -240,12 +240,12 @@ bool shell::CMD::CMDReportDFGPath::exec ( const std::string& str, Env * pEnv){
       list<shared_ptr<SDFG::dfgPath> > mp = arg.bFast ? s->get_out_paths_fast_cb() : s->get_out_paths_cb();
       BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, mp) {
         if(targets.empty() || targets.count(p->tar)) {
-           if(plist.size() < (arg.nMax < 0 ? 10 : arg.nMax))
+          if((int)(plist.size()) < (arg.nMax < 0 ? 10 : arg.nMax))
              plist.push_back(p);
            else break;
         }
       }
-      if(plist.size() >= (arg.nMax < 0 ? 10 : arg.nMax)) 
+      if((int)(plist.size()) >= (arg.nMax < 0 ? 10 : arg.nMax)) 
         break;
     }
   } else {
@@ -253,12 +253,12 @@ bool shell::CMD::CMDReportDFGPath::exec ( const std::string& str, Env * pEnv){
       list<shared_ptr<SDFG::dfgPath> > mp = arg.bFast ? t->get_in_paths_fast_cb() : t->get_in_paths_cb();
       BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, mp) {
         if(sources.empty() || sources.count(p->tar)) {
-           if(plist.size() < (arg.nMax < 0 ? 10 : arg.nMax))
+           if((int)(plist.size()) < (arg.nMax < 0 ? 10 : arg.nMax))
              plist.push_back(p);
            else break;
         }
       }
-      if(plist.size() >= (arg.nMax < 0 ? 10 : arg.nMax)) 
+      if((int)(plist.size()) >= (arg.nMax < 0 ? 10 : arg.nMax)) 
         break;
     }
   }

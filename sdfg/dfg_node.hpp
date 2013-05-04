@@ -44,8 +44,10 @@ namespace SDFG {
     std::set<boost::shared_ptr<netlist::NetComp> > ptr;   // pointer to the netlist components
     boost::shared_ptr<dfgGraph> child;         // when it is a module entity, it should has a child
     std::string child_name;                    // when it is a module entity, this is the module name of the module
-    std::map<std::string, std::list<std::string> > sig2port;   // remember the port connection if it is a module entity
+    std::map<std::string, std::set<std::string> > sig2port;   // remember the port connection if it is a module entity
+    typedef std::pair<const std::string, std::set<std::string> > sig2port_type;
     std::map<std::string, std::string> port2sig;        // remember the port connection if it is a module entity
+    typedef std::pair<const std::string, std::string> port2sig_type;
     dfgGraph* pg;                                       // a pointer pointing to the father Graph
     std::string name;                                   // description of this node
     std::list<std::string> hier;                        // hierarchy prefix (name of flattened modules) 

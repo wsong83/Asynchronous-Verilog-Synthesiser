@@ -157,7 +157,7 @@ bool SDFG::dfgNode::read(const pugi::xml_node& xnode) {
       string port_name = port.attribute("port").as_string();
       string port_signal = port.attribute("signal").as_string();
       port2sig[port_name] = port_signal;
-      sig2port[port_signal].push_back(port_name);
+      sig2port[port_signal].insert(port_name);
     }
   }
 
@@ -220,25 +220,22 @@ void SDFG::dfgNode::set_hier_name(const string& hname) {
 void SDFG::dfgNode::remove_port_sig(const string& sname, int dir) {
   if(type == SDFG_MODULE && sig2port.count(sname)) {
     // remove the port map connection
-    list<string>::iterator it = sig2port[sname].begin();
-    list<string>::iterator end = sig2port[sname].end();
-    while(it!=end) {
-      if((child->get_node(*it)->type & SDFG_PORT) 
-         && (child->get_node(*it)->type != SDFG_OPORT)
-         && dir <= 0) {
-        port2sig.erase(*it);
-        sig2port[sname].erase(it);
-        it = sig2port[sname].begin();
-        end = sig2port[sname].end();
-      } else if((child->get_node(*it)->type & SDFG_PORT) 
-                && (child->get_node(*it)->type != SDFG_IPORT)
-                && dir >= 0) {
-        port2sig.erase(*it);
-        sig2port[sname].erase(it);
-        it = sig2port[sname].begin();
-        end = sig2port[sname].end();
-      } else 
-        ++it;
+    std::set<string> m_slist = sig2port[sname]; // local copy
+    BOOST_FOREACH(const string& sig, m_slist) {
+      shared_ptr<dfgNode> child_node = child->get_node(sig);
+      if(child_node) {
+        if((child_node->type & SDFG_PORT) 
+           && (child_node->type != SDFG_OPORT)
+           && dir <= 0) {
+          port2sig.erase(sig);
+          sig2port[sname].erase(sig);
+        } else if((child_node->type & SDFG_PORT) 
+                  && (child_node->type != SDFG_IPORT)
+                  && dir >= 0) {
+          port2sig.erase(sig);
+          sig2port[sname].erase(sig);
+        } 
+      }
     }
   }
 }
@@ -246,7 +243,7 @@ void SDFG::dfgNode::remove_port_sig(const string& sname, int dir) {
 void SDFG::dfgNode::add_port_sig(const string& pname, const string& sname) {
   if(type == SDFG_MODULE && child->exist(pname)) {
     port2sig[pname] = sname;
-    sig2port[sname].push_back(pname);
+    sig2port[sname].insert(pname);
   }
 }
 
