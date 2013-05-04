@@ -247,3 +247,22 @@ void SDFG::dfgNode::add_port_sig(const string& pname, const string& sname) {
   }
 }
 
+std::ostream& SDFG::dfgNode::streamout(std::ostream& os) const {
+  os << "dfgNode: " << get_full_name() << " (";
+  switch(type) {
+  case SDFG_DF:     os << "default";  break;
+  case SDFG_COMB:   os << "combi";    break;
+  case SDFG_FF:     os << "FF";       break;
+  case SDFG_LATCH:  os << "latch";    break;
+  case SDFG_MODULE: os << "module";   break;
+  case SDFG_GATE:   os << "gate";     break;
+  case SDFG_IPORT:  os << "in";       break;
+  case SDFG_OPORT:  os << "out";      break;
+  case SDFG_PORT:   os << "inout";    break;
+  default:          os << "unknown";
+  }
+
+  os << ")";
+
+  return os;
+}

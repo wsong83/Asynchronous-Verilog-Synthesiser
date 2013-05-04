@@ -123,6 +123,9 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_datapath() const {
     }    
   }
   
+  // remove useless nodes
+  ng->remove_useless_nodes();
+  
   assert(pModule != NULL);
   pModule->DataDFG = ng->get_hier_RRG();
   return pModule->DataDFG;

@@ -217,6 +217,8 @@ void SDFG::dfgGraph::add_path(shared_ptr<dfgPath> p) {
 void SDFG::dfgGraph::remove_node(vertex_descriptor nid) {
   if(!nodes.count(nid)) return;
   shared_ptr<dfgNode> pn = nodes[nid];
+
+  //std::cout << "remove node: " << *pn << std::endl;
   
   // remove all output edges
   {
@@ -538,20 +540,66 @@ void SDFG::dfgGraph::remove_useless_nodes() {
     node_list.pop_front();
     node_set.erase(n);
     
-    switch(n->type) {
-    case dfgNode::SDFG_IPORT: { // input port
+    if(n->type == dfgNode::SDFG_IPORT) { // input port
       if(size_out_edges_ns(n) == 0)
         remove_node(n);         // an input port with no load should be removed
-      break;
-    }
-    case dfgNode::SDFG_MODULE: { // a module entity
-      break;
-    }
-    default: {                  // all other cases
-      if(size_out_edges_ns(n) == 0) {
+    } else if(n->type == dfgNode::SDFG_OPORT) { // output port
+      if(father != NULL && !father->port2sig.count(n->name)) {
+        list<shared_ptr<dfgNode> > inodes = get_in_nodes(n);
+        remove_node(n);
+        BOOST_FOREACH(shared_ptr<dfgNode> inode, inodes) {
+          if(!n->sig2port.count(inode->name) && !node_set.count(inode)) {
+            node_set.insert(inode);
+            node_list.push_back(inode);
+          }
+        }
       }
-      break;
-    }
+    } else if(n->type == dfgNode::SDFG_PORT) { // inout port
+      if(size_out_edges_ns(n) == 0 && father != NULL && !father->port2sig.count(n->name)) {
+        list<shared_ptr<dfgNode> > inodes = get_in_nodes(n);
+        remove_node(n);
+        BOOST_FOREACH(shared_ptr<dfgNode> inode, inodes) {
+          if(!n->sig2port.count(inode->name) && !node_set.count(inode)) {
+            node_set.insert(inode);
+            node_list.push_back(inode);
+          }
+        }
+      }
+    } else if(n->type & dfgNode::SDFG_MODULE) { // a module entity
+      // get the in and out nodes before process it
+      list<shared_ptr<dfgNode> > inodes = get_in_nodes(n);
+      list<shared_ptr<dfgNode> > onodes = get_out_nodes(n);
+      // process the child module
+      n->child->remove_useless_nodes();
+      // check all node originally connected
+      BOOST_FOREACH(shared_ptr<dfgNode> inode, inodes) {
+        if(!n->sig2port.count(inode->name) && !node_set.count(inode)) {
+          node_set.insert(inode);
+          node_list.push_back(inode);
+        }
+      }
+      BOOST_FOREACH(shared_ptr<dfgNode> onode, onodes) {
+        if(!n->sig2port.count(onode->name) && !node_set.count(onode)) {
+          node_set.insert(onode);
+          node_list.push_back(onode);
+        }
+      }
+      // remove the module if it is empty
+      if(n->sig2port.size() == 0)
+        remove_node(n);
+    } else { // all other cases
+      if(size_out_edges_ns(n) == 0) {
+        list<shared_ptr<dfgNode> > inodes = get_in_nodes(n);
+        // remove the node if it has no load
+        remove_node(n);
+        // recheck all input nodes
+        BOOST_FOREACH(shared_ptr<dfgNode> inode, inodes) {
+          if(!n->sig2port.count(inode->name) && !node_set.count(inode)) {
+            node_set.insert(inode);
+            node_list.push_back(inode);
+          }
+        }
+      }
     }
   }
 }

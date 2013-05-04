@@ -104,6 +104,9 @@ namespace SDFG {
     std::pair<double, double> bbox;     // bounding box
     void graphic_init();                // set initial graphic info.
 
+    // for debug usage
+    std::ostream& streamout(std::ostream&) const;
+
   private:
     void out_path_type_update_cb(std::list<boost::shared_ptr<dfgPath> >&,
                                  boost::shared_ptr<dfgPath>&,
@@ -143,6 +146,11 @@ namespace SDFG {
                                               std::map<boost::shared_ptr<dfgNode>, int> >&,
                                      unsigned int);
   };
+
+  inline std::ostream& operator<< (std::ostream& os, const dfgNode& node) {
+    return node.streamout(os);
+  }
+    
 }
 
 #endif
