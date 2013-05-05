@@ -63,12 +63,16 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     
     
     std::map<edge_descriptor, boost::shared_ptr<dfgEdge> > edges;
+    typedef std::pair<const edge_descriptor, boost::shared_ptr<dfgEdge> > edges_type;
     std::map<vertex_descriptor, boost::shared_ptr<dfgNode> > nodes;
-    typedef std::pair<const vertex_descriptor, boost::shared_ptr<dfgNode> > nodes_map_type;
+    typedef std::pair<const vertex_descriptor, boost::shared_ptr<dfgNode> > nodes_type;
 
     std::map<std::string, vertex_descriptor> node_map;
+    typedef std::pair<const std::string, vertex_descriptor> node_map_type;
     std::map<unsigned int, vertex_descriptor> index_map;
+    typedef std::pair<const unsigned int, vertex_descriptor> index_map_type;
     std::map<unsigned int, edge_descriptor> edge_map;
+    typedef std::pair<const unsigned int, edge_descriptor> edge_map_type;
 
     dfgGraph() : father(NULL), pModule(NULL) {}
     dfgGraph(const std::string& n) : father(NULL), name(n), pModule(NULL) {}
@@ -203,6 +207,7 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
 
     // other
     std::string get_full_name() const;
+    bool check_integrity() const; // check whether there is any illegal connections or mismatches in various maps
     
   private:
     // convert types to id

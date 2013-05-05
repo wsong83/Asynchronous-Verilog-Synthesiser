@@ -63,7 +63,9 @@ namespace SDFG {
     bool read(void * const, ogdf::GraphAttributes * const);
 
     std::list<std::pair<double, double> > bend; // bending points of the edge
-
+    
+    // for debug usage
+    bool check_integrity() const; // check whether there is any illegal connections
   };
 
 }

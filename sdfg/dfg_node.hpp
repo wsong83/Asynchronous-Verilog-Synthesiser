@@ -106,6 +106,7 @@ namespace SDFG {
 
     // for debug usage
     std::ostream& streamout(std::ostream&) const;
+    bool check_integrity() const; // check whether there is any illegal connections
 
   private:
     void out_path_type_update_cb(std::list<boost::shared_ptr<dfgPath> >&,

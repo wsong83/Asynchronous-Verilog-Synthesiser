@@ -385,7 +385,8 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
         break;
       }
       case PortConn::CNUM: {    // constant number
-        break;                  // do nothing
+        node->add_port_sig(m->pname.name + "_P", "");
+        break;
       }
       default:
         assert(0 == "port type wrong, input cannot be open.");
@@ -400,7 +401,8 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
         break;
       }
       case PortConn::COPEN: {   // open
-        break;                  // do nothing
+        node->add_port_sig(m->pname.name + "_P", "");
+        break;
       }
       default:
         assert(0 == "port type wrong, output cannot be expression or number.");

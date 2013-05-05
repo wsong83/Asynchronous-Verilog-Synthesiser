@@ -27,6 +27,8 @@
  */
 
 #include "dfg_edge.hpp"
+#include "dfg_node.hpp"
+#include "dfg_graph.hpp"
 
 #include <ogdf/basic/GraphAttributes.h>
 #include <boost/format.hpp>
@@ -103,5 +105,10 @@ bool SDFG::dfgEdge::read(void * const pedge, ogdf::GraphAttributes * const pga) 
   return true;
 }
 
+bool SDFG::dfgEdge::check_integrity() const {
+  assert(pg->get_target(id));
+  assert(pg->get_source(id));
+  return true;
+}
 
 

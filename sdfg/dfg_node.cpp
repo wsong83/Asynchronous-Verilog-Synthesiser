@@ -266,3 +266,34 @@ std::ostream& SDFG::dfgNode::streamout(std::ostream& os) const {
 
   return os;
 }
+
+bool SDFG::dfgNode::check_integrity() const {
+  if(type == SDFG_MODULE) {
+    if(child) {
+      assert(child->father == this);
+      assert(child->check_integrity());
+      BOOST_FOREACH(port2sig_type p2s, port2sig) {
+        assert(child->exist(p2s.first));
+        shared_ptr<dfgNode> p = child->get_node(p2s.first);
+        assert(p);
+        if(p2s.second.size() > 0) {
+          assert(pg->exist(p2s.second));
+          assert(p->type & SDFG_PORT);
+          if(p->type != SDFG_IPORT) {
+            assert(pg->exist(id, p2s.second));
+          }
+          if(p->type != SDFG_OPORT) {
+            assert(pg->exist(p2s.second, id));
+          }
+          assert(sig2port.count(p2s.second));
+          assert(sig2port.find(p2s.second)->second.count(p2s.first));
+        }
+      }
+    }
+  } else if(type & SDFG_PORT) {
+    if(pg->father != NULL) {
+      assert(pg->father->port2sig.count(get_hier_name()));
+    }
+  }
+  return true;
+}

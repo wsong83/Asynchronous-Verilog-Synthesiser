@@ -529,7 +529,7 @@ void SDFG::dfgGraph::remove_useless_nodes() {
   std::list<shared_ptr<dfgNode> > node_list;  // the list store the same set 
 
   // put all nodes into the set
-  BOOST_FOREACH(const nodes_map_type& n, nodes) {
+  BOOST_FOREACH(const nodes_type& n, nodes) {
     node_set.insert(n.second);
     node_list.push_back(n.second);
   }
@@ -1126,6 +1126,46 @@ string SDFG::dfgGraph::get_full_name() const {
     return father->get_full_name();
   else
     return "";
+}
+
+bool SDFG::dfgGraph::check_integrity() const {
+  // check all nodes
+  BOOST_FOREACH(index_map_type index, index_map) {
+    assert(nodes.count(index.second));
+    assert(nodes.find(index.second)->second->node_index == index.first);
+  }
+  
+  BOOST_FOREACH(node_map_type nm, node_map) {
+    assert(nodes.count(nm.second));
+    assert(nodes.find(nm.second)->second->get_hier_name() == nm.first);
+  }
+  
+  BOOST_FOREACH(nodes_type n, nodes) {
+    shared_ptr<dfgNode> pn = n.second;
+    assert(pn);
+    assert(pn->id == n.first);
+    assert(index_map.count(pn->node_index));
+    assert(node_map.count(pn->get_hier_name()));
+    assert(pn->pg == this);
+    assert(pn->check_integrity());
+  }
+
+  // check all edges
+  BOOST_FOREACH(edge_map_type em, edge_map) {
+    assert(edges.count(em.second));
+    assert(edges.find(em.second)->second->edge_index == em.first);   
+  }
+
+  BOOST_FOREACH(edges_type e, edges) {
+    shared_ptr<dfgEdge> pe = e.second;
+    assert(pe);
+    assert(pe->id == e.first);
+    assert(edge_map.count(pe->edge_index));
+    assert(pe->pg == this);
+    assert(pe->check_integrity());
+  }
+  
+  return true;
 }
 
 
