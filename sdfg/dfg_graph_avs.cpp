@@ -43,93 +43,94 @@ using std::pair;
 using std::list;
 
 shared_ptr<dfgGraph> SDFG::dfgGraph::get_datapath() const {
-
-  // new register graph
-  shared_ptr<dfgGraph> ng(new dfgGraph(name));
-
-  // iterate all nodes for data nodes
-  std::set<shared_ptr<dfgNode> > data_nodes; 
-  typedef pair<const vertex_descriptor, shared_ptr<dfgNode> > node_record_type;
-  BOOST_FOREACH(shared_ptr<dfgNode> n, 
-                get_list_of_nodes(dfgNode::SDFG_COMB|dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_GATE)) {
-    bool keep = false;
-    BOOST_FOREACH(shared_ptr<dfgEdge> e, get_in_edges(n)) {
-      if(e->type & dfgEdge::SDFG_DP) {
+  assert(pModule != NULL);
+  if(!pModule->DataDFG) {
+    
+    // new register graph
+    shared_ptr<dfgGraph> ng(new dfgGraph(name));
+    
+    // iterate all nodes for data nodes
+    std::set<shared_ptr<dfgNode> > data_nodes; 
+    BOOST_FOREACH(shared_ptr<dfgNode> n, 
+                  get_list_of_nodes(dfgNode::SDFG_COMB|dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_GATE)) {
+      bool keep = false;
+      BOOST_FOREACH(shared_ptr<dfgEdge> e, get_in_edges(n)) {
+        if(e->type & dfgEdge::SDFG_DP) {
         keep = true;
         break;
-      }
-    }
-    if(!keep) {
-      BOOST_FOREACH(shared_ptr<dfgEdge> e, get_out_edges(n)) {
-        if(e->type & dfgEdge::SDFG_DP) {
-          keep = true;
-          break;
         }
       }
-    }
-    if(keep)
-      data_nodes.insert(n);
-  } 
-
-  // also add module and ports to the graph
-  list<shared_ptr<dfgNode> > m_list = get_list_of_nodes(dfgNode::SDFG_MODULE|dfgNode::SDFG_PORT);
-  data_nodes.insert(m_list.begin(), m_list.end());
-
-  // get all related nodes
-  std::set<shared_ptr<dfgNode> > related_nodes;
-  BOOST_FOREACH(node_record_type n, nodes) {
-    if(data_nodes.count(n.second)) {
-      related_nodes.insert(n.second);
-    } 
-
-    bool keep = false;
-    BOOST_FOREACH(shared_ptr<dfgNode> nn, get_in_nodes(n.second)) {
-      if(data_nodes.count(nn)) {
-        keep = true;
-        break;
+      if(!keep) {
+        BOOST_FOREACH(shared_ptr<dfgEdge> e, get_out_edges(n)) {
+          if(e->type & dfgEdge::SDFG_DP) {
+            keep = true;
+            break;
+          }
+        }
       }
-    }
-    if(!keep) {
-      BOOST_FOREACH(shared_ptr<dfgNode> nn, get_out_nodes(n.second)) {
+      if(keep)
+        data_nodes.insert(n);
+    } 
+    
+    // also add module and ports to the graph
+    list<shared_ptr<dfgNode> > m_list = get_list_of_nodes(dfgNode::SDFG_MODULE|dfgNode::SDFG_PORT);
+    data_nodes.insert(m_list.begin(), m_list.end());
+    
+    // get all related nodes
+    std::set<shared_ptr<dfgNode> > related_nodes;
+    BOOST_FOREACH(nodes_type n, nodes) {
+      if(data_nodes.count(n.second)) {
+        related_nodes.insert(n.second);
+        continue;
+      } 
+      
+      bool keep = false;
+      BOOST_FOREACH(shared_ptr<dfgNode> nn, get_in_nodes(n.second)) {
         if(data_nodes.count(nn)) {
           keep = true;
           break;
         }
       }
-    }
-    if(keep)
-      related_nodes.insert(n.second);
-  }
-  
-  // rebuild the graph
-  BOOST_FOREACH(shared_ptr<dfgNode> n, related_nodes) {
-    shared_ptr<dfgNode> nnode(n->copy());
-    if(n->type & dfgNode::SDFG_MODULE) {
-      nnode->child = nnode->child->get_datapath();
-      nnode->child->father = nnode.get();
-    }
-    ng->add_node(nnode);
-  }
-  BOOST_FOREACH(shared_ptr<dfgNode> n, related_nodes) {
-    BOOST_FOREACH(shared_ptr<dfgEdge> e, get_in_edges(n)) {
-      if((e->type != dfgEdge::SDFG_RST) && (e->type != dfgEdge::SDFG_CLK) && related_nodes.count(get_source(e))) {
-        ng->add_edge(e->name, e->type, get_source(e)->get_hier_name(), n->get_hier_name());
+      if(!keep) {
+        BOOST_FOREACH(shared_ptr<dfgNode> nn, get_out_nodes(n.second)) {
+          if(data_nodes.count(nn)) {
+            keep = true;
+            break;
+          }
+        }
       }
+      if(keep)
+        related_nodes.insert(n.second);
     }
-    BOOST_FOREACH(shared_ptr<dfgEdge> e, get_out_edges(n)) {
-      if((e->type != dfgEdge::SDFG_RST) && (e->type != dfgEdge::SDFG_CLK) && related_nodes.count(get_target(e))) {
-        ng->add_edge(e->name, e->type, n->get_hier_name(), get_target(e)->get_hier_name());
+  
+    // rebuild the graph
+    BOOST_FOREACH(shared_ptr<dfgNode> n, related_nodes) {
+      shared_ptr<dfgNode> nnode(n->copy());
+      if(n->type & dfgNode::SDFG_MODULE) {
+        nnode->child = nnode->child->get_datapath();
+        nnode->child->father = nnode.get();
       }
-    }    
+      ng->add_node(nnode);
+    }
+    BOOST_FOREACH(shared_ptr<dfgNode> n, related_nodes) {
+      BOOST_FOREACH(shared_ptr<dfgEdge> e, get_in_edges(n)) {
+        if((e->type != dfgEdge::SDFG_RST) && (e->type != dfgEdge::SDFG_CLK) && related_nodes.count(get_source(e))) {
+          ng->add_edge(e->name, e->type, get_source(e)->get_hier_name(), n->get_hier_name());
+        }
+      }
+      BOOST_FOREACH(shared_ptr<dfgEdge> e, get_out_edges(n)) {
+        if((e->type != dfgEdge::SDFG_RST) && (e->type != dfgEdge::SDFG_CLK) && related_nodes.count(get_target(e))) {
+          ng->add_edge(e->name, e->type, n->get_hier_name(), get_target(e)->get_hier_name());
+        }
+      }    
+    }
+    
+    // remove useless nodes
+    //ng->remove_useless_nodes();
+    ng->check_integrity();
+    pModule->DataDFG = ng;
   }
   
-  // remove useless nodes
-  ng->remove_useless_nodes();
-  ng->check_integrity();
-  
-  assert(pModule != NULL);
-  pModule->DataDFG = ng->get_hier_RRG();
-  pModule->DataDFG->check_integrity();
   return pModule->DataDFG;
 }
 

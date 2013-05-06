@@ -176,9 +176,16 @@ void shell::CMD::CMDExtractDatapath::exec ( const std::string& str, Env * pEnv){
   fhandler.open(system_complete(outputFileName), std::ios_base::out|std::ios_base::trunc);
 
   // make sure DFG is ready
-  if(!tarDesign->DFG) tarDesign->DFG = tarDesign->extract_sdfg(true);
+  if(!tarDesign->DFG)
+    tarDesign->DFG = tarDesign->extract_sdfg(true);
 
-  tarDesign->DFG->get_datapath()->write(fhandler);
+  if(!tarDesign->DataDFG) {
+    tarDesign->DataDFG = tarDesign->DFG->get_datapath();
+    tarDesign->DataDFG->remove_useless_nodes();
+    tarDesign->DataDFG->check_integrity();
+  }
+
+  tarDesign->DataDFG->write(fhandler);
 
   fhandler.close();
   gEnv.stdOs << "write the datapaths to " << outputFileName << endl;
