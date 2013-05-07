@@ -104,7 +104,7 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     void remove_edge(vertex_descriptor, vertex_descriptor, dfgEdge::edge_type_t);
     DFGG_FH_F1(remove_edge,); 
     void remove_edge(edge_descriptor);
-    void remove_port(const std::string&);
+    void remove_port(const dfgNode&);
     
     // other modifications
     std::list<boost::shared_ptr<dfgNode> > flatten() const;             // move all internal nodes to upper layer, not sure how it works, do not use it

@@ -242,7 +242,7 @@ void SDFG::dfgGraph::remove_node(vertex_descriptor nid) {
   pn->pg = NULL;                    // make sure it cannot access graph
 
   if(pn->type & dfgNode::SDFG_PORT) { // port
-    remove_port(pn->get_hier_name());
+    remove_port(*pn);
   }
 
   if(pn->type & dfgNode::SDFG_MODULE) { // module
@@ -294,38 +294,30 @@ void SDFG::dfgGraph::remove_edge(edge_descriptor eid) {
   }
 }
 
-void SDFG::dfgGraph::remove_port(const std::string& pname) {
-  if(father && father->port2sig.count(pname)) {
-    string sname = father->port2sig[pname];
-    // remove the port map connection
-    BOOST_FOREACH(const string& sig, father->sig2port[sname]) {
-      if(sig == pname) {
-        father->sig2port[sname].erase(sig);
-        break;
-      }
-    }
+void SDFG::dfgGraph::remove_port(const dfgNode& port) {
+  if(father != NULL && father->port2sig.count(port.get_hier_name())) {
+    string sname = father->port2sig[port.get_hier_name()];
+    if(sname.size() > 0) {
+      // remove the port map connection
+      father->sig2port[sname].erase(port.get_hier_name());
 
-    // scan it again to get input/output count
-    bool inpc = false;
-    bool outpc = false;
-    BOOST_FOREACH(const string& sig, father->sig2port[sname]) {
-      switch(get_node(sig)->type) {
-      case dfgNode::SDFG_IPORT: inpc = true; break;
-      case dfgNode::SDFG_OPORT: outpc = true; break;
-      case dfgNode::SDFG_PORT:  inpc = true; outpc = true; break;
-      default: assert(0 == "node type wrong!");
+      // scan it again to get input/output count
+      switch(port.type) {
+      case dfgNode::SDFG_IPORT: 
+        father->pg->remove_edge(sname, father->get_hier_name());
+        break;
+      case dfgNode::SDFG_OPORT: 
+        father->pg->remove_edge(father->get_hier_name(), sname);
+        break;
+      case dfgNode::SDFG_PORT:
+        father->pg->remove_edge(sname, father->get_hier_name());
+        father->pg->remove_edge(father->get_hier_name(), sname);
+        break;
+      default:
+        assert(0 == "node type wrong!");
       }
     }
-    
-    if(!inpc) {               // remove input
-      father->pg->remove_edge(sname, father->get_hier_name());
-    }
-    
-    if(!outpc) {               // remove output
-      father->pg->remove_edge(father->get_hier_name(), sname);
-    }
-    
-    father->port2sig.erase(pname);
+    father->port2sig.erase(port.get_hier_name());
   }
 }
 
@@ -802,14 +794,16 @@ list<shared_ptr<dfgEdge> > SDFG::dfgGraph::get_out_edges_cb(vertex_descriptor ni
     if(pn->type == dfgNode::SDFG_OPORT || pn->type == dfgNode::SDFG_PORT) { // output or I/O port
       if(father && father->port2sig.count(pn->get_hier_name())) {
         string tar_name = father->port2sig.find(pn->get_hier_name())->second;
-        GraphTraits::out_edge_iterator eit, eend;
-        for(boost::tie(eit, eend) = 
-              boost::edge_range(
-                                father->id, 
-                                father->pg->node_map.find(tar_name)->second, 
-                                father->pg->bg_);
-            eit != eend; ++eit) { 
-          rv.push_back(father->pg->edges.find(*eit)->second);
+        if(tar_name.size() > 0) {
+          GraphTraits::out_edge_iterator eit, eend;
+          for(boost::tie(eit, eend) = 
+                boost::edge_range(
+                                  father->id, 
+                                  father->pg->node_map.find(tar_name)->second, 
+                                  father->pg->bg_);
+              eit != eend; ++eit) { 
+            rv.push_back(father->pg->edges.find(*eit)->second);
+          }
         }
       }
     } 
@@ -844,14 +838,16 @@ list<shared_ptr<dfgEdge> > SDFG::dfgGraph::get_in_edges_cb(vertex_descriptor nid
     if(pn->type == dfgNode::SDFG_IPORT || pn->type == dfgNode::SDFG_PORT) { // input or I/O port
       if(pn && father && father->port2sig.count(pn->get_hier_name())) {
         string tar_name = father->port2sig.find(pn->get_hier_name())->second;
-        GraphTraits::out_edge_iterator eit, eend;
-        for(boost::tie(eit, eend) = 
-              boost::edge_range(
-                                father->pg->node_map.find(tar_name)->second, 
+        if(tar_name.size() > 0) {
+          GraphTraits::out_edge_iterator eit, eend;
+          for(boost::tie(eit, eend) = 
+                boost::edge_range(
+                                  father->pg->node_map.find(tar_name)->second, 
                                 father->id, 
-                                father->pg->bg_);
-            eit != eend; ++eit) { 
-          rv.push_back(father->pg->edges.find(*eit)->second);
+                                  father->pg->bg_);
+              eit != eend; ++eit) { 
+            rv.push_back(father->pg->edges.find(*eit)->second);
+          }
         }
       }
     } 
