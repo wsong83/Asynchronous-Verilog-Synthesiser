@@ -533,25 +533,58 @@ void SDFG::dfgGraph::remove_useless_nodes() {
     node_set.erase(n);
     
     if(n->type == dfgNode::SDFG_IPORT) { // input port
-      if(size_out_edges_ns(n) == 0)
-        remove_node(n);         // an input port with no load should be removed
+      if((size_out_edges_ns(n) == 0) ||          // an input port with no load should be removed
+         (father != NULL && 
+          (!father->port2sig.count(n->name) ||            // port removed
+           !father->port2sig.find(n->name)->second.size() > 0      // port open or const
+           )
+          )
+         ) {
+        list<shared_ptr<dfgNode> > onodes = get_out_nodes(n);
+        remove_node(n);
+        BOOST_FOREACH(shared_ptr<dfgNode> onode, onodes) {
+          if(!node_set.count(onode)) {
+            node_set.insert(onode);
+            node_list.push_back(onode);
+          }
+        }        
+      }
     } else if(n->type == dfgNode::SDFG_OPORT) { // output port
-      if(father != NULL && !father->port2sig.count(n->name)) {
+      if((size_in_edges(n) == 0) ||            // an output port with no source should be removed
+         (father != NULL && 
+          (!father->port2sig.count(n->name) ||                // port removed
+           !father->port2sig.find(n->name)->second.size() > 0          // port open or const
+           )
+          )
+         ) {
         list<shared_ptr<dfgNode> > inodes = get_in_nodes(n);
         remove_node(n);
         BOOST_FOREACH(shared_ptr<dfgNode> inode, inodes) {
-          if(!n->sig2port.count(inode->name) && !node_set.count(inode)) {
+          if(!node_set.count(inode)) {
             node_set.insert(inode);
             node_list.push_back(inode);
           }
         }
       }
     } else if(n->type == dfgNode::SDFG_PORT) { // inout port
-      if(size_out_edges_ns(n) == 0 && father != NULL && !father->port2sig.count(n->name)) {
+      if((size_out_edges(n) == 0 && size_in_edges(n) == 0) || // an inout port with no source and no load should be removed
+         (father != NULL && 
+          (!father->port2sig.count(n->name) ||                // port removed
+           !father->port2sig.find(n->name)->second.size() > 0          // port open or const
+           )
+          )
+         ) {
+        list<shared_ptr<dfgNode> > onodes = get_out_nodes(n);
         list<shared_ptr<dfgNode> > inodes = get_in_nodes(n);
         remove_node(n);
+        BOOST_FOREACH(shared_ptr<dfgNode> onode, onodes) {
+          if(!node_set.count(onode)) {
+            node_set.insert(onode);
+            node_list.push_back(onode);
+          }
+        }        
         BOOST_FOREACH(shared_ptr<dfgNode> inode, inodes) {
-          if(!n->sig2port.count(inode->name) && !node_set.count(inode)) {
+          if(!node_set.count(inode)) {
             node_set.insert(inode);
             node_list.push_back(inode);
           }
@@ -562,6 +595,7 @@ void SDFG::dfgGraph::remove_useless_nodes() {
       list<shared_ptr<dfgNode> > inodes = get_in_nodes(n);
       list<shared_ptr<dfgNode> > onodes = get_out_nodes(n);
       // process the child module
+      n->remove_useless_ports();
       n->child->remove_useless_nodes();
       // check all node originally connected
       BOOST_FOREACH(shared_ptr<dfgNode> inode, inodes) {
@@ -716,6 +750,7 @@ list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_out_nodes_cb(vertex_descriptor ni
   shared_ptr<dfgNode> pn = nodes.find(nid)->second;
   if(pn->type == dfgNode::SDFG_OPORT || pn->type == dfgNode::SDFG_PORT) { // output or I/O port
     if(father && father->port2sig.count(pn->get_hier_name())) {
+      if(father->port2sig.find(pn->get_hier_name())->second.size() > 0)
         rv.push_back(father->pg->get_node(father->port2sig.find(pn->get_hier_name())->second));
     }
   } 
@@ -753,7 +788,8 @@ list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_in_nodes_cb(vertex_descriptor nid
   shared_ptr<dfgNode> pn = nodes.find(nid)->second;
   if(pn->type == dfgNode::SDFG_IPORT || pn->type == dfgNode::SDFG_PORT) { // input or I/O port
     if(father && father->port2sig.count(pn->get_hier_name())) {
-      rv.push_back(father->pg->get_node(father->port2sig.find(pn->get_hier_name())->second));
+      if(father->port2sig.find(pn->get_hier_name())->second.size() > 0)
+        rv.push_back(father->pg->get_node(father->port2sig.find(pn->get_hier_name())->second));
     }
   } 
   

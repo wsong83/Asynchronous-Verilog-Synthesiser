@@ -267,6 +267,15 @@ std::ostream& SDFG::dfgNode::streamout(std::ostream& os) const {
   return os;
 }
 
+void SDFG::dfgNode::remove_useless_ports() {
+  std::map<std::string, std::string> m_port2sig = port2sig;
+  BOOST_FOREACH(port2sig_type p2s, m_port2sig) {
+    if(p2s.second.size() == 0) { // open or const input
+      port2sig.erase(p2s.first);
+    }
+  }
+}
+
 bool SDFG::dfgNode::check_integrity() const {
   if(type == SDFG_MODULE) {
     if(child) {

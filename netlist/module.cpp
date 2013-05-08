@@ -551,28 +551,29 @@ double netlist::Module::get_ratio_state_preserved_oport(std::set<VIdentifier>& o
   for(pit = db_port.begin_order(), pend = db_port.end_order(); pit != pend; ++pit) {
     if(pit->second->get_dir() >= 0) { // output or inout
       shared_ptr<SDFG::dfgNode> pnode = DataDFG->get_node(pit->second->name.name + "_P");
-      assert(pnode);
-      list<shared_ptr<SDFG::dfgPath> > psources = pnode->get_in_paths_fast_cb();
-      if(psources.size() > 0) {
-        num_of_oports++;
-        bool all_data_i_sp = true;
-        bool control_i_sp = false;
-        unsigned int num_of_idata = 0;
-        BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, psources) {
-          if(p->type & (SDFG::dfgEdge::SDFG_DP | SDFG::dfgEdge::SDFG_DDP)) {
-            num_of_idata++;
-            if(p->src->get_self_path_cb().size() == 0)
-              all_data_i_sp = false;
+      if(pnode) {               // exist in the data DFG
+        list<shared_ptr<SDFG::dfgPath> > psources = pnode->get_in_paths_fast_cb();
+        if(psources.size() > 0) {
+          num_of_oports++;
+          bool all_data_i_sp = true;
+          bool control_i_sp = false;
+          unsigned int num_of_idata = 0;
+          BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, psources) {
+            if(p->type & (SDFG::dfgEdge::SDFG_DP | SDFG::dfgEdge::SDFG_DDP)) {
+              num_of_idata++;
+              if(p->src->get_self_path_cb().size() == 0)
+                all_data_i_sp = false;
+            }
+            
+            if((p->type & SDFG::dfgEdge::SDFG_CTL) && (p->src->get_self_path_cb().size() > 0))
+              control_i_sp = true;
           }
-          
-          if((p->type & SDFG::dfgEdge::SDFG_CTL) && (p->src->get_self_path_cb().size() > 0))
-            control_i_sp = true;
-        }
         
-        if((num_of_idata > 0 && all_data_i_sp) || (num_of_idata == 0 && control_i_sp))
-          num_of_spports++;
-        else
-          oset.insert(pit->second->name);
+          if((num_of_idata > 0 && all_data_i_sp) || (num_of_idata == 0 && control_i_sp))
+            num_of_spports++;
+          else
+            oset.insert(pit->second->name);
+        }
       }
     }
   }

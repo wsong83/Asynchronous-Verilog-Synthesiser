@@ -104,6 +104,9 @@ namespace SDFG {
     std::pair<double, double> bbox;     // bounding box
     void graphic_init();                // set initial graphic info.
 
+    // remove open and static ports
+    void remove_useless_ports();
+
     // for debug usage
     std::ostream& streamout(std::ostream&) const;
     bool check_integrity() const; // check whether there is any illegal connections
