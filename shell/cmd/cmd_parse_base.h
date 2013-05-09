@@ -50,10 +50,16 @@ namespace shell {
         boost::spirit::qi::rule<Iterator, std::string()> text;
         boost::spirit::qi::rule<Iterator, std::string()> identifier;
         boost::spirit::qi::rule<Iterator, std::string()> filename;
+        boost::spirit::qi::rule<Iterator, double()> num_double;
+        boost::spirit::qi::rule<Iterator, int()> num_int;
+        boost::spirit::qi::rule<Iterator, unsigned int()> num_uint;
         boost::spirit::qi::rule<Iterator, void()> blanks;
 
         cmd_parse_base() {
           using boost::spirit::qi::lit;
+          using boost::spirit::qi::double_;
+          using boost::spirit::qi::uint_;
+          using boost::spirit::qi::int_;
           using boost::spirit::ascii::char_;
           using boost::spirit::ascii::print;
           using boost::spirit::ascii::alpha;
@@ -65,6 +71,9 @@ namespace shell {
             >> *(alnum|char_('$')|char_('\\')|char_('_')|char_('/')) 
             >> *(char_('[') >> +digit >> char_(']'));
           filename %= (print - '-' - space) >> *(print - space);
+          num_double %= double_;
+          num_int %= int_;
+          num_uint %= uint_;
           blanks = +(space) || boost::spirit::qi::eoi;
         }
       };

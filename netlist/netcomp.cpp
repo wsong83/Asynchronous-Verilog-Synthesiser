@@ -130,7 +130,7 @@ shared_ptr<NetComp> netlist::NetComp::get_sp(){
   return shared_from_this();
 }
 
-shared_ptr<Expression> netlist::NetComp::get_combined_expression(const VIdentifier&) {
+shared_ptr<Expression> netlist::NetComp::get_combined_expression(const VIdentifier&, std::set<string>) {
   std::cerr << "ERROR!!, the get_combined_expression() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << endl;
   assert(0 == "get_combined_expression() of NetComp is used");
   return shared_ptr<Expression>();

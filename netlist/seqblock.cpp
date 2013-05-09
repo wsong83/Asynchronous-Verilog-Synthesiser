@@ -337,7 +337,8 @@ void netlist::SeqBlock::replace_variable(const VIdentifier& var, const Number& n
 
 void netlist::SeqBlock::ssa_analysis(const VIdentifier& sname) {
   //std::cout << *this << std::endl;
-  shared_ptr<Expression> combi_exp = Block::get_combined_expression(sname);
+  std::set<string> m_set;
+  shared_ptr<Expression> combi_exp = Block::get_combined_expression(sname, m_set);
   //std::cout << *combi_exp << std::endl;
   combi_exp->extract_ssa_condition(sname);
 }

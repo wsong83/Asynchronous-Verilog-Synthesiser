@@ -142,7 +142,7 @@ namespace netlist{
     virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>);
     virtual void scan_vars(boost::shared_ptr<SDFG::RForest>, bool) const; 
     virtual boost::shared_ptr<NetComp> get_sp();
-    virtual boost::shared_ptr<Expression> get_combined_expression(const VIdentifier&);
+    virtual boost::shared_ptr<Expression> get_combined_expression(const VIdentifier&, std::set<std::string>);
     virtual Module* get_module(); // return the pointer of the father module
 
   protected:

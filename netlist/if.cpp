@@ -181,10 +181,10 @@ void netlist::IfState::replace_variable(const VIdentifier& var, const Number& nu
   if(elsecase) elsecase->replace_variable(var, num);
 }
 
-shared_ptr<Expression> netlist::IfState::get_combined_expression(const VIdentifier& target) {
-  shared_ptr<Expression> if_exp = ifcase->get_combined_expression(target);
+shared_ptr<Expression> netlist::IfState::get_combined_expression(const VIdentifier& target, std::set<std::string> s_set) {
+  shared_ptr<Expression> if_exp = ifcase->get_combined_expression(target, s_set);
   shared_ptr<Expression> else_exp;
-  if(elsecase)  else_exp = elsecase->get_combined_expression(target);
+  if(elsecase)  else_exp = elsecase->get_combined_expression(target, s_set);
   shared_ptr<Expression> rv;
   if(if_exp || else_exp) {
     if(if_exp) {

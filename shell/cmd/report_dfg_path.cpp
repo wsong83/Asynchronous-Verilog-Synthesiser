@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -190,18 +190,21 @@ bool shell::CMD::CMDReportDFGPath::exec ( const std::string& str, Env * pEnv){
     gEnv.stdOs << "Error: At least one of the starting point or the ending point must be specified." << endl;
   }
   
-  shared_ptr<SDFG::dfgNode> src;
-  shared_ptr<SDFG::dfgNode> tar;
+  shared_ptr<SDFG::dfgNode> src, src_p;
+  shared_ptr<SDFG::dfgNode> tar, tar_p;
 
   if(!arg.sSource.empty()) {
     src = G->search_node(arg.sSource);
+    src_p = G->search_node(arg.sSource + "_P");
     if(!src) {
       gEnv.stdOs << "Error: Fail to find the specified starting point \"" << arg.sSource << "\"." << endl;
-    } else if(
-              !(src->type & (SDFG::dfgNode::SDFG_FF|SDFG::dfgNode::SDFG_LATCH)) &&
-              !((src->type & SDFG::dfgNode::SDFG_PORT) && (src->type != SDFG::dfgNode::SDFG_OPORT) && 
-                (!src->pg->father))
+    } else if(src->type & (SDFG::dfgNode::SDFG_FF|SDFG::dfgNode::SDFG_LATCH)) {
+    } else if(src_p && 
+              (src_p->type & SDFG::dfgNode::SDFG_PORT) && (src_p->type != SDFG::dfgNode::SDFG_OPORT) && 
+              !(src_p->pg->father)
               ) {
+      src = src_p;
+    } else {
       gEnv.stdOs << "Error: The starting point of a path must be a FF/Latch or top-level input port." << endl;
       return false;
     }
@@ -209,13 +212,16 @@ bool shell::CMD::CMDReportDFGPath::exec ( const std::string& str, Env * pEnv){
 
   if(!arg.sTarget.empty()) {
     tar = G->search_node(arg.sTarget);
+    tar_p = G->search_node(arg.sTarget + "_P");
     if(!tar) {
       gEnv.stdOs << "Error: Fail to find the specified ending point \"" << arg.sTarget << "\"." << endl;
-    } else if(
-              !(tar->type & (SDFG::dfgNode::SDFG_FF|SDFG::dfgNode::SDFG_LATCH)) &&
-              !((tar->type & SDFG::dfgNode::SDFG_PORT) && (tar->type != SDFG::dfgNode::SDFG_IPORT) && 
-                (!tar->pg->father))
+    } else if(tar->type & (SDFG::dfgNode::SDFG_FF|SDFG::dfgNode::SDFG_LATCH)) {
+    } else if(tar_p &&
+              (tar_p->type & SDFG::dfgNode::SDFG_PORT) && (tar_p->type != SDFG::dfgNode::SDFG_IPORT) && 
+              !(tar_p->pg->father)
               ) {
+      tar = tar_p;
+    } else {
       gEnv.stdOs << "Error: The ending point of a path must be a FF/Latch or top-level output port." << endl;
       return false;
     }
@@ -234,12 +240,12 @@ bool shell::CMD::CMDReportDFGPath::exec ( const std::string& str, Env * pEnv){
       list<shared_ptr<SDFG::dfgPath> > mp = arg.bFast ? s->get_out_paths_fast_cb() : s->get_out_paths_cb();
       BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, mp) {
         if(targets.empty() || targets.count(p->tar)) {
-           if(plist.size() < (arg.nMax < 0 ? 10 : arg.nMax))
+          if((int)(plist.size()) < (arg.nMax < 0 ? 10 : arg.nMax))
              plist.push_back(p);
            else break;
         }
       }
-      if(plist.size() >= (arg.nMax < 0 ? 10 : arg.nMax)) 
+      if((int)(plist.size()) >= (arg.nMax < 0 ? 10 : arg.nMax)) 
         break;
     }
   } else {
@@ -247,12 +253,12 @@ bool shell::CMD::CMDReportDFGPath::exec ( const std::string& str, Env * pEnv){
       list<shared_ptr<SDFG::dfgPath> > mp = arg.bFast ? t->get_in_paths_fast_cb() : t->get_in_paths_cb();
       BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, mp) {
         if(sources.empty() || sources.count(p->tar)) {
-           if(plist.size() < (arg.nMax < 0 ? 10 : arg.nMax))
+           if((int)(plist.size()) < (arg.nMax < 0 ? 10 : arg.nMax))
              plist.push_back(p);
            else break;
         }
       }
-      if(plist.size() >= (arg.nMax < 0 ? 10 : arg.nMax)) 
+      if((int)(plist.size()) >= (arg.nMax < 0 ? 10 : arg.nMax)) 
         break;
     }
   }

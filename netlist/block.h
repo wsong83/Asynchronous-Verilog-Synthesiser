@@ -147,7 +147,7 @@ namespace netlist {
     
     // analysis
     // return the combined expression assigning a signal
-    virtual boost::shared_ptr<Expression> get_combined_expression(const VIdentifier&);  
+    virtual boost::shared_ptr<Expression> get_combined_expression(const VIdentifier&, std::set<std::string>);  
     
     // data
     BIdentifier name;

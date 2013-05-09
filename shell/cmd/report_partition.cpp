@@ -20,8 +20,8 @@
  */
 
 /* 
- * extract the SDFG of a module
- * 25/06/2012   Wei Song
+ * report possible partitions
+ * 24/04/2013   Wei Song
  *
  *
  */
@@ -55,24 +55,25 @@ namespace {
 
   struct Argument {
     bool bHelp;                 // show help information
-    bool bQuiet;                // suppress information
-    std::string sDesign;        // target design to be written out
+    double dRatio;              // the accept ratio
+    bool bVerbose;              // verbose output, report all sub modules
     std::string sOutput;        // output file name
     
     Argument() : 
       bHelp(false),
-      bQuiet(false),
-      sDesign(""),
+      dRatio(0.8),
+      bVerbose(false),
       sOutput("") {}
   };
 }
+
 
 BOOST_FUSION_ADAPT_STRUCT
 (
  Argument,
  (bool, bHelp)
- (bool, bQuiet)
- (std::string, sDesign)
+ (double, dRatio)
+ (bool, bVerbose)
  (std::string, sOutput)
  )
 
@@ -86,27 +87,23 @@ namespace {
     ArgParser() : ArgParser::base_type(start) {
       using qi::lit;
       using ascii::char_;
+      using phoenix::push_back;
       using ascii::space;
       using phoenix::at_c;
       using namespace qi::labels;
 
       args = lit('-') >> 
-        ( (lit("help")              >> blanks) [at_c<0>(_r1) = true]  ||
-          (lit("quiet")             >> blanks) [at_c<1>(_r1) = true]  ||
-          (lit("output") >> blanks >> filename >> blanks) [at_c<3>(_r1) = _1]
+        ( (lit("help")   >> blanks)                         [at_c<0>(_r1) = true] ||
+          (lit("ratio")  >> blanks >> num_double >> blanks) [at_c<1>(_r1) = _1]   ||
+          (lit("verbose") >> blanks)                        [at_c<2>(_r1) = true] ||
+          (lit("output") >> blanks >> filename >> blanks)   [at_c<3>(_r1) = _1]
           );
       
-      start = 
-        *(args(_val))
-        >> -(identifier >> blanks) [at_c<2>(_val) = _1] 
-        >> *(args(_val))
-        ;
+      start = *(args(_val));
 
 #ifdef BOOST_SPIRIT_QI_DEBUG
       BOOST_SPIRIT_DEBUG_NODE(args);
       BOOST_SPIRIT_DEBUG_NODE(start);
-      BOOST_SPIRIT_DEBUG_NODE(text);
-      BOOST_SPIRIT_DEBUG_NODE(blanks);
       BOOST_SPIRIT_DEBUG_NODE(identifier);
       BOOST_SPIRIT_DEBUG_NODE(filename);
 #endif
@@ -114,22 +111,21 @@ namespace {
   };
 }
 
-const std::string shell::CMD::CMDExtractSDFG::name = "extract_sdfg"; 
-const std::string shell::CMD::CMDExtractSDFG::description = 
-  "extract the SDFG of a module.";
+const std::string shell::CMD::CMDReportPartition::name = "report_partition"; 
+const std::string shell::CMD::CMDReportPartition::description = 
+  "report possible partitions of the current design.";
 
-void shell::CMD::CMDExtractSDFG::help(Env& gEnv) {
+void shell::CMD::CMDReportPartition::help(Env& gEnv) {
   gEnv.stdOs << name << ": " << description << endl;
-  gEnv.stdOs << "    extract_sdfg [options] [design_name]" << endl;
-  gEnv.stdOs << "    design_name         the design to be extracted (default the current design)" << endl;
+  gEnv.stdOs << "    report_partition [options]" << endl;
   gEnv.stdOs << "Options:" << endl;
   gEnv.stdOs << "   -help                show this help information." << endl;
-  gEnv.stdOs << "   -quiet               suppress the uniquifying information." << endl;
-  gEnv.stdOs << "   -output file_name    specify the output file name." << endl;
-  gEnv.stdOs << "                        (in default is \"design_name.sdfg\")" << endl;
+  gEnv.stdOs << "   -ratio double        the accept ratio (default 0.80)." << endl;
+  gEnv.stdOs << "   -verbose             report all sub-modules." << endl;
+  gEnv.stdOs << "   -output file_name    specify an output file otherwise print out." << endl;
 }
 
-void shell::CMD::CMDExtractSDFG::exec ( const std::string& str, Env * pEnv){
+bool shell::CMD::CMDReportPartition::exec ( const std::string& str, Env * pEnv){
 
   using std::string;
 
@@ -142,52 +138,43 @@ void shell::CMD::CMDExtractSDFG::exec ( const std::string& str, Env * pEnv){
   bool r = qi::parse(it, end, parser, arg);
 
   if(!r || it != end) {
-    gEnv.stdOs << "Error: Wrong command syntax error! See usage by extract_sdfg -help." << endl;
-    gEnv.stdOs << "    extract_sdfg [options] [design_name]" << endl;
-    return;
+    gEnv.stdOs << "Error: Wrong command syntax error! See usage by report_partition -help." << endl;
+    gEnv.stdOs << "    report_ports [options]" << endl;
+    return false;
   }
 
   if(arg.bHelp) {        // print help information
     help(gEnv);
-    return;
+    return true;
   }
 
-  // settle the design to be extracted
-  string designName;
+  // find the target design
+  string designName = gEnv.macroDB[MACRO_CURRENT_DESIGN].get_string();;
   shared_ptr<netlist::Module> tarDesign;
-  if(arg.sDesign.empty()) {
-    designName = gEnv.macroDB[MACRO_CURRENT_DESIGN].get_string();
-  } else {
-    designName = arg.sDesign;
-  }
   tarDesign = gEnv.find_module(designName);
   if(tarDesign.use_count() == 0) {
     gEnv.stdOs << "Error: Failed to find the target design \"" << designName << "\"." << endl;
-    return;
+    return false;
   }
 
-  // specify the output file name
-  string outputFileName;
-  if(arg.sOutput.empty()) outputFileName = designName + ".sdfg";
-  else outputFileName = arg.sOutput;
-
-  // open the file
-  ofstream fhandler;
-  fhandler.open(system_complete(outputFileName), std::ios_base::out|std::ios_base::trunc);
-
-  // extract SDFG
-  // make sure it is uniquified
-  if(!arg.bQuiet) {
-    gEnv.error("SDFG-EXTRACT-0");
-    CMDUniquify::exec("", pEnv);
+  // check DFG is ready
+  shared_ptr<SDFG::dfgGraph> G;
+  if(!tarDesign->DataDFG) {
+    gEnv.stdOs << "Error: Data DFG is not extracted for the target design \"" << designName << "\"." << endl;
+    gEnv.stdOs << "       Use extract_datapath before report partition." << endl;
+    return false;
   } else {
-    CMDUniquify::exec("-quiet", pEnv);
+    G = tarDesign->DataDFG;
+  }
+
+  if(arg.sOutput.size() > 0) {
+    ofstream fhandler;
+    fhandler.open(system_complete(arg.sOutput), std::ios_base::out|std::ios_base::trunc);
+    tarDesign->cal_partition(arg.dRatio, fhandler, arg.bVerbose);
+    fhandler.close();
+  } else {
+    tarDesign->cal_partition(arg.dRatio, gEnv.stdOs, arg.bVerbose);
   }
   
-  if(!tarDesign->DFG)
-    tarDesign->DFG = tarDesign->extract_sdfg(arg.bQuiet);
-
-  tarDesign->DFG->check_integrity();
-  tarDesign->DFG->write(fhandler);
-  fhandler.close();
+  return true;
 }
