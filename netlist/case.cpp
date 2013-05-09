@@ -304,14 +304,14 @@ void netlist::CaseState::replace_variable(const VIdentifier& var, const Number& 
   }
 }
 
-shared_ptr<Expression> netlist::CaseState::get_combined_expression(const VIdentifier& target) {
+shared_ptr<Expression> netlist::CaseState::get_combined_expression(const VIdentifier& target, std::set<string> s_set) {
   //std::cout << *this << std::endl;
   bool has_default = false;
   bool target_found = false;
   typedef std::pair<list<shared_ptr<Expression> >, shared_ptr<Expression> > cexp_type;
   list<cexp_type> m_case_exps;
   BOOST_FOREACH(boost::shared_ptr<CaseItem> ct, cases) {
-    m_case_exps.push_back(cexp_type(ct->exps, ct->body->get_combined_expression(target)));
+    m_case_exps.push_back(cexp_type(ct->exps, ct->body->get_combined_expression(target, s_set)));
     
     if((!target_found) && m_case_exps.back().second) 
       target_found = true;

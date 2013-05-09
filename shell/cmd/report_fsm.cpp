@@ -166,7 +166,10 @@ bool shell::CMD::CMDReportFSM::exec ( const std::string& str, Env * pEnv){
   }
 
   // make sure DFG and RRG are ready
-  if(!tarDesign->DFG) tarDesign->DFG = tarDesign->extract_sdfg(true);
+  if(!tarDesign->DFG) {
+    CMDUniquify::exec("-quiet", pEnv);
+    tarDesign->DFG = tarDesign->extract_sdfg(true);
+  }
   if(!tarDesign->RRG) tarDesign->RRG = tarDesign->DFG->get_RRG();
   
   // do the FSM extraction

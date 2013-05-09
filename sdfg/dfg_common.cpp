@@ -20,18 +20,38 @@
  */
 
 /* 
- * A help library of Synchronous Data-Flow Graph (SDFG)
+ * Common definitions in the SDFG library
  * 17/09/2012   Wei Song
  *
  *
  */
 
-#ifndef _SDFG_H_
-#define _SDFG_H_
+#include "dfg_common.hpp"
 
-#include "dfg_node.hpp"
-#include "dfg_edge.hpp"
-#include "dfg_path.hpp"
-#include "dfg_graph.hpp"
+#include <boost/format.hpp>
+#include <iostream>
 
-#endif /* _SDFG_H_ */
+using namespace SDFG;
+using std::string;
+
+namespace SDFG {
+
+  unsigned long shash(const string& str) {
+    unsigned int id_size = 32; // assuming all system has a long larger than 4 bytes
+    unsigned long rv = 0;
+    for(unsigned int i=0; i<str.size(); i++) {
+      unsigned long highbit = rv >> (id_size - 2);
+      rv <<= 7;
+      rv &= 0xffffffff;
+      rv |= str[i];
+      rv ^= highbit;
+    }
+    return rv;
+  }
+  
+  // display the hash id of a tring
+  void show_hash(const string& str) {
+    std::cout << "hash id of \"" << str << "\":" << boost::format("0x%x") % shash(str) << std::endl;
+  }
+  
+}

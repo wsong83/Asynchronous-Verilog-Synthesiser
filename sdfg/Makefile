@@ -25,17 +25,22 @@
 
 # variables
 INCDIRS = -I./ -I../ -I$(OGDF_PATH)
+COMM_HEADERS = sdfg.hpp dfg_common.hpp
+
+SDFG_TARGET = dfg_common.o dfg_node.o dfg_edge.o dfg_path.o dfg_graph.o
+AVS_SDFG_TARGET = dfg_node_avs.o dfg_graph_avs.o
+RTREE_TARGET = rtree.o
 
 # actions
-all: sdfg.o sdfg_avs.o rtree.o
+all: $(SDFG_TARGET) $(AVS_SDFG_TARGET) $(RTREE_TARGET)
 
-sdfg.o: sdfg.cpp sdfg.hpp
+$(SDFG_TARGET): %.o:%.cpp %.hpp $(COMM_HEADERS)
 	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
 
-sdfg_avs.o: sdfg_avs.cpp sdfg.hpp
+$(AVS_SDFG_TARGET): %_avs.o:%_avs.cpp %.hpp $(COMM_HEADERS)
 	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
 
-rtree.o: rtree.cpp rtree.hpp sdfg.hpp
+$(RTREE_TARGET): %.o:%.cpp %.hpp $(COMM_HEADERS)
 	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
 
 .PHONY: clean
