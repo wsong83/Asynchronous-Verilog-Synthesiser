@@ -176,8 +176,10 @@ void shell::CMD::CMDExtractDatapath::exec ( const std::string& str, Env * pEnv){
   fhandler.open(system_complete(outputFileName), std::ios_base::out|std::ios_base::trunc);
 
   // make sure DFG is ready
-  if(!tarDesign->DFG)
+  if(!tarDesign->DFG) {
+    CMDUniquify::exec("-quiet", pEnv);
     tarDesign->DFG = tarDesign->extract_sdfg(true);
+  }
 
   if(!tarDesign->DataDFG) {
     tarDesign->DataDFG = tarDesign->DFG->get_datapath();

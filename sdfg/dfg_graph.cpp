@@ -614,13 +614,19 @@ void SDFG::dfgGraph::remove_useless_nodes() {
       if(n->sig2port.size() == 0)
         remove_node(n);
     } else { // all other cases
-      if(size_out_edges_ns(n) == 0) {
+      if(size_out_edges(n) == 0 || size_in_edges(n) == 0) {
+        // a node with no source or no load is useless
+        list<shared_ptr<dfgNode> > onodes = get_out_nodes(n);
         list<shared_ptr<dfgNode> > inodes = get_in_nodes(n);
-        // remove the node if it has no load
         remove_node(n);
-        // recheck all input nodes
+        BOOST_FOREACH(shared_ptr<dfgNode> onode, onodes) {
+          if(!node_set.count(onode)) {
+            node_set.insert(onode);
+            node_list.push_back(onode);
+          }
+        }        
         BOOST_FOREACH(shared_ptr<dfgNode> inode, inodes) {
-          if(!n->sig2port.count(inode->name) && !node_set.count(inode)) {
+          if(!node_set.count(inode)) {
             node_set.insert(inode);
             node_list.push_back(inode);
           }

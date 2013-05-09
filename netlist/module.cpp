@@ -537,47 +537,52 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
            [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
              m.second->gen_sdfg(G);
            });
+  
+  G->check_integrity();
 
   DFG = G;
   G->pModule = this;
   return G;
 }
 
-double netlist::Module::get_ratio_state_preserved_oport(std::set<VIdentifier>& oset) {
+double netlist::Module::get_ratio_state_preserved_oport(map<VIdentifier, pair<bool, string> >& port_ana) {
   assert(DataDFG);
   unsigned int num_of_spports = 0; // number of state preserved ports
   unsigned int num_of_oports = 0;  // number of output ports
+  
   DataBase<VIdentifier, Port, true>::DBTL::iterator pit, pend;
   for(pit = db_port.begin_order(), pend = db_port.end_order(); pit != pend; ++pit) {
     if(pit->second->get_dir() >= 0) { // output or inout
       shared_ptr<SDFG::dfgNode> pnode = DataDFG->get_node(pit->second->name.name + "_P");
       if(pnode) {               // exist in the data DFG
-        list<shared_ptr<SDFG::dfgPath> > psources = pnode->get_in_paths_fast_cb();
-        if(psources.size() > 0) {
-          num_of_oports++;
-          bool all_data_i_sp = true;
-          bool control_i_sp = false;
-          unsigned int num_of_idata = 0;
-          BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, psources) {
-            if(p->type & (SDFG::dfgEdge::SDFG_DP | SDFG::dfgEdge::SDFG_DDP)) {
-              num_of_idata++;
-              if(p->src->get_self_path_cb().size() == 0)
-                all_data_i_sp = false;
+        bool is_a_doport = false;       // is a data output port (exclude data through port)
+        bool is_state_preserved = false; // preserve state
+        string data_source;
+        BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, pnode->get_in_paths_fast_im()) {
+          if((p->src->type & SDFG::dfgNode::SDFG_FF) && // from an FF
+             (p->type & (SDFG::dfgEdge::SDFG_DP | SDFG::dfgEdge::SDFG_DDP))) { // is a data path
+            is_a_doport = true;
+            if(p->src->get_self_path_cb().size() > 0) {
+              is_state_preserved = true;
+              data_source = p->src->get_hier_name();
+              break;
             }
-            
-            if((p->type & SDFG::dfgEdge::SDFG_CTL) && (p->src->get_self_path_cb().size() > 0))
-              control_i_sp = true;
           }
+        }
         
-          if((num_of_idata > 0 && all_data_i_sp) || (num_of_idata == 0 && control_i_sp))
-            num_of_spports++;
-          else
-            oset.insert(pit->second->name);
+        if(is_a_doport) {
+          num_of_oports++;
+          if(is_state_preserved) num_of_spports++;
+          port_ana[pit->first] = pair<bool, string>(true, data_source);
         }
       }
     }
   }
-  return (double)(num_of_spports) / num_of_oports;
+
+  if(num_of_oports > 0)
+    return (double)(num_of_spports) / num_of_oports;
+  else
+    return 0.0;
 }
 
 void netlist::Module::cal_partition(const double& acc_ratio, std::ostream& ostm, bool verbose) {
@@ -589,58 +594,28 @@ void netlist::Module::cal_partition(const double& acc_ratio, std::ostream& ostm,
     }
   }
   if(DataDFG->father != NULL) {
-    std::set<VIdentifier> mset;
-    double r = get_ratio_state_preserved_oport(mset);
+    map<VIdentifier, pair<bool, string> > port_ana; // port analyses
+    typedef pair<const VIdentifier, pair<bool, string> > port_ana_type;
+    double r = get_ratio_state_preserved_oport(port_ana);
     if(r >= acc_ratio || verbose) {
-      ostm << DataDFG->father->get_full_name() << "\t(" << name << ") with rate " << r << ": " << endl;
-      ostm << string(4, ' ');
-      BOOST_FOREACH(VIdentifier oport, mset) {
-        ostm << oport << "; ";
+      ostm << DataDFG->father->get_full_name() << "\t(" << name << ") with rate " << r ;
+      if(r >= acc_ratio)
+        ostm << " >= " << acc_ratio;
+      else
+        ostm << " < " << acc_ratio;
+      ostm << ": " << endl;
+      BOOST_FOREACH(port_ana_type p, port_ana) {
+        ostm << string(4, ' ');
+        if(p.second.first)
+          ostm << p.first << "\t" << p.second.first << "\t" << p.second.second << std::endl;
+        else
+          ostm << p.first << "\t" << p.second.first <<  std::endl;
       }
       ostm << endl;
     }
   }
 }
 
-/*
-void netlist::Module::scan_datapaths() {
-  if(DataDFG) return;
-  else DataDFG.reset(new SDFG::dfgGraph(DFG->name));
-  
-  // scan all sub-modules
-  DataBase<IIdentifier, Instance>::DBTM::iterator iit, iend;
-  for(iit = db_instance.begin(), iend = db_instance.end(); iit != iend; ++iit) {
-    if(iit->second->type == Instance::modu_inst) {
-      shared_ptr<Module> subMod = G_ENV->find_module(iit->second->mname);
-      subMod->scan_datapaths();
-    }
-  }
-
-  // TODO: scan the current module
-  DataBase<VIdentifier, Port, true>::DBTL::iterator pit, pend;
-  for(pit = db_port.begin_order(), pend = db_port.end_order(); pit != pend; ++pit) {
-    if(pit->second->get_dir() <= 0) { // input or inout
-      shared_ptr<SDFG::dfgNode> psrc = DFG->get_node(pit->second->name.name + "_P");
-      assert(psrc);
-      list<shared_ptr<SDFG::dfgPath> > mpaths = psrc->get_out_paths_fast();
-      std::set<shared_ptr<SDFG::dfgNode> > visited, tovisit;
-      visited.insert(psrc);
-      BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, mpaths) {
-        if(p->type & (SDFG::dfgEdge::SDFG_DP|SDFG::dfgEdge::SDFG_DDP)) {
-          if(!visited.count(p->tar))
-            tovisit.insert(p->tar);
-          p->type &= (SDFG::dfgEdge::SDFG_DP|SDFG::dfgEdge::SDFG_DDP);
-          DataDFG->add_path(p);
-        }
-      }
-      while(!tovisit.empty()) {
-        
-      }
-    }
-  }
-}
-
-*/
 
 void netlist::Module::init_port_list(const list<shared_ptr<Port> >& port_list) {
   BOOST_FOREACH(shared_ptr<Port> m, port_list) {

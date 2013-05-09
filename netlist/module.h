@@ -82,7 +82,7 @@ namespace netlist {
     boost::shared_ptr<SDFG::dfgGraph> extract_sdfg(bool);
 
     // return the ratio of state preserve output ports
-    double get_ratio_state_preserved_oport(std::set<VIdentifier>&);
+    double get_ratio_state_preserved_oport(std::map<VIdentifier, std::pair<bool, std::string> >&);
     void cal_partition(const double&, std::ostream&, bool);
 
     // data
