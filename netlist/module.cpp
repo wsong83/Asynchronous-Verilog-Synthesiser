@@ -560,7 +560,9 @@ double netlist::Module::get_ratio_state_preserved_oport(map<VIdentifier, pair<bo
         string data_source;
         BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, pnode->get_in_paths_fast_im()) {
           if((p->src->type & SDFG::dfgNode::SDFG_FF) && // from an FF
-             (p->type & (SDFG::dfgEdge::SDFG_DP | SDFG::dfgEdge::SDFG_DDP))) { // is a data path
+             ((p->type & (SDFG::dfgEdge::SDFG_DP | SDFG::dfgEdge::SDFG_DDP)) ||
+              (p->type == SDFG::dfgEdge::SDFG_DF)) // also when it is a default path
+             ) { // is a data path
             is_a_doport = true;
             if(p->src->get_self_path_cb().size() > 0) {
               is_state_preserved = true;
@@ -572,9 +574,17 @@ double netlist::Module::get_ratio_state_preserved_oport(map<VIdentifier, pair<bo
         
         if(is_a_doport) {
           num_of_oports++;
-          if(is_state_preserved) num_of_spports++;
-          port_ana[pit->first] = pair<bool, string>(true, data_source);
+          if(is_state_preserved) {
+            num_of_spports++;
+            port_ana[pit->first] = pair<bool, string>(true, data_source);
+          } else {
+            port_ana[pit->first] = pair<bool, string>(false, "[data-pipeline]");
+          }
+        } else {
+          port_ana[pit->first] = pair<bool, string>(false, "[none-data/ctl|through]");
         }
+      } else {
+        port_ana[pit->first] = pair<bool, string>(false, "[none-data/opted]");
       }
     }
   }
@@ -605,11 +615,11 @@ void netlist::Module::cal_partition(const double& acc_ratio, std::ostream& ostm,
         ostm << " < " << acc_ratio;
       ostm << ": " << endl;
       BOOST_FOREACH(port_ana_type p, port_ana) {
+        const unsigned int const_size_of_name = 28;
         ostm << string(4, ' ');
-        if(p.second.first)
-          ostm << p.first << "\t" << p.second.first << "\t" << p.second.second << std::endl;
-        else
-          ostm << p.first << "\t" << p.second.first <<  std::endl;
+        ostm << p.first << 
+          string(p.first.name.size() > const_size_of_name - 4 ? 4 : const_size_of_name - p.first.name.size(), ' ') << 
+          p.second.first << "\t" << p.second.second << std::endl;
       }
       ostm << endl;
     }
