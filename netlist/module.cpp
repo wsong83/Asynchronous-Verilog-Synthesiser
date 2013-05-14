@@ -46,16 +46,16 @@ using shell::location;
 using std::for_each;
 
 netlist::Module::Module()
-  : Block(tModule) {}
+  : Block(tModule), fsm_extracted(false) {}
 
 netlist::Module::Module(const MIdentifier& nm)
-  : Block(tModule), name(nm) { named=true; }
+  : Block(tModule), name(nm), fsm_extracted(false) { named=true; }
 
 netlist::Module::Module(const shell::location& lloc, const MIdentifier& nm)
-  : Block(tModule, lloc), name(nm) { named=true; }
+  : Block(tModule, lloc), name(nm), fsm_extracted(false) { named=true; }
 
 netlist::Module::Module(const MIdentifier& nm, const shared_ptr<Block>& body)
-  : Block(*body), name(nm) 
+  : Block(*body), name(nm), fsm_extracted(false) 
 {
   ctype = tModule;
   named=true; 
@@ -63,7 +63,7 @@ netlist::Module::Module(const MIdentifier& nm, const shared_ptr<Block>& body)
 }
 
 netlist::Module::Module(const location& lloc, const MIdentifier& nm, const shared_ptr<Block>& body)
-  : Block(*body), name(nm) 
+  : Block(*body), name(nm), fsm_extracted(false) 
 {
   ctype = tModule;
   named=true; 
@@ -72,7 +72,7 @@ netlist::Module::Module(const location& lloc, const MIdentifier& nm, const share
 }
 
 netlist::Module::Module(const MIdentifier& nm, const list<shared_ptr<Port> >& port_list, const shared_ptr<Block>& body)
-  : Block(*body), name(nm) 
+  : Block(*body), name(nm), fsm_extracted(false) 
 {
   ctype = tModule;
   named=true;
@@ -81,7 +81,7 @@ netlist::Module::Module(const MIdentifier& nm, const list<shared_ptr<Port> >& po
 }
 
 netlist::Module::Module(const location& lloc, const MIdentifier& nm, const list<shared_ptr<Port> >& port_list, const shared_ptr<Block>& body)
-  : Block(*body), name(nm) 
+  : Block(*body), name(nm), fsm_extracted(false) 
 {
   ctype = tModule;
   named=true;
@@ -92,7 +92,7 @@ netlist::Module::Module(const location& lloc, const MIdentifier& nm, const list<
 
 netlist::Module::Module(const MIdentifier& nm, const list<shared_ptr<Variable> >& para_list,
                         const list<shared_ptr<Port> >& port_list, const shared_ptr<Block>& body)
-  : Block(*body), name(nm) 
+  : Block(*body), name(nm), fsm_extracted(false) 
 {
   ctype = tModule;
   named=true;
@@ -104,7 +104,7 @@ netlist::Module::Module(const MIdentifier& nm, const list<shared_ptr<Variable> >
 netlist::Module::Module(const location& lloc, const MIdentifier& nm, 
                         const list<shared_ptr<Variable> >& para_list,
                         const list<shared_ptr<Port> >& port_list, const shared_ptr<Block>& body)
-  : Block(*body), name(nm) 
+  : Block(*body), name(nm), fsm_extracted(false) 
 {
   ctype = tModule;
   named = true;

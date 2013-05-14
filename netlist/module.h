@@ -95,9 +95,11 @@ namespace netlist {
     boost::shared_ptr<SDFG::dfgGraph> RRG; // the register relation graph of this module
 
     // data paths
-    //void scan_datapaths();      // scan and fill the data port structure (dports) and DataDFG
-    //std::map<VIdentifier, std::set<VIdentifier> > dports; // record the data paths from input ports to output ports
     boost::shared_ptr<SDFG::dfgGraph> DataDFG;            // the data path only DFG
+    
+    // fsm extracted
+    bool fsm_extracted;                             // record whether the FSMs are extracted yet
+    boost::shared_ptr<std::set<std::string> > FSMs; // the FSM extracted
 
   private:
     // only used in constructors
