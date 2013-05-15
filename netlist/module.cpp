@@ -545,6 +545,40 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
   return G;
 }
 
+std::set<string> netlist::Module::extract_fsms(bool verbose, bool force,
+                                               shared_ptr<SDFG::dfgGraph> pRRG,
+                                               unsigned int& num_n,
+                                               unsigned int& num_r,
+                                               unsigned int& num_pf) {
+  if(!fsm_extracted || force) {
+    assert(DFG);
+    
+    std::set<shared_ptr<SDFG::dfgNode> > dfg_fsms = 
+      DFG->get_fsms(verbose, pRRG, num_n, num_r, num_pf);
+    FSMs.clear();
+    BOOST_FOREACH(shared_ptr<SDFG::dfgNode> n, dfg_fsms)
+      FSMs.insert(n->get_full_name());
+    fsm_extracted = true;
+  }
+
+  std::set<string> rv = FSMs;
+
+  for_each(db_instance.begin(), db_instance.end(),
+           [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
+             if(m.second->type == Instance::modu_inst) {
+               shared_ptr<Module> subMod = G_ENV->find_module(m.second->mname);
+               if(subMod) {
+                 std::set<string> fsm_set_m = 
+                   subMod->extract_fsms(verbose, force, pRRG, num_n, num_r, num_pf);
+                 rv.insert(fsm_set_m.begin(), fsm_set_m.end());
+               }
+             }
+           });
+
+  return rv;
+}
+
+
 double netlist::Module::get_ratio_state_preserved_oport(map<VIdentifier, pair<bool, string> >& port_ana) {
   assert(DataDFG);
   unsigned int num_of_spports = 0; // number of state preserved ports

@@ -99,8 +99,8 @@ namespace {
         ( (lit("help")   >> blanks)                         [at_c<0>(_r1) = true] ||
           (lit("ratio")  >> blanks >> num_double >> blanks) [at_c<1>(_r1) = _1]   ||
           (lit("use_fsm") >> blanks)                        [at_c<2>(_r1) = true] ||
-          (lit("verbose") >> blanks)                        [at_c<2>(_r1) = true] ||
-          (lit("output") >> blanks >> filename >> blanks)   [at_c<3>(_r1) = _1]
+          (lit("verbose") >> blanks)                        [at_c<3>(_r1) = true] ||
+          (lit("output") >> blanks >> filename >> blanks)   [at_c<4>(_r1) = _1]
           );
       
       start = *(args(_val));

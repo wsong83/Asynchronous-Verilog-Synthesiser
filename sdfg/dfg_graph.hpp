@@ -202,7 +202,13 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     boost::shared_ptr<dfgGraph> get_hier_RRG() const; // get a hierarchical RRG from any SDFG
     boost::shared_ptr<dfgGraph> get_RRG() const; // extract the register relation graph from a signal level DFG
     boost::shared_ptr<dfgGraph> build_reg_graph(const std::set<boost::shared_ptr<dfgNode> >& ) const; // build up a reg connection graph for certain registers 
-    std::set<boost::shared_ptr<dfgNode> > get_fsm_groups(bool, boost::shared_ptr<dfgGraph>) const; // extract fsms from RRG and DFG
+    std::set<boost::shared_ptr<dfgNode> > get_fsms(
+                                                   bool verbose, 
+                                                   boost::shared_ptr<dfgGraph> RRG,
+                                                   unsigned int& num_of_nodes,
+                                                   unsigned int& num_of_regs,
+                                                   unsigned int& num_of_p_fsms
+                                                   ) const; // extract fsms from RRG and DFG
     void fsm_simplify();  // simplify the FSM connection graph
 
     // other
