@@ -561,8 +561,6 @@ std::set<string> netlist::Module::extract_fsms(bool verbose, bool force,
     fsm_extracted = true;
   }
 
-  std::set<string> rv = FSMs;
-
   for_each(db_instance.begin(), db_instance.end(),
            [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
              if(m.second->type == Instance::modu_inst) {
@@ -570,16 +568,16 @@ std::set<string> netlist::Module::extract_fsms(bool verbose, bool force,
                if(subMod) {
                  std::set<string> fsm_set_m = 
                    subMod->extract_fsms(verbose, force, pRRG, num_n, num_r, num_pf);
-                 rv.insert(fsm_set_m.begin(), fsm_set_m.end());
+                 FSMs.insert(fsm_set_m.begin(), fsm_set_m.end());
                }
              }
            });
 
-  return rv;
+  return FSMs;
 }
 
 
-double netlist::Module::get_ratio_state_preserved_oport(map<VIdentifier, pair<bool, string> >& port_ana) {
+double netlist::Module::get_ratio_state_preserved_oport(map<VIdentifier, pair<bool, string> >& port_ana, bool use_fsm, const std::set<string>& gFSMs) {
   assert(DataDFG);
   unsigned int num_of_spports = 0; // number of state preserved ports
   unsigned int num_of_oports = 0;  // number of output ports
@@ -602,6 +600,15 @@ double netlist::Module::get_ratio_state_preserved_oport(map<VIdentifier, pair<bo
               is_state_preserved = true;
               data_source = p->src->get_hier_name();
               break;
+            } else if(use_fsm) {
+              BOOST_FOREACH(shared_ptr<SDFG::dfgPath> pp, p->src->get_in_paths_fast_cb()) {
+                if((pp->type & SDFG::dfgEdge::SDFG_CTL) && FSMs.count(pp->src->get_full_name())) {
+                  is_state_preserved = true;
+                  data_source = p->src->get_hier_name();
+                  break;
+                }
+              }
+              if(is_state_preserved) break;
             }
           }
         }
@@ -629,18 +636,18 @@ double netlist::Module::get_ratio_state_preserved_oport(map<VIdentifier, pair<bo
     return 0.0;
 }
 
-void netlist::Module::cal_partition(const double& acc_ratio, std::ostream& ostm, bool verbose) {
+void netlist::Module::cal_partition(const double& acc_ratio, std::ostream& ostm, bool use_fsm, const std::set<string>& gFSMs, bool verbose) {
   DataBase<IIdentifier, Instance>::DBTM::iterator iit, iend;
   for(iit = db_instance.begin(), iend = db_instance.end(); iit != iend; ++iit) {
     if(iit->second->type == Instance::modu_inst) {
       shared_ptr<Module> subMod = G_ENV->find_module(iit->second->mname);
-      subMod->cal_partition(acc_ratio, ostm, verbose);
+      subMod->cal_partition(acc_ratio, ostm, use_fsm, gFSMs, verbose);
     }
   }
   if(DataDFG->father != NULL) {
     map<VIdentifier, pair<bool, string> > port_ana; // port analyses
     typedef pair<const VIdentifier, pair<bool, string> > port_ana_type;
-    double r = get_ratio_state_preserved_oport(port_ana);
+    double r = get_ratio_state_preserved_oport(port_ana, use_fsm, gFSMs);
     if(r >= acc_ratio || verbose) {
       ostm << DataDFG->father->get_full_name() << "\t(" << name << ") with rate " << r ;
       if(r >= acc_ratio)

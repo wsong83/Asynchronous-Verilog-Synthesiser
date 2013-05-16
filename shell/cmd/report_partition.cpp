@@ -172,13 +172,20 @@ bool shell::CMD::CMDReportPartition::exec ( const std::string& str, Env * pEnv){
     G = tarDesign->DataDFG;
   }
 
+  // check FSMs are extracted if -use_fsm is set
+  if(arg.bFsm && !tarDesign->fsm_extracted) {
+    gEnv.stdOs << "Error: FSMs are not extracted for the target design \"" << designName << "\"." << endl;
+    gEnv.stdOs << "       Use report_fsm before report partition." << endl;
+    return false;      
+  }
+
   if(arg.sOutput.size() > 0) {
     ofstream fhandler;
     fhandler.open(system_complete(arg.sOutput), std::ios_base::out|std::ios_base::trunc);
-    tarDesign->cal_partition(arg.dRatio, fhandler, arg.bVerbose);
+    tarDesign->cal_partition(arg.dRatio, fhandler, arg.bFsm, tarDesign->FSMs, arg.bVerbose);
     fhandler.close();
   } else {
-    tarDesign->cal_partition(arg.dRatio, gEnv.stdOs, arg.bVerbose);
+    tarDesign->cal_partition(arg.dRatio, gEnv.stdOs, arg.bFsm, tarDesign->FSMs, arg.bVerbose);
   }
   
   return true;
