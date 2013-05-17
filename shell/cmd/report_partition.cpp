@@ -56,12 +56,14 @@ namespace {
   struct Argument {
     bool bHelp;                 // show help information
     double dRatio;              // the accept ratio
+    bool bFsm;                  // whether to use FSM to help datapath detection
     bool bVerbose;              // verbose output, report all sub modules
     std::string sOutput;        // output file name
     
     Argument() : 
       bHelp(false),
       dRatio(0.8),
+      bFsm(false),
       bVerbose(false),
       sOutput("") {}
   };
@@ -73,6 +75,7 @@ BOOST_FUSION_ADAPT_STRUCT
  Argument,
  (bool, bHelp)
  (double, dRatio)
+ (bool, bFsm)
  (bool, bVerbose)
  (std::string, sOutput)
  )
@@ -95,8 +98,9 @@ namespace {
       args = lit('-') >> 
         ( (lit("help")   >> blanks)                         [at_c<0>(_r1) = true] ||
           (lit("ratio")  >> blanks >> num_double >> blanks) [at_c<1>(_r1) = _1]   ||
-          (lit("verbose") >> blanks)                        [at_c<2>(_r1) = true] ||
-          (lit("output") >> blanks >> filename >> blanks)   [at_c<3>(_r1) = _1]
+          (lit("use_fsm") >> blanks)                        [at_c<2>(_r1) = true] ||
+          (lit("verbose") >> blanks)                        [at_c<3>(_r1) = true] ||
+          (lit("output") >> blanks >> filename >> blanks)   [at_c<4>(_r1) = _1]
           );
       
       start = *(args(_val));
@@ -121,6 +125,7 @@ void shell::CMD::CMDReportPartition::help(Env& gEnv) {
   gEnv.stdOs << "Options:" << endl;
   gEnv.stdOs << "   -help                show this help information." << endl;
   gEnv.stdOs << "   -ratio double        the accept ratio (default 0.80)." << endl;
+  gEnv.stdOs << "   -use_fsm             set to use extracted FSM in analyses." << endl;
   gEnv.stdOs << "   -verbose             report all sub-modules." << endl;
   gEnv.stdOs << "   -output file_name    specify an output file otherwise print out." << endl;
 }
@@ -167,13 +172,20 @@ bool shell::CMD::CMDReportPartition::exec ( const std::string& str, Env * pEnv){
     G = tarDesign->DataDFG;
   }
 
+  // check FSMs are extracted if -use_fsm is set
+  if(arg.bFsm && !tarDesign->fsm_extracted) {
+    gEnv.stdOs << "Error: FSMs are not extracted for the target design \"" << designName << "\"." << endl;
+    gEnv.stdOs << "       Use report_fsm before report partition." << endl;
+    return false;      
+  }
+
   if(arg.sOutput.size() > 0) {
     ofstream fhandler;
     fhandler.open(system_complete(arg.sOutput), std::ios_base::out|std::ios_base::trunc);
-    tarDesign->cal_partition(arg.dRatio, fhandler, arg.bVerbose);
+    tarDesign->cal_partition(arg.dRatio, fhandler, arg.bFsm, tarDesign->FSMs, arg.bVerbose);
     fhandler.close();
   } else {
-    tarDesign->cal_partition(arg.dRatio, gEnv.stdOs, arg.bVerbose);
+    tarDesign->cal_partition(arg.dRatio, gEnv.stdOs, arg.bFsm, tarDesign->FSMs, arg.bVerbose);
   }
   
   return true;

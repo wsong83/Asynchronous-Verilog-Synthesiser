@@ -254,27 +254,59 @@ void netlist::Block::elab_inparse() {
   }
 
   BOOST_FOREACH(shared_ptr<NetComp> m, to_del) {
-    statements.erase(std::find(statements.begin(), statements.end(), m));
+    statements.remove(m);
   }
   
-  // second step, do the classification
+  to_add.clear();
+  to_del.clear();
+  
+  // process all variables before others
   BOOST_FOREACH(shared_ptr<NetComp> st, statements) {
-    switch(st->get_type()) {
-    case tVariable: {
+    if(st->get_type() == tVariable) {
       SP_CAST(m, Variable, st);
       if(find_var(m->name)) {
         G_ENV->error(m->loc, "SYN-VAR-1", m->name.name, toString(find_var(m->name)->loc));
       } else {
         // check initial value
-        if(m->vtype != Variable::TParam && m->vtype != Variable::TLParam && m->exp) {
-          G_ENV->error(m->loc, "SYN-VAR-4", m->name.name);
-          m->exp.reset();
+        //if(m->vtype != Variable::TParam && m->vtype != Variable::TLParam && m->exp) {
+        //  G_ENV->error(m->loc, "SYN-VAR-4", m->name.name);
+        //  m->exp.reset();
+        //}
+        if(m->exp) {
+          if(m->vtype == Variable::TWire) { 
+            // initial assignment to a wire is a continueous assignment
+            shared_ptr<LConcatenation> lhs(new LConcatenation(m->loc, m->name));
+            shared_ptr<Assign> asgn(new Assign(m->loc, lhs, m->exp, true));
+            asgn->set_continuous();
+            to_add[m].push_back(asgn);
+            m->exp.reset();
+          } else if(m->vtype != Variable::TParam && m->vtype != Variable::TLParam) {
+            G_ENV->error(m->loc, "SYN-VAR-4", m->name.name);
+            m->exp.reset();
+          }
         }
         db_var.insert(m->name, m);
-        to_del.insert(st);
       }
-      break;
+      to_del.insert(st);
     }
+  }
+
+  typedef pair<const shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add_type;
+  BOOST_FOREACH(to_add_type m, to_add) {
+    statements.splice(std::find(statements.begin(), statements.end(), m.first), m.second);
+  }
+
+  BOOST_FOREACH(shared_ptr<NetComp> m, to_del) {
+    statements.remove(m);
+  }
+
+
+  to_add.clear();
+  to_del.clear();
+
+  // third step, do the classification
+  BOOST_FOREACH(shared_ptr<NetComp> st, statements) {
+    switch(st->get_type()) {
     case tInstance: {
       SP_CAST(m, Instance, st);
       if(!m->is_named()) {

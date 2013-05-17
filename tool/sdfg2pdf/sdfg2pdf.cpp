@@ -58,6 +58,7 @@ int main(int argc, char *argv[]) {
   printer.setOutputFormat(QPrinter::PdfFormat);
   printer.setOutputFileName(filename.c_str());
   printer.setPaperSize(QPrinter::A4);  // default A4
+  printer.setColorMode(QPrinter::Color); // explicitly set it to color mode
 
   QPainter painter;
   if(!painter.begin(&printer)) return 3;

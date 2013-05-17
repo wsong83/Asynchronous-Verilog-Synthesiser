@@ -57,6 +57,7 @@ namespace {
     bool bHelp;                 // show help information
     bool bFast;                 // use the fast algorithm
     bool bSpace;                // space analysis
+    bool bForce;                // force to re-extract FSMs
     bool bVerbose;              // show extra information
     std::string sDesign;        // target design
     
@@ -64,6 +65,7 @@ namespace {
       bHelp(false),
       bFast(false),
       bSpace(false),
+      bForce(false),
       bVerbose(false),
       sDesign("") {}
   };
@@ -75,6 +77,7 @@ BOOST_FUSION_ADAPT_STRUCT
  (bool, bHelp)
  (bool, bFast)
  (bool, bSpace)
+ (bool, bForce)
  (bool, bVerbose)
  (std::string, sDesign)
  )
@@ -97,8 +100,9 @@ namespace {
         ( (lit("help")    >> blanks)                        [at_c<0>(_r1) = true] ||
           (lit("fast")    >> blanks)                        [at_c<1>(_r1) = true] ||
           (lit("space")   >> blanks)                        [at_c<2>(_r1) = true] ||
-          (lit("verbose") >> blanks)                        [at_c<3>(_r1) = true] ||
-          (lit("design") >> blanks >> identifier >> blanks) [at_c<4>(_r1) = _1]
+          (lit("force")   >> blanks)                        [at_c<3>(_r1) = true] ||
+          (lit("verbose") >> blanks)                        [at_c<4>(_r1) = true] ||
+          (lit("design") >> blanks >> identifier >> blanks) [at_c<5>(_r1) = _1]
           );
       
       start = *(args(_val));
@@ -124,6 +128,7 @@ void shell::CMD::CMDReportFSM::help(Env& gEnv) {
   gEnv.stdOs << "   -help                show this help information." << endl;
   gEnv.stdOs << "   -fast                use the fast algorithm." << endl;
   gEnv.stdOs << "   -space               shown state space analyses." << endl;
+  gEnv.stdOs << "   -force               whether to force extracting FSMs again." << endl;
   gEnv.stdOs << "   -verbose             show extra information." << endl;
   gEnv.stdOs << "   -design ID           design name if not the current design." << endl;
 }
@@ -173,23 +178,39 @@ bool shell::CMD::CMDReportFSM::exec ( const std::string& str, Env * pEnv){
   if(!tarDesign->RRG) tarDesign->RRG = tarDesign->DFG->get_RRG();
   
   // do the FSM extraction
-  std::set<shared_ptr<SDFG::dfgNode> > fsms = 
-    tarDesign->DFG->get_fsm_groups(arg.bVerbose, tarDesign->RRG);
+  unsigned int num_of_nodes = 0;
+  unsigned int num_of_regs = 0;
+  unsigned int num_of_p_fsms = 0;
+  std::set<string> fsms = 
+    tarDesign->extract_fsms(arg.bVerbose, arg.bForce, tarDesign->RRG, 
+                            num_of_nodes, num_of_regs, num_of_p_fsms);
 
-  // reorder the set using names rather than pointers
-  std::set<string> fsm_str;
-  BOOST_FOREACH(shared_ptr<SDFG::dfgNode> pfsm, fsms)
-    fsm_str.insert(pfsm->get_full_name());
+  // report
+  if(num_of_nodes > 0) {
+    std::cout << "\n\nSUMMARY:" << std::endl;
+    std::cout << "In this extraction, " << 
+      num_of_nodes << " nodes has been scanned, in which " << 
+      num_of_regs << " nodes are registers." << std::endl;
+    std::cout << "In total " << 
+      fsms.size() << " FSM controllers has been found in " <<
+      num_of_p_fsms << " potential FSM registers." << std::endl;
+  }
 
+  std::cout << "The extracted FSMs are listed below:" << std::endl;
   unsigned int index = 0;
-  BOOST_FOREACH(const string& fsm_name, fsm_str) {
+  BOOST_FOREACH(const string& fsm_name, fsms) {
     gEnv.stdOs << "[" << ++index << "]  ";
     gEnv.stdOs <<  fsm_name << " ";
     gEnv.stdOs << endl;
   }
 
   // build the fsm connection graph
-  shared_ptr<SDFG::dfgGraph> fsm_graph = tarDesign->RRG->build_reg_graph(fsms);
+  std::set<shared_ptr<SDFG::dfgNode> > fsms_nodes;
+  BOOST_FOREACH(const string& fsm_name, fsms) {
+    fsms_nodes.insert(tarDesign->RRG->get_node(fsm_name));
+  }
+  shared_ptr<SDFG::dfgGraph> fsm_graph = 
+    tarDesign->RRG->build_reg_graph(fsms_nodes);
 
   // specify the output file name
   string outputFileName = designName + ".fsm";
@@ -211,7 +232,7 @@ bool shell::CMD::CMDReportFSM::exec ( const std::string& str, Env * pEnv){
   //gEnv.stdOs << "write the simplified FSM connection graph to " << outputFileName << endl;
 
   if(arg.bSpace) { // show space
-    BOOST_FOREACH(const string& fsm_name, fsm_str) {
+    BOOST_FOREACH(const string& fsm_name, fsms) {
       gEnv.stdOs << "SSA Conditions for \"" << fsm_name << "\"" << std::endl;
       std::set<shared_ptr<netlist::NetComp> > node_set = tarDesign->RRG->get_node(fsm_name)->ptr;
       BOOST_FOREACH(shared_ptr<netlist::NetComp> pnode, node_set) {
