@@ -81,9 +81,12 @@ namespace netlist {
     // extract data flow graph
     boost::shared_ptr<SDFG::dfgGraph> extract_sdfg(bool);
 
+    // extract FSMs
+    std::set<std::string> extract_fsms(bool, bool, boost::shared_ptr<SDFG::dfgGraph>, unsigned int&, unsigned int&, unsigned int&);
+
     // return the ratio of state preserve output ports
-    double get_ratio_state_preserved_oport(std::map<VIdentifier, std::pair<bool, std::string> >&);
-    void cal_partition(const double&, std::ostream&, bool);
+    double get_ratio_state_preserved_oport(std::map<VIdentifier, std::pair<bool, std::string> >&, bool, const std::set<std::string>&);
+    void cal_partition(const double&, std::ostream&, bool, const std::set<std::string>&, bool);
 
     // data
     MIdentifier name;
@@ -95,9 +98,11 @@ namespace netlist {
     boost::shared_ptr<SDFG::dfgGraph> RRG; // the register relation graph of this module
 
     // data paths
-    //void scan_datapaths();      // scan and fill the data port structure (dports) and DataDFG
-    //std::map<VIdentifier, std::set<VIdentifier> > dports; // record the data paths from input ports to output ports
     boost::shared_ptr<SDFG::dfgGraph> DataDFG;            // the data path only DFG
+    
+    // fsm extracted
+    bool fsm_extracted;   // record whether the FSMs are extracted yet
+    std::set<std::string> FSMs; // the FSM extracted
 
   private:
     // only used in constructors

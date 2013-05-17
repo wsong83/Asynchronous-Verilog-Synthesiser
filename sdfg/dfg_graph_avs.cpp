@@ -281,43 +281,30 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::build_reg_graph(const std::set<shared_ptr<d
   return ng;
 }
 
-std::set<shared_ptr<dfgNode> > SDFG::dfgGraph::get_fsm_groups(bool verbose, shared_ptr<dfgGraph> RRG) const {
+std::set<shared_ptr<dfgNode> > 
+SDFG::dfgGraph::get_fsms(bool verbose, 
+                         shared_ptr<dfgGraph> RRG,
+                         unsigned int& num_n,
+                         unsigned int& num_r,
+                         unsigned int& num_pf) const {
   // find all registers who has self-loops
-  list<shared_ptr<dfgNode> > nlist = get_list_of_nodes(dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_MODULE);
-  unsigned int noden = nlist.size();   // number of nodes
+  list<shared_ptr<dfgNode> > nlist = get_list_of_nodes(dfgNode::SDFG_FF|dfgNode::SDFG_LATCH);
+  unsigned int noden = nodes.size();   // number of nodes
   std::set<shared_ptr<dfgNode> > pfsm; // potential FSMs
-  unsigned int regn = 0;               // total number of registers
+  unsigned int regn = nlist.size();    // total number of registers
   unsigned int pfsmn = 0;              // total number of potential FSMs
   
-  typedef pair<const vertex_descriptor, shared_ptr<dfgNode> > node_record_type;
-  BOOST_FOREACH(node_record_type nr, nodes) {
-    noden++;
-    if(nr.second->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_MODULE))
-      nlist.push_back(nr.second);
-  }
-
   std::set<shared_ptr<dfgNode> > fakes_co, fakes_di; // for debug reasons
   while(!nlist.empty()) {
     shared_ptr<dfgNode> cn = nlist.front();
     nlist.pop_front();
     //if(verbose) std::cout << "analyse the paths of " << cn->get_hier_name() << std::endl;
-    if(cn->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH)) { // register
-      regn++;
-      list<shared_ptr<dfgPath> > pathlist = cn->get_self_path_cb();
-      BOOST_FOREACH(shared_ptr<dfgPath> p, pathlist) {
-        if(p->type & (dfgEdge::SDFG_CTL|dfgEdge::SDFG_DP)) {
-          pfsm.insert(cn);
-          pfsmn++;
-          break;
-        }
-      }
-    } else {
-      // must be module
-      if(cn->child) {
-        list<shared_ptr<dfgNode> > m_list = 
-          get_list_of_nodes(dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_MODULE, *(cn->child));
-        noden += m_list.size();
-        nlist.splice(nlist.end(), m_list);
+    list<shared_ptr<dfgPath> > pathlist = cn->get_self_path_cb();
+    BOOST_FOREACH(shared_ptr<dfgPath> p, pathlist) {
+      if(p->type & (dfgEdge::SDFG_CTL|dfgEdge::SDFG_DP)) {
+        pfsm.insert(cn);
+        pfsmn++;
+        break;
       }
     }
   }
@@ -361,10 +348,9 @@ std::set<shared_ptr<dfgNode> > SDFG::dfgGraph::get_fsm_groups(bool verbose, shar
     pfsm.erase(n);
   }
 
-  // report:
-  std::cout << "\n\nSUMMARY:" << std::endl;
-  std::cout << "In a design of " << noden << " nodes, " << regn << " nodes are registers." << std::endl;
-  std::cout << "Find " << pfsmn << " potential FSMs but finally reduce to " << pfsm.size() << " FSM registers." << std::endl; 
+  num_n += noden;
+  num_r += regn;
+  num_pf += pfsmn;
 
   return pfsm;
 }
