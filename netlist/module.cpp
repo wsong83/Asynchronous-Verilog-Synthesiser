@@ -590,26 +590,34 @@ double netlist::Module::get_ratio_state_preserved_oport(map<VIdentifier, pair<bo
         bool is_a_doport = false;       // is a data output port (exclude data through port)
         bool is_state_preserved = false; // preserve state
         string data_source;
-        BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, pnode->get_in_paths_fast_im()) {
+        BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, pnode->get_in_paths_fast_cb()) {
           if((p->src->type & SDFG::dfgNode::SDFG_FF) && // from an FF
              ((p->type & (SDFG::dfgEdge::SDFG_DP | SDFG::dfgEdge::SDFG_DDP)) ||
               (p->type == SDFG::dfgEdge::SDFG_DF)) // also when it is a default path
              ) { // is a data path
             is_a_doport = true;
-            if(p->src->get_self_path_cb().size() > 0) {
+            if(FSMs.count(p->src->get_full_name())) {
               is_state_preserved = true;
-              data_source = p->src->get_hier_name();
-              break;
-            } else if(use_fsm) {
+              data_source = p->src->get_full_name() + " [fsm]";
+            } else if(p->src->get_self_path_cb().size() > 0) {
+              is_state_preserved = true;
+              data_source = p->src->get_full_name();
+            } 
+            
+            if(use_fsm) {
               BOOST_FOREACH(shared_ptr<SDFG::dfgPath> pp, p->src->get_in_paths_fast_cb()) {
                 if((pp->type & SDFG::dfgEdge::SDFG_CTL) && FSMs.count(pp->src->get_full_name())) {
-                  is_state_preserved = true;
-                  data_source = p->src->get_hier_name();
+                  if(!is_state_preserved) {
+                    is_state_preserved = true;
+                    data_source = p->src->get_full_name() + " [fsm:" + pp->src->get_full_name() + "]";
+                  } else {
+                    data_source += " [fsm:" + pp->src->get_full_name() + "]";
+                  }
                   break;
                 }
               }
-              if(is_state_preserved) break;
             }
+            if(is_state_preserved) break;
           }
         }
         
