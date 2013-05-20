@@ -1,3 +1,12 @@
+##### Mon 20/05/2013
+* Using RRG rather than DFG to extract FSMs according to the DSD paper.
+* Able to report the FSM connections.
+* Able to check the integrity of a DFG.
+* Able to remove useless nodes and edges in a graph.
+* Able to report the datapath output with preserved states
+* Able to use FSM information in report partition.
+* able to list the expression of an FSM.
+
 ##### Sat 05/01/2013
 * Seems FSM detection is ready for use.
   Set up a new branch to detect the partition boundary.
@@ -25,8 +34,8 @@
 * VParser supports input/output/output reg definitions in port list.
 
 ##### Fri 19/10/2012
-* New command report_fsm 
-      search and report the FSMs in this design    
+* New command report_fsm
+      search and report the FSMs in this design
 * Now the output/input paths of each register is searched only once and stored in the graph to reduce running time
 
 ##### Mon 15/10/2012
