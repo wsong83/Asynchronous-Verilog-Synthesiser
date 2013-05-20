@@ -15,11 +15,8 @@ What I have done:
   handle macros.
 * A Verilog parser which can read in synthesizable Verilog features.
 * An error report system provide easy error type insertion and display.
-
-What I need to do in the future:
-* Extract static data-flow from the parsed design.
-* Try to figure out how to partition the design.
-* Petri-net based netlist optimization.
+* Automatically report all FSMs.
+* Automatically report all available partitions.
 
 Package required:
   GNU Make              ( make       )
@@ -28,10 +25,13 @@ Package required:
   Bison                 ( bison      )
   Flex                  ( flex       )
   GNU Boost Library     ( shared_ptr, regex, filesystem, program_options,
-                          lexical_cast, format, string )
+                          lexical_cast, format, string, BGL, Spirit )
   GNU MP Bignum Library ( gmp, gmpxx )
   rlwrap                ( rlwrap     )
   Tcl/Tk                ( Tcl/tk 8.4, cpptcl: already embedded )
+  PugiXML               ( v1.2: already embedded )
+  OGDF                  ( Open Graph Drawing Framework )
+  Qt                    ( v4 )
 
 Install guide:
   make
@@ -43,12 +43,6 @@ Usage info.:
 Other info.:
   This is a part of the EPSRC funded project GAELS (EP/I038306/1).
 
-Download info.:
-  As this project is under continuous development, please download
-a commit with comment beginning with "(OK)" or download old versions
-in tags. The commit versions with "(Err)" are likely to fail the 
-compiler.
-
 Any question or request pls write to <wsong83@gmail.com>
 
 Dr. Wei Song
@@ -58,4 +52,4 @@ songw@cs.man.ac.uk
 http://apt.cs.man.ac.uk/people/wsong/
 http://wsong83.weebly.com/
 
-25/06/2012
+20/05/2013
