@@ -107,6 +107,10 @@ namespace SDFG {
     // remove open and static ports
     void remove_useless_ports();
 
+    // check functionalities
+    bool is_const();            // is const or const after reset
+    unsigned int is_fsm();
+
     // for debug usage
     std::ostream& streamout(std::ostream&) const;
     bool check_integrity() const; // check whether there is any illegal connections

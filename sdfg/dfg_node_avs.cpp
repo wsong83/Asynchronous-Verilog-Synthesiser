@@ -42,6 +42,22 @@ using std::string;
 using std::pair;
 using std::list;
 
+bool SDFG::dfgNode::is_const() {
+  BOOST_FOREACH(shared_ptr<dfgPath> p, get_in_paths_fast_cb()) {
+    if(p->type == dfgEdge::SDFG_CLK || p->type == dfgEdge::SDFG_RST)
+      continue;                 // clock and reset paths
+    else if(p->type == dfgEdge::SDFG_DF && p->src->id == id)
+      continue;                 // self default path
+    else
+      return false;
+  }
+  return true;
+}
+
+unsigned int SDFG::dfgNode::is_fsm() {
+  return 0;
+}
+
 list<shared_ptr<dfgPath> >& SDFG::dfgNode::get_out_paths_cb() {
   if(opath.empty()) {
     // return value and the main path
