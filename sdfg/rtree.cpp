@@ -35,6 +35,22 @@ using std::string;
 using std::list;
 using boost::shared_ptr;
 
+string const SDFG::RTree::DTraget("@");
+
+SDFG::RTree::RTree() {
+  tree[DTraget] = map<string, int>();
+}
+
+SDFG::RTree::RTree(const string& sig, int etype) {
+  tree[DTraget][sig] = etype;
+}
+
+
+
+
+
+
+
 /////////////////////////////////////////////////////////////////////////////
 /********        relation tree nodes                                ********/
 /////////////////////////////////////////////////////////////////////////////

@@ -46,6 +46,17 @@ namespace SDFG {
 
   class RTree {
   public:
+    static const std::string DTarget;
+    RTree();
+    RTree(const std::string, int);
+    
+    std::map<std::string, std::map<std::string, int> > tree; 
+  };
+
+
+
+  class RTree_old {
+  public:
     enum node_type_t {
       RT_DF                  = 0x00001, // default, unknown type
       RT_DATA                = 0x00002, // data

@@ -434,6 +434,75 @@ void netlist::Operation::reduce() {
   }
 }
 
+shared_ptr<SDFG::RTree> get_rtree() const {
+  switch(otype) {
+  case oVar: return get_var().get_rtree();
+  case oCon: return get_con().get_rtree();
+  case oNULL:
+  case oNum: return shared_ptr<SDFG::RTree>(new RTree());
+  case oFun: return get_fun().get_rtree();
+  case oUPos:
+  case oUNeg:
+  case oULRev:
+  case oURev:
+  case oUAnd:
+  case oUNand:
+  case oUOr:
+  case oUNor:
+  case oUXor:
+  case oUNxor: 
+    return shared_ptr<SDFG::RTree>(new RTree(child[0]->get_rtree(), 
+                                             SDFG::dfgEdge::SDFG_DAT)
+                                   );
+  case oPower:
+  case oTime:
+  case oDiv:
+  case oMode:
+  case oRS:
+  case oLS:
+  case oLRS:
+  case oAnd:
+  case oXor:
+  case oNxor:
+  case oOr:
+  case oLAnd:
+  case oLOr: 
+    return shared_ptr<SDFG::RTree>(new RTree(child[0]->get_rtree(),
+                                             child[1]->get_rtree(),
+                                             SDFG::dfgEdge::SDFG_DAT)
+                                   );
+  case oAdd:
+  case oMinus:
+    return shared_ptr<SDFG::RTree>(new RTree(child[0]->get_rtree(),
+                                             child[1]->get_rtree(),
+                                             SDFG::dfgEdge::SDFG_CAL)
+                                   );
+  case oLess:
+  case oLe:
+  case oGreat:
+  case oGe:
+    return shared_ptr<SDFG::RTree>(new RTree(child[0]->get_rtree(),
+                                             child[1]->get_rtree(),
+                                             SDFG::dfgEdge::SDFG_CMP)
+                                   );
+  case oEq:
+  case oNeq:
+  case oCEq:
+  case oCNeq:
+    return shared_ptr<SDFG::RTree>(new RTree(child[0]->get_rtree(),
+                                             child[1]->get_rtree(),
+                                             SDFG::dfgEdge::SDFG_EQU)
+                                   );
+  case oQuestion:
+    return shared_ptr<SDFG::RTree>(new RTree(child[0]->get_rtree(),
+                                             child[1]->get_rtree(),
+                                             child[2]->get_rtree())
+                                   );
+  default:
+    assert(0 == "wrong operation type!");
+  }  
+}
+
 void netlist::Operation::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
   switch(otype) {
   case oVar: {

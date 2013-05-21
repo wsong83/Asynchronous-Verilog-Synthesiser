@@ -45,9 +45,13 @@ void SDFG::dfgEdge::write(pugi::xml_node& xnode) const {
   xnode.append_attribute("name") = name.c_str();
   string stype;
   switch(type) {
-  case SDFG_DP:     stype = "data";      break;
   case SDFG_DDP:    stype = "self-data"; break;
+  case SDFG_CAL:    stype = "math-cal";  break;
+  case SDFG_ASS:    stype = "assign";    break;
+  case SDFG_DAT:    stype = "data";      break;
   case SDFG_CTL:    stype = "control";   break;
+  case SDFG_CMP:    stype = "compare";   break;
+  case SDFG_EQU:    stype = "equal";     break;
   case SDFG_CLK:    stype = "clk";       break;
   case SDFG_RST:    stype = "rst";       break;
   default:          stype = "unknown";
@@ -72,10 +76,14 @@ void SDFG::dfgEdge::write(void *pedge, ogdf::GraphAttributes *pga) {
 }
 
 bool SDFG::dfgEdge::read(const pugi::xml_node& xnode) {
-  if(1 == 0) {
-    show_hash("data");          // 0x0c987a61
+  if(1 == 1) {
     show_hash("self-data");     // 0xdc983be0
+    show_hash("math-cal");
+    show_hash("assign");
+    show_hash("data");          // 0x0c987a61
     show_hash("control");       // 0xee9cb7ef
+    show_hash("compare");
+    show_hash("equal");
     show_hash("clk");           // 0x0018f66b
     show_hash("rst");           // 0x001cb9f4
     show_hash("unknown");       // 0xbddbfb6d
