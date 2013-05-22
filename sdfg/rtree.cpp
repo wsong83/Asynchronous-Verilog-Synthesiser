@@ -45,10 +45,53 @@ SDFG::RTree::RTree(const string& sig, int etype) {
   tree[DTraget][sig] = etype;
 }
 
+SDFG::RTree::RTree(shared_ptr<RTree> st, int etype) {
+  assert(st->tree.size() == 1 && st->tree.count(DTraget));
+  add_tree(st, rtype);
+}
 
+SDFG::RTree::RTree(shared_ptr<RTree> st0, shared_ptr<RTree> st1, int etype) {
+  assert(st0->ptree.size() == 1 && st0->ptree.count(DTraget));
+  assert(st1->ptree.size() == 1 && st1->ptree.count(DTraget));
 
+  add_tree(st0, rtype)->add_tree(st1, etype);
+}
+  
+SDFG::RTree::RTree(shared_ptr<RTree> stc, shared_ptr<RTree> st0, shared_ptr<RTree> st1) {
+  assert(stc->ptree.size() == 1 && stc->ptree.count(DTraget));
+  assert(st0->ptree.size() == 1 && st0->ptree.count(DTraget));
+  assert(st1->ptree.size() == 1 && st1->ptree.count(DTraget));
+  
+  add_tree(stc, SDFG::dfgEdge::SDFG_CTL)->add_tree(st0)->add_tree(st1);
+}
 
+RTree* SDFG::RTree::add_edge(const string& sig, int etype) {
+  assert(tree.size() == 1 && tree.count(DTraget));
+  return add_edge(sig, DTraget, etype);
+}
 
+RTree* SDFG::RTree::add_edge(const string& sig, const string& root, int etype) {
+  assert(tree.count(root))
+  if(tree[root].count(sig))
+    tree[root][sig] |= etype;
+  else
+    tree[root][sig] = etype;
+  return this;
+}
+
+RTree* SDFG::RTree::add_tree(shared_ptr<RTree> pt, int rtype) {
+  BOOST_FOREACH(sub_tree_type& t, *(pt->tree)) {
+    if(!ptree->count(t.first)) tree[t.first] = map<string, int>();
+    BOOST_FOREACH(rtree_edge_type& e, t.second) {
+      if(tree[t.first]->count(e.first))
+        tree[t.first][e.first] |= dfgPath::cal_type(e.second, rtype);
+      else
+        tree[t.first][e.first] == dfgPath::cal_type(e.second, rtype);
+    }
+  }
+  return this;
+}
+  
 
 
 /////////////////////////////////////////////////////////////////////////////

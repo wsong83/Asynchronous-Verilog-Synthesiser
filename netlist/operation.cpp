@@ -434,7 +434,7 @@ void netlist::Operation::reduce() {
   }
 }
 
-shared_ptr<SDFG::RTree> get_rtree() const {
+shared_ptr<SDFG::RTree> netlist::Operation::get_rtree() const {
   switch(otype) {
   case oVar: return get_var().get_rtree();
   case oCon: return get_con().get_rtree();

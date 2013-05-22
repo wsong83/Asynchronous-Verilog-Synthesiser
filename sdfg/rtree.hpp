@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -41,16 +41,28 @@
 namespace SDFG {
 
   // forward declaration
-  class RTee;
+  class RTree;
   class RForest;
 
   class RTree {
   public:
     static const std::string DTarget;
     RTree();
-    RTree(const std::string, int);
+    RTree(const std::string, int etype = dfgEdge::SDFG_ASS);
+    RTree(boost::shared_ptr<RTree>, int);
+    RTree(boost::shared_ptr<RTree>, boost::shared_ptr<RTree>, int);
+    RTree(boost::shared_ptr<RTree>, boost::shared_ptr<RTree>, boost::shared_ptr<RTree>);
     
     std::map<std::string, std::map<std::string, int> > tree; 
+    typedef std::pair<const std::string, std::map<std::string, int> > sub_tree_type;
+    typedef std::pair<const std::string, int> rtree_edge_type;
+
+
+    // helpers
+    RTree* add_edge(const std::string&, int etype = dfgEdge::SDFG_ASS); // add an signal to the tree
+    RTree* add_edge(const std::string&, const std::string&, int etype = dfgEdge::SDFG_ASS); // add an signal to the tree
+    RTree* add_tree(boost::shared_ptr<RTree>, int etype = dfgEdge::SDFG_ASS); // add a parallel tree to this tree
+    
   };
 
 

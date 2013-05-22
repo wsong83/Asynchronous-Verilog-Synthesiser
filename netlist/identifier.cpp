@@ -470,3 +470,9 @@ void netlist::VIdentifier::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) con
 void netlist::VIdentifier::replace_variable(const VIdentifier& var, const Number& num) {
   m_select.replace_variable(var, num);
 }
+
+shared_ptr<SDFG::RTree> netlist::VIdentifier::get_rtree() const {
+  shared_ptr<SDFG::RTree> sel_tree = get_select().get_rtree();
+  shared_ptr<SDFG::RTree> rv(new SDFG::RTree(sel_tree, SDFG::dfgEdge::SDFG_CTL));
+  rv->add_edge(name);
+}
