@@ -146,24 +146,17 @@ void SDFG::dfgGraph::add_path(shared_ptr<dfgPath> p) {
     }
 
     ptype = p->type;
-    if(ptype == dfgEdge::SDFG_DF) 
-      add_edge(s->name, dfgEdge::SDFG_DF, s, t);
-    else {
-      if(ptype & dfgEdge::SDFG_DP) 
-        add_edge(s->name, dfgEdge::SDFG_DP, s, t);
-      
-      if(ptype & dfgEdge::SDFG_DDP) 
-        add_edge(s->name, dfgEdge::SDFG_DDP, s, t);
-      
-      if(ptype & dfgEdge::SDFG_CTL) {
-        if((ptype & dfgEdge::SDFG_CLK) == dfgEdge::SDFG_CLK) 
-          add_edge(s->name, dfgEdge::SDFG_CLK, s, t);
-        else if((ptype & dfgEdge::SDFG_RST) == dfgEdge::SDFG_RST) 
-          add_edge(s->name, dfgEdge::SDFG_RST, s, t);
-        else 
-          add_edge(s->name, dfgEdge::SDFG_CTL, s, t);
-      }
-    } 
+    if(ptype == dfgEdge::SDFG_DF) add_edge(s->name, dfgEdge::SDFG_DF,  s, t);
+    if(ptype & dfgEdge::SDFG_DDP) add_edge(s->name, dfgEdge::SDFG_DDP, s, t);
+    if(ptype & dfgEdge::SDFG_CAL) add_edge(s->name, dfgEdge::SDFG_CAL, s, t);
+    if(ptype & dfgEdge::SDFG_ASS) add_edge(s->name, dfgEdge::SDFG_ASS, s, t);
+    if(ptype & dfgEdge::SDFG_DAT) add_edge(s->name, dfgEdge::SDFG_DAT, s, t);
+    if(ptype & dfgEdge::SDFG_CTL) add_edge(s->name, dfgEdge::SDFG_CTL, s, t);
+    if(ptype & dfgEdge::SDFG_CMP) add_edge(s->name, dfgEdge::SDFG_CMP, s, t);
+    if(ptype & dfgEdge::SDFG_EQU) add_edge(s->name, dfgEdge::SDFG_EQU, s, t);
+    if(ptype & dfgEdge::SDFG_CLK) add_edge(s->name, dfgEdge::SDFG_CLK, s, t);
+    if(ptype & dfgEdge::SDFG_RST) add_edge(s->name, dfgEdge::SDFG_RST, s, t);
+
   } else {                      // normal path
     list<dfgPath::path_type> m_path = p->path;
     if(exist(p->src->get_hier_name())) {
@@ -189,24 +182,17 @@ void SDFG::dfgGraph::add_path(shared_ptr<dfgPath> p) {
         add_node(t);
       }
 
-      if(ptype == dfgEdge::SDFG_DF) 
-        add_edge(s->name, dfgEdge::SDFG_DF, s, t);
-      else {
-        if(ptype & dfgEdge::SDFG_DP) 
-          add_edge(s->name, dfgEdge::SDFG_DP, s, t);
-        
-        if(ptype & dfgEdge::SDFG_DDP) 
-          add_edge(s->name, dfgEdge::SDFG_DDP, s, t);
-        
-        if(ptype & dfgEdge::SDFG_CTL) {
-          if((ptype & dfgEdge::SDFG_CLK) == dfgEdge::SDFG_CLK) 
-            add_edge(s->name, dfgEdge::SDFG_CLK, s, t);
-          else if((ptype & dfgEdge::SDFG_RST) == dfgEdge::SDFG_RST) 
-            add_edge(s->name, dfgEdge::SDFG_RST, s, t);
-          else 
-            add_edge(s->name, dfgEdge::SDFG_CTL, s, t);
-        }
-      }
+    if(ptype == dfgEdge::SDFG_DF) add_edge(s->name, dfgEdge::SDFG_DF,  s, t);
+    if(ptype & dfgEdge::SDFG_DDP) add_edge(s->name, dfgEdge::SDFG_DDP, s, t);
+    if(ptype & dfgEdge::SDFG_CAL) add_edge(s->name, dfgEdge::SDFG_CAL, s, t);
+    if(ptype & dfgEdge::SDFG_ASS) add_edge(s->name, dfgEdge::SDFG_ASS, s, t);
+    if(ptype & dfgEdge::SDFG_DAT) add_edge(s->name, dfgEdge::SDFG_DAT, s, t);
+    if(ptype & dfgEdge::SDFG_CTL) add_edge(s->name, dfgEdge::SDFG_CTL, s, t);
+    if(ptype & dfgEdge::SDFG_CMP) add_edge(s->name, dfgEdge::SDFG_CMP, s, t);
+    if(ptype & dfgEdge::SDFG_EQU) add_edge(s->name, dfgEdge::SDFG_EQU, s, t);
+    if(ptype & dfgEdge::SDFG_CLK) add_edge(s->name, dfgEdge::SDFG_CLK, s, t);
+    if(ptype & dfgEdge::SDFG_RST) add_edge(s->name, dfgEdge::SDFG_RST, s, t);
+
     }
   }
 }
@@ -989,6 +975,7 @@ bool SDFG::dfgGraph::layout(ogdf::Graph* pg, ogdf::GraphAttributes *pga) {
 
   if(!read(pg, pga)) return false;
 
+  /*
   // special operations for self loops
   for_each(edges.begin(), edges.end(),
            [&](pair<const edge_descriptor, shared_ptr<dfgEdge> >& m) {
@@ -1018,7 +1005,8 @@ bool SDFG::dfgGraph::layout(ogdf::Graph* pg, ogdf::GraphAttributes *pga) {
                  }
                }
              });
-
+  */
+  assert(0 == "TODO!");
   return true;
 }
 

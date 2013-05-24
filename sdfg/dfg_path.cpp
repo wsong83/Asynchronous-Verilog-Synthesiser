@@ -63,7 +63,7 @@ void SDFG::dfgPath::combine(boost::shared_ptr<dfgPath> p) {
 std::ostream& SDFG::dfgPath::streamout(std::ostream& os) const {
   if(src && tar) {
     os << src->get_full_name() << "->" 
-       << tar->get_full_name() << " (" << stypeget_stype(type) << "): " 
+       << tar->get_full_name() << " (" << get_stype(type) << "): " 
        << std::endl;
     if(!path.empty() && path.size() > 1) {
       BOOST_FOREACH(const path_type& m, path) {
@@ -77,7 +77,7 @@ std::ostream& SDFG::dfgPath::streamout(std::ostream& os) const {
   return os;
 }
  
-int SDFG::dfgPath::cal_type(const int& t0, const int& t1) {
+int SDFG::dfgPath::cal_type(int t0, int t1) {
   if(t0 == dfgEdge::SDFG_DF)  return t1;
   if(t1 == dfgEdge::SDFG_DF)  return t0;
   if(t0 == t1)                return t1;
@@ -85,9 +85,9 @@ int SDFG::dfgPath::cal_type(const int& t0, const int& t1) {
   // other
   int gt = 0;
   if(t0 & dfgEdge::SDFG_CTL_MASK) gt |= 0x8;
-  if(t0 & dfgEdge::SDFG_DATA_MASK) gt |= 0x4;
+  if(t0 & dfgEdge::SDFG_DAT_MASK) gt |= 0x4;
   if(t1 & dfgEdge::SDFG_CTL_MASK) gt |= 0x2;
-  if(t1 & dfgEdge::SDFG_DATA_MASK) gt |= 0x1;
+  if(t1 & dfgEdge::SDFG_DAT_MASK) gt |= 0x1;
   int dt = cal_type_data(t0&0xf, t1&0xf);
   int ct = cal_type_control(t0>>4&0xf, t1>>4&0xf);
   int d2ct = cal_type_data2control(t0&0xf, t1>>4&0xf);
@@ -108,7 +108,7 @@ int SDFG::dfgPath::cal_type(const int& t0, const int& t1) {
   }
 }
 
-int SDFG::dfgPath::cal_type_data(const int& t0, const int& t1) {
+int SDFG::dfgPath::cal_type_data(int t0, int t1) {
   int tt = (t0 << 4 )| t1;
   switch(tt) {
   case 0x00:
@@ -182,12 +182,12 @@ int SDFG::dfgPath::cal_type_data(const int& t0, const int& t1) {
   }
 }
 
-int SDFG::dfgPath::cal_type_control(const int& t0, const int& t1) {
+int SDFG::dfgPath::cal_type_control(int t0, int t1) {
   if(t1 == 0) return 0;
   else return t0;
 }
 
-int SDFG::dfgPath::cal_type_data2control(const int& t0, const int& t1) {
+int SDFG::dfgPath::cal_type_data2control(int t0, int t1) {
   int tt = (t0 << 4 )| t1;
   switch(tt) {
   case 0x00:
@@ -261,7 +261,7 @@ int SDFG::dfgPath::cal_type_data2control(const int& t0, const int& t1) {
   }
 }
 
-string SDFG::dfgPath::get_stype(unsigned int tt) const {
+string SDFG::dfgPath::get_stype(int tt) {
   string stype("");
   if(tt == dfgEdge::SDFG_DF) stype += "DP|";
   if(tt & dfgEdge::SDFG_DDP) stype += "DDP|";

@@ -124,3 +124,11 @@ void netlist::FuncCall::replace_variable(const VIdentifier& var, const Number& n
     exp->replace_variable(var, num);
   }
 }
+
+shared_ptr<SDFG::RTree> netlist::FuncCall::get_rtree() const {
+  shared_ptr<SDFG::RTree> rv(new SDFG::RTree());
+  BOOST_FOREACH(shared_ptr<Expression> exp, args) {
+    rv->add_tree(exp->get_rtree());
+  }
+  return rv;
+}

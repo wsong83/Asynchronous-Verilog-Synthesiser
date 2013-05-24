@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -242,4 +242,8 @@ void netlist::RangeArray::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) cons
 
 void netlist::RangeArray::replace_variable(const VIdentifier& var, const Number& num) {
   RangeArrayCommon::replace_variable(var, num);
+}
+
+shared_ptr<SDFG::RTree> netlist::Range::get_rtree() const {
+  return RangeArrayCommon::get_rtree();
 }

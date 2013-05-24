@@ -252,6 +252,7 @@ void netlist::SeqBlock::scan_vars(shared_ptr<SDFG::RForest> rf, bool) const {
 
 
 void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
+  /*
   assert(db_var.empty());
   assert(db_instance.empty());
 
@@ -322,6 +323,8 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
         G->get_node(t.first)->type = SDFG::dfgNode::SDFG_COMB;
     }
   }
+  */
+  assert(0 == "TODO!");
 }
 
 void netlist::SeqBlock::replace_variable(const VIdentifier& var, const Number& num) {

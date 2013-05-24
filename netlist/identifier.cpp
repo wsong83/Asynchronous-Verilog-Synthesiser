@@ -455,6 +455,7 @@ VIdentifier* netlist::VIdentifier::deep_copy() const {
 }
   
 void netlist::VIdentifier::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
+  /*
   if(ctl) {
     if(!rf->tree["@CTL"]) rf->tree["@CTL"].reset(new SDFG::RTree(SDFG::RTree::RT_CTL));
     rf->tree["@CTL"]->sig.insert(name);
@@ -465,6 +466,7 @@ void netlist::VIdentifier::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) con
 
   //get_select().scan_vars(rf, ctl);
   get_select().scan_vars(rf, true);
+  */
 }
 
 void netlist::VIdentifier::replace_variable(const VIdentifier& var, const Number& num) {

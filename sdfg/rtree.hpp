@@ -38,6 +38,8 @@
 // pugixml library
 #include "pugixml/pugixml.hpp"
 
+#include "dfg_edge.hpp"
+
 namespace SDFG {
 
   // forward declaration
@@ -48,7 +50,7 @@ namespace SDFG {
   public:
     static const std::string DTarget;
     RTree();
-    RTree(const std::string, int etype = dfgEdge::SDFG_ASS);
+    RTree(const std::string&, int etype = dfgEdge::SDFG_ASS);
     RTree(boost::shared_ptr<RTree>, int);
     RTree(boost::shared_ptr<RTree>, boost::shared_ptr<RTree>, int);
     RTree(boost::shared_ptr<RTree>, boost::shared_ptr<RTree>, boost::shared_ptr<RTree>);
@@ -66,7 +68,7 @@ namespace SDFG {
   };
 
 
-
+  /*
   class RTree_old {
   public:
     enum node_type_t {
@@ -96,7 +98,7 @@ namespace SDFG {
     // debug I/O
     void write(pugi::xml_node&, pugi::xml_node&, unsigned int&) const;
   };
-
+  */
   class RForest {
   public:
     std::map<std::string, boost::shared_ptr<RTree> > tree;

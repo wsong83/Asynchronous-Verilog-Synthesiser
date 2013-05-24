@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -85,6 +85,17 @@ void netlist::ConElem::replace_variable(const VIdentifier& var, shared_ptr<Expre
   BOOST_FOREACH(shared_ptr<ConElem> ce, con) {
     ce->replace_variable(var, rexp);
   }  
+}
+
+shared_ptr<SDFG::RTree> netlist::ConElem::get_rtree() const {
+  shared_ptr<SDFG::RTree> rv(new SDFG::RTree());
+  if(exp)
+    rv->add_tree(exp->get_rtree());
+  
+  BOOST_FOREACH(shared_ptr<ConElem> m, con) {
+    rv->add_tree(m->get_rtree());
+  }
+  return rv;
 }
 
 ostream& netlist::ConElem::streamout(ostream& os, unsigned int indent) const {
@@ -272,6 +283,14 @@ void netlist::Concatenation::replace_variable(const VIdentifier& var, shared_ptr
   BOOST_FOREACH(shared_ptr<ConElem> d, data) {
     d->replace_variable(var, rexp);
   }
+}
+
+shared_ptr<SDFG::RTree> netlist::Concatenation::get_rtree() const {
+  shared_ptr<SDFG::RTree> rv(new SDFG::RTree());
+  BOOST_FOREACH(shared_ptr<ConElem> d, data) {
+    rv->add_tree(d->get_rtree());
+  }
+  return rv;
 }
 
 void netlist::Concatenation::db_register(int iod) {

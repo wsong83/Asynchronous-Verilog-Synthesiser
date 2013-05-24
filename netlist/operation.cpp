@@ -439,7 +439,7 @@ shared_ptr<SDFG::RTree> netlist::Operation::get_rtree() const {
   case oVar: return get_var().get_rtree();
   case oCon: return get_con().get_rtree();
   case oNULL:
-  case oNum: return shared_ptr<SDFG::RTree>(new RTree());
+  case oNum: return shared_ptr<SDFG::RTree>(new SDFG::RTree());
   case oFun: return get_fun().get_rtree();
   case oUPos:
   case oUNeg:
@@ -451,8 +451,8 @@ shared_ptr<SDFG::RTree> netlist::Operation::get_rtree() const {
   case oUNor:
   case oUXor:
   case oUNxor: 
-    return shared_ptr<SDFG::RTree>(new RTree(child[0]->get_rtree(), 
-                                             SDFG::dfgEdge::SDFG_DAT)
+    return shared_ptr<SDFG::RTree>(new SDFG::RTree(child[0]->get_rtree(), 
+                                                   SDFG::dfgEdge::SDFG_DAT)
                                    );
   case oPower:
   case oTime:
@@ -467,36 +467,36 @@ shared_ptr<SDFG::RTree> netlist::Operation::get_rtree() const {
   case oOr:
   case oLAnd:
   case oLOr: 
-    return shared_ptr<SDFG::RTree>(new RTree(child[0]->get_rtree(),
-                                             child[1]->get_rtree(),
-                                             SDFG::dfgEdge::SDFG_DAT)
+    return shared_ptr<SDFG::RTree>(new SDFG::RTree(child[0]->get_rtree(),
+                                                   child[1]->get_rtree(),
+                                                   SDFG::dfgEdge::SDFG_DAT)
                                    );
   case oAdd:
   case oMinus:
-    return shared_ptr<SDFG::RTree>(new RTree(child[0]->get_rtree(),
-                                             child[1]->get_rtree(),
-                                             SDFG::dfgEdge::SDFG_CAL)
+    return shared_ptr<SDFG::RTree>(new SDFG::RTree(child[0]->get_rtree(),
+                                                   child[1]->get_rtree(),
+                                                   SDFG::dfgEdge::SDFG_CAL)
                                    );
   case oLess:
   case oLe:
   case oGreat:
   case oGe:
-    return shared_ptr<SDFG::RTree>(new RTree(child[0]->get_rtree(),
-                                             child[1]->get_rtree(),
-                                             SDFG::dfgEdge::SDFG_CMP)
+    return shared_ptr<SDFG::RTree>(new SDFG::RTree(child[0]->get_rtree(),
+                                                   child[1]->get_rtree(),
+                                                   SDFG::dfgEdge::SDFG_CMP)
                                    );
   case oEq:
   case oNeq:
   case oCEq:
   case oCNeq:
-    return shared_ptr<SDFG::RTree>(new RTree(child[0]->get_rtree(),
-                                             child[1]->get_rtree(),
-                                             SDFG::dfgEdge::SDFG_EQU)
+    return shared_ptr<SDFG::RTree>(new SDFG::RTree(child[0]->get_rtree(),
+                                                   child[1]->get_rtree(),
+                                                   SDFG::dfgEdge::SDFG_EQU)
                                    );
   case oQuestion:
-    return shared_ptr<SDFG::RTree>(new RTree(child[0]->get_rtree(),
-                                             child[1]->get_rtree(),
-                                             child[2]->get_rtree())
+    return shared_ptr<SDFG::RTree>(new SDFG::RTree(child[0]->get_rtree(),
+                                                   child[1]->get_rtree(),
+                                                   child[2]->get_rtree())
                                    );
   default:
     assert(0 == "wrong operation type!");

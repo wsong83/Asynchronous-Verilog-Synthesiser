@@ -353,7 +353,7 @@ bool netlist::Instance::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
 }
 
 void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
-
+  /*
   // find out the node
   shared_ptr<dfgNode> node = G->get_node(name.name);
   assert(node);
@@ -408,7 +408,8 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
         assert(0 == "port type wrong, output cannot be expression or number.");
       }
     }
-  }       
+  } 
+  */      
 }
 
 void netlist::Instance::replace_variable(const VIdentifier& var, const Number& num) {

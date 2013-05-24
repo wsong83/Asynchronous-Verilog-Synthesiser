@@ -128,6 +128,12 @@ namespace netlist {
 
 }
 
+// SDFG
+namespace SDFG {
+  class dfgGraph;
+  class RTree;
+}
+
 #include "defines.h"
 
 // root class
@@ -169,12 +175,6 @@ namespace shell {
 }
 
 extern shell::Env* G_ENV;
-
-// SDFG
-namespace SDFG {
-  class dfgGraph;
-}
-
 
 #include <sstream>
 

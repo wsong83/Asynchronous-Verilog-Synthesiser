@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -815,10 +815,10 @@ void netlist::Range::replace_variable(const VIdentifier& var, const Number& num)
 
 shared_ptr<SDFG::RTree> netlist::Range::get_rtree() const {
   shared_ptr<SDFG::RTree> rv(new SDFG::RTree());
-  if(rtype == TR_Var) rv->add_tree(v->get_tree());
-  else if(rtype == TR_Range) rv->add_tree(r.first->get_tree())->add_tree(r.second->get_tree());
+  if(rtype == TR_Var) rv->add_tree(v->get_rtree());
+  else if(rtype == TR_Range) rv->add_tree(r.first->get_rtree())->add_tree(r.second->get_rtree());
   
-  rv->add_tree(RangeArrayCommon::get_rtree);
+  rv->add_tree(RangeArrayCommon::get_rtree());
   return rv;
 }
   

@@ -92,7 +92,6 @@ bool SDFG::dfgEdge::read(const pugi::xml_node& xnode) {
   name = xnode.attribute("name").as_string();
   switch(shash(xnode.attribute("type").as_string())) {
   case 0xdc983be0: type = SDFG_DDP; break;
-  case 0x0c987a61: type = SDFG_DP;  break;
   case 0xee9cb7ef: type = SDFG_CTL; break;
   case 0x0018f66b: type = SDFG_CLK; break;
   case 0x001cb9f4: type = SDFG_RST; break;

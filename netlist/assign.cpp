@@ -94,6 +94,7 @@ bool netlist::Assign::elaborate(std::set<shared_ptr<NetComp> >&,
 }
 
 void netlist::Assign::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
+  /*
   shared_ptr<SDFG::RForest> rf(new SDFG::RForest());
   scan_vars(rf, false);
   //std::cout << "assign ------->" << *this << std::endl;
@@ -109,7 +110,9 @@ void netlist::Assign::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
       G->add_edge(s, SDFG::dfgEdge::SDFG_DP, s, t.first);
     }
     G->get_node(t.first)->ptr.insert(get_sp());
-  }  
+  } 
+  */
+  assert(0 == "TODO");
 }
 
 void netlist::Assign::scan_vars(shared_ptr<SDFG::RForest> rf, bool) const {
@@ -144,6 +147,7 @@ void netlist::Assign::replace_variable(const VIdentifier& var, const Number& num
 }
 
 shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifier& target, std::set<string> s_set) {
+  /*
   shared_ptr<SDFG::RForest> lrf(new SDFG::RForest());
   shared_ptr<SDFG::RForest> rrf(new SDFG::RForest());
   lval->scan_vars(lrf, false);
@@ -221,4 +225,6 @@ shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifie
     }
   }
   return rv;
+  */
+  assert(0 == "TODO!");
 }
