@@ -64,7 +64,11 @@ namespace SDFG {
     RTree* add_edge(const std::string&, int etype = dfgEdge::SDFG_ASS); // add an signal to the tree
     RTree* add_edge(const std::string&, const std::string&, int etype = dfgEdge::SDFG_ASS); // add an signal to the tree
     RTree* add_tree(boost::shared_ptr<RTree>, int etype = dfgEdge::SDFG_ASS); // add a parallel tree to this tree
+    RTree* add_tree(boost::shared_ptr<RTree>, const std::string&, int etype = dfgEdge::SDFG_ASS); // add a tree and set a root for the default targeted sub-tree
+    RTree* combine(boost::shared_ptr<RTree>, int etype = dfgEdge::SDFG_ASS); // assign the default sub-tree to the named sub-trees of this tree
     
+  private:
+    void copy_subtree(const std::string&, const std::map<std::string, int>&, int);
   };
 
 

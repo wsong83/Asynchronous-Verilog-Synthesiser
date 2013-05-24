@@ -59,7 +59,6 @@ namespace netlist {
     NETLIST_SET_FATHER_DECL;
     virtual ConElem* deep_copy() const;
     NETLIST_DB_DECL;
-    NETLIST_SCAN_VARS;
     NETLIST_REPLACE_VARIABLE;
     void replace_variable(const VIdentifier&, boost::shared_ptr<Expression>); // replace a vid with an expression     
     virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
@@ -93,7 +92,6 @@ namespace netlist {
     NETLIST_SET_FATHER_DECL;
     virtual Concatenation* deep_copy() const;
     NETLIST_DB_DECL;
-    NETLIST_SCAN_VARS;
     NETLIST_REPLACE_VARIABLE;
     void replace_variable(const VIdentifier&, boost::shared_ptr<Expression>); // replace a vid with an expression 
     virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;

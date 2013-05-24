@@ -128,12 +128,6 @@ namespace netlist {
 
 }
 
-// SDFG
-namespace SDFG {
-  class dfgGraph;
-  class RTree;
-}
-
 #include "defines.h"
 
 // root class

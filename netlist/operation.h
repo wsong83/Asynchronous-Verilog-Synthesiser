@@ -128,7 +128,6 @@ namespace netlist {
     NETLIST_STREAMOUT_DECL;
     virtual Operation* deep_copy() const; 
     NETLIST_DB_DECL;
-    NETLIST_SCAN_VARS;
     NETLIST_REPLACE_VARIABLE;
     virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
 

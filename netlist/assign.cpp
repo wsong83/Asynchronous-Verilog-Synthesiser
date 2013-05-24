@@ -115,19 +115,12 @@ void netlist::Assign::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
   assert(0 == "TODO");
 }
 
-void netlist::Assign::scan_vars(shared_ptr<SDFG::RForest> rf, bool) const {
-  shared_ptr<SDFG::RForest> lrf(new SDFG::RForest());
-  shared_ptr<SDFG::RForest> rrf(new SDFG::RForest());
-  lval->scan_vars(lrf, false);
-  rexp->scan_vars(rrf, false);
-  //std::cout << "rhs expression ------->" << *rexp << std::endl;
-  //rrf->write(std::cout);
-  shared_ptr<SDFG::RForest> crf(new SDFG::RForest());
-  crf->build(lrf, rrf);
-  rf->add(crf);
-  //std::cout << *this << std::endl;
-  //rf->write(std::cout);
+shared_ptr<SDFG::RTree> netlist::Assign::get_rtree() const {
+  shared_ptr<SDFG::RTree> lrf = lval->get_rtree();
+  shared_ptr<SDFG::RTree> rrf = rexp->get_rtree();
+  return lrf->combine(rrf);
 }
+
 
 Assign* netlist::Assign::deep_copy() const {
   Assign* rv = new Assign( loc,

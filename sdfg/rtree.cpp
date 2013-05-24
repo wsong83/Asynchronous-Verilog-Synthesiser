@@ -86,17 +86,39 @@ RTree* SDFG::RTree::add_edge(const string& sig, const string& root, int etype) {
 RTree* SDFG::RTree::add_tree(shared_ptr<RTree> pt, int rtype) {
   BOOST_FOREACH(sub_tree_type& t, pt->tree) {
     if(!tree.count(t.first)) tree[t.first] = map<string, int>();
-    BOOST_FOREACH(rtree_edge_type& e, t.second) {
-      if(tree[t.first].count(e.first))
-        tree[t.first][e.first] |= dfgPath::cal_type(e.second, rtype);
-      else
-        tree[t.first][e.first] = dfgPath::cal_type(e.second, rtype);
+    copy_subtree(t.first, t.second, rtype);
+  }
+  return this;
+}
+
+RTree* SDFG::RTree::add_tree(shared_ptr<RTree> pt, const string& root, int rtype) {
+  BOOST_FOREACH(sub_tree_type& t, pt->tree) {
+    if(t.first == DTarget) {    // default sub-tree
+      if(!tree.count(root)) tree[root] = map<string, int>();
+      copy_subtree(root, t.second, rtype);
+    } else {                    // named sub-tree
+      if(!tree.count(t.first)) tree[t.first] = map<string, int>();
+      copy_subtree(t.first, t.second, rtype);
     }
   }
   return this;
 }
-  
 
+RTree* SDFG::RTree::combine(shared_ptr<RTree> rhs, int rtype) {
+  BOOST_FOREACH(sub_tree_type& t, tree) {
+    add_tree(rhs, t.first, rtype);
+  }
+  return this;
+}
+
+void SDFG::RTree::copy_subtree(const string& root,  const map<string, int>& st, int rtype) {
+  BOOST_FOREACH(rtree_edge_type& e, st) {
+    if(tree[root].count(e.first))
+      tree[root][e.first] |= dfgPath::cal_type(e.second, rtype);
+    else
+      tree[root][e.first] = dfgPath::cal_type(e.second, rtype);
+  }
+}
 
 /////////////////////////////////////////////////////////////////////////////
 /********        relation tree nodes                                ********/

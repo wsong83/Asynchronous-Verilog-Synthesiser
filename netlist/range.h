@@ -88,7 +88,6 @@ namespace netlist {
     unsigned int get_width(const Range&) const; // considering child
     unsigned int get_width(const Range&); // considering child
     void set_width(const unsigned int&, const Range&);
-    NETLIST_SCAN_VARS;
     NETLIST_REPLACE_VARIABLE;
     virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
 

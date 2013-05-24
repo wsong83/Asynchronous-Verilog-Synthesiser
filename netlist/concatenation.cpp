@@ -64,15 +64,6 @@ void netlist::ConElem::reduce() {
   }
 }
 
-void netlist::ConElem::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
-  if(exp)
-    exp->scan_vars(rf, ctl);
-  
-  BOOST_FOREACH(shared_ptr<ConElem> m, con) {
-    m->scan_vars(rf, ctl);
-  }
-}
-
 void netlist::ConElem::replace_variable(const VIdentifier& var, const Number& num) {
   exp->replace_variable(var, num);
   BOOST_FOREACH(shared_ptr<ConElem> ce, con) {
@@ -264,12 +255,6 @@ void netlist::Concatenation::reduce() {
       pre = it; 
       it++; 
     }
-  }
-}
-
-void netlist::Concatenation::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
-  BOOST_FOREACH(shared_ptr<ConElem> m, data) {
-    m->scan_vars(rf, ctl);
   }
 }
 
