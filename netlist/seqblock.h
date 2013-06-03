@@ -56,10 +56,9 @@ namespace netlist{
     using Block::set_father;
     virtual SeqBlock* deep_copy() const;
     NETLIST_DB_DECL;
-    NETLIST_SCAN_VARS;
     NETLIST_GEN_SDFG;
     NETLIST_REPLACE_VARIABLE;
-    
+    virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
 
     // state space analysis
     void ssa_analysis(const VIdentifier& sname);

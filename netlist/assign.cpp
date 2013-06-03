@@ -118,7 +118,8 @@ void netlist::Assign::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
 shared_ptr<SDFG::RTree> netlist::Assign::get_rtree() const {
   shared_ptr<SDFG::RTree> lrf = lval->get_rtree();
   shared_ptr<SDFG::RTree> rrf = rexp->get_rtree();
-  return lrf->combine(rrf);
+  lrf->combine(rrf);
+  return lrf;
 }
 
 

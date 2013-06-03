@@ -244,10 +244,8 @@ void netlist::SeqBlock::db_expunge() {
 }
 
 
-void netlist::SeqBlock::scan_vars(shared_ptr<SDFG::RForest> rf, bool) const {
-  Block::scan_vars(rf, false);
-  //std::cout << "always@ ------->" << *this << std::endl;
-  //rf->write(std::cout);
+shared_ptr<SDFG::RTree> netlist::SeqBlock::get_rtree() const {
+  return Block::get_rtree();
 }
 
 

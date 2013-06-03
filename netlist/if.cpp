@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -158,21 +158,36 @@ bool netlist::IfState::elaborate(std::set<shared_ptr<NetComp> >& to_del,
   return true;
 }
 
-void netlist::IfState::scan_vars(shared_ptr<SDFG::RForest> rf, bool) const {
-  shared_ptr<SDFG::RForest> exprf(new SDFG::RForest());
-  exp->scan_vars(exprf, true);
-  
-  shared_ptr<SDFG::RForest> ifrf(new SDFG::RForest());
-  ifcase->scan_vars(ifrf, false);
-    
-  shared_ptr<SDFG::RForest> elserf(new SDFG::RForest());
-  if(elsecase) elsecase->scan_vars(elserf, false);
-  
-  list<shared_ptr<SDFG::RForest> > branches;
-  branches.push_back(ifrf);
-  branches.push_back(elserf);
+shared_ptr<SDFG::RTree> netlist::IfState::get_rtree() const {
 
-  rf->add(exprf, branches);
+  shared_ptr<SDFG::RTree> rv(new SDFG::RTree());
+  map<string, unsigned int> target_count;
+
+  shared_ptr<SDFG::RTree> ifcase_rtree = ifcase->get_rtree();
+  BOOST_FOREACH(SDFG::RTree::sub_tree_type& t, ifcase_rtree->tree) {
+    if(target_count.count(t.first)) target_count[t.first]++;
+    else                            target_count[t.first] = 1;
+  }
+  rv->add_tree(ifcase_rtree);
+
+  shared_ptr<SDFG::RTree> elsecase_rtree(new SDFG::RTree());
+  if(elsecase) elsecase_rtree = elsecase->get_rtree();
+  BOOST_FOREACH(SDFG::RTree::sub_tree_type& t, elsecase_rtree->tree) {
+    if(target_count.count(t.first)) target_count[t.first]++;
+    else                            target_count[t.first] = 1;
+  }
+  rv->add_tree(elsecase_rtree);
+
+  rv->add_tree(exp->get_rtree(), SDFG::dfgEdge::SDFG_CTL);
+
+  // add self paths
+  typedef std::pair<const string&, unsigned int> m_type;
+  BOOST_FOREACH(m_type t, target_count) {
+    if(t.second < 2)
+      rv->add_edge(t.first, t.first, SDFG::dfgEdge::SDFG_DDP);
+  }
+
+  return rv;
 }
 
 void netlist::IfState::replace_variable(const VIdentifier& var, const Number& num) {

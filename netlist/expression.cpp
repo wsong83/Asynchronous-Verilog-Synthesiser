@@ -230,10 +230,6 @@ Expression* netlist::Expression::deep_copy() const {
   return rv;
 }
 
-void netlist::Expression::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
-  eqn->scan_vars(rf, ctl);
-}
-
 shared_ptr<SDFG::RTree> netlist::Expression::get_rtree() const {
   return eqn->get_rtree();
 }
