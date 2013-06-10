@@ -240,6 +240,6 @@ void netlist::RangeArray::replace_variable(const VIdentifier& var, const Number&
   RangeArrayCommon::replace_variable(var, num);
 }
 
-shared_ptr<SDFG::RTree> netlist::Range::get_rtree() const {
+shared_ptr<SDFG::RTree> netlist::RangeArray::get_rtree() const {
   return RangeArrayCommon::get_rtree();
 }

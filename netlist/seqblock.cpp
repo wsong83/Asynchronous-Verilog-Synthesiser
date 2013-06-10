@@ -166,13 +166,9 @@ void netlist::SeqBlock::elab_inparse() {
   if(slist_level.size() == 1 && slist_level.front()->is_variable() && slist_level.front()->get_variable().name == "*") {
     // automatic sensitive list filling
     slist_level.clear();
-    shared_ptr<SDFG::RForest> rf(new SDFG::RForest());
-    Block::scan_vars(rf, false);
-    std::set<string> cset;
-    BOOST_FOREACH(SDFG::RForest::tree_map_type& t, rf->tree) {
-      std::set<string> csig = rf->get_control(t.first);
-      cset.insert(csig.begin(), csig.end());
-    }
+
+    std::set<string> cset = get_rtree()->get_all();
+
     BOOST_FOREACH(const string& s, cset) {
       VIdentifier signal(s);
       slist_level.push_back(shared_ptr<Expression>(new Expression(signal)));

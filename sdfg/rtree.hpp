@@ -66,64 +66,14 @@ namespace SDFG {
     RTree* add_tree(boost::shared_ptr<RTree>, int etype = dfgEdge::SDFG_ASS); // add a parallel tree to this tree
     RTree* add_tree(boost::shared_ptr<RTree>, const std::string&, int etype = dfgEdge::SDFG_ASS); // add a tree and set a root for the default targeted sub-tree
     RTree* combine(boost::shared_ptr<RTree>, int etype = dfgEdge::SDFG_ASS); // assign the default sub-tree to the named sub-trees of this tree
+
+    std::set<std::string> get_control(const std::string& = "") const;
+    std::set<std::string> get_data(const std::string& = "") const;
+    std::set<std::string> get_all(const std::string& = "") const;
+    std::set<std::string> get_signals(int, const std::string& = "") const;
     
   private:
     void copy_subtree(const std::string&, const std::map<std::string, int>&, int);
-  };
-
-
-  /*
-  class RTree_old {
-  public:
-    enum node_type_t {
-      RT_DF                  = 0x00001, // default, unknown type
-      RT_DATA                = 0x00002, // data
-      RT_CTL                 = 0x00004  // control
-    } type;
-
-    std::set<boost::shared_ptr<RTree> > child; // child nodes
-    std::set<std::string> sig;  // signals in this node
-    
-    // constructor
-    RTree();
-    RTree(node_type_t);
-
-    //helpers
-    RTree * deep_copy() const;
-    
-    // functions
-    void build(boost::shared_ptr<RForest>);        // build up a relation tree using the forest of an expression
-    bool insert_default(boost::shared_ptr<RTree>); // insert a default statement to all self loops
-    void append(boost::shared_ptr<RTree>);         // append a leaf to all control leaves
-    void get_control(std::set<std::string>&) const; // get the control signals of a target
-    void get_data(std::set<std::string>&) const;   // get the control signals of a target
-    void combine(boost::shared_ptr<RTree>, boost::shared_ptr<RTree>); // combine two trees 
-
-    // debug I/O
-    void write(pugi::xml_node&, pugi::xml_node&, unsigned int&) const;
-  };
-  */
-  class RForest {
-  public:
-    std::map<std::string, boost::shared_ptr<RTree> > tree;
-    typedef std::pair<const std::string, boost::shared_ptr<RTree> > tree_map_type;
-
-    // constructore
-    //RForest(bool d_init = false);
-
-    // helpers
-    RForest * deep_copy() const;
-    
-    // functions
-    void build(boost::shared_ptr<RForest>, boost::shared_ptr<RForest>); // build up a statement with lval and right expression
-    void add(boost::shared_ptr<RForest>, std::list<boost::shared_ptr<RForest> >); // add an case/if statement
-    void add(boost::shared_ptr<RForest>); // add a parallel statement
-    void combine(std::list<boost::shared_ptr<RForest> > ); // using the control forests to combine branches
-    std::set<std::string> get_control(const std::string&) const; // get the control signals of a target
-    std::set<std::string> get_data(const std::string&) const; // get the control signals of a target
-
-    // debug I/O
-    void write(std::ostream&) const;
   };
 
 }
