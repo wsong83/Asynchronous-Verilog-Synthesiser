@@ -42,10 +42,6 @@
 
 namespace SDFG {
 
-  // forward declaration
-  class RTree;
-  class RForest;
-
   class RTree {
   public:
     static const std::string DTarget;

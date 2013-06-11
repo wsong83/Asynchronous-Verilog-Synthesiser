@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+# Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
 #    Advanced Processor Technologies Group, School of Computer Science
 #    University of Manchester, Manchester M13 9PL UK
 #
@@ -30,6 +30,7 @@ TARGET = DEBUG
 export BISON_EXE = bison
 export FLEX_EXE = flex
 export CXX = ccache g++
+export MC_FLAG = -j4
 
 # OGDF library
 export OGDF_PATH = $(PWD)/../OGDF
@@ -64,7 +65,7 @@ bison: $(BISONDIRS)
 subdirs: $(SUBDIRS)
 
 $(SUBDIRS):
-	$(MAKE) -C $@
+	$(MAKE) $(MC_FLAG) -C $@
 
 shell.bison:
 	$(MAKE) bison -C shell

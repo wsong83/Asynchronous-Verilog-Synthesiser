@@ -246,46 +246,29 @@ shared_ptr<SDFG::RTree> netlist::SeqBlock::get_rtree() const {
 
 
 void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
-  /*
   assert(db_var.empty());
   assert(db_instance.empty());
 
-  shared_ptr<SDFG::RForest> rf(new SDFG::RForest());
-  scan_vars(rf, false);
-  std::set<string> cset;        // to store all control signals
+  shared_ptr<SDFG::RTree> rt = get_rtree();
+  std::set<string> cset = rt->get_control();        // to store all control signals
   
-  BOOST_FOREACH(SDFG::RForest::tree_map_type& t, rf->tree) {
-    //std::cout << "target ->" << " " << t.first << std::endl;
-    std::set<string> csig = rf->get_control(t.first);
-    if(!slist_pulse.empty()) cset.insert(csig.begin(), csig.end());
-    std::set<string> dsig = rf->get_data(t.first);
-    //std::cout << "ctl: ";
-    BOOST_FOREACH(const string& s, csig) {
-      G->add_edge(s, SDFG::dfgEdge::SDFG_CTL, s, t.first);
-      //std::cout << s << " ";
+  BOOST_FOREACH(SDFG::RTree::sub_tree_type& t, rt->tree) {
+    BOOST_FOREACH(SDFG::RTree::rtree_edge_type& e, t.second) {
+      G->add_edge_multi(e.first, e.second, e.first, t.first);
     }
-    //std::cout << "data: " ;
-    BOOST_FOREACH(const string& s, dsig) {
-      if(s != "") G->add_edge(s, SDFG::dfgEdge::SDFG_DP, s, t.first);
-      else        G->add_edge(t.first, SDFG::dfgEdge::SDFG_DDP, t.first, t.first); // self-loop
-      //std::cout << s << " ";
-    }
-    //std::cout << std::endl;
-    G->get_node(t.first)->ptr.insert(get_sp());
   }
-
 
   if(!slist_pulse.empty()) {    // ff
     assert(slist_pulse.size() <= 2 && slist_pulse.size() >= 1);
-    shared_ptr<SDFG::RForest> slsig(new SDFG::RForest());
+    shared_ptr<SDFG::RTree> sltree(new SDFG::RTree());
     typedef pair<bool, shared_ptr<Expression> > slist_type;
     BOOST_FOREACH(slist_type& sl, slist_pulse) {
-      sl.second->scan_vars(slsig, true);
+      sltree->add_tree(sl.second->get_rtree());
     }
 
     std::set<string> clks, rsts;
 
-    BOOST_FOREACH(const string& s, slsig->tree["@CTL"]->sig) {
+    BOOST_FOREACH(const string& s, sltree->get_all()) {
       if(cset.count(s))
         rsts.insert(s);
       else
@@ -296,7 +279,7 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
     assert(rsts.size() <= 1);
     
     // handle the nodes
-    BOOST_FOREACH(SDFG::RForest::tree_map_type& t, rf->tree) {
+    BOOST_FOREACH(SDFG::RTree::sub_tree_type& t, rt->tree) {
       shared_ptr<SDFG::dfgNode> node = G->get_node(t.first);
       assert(node);
       node->type = SDFG::dfgNode::SDFG_FF;
@@ -310,15 +293,13 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
     }
   } else {                      // combinational
     // handle the nodes
-    BOOST_FOREACH(SDFG::RForest::tree_map_type& t, rf->tree) {
-      if(G->exist(t.first, t.first))
+    BOOST_FOREACH(SDFG::RTree::sub_tree_type& t, rt->tree) {
+      if(t.second.count(t.first))
         G->get_node(t.first)->type = SDFG::dfgNode::SDFG_LATCH; // self-loop means latch
       else
         G->get_node(t.first)->type = SDFG::dfgNode::SDFG_COMB;
     }
   }
-  */
-  assert(0 == "TODO!");
 }
 
 void netlist::SeqBlock::replace_variable(const VIdentifier& var, const Number& num) {

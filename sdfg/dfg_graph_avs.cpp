@@ -55,14 +55,14 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_datapath() const {
                   get_list_of_nodes(dfgNode::SDFG_COMB|dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_GATE)) {
       bool keep = false;
       BOOST_FOREACH(shared_ptr<dfgEdge> e, get_in_edges(n)) {
-        if(e->type & dfgEdge::SDFG_DP) {
+        if(e->type & dfgEdge::SDFG_DAT_MASK) {
         keep = true;
         break;
         }
       }
       if(!keep) {
         BOOST_FOREACH(shared_ptr<dfgEdge> e, get_out_edges(n)) {
-          if(e->type & dfgEdge::SDFG_DP) {
+          if(e->type & dfgEdge::SDFG_DAT_MASK) {
             keep = true;
             break;
           }
@@ -114,14 +114,12 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_datapath() const {
     }
     BOOST_FOREACH(shared_ptr<dfgNode> n, related_nodes) {
       BOOST_FOREACH(shared_ptr<dfgEdge> e, get_in_edges(n)) {
-        if((e->type != dfgEdge::SDFG_RST) && (e->type != dfgEdge::SDFG_CLK) && related_nodes.count(get_source(e))) {
-          ng->add_edge(e->name, e->type, get_source(e)->get_hier_name(), n->get_hier_name());
-        }
+        assert(related_nodes.count(get_source(e)));
+        ng->add_edge_multi(e->name, e->type, get_source(e)->get_hier_name(), n->get_hier_name());
       }
       BOOST_FOREACH(shared_ptr<dfgEdge> e, get_out_edges(n)) {
-        if((e->type != dfgEdge::SDFG_RST) && (e->type != dfgEdge::SDFG_CLK) && related_nodes.count(get_target(e))) {
-          ng->add_edge(e->name, e->type, n->get_hier_name(), get_target(e)->get_hier_name());
-        }
+        assert(related_nodes.count(get_target(e)));
+        ng->add_edge_multi(e->name, e->type, n->get_hier_name(), get_target(e)->get_hier_name());
       }    
     }
     
@@ -168,51 +166,17 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_hier_RRG() const {
   }
 
   // output paths
-  list<shared_ptr<dfgNode> > tmp_list = nlist;
   while(!nlist.empty()) {
     shared_ptr<dfgNode> cn = nlist.front();
     nlist.pop_front();
     if(cn->type != dfgNode::SDFG_OPORT){ // IPORT, FF and Latch
       BOOST_FOREACH(shared_ptr<dfgPath> po, cn->get_out_paths_fast()) {
         if(!ng->exist(po->tar->get_full_name())) copy_a_node(ng, po->tar);
-        // add arcs
-        if(po->type & dfgEdge::SDFG_DP)
-          ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_DP, cn->get_full_name(), po->tar->get_full_name());
-        else if(po->type & dfgEdge::SDFG_DDP)
-          ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_DDP, cn->get_full_name(), po->tar->get_full_name());
-        
-        if(po->type & dfgEdge::SDFG_CTL)
-          ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_CTL, cn->get_full_name(), po->tar->get_full_name());
-
-        if(po->type == 0)
-          ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_DF, cn->get_full_name(), po->tar->get_full_name());
+        ng->add_edge_multi(cn->get_full_name(), po->type, cn->get_full_name(), po->tar->get_full_name());
       }
     }
   }
 
-  /*
-  nlist = tmp_list;
-  while(!nlist.empty()) {
-    shared_ptr<dfgNode> cn = nlist.front();
-    nlist.pop_front();
-    if(cn->type != dfgNode::SDFG_IPORT){ // OPORT, FF and Latch
-      BOOST_FOREACH(shared_ptr<dfgPath> po, cn->get_in_paths_fast()) {
-        if(!ng->exist(po->src->get_full_name())) copy_a_node(ng, po->src);
-        // add arcs
-        if(po->type & dfgEdge::SDFG_DP)
-          ng->add_edge(po->src->get_full_name(), dfgEdge::SDFG_DP, po->src->get_full_name(), cn->get_full_name());
-        else if(po->type & dfgEdge::SDFG_DDP)
-          ng->add_edge(po->src->get_full_name(), dfgEdge::SDFG_DDP, po->src->get_full_name(), cn->get_full_name());
-        
-        if(po->type & dfgEdge::SDFG_CTL)
-          ng->add_edge(po->src->get_full_name(), dfgEdge::SDFG_CTL, po->src->get_full_name(), cn->get_full_name());
-
-        if(po->type == 0)
-          ng->add_edge(po->src->get_full_name(), dfgEdge::SDFG_DF, po->src->get_full_name(), cn->get_full_name());
-      }
-    }
-  }
-  */
   return ng;
 
 }
@@ -237,22 +201,7 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_RRG() const {
         copy_a_node(ng, p->tar);
         nlist.push_back(p->tar);
       }
-
-      // add arcs
-      if(p->type & dfgEdge::SDFG_DP)
-        ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_DP, cn->get_full_name(), p->tar->get_full_name());
-      else if(p->type & dfgEdge::SDFG_DDP)
-        ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_DDP, cn->get_full_name(), p->tar->get_full_name());
-
-      if((p->type & dfgEdge::SDFG_RST) == dfgEdge::SDFG_RST)
-        ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_RST, cn->get_full_name(), p->tar->get_full_name());
-      else if((p->type & dfgEdge::SDFG_CLK) == dfgEdge::SDFG_CLK)
-        ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_CLK, cn->get_full_name(), p->tar->get_full_name());
-      else if(p->type & dfgEdge::SDFG_CTL)
-        ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_CTL, cn->get_full_name(), p->tar->get_full_name());
-
-      if(p->type == 0)
-        ng->add_edge(cn->get_full_name(), dfgEdge::SDFG_DF, cn->get_full_name(), p->tar->get_full_name());
+      ng->add_edge_multi(cn->get_full_name(), p->type, cn->get_full_name(), p->tar->get_full_name());
     }
   }
 
@@ -301,7 +250,7 @@ SDFG::dfgGraph::get_fsms(bool verbose,
     //if(verbose) std::cout << "analyse the paths of " << cn->get_hier_name() << std::endl;
     list<shared_ptr<dfgPath> > pathlist = cn->get_self_path_cb();
     BOOST_FOREACH(shared_ptr<dfgPath> p, pathlist) {
-      if(p->type & (dfgEdge::SDFG_CTL|dfgEdge::SDFG_DP)) {
+      if(p->type & (dfgEdge::SDFG_CTL_MASK|dfgEdge::SDFG_DAT_MASK)) {
         pfsm.insert(cn);
         pfsmn++;
         break;
@@ -320,7 +269,7 @@ SDFG::dfgGraph::get_fsms(bool verbose,
         etype |= e->type;
     }
 
-    if(!(etype & dfgEdge::SDFG_CTL)) {
+    if(!(etype & dfgEdge::SDFG_CTL_MASK)) {
       fakes_co.insert(n);
       continue;
     }
@@ -331,7 +280,7 @@ SDFG::dfgGraph::get_fsms(bool verbose,
         etype |= e->type;
     }
     
-    if(etype & dfgEdge::SDFG_DP) {
+    if(etype & dfgEdge::SDFG_DAT_MASK) {
       fakes_di.insert(n);
       continue;
     }

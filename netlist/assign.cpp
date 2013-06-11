@@ -94,25 +94,11 @@ bool netlist::Assign::elaborate(std::set<shared_ptr<NetComp> >&,
 }
 
 void netlist::Assign::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
-  /*
-  shared_ptr<SDFG::RForest> rf(new SDFG::RForest());
-  scan_vars(rf, false);
-  //std::cout << "assign ------->" << *this << std::endl;
-  //rf->write(std::cout);
-  
-  BOOST_FOREACH(SDFG::RForest::tree_map_type& t, rf->tree) {
-    std::set<string> csig = rf->get_control(t.first);
-    std::set<string> dsig = rf->get_data(t.first);
-    BOOST_FOREACH(const string& s, csig) {
-      G->add_edge(s, SDFG::dfgEdge::SDFG_CTL, s, t.first);
+  BOOST_FOREACH(SDFG::RTree::sub_tree_type& t, get_rtree()->tree) {
+    BOOST_FOREACH(SDFG::RTree::rtree_edge_type& e, t.second) {
+      G->add_edge_multi(e.first, e.second, e.first, t.first);
     }
-    BOOST_FOREACH(const string& s, dsig) {
-      G->add_edge(s, SDFG::dfgEdge::SDFG_DP, s, t.first);
-    }
-    G->get_node(t.first)->ptr.insert(get_sp());
-  } 
-  */
-  assert(0 == "TODO");
+  }
 }
 
 shared_ptr<SDFG::RTree> netlist::Assign::get_rtree() const {

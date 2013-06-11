@@ -128,6 +128,20 @@ shared_ptr<dfgEdge> SDFG::dfgGraph::add_edge(const string& n, dfgEdge::edge_type
   return edge;
 }
 
+void SDFG::dfgGraph::add_edge_multi(const string& n, int t, vertex_descriptor src, vertex_descriptor snk) {
+    if(t == dfgEdge::SDFG_DF) add_edge(n, dfgEdge::SDFG_DF,  src, snk);
+    if(t & dfgEdge::SDFG_DDP) add_edge(n, dfgEdge::SDFG_DDP, src, snk);
+    if(t & dfgEdge::SDFG_CAL) add_edge(n, dfgEdge::SDFG_CAL, src, snk);
+    if(t & dfgEdge::SDFG_ASS) add_edge(n, dfgEdge::SDFG_ASS, src, snk);
+    if(t & dfgEdge::SDFG_DAT) add_edge(n, dfgEdge::SDFG_DAT, src, snk);
+    if(t & dfgEdge::SDFG_CTL) add_edge(n, dfgEdge::SDFG_CTL, src, snk);
+    if(t & dfgEdge::SDFG_CMP) add_edge(n, dfgEdge::SDFG_CMP, src, snk);
+    if(t & dfgEdge::SDFG_EQU) add_edge(n, dfgEdge::SDFG_EQU, src, snk);
+    if(t & dfgEdge::SDFG_CLK) add_edge(n, dfgEdge::SDFG_CLK, src, snk);
+    if(t & dfgEdge::SDFG_RST) add_edge(n, dfgEdge::SDFG_RST, src, snk);
+}
+  
+
 void SDFG::dfgGraph::add_path(shared_ptr<dfgPath> p) {
   shared_ptr<dfgNode> s, t;
   unsigned int ptype;
@@ -145,18 +159,7 @@ void SDFG::dfgGraph::add_path(shared_ptr<dfgPath> p) {
       add_node(t);
     }
 
-    ptype = p->type;
-    if(ptype == dfgEdge::SDFG_DF) add_edge(s->name, dfgEdge::SDFG_DF,  s, t);
-    if(ptype & dfgEdge::SDFG_DDP) add_edge(s->name, dfgEdge::SDFG_DDP, s, t);
-    if(ptype & dfgEdge::SDFG_CAL) add_edge(s->name, dfgEdge::SDFG_CAL, s, t);
-    if(ptype & dfgEdge::SDFG_ASS) add_edge(s->name, dfgEdge::SDFG_ASS, s, t);
-    if(ptype & dfgEdge::SDFG_DAT) add_edge(s->name, dfgEdge::SDFG_DAT, s, t);
-    if(ptype & dfgEdge::SDFG_CTL) add_edge(s->name, dfgEdge::SDFG_CTL, s, t);
-    if(ptype & dfgEdge::SDFG_CMP) add_edge(s->name, dfgEdge::SDFG_CMP, s, t);
-    if(ptype & dfgEdge::SDFG_EQU) add_edge(s->name, dfgEdge::SDFG_EQU, s, t);
-    if(ptype & dfgEdge::SDFG_CLK) add_edge(s->name, dfgEdge::SDFG_CLK, s, t);
-    if(ptype & dfgEdge::SDFG_RST) add_edge(s->name, dfgEdge::SDFG_RST, s, t);
-
+    add_edge_multi(s->name, p->type, s, t);
   } else {                      // normal path
     list<dfgPath::path_type> m_path = p->path;
     if(exist(p->src->get_hier_name())) {
@@ -182,17 +185,7 @@ void SDFG::dfgGraph::add_path(shared_ptr<dfgPath> p) {
         add_node(t);
       }
 
-    if(ptype == dfgEdge::SDFG_DF) add_edge(s->name, dfgEdge::SDFG_DF,  s, t);
-    if(ptype & dfgEdge::SDFG_DDP) add_edge(s->name, dfgEdge::SDFG_DDP, s, t);
-    if(ptype & dfgEdge::SDFG_CAL) add_edge(s->name, dfgEdge::SDFG_CAL, s, t);
-    if(ptype & dfgEdge::SDFG_ASS) add_edge(s->name, dfgEdge::SDFG_ASS, s, t);
-    if(ptype & dfgEdge::SDFG_DAT) add_edge(s->name, dfgEdge::SDFG_DAT, s, t);
-    if(ptype & dfgEdge::SDFG_CTL) add_edge(s->name, dfgEdge::SDFG_CTL, s, t);
-    if(ptype & dfgEdge::SDFG_CMP) add_edge(s->name, dfgEdge::SDFG_CMP, s, t);
-    if(ptype & dfgEdge::SDFG_EQU) add_edge(s->name, dfgEdge::SDFG_EQU, s, t);
-    if(ptype & dfgEdge::SDFG_CLK) add_edge(s->name, dfgEdge::SDFG_CLK, s, t);
-    if(ptype & dfgEdge::SDFG_RST) add_edge(s->name, dfgEdge::SDFG_RST, s, t);
-
+      add_edge_multi(s->name, ptype,  s, t);
     }
   }
 }

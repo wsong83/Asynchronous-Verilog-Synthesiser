@@ -28,8 +28,7 @@ INCDIRS = -I./ -I../ -I$(OGDF_PATH)
 COMM_HEADERS = sdfg.hpp dfg_common.hpp
 
 SDFG_TARGET = dfg_common.o dfg_node.o dfg_edge.o dfg_path.o dfg_graph.o
-AVS_SDFG_TARGET = 
-#dfg_node_avs.o dfg_graph_avs.o
+AVS_SDFG_TARGET = dfg_node_avs.o dfg_graph_avs.o
 RTREE_TARGET = rtree.o
 
 # actions
