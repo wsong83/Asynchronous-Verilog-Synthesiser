@@ -30,7 +30,8 @@ TARGET = DEBUG
 export BISON_EXE = bison
 export FLEX_EXE = flex
 export CXX = ccache g++
-export MC_FLAG = -j4
+export MC_FLAG = 
+#export MC_FLAG = -j4
 
 # OGDF library
 export OGDF_PATH = $(PWD)/../OGDF

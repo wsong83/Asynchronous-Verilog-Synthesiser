@@ -67,10 +67,18 @@ namespace SDFG {
     std::set<std::string> get_data(const std::string& = "") const;
     std::set<std::string> get_all(const std::string& = "") const;
     std::set<std::string> get_signals(int, const std::string& = "") const;
+
+
+    // debug
+    std::ostream& streamout (std::ostream& os) const;
     
   private:
     void copy_subtree(const std::string&, const std::map<std::string, int>&, int);
   };
+
+  inline std::ostream& operator<< ( std::ostream& os, const RTree& rhs) {
+    return rhs.streamout(os);
+  }
 
 }
 

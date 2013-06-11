@@ -108,6 +108,7 @@ RTree* SDFG::RTree::combine(shared_ptr<RTree> rhs, int rtype) {
   BOOST_FOREACH(sub_tree_type& t, tree) {
     add_tree(rhs, t.first, rtype);
   }
+  std::cout << *this;
   return this;
 }
 
@@ -139,6 +140,16 @@ std::set<string> SDFG::RTree::get_signals(int stype, const string& sig) const {
     }
   }
   return rv;
+}
+
+std::ostream& SDFG::RTree::streamout(std::ostream& os) const {
+  BOOST_FOREACH(const sub_tree_type& t, tree) {
+    os << t.first << ": " << std::endl;
+    BOOST_FOREACH(const rtree_edge_type& e, t.second) {
+      os << "    " << dfgPath::get_stype(e.second) << " " << e.first << std::endl;
+    }
+  }
+  return os;
 }
 
 void SDFG::RTree::copy_subtree(const string& root,  const map<string, int>& st, int rtype) {

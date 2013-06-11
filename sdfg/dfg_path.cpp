@@ -98,7 +98,7 @@ int SDFG::dfgPath::cal_type(int t0, int t1) {
   case 0xD:   return  ct << 4 | dt;
   case 0xB:
   case 0xA:
-  case 0x8:   return t0;
+  case 0x9:   return t0;
   case 0x7:   return d2ct << 4 | dt;
   case 0x6:   return d2ct << 4;
   case 0x5:   return dt;
@@ -121,6 +121,7 @@ int SDFG::dfgPath::cal_type_data(int t0, int t1) {
   case 0xE0:
   case 0x02:
   case 0x04:
+  case 0x14:
   case 0x06:
   case 0x08:
   case 0x0A:
@@ -191,6 +192,7 @@ int SDFG::dfgPath::cal_type_data2control(int t0, int t1) {
   int tt = (t0 << 4 )| t1;
   switch(tt) {
   case 0x00:
+  case 0x10:
   case 0x20:
   case 0x40:
   case 0x60:

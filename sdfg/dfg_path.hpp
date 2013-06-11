@@ -58,8 +58,8 @@ namespace SDFG {
     // stream out
     std::ostream& streamout(std::ostream&) const;
     
-  private:
     static std::string get_stype(int);
+  private:
     static int cal_type_data(int, int);
     static int cal_type_control(int, int);
     static int cal_type_data2control(int, int);
