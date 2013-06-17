@@ -45,7 +45,7 @@ namespace SDFG {
   class RTree {
   public:
     static const std::string DTarget;
-    RTree();
+    RTree(bool default_case = true);
     RTree(const std::string&, int etype = dfgEdge::SDFG_ASS);
     RTree(boost::shared_ptr<RTree>, int);
     RTree(boost::shared_ptr<RTree>, boost::shared_ptr<RTree>, int);

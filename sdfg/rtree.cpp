@@ -41,8 +41,8 @@ using boost::shared_ptr;
 
 string const SDFG::RTree::DTarget("@");
 
-SDFG::RTree::RTree() {
-  tree[DTarget] = map<string, int>();
+SDFG::RTree::RTree(bool default_case) {
+  if(default_case) tree[DTarget] = map<string, int>();
 }
 
 SDFG::RTree::RTree(const string& sig, int etype) {
@@ -105,10 +105,13 @@ RTree* SDFG::RTree::add_tree(shared_ptr<RTree> pt, const string& root, int rtype
 }
 
 RTree* SDFG::RTree::combine(shared_ptr<RTree> rhs, int rtype) {
+  //std::cout << "combine:" << std::endl;
+  //std::cout << "this:\n" << *this << std::endl;
+  //std::cout << "rhs:\n" << *rhs << std::endl;
   BOOST_FOREACH(sub_tree_type& t, tree) {
     add_tree(rhs, t.first, rtype);
   }
-  std::cout << *this;
+  //std::cout << "result:\n" << *this << std::endl;
   return this;
 }
 

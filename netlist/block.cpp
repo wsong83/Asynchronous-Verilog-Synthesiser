@@ -452,7 +452,7 @@ bool netlist::Block::elaborate(std::set<shared_ptr<NetComp> >&,
 }
 
 shared_ptr<SDFG::RTree> netlist::Block::get_rtree() const {
-  shared_ptr<SDFG::RTree> rv(new SDFG::RTree());
+  shared_ptr<SDFG::RTree> rv(new SDFG::RTree(false));
   BOOST_FOREACH(const shared_ptr<NetComp>& m, statements) {
     rv->add_tree(m->get_rtree());
   }

@@ -801,7 +801,7 @@ void netlist::Range::replace_variable(const VIdentifier& var, const Number& num)
 }
 
 shared_ptr<SDFG::RTree> netlist::Range::get_rtree() const {
-  shared_ptr<SDFG::RTree> rv(new SDFG::RTree());
+  shared_ptr<SDFG::RTree> rv(new SDFG::RTree(false));
   if(rtype == TR_Var) rv->add_tree(v->get_rtree());
   else if(rtype == TR_Range) rv->add_tree(r.first->get_rtree())->add_tree(r.second->get_rtree());
   

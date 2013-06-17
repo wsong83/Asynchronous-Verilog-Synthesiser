@@ -121,12 +121,12 @@ int SDFG::dfgPath::cal_type_data(int t0, int t1) {
   case 0xE0:
   case 0x02:
   case 0x04:
-  case 0x14:
   case 0x06:
   case 0x08:
   case 0x0A:
   case 0x0C:
   case 0x0E:   return 0x0;      // should not be used in the final value
+  case 0x14:   return 0x1;      // default self data path
   case 0x22:
   case 0x24:
   case 0x26:
@@ -265,7 +265,7 @@ int SDFG::dfgPath::cal_type_data2control(int t0, int t1) {
 
 string SDFG::dfgPath::get_stype(int tt) {
   string stype("");
-  if(tt == dfgEdge::SDFG_DF) stype += "DP|";
+  if(tt == dfgEdge::SDFG_DF) stype += "DF|";
   if(tt & dfgEdge::SDFG_DDP) stype += "DDP|";
   if(tt & dfgEdge::SDFG_CAL) stype += "CAL|";
   if(tt & dfgEdge::SDFG_ASS) stype += "ASS|";

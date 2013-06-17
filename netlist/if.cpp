@@ -160,7 +160,7 @@ bool netlist::IfState::elaborate(std::set<shared_ptr<NetComp> >& to_del,
 
 shared_ptr<SDFG::RTree> netlist::IfState::get_rtree() const {
 
-  shared_ptr<SDFG::RTree> rv(new SDFG::RTree());
+  shared_ptr<SDFG::RTree> rv(new SDFG::RTree(false));
   map<string, unsigned int> target_count;
 
   shared_ptr<SDFG::RTree> ifcase_rtree = ifcase->get_rtree();
@@ -170,7 +170,7 @@ shared_ptr<SDFG::RTree> netlist::IfState::get_rtree() const {
   }
   rv->add_tree(ifcase_rtree);
 
-  shared_ptr<SDFG::RTree> elsecase_rtree(new SDFG::RTree());
+  shared_ptr<SDFG::RTree> elsecase_rtree(new SDFG::RTree(false));
   if(elsecase) elsecase_rtree = elsecase->get_rtree();
   BOOST_FOREACH(SDFG::RTree::sub_tree_type& t, elsecase_rtree->tree) {
     if(target_count.count(t.first)) target_count[t.first]++;

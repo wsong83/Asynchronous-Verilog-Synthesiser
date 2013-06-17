@@ -251,8 +251,16 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
 
   shared_ptr<SDFG::RTree> rt = get_rtree();
   std::set<string> cset = rt->get_control();        // to store all control signals
+
+  //std::cout << *this << std::endl;
+  //std::cout << *rt << std::endl;
   
   BOOST_FOREACH(SDFG::RTree::sub_tree_type& t, rt->tree) {
+    if(t.first == SDFG::RTree::DTarget) {
+      std::cout << *this << std::endl;
+      std::cout << *rt << std::endl;
+    }
+    assert(t.first != SDFG::RTree::DTarget); 
     BOOST_FOREACH(SDFG::RTree::rtree_edge_type& e, t.second) {
       G->add_edge_multi(e.first, e.second, e.first, t.first);
     }
@@ -260,7 +268,7 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
 
   if(!slist_pulse.empty()) {    // ff
     assert(slist_pulse.size() <= 2 && slist_pulse.size() >= 1);
-    shared_ptr<SDFG::RTree> sltree(new SDFG::RTree());
+    shared_ptr<SDFG::RTree> sltree(new SDFG::RTree(false));
     typedef pair<bool, shared_ptr<Expression> > slist_type;
     BOOST_FOREACH(slist_type& sl, slist_pulse) {
       sltree->add_tree(sl.second->get_rtree());

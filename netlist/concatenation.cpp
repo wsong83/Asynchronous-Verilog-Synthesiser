@@ -79,7 +79,7 @@ void netlist::ConElem::replace_variable(const VIdentifier& var, shared_ptr<Expre
 }
 
 shared_ptr<SDFG::RTree> netlist::ConElem::get_rtree() const {
-  shared_ptr<SDFG::RTree> rv(new SDFG::RTree());
+  shared_ptr<SDFG::RTree> rv(new SDFG::RTree(false));
   if(exp)
     rv->add_tree(exp->get_rtree());
   
