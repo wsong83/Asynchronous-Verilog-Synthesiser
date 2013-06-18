@@ -34,6 +34,8 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include <cmath>
+
 
 #include <ogdf/layered/SugiyamaLayout.h>
 #include <ogdf/layered/FastHierarchyLayout.h>
@@ -58,6 +60,12 @@ static const double G_NODE_H = 17.6;
 static const double G_FONT_RATIO = 3.6;
 static const double G_LAYER_DIST = 2;
 static const double G_NODE_DIST = 3;
+
+static const double PI = 3.14159265;
+
+  double d2r(double degree) {
+    return degree*PI/180.0;
+  }
 
 }
 
@@ -974,32 +982,43 @@ bool SDFG::dfgGraph::layout(ogdf::Graph* pg, ogdf::GraphAttributes *pga) {
            [&](pair<const edge_descriptor, shared_ptr<dfgEdge> >& m) {
                if(boost::source(m.second->id, bg_) == boost::target(m.second->id, bg_)) { // self loop
                  shared_ptr<dfgNode> node = get_source(m.second);
-                 double base_length = G_NODE_H*G_NODE_DIST;
+                 double base_len = G_NODE_H*G_NODE_DIST*0.8;
                  switch(m.second->type) {
                  case dfgEdge::SDFG_DDP:
-                   
+                   m.second->push_bend(-base_len*cos(d2r(30.0)), -base_len*sin(d2r(30.0)), true);
+                   m.second->push_bend(-base_len*cos(d2r(85.0)), -base_len*sin(d2r(85.0)), true);
+                   break;                   
                  case dfgEdge::SDFG_CAL:
+                   m.second->push_bend(-base_len*cos(d2r(20.0)), -base_len*sin(d2r(20.0)), true);
+                   m.second->push_bend(-base_len*cos(d2r(80.0)), -base_len*sin(d2r(80.0)), true);
+                   break;                   
                  case dfgEdge::SDFG_ASS:
+                   m.second->push_bend(-base_len*cos(d2r(10.0)), -base_len*sin(d2r(10.0)), true);
+                   m.second->push_bend(-base_len*cos(d2r(70.0)), -base_len*sin(d2r(70.0)), true);
+                   break;                   
                  case dfgEdge::SDFG_DAT:
-                   m.second->push_bend(-base_length,     0,                  true);
-                   m.second->push_bend(-base_length*0.5, -base_length*0.866, true);
+                   m.second->push_bend(-base_len*cos(d2r(00.0)), -base_len*sin(d2r(00.0)), true);
+                   m.second->push_bend(-base_len*cos(d2r(60.0)), -base_len*sin(d2r(60.0)), true);
                    break;
                  case dfgEdge::SDFG_CTL:
-                   m.second->push_bend(base_length,      0,                  true);
-                   m.second->push_bend(base_length*0.5,  -base_length*0.866, true);
+                   m.second->push_bend(base_len*cos(d2r(00.0)),  -base_len*sin(d2r(00.0)), true);
+                   m.second->push_bend(base_len*cos(d2r(60.0)),  -base_len*sin(d2r(60.0)), true);
                    break;
                  case dfgEdge::SDFG_CMP:
+                   m.second->push_bend(base_len*cos(d2r(10.0)),  -base_len*sin(d2r(10.0)), true);
+                   m.second->push_bend(base_len*cos(d2r(70.0)),  -base_len*sin(d2r(70.0)), true);
+                   break;
                  case dfgEdge::SDFG_EQU:
-                 case dfgEdge::SDFG_CLK:
-                 case dfgEdge::SDFG_RST:
+                   m.second->push_bend(base_len*cos(d2r(20.0)),  -base_len*sin(d2r(20.0)), true);
+                   m.second->push_bend(base_len*cos(d2r(80.0)),  -base_len*sin(d2r(80.0)), true);
+                   break;
                  default:
-                   m.second->push_bend(base_length,      0,                  true);
-                   m.second->push_bend(base_length*0.5,  base_length*0.866,  true);
+                   m.second->push_bend(base_len*cos(d2r(00.0)),   base_len*sin(d2r(00.0)), true);
+                   m.second->push_bend(base_len*cos(d2r(60.0)),   base_len*sin(d2r(60.0)), true);
                  }
                }
              });
   
-  assert(0 == "TODO!");
   return true;
 }
 

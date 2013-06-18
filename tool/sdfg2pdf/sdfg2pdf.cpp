@@ -208,32 +208,32 @@ void draw_page(SDFG::dfgGraph& g, QPainter& painter, QPrinter& printer, std::set
              case SDFG::dfgNode::SDFG_IPORT: {
                painter.drawEllipse(bbox);
                painter.drawText(bbox, Qt::AlignCenter, "I");
-               painter.setFont(QFont(PDF_FONT, PDF_FONT_SIZE-4));
-               painter.drawText(name_point, node.name.substr(0,8).c_str());
-               painter.setFont(font);
+               //painter.setFont(QFont(PDF_FONT, PDF_FONT_SIZE-4));
+               painter.drawText(name_point, node.name.c_str());
+               //painter.setFont(font);
                break;
              }
              case SDFG::dfgNode::SDFG_OPORT: {
                painter.drawEllipse(bbox);
                painter.drawText(bbox, Qt::AlignCenter, "O");
-               painter.setFont(QFont(PDF_FONT, PDF_FONT_SIZE-4));
-               painter.drawText(name_point, node.name.substr(0,8).c_str());
-               painter.setFont(font);
+               //painter.setFont(QFont(PDF_FONT, PDF_FONT_SIZE-4));
+               painter.drawText(name_point, node.name.c_str());
+               //painter.setFont(font);
                break;
              }
              case SDFG::dfgNode::SDFG_PORT: {
                painter.drawEllipse(bbox);
                painter.drawText(bbox, Qt::AlignCenter, "I/O");
-               painter.setFont(QFont(PDF_FONT, PDF_FONT_SIZE-4));
-               painter.drawText(name_point, node.name.substr(0,8).c_str());
-               painter.setFont(font);
+               //painter.setFont(QFont(PDF_FONT, PDF_FONT_SIZE-4));
+               painter.drawText(name_point, node.name.c_str());
+               //painter.setFont(font);
                break;
              }
              default: {
                painter.drawEllipse(bbox);
-               painter.setFont(QFont(PDF_FONT, PDF_FONT_SIZE-4));
-               painter.drawText(name_point, node.name.substr(0,8).c_str());
-               painter.setFont(font);
+               //painter.setFont(QFont(PDF_FONT, PDF_FONT_SIZE-4));
+               painter.drawText(name_point, node.name.c_str());
+               //painter.setFont(font);
                break;
              }
              }
@@ -368,29 +368,29 @@ void draw_page(SDFG::dfgGraph& g, QPainter& painter, QPrinter& printer, std::set
              QPen line_pen = pen;
              switch(m.second->type) {
              case SDFG::dfgEdge::SDFG_DF: 
-               line_pen.setColor(Qt::black);
+               line_pen.setColor(Qt::gray);
                line_pen.setStyle(Qt::SolidLine);
                line_pen.setWidth(PDF_PEN_SIZE + 0);
                break;
              case SDFG::dfgEdge::SDFG_DDP:
                line_pen.setColor(Qt::black);
                line_pen.setStyle(Qt::DotLine);
-               line_pen.setWidth(PDF_PEN_SIZE + 0);
+               line_pen.setWidth(PDF_PEN_SIZE + 0); //1.5);
                break;
              case SDFG::dfgEdge::SDFG_CAL:
                line_pen.setColor(Qt::black);
                line_pen.setStyle(Qt::SolidLine);
-               line_pen.setWidth(PDF_PEN_SIZE + 1.5);
+               line_pen.setWidth(PDF_PEN_SIZE + 0); //1.5);
                break;
              case SDFG::dfgEdge::SDFG_ASS:
                line_pen.setColor(Qt::black);
                line_pen.setStyle(Qt::DashDotLine);
-               line_pen.setWidth(PDF_PEN_SIZE + 1.5);
+               line_pen.setWidth(PDF_PEN_SIZE + 0); //1.5);
                break;
              case SDFG::dfgEdge::SDFG_DAT:
                line_pen.setColor(Qt::black);
                line_pen.setStyle(Qt::DashLine);
-               line_pen.setWidth(PDF_PEN_SIZE + 1.5);
+               line_pen.setWidth(PDF_PEN_SIZE + 0); //1.5);
                break;
              case SDFG::dfgEdge::SDFG_CTL:
                line_pen.setColor(Qt::darkRed);
@@ -400,12 +400,12 @@ void draw_page(SDFG::dfgGraph& g, QPainter& painter, QPrinter& printer, std::set
              case SDFG::dfgEdge::SDFG_CMP:
                line_pen.setColor(Qt::red);
                line_pen.setStyle(Qt::DashDotLine);
-               line_pen.setWidth(PDF_PEN_SIZE + 1.5);
+               line_pen.setWidth(PDF_PEN_SIZE + 0); //1.5);
                break;
              case SDFG::dfgEdge::SDFG_EQU:
                line_pen.setColor(Qt::red);
                line_pen.setStyle(Qt::DashLine);
-               line_pen.setWidth(PDF_PEN_SIZE + 1.5);
+               line_pen.setWidth(PDF_PEN_SIZE + 0); //1.5);
                break;
              case SDFG::dfgEdge::SDFG_CLK:
                line_pen.setColor(Qt::blue);
