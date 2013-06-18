@@ -127,6 +127,13 @@ int SDFG::dfgPath::cal_type_data(int t0, int t1) {
   case 0x0C:
   case 0x0E:   return 0x0;      // should not be used in the final value
   case 0x14:   return 0x1;      // default self data path
+  case 0x34:   return 0x3;      // default self data path and cal
+  case 0x54:   return 0x5;      // default self data path and assign
+  case 0x74:   return 0x7;      // default self data path, cal and assign
+  case 0x94:   return 0x9;      // default self data path and data
+  case 0xB4:   return 0xB;      // default self data path, dat and cal
+  case 0xD4:   return 0xD;      // default self data path, dat and assign 
+  case 0xF4:   return 0xF;      // default self data path, dat, cal and assign 
   case 0x22:
   case 0x24:
   case 0x26:
@@ -161,7 +168,7 @@ int SDFG::dfgPath::cal_type_data(int t0, int t1) {
   case 0xA8:
   case 0xAA:
   case 0xAC:
-  case 0xAE:   return 0xA;      // ctl|dat -> ??? : ctl|cal
+  case 0xAE:   return 0xA;      // cal|dat -> ??? : ctl|cal
   case 0xC2:   return 0xA;
   case 0xC4:   return 0xC;
   case 0xC6:   return 0xE;
@@ -194,12 +201,19 @@ int SDFG::dfgPath::cal_type_data2control(int t0, int t1) {
   case 0x00:
   case 0x10:
   case 0x20:
+  case 0x30:
   case 0x40:
+  case 0x50:
   case 0x60:
+  case 0x70:
   case 0x80:
+  case 0x90:
   case 0xA0:
+  case 0xB0:
   case 0xC0:
+  case 0xD0:
   case 0xE0:
+  case 0xF0:
   case 0x02:
   case 0x04:
   case 0x06:

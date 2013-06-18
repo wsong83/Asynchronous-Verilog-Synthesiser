@@ -68,6 +68,7 @@ namespace SDFG {
     void write(void *, ogdf::GraphAttributes *);
     bool read(const pugi::xml_node&);
     bool read(void * const, ogdf::GraphAttributes * const);
+    void push_bend(double, double, bool relative = false);
 
     std::list<std::pair<double, double> > bend; // bending points of the edge
     

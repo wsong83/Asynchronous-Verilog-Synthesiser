@@ -968,37 +968,37 @@ bool SDFG::dfgGraph::layout(ogdf::Graph* pg, ogdf::GraphAttributes *pga) {
 
   if(!read(pg, pga)) return false;
 
-  /*
+ 
   // special operations for self loops
   for_each(edges.begin(), edges.end(),
            [&](pair<const edge_descriptor, shared_ptr<dfgEdge> >& m) {
                if(boost::source(m.second->id, bg_) == boost::target(m.second->id, bg_)) { // self loop
                  shared_ptr<dfgNode> node = get_source(m.second);
-                 if(m.second->type == dfgEdge::SDFG_CTL) { // control
-                   m.second->bend.push_back(pair<double, double>
-                                            (node->position.first+G_NODE_H * G_NODE_DIST,
-                                             node->position.second));
-                   m.second->bend.push_back(pair<double, double>
-                                            (node->position.first+G_NODE_H * G_NODE_DIST * 0.5,
-                                             node->position.second - G_NODE_H * G_NODE_DIST*0.866));
-                 } else if(m.second->type == dfgEdge::SDFG_DP || m.second->type == dfgEdge::SDFG_DDP) { // data
-                   m.second->bend.push_back(pair<double, double>
-                                            (node->position.first-G_NODE_H * G_NODE_DIST,
-                                             node->position.second));
-                   m.second->bend.push_back(pair<double, double>
-                                            (node->position.first-G_NODE_H * G_NODE_DIST * 0.5,
-                                             node->position.second - G_NODE_H * G_NODE_DIST*0.866));
-                 } else {       // other, should not be this case
-                   m.second->bend.push_back(pair<double, double>
-                                            (node->position.first+G_NODE_H * G_NODE_DIST,
-                                             node->position.second));
-                   m.second->bend.push_back(pair<double, double>
-                                            (node->position.first+G_NODE_H * G_NODE_DIST * 0.5,
-                                             node->position.second + G_NODE_H * G_NODE_DIST*0.866));
+                 double base_length = G_NODE_H*G_NODE_DIST;
+                 switch(m.second->type) {
+                 case dfgEdge::SDFG_DDP:
+                   
+                 case dfgEdge::SDFG_CAL:
+                 case dfgEdge::SDFG_ASS:
+                 case dfgEdge::SDFG_DAT:
+                   m.second->push_bend(-base_length,     0,                  true);
+                   m.second->push_bend(-base_length*0.5, -base_length*0.866, true);
+                   break;
+                 case dfgEdge::SDFG_CTL:
+                   m.second->push_bend(base_length,      0,                  true);
+                   m.second->push_bend(base_length*0.5,  -base_length*0.866, true);
+                   break;
+                 case dfgEdge::SDFG_CMP:
+                 case dfgEdge::SDFG_EQU:
+                 case dfgEdge::SDFG_CLK:
+                 case dfgEdge::SDFG_RST:
+                 default:
+                   m.second->push_bend(base_length,      0,                  true);
+                   m.second->push_bend(base_length*0.5,  base_length*0.866,  true);
                  }
                }
              });
-  */
+  
   assert(0 == "TODO!");
   return true;
 }
