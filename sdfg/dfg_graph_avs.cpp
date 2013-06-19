@@ -114,11 +114,9 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_datapath() const {
     }
     BOOST_FOREACH(shared_ptr<dfgNode> n, related_nodes) {
       BOOST_FOREACH(shared_ptr<dfgEdge> e, get_in_edges(n)) {
-        assert(related_nodes.count(get_source(e)));
         ng->add_edge_multi(e->name, e->type, get_source(e)->get_hier_name(), n->get_hier_name());
       }
       BOOST_FOREACH(shared_ptr<dfgEdge> e, get_out_edges(n)) {
-        assert(related_nodes.count(get_target(e)));
         ng->add_edge_multi(e->name, e->type, n->get_hier_name(), get_target(e)->get_hier_name());
       }    
     }

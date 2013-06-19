@@ -252,17 +252,16 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
   shared_ptr<SDFG::RTree> rt = get_rtree();
   std::set<string> cset = rt->get_control();        // to store all control signals
 
-  //std::cout << *this << std::endl;
-  //std::cout << *rt << std::endl;
-  
   BOOST_FOREACH(SDFG::RTree::sub_tree_type& t, rt->tree) {
-    if(t.first == SDFG::RTree::DTarget) {
-      std::cout << *this << std::endl;
-      std::cout << *rt << std::endl;
-    }
     assert(t.first != SDFG::RTree::DTarget); 
     BOOST_FOREACH(SDFG::RTree::rtree_edge_type& e, t.second) {
-      G->add_edge_multi(e.first, e.second, e.first, t.first);
+      if(slist_pulse.empty()) {
+        if(e.second != SDFG::dfgEdge::SDFG_DDP) {
+          e.second &= ~(SDFG::dfgEdge::SDFG_DDP); // remove self-data=path when it is not a ff (assuming no implicit latch)
+          G->add_edge_multi(e.first, e.second, e.first, t.first);
+        }
+      } else
+        G->add_edge_multi(e.first, e.second, e.first, t.first);
     }
   }
 
@@ -302,9 +301,9 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
   } else {                      // combinational
     // handle the nodes
     BOOST_FOREACH(SDFG::RTree::sub_tree_type& t, rt->tree) {
-      if(t.second.count(t.first))
-        G->get_node(t.first)->type = SDFG::dfgNode::SDFG_LATCH; // self-loop means latch
-      else
+      //if(t.second.count(t.first))
+      //G->get_node(t.first)->type = SDFG::dfgNode::SDFG_LATCH; // self-loop means latch
+      //else
         G->get_node(t.first)->type = SDFG::dfgNode::SDFG_COMB;
     }
   }

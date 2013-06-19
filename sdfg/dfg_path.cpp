@@ -80,6 +80,7 @@ std::ostream& SDFG::dfgPath::streamout(std::ostream& os) const {
 int SDFG::dfgPath::cal_type(int t0, int t1) {
   if(t0 == dfgEdge::SDFG_DF)  return t1;
   if(t1 == dfgEdge::SDFG_DF)  return t0;
+  if(t1 & dfgEdge::SDFG_CR_MASK) return t1; // reset and clock
   if(t0 == t1)                return t1;
 
   // other
@@ -97,7 +98,7 @@ int SDFG::dfgPath::cal_type(int t0, int t1) {
   case 0xE:   return  (ct|d2ct) << 4;
   case 0xD:   return  ct << 4 | dt;
   case 0xB:
-  case 0xA:
+  case 0xA:   return ct << 4;
   case 0x9:   return t0;
   case 0x7:   return d2ct << 4 | dt;
   case 0x6:   return d2ct << 4;
