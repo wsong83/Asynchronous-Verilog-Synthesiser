@@ -46,7 +46,7 @@ bool SDFG::dfgNode::is_const() {
   BOOST_FOREACH(shared_ptr<dfgPath> p, get_in_paths_fast_cb()) {
     if(p->type == dfgEdge::SDFG_CLK || p->type == dfgEdge::SDFG_RST)
       continue;                 // clock and reset paths
-    else if(p->type == dfgEdge::SDFG_DF && p->src->id == id)
+    else if(p->type == dfgEdge::SDFG_DDP && p->src->id == id)
       continue;                 // self default path
     else
       return false;
@@ -54,8 +54,62 @@ bool SDFG::dfgNode::is_const() {
   return true;
 }
 
-unsigned int SDFG::dfgNode::is_fsm() {
-  return 0;
+int SDFG::dfgNode::is_fsm() const {
+  if(type != SDFG_FF) return SDFG_FSM_NONE;
+  list<shared_ptr<dfgEdge> > in_edges = pg->get_in_edges(id);
+  list<shared_ptr<dfgEdge> > out_edges = pg->get_out_edges(id);
+  
+  int in_path_type = 0;
+  int self_loop_type = 0;
+  int out_path_type = 0;
+  
+  BOOST_FOREACH(shared_ptr<dfgEdge> e, in_edges) {
+    if(pg->get_source_id(e->id) == id)
+      self_loop_type |= e->type;
+    else
+      in_path_type |= e->type;
+  }
+
+  BOOST_FOREACH(shared_ptr<dfgEdge> e, out_edges) {
+    if(pg->get_target_id(e->id) != id)
+      out_path_type |= e->type;
+  }
+
+  int fsm_type = SDFG_FSM_NONE;
+
+  if((self_loop_type != 0) && 
+     (out_path_type & dfgEdge::SDFG_CTL_MASK) &&
+     !(in_path_type & dfgEdge::SDFG_DAT_MASK)
+     ) { // fsm
+    fsm_type |= SDFG_FSM_OTHER;
+  }
+
+  if((self_loop_type & dfgEdge::SDFG_EQU) && 
+     (out_path_type & dfgEdge::SDFG_EQU) &&
+     !(in_path_type & dfgEdge::SDFG_DAT_MASK)
+     ) { // fsm
+    fsm_type |= SDFG_FSM_FSM;
+  }
+
+  if((self_loop_type & (dfgEdge::SDFG_EQU|dfgEdge::SDFG_CMP)) &&
+     (self_loop_type & dfgEdge::SDFG_CAL) &&
+     (out_path_type & (dfgEdge::SDFG_EQU|dfgEdge::SDFG_CMP)) &&
+     !(in_path_type & dfgEdge::SDFG_DAT_MASK)
+     ) { // fsm
+    fsm_type |= SDFG_FSM_CNT;
+  }
+
+  return fsm_type;
+}
+
+string SDFG::dfgNode::get_fsm_type() const {
+  int t = is_fsm();
+  string rv("");
+  if(t & SDFG_FSM_FSM) rv += "FSM|";
+  if(t & SDFG_FSM_CNT) rv += "CNT|";
+  if(t == SDFG_FSM_OTHER) rv = "OTHER|";
+  rv.erase(rv.size()-1);
+  return rv;
 }
 
 list<shared_ptr<dfgPath> >& SDFG::dfgNode::get_out_paths_cb() {
