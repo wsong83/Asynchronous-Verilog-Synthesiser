@@ -89,6 +89,19 @@ shared_ptr<SDFG::RTree> netlist::ConElem::get_rtree() const {
   return rv;
 }
 
+unsigned int netlist::ConElem::get_width() const {
+  if(con.size() == 0) {
+    return exp->get_width();
+  } else {
+    assert(exp->is_valuable());
+    unsigned int rv = 0;
+    BOOST_FOREACH(shared_ptr<ConElem> m, con) {
+      rv += m->get_width();
+    }
+    return exp->get_value().get_value().get_ui() * rv;
+  }
+}
+
 ostream& netlist::ConElem::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
   if(0 == con.size()) {
@@ -274,6 +287,14 @@ shared_ptr<SDFG::RTree> netlist::Concatenation::get_rtree() const {
   shared_ptr<SDFG::RTree> rv(new SDFG::RTree());
   BOOST_FOREACH(shared_ptr<ConElem> d, data) {
     rv->add_tree(d->get_rtree());
+  }
+  return rv;
+}
+
+unsigned int netlist::Concatenation::get_width() const {
+  unsigned int rv = 0;
+  BOOST_FOREACH(shared_ptr<ConElem> d, data) {
+    rv += d->get_width();
   }
   return rv;
 }

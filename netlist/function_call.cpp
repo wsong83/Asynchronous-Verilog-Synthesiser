@@ -124,3 +124,8 @@ shared_ptr<SDFG::RTree> netlist::FuncCall::get_rtree() const {
   }
   return rv;
 }
+
+unsigned int netlist::FuncCall::get_width() const {
+  assert(0 == "get_width() of function_call is not implemented yet!");
+  return 0;
+}

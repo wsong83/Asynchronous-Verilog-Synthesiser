@@ -57,6 +57,7 @@ namespace netlist {
     NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
     NETLIST_REPLACE_VARIABLE;
+    virtual unsigned int get_width() const;
 
     // helpers
     void set_value(const Number&); /* reset the value of this variable */

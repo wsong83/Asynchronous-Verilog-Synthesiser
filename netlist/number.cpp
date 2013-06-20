@@ -237,7 +237,7 @@ void netlist::Number::concatenate(const Number& rhs) {
   sign_flag = false;            // once concatenated, all signed number turn to be unsigned
 }
 
-unsigned int netlist::Number::get_width() {
+unsigned int netlist::Number::get_width() const {
   return num_leng;
 }
 

@@ -105,7 +105,7 @@ bool netlist::NetComp::elaborate(std::set<shared_ptr<NetComp> >&,
   return false;
 }
 
-unsigned int netlist::NetComp::get_width() {
+unsigned int netlist::NetComp::get_width() const {
   std::cerr << "ERROR!!, the get_width() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << endl;
   assert(0 == "get_width() of NetComp is used");
   return 0;

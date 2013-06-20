@@ -503,6 +503,56 @@ shared_ptr<SDFG::RTree> netlist::Operation::get_rtree() const {
   }  
 }
 
+unsigned int netlist::Operation::get_width() const {
+  switch(otype) {
+  case oNULL:  return 0;
+  case oVar:   return get_var().get_width();
+  case oCon:   return get_con().get_width();
+  case oNum:   return get_num().get_width();
+  case oFun:   return get_fun().get_width();
+  case oUPos: 
+  case oUNeg:  return child[0]->get_width();
+  case oULRev: return 1;
+  case oURev:  return child[0]->get_width();
+  case oUAnd:
+  case oUNand:
+  case oUOr:
+  case oUNor:
+  case oUXor:
+  case oUNxor: return 1;
+  case oPower: {
+    assert(child[1]->is_valuable() && child[1]->otype == oNum);
+    return child[0]->get_width() * child[1]->get_num().get_value().get_ui();
+  }
+  case oTime:  return child[0]->get_width() + child[1]->get_width();
+  case oDiv:
+  case oMode:  
+  case oRS:    
+  case oLS:
+  case oLRS:   return child[0]->get_width();
+  case oAnd:  
+  case oXor:
+  case oNxor:
+  case oOr:    return std::max(child[0]->get_width(), child[1]->get_width());
+  case oLAnd:
+  case oLOr:   return 1;
+  case oAdd:
+  case oMinus: return std::max(child[0]->get_width(), child[1]->get_width());
+  case oLess:
+  case oLe:
+  case oGreat:
+  case oGe:
+  case oEq:
+  case oNeq:
+  case oCEq:
+  case oCNeq:  return 1;
+  case oQuestion: return std::max(child[1]->get_width(), child[2]->get_width());
+  default:
+    assert(0 == "wrong operation type!");
+  }  
+  return 0; 
+}
+
 void netlist::Operation::replace_variable(const VIdentifier& var, const Number& num) {
   switch(otype) {
   case oVar: {

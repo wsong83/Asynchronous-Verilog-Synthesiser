@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -238,3 +238,11 @@ string netlist::Variable::get_short_string() const {
 void netlist::Variable::replace_variable(const VIdentifier& var, const Number& num) {
   if(exp) exp->replace_variable(var, num);
 }
+
+unsigned int netlist::Variable::get_width() const {
+  if(name.get_range().is_empty())
+    return 1;
+  else
+    return name.get_range().get_width(name.get_range());
+}
+

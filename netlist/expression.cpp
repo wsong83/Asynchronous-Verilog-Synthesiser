@@ -234,6 +234,10 @@ shared_ptr<SDFG::RTree> netlist::Expression::get_rtree() const {
   return eqn->get_rtree();
 }
 
+unsigned int netlist::Expression::get_width() const {
+  return eqn->get_width();
+}
+
 void netlist::Expression::replace_variable(const VIdentifier& var, const Number& num) {
   eqn->replace_variable(var, num);
 }
