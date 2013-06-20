@@ -52,9 +52,10 @@ namespace SDFG {
       SDFG_CAL            = 0x00002, // mathmatical calculation datapath
       SDFG_ASS            = 0x00004, // direct assignment
       SDFG_DAT            = 0x00008, // other type of data
-      SDFG_CTL            = 0x00020, // normal control
-      SDFG_CMP            = 0x00040, // compare
-      SDFG_EQU            = 0x00080, // equal
+      SDFG_CMP            = 0x00010, // compare
+      SDFG_EQU            = 0x00020, // equal
+      SDFG_LOG            = 0x00040, // logic 
+      SDFG_CTL            = 0x00080, // normal control
       SDFG_CLK            = 0x00200, // clk
       SDFG_RST            = 0x00400, // reset
       SDFG_DAT_MASK       = 0x0000F,

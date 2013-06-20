@@ -91,13 +91,18 @@ int SDFG::dfgNode::is_fsm() const {
     fsm_type |= SDFG_FSM_FSM;
   }
 
-  if((self_loop_type & (dfgEdge::SDFG_EQU|dfgEdge::SDFG_CMP)) &&
-     (self_loop_type & dfgEdge::SDFG_CAL) &&
+  if((self_loop_type & dfgEdge::SDFG_CAL) &&
      (out_path_type & (dfgEdge::SDFG_EQU|dfgEdge::SDFG_CMP)) &&
      !(in_path_type & dfgEdge::SDFG_DAT_MASK)
      ) { // fsm
     fsm_type |= SDFG_FSM_CNT;
   }
+
+  std::cout << std::hex 
+            << ":" << self_loop_type 
+            << ":" <<  in_path_type
+            << ":" <<  out_path_type
+            << std::dec << " ";
 
   return fsm_type;
 }

@@ -192,90 +192,15 @@ int SDFG::dfgPath::cal_type_data(int t0, int t1) {
 }
 
 int SDFG::dfgPath::cal_type_control(int t0, int t1) {
-  if(t1 == 0) return 0;
-  else return t0;
+  return t0;
 }
 
 int SDFG::dfgPath::cal_type_data2control(int t0, int t1) {
-  int tt = (t0 << 4 )| t1;
-  switch(tt) {
-  case 0x00:
-  case 0x10:
-  case 0x20:
-  case 0x30:
-  case 0x40:
-  case 0x50:
-  case 0x60:
-  case 0x70:
-  case 0x80:
-  case 0x90:
-  case 0xA0:
-  case 0xB0:
-  case 0xC0:
-  case 0xD0:
-  case 0xE0:
-  case 0xF0:
-  case 0x02:
-  case 0x04:
-  case 0x06:
-  case 0x08:
-  case 0x0A:
-  case 0x0C:
-  case 0x0E:   return 0x0;      // should not be used in the final value
-  case 0x22:
-  case 0x24:
-  case 0x26:
-  case 0x28:
-  case 0x2A:
-  case 0x2C:
-  case 0x2E:   return 0x2;      // cal -> ??? : ctl
-  case 0x42:   return 0x2;      
-  case 0x44:   return 0x4;      
-  case 0x46:   return 0x6;      
-  case 0x48:   return 0x8;      
-  case 0x4A:   return 0xA;      
-  case 0x4C:   return 0xC;      
-  case 0x4E:   return 0xE;      // ass -> ??? : ???
-  case 0x62:   return 0x2;
-  case 0x64:   return 0x6;
-  case 0x66:   return 0x6;
-  case 0x68:   return 0xA;
-  case 0x6A:   return 0xA;
-  case 0x6C:   return 0xE;
-  case 0x6E:   return 0xE;      // ctl|ass -> ??? : ctl|???
-  case 0x82:
-  case 0x84:
-  case 0x86:
-  case 0x88:
-  case 0x8A:
-  case 0x8C:
-  case 0x8E:   return 0x2;      // dat -> ??? : ctl
-  case 0xA2:
-  case 0xA4:
-  case 0xA6:
-  case 0xA8:
-  case 0xAA:
-  case 0xAC:
-  case 0xAE:   return 0x2;      // ctl|dat -> ??? : ctl
-  case 0xC2:   return 0x2;
-  case 0xC4:   return 0x6;
-  case 0xC6:   return 0x6;
-  case 0xC8:   return 0xA;
-  case 0xCA:   return 0xA;
-  case 0xCC:   return 0xE;
-  case 0xCE:   return 0xE;      // ass|dat -> ??? : ???|ctl
-  case 0xE2:   return 0x2;
-  case 0xE4:   return 0x6;
-  case 0xE6:   return 0x6;
-  case 0xE8:   return 0xA;
-  case 0xEA:   return 0xA;
-  case 0xEC:   return 0xE;
-  case 0xEE:   return 0xE;      // cal|ass|dat -> ??? : ???|ctl  
-  default:
-    std::cout << std::hex << tt << std::endl; 
-    assert(0 == "impossible data type calculation");
-    return t1;
-  }
+  int rv = 0x00;
+  if(t0 == 0 || t1 == 0) return 0x0;
+  if(t0 & (dfgEdge::SDFG_CAL|dfgEdge::SDFG_DAT)) rv |= 0x8;
+  if(t0 & dfgEdge::SDFG_ASS)                     rv |= t1;
+  return rv;
 }
 
 string SDFG::dfgPath::get_stype(int tt) {
@@ -286,6 +211,7 @@ string SDFG::dfgPath::get_stype(int tt) {
   if(tt & dfgEdge::SDFG_ASS) stype += "ASS|";
   if(tt & dfgEdge::SDFG_DAT) stype += "DAT|";
   if(tt & dfgEdge::SDFG_CTL) stype += "CTL|";
+  if(tt & dfgEdge::SDFG_LOG) stype += "LOG|";
   if(tt & dfgEdge::SDFG_CMP) stype += "CMP|";
   if(tt & dfgEdge::SDFG_EQU) stype += "EQU|";
   if(tt & dfgEdge::SDFG_CLK) stype += "CLK|";

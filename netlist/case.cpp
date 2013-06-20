@@ -306,7 +306,7 @@ shared_ptr<SDFG::RTree> netlist::CaseState::get_rtree() const {
   if(!has_default) num_of_case++; // no default, all target counts increased by 1
   
   // build the tree
-  rv->combine(exp_rtree, SDFG::dfgEdge::SDFG_CTL);
+  rv->combine(exp_rtree, SDFG::dfgEdge::SDFG_EQU);
 
   // add self paths
   typedef std::pair<const string&, unsigned int> m_type;
