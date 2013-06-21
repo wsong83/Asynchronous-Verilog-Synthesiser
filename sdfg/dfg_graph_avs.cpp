@@ -152,14 +152,14 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_hier_RRG() const {
     BOOST_FOREACH(shared_ptr<dfgNode> m, get_in_nodes(nr)) {
       if(!ng->exist(m->get_full_name()))
         copy_a_node(ng, m);
-      ng->add_edge(m->get_full_name(), dfgEdge::SDFG_DF, m->get_full_name(), nr->get_full_name());
+      ng->add_edge(m->get_full_name(), dfgEdge::SDFG_ASS, m->get_full_name(), nr->get_full_name());
     }
     BOOST_FOREACH(shared_ptr<dfgNode> m, get_out_nodes(nr)) {
       if(!ng->exist(m->get_full_name())) {
         copy_a_node(ng, m);
         nlist.push_back(m);
       }
-      ng->add_edge(nr->get_full_name(), dfgEdge::SDFG_DF, nr->get_full_name(), m->get_full_name());
+      ng->add_edge(nr->get_full_name(), dfgEdge::SDFG_ASS, nr->get_full_name(), m->get_full_name());
     }    
   }
 

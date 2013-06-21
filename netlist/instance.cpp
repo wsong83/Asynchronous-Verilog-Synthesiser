@@ -366,12 +366,12 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
         BOOST_FOREACH(SDFG::RTree::rtree_edge_type& e, exp_tree->tree[SDFG::RTree::DTarget]) {
           G->add_edge_multi(e.first, e.second, e.first, exp_node->name);
         }
-        G->add_edge(exp_node->name, dfgEdge::SDFG_DF, exp_node->name, node->name);
+        G->add_edge(exp_node->name, dfgEdge::SDFG_ASS, exp_node->name, node->name);
         node->add_port_sig(m->pname.name + "_P", exp_node->name);
         break;
       }
       case PortConn::CVAR: {    // variable
-        G->add_edge(m->var.name, dfgEdge::SDFG_DF, m->var.name, node->name);
+        G->add_edge(m->var.name, dfgEdge::SDFG_ASS, m->var.name, node->name);
         node->add_port_sig(m->pname.name + "_P", m->var.name);
         break;
       }
@@ -387,7 +387,7 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
     if(m->get_dir() >= 0) {     // output
       switch(m->type) {
       case PortConn::CVAR: {    // variable
-        G->add_edge(m->pname.name, dfgEdge::SDFG_DF, node->name, m->var.name);
+        G->add_edge(m->pname.name, dfgEdge::SDFG_ASS, node->name, m->var.name);
         node->add_port_sig(m->pname.name + "_P", m->var.name);
         break;
       }

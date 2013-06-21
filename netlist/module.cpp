@@ -500,14 +500,14 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
            [&](const pair<const VIdentifier, shared_ptr<Port> >& m) {
              switch(m.second->get_dir()) {
              case  1:           // output
-               G->add_edge(m.first.name, dfgEdge::SDFG_DF, m.first.name, m.first.name + "_P"); 
+               G->add_edge(m.first.name, dfgEdge::SDFG_ASS, m.first.name, m.first.name + "_P"); 
                break;
              case -1:           // input
-               G->add_edge(m.first.name, dfgEdge::SDFG_DF, m.first.name + "_P", m.first.name); 
+               G->add_edge(m.first.name, dfgEdge::SDFG_ASS, m.first.name + "_P", m.first.name); 
                break;
              default:           // inout
-               G->add_edge(m.first.name, dfgEdge::SDFG_DF, m.first.name, m.first.name + "_P"); 
-               G->add_edge(m.first.name, dfgEdge::SDFG_DF, m.first.name + "_P", m.first.name);
+               G->add_edge(m.first.name, dfgEdge::SDFG_ASS, m.first.name, m.first.name + "_P"); 
+               G->add_edge(m.first.name, dfgEdge::SDFG_ASS, m.first.name + "_P", m.first.name);
              }
            });
 

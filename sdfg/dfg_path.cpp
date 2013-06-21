@@ -90,8 +90,8 @@ int SDFG::dfgPath::cal_type(int t0, int t1) {
   if(t1 & dfgEdge::SDFG_CTL_MASK) gt |= 0x2;
   if(t1 & dfgEdge::SDFG_DAT_MASK) gt |= 0x1;
   int dt = cal_type_data(t0&0xf, t1&0xf);
-  int ct = cal_type_control(t0>>4&0xf, t1>>4&0xf);
-  int d2ct = cal_type_data2control(t0&0xf, t1>>4&0xf);
+  int ct = cal_type_control(t0>>4&0xff, t1>>4&0xff);
+  int d2ct = cal_type_data2control(t0&0xf, t1>>4&0xff);
 
   switch(gt) {
   case 0xF:   return  (ct|d2ct) << 4 | dt;
@@ -217,6 +217,7 @@ string SDFG::dfgPath::get_stype(int tt) {
   if(tt & dfgEdge::SDFG_EQU) stype += "EQU|";
   if(tt & dfgEdge::SDFG_CLK) stype += "CLK|";
   if(tt & dfgEdge::SDFG_RST) stype += "RST|";
+  assert(stype.size() > 1);
   stype.erase(stype.size()-1);
   return stype;
 }
