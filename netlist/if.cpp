@@ -178,7 +178,7 @@ shared_ptr<SDFG::RTree> netlist::IfState::get_rtree() const {
   }
   rv->add_tree(elsecase_rtree);
 
-  rv->combine(exp->get_rtree(), SDFG::dfgEdge::SDFG_CTL);
+  rv->combine(exp->get_rtree(), SDFG::dfgEdge::SDFG_LOG);
 
   // add self paths
   typedef std::pair<const string&, unsigned int> m_type;

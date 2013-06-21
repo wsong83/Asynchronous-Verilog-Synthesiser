@@ -66,7 +66,7 @@ SDFG::RTree::RTree(shared_ptr<RTree> stc, shared_ptr<RTree> st0, shared_ptr<RTre
   assert(st0->tree.size() == 1 && st0->tree.count(DTarget));
   assert(st1->tree.size() == 1 && st1->tree.count(DTarget));
   
-  add_tree(stc, SDFG::dfgEdge::SDFG_CTL)->add_tree(st0)->add_tree(st1);
+  add_tree(stc, SDFG::dfgEdge::SDFG_LOG)->add_tree(st0)->add_tree(st1);
 }
 
 RTree* SDFG::RTree::add_edge(const string& sig, int etype) {

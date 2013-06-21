@@ -231,6 +231,8 @@ Expression* netlist::Expression::deep_copy() const {
 }
 
 shared_ptr<SDFG::RTree> netlist::Expression::get_rtree() const {
+  //std::cout << *this << std::endl;
+  //std::cout << *(eqn->get_rtree()) << std::endl;
   return eqn->get_rtree();
 }
 

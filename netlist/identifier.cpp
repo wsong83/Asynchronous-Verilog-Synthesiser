@@ -460,8 +460,8 @@ void netlist::VIdentifier::replace_variable(const VIdentifier& var, const Number
 
 shared_ptr<SDFG::RTree> netlist::VIdentifier::get_rtree() const {
   shared_ptr<SDFG::RTree> sel_tree = get_select().get_rtree();
-  shared_ptr<SDFG::RTree> rv(new SDFG::RTree(sel_tree, SDFG::dfgEdge::SDFG_ADR));
-  rv->add_edge(name);
+  shared_ptr<SDFG::RTree> rv(new SDFG::RTree(name));
+  rv->add_tree(sel_tree, SDFG::dfgEdge::SDFG_ADR);
   return rv;
 }
 

@@ -100,11 +100,18 @@ int SDFG::dfgNode::is_fsm() const {
       fsm_type |= SDFG_FSM_ADR;
   }
 
-  std::cout << std::hex 
-            << ":" << self_loop_type 
-            << ":" <<  in_path_type
-            << ":" <<  out_path_type
-            << std::dec << " ";
+  if((self_loop_type & dfgEdge::SDFG_CTL_MASK) && 
+     (out_path_type & dfgEdge::SDFG_LOG) &&
+     !(in_path_type & dfgEdge::SDFG_DAT_MASK)
+     ) { // flags
+    fsm_type |= SDFG_FSM_FLAG;
+  }
+
+  //std::cout << std::hex 
+  //          << ":" << self_loop_type 
+  //          << ":" <<  in_path_type
+  //          << ":" <<  out_path_type
+  //          << std::dec << " ";
 
   return fsm_type;
 }
@@ -115,6 +122,7 @@ string SDFG::dfgNode::get_fsm_type() const {
   if(t & SDFG_FSM_FSM) rv += "FSM|";
   if(t & SDFG_FSM_CNT) rv += "CNT|";
   if(t & SDFG_FSM_ADR) rv += "ADR|";
+  if(t & SDFG_FSM_FLAG) rv += "FLAG|";
   if(t == SDFG_FSM_OTHER) rv = "OTHER|";
   rv.erase(rv.size()-1);
   return rv;
