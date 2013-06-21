@@ -460,14 +460,14 @@ void netlist::VIdentifier::replace_variable(const VIdentifier& var, const Number
 
 shared_ptr<SDFG::RTree> netlist::VIdentifier::get_rtree() const {
   shared_ptr<SDFG::RTree> sel_tree = get_select().get_rtree();
-  shared_ptr<SDFG::RTree> rv(new SDFG::RTree(sel_tree, SDFG::dfgEdge::SDFG_CTL));
+  shared_ptr<SDFG::RTree> rv(new SDFG::RTree(sel_tree, SDFG::dfgEdge::SDFG_ADR));
   rv->add_edge(name);
   return rv;
 }
 
 unsigned int netlist::VIdentifier::get_width() const {
+  assert(pvar);
   if(m_select.is_empty()) {
-    assert(pvar);
     return pvar->get_width();
   } else {
     return m_select.get_width(pvar->name.m_range);

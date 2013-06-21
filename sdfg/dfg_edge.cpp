@@ -49,9 +49,11 @@ void SDFG::dfgEdge::write(pugi::xml_node& xnode) const {
   case SDFG_CAL:    stype = "math-cal";  break;
   case SDFG_ASS:    stype = "assign";    break;
   case SDFG_DAT:    stype = "data";      break;
-  case SDFG_CTL:    stype = "control";   break;
   case SDFG_CMP:    stype = "compare";   break;
   case SDFG_EQU:    stype = "equal";     break;
+  case SDFG_LOG:    stype = "logic";     break;
+  case SDFG_ADR:    stype = "address";   break;
+  case SDFG_CTL:    stype = "control";   break;
   case SDFG_CLK:    stype = "clk";       break;
   case SDFG_RST:    stype = "rst";       break;
   default:          stype = "unknown";
@@ -84,6 +86,8 @@ bool SDFG::dfgEdge::read(const pugi::xml_node& xnode) {
     show_hash("control");       // 0xee9cb7ef
     show_hash("compare");       // 0xde187966
     show_hash("equal");         // 0x5e3d70ec
+    show_hash("logic");         // 0xcdf9f4e3
+    show_hash("address");       // 0x4e5979f2
     show_hash("clk");           // 0x0018f66b
     show_hash("rst");           // 0x001cb9f4
     show_hash("unknown");       // 0xbddbfb6d
@@ -98,6 +102,8 @@ bool SDFG::dfgEdge::read(const pugi::xml_node& xnode) {
   case 0xee9cb7ef: type = SDFG_CTL; break;
   case 0xde187966: type = SDFG_CMP; break;
   case 0x5e3d70ec: type = SDFG_EQU; break;
+  case 0xcdf9f4e3: type = SDFG_LOG; break;
+  case 0x4e5979f2: type = SDFG_ADR; break;
   case 0x0018f66b: type = SDFG_CLK; break;
   case 0x001cb9f4: type = SDFG_RST; break;
   case 0xbddbfb6d: type = SDFG_DF;  break;

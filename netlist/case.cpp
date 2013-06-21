@@ -302,8 +302,9 @@ shared_ptr<SDFG::RTree> netlist::CaseState::get_rtree() const {
       break;
     }
   }
-
-  if(!has_default) num_of_case++; // no default, all target counts increased by 1
+  
+  // no default, all target counts increased by 1
+  if(!has_default && num_of_case < (1 << exp->get_width())) num_of_case++; 
   
   // build the tree
   rv->combine(exp_rtree, SDFG::dfgEdge::SDFG_EQU);
@@ -315,6 +316,7 @@ shared_ptr<SDFG::RTree> netlist::CaseState::get_rtree() const {
       rv->add_edge(t.first, t.first, SDFG::dfgEdge::SDFG_DDP);
   }
 
+  //std::cout << *this << *rv << std::endl;
   return rv;
 }
 

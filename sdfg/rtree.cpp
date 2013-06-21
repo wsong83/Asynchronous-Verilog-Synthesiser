@@ -116,11 +116,11 @@ RTree* SDFG::RTree::combine(shared_ptr<RTree> rhs, int rtype) {
 }
 
 std::set<string> SDFG::RTree::get_control(const string& t) const {
-  return get_signals (dfgEdge::SDFG_CTL | dfgEdge::SDFG_CMP | dfgEdge::SDFG_EQU, t);
+  return get_signals (dfgEdge::SDFG_CTL_MASK, t);
 }
 
 std::set<string> SDFG::RTree::get_data(const string& t) const {
-  return get_signals (dfgEdge::SDFG_DDP | dfgEdge::SDFG_CAL | dfgEdge::SDFG_ASS | dfgEdge::SDFG_DAT, t);
+  return get_signals (dfgEdge::SDFG_DAT_MASK, t);
 }
 
 std::set<string> SDFG::RTree::get_all(const string& t) const {

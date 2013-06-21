@@ -142,6 +142,8 @@ void SDFG::dfgGraph::add_edge_multi(const string& n, int t, vertex_descriptor sr
     if(t & dfgEdge::SDFG_CAL) add_edge(n, dfgEdge::SDFG_CAL, src, snk);
     if(t & dfgEdge::SDFG_ASS) add_edge(n, dfgEdge::SDFG_ASS, src, snk);
     if(t & dfgEdge::SDFG_DAT) add_edge(n, dfgEdge::SDFG_DAT, src, snk);
+    if(t & dfgEdge::SDFG_LOG) add_edge(n, dfgEdge::SDFG_LOG, src, snk);
+    if(t & dfgEdge::SDFG_ADR) add_edge(n, dfgEdge::SDFG_ADR, src, snk);
     if(t & dfgEdge::SDFG_CTL) add_edge(n, dfgEdge::SDFG_CTL, src, snk);
     if(t & dfgEdge::SDFG_CMP) add_edge(n, dfgEdge::SDFG_CMP, src, snk);
     if(t & dfgEdge::SDFG_EQU) add_edge(n, dfgEdge::SDFG_EQU, src, snk);
@@ -1011,6 +1013,14 @@ bool SDFG::dfgGraph::layout(ogdf::Graph* pg, ogdf::GraphAttributes *pga) {
                  case dfgEdge::SDFG_EQU:
                    m.second->push_bend(base_len*cos(d2r(20.0)),  -base_len*sin(d2r(20.0)), true);
                    m.second->push_bend(base_len*cos(d2r(80.0)),  -base_len*sin(d2r(80.0)), true);
+                   break;
+                 case dfgEdge::SDFG_LOG:
+                   m.second->push_bend(base_len*cos(d2r(30.0)),  -base_len*sin(d2r(30.0)), true);
+                   m.second->push_bend(base_len*cos(d2r(90.0)),  -base_len*sin(d2r(90.0)), true);
+                   break;
+                 case dfgEdge::SDFG_ADR:
+                   m.second->push_bend(base_len*cos(d2r(40.0)),  -base_len*sin(d2r(40.0)), true);
+                   m.second->push_bend(base_len*cos(d2r(100.0)),  -base_len*sin(d2r(100.0)), true);
                    break;
                  default:
                    m.second->push_bend(base_len*cos(d2r(00.0)),   base_len*sin(d2r(00.0)), true);

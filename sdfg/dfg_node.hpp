@@ -69,9 +69,10 @@ namespace SDFG {
     enum fsm_type_t {           // FSM type
       SDFG_FSM_NONE       = 0x00000, // not a fsm
       SDFG_FSM_FSM        = 0x00001, // state machine
-      SDFG_FSM_CNT        = 0x00002, // counter
-      SDFG_FSM_FLAG       = 0x00004, // control flag
-      SDFG_FSM_OTHER      = 0x00010  // probably false-active
+      SDFG_FSM_CNT        = 0x00002, // counter used as FSM
+      SDFG_FSM_ADR        = 0x00004, // counter used as address
+      SDFG_FSM_FLAG       = 0x00008, // control flag
+      SDFG_FSM_OTHER      = 0x00100  // probably false-active
     };
 
     // only available in register graph

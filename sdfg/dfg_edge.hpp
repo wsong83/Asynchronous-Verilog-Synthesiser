@@ -54,13 +54,14 @@ namespace SDFG {
       SDFG_DAT            = 0x00008, // other type of data
       SDFG_CMP            = 0x00010, // compare
       SDFG_EQU            = 0x00020, // equal
-      SDFG_LOG            = 0x00040, // logic 
-      SDFG_CTL            = 0x00080, // normal control
-      SDFG_CLK            = 0x00200, // clk
-      SDFG_RST            = 0x00400, // reset
+      SDFG_LOG            = 0x00040, // logic
+      SDFG_ADR            = 0x00080, // address
+      SDFG_CTL            = 0x00100, // normal control
+      SDFG_CLK            = 0x02000, // clk
+      SDFG_RST            = 0x04000, // reset
       SDFG_DAT_MASK       = 0x0000F,
-      SDFG_CTL_MASK       = 0x000F0,
-      SDFG_CR_MASK        = 0x00F00
+      SDFG_CTL_MASK       = 0x00FF0,
+      SDFG_CR_MASK        = 0x0F000
     } type;
 
     dfgEdge() : pg(NULL), type(SDFG_DF) {}

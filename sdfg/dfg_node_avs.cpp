@@ -80,7 +80,7 @@ int SDFG::dfgNode::is_fsm() const {
   if((self_loop_type != 0) && 
      (out_path_type & dfgEdge::SDFG_CTL_MASK) &&
      !(in_path_type & dfgEdge::SDFG_DAT_MASK)
-     ) { // fsm
+     ) { // all fsm
     fsm_type |= SDFG_FSM_OTHER;
   }
 
@@ -92,10 +92,12 @@ int SDFG::dfgNode::is_fsm() const {
   }
 
   if((self_loop_type & dfgEdge::SDFG_CAL) &&
-     (out_path_type & (dfgEdge::SDFG_EQU|dfgEdge::SDFG_CMP)) &&
      !(in_path_type & dfgEdge::SDFG_DAT_MASK)
-     ) { // fsm
-    fsm_type |= SDFG_FSM_CNT;
+     ) { // 
+    if(out_path_type & (dfgEdge::SDFG_EQU|dfgEdge::SDFG_CMP))
+      fsm_type |= SDFG_FSM_CNT;
+    if(out_path_type & (dfgEdge::SDFG_ADR))
+      fsm_type |= SDFG_FSM_ADR;
   }
 
   std::cout << std::hex 
@@ -112,6 +114,7 @@ string SDFG::dfgNode::get_fsm_type() const {
   string rv("");
   if(t & SDFG_FSM_FSM) rv += "FSM|";
   if(t & SDFG_FSM_CNT) rv += "CNT|";
+  if(t & SDFG_FSM_ADR) rv += "ADR|";
   if(t == SDFG_FSM_OTHER) rv = "OTHER|";
   rv.erase(rv.size()-1);
   return rv;

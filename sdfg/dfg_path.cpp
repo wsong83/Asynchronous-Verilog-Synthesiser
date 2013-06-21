@@ -212,6 +212,7 @@ string SDFG::dfgPath::get_stype(int tt) {
   if(tt & dfgEdge::SDFG_DAT) stype += "DAT|";
   if(tt & dfgEdge::SDFG_CTL) stype += "CTL|";
   if(tt & dfgEdge::SDFG_LOG) stype += "LOG|";
+  if(tt & dfgEdge::SDFG_ADR) stype += "ADR|";
   if(tt & dfgEdge::SDFG_CMP) stype += "CMP|";
   if(tt & dfgEdge::SDFG_EQU) stype += "EQU|";
   if(tt & dfgEdge::SDFG_CLK) stype += "CLK|";

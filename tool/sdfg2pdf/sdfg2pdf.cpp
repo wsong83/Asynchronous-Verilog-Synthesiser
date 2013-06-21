@@ -407,6 +407,16 @@ void draw_page(SDFG::dfgGraph& g, QPainter& painter, QPrinter& printer, std::set
                line_pen.setStyle(Qt::DashLine);
                line_pen.setWidth(PDF_PEN_SIZE + 0); //1.5);
                break;
+             case SDFG::dfgEdge::SDFG_LOG:
+               line_pen.setColor(Qt::darkRed);
+               line_pen.setStyle(Qt::DashDotLine);
+               line_pen.setWidth(PDF_PEN_SIZE + 0); //1.5);
+               break;
+             case SDFG::dfgEdge::SDFG_ADR:
+               line_pen.setColor(Qt::darkRed);
+               line_pen.setStyle(Qt::DashLine);
+               line_pen.setWidth(PDF_PEN_SIZE + 0); //1.5);
+               break;
              case SDFG::dfgEdge::SDFG_CLK:
                line_pen.setColor(Qt::blue);
                line_pen.setStyle(Qt::SolidLine);

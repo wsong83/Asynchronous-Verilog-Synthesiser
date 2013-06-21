@@ -461,6 +461,10 @@ shared_ptr<SDFG::RTree> netlist::Operation::get_rtree() const {
   case oRS:
   case oLS:
   case oLRS:
+    return shared_ptr<SDFG::RTree>(new SDFG::RTree(child[0]->get_rtree(),
+                                                   child[1]->get_rtree(),
+                                                   SDFG::dfgEdge::SDFG_DAT)
+                                   );
   case oAnd:
   case oXor:
   case oNxor:
@@ -469,7 +473,7 @@ shared_ptr<SDFG::RTree> netlist::Operation::get_rtree() const {
   case oLOr: 
     return shared_ptr<SDFG::RTree>(new SDFG::RTree(child[0]->get_rtree(),
                                                    child[1]->get_rtree(),
-                                                   SDFG::dfgEdge::SDFG_DAT)
+                                                   SDFG::dfgEdge::SDFG_LOG)
                                    );
   case oAdd:
   case oMinus:
