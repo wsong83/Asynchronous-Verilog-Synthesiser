@@ -40,6 +40,7 @@ namespace SDFG {
   class dfgEdge;
   class dfgGraph;
   class RForest;
+  class RTree;
 }
 
 // function macro for stream out operator <<
@@ -93,11 +94,6 @@ namespace SDFG {
   virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>); 
 #endif
 
-#ifndef NETLIST_SCAN_VARS
-#define NETLIST_SCAN_VARS                          \
-  virtual void scan_vars(boost::shared_ptr<SDFG::RForest>, bool) const;
-#endif
-
 #ifndef NETLIST_REPLACE_VARIABLE
 #define NETLIST_REPLACE_VARIABLE                   \
   virtual void replace_variable(const VIdentifier&, const Number&);
@@ -137,10 +133,10 @@ namespace netlist{
     virtual void db_expunge();
     virtual bool elaborate(std::set<boost::shared_ptr<NetComp> >&,
                            std::map<boost::shared_ptr<NetComp>, std::list<boost::shared_ptr<NetComp> > >&);
-    virtual unsigned int get_width();
+    virtual unsigned int get_width() const;
     virtual void set_width(const unsigned int&);
     virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>);
-    virtual void scan_vars(boost::shared_ptr<SDFG::RForest>, bool) const; 
+    virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
     virtual boost::shared_ptr<NetComp> get_sp();
     virtual boost::shared_ptr<Expression> get_combined_expression(const VIdentifier&, std::set<std::string>);
     virtual Module* get_module(); // return the pointer of the father module

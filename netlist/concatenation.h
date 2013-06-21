@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -59,9 +59,10 @@ namespace netlist {
     NETLIST_SET_FATHER_DECL;
     virtual ConElem* deep_copy() const;
     NETLIST_DB_DECL;
-    NETLIST_SCAN_VARS;
     NETLIST_REPLACE_VARIABLE;
     void replace_variable(const VIdentifier&, boost::shared_ptr<Expression>); // replace a vid with an expression     
+    virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
+    virtual unsigned int get_width() const;
 
     boost::shared_ptr<Expression> exp;
     std::list<boost::shared_ptr<ConElem> > con;
@@ -92,9 +93,10 @@ namespace netlist {
     NETLIST_SET_FATHER_DECL;
     virtual Concatenation* deep_copy() const;
     NETLIST_DB_DECL;
-    NETLIST_SCAN_VARS;
     NETLIST_REPLACE_VARIABLE;
     void replace_variable(const VIdentifier&, boost::shared_ptr<Expression>); // replace a vid with an expression 
+    virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
+    virtual unsigned int get_width() const;
 
     // data
     std::list<boost::shared_ptr<ConElem> > data;

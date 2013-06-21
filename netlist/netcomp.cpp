@@ -105,7 +105,7 @@ bool netlist::NetComp::elaborate(std::set<shared_ptr<NetComp> >&,
   return false;
 }
 
-unsigned int netlist::NetComp::get_width() {
+unsigned int netlist::NetComp::get_width() const {
   std::cerr << "ERROR!!, the get_width() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << endl;
   assert(0 == "get_width() of NetComp is used");
   return 0;
@@ -121,11 +121,12 @@ void netlist::NetComp::gen_sdfg(shared_ptr<SDFG::dfgGraph>) {
   assert(0 == "gen_sdfg() of NetComp is used");
 } 
 
-void netlist::NetComp::scan_vars(boost::shared_ptr<SDFG::RForest>, bool) const {
-  std::cerr << "ERROR!!, the scan_vars() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << endl;
-  assert(0 == "scan_vars() of NetComp is used");
+shared_ptr<SDFG::RTree> netlist::NetComp::get_rtree() const {
+  std::cerr << "ERROR!!, the get_rtree() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << endl;
+  assert(0 == "get_rtree() of NetComp is used");
+  return shared_ptr<SDFG::RTree>();
 }
-    
+
 shared_ptr<NetComp> netlist::NetComp::get_sp(){
   return shared_from_this();
 }

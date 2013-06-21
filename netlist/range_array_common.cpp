@@ -275,12 +275,6 @@ void netlist::RangeArrayCommon::set_width(const unsigned int& w, const Range& r)
   //width = w;  // RangeArrayCommon does not have a width member as it is a shared base class
 }
 
-void netlist::RangeArrayCommon::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
-  BOOST_FOREACH(const shared_ptr<Range> m, child) {
-    m->scan_vars(rf, ctl);
-  }
-}
-
 void netlist::RangeArrayCommon::replace_variable(const VIdentifier& var, const Number& num) {
   BOOST_FOREACH(shared_ptr<Range> r, child) {
     r->replace_variable(var, num);
@@ -295,3 +289,10 @@ list<shared_ptr<Range> >& netlist::RangeArrayCommon::sort(list<shared_ptr<Range>
   return rhs;
 }
 
+shared_ptr<SDFG::RTree> netlist::RangeArrayCommon::get_rtree() const {
+  shared_ptr<SDFG::RTree> rv(new SDFG::RTree());
+  BOOST_FOREACH(const shared_ptr<Range> r, child) {
+    rv->add_tree(r->get_rtree());
+  }
+  return rv;
+}

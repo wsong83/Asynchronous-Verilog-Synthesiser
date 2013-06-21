@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -75,8 +75,8 @@ namespace netlist {
     unsigned int get_width(const Range&) const; // considering child
     unsigned int get_width(const Range&); // considering child
     void set_width(const unsigned int&, const Range&);
-    NETLIST_SCAN_VARS;
     void replace_variable(const VIdentifier&, const Number&);
+    virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
     
   protected:
     std::list<boost::shared_ptr<Range> > child; // the range expressions of the lower dimension

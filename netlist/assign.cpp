@@ -94,37 +94,22 @@ bool netlist::Assign::elaborate(std::set<shared_ptr<NetComp> >&,
 }
 
 void netlist::Assign::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
-  shared_ptr<SDFG::RForest> rf(new SDFG::RForest());
-  scan_vars(rf, false);
-  //std::cout << "assign ------->" << *this << std::endl;
-  //rf->write(std::cout);
-  
-  BOOST_FOREACH(SDFG::RForest::tree_map_type& t, rf->tree) {
-    std::set<string> csig = rf->get_control(t.first);
-    std::set<string> dsig = rf->get_data(t.first);
-    BOOST_FOREACH(const string& s, csig) {
-      G->add_edge(s, SDFG::dfgEdge::SDFG_CTL, s, t.first);
+  shared_ptr<SDFG::RTree> ass_tree = get_rtree();
+  BOOST_FOREACH(SDFG::RTree::sub_tree_type& t, ass_tree->tree) {
+    assert(t.first != SDFG::RTree::DTarget); 
+    BOOST_FOREACH(SDFG::RTree::rtree_edge_type& e, t.second) {
+      G->add_edge_multi(e.first, e.second, e.first, t.first);
     }
-    BOOST_FOREACH(const string& s, dsig) {
-      G->add_edge(s, SDFG::dfgEdge::SDFG_DP, s, t.first);
-    }
-    G->get_node(t.first)->ptr.insert(get_sp());
-  }  
+  }
 }
 
-void netlist::Assign::scan_vars(shared_ptr<SDFG::RForest> rf, bool) const {
-  shared_ptr<SDFG::RForest> lrf(new SDFG::RForest());
-  shared_ptr<SDFG::RForest> rrf(new SDFG::RForest());
-  lval->scan_vars(lrf, false);
-  rexp->scan_vars(rrf, false);
-  //std::cout << "rhs expression ------->" << *rexp << std::endl;
-  //rrf->write(std::cout);
-  shared_ptr<SDFG::RForest> crf(new SDFG::RForest());
-  crf->build(lrf, rrf);
-  rf->add(crf);
-  //std::cout << *this << std::endl;
-  //rf->write(std::cout);
+shared_ptr<SDFG::RTree> netlist::Assign::get_rtree() const {
+  shared_ptr<SDFG::RTree> lrf = lval->get_rtree();
+  shared_ptr<SDFG::RTree> rrf = rexp->get_rtree();
+  lrf->combine(rrf);
+  return lrf;
 }
+
 
 Assign* netlist::Assign::deep_copy() const {
   Assign* rv = new Assign( loc,
@@ -144,6 +129,7 @@ void netlist::Assign::replace_variable(const VIdentifier& var, const Number& num
 }
 
 shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifier& target, std::set<string> s_set) {
+  /*
   shared_ptr<SDFG::RForest> lrf(new SDFG::RForest());
   shared_ptr<SDFG::RForest> rrf(new SDFG::RForest());
   lval->scan_vars(lrf, false);
@@ -221,4 +207,6 @@ shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifie
     }
   }
   return rv;
+  */
+  assert(0 == "TODO!");
 }

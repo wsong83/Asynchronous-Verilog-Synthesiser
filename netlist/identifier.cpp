@@ -453,20 +453,23 @@ VIdentifier* netlist::VIdentifier::deep_copy() const {
   rv->m_select = m_select.deep_object_copy();
   return rv;
 }
-  
-void netlist::VIdentifier::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
-  if(ctl) {
-    if(!rf->tree["@CTL"]) rf->tree["@CTL"].reset(new SDFG::RTree(SDFG::RTree::RT_CTL));
-    rf->tree["@CTL"]->sig.insert(name);
-  } else {
-    if(!rf->tree["@DATA"]) rf->tree["@DATA"].reset(new SDFG::RTree(SDFG::RTree::RT_DATA));
-    rf->tree["@DATA"]->sig.insert(name);
-  }
-
-  //get_select().scan_vars(rf, ctl);
-  get_select().scan_vars(rf, true);
-}
 
 void netlist::VIdentifier::replace_variable(const VIdentifier& var, const Number& num) {
   m_select.replace_variable(var, num);
+}
+
+shared_ptr<SDFG::RTree> netlist::VIdentifier::get_rtree() const {
+  shared_ptr<SDFG::RTree> sel_tree = get_select().get_rtree();
+  shared_ptr<SDFG::RTree> rv(new SDFG::RTree(name));
+  rv->add_tree(sel_tree, SDFG::dfgEdge::SDFG_ADR);
+  return rv;
+}
+
+unsigned int netlist::VIdentifier::get_width() const {
+  assert(pvar);
+  if(m_select.is_empty()) {
+    return pvar->get_width();
+  } else {
+    return m_select.get_width(pvar->name.m_range);
+  }
 }

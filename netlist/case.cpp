@@ -140,8 +140,8 @@ bool netlist::CaseItem::elaborate(std::set<shared_ptr<NetComp> >& to_del,
   return true;
 }
 
-void netlist::CaseItem::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
-  body->scan_vars(rf, ctl);
+shared_ptr<SDFG::RTree> netlist::CaseItem::get_rtree() const {
+  return body->get_rtree();
 }
 
 void netlist::CaseItem::replace_variable(const VIdentifier& var, const Number& num) {
@@ -281,20 +281,43 @@ bool netlist::CaseState::elaborate(std::set<shared_ptr<NetComp> >& to_del,
 
 } 
 
-void netlist::CaseState::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
-  shared_ptr<SDFG::RForest> exprf(new SDFG::RForest());
-  exp->scan_vars(exprf, true);
-  list<shared_ptr<SDFG::RForest> > branches;
+shared_ptr<SDFG::RTree> netlist::CaseState::get_rtree() const {
+  shared_ptr<SDFG::RTree> exp_rtree = exp->get_rtree();
+  shared_ptr<SDFG::RTree> rv(new SDFG::RTree(false));
+  unsigned int num_of_case = 0;
+  map<string, unsigned int> target_count;
   bool has_default = false;
-  BOOST_FOREACH(const shared_ptr<CaseItem>& m, cases) {
-    shared_ptr<SDFG::RForest> mrf(new SDFG::RForest());
-    m->scan_vars(mrf, ctl);
-    //mrf->write(std::cout);
-    branches.push_back(mrf);
-    has_default |= m->is_default();
+
+  // get all cases and count the target counts
+  BOOST_FOREACH(shared_ptr<CaseItem> m, cases) {
+    shared_ptr<SDFG::RTree> case_rtree = m->get_rtree();
+    BOOST_FOREACH(SDFG::RTree::sub_tree_type& t, case_rtree->tree) {
+      if(target_count.count(t.first)) target_count[t.first]++;
+      else                            target_count[t.first] = 1;
+    }
+    num_of_case++;
+    rv->add_tree(case_rtree);
+    if(m->is_default()) {
+      has_default = true;
+      break;
+    }
   }
-  if(!has_default) branches.push_back(shared_ptr<SDFG::RForest>(new SDFG::RForest()));
-  rf->add(exprf, branches);
+  
+  // no default, all target counts increased by 1
+  if(!has_default && num_of_case < (1 << exp->get_width())) num_of_case++; 
+  
+  // build the tree
+  rv->combine(exp_rtree, SDFG::dfgEdge::SDFG_EQU);
+
+  // add self paths
+  typedef std::pair<const string&, unsigned int> m_type;
+  BOOST_FOREACH(m_type t, target_count) {
+    if(t.second < num_of_case)
+      rv->add_edge(t.first, t.first, SDFG::dfgEdge::SDFG_DDP);
+  }
+
+  //std::cout << *this << *rv << std::endl;
+  return rv;
 }
 
 void netlist::CaseState::replace_variable(const VIdentifier& var, const Number& num) {

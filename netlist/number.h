@@ -75,7 +75,7 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
     virtual Number* deep_copy() const;
-    unsigned int get_width();
+    unsigned int get_width() const;
     void set_width(const unsigned int&);
 
   private:

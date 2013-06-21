@@ -434,22 +434,14 @@ void netlist::Operation::reduce() {
   }
 }
 
-void netlist::Operation::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
+shared_ptr<SDFG::RTree> netlist::Operation::get_rtree() const {
+
   switch(otype) {
-  case oVar: {
-    get_var().scan_vars(rf, ctl);
-    break;
-  }
-  case oCon: {
-    get_con().scan_vars(rf, ctl);
-    break;
-  }
+  case oVar: return get_var().get_rtree();
+  case oCon: return get_con().get_rtree();
   case oNULL:
-  case oNum: break;
-  case oFun: {
-    get_fun().scan_vars(rf, ctl);
-    break;
-  }
+  case oNum: return shared_ptr<SDFG::RTree>(new SDFG::RTree());
+  case oFun: return get_fun().get_rtree();
   case oUPos:
   case oUNeg:
   case oULRev:
@@ -459,19 +451,98 @@ void netlist::Operation::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const
   case oUOr:
   case oUNor:
   case oUXor:
-  case oUNxor: {
-    child[0]->scan_vars(rf, ctl);
-    break;
-  }
+  case oUNxor: 
+    return shared_ptr<SDFG::RTree>(new SDFG::RTree(child[0]->get_rtree(), 
+                                                   SDFG::dfgEdge::SDFG_DAT)
+                                   );
   case oPower:
   case oTime:
   case oDiv:
   case oMode:
-  case oAdd:
-  case oMinus:
   case oRS:
   case oLS:
   case oLRS:
+  case oAnd:
+  case oXor:
+  case oNxor:
+  case oOr:
+    return shared_ptr<SDFG::RTree>(new SDFG::RTree(child[0]->get_rtree(),
+                                                   child[1]->get_rtree(),
+                                                   SDFG::dfgEdge::SDFG_DAT)
+                                   );
+  case oLAnd:
+  case oLOr: 
+    return shared_ptr<SDFG::RTree>(new SDFG::RTree(child[0]->get_rtree(),
+                                                   child[1]->get_rtree(),
+                                                   SDFG::dfgEdge::SDFG_LOG)
+                                   );
+  case oAdd:
+  case oMinus:
+    return shared_ptr<SDFG::RTree>(new SDFG::RTree(child[0]->get_rtree(),
+                                                   child[1]->get_rtree(),
+                                                   SDFG::dfgEdge::SDFG_CAL)
+                                   );
+  case oLess:
+  case oLe:
+  case oGreat:
+  case oGe:
+    return shared_ptr<SDFG::RTree>(new SDFG::RTree(child[0]->get_rtree(),
+                                                   child[1]->get_rtree(),
+                                                   SDFG::dfgEdge::SDFG_CMP)
+                                   );
+  case oEq:
+  case oNeq:
+  case oCEq:
+  case oCNeq:
+    return shared_ptr<SDFG::RTree>(new SDFG::RTree(child[0]->get_rtree(),
+                                                   child[1]->get_rtree(),
+                                                   SDFG::dfgEdge::SDFG_EQU)
+                                   );
+  case oQuestion:
+    return shared_ptr<SDFG::RTree>(new SDFG::RTree(child[0]->get_rtree(),
+                                                   child[1]->get_rtree(),
+                                                   child[2]->get_rtree())
+                                   );
+  default:
+    assert(0 == "wrong operation type!");
+  }  
+}
+
+unsigned int netlist::Operation::get_width() const {
+  switch(otype) {
+  case oNULL:  return 0;
+  case oVar:   return get_var().get_width();
+  case oCon:   return get_con().get_width();
+  case oNum:   return get_num().get_width();
+  case oFun:   return get_fun().get_width();
+  case oUPos: 
+  case oUNeg:  return child[0]->get_width();
+  case oULRev: return 1;
+  case oURev:  return child[0]->get_width();
+  case oUAnd:
+  case oUNand:
+  case oUOr:
+  case oUNor:
+  case oUXor:
+  case oUNxor: return 1;
+  case oPower: {
+    assert(child[1]->is_valuable() && child[1]->otype == oNum);
+    return child[0]->get_width() * child[1]->get_num().get_value().get_ui();
+  }
+  case oTime:  return child[0]->get_width() + child[1]->get_width();
+  case oDiv:
+  case oMode:  
+  case oRS:    
+  case oLS:
+  case oLRS:   return child[0]->get_width();
+  case oAnd:  
+  case oXor:
+  case oNxor:
+  case oOr:    return std::max(child[0]->get_width(), child[1]->get_width());
+  case oLAnd:
+  case oLOr:   return 1;
+  case oAdd:
+  case oMinus: return std::max(child[0]->get_width(), child[1]->get_width());
   case oLess:
   case oLe:
   case oGreat:
@@ -479,26 +550,12 @@ void netlist::Operation::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const
   case oEq:
   case oNeq:
   case oCEq:
-  case oCNeq:
-  case oAnd:
-  case oXor:
-  case oNxor:
-  case oOr:
-  case oLAnd:
-  case oLOr: {
-    child[0]->scan_vars(rf, ctl);
-    child[1]->scan_vars(rf, ctl);
-    break;
-  }
-  case oQuestion: {
-    child[0]->scan_vars(rf, true);
-    child[1]->scan_vars(rf, ctl);
-    child[2]->scan_vars(rf, ctl);
-    break;    
-  }
+  case oCNeq:  return 1;
+  case oQuestion: return std::max(child[1]->get_width(), child[2]->get_width());
   default:
     assert(0 == "wrong operation type!");
-  }
+  }  
+  return 0; 
 }
 
 void netlist::Operation::replace_variable(const VIdentifier& var, const Number& num) {

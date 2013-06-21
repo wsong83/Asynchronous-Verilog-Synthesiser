@@ -34,6 +34,8 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include <cmath>
+
 
 #include <ogdf/layered/SugiyamaLayout.h>
 #include <ogdf/layered/FastHierarchyLayout.h>
@@ -58,6 +60,12 @@ static const double G_NODE_H = 17.6;
 static const double G_FONT_RATIO = 3.6;
 static const double G_LAYER_DIST = 2;
 static const double G_NODE_DIST = 3;
+
+static const double PI = 3.14159265;
+
+  double d2r(double degree) {
+    return degree*PI/180.0;
+  }
 
 }
 
@@ -128,6 +136,22 @@ shared_ptr<dfgEdge> SDFG::dfgGraph::add_edge(const string& n, dfgEdge::edge_type
   return edge;
 }
 
+void SDFG::dfgGraph::add_edge_multi(const string& n, int t, vertex_descriptor src, vertex_descriptor snk) {
+    if(t == dfgEdge::SDFG_DF) add_edge(n, dfgEdge::SDFG_DF,  src, snk);
+    if(t & dfgEdge::SDFG_DDP) add_edge(n, dfgEdge::SDFG_DDP, src, snk);
+    if(t & dfgEdge::SDFG_CAL) add_edge(n, dfgEdge::SDFG_CAL, src, snk);
+    if(t & dfgEdge::SDFG_ASS) add_edge(n, dfgEdge::SDFG_ASS, src, snk);
+    if(t & dfgEdge::SDFG_DAT) add_edge(n, dfgEdge::SDFG_DAT, src, snk);
+    if(t & dfgEdge::SDFG_LOG) add_edge(n, dfgEdge::SDFG_LOG, src, snk);
+    if(t & dfgEdge::SDFG_ADR) add_edge(n, dfgEdge::SDFG_ADR, src, snk);
+    if(t & dfgEdge::SDFG_CTL) add_edge(n, dfgEdge::SDFG_CTL, src, snk);
+    if(t & dfgEdge::SDFG_CMP) add_edge(n, dfgEdge::SDFG_CMP, src, snk);
+    if(t & dfgEdge::SDFG_EQU) add_edge(n, dfgEdge::SDFG_EQU, src, snk);
+    if(t & dfgEdge::SDFG_CLK) add_edge(n, dfgEdge::SDFG_CLK, src, snk);
+    if(t & dfgEdge::SDFG_RST) add_edge(n, dfgEdge::SDFG_RST, src, snk);
+}
+  
+
 void SDFG::dfgGraph::add_path(shared_ptr<dfgPath> p) {
   shared_ptr<dfgNode> s, t;
   unsigned int ptype;
@@ -145,25 +169,7 @@ void SDFG::dfgGraph::add_path(shared_ptr<dfgPath> p) {
       add_node(t);
     }
 
-    ptype = p->type;
-    if(ptype == dfgEdge::SDFG_DF) 
-      add_edge(s->name, dfgEdge::SDFG_DF, s, t);
-    else {
-      if(ptype & dfgEdge::SDFG_DP) 
-        add_edge(s->name, dfgEdge::SDFG_DP, s, t);
-      
-      if(ptype & dfgEdge::SDFG_DDP) 
-        add_edge(s->name, dfgEdge::SDFG_DDP, s, t);
-      
-      if(ptype & dfgEdge::SDFG_CTL) {
-        if((ptype & dfgEdge::SDFG_CLK) == dfgEdge::SDFG_CLK) 
-          add_edge(s->name, dfgEdge::SDFG_CLK, s, t);
-        else if((ptype & dfgEdge::SDFG_RST) == dfgEdge::SDFG_RST) 
-          add_edge(s->name, dfgEdge::SDFG_RST, s, t);
-        else 
-          add_edge(s->name, dfgEdge::SDFG_CTL, s, t);
-      }
-    } 
+    add_edge_multi(s->name, p->type, s, t);
   } else {                      // normal path
     list<dfgPath::path_type> m_path = p->path;
     if(exist(p->src->get_hier_name())) {
@@ -189,24 +195,7 @@ void SDFG::dfgGraph::add_path(shared_ptr<dfgPath> p) {
         add_node(t);
       }
 
-      if(ptype == dfgEdge::SDFG_DF) 
-        add_edge(s->name, dfgEdge::SDFG_DF, s, t);
-      else {
-        if(ptype & dfgEdge::SDFG_DP) 
-          add_edge(s->name, dfgEdge::SDFG_DP, s, t);
-        
-        if(ptype & dfgEdge::SDFG_DDP) 
-          add_edge(s->name, dfgEdge::SDFG_DDP, s, t);
-        
-        if(ptype & dfgEdge::SDFG_CTL) {
-          if((ptype & dfgEdge::SDFG_CLK) == dfgEdge::SDFG_CLK) 
-            add_edge(s->name, dfgEdge::SDFG_CLK, s, t);
-          else if((ptype & dfgEdge::SDFG_RST) == dfgEdge::SDFG_RST) 
-            add_edge(s->name, dfgEdge::SDFG_RST, s, t);
-          else 
-            add_edge(s->name, dfgEdge::SDFG_CTL, s, t);
-        }
-      }
+      add_edge_multi(s->name, ptype,  s, t);
     }
   }
 }
@@ -989,36 +978,57 @@ bool SDFG::dfgGraph::layout(ogdf::Graph* pg, ogdf::GraphAttributes *pga) {
 
   if(!read(pg, pga)) return false;
 
+ 
   // special operations for self loops
   for_each(edges.begin(), edges.end(),
            [&](pair<const edge_descriptor, shared_ptr<dfgEdge> >& m) {
                if(boost::source(m.second->id, bg_) == boost::target(m.second->id, bg_)) { // self loop
                  shared_ptr<dfgNode> node = get_source(m.second);
-                 if(m.second->type == dfgEdge::SDFG_CTL) { // control
-                   m.second->bend.push_back(pair<double, double>
-                                            (node->position.first+G_NODE_H * G_NODE_DIST,
-                                             node->position.second));
-                   m.second->bend.push_back(pair<double, double>
-                                            (node->position.first+G_NODE_H * G_NODE_DIST * 0.5,
-                                             node->position.second - G_NODE_H * G_NODE_DIST*0.866));
-                 } else if(m.second->type == dfgEdge::SDFG_DP || m.second->type == dfgEdge::SDFG_DDP) { // data
-                   m.second->bend.push_back(pair<double, double>
-                                            (node->position.first-G_NODE_H * G_NODE_DIST,
-                                             node->position.second));
-                   m.second->bend.push_back(pair<double, double>
-                                            (node->position.first-G_NODE_H * G_NODE_DIST * 0.5,
-                                             node->position.second - G_NODE_H * G_NODE_DIST*0.866));
-                 } else {       // other, should not be this case
-                   m.second->bend.push_back(pair<double, double>
-                                            (node->position.first+G_NODE_H * G_NODE_DIST,
-                                             node->position.second));
-                   m.second->bend.push_back(pair<double, double>
-                                            (node->position.first+G_NODE_H * G_NODE_DIST * 0.5,
-                                             node->position.second + G_NODE_H * G_NODE_DIST*0.866));
+                 double base_len = G_NODE_H*G_NODE_DIST*0.8;
+                 switch(m.second->type) {
+                 case dfgEdge::SDFG_DDP:
+                   m.second->push_bend(-base_len*cos(d2r(30.0)), -base_len*sin(d2r(30.0)), true);
+                   m.second->push_bend(-base_len*cos(d2r(85.0)), -base_len*sin(d2r(85.0)), true);
+                   break;                   
+                 case dfgEdge::SDFG_CAL:
+                   m.second->push_bend(-base_len*cos(d2r(20.0)), -base_len*sin(d2r(20.0)), true);
+                   m.second->push_bend(-base_len*cos(d2r(80.0)), -base_len*sin(d2r(80.0)), true);
+                   break;                   
+                 case dfgEdge::SDFG_ASS:
+                   m.second->push_bend(-base_len*cos(d2r(10.0)), -base_len*sin(d2r(10.0)), true);
+                   m.second->push_bend(-base_len*cos(d2r(70.0)), -base_len*sin(d2r(70.0)), true);
+                   break;                   
+                 case dfgEdge::SDFG_DAT:
+                   m.second->push_bend(-base_len*cos(d2r(00.0)), -base_len*sin(d2r(00.0)), true);
+                   m.second->push_bend(-base_len*cos(d2r(60.0)), -base_len*sin(d2r(60.0)), true);
+                   break;
+                 case dfgEdge::SDFG_CTL:
+                   m.second->push_bend(base_len*cos(d2r(00.0)),  -base_len*sin(d2r(00.0)), true);
+                   m.second->push_bend(base_len*cos(d2r(60.0)),  -base_len*sin(d2r(60.0)), true);
+                   break;
+                 case dfgEdge::SDFG_CMP:
+                   m.second->push_bend(base_len*cos(d2r(10.0)),  -base_len*sin(d2r(10.0)), true);
+                   m.second->push_bend(base_len*cos(d2r(70.0)),  -base_len*sin(d2r(70.0)), true);
+                   break;
+                 case dfgEdge::SDFG_EQU:
+                   m.second->push_bend(base_len*cos(d2r(20.0)),  -base_len*sin(d2r(20.0)), true);
+                   m.second->push_bend(base_len*cos(d2r(80.0)),  -base_len*sin(d2r(80.0)), true);
+                   break;
+                 case dfgEdge::SDFG_LOG:
+                   m.second->push_bend(base_len*cos(d2r(30.0)),  -base_len*sin(d2r(30.0)), true);
+                   m.second->push_bend(base_len*cos(d2r(90.0)),  -base_len*sin(d2r(90.0)), true);
+                   break;
+                 case dfgEdge::SDFG_ADR:
+                   m.second->push_bend(base_len*cos(d2r(40.0)),  -base_len*sin(d2r(40.0)), true);
+                   m.second->push_bend(base_len*cos(d2r(100.0)),  -base_len*sin(d2r(100.0)), true);
+                   break;
+                 default:
+                   m.second->push_bend(base_len*cos(d2r(00.0)),   base_len*sin(d2r(00.0)), true);
+                   m.second->push_bend(base_len*cos(d2r(60.0)),   base_len*sin(d2r(60.0)), true);
                  }
                }
              });
-
+  
   return true;
 }
 

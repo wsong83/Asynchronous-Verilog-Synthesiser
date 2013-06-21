@@ -451,10 +451,12 @@ bool netlist::Block::elaborate(std::set<shared_ptr<NetComp> >&,
   return true;
 }
 
-void netlist::Block::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
+shared_ptr<SDFG::RTree> netlist::Block::get_rtree() const {
+  shared_ptr<SDFG::RTree> rv(new SDFG::RTree(false));
   BOOST_FOREACH(const shared_ptr<NetComp>& m, statements) {
-    m->scan_vars(rf, ctl);
+    rv->add_tree(m->get_rtree());
   }
+  return rv;
 }
 
 void netlist::Block::replace_variable(const VIdentifier& var, const Number& num) {

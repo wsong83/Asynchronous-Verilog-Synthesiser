@@ -38,7 +38,7 @@
 // the Synchronous Data-Flow Graph (SDFG) library
 namespace SDFG {
   
-    class dfgPath {
+  class dfgPath {
   public:
     boost::shared_ptr<dfgNode> src;
     boost::shared_ptr<dfgNode> tar;
@@ -46,17 +46,24 @@ namespace SDFG {
     typedef std::pair<boost::shared_ptr<dfgNode>, int> path_type;
     std::list<path_type> path;
     std::set<boost::shared_ptr<dfgNode> > node_set; // remember the nodes in this path; to avoid combi loop
-
+    
     dfgPath() : type(0) {}
     
     // add sub-paths
     void push_back(boost::shared_ptr<dfgNode>, int);
     void push_front(boost::shared_ptr<dfgNode>, int);
     void combine(boost::shared_ptr<dfgPath>);
-    static int cal_type(const int&, const int&); // calculate the type
+    static int cal_type(int, int); // calculate the type
 
     // stream out
     std::ostream& streamout(std::ostream&) const;
+    
+    static std::string get_stype(int);
+  private:
+    static int cal_type_data(int, int);
+    static int cal_type_control(int, int);
+    static int cal_type_data2control(int, int);
+    
   };
 
   inline std::ostream& operator<< (std::ostream& os, const dfgPath& p) {

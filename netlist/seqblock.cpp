@@ -166,13 +166,9 @@ void netlist::SeqBlock::elab_inparse() {
   if(slist_level.size() == 1 && slist_level.front()->is_variable() && slist_level.front()->get_variable().name == "*") {
     // automatic sensitive list filling
     slist_level.clear();
-    shared_ptr<SDFG::RForest> rf(new SDFG::RForest());
-    Block::scan_vars(rf, false);
-    std::set<string> cset;
-    BOOST_FOREACH(SDFG::RForest::tree_map_type& t, rf->tree) {
-      std::set<string> csig = rf->get_control(t.first);
-      cset.insert(csig.begin(), csig.end());
-    }
+
+    std::set<string> cset = get_rtree()->get_all();
+
     BOOST_FOREACH(const string& s, cset) {
       VIdentifier signal(s);
       slist_level.push_back(shared_ptr<Expression>(new Expression(signal)));
@@ -244,10 +240,8 @@ void netlist::SeqBlock::db_expunge() {
 }
 
 
-void netlist::SeqBlock::scan_vars(shared_ptr<SDFG::RForest> rf, bool) const {
-  Block::scan_vars(rf, false);
-  //std::cout << "always@ ------->" << *this << std::endl;
-  //rf->write(std::cout);
+shared_ptr<SDFG::RTree> netlist::SeqBlock::get_rtree() const {
+  return Block::get_rtree();
 }
 
 
@@ -255,42 +249,33 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
   assert(db_var.empty());
   assert(db_instance.empty());
 
-  shared_ptr<SDFG::RForest> rf(new SDFG::RForest());
-  scan_vars(rf, false);
-  std::set<string> cset;        // to store all control signals
-  
-  BOOST_FOREACH(SDFG::RForest::tree_map_type& t, rf->tree) {
-    //std::cout << "target ->" << " " << t.first << std::endl;
-    std::set<string> csig = rf->get_control(t.first);
-    if(!slist_pulse.empty()) cset.insert(csig.begin(), csig.end());
-    std::set<string> dsig = rf->get_data(t.first);
-    //std::cout << "ctl: ";
-    BOOST_FOREACH(const string& s, csig) {
-      G->add_edge(s, SDFG::dfgEdge::SDFG_CTL, s, t.first);
-      //std::cout << s << " ";
-    }
-    //std::cout << "data: " ;
-    BOOST_FOREACH(const string& s, dsig) {
-      if(s != "") G->add_edge(s, SDFG::dfgEdge::SDFG_DP, s, t.first);
-      else        G->add_edge(t.first, SDFG::dfgEdge::SDFG_DDP, t.first, t.first); // self-loop
-      //std::cout << s << " ";
-    }
-    //std::cout << std::endl;
-    G->get_node(t.first)->ptr.insert(get_sp());
-  }
+  shared_ptr<SDFG::RTree> rt = get_rtree();
+  std::set<string> cset = rt->get_control();        // to store all control signals
 
+  BOOST_FOREACH(SDFG::RTree::sub_tree_type& t, rt->tree) {
+    assert(t.first != SDFG::RTree::DTarget); 
+    BOOST_FOREACH(SDFG::RTree::rtree_edge_type& e, t.second) {
+      if(slist_pulse.empty()) {
+        if(e.second != SDFG::dfgEdge::SDFG_DDP) {
+          e.second &= ~(SDFG::dfgEdge::SDFG_DDP); // remove self-data=path when it is not a ff (assuming no implicit latch)
+          G->add_edge_multi(e.first, e.second, e.first, t.first);
+        }
+      } else
+        G->add_edge_multi(e.first, e.second, e.first, t.first);
+    }
+  }
 
   if(!slist_pulse.empty()) {    // ff
     assert(slist_pulse.size() <= 2 && slist_pulse.size() >= 1);
-    shared_ptr<SDFG::RForest> slsig(new SDFG::RForest());
+    shared_ptr<SDFG::RTree> sltree(new SDFG::RTree(false));
     typedef pair<bool, shared_ptr<Expression> > slist_type;
     BOOST_FOREACH(slist_type& sl, slist_pulse) {
-      sl.second->scan_vars(slsig, true);
+      sltree->add_tree(sl.second->get_rtree());
     }
 
     std::set<string> clks, rsts;
 
-    BOOST_FOREACH(const string& s, slsig->tree["@CTL"]->sig) {
+    BOOST_FOREACH(const string& s, sltree->get_all()) {
       if(cset.count(s))
         rsts.insert(s);
       else
@@ -301,7 +286,7 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
     assert(rsts.size() <= 1);
     
     // handle the nodes
-    BOOST_FOREACH(SDFG::RForest::tree_map_type& t, rf->tree) {
+    BOOST_FOREACH(SDFG::RTree::sub_tree_type& t, rt->tree) {
       shared_ptr<SDFG::dfgNode> node = G->get_node(t.first);
       assert(node);
       node->type = SDFG::dfgNode::SDFG_FF;
@@ -315,10 +300,10 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
     }
   } else {                      // combinational
     // handle the nodes
-    BOOST_FOREACH(SDFG::RForest::tree_map_type& t, rf->tree) {
-      if(G->exist(t.first, t.first))
-        G->get_node(t.first)->type = SDFG::dfgNode::SDFG_LATCH; // self-loop means latch
-      else
+    BOOST_FOREACH(SDFG::RTree::sub_tree_type& t, rt->tree) {
+      //if(t.second.count(t.first))
+      //G->get_node(t.first)->type = SDFG::dfgNode::SDFG_LATCH; // self-loop means latch
+      //else
         G->get_node(t.first)->type = SDFG::dfgNode::SDFG_COMB;
     }
   }

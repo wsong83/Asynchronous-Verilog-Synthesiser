@@ -201,6 +201,7 @@ bool shell::CMD::CMDReportFSM::exec ( const std::string& str, Env * pEnv){
   BOOST_FOREACH(const string& fsm_name, fsms) {
     gEnv.stdOs << "[" << ++index << "]  ";
     gEnv.stdOs <<  fsm_name << " ";
+    gEnv.stdOs << tarDesign->RRG->get_node(fsm_name)->get_fsm_type();
     gEnv.stdOs << endl;
   }
 
