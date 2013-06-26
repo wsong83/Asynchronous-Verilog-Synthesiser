@@ -263,6 +263,8 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
       } else
         G->add_edge_multi(e.first, e.second, e.first, t.first);
     }
+    //std::cout << std::endl;
+    G->get_node(t.first)->ptr.insert(get_sp());
   }
 
   if(!slist_pulse.empty()) {    // ff
