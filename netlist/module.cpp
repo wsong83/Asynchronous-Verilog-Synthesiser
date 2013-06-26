@@ -576,6 +576,15 @@ std::set<string> netlist::Module::extract_fsms(bool verbose, bool force,
   return FSMs;
 }
 
+map<string, string> netlist::Module::extract_fsms_new() {
+  map<string, string> rv;
+  map<shared_ptr<SDFG::dfgNode>, int > dfg_fsms = RRG->get_fsms_new();
+  typedef std::pair<const shared_ptr<SDFG::dfgNode>, int> dfg_fsms_type;
+  BOOST_FOREACH(dfg_fsms_type f, dfg_fsms) {
+    rv[f.first->get_hier_name()] = SDFG::dfgNode::get_fsm_type(f.second);
+  }
+  return rv;
+}
 
 double netlist::Module::get_ratio_state_preserved_oport(map<VIdentifier, pair<bool, string> >& port_ana, const std::set<string>& gFSMs) {
   assert(DFG);

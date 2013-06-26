@@ -120,6 +120,7 @@ namespace SDFG {
     bool is_const();            // is const or const after reset
     int is_fsm() const;
     std::string get_fsm_type() const;
+    static std::string get_fsm_type(int);
 
     // for debug usage
     std::ostream& streamout(std::ostream&) const;

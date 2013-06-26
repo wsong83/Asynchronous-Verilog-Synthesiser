@@ -214,6 +214,8 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
                                                    unsigned int& num_of_regs,
                                                    unsigned int& num_of_p_fsms
                                                    ) const; // extract fsms from RRG and DFG
+
+    std::map<boost::shared_ptr<dfgNode>, int > get_fsms_new() const; // extract fsms from RRG and DFG
     void fsm_simplify();  // simplify the FSM connection graph
 
     // other
