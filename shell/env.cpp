@@ -74,24 +74,25 @@ namespace {
     shell::CMD::func_name::exec(tclObj.get_string(), pEnv);        \
   }
 
-  FUNC_WRAPPER     (bool,         CMDAnalyze         )
-  FUNC_WRAPPER     (std::string,  CMDCurrentDesign   )
-  FUNC_WRAPPER     (std::string,  CMDEcho            )
-  FUNC_WRAPPER     (bool,         CMDElaborate       )
-  FUNC_WRAPPER_VOID(              CMDExit            )
-  FUNC_WRAPPER_VOID(              CMDExtractDatapath )
-  FUNC_WRAPPER_VOID(              CMDExtractRRG      )
-  FUNC_WRAPPER_VOID(              CMDExtractSDFG     )
-  FUNC_WRAPPER_VOID(              CMDHelp            )
-  FUNC_WRAPPER     (bool,         CMDReportDFGPath   )
-  FUNC_WRAPPER     (bool,         CMDReportFSM       )
-  FUNC_WRAPPER     (bool,         CMDReportNetlist   )
-  FUNC_WRAPPER     (bool,         CMDReportPartition )
-  FUNC_WRAPPER     (bool,         CMDReportPorts     )
-  FUNC_WRAPPER     (std::string,  CMDShell           )
-  FUNC_WRAPPER     (bool,         CMDSuppressMessage )
-  FUNC_WRAPPER     (bool,         CMDUniquify        )
-  FUNC_WRAPPER     (bool,         CMDWrite           )
+  FUNC_WRAPPER     (bool,         CMDAnalyze            )
+  FUNC_WRAPPER     (std::string,  CMDCurrentDesign      )
+  FUNC_WRAPPER     (std::string,  CMDEcho               )
+  FUNC_WRAPPER     (bool,         CMDElaborate          )
+  FUNC_WRAPPER_VOID(              CMDExit               )
+  FUNC_WRAPPER_VOID(              CMDExtractDatapath    )
+  FUNC_WRAPPER_VOID(              CMDExtractRRG         )
+  FUNC_WRAPPER_VOID(              CMDExtractSDFG        )
+  FUNC_WRAPPER_VOID(              CMDHelp               )
+  FUNC_WRAPPER     (bool,         CMDReportDFGPath      )
+  FUNC_WRAPPER     (bool,         CMDReportFSM          )
+  FUNC_WRAPPER     (bool,         CMDReportNetlist      )
+  FUNC_WRAPPER     (bool,         CMDReportPartition    )
+  FUNC_WRAPPER     (bool,         CMDReportPorts        )
+  FUNC_WRAPPER     (std::string,  CMDShell              )
+  FUNC_WRAPPER_VOID(              CMDStateSpaceAnalysis )
+  FUNC_WRAPPER     (bool,         CMDSuppressMessage    )
+  FUNC_WRAPPER     (bool,         CMDUniquify           )
+  FUNC_WRAPPER     (bool,         CMDWrite              )
 
 #undef FUNC_WRAPPER
 #undef FUNC_WRAPPER_VOID
@@ -175,6 +176,7 @@ bool shell::Env::initialise() {
   AVS_ENV_ADD_TCL_CMD(CMDReportPartition);
   AVS_ENV_ADD_TCL_CMD(CMDReportPorts);
   AVS_ENV_ADD_TCL_CMD(CMDShell);
+  AVS_ENV_ADD_TCL_CMD(CMDStateSpaceAnalysis);
   AVS_ENV_ADD_TCL_CMD(CMDSuppressMessage);
   AVS_ENV_ADD_TCL_CMD(CMDUniquify);
   AVS_ENV_ADD_TCL_CMD(CMDWrite);

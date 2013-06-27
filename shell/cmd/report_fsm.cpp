@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -208,6 +208,15 @@ bool shell::CMD::CMDReportFSM::exec ( const std::string& str, Env * pEnv){
       gEnv.stdOs <<  fsm_name << " ";
       gEnv.stdOs << tarDesign->RRG->get_node(fsm_name)->get_fsm_type();
       gEnv.stdOs << endl;
+      if(arg.bSpace) {
+        std::set<shared_ptr<netlist::NetComp> > node_set = tarDesign->RRG->get_node(fsm_name)->ptr;
+        BOOST_FOREACH(shared_ptr<netlist::NetComp> pnode, node_set) {
+          if(pnode->get_type() == netlist::NetComp::tSeqBlock)
+            // use the local name rather than the full name
+            boost::static_pointer_cast<netlist::SeqBlock>(pnode)->
+              ssa_analysis(netlist::VIdentifier(tarDesign->RRG->get_node(fsm_name)->name));
+        }
+      }
     }
     
     // build the fsm connection graph
@@ -237,18 +246,6 @@ bool shell::CMD::CMDReportFSM::exec ( const std::string& str, Env * pEnv){
     //fhandler.close();
     //gEnv.stdOs << "write the simplified FSM connection graph to " << outputFileName << endl;
     
-    if(arg.bSpace) { // show space
-      BOOST_FOREACH(const string& fsm_name, fsms) {
-        gEnv.stdOs << "SSA Conditions for \"" << fsm_name << "\"" << std::endl;
-        std::set<shared_ptr<netlist::NetComp> > node_set = tarDesign->RRG->get_node(fsm_name)->ptr;
-        BOOST_FOREACH(shared_ptr<netlist::NetComp> pnode, node_set) {
-          if(pnode->get_type() == netlist::NetComp::tSeqBlock)
-            // use the local name rather than the full name
-            boost::static_pointer_cast<netlist::SeqBlock>(pnode)->
-              ssa_analysis(netlist::VIdentifier(tarDesign->RRG->get_node(fsm_name)->name));
-        }
-      }
-    }
   } else {
     std::map<string, string> fsms = tarDesign->extract_fsms_new();
     typedef std::pair<const string, string> fsms_type;

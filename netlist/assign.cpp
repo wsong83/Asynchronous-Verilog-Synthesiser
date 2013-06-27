@@ -130,15 +130,16 @@ void netlist::Assign::replace_variable(const VIdentifier& var, const Number& num
 }
 
 shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifier& target, std::set<string> s_set) {
-  shared_ptr<SDFG::RTree> lt = lval->get_rtree();
-  shared_ptr<SDFG::RTree> rt = rexp->get_rtree();
+  shared_ptr<SDFG::RTree> rt = get_rtree();
   shared_ptr<Expression> rv;
-  if(lt->tree.count(target.name)) {
+  if(rt->tree.count(target.name)) {
+    //std::cout << *this << std::endl;
     rv.reset(rexp->deep_copy());
     // handle all signals in the expression
-    std::set<string> s_set = rt->get_all(target.name);
-    BOOST_FOREACH(const string& sname, s_set) {
+    std::set<string> sig_set = rt->get_all(target.name);
+    BOOST_FOREACH(const string& sname, sig_set) {
       if(sname != target.name) { // other signals
+        //std::cout << sname << std::endl;
         shared_ptr<SDFG::dfgNode> pnode = get_module()->DFG->get_node(sname);
         assert(pnode);
         bool found_source = false;
@@ -148,6 +149,7 @@ shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifie
           switch(pnode->type) {
           case SDFG::dfgNode::SDFG_DF: {
             if(pnode->ptr.size() > 1) {
+              //std::cout << pnode->get_full_name() << std::endl;
               found_source = true;
             } else {
               pnode = (pnode->pg->get_in_nodes_cb(pnode)).front();
