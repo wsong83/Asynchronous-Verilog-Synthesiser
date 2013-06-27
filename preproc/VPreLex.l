@@ -14,7 +14,7 @@
  *
  ******************************************************************************
  *
- * Copyright 2000-2012 by Wilson Snyder.  This program is free software;
+ * Copyright 2000-2013 by Wilson Snyder.  This program is free software;
  * you can redistribute it and/or modify it under the terms of either the GNU
  * Lesser General Public License Version 3 or the Perl Artistic License Version 2.0.
  *
@@ -505,6 +505,7 @@ void VPreLex::scanBytesBack(const string& str) {
 
 string VPreLex::currentUnreadChars() {
     // WARNING - Peeking at internals
+    if (!currentBuffer()) return "";
     ssize_t left = (yy_n_chars - (yy_c_buf_p -currentBuffer()->yy_ch_buf));
     if (left > 0) {  // left may be -1 at EOS
 	*(yy_c_buf_p) = (yy_hold_char);
