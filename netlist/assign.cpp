@@ -100,6 +100,7 @@ void netlist::Assign::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
     BOOST_FOREACH(SDFG::RTree::rtree_edge_type& e, t.second) {
       G->add_edge_multi(e.first, e.second, e.first, t.first);
     }
+    G->get_node(t.first)->ptr.insert(get_sp());
   }
 }
 
@@ -129,84 +130,78 @@ void netlist::Assign::replace_variable(const VIdentifier& var, const Number& num
 }
 
 shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifier& target, std::set<string> s_set) {
-  /*
-  shared_ptr<SDFG::RForest> lrf(new SDFG::RForest());
-  shared_ptr<SDFG::RForest> rrf(new SDFG::RForest());
-  lval->scan_vars(lrf, false);
-  rexp->scan_vars(rrf, false);
+  shared_ptr<SDFG::RTree> rt = get_rtree();
   shared_ptr<Expression> rv;
-  if(lrf->tree.count(target.name)) {
+  if(rt->tree.count(target.name)) {
+    //std::cout << *this << std::endl;
     rv.reset(rexp->deep_copy());
     // handle all signals in the expression
-    //if(s_set.size() < MAX_LEVEL_OF_COMBI_EXP && rrf->tree["@DATA"]) {
-    if(rrf->tree["@DATA"]) {
-      //std::cout << "the size of s_set " << s_set.size() << std::endl;
-      BOOST_FOREACH(const string& sname, rrf->tree["@DATA"]->sig) {
-        if(sname != target.name) { // other signals
-          shared_ptr<SDFG::dfgNode> pnode = get_module()->DFG->get_node(sname);
+    std::set<string> sig_set = rt->get_all(target.name);
+    BOOST_FOREACH(const string& sname, sig_set) {
+      if(sname != target.name) { // other signals
+        //std::cout << sname << std::endl;
+        shared_ptr<SDFG::dfgNode> pnode = get_module()->DFG->get_node(sname);
+        assert(pnode);
+        bool found_source = false;
+        while(!found_source) {
           assert(pnode);
-          bool found_source = false;
-          while(!found_source) {
-            assert(pnode);
-            //std::cout << pnode->get_full_name() << std::endl;
-            switch(pnode->type) {
-            case SDFG::dfgNode::SDFG_DF: {
-              if(pnode->ptr.size() > 1) {
-                found_source = true;
-              } else {
-                pnode = (pnode->pg->get_in_nodes_cb(pnode)).front();
-              }
-              break;
-            }
-            case SDFG::dfgNode::SDFG_COMB:
-            case SDFG::dfgNode::SDFG_FF:
-            case SDFG::dfgNode::SDFG_LATCH: {
+          //std::cout << pnode->get_full_name() << std::endl;
+          switch(pnode->type) {
+          case SDFG::dfgNode::SDFG_DF: {
+            if(pnode->ptr.size() > 1) {
+              //std::cout << pnode->get_full_name() << std::endl;
               found_source = true;
-              break;
+            } else {
+              pnode = (pnode->pg->get_in_nodes_cb(pnode)).front();
             }
-            case SDFG::dfgNode::SDFG_IPORT: 
-            case SDFG::dfgNode::SDFG_OPORT:   {
-              if((pnode->pg->get_in_nodes_cb(pnode)).size()) {
-                pnode = (pnode->pg->get_in_nodes_cb(pnode)).front(); // get the source from the higher hierarchy
-              } else {
-                found_source = true; // top level
-              }
-              break;
-            }
-            default:
-              assert(0 == "wrong type");
-            }
+            break;
           }
-          assert(pnode);
-          if(pnode->type & SDFG::dfgNode::SDFG_LATCH) {
-            G_ENV->error("ANA-SSA-1", pnode->get_full_name(), get_module()->DFG->get_node(sname)->get_full_name());
+          case SDFG::dfgNode::SDFG_COMB:
+          case SDFG::dfgNode::SDFG_FF:
+          case SDFG::dfgNode::SDFG_LATCH: {
+            found_source = true;
+            break;
           }
-          if(s_set.count(pnode->get_full_name())) {
-            G_ENV->error("ANA-SSA-2", pnode->get_full_name());
-          } else {
-            std::set<string> m_set = s_set;
-            m_set.insert(pnode->get_full_name());
-            
-            if(!(pnode->type & (SDFG::dfgNode::SDFG_FF | SDFG::dfgNode::SDFG_LATCH | SDFG::dfgNode::SDFG_PORT))) {
-              shared_ptr<Expression> sig_exp;
-              BOOST_FOREACH(shared_ptr<NetComp> ncomp, pnode->ptr) {
-                if(ncomp->ctype != tVariable) {
-                  //std::cout << *ncomp << std::endl;
-                  //std::cout << pnode->name << std::endl;
-                  sig_exp = ncomp->get_combined_expression(VIdentifier(pnode->name), m_set);
-                  //std::cout << *sig_exp << std::endl;
-                  break;
-                }
-              }
-              assert(sig_exp);
-              rv->replace_variable(VIdentifier(sname), sig_exp);
+          case SDFG::dfgNode::SDFG_IPORT: 
+          case SDFG::dfgNode::SDFG_OPORT:   {
+            if((pnode->pg->get_in_nodes_cb(pnode)).size()) {
+              pnode = (pnode->pg->get_in_nodes_cb(pnode)).front(); // get the source from the higher hierarchy
+            } else {
+              found_source = true; // top level
             }
+            break;
+          }
+          default:
+            assert(0 == "wrong type");
+          }
+        }
+        assert(pnode);
+        if(pnode->type & SDFG::dfgNode::SDFG_LATCH) {
+          G_ENV->error("ANA-SSA-1", pnode->get_full_name(), get_module()->DFG->get_node(sname)->get_full_name());
+        }
+        if(s_set.count(pnode->get_full_name())) {
+          G_ENV->error("ANA-SSA-2", pnode->get_full_name());
+        } else {
+          std::set<string> m_set = s_set;
+          m_set.insert(pnode->get_full_name());
+          
+          if(!(pnode->type & (SDFG::dfgNode::SDFG_FF | SDFG::dfgNode::SDFG_LATCH | SDFG::dfgNode::SDFG_PORT))) {
+            shared_ptr<Expression> sig_exp;
+            BOOST_FOREACH(shared_ptr<NetComp> ncomp, pnode->ptr) {
+              if(ncomp->ctype != tVariable) {
+                //std::cout << *ncomp << std::endl;
+                //std::cout << pnode->name << std::endl;
+                sig_exp = ncomp->get_combined_expression(VIdentifier(pnode->name), m_set);
+                //std::cout << *sig_exp << std::endl;
+                break;
+              }
+            }
+            assert(sig_exp);
+            rv->replace_variable(VIdentifier(sname), sig_exp);
           }
         }
       }
     }
   }
   return rv;
-  */
-  assert(0 == "TODO!");
 }

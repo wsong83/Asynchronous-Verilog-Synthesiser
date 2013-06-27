@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+# Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
 #    Advanced Processor Technologies Group, School of Computer Science
 #    University of Manchester, Manchester M13 9PL UK
 #
@@ -27,7 +27,7 @@
 INCDIRS = -I./ -I../../ -I../../cpptcl/
 
 # targets
-TARGETS = analyze.o current_design.o echo.o elaborate.o exit.o extract_rrg.o extract_sdfg.o extract_datapath.o help.o report_dfg_path.o report_fsm.o report_netlist.o report_partition.o report_ports.o shell.o suppress_message.o uniquify.o write.o
+TARGETS = analyze.o current_design.o echo.o elaborate.o exit.o extract_rrg.o extract_sdfg.o extract_datapath.o help.o report_dfg_path.o report_fsm.o report_netlist.o report_partition.o report_ports.o shell.o state_space_analysis.o suppress_message.o uniquify.o write.o
 HEADERS = $(wildcard ./*.h)
 HEADERS += ../env.h
 

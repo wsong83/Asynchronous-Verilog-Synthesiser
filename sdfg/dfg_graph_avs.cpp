@@ -302,6 +302,17 @@ SDFG::dfgGraph::get_fsms(bool verbose,
   return pfsm;
 }
 
+map<shared_ptr<dfgNode>, int> SDFG::dfgGraph::get_fsms_new() const {
+  map<shared_ptr<dfgNode>, int> rv;
+  BOOST_FOREACH(nodes_type n, nodes) {
+    int t = n.second->is_fsm();
+    if(t)
+      rv[n.second] = t;
+  }
+  
+  return rv;
+}
+
 void SDFG::dfgGraph::fsm_simplify() {  // simplify the FSM connection graph
   std::set<shared_ptr<dfgNode> > node_set;
   std::list<shared_ptr<dfgNode> > node_list;
