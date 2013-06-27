@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -59,6 +59,7 @@ namespace {
     bool bSpace;                // space analysis
     bool bForce;                // force to re-extract FSMs
     bool bVerbose;              // show extra information
+    bool bNew;                  // use the new algorithm
     std::string sDesign;        // target design
     
     Argument() : 
@@ -67,6 +68,7 @@ namespace {
       bSpace(false),
       bForce(false),
       bVerbose(false),
+      bNew(false),
       sDesign("") {}
   };
 }
@@ -79,6 +81,7 @@ BOOST_FUSION_ADAPT_STRUCT
  (bool, bSpace)
  (bool, bForce)
  (bool, bVerbose)
+ (bool, bNew)
  (std::string, sDesign)
  )
 
@@ -102,7 +105,8 @@ namespace {
           (lit("space")   >> blanks)                        [at_c<2>(_r1) = true] ||
           (lit("force")   >> blanks)                        [at_c<3>(_r1) = true] ||
           (lit("verbose") >> blanks)                        [at_c<4>(_r1) = true] ||
-          (lit("design") >> blanks >> identifier >> blanks) [at_c<5>(_r1) = _1]
+          (lit("new")     >> blanks)                        [at_c<5>(_r1) = true] ||
+          (lit("design") >> blanks >> identifier >> blanks) [at_c<6>(_r1) = _1]
           );
       
       start = *(args(_val));
@@ -177,71 +181,81 @@ bool shell::CMD::CMDReportFSM::exec ( const std::string& str, Env * pEnv){
   }
   if(!tarDesign->RRG) tarDesign->RRG = tarDesign->DFG->get_RRG();
   
-  // do the FSM extraction
-  unsigned int num_of_nodes = 0;
-  unsigned int num_of_regs = 0;
-  unsigned int num_of_p_fsms = 0;
-  std::set<string> fsms = 
-    tarDesign->extract_fsms(arg.bVerbose, arg.bForce, tarDesign->RRG, 
-                            num_of_nodes, num_of_regs, num_of_p_fsms);
-
-  // report
-  if(num_of_nodes > 0) {
-    std::cout << "\n\nSUMMARY:" << std::endl;
-    std::cout << "In this extraction, " << 
-      num_of_nodes << " nodes has been scanned, in which " << 
-      num_of_regs << " nodes are registers." << std::endl;
-    std::cout << "In total " << 
-      fsms.size() << " FSM controllers has been found in " <<
-      num_of_p_fsms << " potential FSM registers." << std::endl;
-  }
-
-  std::cout << "The extracted FSMs are listed below:" << std::endl;
-  unsigned int index = 0;
-  BOOST_FOREACH(const string& fsm_name, fsms) {
-    gEnv.stdOs << "[" << ++index << "]  ";
-    gEnv.stdOs <<  fsm_name << " ";
-    gEnv.stdOs << endl;
-  }
-
-  // build the fsm connection graph
-  std::set<shared_ptr<SDFG::dfgNode> > fsms_nodes;
-  BOOST_FOREACH(const string& fsm_name, fsms) {
-    fsms_nodes.insert(tarDesign->RRG->get_node(fsm_name));
-  }
-  shared_ptr<SDFG::dfgGraph> fsm_graph = 
-    tarDesign->RRG->build_reg_graph(fsms_nodes);
-
-  // specify the output file name
-  string outputFileName = designName + ".fsm";
-
-  // open the file
-  ofstream fhandler;
-  fhandler.open(system_complete(outputFileName), std::ios_base::out|std::ios_base::trunc);
-
-  fsm_graph->write(fhandler);
-  fhandler.close();
-  
-  gEnv.stdOs << "write the FSM connection graph to " << outputFileName << endl;
-  
-  //outputFileName = designName + ".fsm.sim";
-  //fhandler.open(system_complete(outputFileName), std::ios_base::out|std::ios_base::trunc);
-  //fsm_graph->fsm_simplify();
-  //fsm_graph->write(fhandler);
-  //fhandler.close();
-  //gEnv.stdOs << "write the simplified FSM connection graph to " << outputFileName << endl;
-
-  if(arg.bSpace) { // show space
+  if(!arg.bNew) {
+    // do the FSM extraction
+    unsigned int num_of_nodes = 0;
+    unsigned int num_of_regs = 0;
+    unsigned int num_of_p_fsms = 0;
+    std::set<string> fsms = 
+      tarDesign->extract_fsms(arg.bVerbose, arg.bForce, tarDesign->RRG, 
+                              num_of_nodes, num_of_regs, num_of_p_fsms);
+    
+    // report
+    if(num_of_nodes > 0) {
+      std::cout << "\n\nSUMMARY:" << std::endl;
+      std::cout << "In this extraction, " << 
+        num_of_nodes << " nodes has been scanned, in which " << 
+        num_of_regs << " nodes are registers." << std::endl;
+      std::cout << "In total " << 
+        fsms.size() << " FSM controllers has been found in " <<
+        num_of_p_fsms << " potential FSM registers." << std::endl;
+    }
+    
+    std::cout << "The extracted FSMs are listed below:" << std::endl;
+    unsigned int index = 0;
     BOOST_FOREACH(const string& fsm_name, fsms) {
-      gEnv.stdOs << "SSA Conditions for \"" << fsm_name << "\"" << std::endl;
-      std::set<shared_ptr<netlist::NetComp> > node_set = tarDesign->RRG->get_node(fsm_name)->ptr;
-      BOOST_FOREACH(shared_ptr<netlist::NetComp> pnode, node_set) {
-        if(pnode->get_type() == netlist::NetComp::tSeqBlock)
-          // use the local name rather than the full name
-          boost::static_pointer_cast<netlist::SeqBlock>(pnode)->
-            ssa_analysis(netlist::VIdentifier(tarDesign->RRG->get_node(fsm_name)->name));
+      gEnv.stdOs << "[" << ++index << "]  ";
+      gEnv.stdOs <<  fsm_name << " ";
+      gEnv.stdOs << tarDesign->RRG->get_node(fsm_name)->get_fsm_type();
+      gEnv.stdOs << endl;
+      if(arg.bSpace) {
+        std::set<shared_ptr<netlist::NetComp> > node_set = tarDesign->RRG->get_node(fsm_name)->ptr;
+        BOOST_FOREACH(shared_ptr<netlist::NetComp> pnode, node_set) {
+          if(pnode->get_type() == netlist::NetComp::tSeqBlock)
+            // use the local name rather than the full name
+            boost::static_pointer_cast<netlist::SeqBlock>(pnode)->
+              ssa_analysis(netlist::VIdentifier(tarDesign->RRG->get_node(fsm_name)->name));
+        }
       }
     }
+    
+    // build the fsm connection graph
+    std::set<shared_ptr<SDFG::dfgNode> > fsms_nodes;
+    BOOST_FOREACH(const string& fsm_name, fsms) {
+      fsms_nodes.insert(tarDesign->RRG->get_node(fsm_name));
+    }
+    shared_ptr<SDFG::dfgGraph> fsm_graph = 
+      tarDesign->RRG->build_reg_graph(fsms_nodes);
+    
+    // specify the output file name
+    string outputFileName = designName + ".fsm";
+    
+    // open the file
+    ofstream fhandler;
+    fhandler.open(system_complete(outputFileName), std::ios_base::out|std::ios_base::trunc);
+    
+    fsm_graph->write(fhandler);
+    fhandler.close();
+    
+    gEnv.stdOs << "write the FSM connection graph to " << outputFileName << endl;
+    
+    //outputFileName = designName + ".fsm.sim";
+    //fhandler.open(system_complete(outputFileName), std::ios_base::out|std::ios_base::trunc);
+    //fsm_graph->fsm_simplify();
+    //fsm_graph->write(fhandler);
+    //fhandler.close();
+    //gEnv.stdOs << "write the simplified FSM connection graph to " << outputFileName << endl;
+    
+  } else {
+    std::map<string, string> fsms = tarDesign->extract_fsms_new();
+    typedef std::pair<const string, string> fsms_type;
+    unsigned int i = 0;
+    BOOST_FOREACH(fsms_type f, fsms) {
+      gEnv.stdOs << "[" << ++i << "]  ";
+      gEnv.stdOs <<  f.first << " ";
+      gEnv.stdOs << f.second;
+      gEnv.stdOs << endl;
+    }   
   }
 
   return true;

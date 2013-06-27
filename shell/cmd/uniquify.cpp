@@ -198,6 +198,8 @@ bool shell::CMD::CMDUniquify::exec(const std::string& str, Env * pEnv) {
                      existed_module_set.insert(m.second->mname);
                    } else {     // normal module
                      shared_ptr<netlist::Module> new_pm(pm->deep_copy()); // make a duplicate
+                     new_pm->db_register(0);
+
                      // get a new name
                      if(!mname_map.count(pm->name))
                        mname_map[pm->name] = pm->name;

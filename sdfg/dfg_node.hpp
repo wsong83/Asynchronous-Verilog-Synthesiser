@@ -66,6 +66,15 @@ namespace SDFG {
       SDFG_PORT           = 0x00800  // all ports
     } type;
 
+    enum fsm_type_t {           // FSM type
+      SDFG_FSM_NONE       = 0x00000, // not a fsm
+      SDFG_FSM_FSM        = 0x00001, // state machine
+      SDFG_FSM_CNT        = 0x00002, // counter used as FSM
+      SDFG_FSM_ADR        = 0x00004, // counter used as address
+      SDFG_FSM_FLAG       = 0x00008, // control flag
+      SDFG_FSM_OTHER      = 0x00100  // probably false-active
+    };
+
     // only available in register graph
     std::list<boost::shared_ptr<dfgPath> > opath, ipath; // record all output/input paths to avoid recalculation
     std::map<boost::shared_ptr<dfgNode>, int> opath_f, ipath_f, self_f; // record all output/input paths get from fast algorithm to avoid recalculation
@@ -106,6 +115,12 @@ namespace SDFG {
 
     // remove open and static ports
     void remove_useless_ports();
+
+    // check functionalities
+    bool is_const();            // is const or const after reset
+    int is_fsm() const;
+    std::string get_fsm_type() const;
+    static std::string get_fsm_type(int);
 
     // for debug usage
     std::ostream& streamout(std::ostream&) const;

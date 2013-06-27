@@ -90,6 +90,11 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     boost::shared_ptr<dfgEdge> add_edge(const std::string& ename, dfgEdge::edge_type_t etype, T1 n1, T2 n2) {
       return add_edge(ename, etype, to_id(n1), to_id(n2));
     }
+    void add_edge_multi(const std::string&, int, vertex_descriptor, vertex_descriptor);
+    template<typename T1, typename T2>
+    void add_edge_multi(const std::string& ename, int etype, T1 n1, T2 n2) {
+      add_edge_multi(ename, etype, to_id(n1), to_id(n2));
+    }    
     void add_path(boost::shared_ptr<dfgPath>);
 
     // remove nodes and edges
@@ -209,6 +214,8 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
                                                    unsigned int& num_of_regs,
                                                    unsigned int& num_of_p_fsms
                                                    ) const; // extract fsms from RRG and DFG
+
+    std::map<boost::shared_ptr<dfgNode>, int > get_fsms_new() const; // extract fsms from RRG and DFG
     void fsm_simplify();  // simplify the FSM connection graph
 
     // other

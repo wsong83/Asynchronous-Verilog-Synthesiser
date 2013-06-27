@@ -64,6 +64,7 @@ void SDFG::dfgNode::graphic_init() {
     switch(type) {
     case SDFG_COMB:    bbox = pair<double, double>(40.0, 25.0); break;
     case SDFG_FF:      bbox = pair<double, double>(20.0, 20.0); break;
+    case SDFG_LATCH:   bbox = pair<double, double>(35.0, 20.0); break;
     case SDFG_MODULE:  bbox = pair<double, double>(60.0, 35.0); break;
     case SDFG_GATE:    bbox = pair<double, double>(35.0, 35.0); break;
     case SDFG_IPORT:   bbox = pair<double, double>(20.0, 20.0); break;

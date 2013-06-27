@@ -42,6 +42,100 @@ using std::string;
 using std::pair;
 using std::list;
 
+bool SDFG::dfgNode::is_const() {
+  BOOST_FOREACH(shared_ptr<dfgPath> p, get_in_paths_fast_cb()) {
+    if(p->type == dfgEdge::SDFG_CLK || p->type == dfgEdge::SDFG_RST)
+      continue;                 // clock and reset paths
+    else if(p->type == dfgEdge::SDFG_DDP && p->src->id == id)
+      continue;                 // self default path
+    else
+      return false;
+  }
+  return true;
+}
+
+int SDFG::dfgNode::is_fsm() const {
+  if(type != SDFG_FF) return SDFG_FSM_NONE;
+  list<shared_ptr<dfgEdge> > in_edges = pg->get_in_edges(id);
+  list<shared_ptr<dfgEdge> > out_edges = pg->get_out_edges(id);
+  
+  int in_path_type = 0;
+  int self_loop_type = 0;
+  int out_path_type = 0;
+  
+  BOOST_FOREACH(shared_ptr<dfgEdge> e, in_edges) {
+    if(pg->get_source_id(e->id) == id)
+      self_loop_type |= e->type;
+    else
+      in_path_type |= e->type;
+  }
+
+  BOOST_FOREACH(shared_ptr<dfgEdge> e, out_edges) {
+    if(pg->get_target_id(e->id) != id)
+      out_path_type |= e->type;
+  }
+
+  int fsm_type = SDFG_FSM_NONE;
+
+  if((self_loop_type != 0) && 
+     (out_path_type & dfgEdge::SDFG_CTL_MASK) &&
+     !(in_path_type & dfgEdge::SDFG_DAT_MASK)
+     ) { // all fsm
+    fsm_type |= SDFG_FSM_OTHER;
+  }
+
+  if((self_loop_type & dfgEdge::SDFG_EQU) && 
+     (out_path_type & dfgEdge::SDFG_EQU) &&
+     !(in_path_type & dfgEdge::SDFG_DAT_MASK)
+     ) { // fsm
+    fsm_type |= SDFG_FSM_FSM;
+  }
+
+  if((self_loop_type & dfgEdge::SDFG_CAL) &&
+     (out_path_type & (dfgEdge::SDFG_EQU|dfgEdge::SDFG_CMP|dfgEdge::SDFG_LOG)) &&
+     !(in_path_type & dfgEdge::SDFG_DAT_MASK)
+     ) { // 
+    fsm_type |= SDFG_FSM_CNT;
+  }
+
+  if((self_loop_type != 0) && 
+     (out_path_type & (dfgEdge::SDFG_ADR)) && 
+     !(in_path_type & dfgEdge::SDFG_DAT_MASK)
+     ) { // 
+    fsm_type |= SDFG_FSM_ADR;
+  }
+
+  if((self_loop_type != 0) && 
+     (out_path_type & dfgEdge::SDFG_LOG) &&
+     !(in_path_type & dfgEdge::SDFG_DAT_MASK)
+     ) { // flags
+    fsm_type |= SDFG_FSM_FLAG;
+  }
+
+  //std::cout << std::hex 
+  //          << ":" << self_loop_type 
+  //          << ":" <<  in_path_type
+  //          << ":" <<  out_path_type
+  //          << std::dec << " ";
+
+  return fsm_type;
+}
+
+string SDFG::dfgNode::get_fsm_type(int t) {
+  string rv("");
+  if(t & SDFG_FSM_FSM) rv += "FSM|";
+  if(t & SDFG_FSM_CNT) rv += "CNT|";
+  if(t & SDFG_FSM_ADR) rv += "ADR|";
+  if(t & SDFG_FSM_FLAG) rv += "FLAG|";
+  if(t == SDFG_FSM_OTHER) rv = "OTHER|";
+  rv.erase(rv.size()-1);
+  return rv;
+}  
+
+string SDFG::dfgNode::get_fsm_type() const {
+  return get_fsm_type(is_fsm());
+}
+
 list<shared_ptr<dfgPath> >& SDFG::dfgNode::get_out_paths_cb() {
   if(opath.empty()) {
     // return value and the main path
@@ -453,13 +547,15 @@ void SDFG::dfgNode::out_path_type_update_fast(map<shared_ptr<dfgNode>, int>& rv,
       p->push_back(pn, t.second);
       t.first->out_path_type_update_fast(rv, p, rmap);
       // update rmap
-      BOOST_FOREACH(rmap_data_type& m, rmap[t.first]) {
-        if(m.first) {
-          if(rmap[pn].count(m.first)) rmap[pn][m.first] |= dfgPath::cal_type(t.second, m.second);
-          else                        rmap[pn][m.first] = dfgPath::cal_type(t.second, m.second);
-        } else {
-          if(rmap[pn].count(t.first)) rmap[pn][t.first] |= t.second;
-          else                        rmap[pn][t.first] = t.second;
+      if(t.first != p->src) {
+        BOOST_FOREACH(rmap_data_type& m, rmap[t.first]) {
+          if(m.first) {
+            if(rmap[pn].count(m.first)) rmap[pn][m.first] |= dfgPath::cal_type(t.second, m.second);
+            else                        rmap[pn][m.first] = dfgPath::cal_type(t.second, m.second);
+          } else {
+            if(rmap[pn].count(t.first)) rmap[pn][t.first] |= t.second;
+            else                        rmap[pn][t.first] = t.second;
+          }
         }
       }
       if(t.first->type & SDFG_MODULE) { // module, put this node as a terminal
@@ -521,10 +617,12 @@ void SDFG::dfgNode::out_path_type_update_fast_cb(map<shared_ptr<dfgNode>, int>& 
       shared_ptr<dfgPath> p(new dfgPath(*cp));
       p->push_back(pn, t.second);
       t.first->out_path_type_update_fast_cb(rv, p, rmap);
-      // update rmap
-      BOOST_FOREACH(rmap_data_type& m, rmap[t.first]) {
-        if(rmap[pn].count(m.first)) rmap[pn][m.first] |= dfgPath::cal_type(t.second, m.second);
-        else                        rmap[pn][m.first] = dfgPath::cal_type(t.second, m.second);
+      if(t.first != p->src) {
+        // update rmap
+        BOOST_FOREACH(rmap_data_type& m, rmap[t.first]) {
+          if(rmap[pn].count(m.first)) rmap[pn][m.first] |= dfgPath::cal_type(t.second, m.second);
+          else                        rmap[pn][m.first] = dfgPath::cal_type(t.second, m.second);
+        }
       }
     }
   }

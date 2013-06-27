@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -45,8 +45,8 @@ namespace netlist {
     NETLIST_STREAMOUT_DECL;
     virtual LConcatenation* deep_copy() const;
     NETLIST_DB_DECL;
-    NETLIST_SCAN_VARS;
     NETLIST_REPLACE_VARIABLE;
+    virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
 
     // helpers
     bool is_valid() const { return valid; }

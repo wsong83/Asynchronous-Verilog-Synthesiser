@@ -83,10 +83,11 @@ namespace netlist {
 
     // extract FSMs
     std::set<std::string> extract_fsms(bool, bool, boost::shared_ptr<SDFG::dfgGraph>, unsigned int&, unsigned int&, unsigned int&);
+    std::map<std::string, std::string> extract_fsms_new();
 
     // return the ratio of state preserve output ports
-    double get_ratio_state_preserved_oport(std::map<VIdentifier, std::pair<bool, std::string> >&, bool, const std::set<std::string>&);
-    void cal_partition(const double&, std::ostream&, bool, const std::set<std::string>&, bool);
+    double get_ratio_state_preserved_oport(std::map<VIdentifier, std::pair<bool, std::string> >&, const std::set<std::string>&);
+    void cal_partition(const double&, std::ostream&, const std::set<std::string>&, bool);
 
     // data
     MIdentifier name;

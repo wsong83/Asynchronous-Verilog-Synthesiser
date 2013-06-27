@@ -20,8 +20,8 @@
  */
 
 /* 
- * report possible partitions
- * 24/04/2013   Wei Song
+ * analyze the state space of a controller
+ * 27/06/2013   Wei Song
  *
  *
  */
@@ -47,7 +47,6 @@ using boost::shared_ptr;
 using std::list;
 using namespace shell::CMD;
 
-
 namespace {
   namespace qi = boost::spirit::qi;
   namespace phoenix = boost::phoenix;
@@ -55,26 +54,19 @@ namespace {
 
   struct Argument {
     bool bHelp;                 // show help information
-    double dRatio;              // the accept ratio
-    bool bVerbose;              // verbose output, report all sub modules
-    std::string sOutput;        // output file name
+    std::string sController;    // target controller
     
     Argument() : 
       bHelp(false),
-      dRatio(0.8),
-      bVerbose(false),
-      sOutput("") {}
+      sController("") {}
   };
 }
-
 
 BOOST_FUSION_ADAPT_STRUCT
 (
  Argument,
  (bool, bHelp)
- (double, dRatio)
- (bool, bVerbose)
- (std::string, sOutput)
+ (std::string, sController)
  )
 
 namespace {
@@ -87,45 +79,38 @@ namespace {
     ArgParser() : ArgParser::base_type(start) {
       using qi::lit;
       using ascii::char_;
-      using phoenix::push_back;
       using ascii::space;
       using phoenix::at_c;
       using namespace qi::labels;
 
       args = lit('-') >> 
-        ( (lit("help")   >> blanks)                         [at_c<0>(_r1) = true] ||
-          (lit("ratio")  >> blanks >> num_double >> blanks) [at_c<1>(_r1) = _1]   ||
-          (lit("verbose") >> blanks)                        [at_c<2>(_r1) = true] ||
-          (lit("output") >> blanks >> filename >> blanks)   [at_c<3>(_r1) = _1]
-          );
+        ( (lit("help")    >> blanks)                        [at_c<0>(_r1) = true] );
       
-      start = *(args(_val));
+      start = *(args(_val)) >> -((identifier >> blanks) [at_c<1>(_val) = _1]);
+
 
 #ifdef BOOST_SPIRIT_QI_DEBUG
       BOOST_SPIRIT_DEBUG_NODE(args);
       BOOST_SPIRIT_DEBUG_NODE(start);
       BOOST_SPIRIT_DEBUG_NODE(identifier);
-      BOOST_SPIRIT_DEBUG_NODE(filename);
 #endif
     }
   };
 }
 
-const std::string shell::CMD::CMDReportPartition::name = "report_partition"; 
-const std::string shell::CMD::CMDReportPartition::description = 
-  "report possible partitions of the current design.";
+const std::string shell::CMD::CMDStateSpaceAnalysis::name = "state_space_analysis"; 
+const std::string shell::CMD::CMDStateSpaceAnalysis::description = 
+  "analyse the state space of a controller.";
 
-void shell::CMD::CMDReportPartition::help(Env& gEnv) {
+void shell::CMD::CMDStateSpaceAnalysis::help(Env& gEnv) {
   gEnv.stdOs << name << ": " << description << endl;
-  gEnv.stdOs << "    report_partition [options]" << endl;
+  gEnv.stdOs << "    state_space_analysis ID" << endl;
   gEnv.stdOs << "Options:" << endl;
   gEnv.stdOs << "   -help                show this help information." << endl;
-  gEnv.stdOs << "   -ratio double        the accept ratio (default 0.80)." << endl;
-  gEnv.stdOs << "   -verbose             report all sub-modules." << endl;
-  gEnv.stdOs << "   -output file_name    specify an output file otherwise print out." << endl;
+  gEnv.stdOs << "   ID                   name of the controller to be analysed." << endl;
 }
 
-bool shell::CMD::CMDReportPartition::exec ( const std::string& str, Env * pEnv){
+void shell::CMD::CMDStateSpaceAnalysis::exec ( const std::string& str, Env * pEnv){
 
   using std::string;
 
@@ -138,47 +123,44 @@ bool shell::CMD::CMDReportPartition::exec ( const std::string& str, Env * pEnv){
   bool r = qi::parse(it, end, parser, arg);
 
   if(!r || it != end) {
-    gEnv.stdOs << "Error: Wrong command syntax error! See usage by report_partition -help." << endl;
-    gEnv.stdOs << "    report_ports [options]" << endl;
-    return false;
+    gEnv.stdOs << "Error: Wrong command syntax error! See usage by state_space_analysis -help." << endl;
+    gEnv.stdOs << "    state_space_analysis ID" << endl;
+    return;
   }
 
   if(arg.bHelp) {        // print help information
     help(gEnv);
-    return true;
+    return;
   }
 
-  // find the target design
-  string designName = gEnv.macroDB[MACRO_CURRENT_DESIGN].get_string();;
-  shared_ptr<netlist::Module> tarDesign;
-  tarDesign = gEnv.find_module(designName);
-  if(tarDesign.use_count() == 0) {
-    gEnv.stdOs << "Error: Failed to find the target design \"" << designName << "\"." << endl;
-    return false;
+  // get current design
+  shared_ptr<netlist::Module> cDesign = gEnv.find_module(gEnv.macroDB[MACRO_CURRENT_DESIGN].get_string());
+
+  // check current design is ready
+  if(!cDesign) {
+    gEnv.stdOs << "Error: no current design specified yet." << endl;
+    return;
   }
 
-  // check DFG is ready
-  if(!tarDesign->DFG) {
-    gEnv.stdOs << "Error: DFG is not extracted for the target design \"" << designName << "\"." << endl;
-    gEnv.stdOs << "       Use extract_sdfg before report partition." << endl;
-    return false;
-  } 
-
-  // check FSMs are extracted if -use_fsm is set
-  if(!tarDesign->fsm_extracted) {
-    gEnv.stdOs << "Error: FSMs are not extracted for the target design \"" << designName << "\"." << endl;
-    gEnv.stdOs << "       Use report_fsm before report partition." << endl;
-    return false;      
+  // check RRG is ready
+  if(!cDesign->RRG) {
+    gEnv.stdOs << "Error: No RRG has been extracted for current design \"" << cDesign->name << "\"." << endl;
+    return;
   }
 
-  if(arg.sOutput.size() > 0) {
-    ofstream fhandler;
-    fhandler.open(system_complete(arg.sOutput), std::ios_base::out|std::ios_base::trunc);
-    tarDesign->cal_partition(arg.dRatio, fhandler, tarDesign->FSMs, arg.bVerbose);
-    fhandler.close();
-  } else {
-    tarDesign->cal_partition(arg.dRatio, gEnv.stdOs, tarDesign->FSMs, arg.bVerbose);
+  // find the dfgNode
+  shared_ptr<SDFG::dfgNode> pnode = cDesign->RRG->get_node(arg.sController);
+  if(!pnode) {
+    gEnv.stdOs << "Error: target controller \"" << arg.sController << "\" not found." << endl;
+    return;
   }
-  
-  return true;
+
+  BOOST_FOREACH(shared_ptr<netlist::NetComp> nnode, pnode->ptr) {
+    if(nnode->get_type() == netlist::NetComp::tSeqBlock)
+      // use the local name rather than the full name
+      boost::static_pointer_cast<netlist::SeqBlock>(nnode)->
+        ssa_analysis(netlist::VIdentifier(pnode->name));
+  }
+
+  return;
 }

@@ -230,8 +230,14 @@ Expression* netlist::Expression::deep_copy() const {
   return rv;
 }
 
-void netlist::Expression::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
-  eqn->scan_vars(rf, ctl);
+shared_ptr<SDFG::RTree> netlist::Expression::get_rtree() const {
+  //std::cout << *this << std::endl;
+  //std::cout << *(eqn->get_rtree()) << std::endl;
+  return eqn->get_rtree();
+}
+
+unsigned int netlist::Expression::get_width() const {
+  return eqn->get_width();
 }
 
 void netlist::Expression::replace_variable(const VIdentifier& var, const Number& num) {

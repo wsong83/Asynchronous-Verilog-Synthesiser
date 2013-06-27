@@ -142,8 +142,8 @@ namespace netlist {
     NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
     using NetComp::gen_sdfg;
-    NETLIST_SCAN_VARS;
     NETLIST_REPLACE_VARIABLE;
+    virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
     
     // analysis
     // return the combined expression assigning a signal

@@ -111,16 +111,21 @@ Number netlist::FuncCall::get_value() const {
   return Number(0);
 }
 
-void netlist::FuncCall::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
-  BOOST_FOREACH(shared_ptr<Expression> exp, args) {
-    exp->scan_vars(rf, ctl);
-  }
-  //std::cout << "function ------------>" << std::endl; 
-  //rf->write(std::cout);
-}
-
 void netlist::FuncCall::replace_variable(const VIdentifier& var, const Number& num) {
   BOOST_FOREACH(shared_ptr<Expression> exp, args) {
     exp->replace_variable(var, num);
   }
+}
+
+shared_ptr<SDFG::RTree> netlist::FuncCall::get_rtree() const {
+  shared_ptr<SDFG::RTree> rv(new SDFG::RTree(false));
+  BOOST_FOREACH(shared_ptr<Expression> exp, args) {
+    rv->add_tree(exp->get_rtree());
+  }
+  return rv;
+}
+
+unsigned int netlist::FuncCall::get_width() const {
+  assert(0 == "get_width() of function_call is not implemented yet!");
+  return 0;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -125,18 +125,12 @@ void netlist::LConcatenation::db_expunge() {
   BOOST_FOREACH(VIdentifier& m, data) m.db_expunge();
 }
 
-void netlist::LConcatenation::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
+shared_ptr<SDFG::RTree> netlist::LConcatenation::get_rtree() const {
+  shared_ptr<SDFG::RTree> rv(new SDFG::RTree(false));
   BOOST_FOREACH(const VIdentifier& m, data) {
-    shared_ptr<SDFG::RForest> mrf(new SDFG::RForest());
-    m.scan_vars(mrf, ctl);
-    if(mrf->tree.count("@CTL")) {
-      shared_ptr<SDFG::RTree> mc(new SDFG::RTree(SDFG::RTree::RT_CTL));
-      mc->sig = mrf->tree["@CTL"]->sig;
-      rf->tree[m.name] = mc;
-    } else {
-      rf->tree[m.name] = shared_ptr<SDFG::RTree>();
-    }
+    rv->add_tree(m.get_select().get_rtree(), m.name, SDFG::dfgEdge::SDFG_ADR); 
   }
+  return rv;
 }
 
 void netlist::LConcatenation::replace_variable(const VIdentifier& var, const Number& num) {

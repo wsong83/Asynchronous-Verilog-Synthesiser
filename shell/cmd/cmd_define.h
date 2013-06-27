@@ -62,6 +62,7 @@ namespace shell {
     NEW_TCL_CMD(bool, CMDReportPartition);
     NEW_TCL_CMD(bool, CMDReportPorts);
     NEW_TCL_CMD(std::string, CMDShell);
+    NEW_TCL_CMD(void, CMDStateSpaceAnalysis);
     NEW_TCL_CMD(bool, CMDSuppressMessage);
     NEW_TCL_CMD(bool, CMDUniquify);
     NEW_TCL_CMD(bool, CMDWrite);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -64,15 +64,6 @@ void netlist::ConElem::reduce() {
   }
 }
 
-void netlist::ConElem::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
-  if(exp)
-    exp->scan_vars(rf, ctl);
-  
-  BOOST_FOREACH(shared_ptr<ConElem> m, con) {
-    m->scan_vars(rf, ctl);
-  }
-}
-
 void netlist::ConElem::replace_variable(const VIdentifier& var, const Number& num) {
   exp->replace_variable(var, num);
   BOOST_FOREACH(shared_ptr<ConElem> ce, con) {
@@ -85,6 +76,30 @@ void netlist::ConElem::replace_variable(const VIdentifier& var, shared_ptr<Expre
   BOOST_FOREACH(shared_ptr<ConElem> ce, con) {
     ce->replace_variable(var, rexp);
   }  
+}
+
+shared_ptr<SDFG::RTree> netlist::ConElem::get_rtree() const {
+  shared_ptr<SDFG::RTree> rv(new SDFG::RTree(false));
+  if(exp)
+    rv->add_tree(exp->get_rtree());
+  
+  BOOST_FOREACH(shared_ptr<ConElem> m, con) {
+    rv->add_tree(m->get_rtree());
+  }
+  return rv;
+}
+
+unsigned int netlist::ConElem::get_width() const {
+  if(con.size() == 0) {
+    return exp->get_width();
+  } else {
+    assert(exp->is_valuable());
+    unsigned int rv = 0;
+    BOOST_FOREACH(shared_ptr<ConElem> m, con) {
+      rv += m->get_width();
+    }
+    return exp->get_value().get_value().get_ui() * rv;
+  }
 }
 
 ostream& netlist::ConElem::streamout(ostream& os, unsigned int indent) const {
@@ -256,12 +271,6 @@ void netlist::Concatenation::reduce() {
   }
 }
 
-void netlist::Concatenation::scan_vars(shared_ptr<SDFG::RForest> rf, bool ctl) const {
-  BOOST_FOREACH(shared_ptr<ConElem> m, data) {
-    m->scan_vars(rf, ctl);
-  }
-}
-
 void netlist::Concatenation::replace_variable(const VIdentifier& var, const Number& num) {
   BOOST_FOREACH(shared_ptr<ConElem> d, data) {
     d->replace_variable(var, num);
@@ -272,6 +281,22 @@ void netlist::Concatenation::replace_variable(const VIdentifier& var, shared_ptr
   BOOST_FOREACH(shared_ptr<ConElem> d, data) {
     d->replace_variable(var, rexp);
   }
+}
+
+shared_ptr<SDFG::RTree> netlist::Concatenation::get_rtree() const {
+  shared_ptr<SDFG::RTree> rv(new SDFG::RTree());
+  BOOST_FOREACH(shared_ptr<ConElem> d, data) {
+    rv->add_tree(d->get_rtree());
+  }
+  return rv;
+}
+
+unsigned int netlist::Concatenation::get_width() const {
+  unsigned int rv = 0;
+  BOOST_FOREACH(shared_ptr<ConElem> d, data) {
+    rv += d->get_width();
+  }
+  return rv;
 }
 
 void netlist::Concatenation::db_register(int iod) {

@@ -500,14 +500,14 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
            [&](const pair<const VIdentifier, shared_ptr<Port> >& m) {
              switch(m.second->get_dir()) {
              case  1:           // output
-               G->add_edge(m.first.name, dfgEdge::SDFG_DF, m.first.name, m.first.name + "_P"); 
+               G->add_edge(m.first.name, dfgEdge::SDFG_ASS, m.first.name, m.first.name + "_P"); 
                break;
              case -1:           // input
-               G->add_edge(m.first.name, dfgEdge::SDFG_DF, m.first.name + "_P", m.first.name); 
+               G->add_edge(m.first.name, dfgEdge::SDFG_ASS, m.first.name + "_P", m.first.name); 
                break;
              default:           // inout
-               G->add_edge(m.first.name, dfgEdge::SDFG_DF, m.first.name, m.first.name + "_P"); 
-               G->add_edge(m.first.name, dfgEdge::SDFG_DF, m.first.name + "_P", m.first.name);
+               G->add_edge(m.first.name, dfgEdge::SDFG_ASS, m.first.name, m.first.name + "_P"); 
+               G->add_edge(m.first.name, dfgEdge::SDFG_ASS, m.first.name + "_P", m.first.name);
              }
            });
 
@@ -576,88 +576,91 @@ std::set<string> netlist::Module::extract_fsms(bool verbose, bool force,
   return FSMs;
 }
 
+map<string, string> netlist::Module::extract_fsms_new() {
+  map<string, string> rv;
+  map<shared_ptr<SDFG::dfgNode>, int > dfg_fsms = RRG->get_fsms_new();
+  typedef std::pair<const shared_ptr<SDFG::dfgNode>, int> dfg_fsms_type;
+  BOOST_FOREACH(dfg_fsms_type f, dfg_fsms) {
+    rv[f.first->get_hier_name()] = SDFG::dfgNode::get_fsm_type(f.second);
+  }
+  return rv;
+}
 
-double netlist::Module::get_ratio_state_preserved_oport(map<VIdentifier, pair<bool, string> >& port_ana, bool use_fsm, const std::set<string>& gFSMs) {
-  assert(DataDFG);
+double netlist::Module::get_ratio_state_preserved_oport(map<VIdentifier, pair<bool, string> >& port_ana, const std::set<string>& gFSMs) {
+  assert(DFG);
+  
   unsigned int num_of_spports = 0; // number of state preserved ports
   unsigned int num_of_oports = 0;  // number of output ports
   
   DataBase<VIdentifier, Port, true>::DBTL::iterator pit, pend;
   for(pit = db_port.begin_order(), pend = db_port.end_order(); pit != pend; ++pit) {
     if(pit->second->get_dir() >= 0) { // output or inout
-      shared_ptr<SDFG::dfgNode> pnode = DataDFG->get_node(pit->second->name.name + "_P");
-      if(pnode) {               // exist in the data DFG
-        bool is_a_doport = false;       // is a data output port (exclude data through port)
-        bool is_state_preserved = false; // preserve state
-        string data_source;
-        BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, pnode->get_in_paths_fast_cb()) {
-          if((p->src->type & SDFG::dfgNode::SDFG_FF) && // from an FF
-             ((p->type & (SDFG::dfgEdge::SDFG_DP | SDFG::dfgEdge::SDFG_DDP)) ||
-              (p->type == SDFG::dfgEdge::SDFG_DF)) // also when it is a default path
-             ) { // is a data path
-            is_a_doport = true;
-            if(FSMs.count(p->src->get_full_name())) {
-              is_state_preserved = true;
-              data_source = p->src->get_full_name() + " [fsm]";
-            } else if(p->src->get_self_path_cb().size() > 0) {
-              is_state_preserved = true;
-              data_source = p->src->get_full_name();
-            } 
-            
-            if(use_fsm) {
-              BOOST_FOREACH(shared_ptr<SDFG::dfgPath> pp, p->src->get_in_paths_fast_cb()) {
-                if((pp->type & SDFG::dfgEdge::SDFG_CTL) && FSMs.count(pp->src->get_full_name())) {
-                  if(!is_state_preserved) {
-                    is_state_preserved = true;
-                    data_source = p->src->get_full_name() + " [fsm:" + pp->src->get_full_name() + "]";
-                  } else {
-                    data_source += " [fsm:" + pp->src->get_full_name() + "]";
-                  }
-                  break;
-                }
-              }
-            }
-            if(is_state_preserved) break;
+      shared_ptr<SDFG::dfgNode> pnode = DFG->get_node(pit->second->name.name + "_P");
+      bool is_state_preserved = false; // preserve state
+      bool has_ff_input = false;
+      string data_source("");
+      BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, pnode->get_in_paths_fast_cb()) {
+        if(p->src->type & (SDFG::dfgNode::SDFG_FF | SDFG::dfgNode::SDFG_LATCH))
+          has_ff_input = true;
+        
+        data_source += "[" + p->src->get_full_name() + ":";
+        
+        if(gFSMs.count(p->src->get_full_name())) {
+          is_state_preserved = true;
+          data_source += "self-fsm:";
+        } 
+        
+        bool has_control_fsm = false;
+        BOOST_FOREACH(shared_ptr<SDFG::dfgPath> pp, p->src->get_in_paths_fast_cb()) {
+          if(gFSMs.count(pp->src->get_full_name())){
+            if(!is_state_preserved) is_state_preserved = true;
+            if(!has_control_fsm) data_source += "ctl-fsm(";
+            data_source += pp->src->get_full_name() + ",";
+            has_control_fsm = true;
           }
         }
         
-        if(is_a_doport) {
-          num_of_oports++;
-          if(is_state_preserved) {
-            num_of_spports++;
-            port_ana[pit->first] = pair<bool, string>(true, data_source);
-          } else {
-            port_ana[pit->first] = pair<bool, string>(false, "[data-pipeline]");
-          }
+        if(has_control_fsm) {
+          data_source[data_source.size()-1] = ')';
+          data_source += "]";
+        } else if(is_state_preserved) {
+          data_source[data_source.size()-1] = ']';
         } else {
-          port_ana[pit->first] = pair<bool, string>(false, "[none-data/ctl|through]");
+          data_source += "data-pipeline]";
         }
+      }
+      
+      
+      if(has_ff_input) {
+        num_of_oports++;
+        port_ana[pit->first] = pair<bool, string>(is_state_preserved, data_source);
+        if(is_state_preserved) num_of_spports++;
       } else {
-        port_ana[pit->first] = pair<bool, string>(false, "[none-data/opted]");
+        port_ana[pit->first] = pair<bool, string>(false, "[through wire]");
       }
     }
   }
-
+  
   if(num_of_oports > 0)
     return (double)(num_of_spports) / num_of_oports;
   else
     return 0.0;
 }
 
-void netlist::Module::cal_partition(const double& acc_ratio, std::ostream& ostm, bool use_fsm, const std::set<string>& gFSMs, bool verbose) {
+void netlist::Module::cal_partition(const double& acc_ratio, std::ostream& ostm, const std::set<string>& gFSMs, bool verbose) {
   DataBase<IIdentifier, Instance>::DBTM::iterator iit, iend;
   for(iit = db_instance.begin(), iend = db_instance.end(); iit != iend; ++iit) {
     if(iit->second->type == Instance::modu_inst) {
       shared_ptr<Module> subMod = G_ENV->find_module(iit->second->mname);
-      subMod->cal_partition(acc_ratio, ostm, use_fsm, gFSMs, verbose);
+      subMod->cal_partition(acc_ratio, ostm, gFSMs, verbose);
     }
   }
-  if(DataDFG->father != NULL) {
+  if(DFG->father != NULL) {
     map<VIdentifier, pair<bool, string> > port_ana; // port analyses
     typedef pair<const VIdentifier, pair<bool, string> > port_ana_type;
-    double r = get_ratio_state_preserved_oport(port_ana, use_fsm, gFSMs);
+    double r = get_ratio_state_preserved_oport(port_ana, gFSMs);
     if(r >= acc_ratio || verbose) {
-      ostm << DataDFG->father->get_full_name() << "\t(" << name << ") with rate " << r ;
+      ostm << DFG->father->get_full_name() << "\t(" << name << ") with rate " << r ;
       if(r >= acc_ratio)
         ostm << " >= " << acc_ratio;
       else

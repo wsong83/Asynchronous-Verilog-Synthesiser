@@ -44,8 +44,8 @@ namespace netlist {
     NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
     NETLIST_GEN_SDFG;
-    NETLIST_SCAN_VARS;
     NETLIST_REPLACE_VARIABLE;
+    virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
 
     // helpers
     void set_name(const BIdentifier& nm) {name = nm; named=true;}

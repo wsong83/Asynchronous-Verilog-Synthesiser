@@ -49,10 +49,19 @@ namespace SDFG {
     enum edge_type_t {
       SDFG_DF             = 0x00000, // default, unknown yet
       SDFG_DDP            = 0x00001, // default data loop
-      SDFG_DP             = 0x00010, // data path
-      SDFG_CTL            = 0x00080, // control path
-      SDFG_CLK            = 0x000a0, // clk
-      SDFG_RST            = 0x000c0  // reset
+      SDFG_CAL            = 0x00002, // mathmatical calculation datapath
+      SDFG_ASS            = 0x00004, // direct assignment
+      SDFG_DAT            = 0x00008, // other type of data
+      SDFG_CMP            = 0x00010, // compare
+      SDFG_EQU            = 0x00020, // equal
+      SDFG_LOG            = 0x00040, // logic
+      SDFG_ADR            = 0x00080, // address
+      SDFG_CTL            = 0x00100, // normal control
+      SDFG_CLK            = 0x02000, // clk
+      SDFG_RST            = 0x04000, // reset
+      SDFG_DAT_MASK       = 0x0000F,
+      SDFG_CTL_MASK       = 0x00FF0,
+      SDFG_CR_MASK        = 0x0F000
     } type;
 
     dfgEdge() : pg(NULL), type(SDFG_DF) {}
@@ -61,6 +70,7 @@ namespace SDFG {
     void write(void *, ogdf::GraphAttributes *);
     bool read(const pugi::xml_node&);
     bool read(void * const, ogdf::GraphAttributes * const);
+    void push_bend(double, double, bool relative = false);
 
     std::list<std::pair<double, double> > bend; // bending points of the edge
     

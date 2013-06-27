@@ -55,7 +55,7 @@ namespace netlist{
     NETLIST_ELABORATE_DECL;
     bool is_default() const {return exps.size() == 0; }
     bool is_match(const Number&) const; /* whether this case match with the number (arguement) */
-    NETLIST_SCAN_VARS;
+    virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
     NETLIST_REPLACE_VARIABLE;
 
     // data
@@ -93,7 +93,7 @@ namespace netlist{
     NETLIST_ELABORATE_DECL;
     void set_name(const BIdentifier& nm) {name = nm; named=true;}
     bool is_named() const { return named; }
-    NETLIST_SCAN_VARS;
+    virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
     NETLIST_REPLACE_VARIABLE;
     
     // data

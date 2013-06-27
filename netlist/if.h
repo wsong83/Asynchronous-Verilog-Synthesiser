@@ -52,9 +52,9 @@ namespace netlist {
     virtual IfState* deep_copy() const;
     NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
-    NETLIST_SCAN_VARS;
     NETLIST_REPLACE_VARIABLE;
     virtual boost::shared_ptr<Expression> get_combined_expression(const VIdentifier&, std::set<std::string>);
+    virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
 
     //data
     boost::shared_ptr<Expression> exp; /* the condition expression */

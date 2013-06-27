@@ -170,12 +170,6 @@ namespace shell {
 
 extern shell::Env* G_ENV;
 
-// SDFG
-namespace SDFG {
-  class dfgGraph;
-}
-
-
 #include <sstream>
 
 // objects to string templates
