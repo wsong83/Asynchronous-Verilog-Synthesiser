@@ -56,6 +56,7 @@ dfgNode* SDFG::dfgNode::copy() const {
   rv->id = NULL;
   rv->node_index = 0;
   rv->type = type;
+  rv->dp_type = dp_type;
   return rv;
 }
 

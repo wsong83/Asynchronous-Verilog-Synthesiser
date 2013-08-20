@@ -53,7 +53,7 @@ namespace SDFG {
     std::list<std::string> hier;                        // hierarchy prefix (name of flattened modules) 
     vertex_descriptor id;                               // node id
     unsigned int node_index;   // when nodes are stored in listS, vertext_descriptors are no longer
-                                // integers, thereofer, separated indices must be generated and stored 
+                                // integers, thereofer, separated indices must be generated and stored
     enum node_type_t {          // node type
       SDFG_DF             = 0x00001, // default, unknown yet
       SDFG_COMB           = 0x00010, // combinational assign or always
@@ -74,6 +74,12 @@ namespace SDFG {
       SDFG_FSM_FLAG       = 0x00008, // control flag
       SDFG_FSM_OTHER      = 0x00100  // probably false-active
     };
+
+    enum datapath_type_t {      // node type in control/data path division
+      SDFG_DP_NONE        = 0x00000, // unknown yet
+      SDFG_DP_DATA        = 0x00010, // elements on data paths
+      SDFG_DP_CTL         = 0x00100  // elements on control paths
+    } dp_type;
 
     // only available in register graph
     std::list<boost::shared_ptr<dfgPath> > opath, ipath; // record all output/input paths to avoid recalculation
