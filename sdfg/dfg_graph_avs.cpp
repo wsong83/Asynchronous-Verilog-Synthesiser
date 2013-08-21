@@ -42,6 +42,113 @@ using std::string;
 using std::pair;
 using std::list;
 
+shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath(bool with_fsm, bool with_ctl) const {
+
+  // first get a hierarchical RRG from the SDFG
+  shared_ptr<dfgGraph> hier_rrg = get_hier_RRG();
+
+  list<shared_ptr<dfgNode> > nlist;          // nodes to be processed
+  BOOST_FOREACH(nodes_type nn, hier_rrg->nodes) {
+    nlist.push_back(nn.second);
+
+    if(nn.second->type & (dfgNode::SDFG_FF | dfgNode::SDFG_LATCH) ) {
+      // get the input edge type
+      int itype = 0;
+      BOOST_FOREACH(shared_ptr<dfgEdge> e, nn.second->get_in_edges()) 
+        itype |= e.type;
+
+      int otype = 0;
+      BOOST_FOREACH(shared_ptr<dfgEdge> e, nn.second->get_out_edges()) 
+        otype |= e.type;
+      
+      nn.second->dp_type = 0;
+      
+      if(nn.second->is_fsm()) nn.second->dp_type |= SDFG_DP_FSM;
+    
+      if((otype & dfgNode::SDFG_DAT_MASK) || 
+         ((itype & dfgNode::SDFG_DAT_MASK) && 
+          (otype & (dfgNode::SDFG_CMP | dfgNode::SDFG_EQU | dfgNode::SDFG_ADR))
+          )
+         )
+        nn.second->dp_type |= dfgNode::SDFG_DP_DATA;
+      
+      if(otype & dfgNode::SDFG_CTL_MASK)
+        nn.second->dp_type |= dfgNode::SDFG_DP_CTL;
+    }
+
+    if(nn.second->type & dfgNode::SDFG_MODULE)
+      nn.second->extract_datapath(with_fsm, with_ctl);
+
+  }
+
+  // begin the trim
+  BOOST_FOREACH(shared_ptr<dfgNode> n, nlist) {
+    if(n->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH)) {
+      if(!(n->dp_type & dfgNode::SDFG_DP_DATA) && (n->dp_type & dfgNode::SDFG_DP_CTL) {
+          if(with_fsm && (n->dp_type & dfgNode::SDFG_DP_FSM)) continue;
+          bool keep = false;
+          if(with_ctl) {
+            BOOST_FOREACH(shared_ptr<dfgNode> nn, n->get_out_nodes()) {
+              if(nn->dp_type & SDFG_DP_DATA) { keep = ture; break; }
+            }
+          }
+          if(!keep) hier_rrg->remove(n);
+        }
+      }
+    }
+  }
+  
+  // remove default nodes
+  BOOST_FOREACH(shared_ptr<dfgNode> n, nlist) {
+    if(n->type == dfgNode::SDFG_DF) {
+      if((n->size_in_edges() == 0) || (n->size_out_edges() == 0))
+        hier_rrg->remove_node(n);
+    }
+  }
+
+  // count from input
+  std::set<shared_ptr<dfgNode> > nkeep;      // nodes to keep
+  list<shared_ptr<dfgNode> > nlook = hier_rrg->get_list_of_nodes(dfgNode::SDFG_IPORT); // nodes to be processed
+
+  while(nlook.size()) {
+    shared_ptr<dfgNode> n = nlook.front();
+    nlook.pop_front();
+    
+    if(n->size_out_edges() > 0) {
+      nkeep.insert(n);
+      BOOST_FOREACH(shared_ptr<dfgNode> nn, n->get_out_nodes()) {
+        if(!nkeep.count(nn)) {
+          nkeep.insert(nn);
+          nlook.push_back(nn);
+          BOOST_FOREACH(shared_ptr<dfgNode> nnn, nn->get_in_nodes())
+            nkeep.insert(nnn);
+        }
+      }
+    }
+  }
+
+  nlook = hier_rrg->get_list_of_nodes(dfgNode::SDFG_OPORT);
+  while(nlook.size()) {
+    shared_ptr<dfgNode> n = nlook.front();
+    nlook.pop_front();
+    
+    if(n->size_in_edges() > 0) {
+      nkeep.insert(n);
+      BOOST_FOREACH(shared_ptr<dfgNode> nn, n->get_in_nodes()) {
+        if(!nkeep.count(nn)) {
+          nkeep.insert(nn);
+          if(nn->dp_type & dfgNode::SDFG_DP_DATA)
+            nlook.push_back(nn);
+        }
+      }
+    }
+  }
+  
+
+  // to finally trim the graph
+
+}
+
 shared_ptr<dfgGraph> SDFG::dfgGraph::get_datapath() const {
   assert(pModule != NULL);
   if(!pModule->DataDFG) {

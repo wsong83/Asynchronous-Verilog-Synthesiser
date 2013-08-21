@@ -204,6 +204,8 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
 
     // analyse functions
     boost::shared_ptr<dfgGraph> get_datapath() const; // extract all datapaths from an SDFG
+    boost::shared_ptr<dfgGraph> extract_datapath() const; // a new extraction method
+    boost::shared_ptr<dfgGraph> extract_datapath(boost::shared_ptr<dfgGraph>) const; 
     boost::shared_ptr<dfgGraph> get_hier_RRG() const; // get a hierarchical RRG from any SDFG
     boost::shared_ptr<dfgGraph> get_RRG() const; // extract the register relation graph from a signal level DFG
     boost::shared_ptr<dfgGraph> build_reg_graph(const std::set<boost::shared_ptr<dfgNode> >& ) const; // build up a reg connection graph for certain registers 
