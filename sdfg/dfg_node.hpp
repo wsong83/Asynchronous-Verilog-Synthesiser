@@ -78,7 +78,7 @@ namespace SDFG {
     enum datapath_type_t {      // node type in control/data path division
       SDFG_DP_NONE        = 0x00000, // unknown yet
       SDFG_DP_DATA        = 0x00010, // elements on data paths
-      SDFG_DP_CTL         = 0x00100  // elements on control paths
+      SDFG_DP_CTL         = 0x00100, // elements on control paths
       SDFG_DP_FSM         = 0x00300  // elements on control paths
     } dp_type;
 
@@ -96,30 +96,20 @@ namespace SDFG {
     bool read(const pugi::xml_node&);
     bool read(void * const, ogdf::GraphAttributes * const);
 
-    unsigned int size_out_edges() const 
-    { return pg->size_out_edges(id); }
-    unsigned int size_out_edges_ns() const // ns: none-self edges
-    { return pg->size_out_edges_ns(id); }
-    unsigned int size_out_edges_cb() const // cb: cross-boundar
-    { return pg->size_out_edges_cb(id); }
-    unsigned int size_in_edges() const 
-    { return pg->size_in_edges(id); }
-    unsigned int size_in_edges_ns() const // ns: none-self edges
-    { return pg->size_in_edges_ns(id); }
-    unsigned int size_in_edges_cb() const // cb: cross-boundar
-    { return pg->size_in_edges_cb(id); }
-    std::list<boost::shared_ptr<dfgNode> > get_out_nodes() const
-    { return pg->get_out_nodes(id); }
-    std::list<boost::shared_ptr<dfgNode> > get_out_nodes_cb() const
-    { return pg->get_out_nodes_cb(id); }
-    std::list<boost::shared_ptr<dfgNode> > get_in_nodes() const
-    { return pg->get_in_nodes(id); }
-    std::list<boost::shared_ptr<dfgNode> > get_in_nodes_cb() const
-    { return pg->get_in_nodes_cb(id); }
-    std::list<boost::shared_ptr<dfgEdge> > get_out_edges() const
-    { return pg->get_out_edges(id); }
-    std::list<boost::shared_ptr<dfgEdge> > get_out_edges_cb() const
-    { return pg->get_out_edges_cb(id); }
+    unsigned int size_out_edges() const;
+    unsigned int size_out_edges_ns() const; // ns: none-self edges
+    unsigned int size_out_edges_cb() const; // cb: cross-boundar
+    unsigned int size_in_edges() const; 
+    unsigned int size_in_edges_ns() const; // ns: none-self edges
+    unsigned int size_in_edges_cb() const; // cb: cross-boundar
+    std::list<boost::shared_ptr<dfgNode> > get_out_nodes() const;
+    std::list<boost::shared_ptr<dfgNode> > get_out_nodes_cb() const;
+    std::list<boost::shared_ptr<dfgNode> > get_in_nodes() const;
+    std::list<boost::shared_ptr<dfgNode> > get_in_nodes_cb() const;
+    std::list<boost::shared_ptr<dfgEdge> > get_out_edges() const;
+    std::list<boost::shared_ptr<dfgEdge> > get_out_edges_cb() const;
+    std::list<boost::shared_ptr<dfgEdge> > get_in_edges() const;
+    std::list<boost::shared_ptr<dfgEdge> > get_in_edges_cb() const;
 
     boost::shared_ptr<dfgNode> flatten() const;   // move this node to one module higher, not sure how this work, do not use it
     std::string get_hier_name() const;            // get the hierarchical name of the name

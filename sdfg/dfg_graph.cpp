@@ -1195,7 +1195,7 @@ bool SDFG::dfgGraph::check_integrity() const {
     assert(index_map.count(pn->node_index));
     assert(node_map.count(pn->get_hier_name()));
     assert(pn->pg == this);
-    assert(pn->check_integrity());
+    //assert(pn->check_integrity());
   }
 
   // check all edges
@@ -1210,7 +1210,7 @@ bool SDFG::dfgGraph::check_integrity() const {
     assert(pe->id == e.first);
     assert(edge_map.count(pe->edge_index));
     assert(pe->pg == this);
-    assert(pe->check_integrity());
+    //assert(pe->check_integrity());
   }
   
   return true;

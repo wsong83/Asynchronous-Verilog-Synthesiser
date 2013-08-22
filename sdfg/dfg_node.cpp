@@ -43,6 +43,62 @@ using std::pair;
 using std::list;
 
 
+unsigned int SDFG::dfgNode::size_out_edges() const { 
+  return pg->size_out_edges(id); 
+}
+
+unsigned int SDFG::dfgNode::size_out_edges_ns() const { // ns: none-self edges
+  return pg->size_out_edges_ns(id); 
+}
+
+unsigned int SDFG::dfgNode::size_out_edges_cb() const { // cb: cross-boundar
+  return pg->size_out_edges_cb(id); 
+}
+
+unsigned int SDFG::dfgNode::size_in_edges() const {
+  return pg->size_in_edges(id); 
+}
+
+unsigned int SDFG::dfgNode::size_in_edges_ns() const { // ns: none-self edges
+  return pg->size_in_edges_ns(id); 
+}
+
+unsigned int SDFG::dfgNode::size_in_edges_cb() const { // cb: cross-boundar
+  return pg->size_in_edges_cb(id); 
+}
+
+list<shared_ptr<dfgNode> > SDFG::dfgNode::get_out_nodes() const {
+  return pg->get_out_nodes(id); 
+}
+
+list<shared_ptr<dfgNode> > SDFG::dfgNode::get_out_nodes_cb() const {
+  return pg->get_out_nodes_cb(id); 
+}
+
+list<shared_ptr<dfgNode> > SDFG::dfgNode::get_in_nodes() const {
+  return pg->get_in_nodes(id); 
+}
+
+list<shared_ptr<dfgNode> > SDFG::dfgNode::get_in_nodes_cb() const {
+  return pg->get_in_nodes_cb(id); 
+}
+
+list<shared_ptr<dfgEdge> > SDFG::dfgNode::get_out_edges() const {
+  return pg->get_out_edges(id);
+}
+
+list<shared_ptr<dfgEdge> > SDFG::dfgNode::get_out_edges_cb() const {
+  return pg->get_out_edges_cb(id); 
+}
+
+list<shared_ptr<dfgEdge> > SDFG::dfgNode::get_in_edges() const {
+  return pg->get_in_edges(id);
+}
+
+list<shared_ptr<dfgEdge> > SDFG::dfgNode::get_in_edges_cb() const {
+  return pg->get_in_edges_cb(id); 
+}
+
 dfgNode* SDFG::dfgNode::copy() const {
   dfgNode* rv = new dfgNode();
   rv->ptr = ptr;
@@ -229,17 +285,18 @@ void SDFG::dfgNode::remove_port_sig(const string& sname, int dir) {
         if((child_node->type & SDFG_PORT) 
            && (child_node->type != SDFG_OPORT)
            && dir <= 0) {
-          port2sig.erase(sig);
+          port2sig[sig] = string();
           sig2port[sname].erase(sig);
         } else if((child_node->type & SDFG_PORT) 
                   && (child_node->type != SDFG_IPORT)
                   && dir >= 0) {
-          port2sig.erase(sig);
+          port2sig[sig] = string();
           sig2port[sname].erase(sig);
         } 
       }
     }
   }
+  if(sig2port[sname].size() == 0) sig2port.erase(sname);
 }
 
 void SDFG::dfgNode::add_port_sig(const string& pname, const string& sname) {
