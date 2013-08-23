@@ -647,26 +647,24 @@ bool SDFG::dfgGraph::exist(vertex_descriptor nid) const {
 ///////////////////////////////
 // traverse
 ///////////////////////////////
-unsigned int SDFG::dfgGraph::size_out_edges(vertex_descriptor nid) const {
-  if(nodes.count(nid))
-    return boost::out_degree(nid, bg_);
-  else
+unsigned int SDFG::dfgGraph::size_out_edges(vertex_descriptor nid, bool bself) const {
+  if(nodes.count(nid)) {
+    if(bself)
+      return boost::out_degree(nid, bg_);
+    else {
+      unsigned int rv = 0;
+      GraphTraits::out_edge_iterator eit, eend;
+      for(boost::tie(eit, eend) = boost::out_edges(nid, bg_);
+          eit != eend; ++eit) {
+        if(boost::target(*eit, bg_) != nid) rv++;
+      }
+      return rv;
+    }
+  } else
     return 0;
 }
 
-unsigned int SDFG::dfgGraph::size_out_edges_ns(vertex_descriptor nid) const {
-  unsigned int rv = 0;
-  if(nodes.count(nid)) {
-    GraphTraits::out_edge_iterator eit, eend;
-    for(boost::tie(eit, eend) = boost::out_edges(nid, bg_);
-        eit != eend; ++eit) {
-      if(boost::target(*eit, bg_) != nid) rv++;
-    }
-  }
-  return rv;
-}
-
-unsigned int SDFG::dfgGraph::size_out_edges_cb(vertex_descriptor nid) const {
+unsigned int SDFG::dfgGraph::size_out_edges_cb(vertex_descriptor nid, bool bself) const {
   if(nodes.count(nid)) {
     shared_ptr<dfgNode> pn = nodes.find(nid)->second;
     if(pn->type == dfgNode::SDFG_OPORT) { // output port
@@ -676,35 +674,33 @@ unsigned int SDFG::dfgGraph::size_out_edges_cb(vertex_descriptor nid) const {
         return 0;
     } else if(pn->type == dfgNode::SDFG_PORT) { // I/O port
       if(father && father->port2sig.count(pn->get_hier_name()))
-        return 1 + boost::out_degree(nid, bg_);
+        return 1 + size_out_edges(bself);
       else
-        return boost::out_degree(nid, bg_);
+        return size_out_edges(bself);
     } else
-      return boost::out_degree(nid, bg_);
+      return size_out_edges(bself);
   } else
     return 0;
 }
 
-unsigned int SDFG::dfgGraph::size_in_edges(vertex_descriptor nid) const {
-  if(nodes.count(nid))
-    return boost::in_degree(nid, bg_);
-  else
+unsigned int SDFG::dfgGraph::size_in_edges(vertex_descriptor nid, bool bself) const {
+  if(nodes.count(nid)) {
+    if(bself)
+      return boost::in_degree(nid, bg_);
+    else {
+      unsigned int rv = 0;
+      GraphTraits::in_edge_iterator eit, eend;
+      for(boost::tie(eit, eend) = boost::in_edges(nid, bg_);
+          eit != eend; ++eit) {
+        if(boost::source(*eit, bg_) != nid) rv++;
+      }
+      return rv;
+    }
+  } else
     return 0;
 }
 
-unsigned int SDFG::dfgGraph::size_in_edges_ns(vertex_descriptor nid) const {
-  unsigned int rv = 0;
-  if(nodes.count(nid)) {
-    GraphTraits::in_edge_iterator eit, eend;
-    for(boost::tie(eit, eend) = boost::in_edges(nid, bg_);
-        eit != eend; ++eit) {
-      if(boost::source(*eit, bg_) != nid) rv++;
-    }
-  }
-  return rv;
-}
-
-unsigned int SDFG::dfgGraph::size_in_edges_cb(vertex_descriptor nid) const {
+unsigned int SDFG::dfgGraph::size_in_edges_cb(vertex_descriptor nid, bool bself) const {
   if(nodes.count(nid)) {
     shared_ptr<dfgNode> pn = nodes.find(nid)->second;
     if(pn->type == dfgNode::SDFG_IPORT) { // input port
@@ -714,26 +710,28 @@ unsigned int SDFG::dfgGraph::size_in_edges_cb(vertex_descriptor nid) const {
         return 0;
     } else if(pn->type == dfgNode::SDFG_PORT) { // I/O port
       if(father && father->port2sig.count(pn->get_hier_name()))
-        return 1 + boost::in_degree(nid, bg_);
+        return 1 + size_in_edges(bself);
       else
-        return boost::in_degree(nid, bg_);
+        return size_in_edges(bself);
     } else
-      return boost::in_degree(nid, bg_);
+      return size_in_edges(bself);
   } else
     return 0;
 }
 
-list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_out_nodes(vertex_descriptor nid) const {
+list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_out_nodes(vertex_descriptor nid, bool bself) const {
   list<shared_ptr<dfgNode> > rv;
   GraphTraits::adjacency_iterator nit, nend;
   for(boost::tie(nit, nend) = boost::adjacent_vertices(nid, bg_);
       nit != nend; ++nit) {
-    rv.push_back(nodes.find(*nit)->second);
+    shared_ptr<dfgNode> mn = nodes.find(*nit)->second;
+    if((mn->id != nid) || bself)
+      rv.push_back(nodes.find(*nit)->second);
   }
   return rv;
 }
 
-list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_out_nodes_cb(vertex_descriptor nid) const {
+list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_out_nodes_cb(vertex_descriptor nid, bool bself) const {
   list<shared_ptr<dfgNode> > rv;
   if(!nodes.count(nid)) return rv;
   shared_ptr<dfgNode> pn = nodes.find(nid)->second;
@@ -753,7 +751,7 @@ list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_out_nodes_cb(vertex_descriptor ni
         BOOST_FOREACH(const string& sname, osrc->sig2port.find(pn->name)->second) {
           rv.push_back(osrc->child->get_node(sname));
         }
-      } else {
+      } else if((osrc->id != nid) || bself) {
         rv.push_back(osrc);
       }
     }
@@ -761,17 +759,19 @@ list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_out_nodes_cb(vertex_descriptor ni
   return rv;
 }
 
-list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_in_nodes(vertex_descriptor nid) const {
+list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_in_nodes(vertex_descriptor nid, bool bself) const {
   list<shared_ptr<dfgNode> > rv;
   GType::inv_adjacency_iterator nit, nend; //!! why inv_adjacency_iterator is in Graph instead of Trait?
   for(boost::tie(nit, nend) = boost::inv_adjacent_vertices(nid, bg_);
       nit != nend; ++nit) {
-    rv.push_back(nodes.find(*nit)->second);
+    shared_ptr<dfgNode> mn = nodes.find(*nit)->second;
+    if((mn->id != nid) || bself)
+      rv.push_back(nodes.find(*nit)->second);
   }
   return rv;
 }
 
-list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_in_nodes_cb(vertex_descriptor nid) const {
+list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_in_nodes_cb(vertex_descriptor nid, bool bself) const {
   list<shared_ptr<dfgNode> > rv;
   if(!nodes.count(nid)) return rv;
   shared_ptr<dfgNode> pn = nodes.find(nid)->second;
@@ -791,7 +791,7 @@ list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_in_nodes_cb(vertex_descriptor nid
         BOOST_FOREACH(const string& sname, isrc->sig2port.find(pn->name)->second) {
           rv.push_back(isrc->child->get_node(sname));
         }
-      } else {
+      } else if((isrc->id != nid) || bself) {
         rv.push_back(isrc);
       }
     }

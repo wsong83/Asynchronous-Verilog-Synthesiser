@@ -46,6 +46,16 @@ void func_name(T d) bconst { func_name(to_id(d)); }
 template<typename T>                                      \
 rtype func_name(T d) bconst { return func_name(to_id(d)); }              
   
+#define DFGG_FH_F1B(func_name, bconst)                    \
+template<typename T>                                      \
+ void func_name(T d, bool bself = true) bconst {          \
+  func_name(to_id(d), bself); }              
+
+#define DFGG_FH_RF1B(rtype, func_name, bconst)            \
+template<typename T>                                      \
+rtype func_name(T d, bool bself = true) bconst {          \
+  return func_name(to_id(d), bself); }              
+
 #define DFGG_FH_F2(func_name, bconst)                     \
 template<typename T1, typename T2>                        \
 void func_name(T1 d1, T2 d2) bconst { func_name(to_id(d1), to_id(d2)); }              
@@ -156,38 +166,34 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     bool exist(edge_descriptor) const;
 
     // traverse
-    DFGG_FH_RF1(unsigned int, size_out_edges, const);
-    DFGG_FH_RF1(unsigned int, size_out_edges_ns, const);
-    DFGG_FH_RF1(unsigned int, size_out_edges_cb, const);
-    unsigned int size_out_edges(vertex_descriptor) const;
-    unsigned int size_out_edges_ns(vertex_descriptor) const; // ns: none-self edges
-    unsigned int size_out_edges_cb(vertex_descriptor) const; // cb: cross-boundary
-    DFGG_FH_RF1(unsigned int, size_in_edges, const);
-    DFGG_FH_RF1(unsigned int, size_in_edges_ns, const);
-    DFGG_FH_RF1(unsigned int, size_in_edges_cb, const);
-    unsigned int size_in_edges(vertex_descriptor) const;
-    unsigned int size_in_edges_ns(vertex_descriptor) const;
-    unsigned int size_in_edges_cb(vertex_descriptor) const;
-    DFGG_FH_RF1(std::list<boost::shared_ptr<dfgNode> >, get_out_nodes, const);
-    DFGG_FH_RF1(std::list<boost::shared_ptr<dfgNode> >, get_out_nodes_cb, const);
-    std::list<boost::shared_ptr<dfgNode> > get_out_nodes(vertex_descriptor) const;
-    std::list<boost::shared_ptr<dfgNode> > get_out_nodes_cb(vertex_descriptor) const;
-    DFGG_FH_RF1(std::list<boost::shared_ptr<dfgNode> >, get_in_nodes, const);
-    DFGG_FH_RF1(std::list<boost::shared_ptr<dfgNode> >, get_in_nodes_cb, const);
-    std::list<boost::shared_ptr<dfgNode> > get_in_nodes(vertex_descriptor) const;
-    std::list<boost::shared_ptr<dfgNode> > get_in_nodes_cb(vertex_descriptor) const;
-    DFGG_FH_RF1(std::list<boost::shared_ptr<dfgEdge> >, get_out_edges, const);
-    DFGG_FH_RF1(std::list<boost::shared_ptr<dfgEdge> >, get_out_edges_cb, const);
-    std::list<boost::shared_ptr<dfgEdge> > get_out_edges(vertex_descriptor) const;
-    std::list<boost::shared_ptr<dfgEdge> > get_out_edges_cb(vertex_descriptor) const;
-    DFGG_FH_RF1(std::list<boost::shared_ptr<dfgEdge> >, get_in_edges, const);
-    DFGG_FH_RF1(std::list<boost::shared_ptr<dfgEdge> >, get_in_edges_cb, const);
-    std::list<boost::shared_ptr<dfgEdge> > get_in_edges(vertex_descriptor) const;
-    std::list<boost::shared_ptr<dfgEdge> > get_in_edges_cb(vertex_descriptor) const;
-    DFGG_FH_RF1(int, get_out_edges_type, const);
-    int get_out_edges_type(vertex_descriptor) const;
-    DFGG_FH_RF1(int, get_in_edges_type, const);
-    int get_in_edges_type(vertex_descriptor) const;
+    DFGG_FH_RF1B(unsigned int, size_out_edges, const);
+    DFGG_FH_RF1B(unsigned int, size_out_edges_cb, const);
+    unsigned int size_out_edges(vertex_descriptor, bool bself = true) const;
+    unsigned int size_out_edges_cb(vertex_descriptor, bool bself = true) const;
+    DFGG_FH_RF1B(unsigned int, size_in_edges, const);
+    DFGG_FH_RF1B(unsigned int, size_in_edges_cb, const);
+    unsigned int size_in_edges(vertex_descriptor, bool bself = true) const;
+    unsigned int size_in_edges_cb(vertex_descriptor, bool bself = true) const;
+    DFGG_FH_RF1B(std::list<boost::shared_ptr<dfgNode> >, get_out_nodes, const);
+    DFGG_FH_RF1B(std::list<boost::shared_ptr<dfgNode> >, get_out_nodes_cb, const);
+    std::list<boost::shared_ptr<dfgNode> > get_out_nodes(vertex_descriptor, bool bself = true) const;
+    std::list<boost::shared_ptr<dfgNode> > get_out_nodes_cb(vertex_descriptor, bool bself = true) const;
+    DFGG_FH_RF1B(std::list<boost::shared_ptr<dfgNode> >, get_in_nodes, const);
+    DFGG_FH_RF1B(std::list<boost::shared_ptr<dfgNode> >, get_in_nodes_cb, const);
+    std::list<boost::shared_ptr<dfgNode> > get_in_nodes(vertex_descriptor, bool bself = true) const;
+    std::list<boost::shared_ptr<dfgNode> > get_in_nodes_cb(vertex_descriptor, bool bself = true) const;
+    DFGG_FH_RF1B(std::list<boost::shared_ptr<dfgEdge> >, get_out_edges, const);
+    DFGG_FH_RF1B(std::list<boost::shared_ptr<dfgEdge> >, get_out_edges_cb, const);
+    std::list<boost::shared_ptr<dfgEdge> > get_out_edges(vertex_descriptor, bool bself = true) const;
+    std::list<boost::shared_ptr<dfgEdge> > get_out_edges_cb(vertex_descriptor, bool bself = true) const;
+    DFGG_FH_RF1B(std::list<boost::shared_ptr<dfgEdge> >, get_in_edges, const);
+    DFGG_FH_RF1B(std::list<boost::shared_ptr<dfgEdge> >, get_in_edges_cb, const);
+    std::list<boost::shared_ptr<dfgEdge> > get_in_edges(vertex_descriptor, bool bself = true) const;
+    std::list<boost::shared_ptr<dfgEdge> > get_in_edges_cb(vertex_descriptor, bool bself = true) const;
+    DFGG_FH_RF1B(int, get_out_edges_type, const);
+    int get_out_edges_type(vertex_descriptor, bool bself = true) const;
+    DFGG_FH_RF1B(int, get_in_edges_type, const);
+    int get_in_edges_type(vertex_descriptor, bool bself = true) const;
 
     // graphic property
     unsigned int size_of_nodes() const;     // number of nodes in this graph
@@ -244,6 +250,8 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
 
 #undef DFGG_FH_F1  
 #undef DFGG_FH_RF1
+#undef DFGG_FH_F1B  
+#undef DFGG_FH_RF1B
 #undef DFGG_FH_F2  
 #undef DFGG_FH_RF2
 
