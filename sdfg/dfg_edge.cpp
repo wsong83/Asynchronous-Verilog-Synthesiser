@@ -41,6 +41,30 @@ using std::pair;
 using std::list;
 
 
+shared_ptr<dfgNode> SDFG::dfgEdge::get_source() const { 
+  return pg->get_source(id); 
+}
+
+shared_ptr<dfgNode> SDFG::dfgEdge::get_source_cb() const {
+  return pg->get_source_cb(id); 
+}
+
+shared_ptr<dfgNode> SDFG::dfgEdge::get_target() const {
+  return pg->get_target(id); 
+}
+
+list<shared_ptr<dfgNode> > SDFG::dfgEdge::get_target_cb() const {
+  return pg->get_target_cb(id); 
+}
+
+vertex_descriptor SDFG::dfgEdge::get_source_id() const {
+  return pg->get_source_id(id); 
+}
+
+vertex_descriptor SDFG::dfgEdge::get_target_id() const {
+  return pg->get_target_id(id); 
+}
+
 void SDFG::dfgEdge::write(pugi::xml_node& xnode) const {
   xnode.append_attribute("name") = name.c_str();
   string stype;

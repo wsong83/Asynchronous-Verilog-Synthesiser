@@ -584,36 +584,30 @@ void SDFG::dfgGraph::remove_useless_nodes() {
       list<shared_ptr<dfgNode> > inodes = get_in_nodes(n);
       list<shared_ptr<dfgNode> > onodes = get_out_nodes(n);
       // process the child module
-      n->remove_useless_ports();
-      n->child->remove_useless_nodes();
-      // check all node originally connected
-      BOOST_FOREACH(shared_ptr<dfgNode> inode, inodes) {
-        if(!n->sig2port.count(inode->name) && !node_set.count(inode)) {
-          node_set.insert(inode);
-          node_list.push_back(inode);
+      if(n->remove_useless_ports()) {
+        n->child->remove_useless_nodes(); 
+        // check all node originally connected
+        BOOST_FOREACH(shared_ptr<dfgNode> inode, inodes) {
+          if(!n->sig2port.count(inode->get_hier_name()) && !node_set.count(inode)) {
+            node_set.insert(inode);
+            node_list.push_back(inode);
+          }
         }
-      }
-      BOOST_FOREACH(shared_ptr<dfgNode> onode, onodes) {
-        if(!n->sig2port.count(onode->name) && !node_set.count(onode)) {
-          node_set.insert(onode);
-          node_list.push_back(onode);
-        }
-      }
-      // remove the module if it is empty
-      if(n->sig2port.size() == 0)
-        remove_node(n);
-    } else { // all other cases
-      if(size_out_edges(n) == 0 || size_in_edges(n) == 0) {
-        // a node with no source or no load is useless
-        list<shared_ptr<dfgNode> > onodes = get_out_nodes(n);
-        list<shared_ptr<dfgNode> > inodes = get_in_nodes(n);
-        remove_node(n);
         BOOST_FOREACH(shared_ptr<dfgNode> onode, onodes) {
-          if(!node_set.count(onode)) {
+          if(!n->sig2port.count(onode->get_hier_name()) && !node_set.count(onode)) {
             node_set.insert(onode);
             node_list.push_back(onode);
           }
-        }        
+        }
+        // remove the module if it is empty
+        if(n->sig2port.size() == 0)
+          remove_node(n);
+      }
+    } else { // all other cases
+      if(size_out_edges(n) == 0) {
+        // a node with no source or no load is useless
+        list<shared_ptr<dfgNode> > inodes = get_in_nodes(n);
+        remove_node(n);
         BOOST_FOREACH(shared_ptr<dfgNode> inode, inodes) {
           if(!node_set.count(inode)) {
             node_set.insert(inode);
@@ -892,6 +886,20 @@ list<shared_ptr<dfgEdge> > SDFG::dfgGraph::get_in_edges_cb(vertex_descriptor nid
       }
     }
   }
+  return rv;
+}
+
+int SDFG::dfgGraph::get_out_edges_type(vertex_descriptor nid) const {
+  int rv = 0;
+  BOOST_FOREACH(shared_ptr<dfgEdge> e, get_out_edges(nid))
+    rv |= e->type;
+  return rv;
+}
+
+int SDFG::dfgGraph::get_in_edges_type(vertex_descriptor nid) const {
+  int rv = 0;
+  BOOST_FOREACH(shared_ptr<dfgEdge> e, get_in_edges(nid))
+    rv |= e->type;
   return rv;
 }
 
@@ -1195,7 +1203,7 @@ bool SDFG::dfgGraph::check_integrity() const {
     assert(index_map.count(pn->node_index));
     assert(node_map.count(pn->get_hier_name()));
     assert(pn->pg == this);
-    assert(pn->check_integrity());
+    //assert(pn->check_integrity());
   }
 
   // check all edges
@@ -1210,10 +1218,23 @@ bool SDFG::dfgGraph::check_integrity() const {
     assert(pe->id == e.first);
     assert(edge_map.count(pe->edge_index));
     assert(pe->pg == this);
-    assert(pe->check_integrity());
+    //assert(pe->check_integrity());
   }
   
   return true;
+}
+
+list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_list_of_nodes(unsigned int types) const {
+  list<shared_ptr<dfgNode> > nlist;
+  typedef pair<const vertex_descriptor, shared_ptr<dfgNode> > node_record_type;
+  BOOST_FOREACH(node_record_type nr, nodes) {
+    if(nr.second->type & types) nlist.push_back(nr.second);
+  }
+  return nlist;
+}
+
+list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_list_of_nodes(unsigned int types, const dfgGraph& G) const {
+  return G.get_list_of_nodes(types);
 }
 
 

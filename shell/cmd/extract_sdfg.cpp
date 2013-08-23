@@ -187,7 +187,7 @@ void shell::CMD::CMDExtractSDFG::exec ( const std::string& str, Env * pEnv){
   if(!tarDesign->DFG)
     tarDesign->DFG = tarDesign->extract_sdfg(arg.bQuiet);
 
-  tarDesign->DFG->check_integrity();
+  //tarDesign->DFG->check_integrity();
   tarDesign->DFG->write(fhandler);
   fhandler.close();
 }

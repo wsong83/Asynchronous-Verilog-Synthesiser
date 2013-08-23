@@ -501,6 +501,7 @@ void SDFG::dfgNode::out_path_type_update_fast(map<shared_ptr<dfgNode>, int>& rv,
   
   // check node type
   if((type & (SDFG_FF|SDFG_LATCH))         || // register
+     (type == SDFG_DF)                     || // module or port
      pg->size_out_edges(id) == 0              // output
      ) {  // ending point
     if(rv.count(pn)) rv[pn] |= cp->type;

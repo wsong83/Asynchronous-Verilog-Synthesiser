@@ -184,6 +184,10 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     DFGG_FH_RF1(std::list<boost::shared_ptr<dfgEdge> >, get_in_edges_cb, const);
     std::list<boost::shared_ptr<dfgEdge> > get_in_edges(vertex_descriptor) const;
     std::list<boost::shared_ptr<dfgEdge> > get_in_edges_cb(vertex_descriptor) const;
+    DFGG_FH_RF1(int, get_out_edges_type, const);
+    int get_out_edges_type(vertex_descriptor) const;
+    DFGG_FH_RF1(int, get_in_edges_type, const);
+    int get_in_edges_type(vertex_descriptor) const;
 
     // graphic property
     unsigned int size_of_nodes() const;     // number of nodes in this graph
@@ -204,7 +208,8 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
 
     // analyse functions
     boost::shared_ptr<dfgGraph> get_datapath() const; // extract all datapaths from an SDFG
-    boost::shared_ptr<dfgGraph> get_hier_RRG() const; // get a hierarchical RRG from any SDFG
+    boost::shared_ptr<dfgGraph> extract_datapath(bool, bool) const; // a new extraction method
+    boost::shared_ptr<dfgGraph> get_hier_RRG(bool hier = true) const; // get a hierarchical RRG from any SDFG
     boost::shared_ptr<dfgGraph> get_RRG() const; // extract the register relation graph from a signal level DFG
     boost::shared_ptr<dfgGraph> build_reg_graph(const std::set<boost::shared_ptr<dfgNode> >& ) const; // build up a reg connection graph for certain registers 
     std::set<boost::shared_ptr<dfgNode> > get_fsms(
@@ -222,6 +227,9 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     std::string get_full_name() const;
     bool check_integrity() const; // check whether there is any illegal connections or mismatches in various maps
     
+    std::list<boost::shared_ptr<dfgNode> > get_list_of_nodes(unsigned int) const; // get a list of nodes of certain types
+    std::list<boost::shared_ptr<dfgNode> > get_list_of_nodes(unsigned int, const dfgGraph&) const; // get a list of nodes of certain types
+
   private:
     // convert types to id
     vertex_descriptor to_id(const std::string&) const; 
@@ -230,9 +238,7 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     edge_descriptor to_id(boost::shared_ptr<dfgEdge>) const;
     edge_descriptor to_id(const edge_descriptor&) const;
     boost::shared_ptr<dfgNode> fsm_simplify_node(boost::shared_ptr<dfgNode>);  // simply the connection for a single FSM register
-    std::list<boost::shared_ptr<dfgNode> > get_list_of_nodes(unsigned int) const; // get a list of nodes of certain types
-    std::list<boost::shared_ptr<dfgNode> > get_list_of_nodes(unsigned int, const dfgGraph&) const; // get a list of nodes of certain types
-    boost::shared_ptr<dfgNode> copy_a_node(boost::shared_ptr<dfgGraph>, boost::shared_ptr<dfgNode>) const; // copy a node from this graph to a new graph and return the pointer of the new node
+    boost::shared_ptr<dfgNode> copy_a_node(boost::shared_ptr<dfgGraph>, boost::shared_ptr<dfgNode>, bool use_full_name = false) const; // copy a node from this graph to a new graph and return the pointer of the new node
 
   };
 
