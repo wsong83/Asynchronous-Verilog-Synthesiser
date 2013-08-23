@@ -314,6 +314,30 @@ void SDFG::dfgNode::add_port_sig(const string& pname, const string& sname) {
   }
 }
 
+void SDFG::dfgNode::remap_ports() {
+  map<string, std::set<string> > m_s2p;
+  map<string, string> m_p2s;
+
+  BOOST_FOREACH(shared_ptr<dfgNode> n, child->get_list_of_nodes(SDFG_PORT)) {
+    string pname = n->get_hier_name();
+    if(port2sig.count(pname)) {
+      m_p2s[pname] = port2sig[pname];
+      string sname = port2sig[pname];
+      if(sname.size())
+        m_s2p[sname].insert(pname);
+    }
+  }
+
+  port2sig = m_p2s;
+  sig2port = m_s2p;
+}
+
+void SDFG::dfgNode::set_new_child(shared_ptr<dfgGraph> c) {
+  child = c;
+  child->father = this;
+  remap_ports();
+}
+
 std::ostream& SDFG::dfgNode::streamout(std::ostream& os) const {
   os << "dfgNode: " << get_full_name() << " (";
   switch(type) {

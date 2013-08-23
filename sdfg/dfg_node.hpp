@@ -119,6 +119,9 @@ namespace SDFG {
     void set_hier_name(const std::string&);       // set the hierarchical name
     void remove_port_sig(const std::string&, int); // remove a certain port signal
     void add_port_sig(const std::string&, const std::string&); // add a certain port connection
+    void remap_ports();                           // remove the port maps when a new sub-figure is linked
+    void set_new_child(boost::shared_ptr<dfgGraph>);  // set a new child
+
     std::list<boost::shared_ptr<dfgPath> >& get_out_paths_cb(); // return all output paths from this register/port
     std::list<boost::shared_ptr<dfgPath> >& get_in_paths_cb(); // return all input paths to this register/port
     // return all output paths from this register/port, faster algorithm
