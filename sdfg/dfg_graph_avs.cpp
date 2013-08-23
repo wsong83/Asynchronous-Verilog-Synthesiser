@@ -47,6 +47,8 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath(bool with_fsm, bool with_c
   // first get a hierarchical RRG from the SDFG
   shared_ptr<dfgGraph> hier_rrg = get_hier_RRG(false);
 
+  //shared_ptr<dfgGraph> hier_rrg = get_RRG();
+
   list<shared_ptr<dfgNode> > nlist;          // nodes to be processed
   BOOST_FOREACH(nodes_type nn, hier_rrg->nodes) {
     nlist.push_back(nn.second);
@@ -87,10 +89,7 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath(bool with_fsm, bool with_c
       }
 
       // get rid of the edges connected to non-existed submodule ports
-      if((n->size_in_edges() == 0) || (n->size_out_edges() == 0) ||
-         !(n->get_out_edges_type() & (dfgEdge::SDFG_DAT_MASK|dfgEdge::SDFG_CTL_MASK)) ||
-         !(n->get_in_edges_type() & (dfgEdge::SDFG_DAT_MASK|dfgEdge::SDFG_CTL_MASK))
-         )
+      if((n->size_in_edges() == 0) || (n->size_out_edges() == 0))
         hier_rrg->remove_node(n);
     }
   }
@@ -115,6 +114,17 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath(bool with_fsm, bool with_c
         dp_type |= dfgNode::SDFG_DP_CTL;
 
       n->dp_type = (dfgNode::datapath_type_t)(dp_type);
+    } else if(n->type == dfgNode::SDFG_DF && hier_rrg->exist(n)) {
+      // remove all none data edges
+      BOOST_FOREACH(shared_ptr<dfgEdge> e, n->get_in_edges()) {
+        if(!(e->type & (dfgEdge::SDFG_DAT_MASK | dfgEdge::SDFG_CMP | dfgEdge::SDFG_EQU | dfgEdge::SDFG_ADR)))
+          hier_rrg->remove_edge(e);
+      }
+      
+      BOOST_FOREACH(shared_ptr<dfgEdge> e, n->get_out_edges()) {
+        if(!(e->type & (dfgEdge::SDFG_DAT_MASK | dfgEdge::SDFG_CMP | dfgEdge::SDFG_EQU | dfgEdge::SDFG_ADR)))
+          hier_rrg->remove_edge(e);
+      }
     }
   }
 
@@ -131,38 +141,42 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath(bool with_fsm, bool with_c
         }
         if(!keep) hier_rrg->remove_node(n);
       }
+    }else if(n->type == dfgNode::SDFG_DF && hier_rrg->exist(n)) {
+      if((n->size_in_edges() == 0) || (n->size_out_edges() == 0))
+        hier_rrg->remove_node(n);
     }
   }
   //hier_rrg->check_integrity();
   
   // count from input
   std::set<shared_ptr<dfgNode> > nkeep;      // nodes to keep
-  list<shared_ptr<dfgNode> > nlook = hier_rrg->get_list_of_nodes(dfgNode::SDFG_IPORT); // nodes to be processed
-  std::set<shared_ptr<dfgNode> > nlook_set;
-  BOOST_FOREACH(shared_ptr<dfgNode> n, nlook)
-    nlook_set.insert(n);
+  // list<shared_ptr<dfgNode> > nlook = hier_rrg->get_list_of_nodes(dfgNode::SDFG_IPORT); // nodes to be processed
+  // std::set<shared_ptr<dfgNode> > nlook_set;
+  // BOOST_FOREACH(shared_ptr<dfgNode> n, nlook)
+  //   nlook_set.insert(n);
 
-  while(nlook.size()) {
-    shared_ptr<dfgNode> n = nlook.front();
-    nlook.pop_front();
+  // while(nlook.size()) {
+  //   shared_ptr<dfgNode> n = nlook.front();
+  //   nlook.pop_front();
     
-    if(n->size_out_edges() > 0) {
-      nkeep.insert(n);
-      BOOST_FOREACH(shared_ptr<dfgNode> nn, n->get_out_nodes()) {
-        if(!nkeep.count(nn)) {
-          nkeep.insert(nn);
-          if(!nlook_set.count(nn)) {
-            nlook.push_back(nn);
-            nlook_set.insert(nn);
-          }
-          BOOST_FOREACH(shared_ptr<dfgNode> nnn, nn->get_in_nodes())
-            nkeep.insert(nnn);
-        }
-      }
-    }
-  }
+  //   if(n->size_out_edges() > 0) {
+  //     nkeep.insert(n);
+  //     BOOST_FOREACH(shared_ptr<dfgNode> nn, n->get_out_nodes()) {
+  //       if(!nkeep.count(nn)) {
+  //         nkeep.insert(nn);
+  //         if(!nlook_set.count(nn)) {
+  //           nlook.push_back(nn);
+  //           nlook_set.insert(nn);
+  //         }
+  //         BOOST_FOREACH(shared_ptr<dfgNode> nnn, nn->get_in_nodes())
+  //           nkeep.insert(nnn);
+  //       }
+  //     }
+  //   }
+  // }
 
-  nlook = hier_rrg->get_list_of_nodes(dfgNode::SDFG_OPORT);
+  list<shared_ptr<dfgNode> > nlook = hier_rrg->get_list_of_nodes(dfgNode::SDFG_OPORT);
+  std::set<shared_ptr<dfgNode> > nlook_set;
   BOOST_FOREACH(shared_ptr<dfgNode> n, nlook)
     nlook_set.insert(n);
   while(nlook.size()) {
@@ -174,7 +188,9 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath(bool with_fsm, bool with_c
       BOOST_FOREACH(shared_ptr<dfgNode> nn, n->get_in_nodes()) {
         if(!nkeep.count(nn)) {
           nkeep.insert(nn);
-          if((nn->dp_type & dfgNode::SDFG_DP_DATA) && !nlook_set.count(nn)) {
+          if(((!(nn->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH))) 
+              || (nn->dp_type & dfgNode::SDFG_DP_DATA)) 
+             && !nlook_set.count(nn)) {
             nlook.push_back(nn);
             nlook_set.insert(nn);
           }
