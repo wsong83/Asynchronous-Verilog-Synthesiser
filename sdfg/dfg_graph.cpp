@@ -584,36 +584,30 @@ void SDFG::dfgGraph::remove_useless_nodes() {
       list<shared_ptr<dfgNode> > inodes = get_in_nodes(n);
       list<shared_ptr<dfgNode> > onodes = get_out_nodes(n);
       // process the child module
-      n->remove_useless_ports();
-      n->child->remove_useless_nodes();
-      // check all node originally connected
-      BOOST_FOREACH(shared_ptr<dfgNode> inode, inodes) {
-        if(!n->sig2port.count(inode->name) && !node_set.count(inode)) {
-          node_set.insert(inode);
-          node_list.push_back(inode);
+      if(n->remove_useless_ports()) {
+        n->child->remove_useless_nodes(); 
+        // check all node originally connected
+        BOOST_FOREACH(shared_ptr<dfgNode> inode, inodes) {
+          if(!n->sig2port.count(inode->get_hier_name()) && !node_set.count(inode)) {
+            node_set.insert(inode);
+            node_list.push_back(inode);
+          }
         }
-      }
-      BOOST_FOREACH(shared_ptr<dfgNode> onode, onodes) {
-        if(!n->sig2port.count(onode->name) && !node_set.count(onode)) {
-          node_set.insert(onode);
-          node_list.push_back(onode);
-        }
-      }
-      // remove the module if it is empty
-      if(n->sig2port.size() == 0)
-        remove_node(n);
-    } else { // all other cases
-      if(size_out_edges(n) == 0 || size_in_edges(n) == 0) {
-        // a node with no source or no load is useless
-        list<shared_ptr<dfgNode> > onodes = get_out_nodes(n);
-        list<shared_ptr<dfgNode> > inodes = get_in_nodes(n);
-        remove_node(n);
         BOOST_FOREACH(shared_ptr<dfgNode> onode, onodes) {
-          if(!node_set.count(onode)) {
+          if(!n->sig2port.count(onode->get_hier_name()) && !node_set.count(onode)) {
             node_set.insert(onode);
             node_list.push_back(onode);
           }
-        }        
+        }
+        // remove the module if it is empty
+        if(n->sig2port.size() == 0)
+          remove_node(n);
+      }
+    } else { // all other cases
+      if(size_out_edges(n) == 0) {
+        // a node with no source or no load is useless
+        list<shared_ptr<dfgNode> > inodes = get_in_nodes(n);
+        remove_node(n);
         BOOST_FOREACH(shared_ptr<dfgNode> inode, inodes) {
           if(!node_set.count(inode)) {
             node_set.insert(inode);

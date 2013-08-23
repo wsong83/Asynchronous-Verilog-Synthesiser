@@ -211,6 +211,9 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath(bool with_fsm, bool with_c
       hier_rrg->remove_node(n);
   }
 
+  //hier_rrg->check_integrity();
+
+  hier_rrg->remove_useless_nodes();
   hier_rrg->check_integrity();
   
   return hier_rrg;
