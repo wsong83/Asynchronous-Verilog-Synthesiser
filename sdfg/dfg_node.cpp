@@ -43,6 +43,70 @@ using std::pair;
 using std::list;
 
 
+unsigned int SDFG::dfgNode::size_out_edges() const { 
+  return pg->size_out_edges(id); 
+}
+
+unsigned int SDFG::dfgNode::size_out_edges_ns() const { // ns: none-self edges
+  return pg->size_out_edges_ns(id); 
+}
+
+unsigned int SDFG::dfgNode::size_out_edges_cb() const { // cb: cross-boundar
+  return pg->size_out_edges_cb(id); 
+}
+
+unsigned int SDFG::dfgNode::size_in_edges() const {
+  return pg->size_in_edges(id); 
+}
+
+unsigned int SDFG::dfgNode::size_in_edges_ns() const { // ns: none-self edges
+  return pg->size_in_edges_ns(id); 
+}
+
+unsigned int SDFG::dfgNode::size_in_edges_cb() const { // cb: cross-boundar
+  return pg->size_in_edges_cb(id); 
+}
+
+list<shared_ptr<dfgNode> > SDFG::dfgNode::get_out_nodes() const {
+  return pg->get_out_nodes(id); 
+}
+
+list<shared_ptr<dfgNode> > SDFG::dfgNode::get_out_nodes_cb() const {
+  return pg->get_out_nodes_cb(id); 
+}
+
+list<shared_ptr<dfgNode> > SDFG::dfgNode::get_in_nodes() const {
+  return pg->get_in_nodes(id); 
+}
+
+list<shared_ptr<dfgNode> > SDFG::dfgNode::get_in_nodes_cb() const {
+  return pg->get_in_nodes_cb(id); 
+}
+
+list<shared_ptr<dfgEdge> > SDFG::dfgNode::get_out_edges() const {
+  return pg->get_out_edges(id);
+}
+
+list<shared_ptr<dfgEdge> > SDFG::dfgNode::get_out_edges_cb() const {
+  return pg->get_out_edges_cb(id); 
+}
+
+list<shared_ptr<dfgEdge> > SDFG::dfgNode::get_in_edges() const {
+  return pg->get_in_edges(id);
+}
+
+list<shared_ptr<dfgEdge> > SDFG::dfgNode::get_in_edges_cb() const {
+  return pg->get_in_edges_cb(id); 
+}
+
+int SDFG::dfgNode::get_in_edges_type() const {
+  return pg->get_in_edges_type(id);
+}
+
+int SDFG::dfgNode::get_out_edges_type() const {
+  return pg->get_out_edges_type(id);
+}
+
 dfgNode* SDFG::dfgNode::copy() const {
   dfgNode* rv = new dfgNode();
   rv->ptr = ptr;
@@ -56,6 +120,7 @@ dfgNode* SDFG::dfgNode::copy() const {
   rv->id = NULL;
   rv->node_index = 0;
   rv->type = type;
+  rv->dp_type = dp_type;
   return rv;
 }
 
@@ -228,17 +293,18 @@ void SDFG::dfgNode::remove_port_sig(const string& sname, int dir) {
         if((child_node->type & SDFG_PORT) 
            && (child_node->type != SDFG_OPORT)
            && dir <= 0) {
-          port2sig.erase(sig);
+          port2sig[sig] = string();
           sig2port[sname].erase(sig);
         } else if((child_node->type & SDFG_PORT) 
                   && (child_node->type != SDFG_IPORT)
                   && dir >= 0) {
-          port2sig.erase(sig);
+          port2sig[sig] = string();
           sig2port[sname].erase(sig);
         } 
       }
     }
   }
+  if(sig2port[sname].size() == 0) sig2port.erase(sname);
 }
 
 void SDFG::dfgNode::add_port_sig(const string& pname, const string& sname) {
@@ -246,6 +312,30 @@ void SDFG::dfgNode::add_port_sig(const string& pname, const string& sname) {
     port2sig[pname] = sname;
     sig2port[sname].insert(pname);
   }
+}
+
+void SDFG::dfgNode::remap_ports() {
+  map<string, std::set<string> > m_s2p;
+  map<string, string> m_p2s;
+
+  BOOST_FOREACH(shared_ptr<dfgNode> n, child->get_list_of_nodes(SDFG_PORT)) {
+    string pname = n->get_hier_name();
+    if(port2sig.count(pname)) {
+      m_p2s[pname] = port2sig[pname];
+      string sname = port2sig[pname];
+      if(sname.size())
+        m_s2p[sname].insert(pname);
+    }
+  }
+
+  port2sig = m_p2s;
+  sig2port = m_s2p;
+}
+
+void SDFG::dfgNode::set_new_child(shared_ptr<dfgGraph> c) {
+  child = c;
+  child->father = this;
+  remap_ports();
 }
 
 std::ostream& SDFG::dfgNode::streamout(std::ostream& os) const {
@@ -268,13 +358,16 @@ std::ostream& SDFG::dfgNode::streamout(std::ostream& os) const {
   return os;
 }
 
-void SDFG::dfgNode::remove_useless_ports() {
+bool SDFG::dfgNode::remove_useless_ports() {
+  bool rv = false;
   std::map<std::string, std::string> m_port2sig = port2sig;
   BOOST_FOREACH(port2sig_type p2s, m_port2sig) {
     if(p2s.second.size() == 0) { // open or const input
       port2sig.erase(p2s.first);
+      rv = true;
     }
   }
+  return rv;
 }
 
 bool SDFG::dfgNode::check_integrity() const {

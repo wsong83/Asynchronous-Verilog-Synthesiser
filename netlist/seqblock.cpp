@@ -292,14 +292,18 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
       shared_ptr<SDFG::dfgNode> node = G->get_node(t.first);
       assert(node);
       node->type = SDFG::dfgNode::SDFG_FF;
-      // handle the reset signals
-      if(rsts.size() > 0 && G->exist(*(rsts.begin()), t.first, SDFG::dfgEdge::SDFG_CTL))
-        G->get_edge(*(rsts.begin()), t.first, SDFG::dfgEdge::SDFG_CTL)->type = SDFG::dfgEdge::SDFG_RST;
       
       // handle clock
       string clk_name = *(clks.begin());
       G->add_edge(clk_name, SDFG::dfgEdge::SDFG_CLK, clk_name, t.first);
     }
+
+    // handle the reset signals
+    if(rsts.size() > 0) {
+      BOOST_FOREACH(shared_ptr<SDFG::dfgEdge> e, G->get_out_edges(*(rsts.begin())))
+        e->type = SDFG::dfgEdge::SDFG_RST;
+    }
+
   } else {                      // combinational
     // handle the nodes
     BOOST_FOREACH(SDFG::RTree::sub_tree_type& t, rt->tree) {

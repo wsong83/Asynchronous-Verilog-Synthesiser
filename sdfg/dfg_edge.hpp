@@ -72,6 +72,13 @@ namespace SDFG {
     bool read(void * const, ogdf::GraphAttributes * const);
     void push_bend(double, double, bool relative = false);
 
+    boost::shared_ptr<dfgNode> get_source() const;
+    boost::shared_ptr<dfgNode> get_source_cb() const;
+    boost::shared_ptr<dfgNode> get_target() const;
+    std::list<boost::shared_ptr<dfgNode> > get_target_cb() const;
+    vertex_descriptor get_source_id() const;
+    vertex_descriptor get_target_id() const;
+
     std::list<std::pair<double, double> > bend; // bending points of the edge
     
     // for debug usage

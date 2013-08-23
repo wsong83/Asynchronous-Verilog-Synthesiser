@@ -53,7 +53,7 @@ namespace SDFG {
     std::list<std::string> hier;                        // hierarchy prefix (name of flattened modules) 
     vertex_descriptor id;                               // node id
     unsigned int node_index;   // when nodes are stored in listS, vertext_descriptors are no longer
-                                // integers, thereofer, separated indices must be generated and stored 
+                                // integers, thereofer, separated indices must be generated and stored
     enum node_type_t {          // node type
       SDFG_DF             = 0x00001, // default, unknown yet
       SDFG_COMB           = 0x00010, // combinational assign or always
@@ -75,6 +75,13 @@ namespace SDFG {
       SDFG_FSM_OTHER      = 0x00100  // probably false-active
     };
 
+    enum datapath_type_t {      // node type in control/data path division
+      SDFG_DP_NONE        = 0x00000, // unknown yet
+      SDFG_DP_DATA        = 0x00010, // elements on data paths
+      SDFG_DP_CTL         = 0x00100, // elements on control paths
+      SDFG_DP_FSM         = 0x00300  // elements on control paths
+    } dp_type;
+
     // only available in register graph
     std::list<boost::shared_ptr<dfgPath> > opath, ipath; // record all output/input paths to avoid recalculation
     std::map<boost::shared_ptr<dfgNode>, int> opath_f, ipath_f, self_f; // record all output/input paths get from fast algorithm to avoid recalculation
@@ -88,12 +95,33 @@ namespace SDFG {
     void write(void *, ogdf::GraphAttributes *);
     bool read(const pugi::xml_node&);
     bool read(void * const, ogdf::GraphAttributes * const);
+
+    unsigned int size_out_edges() const;
+    unsigned int size_out_edges_ns() const; // ns: none-self edges
+    unsigned int size_out_edges_cb() const; // cb: cross-boundar
+    unsigned int size_in_edges() const; 
+    unsigned int size_in_edges_ns() const; // ns: none-self edges
+    unsigned int size_in_edges_cb() const; // cb: cross-boundar
+    std::list<boost::shared_ptr<dfgNode> > get_out_nodes() const;
+    std::list<boost::shared_ptr<dfgNode> > get_out_nodes_cb() const;
+    std::list<boost::shared_ptr<dfgNode> > get_in_nodes() const;
+    std::list<boost::shared_ptr<dfgNode> > get_in_nodes_cb() const;
+    std::list<boost::shared_ptr<dfgEdge> > get_out_edges() const;
+    std::list<boost::shared_ptr<dfgEdge> > get_out_edges_cb() const;
+    std::list<boost::shared_ptr<dfgEdge> > get_in_edges() const;
+    std::list<boost::shared_ptr<dfgEdge> > get_in_edges_cb() const;
+    int get_out_edges_type() const;
+    int get_in_edges_type() const;
+
     boost::shared_ptr<dfgNode> flatten() const;   // move this node to one module higher, not sure how this work, do not use it
     std::string get_hier_name() const;            // get the hierarchical name of the name
     std::string get_full_name() const;            // get the hierarchical name of the name
     void set_hier_name(const std::string&);       // set the hierarchical name
     void remove_port_sig(const std::string&, int); // remove a certain port signal
     void add_port_sig(const std::string&, const std::string&); // add a certain port connection
+    void remap_ports();                           // remove the port maps when a new sub-figure is linked
+    void set_new_child(boost::shared_ptr<dfgGraph>);  // set a new child
+
     std::list<boost::shared_ptr<dfgPath> >& get_out_paths_cb(); // return all output paths from this register/port
     std::list<boost::shared_ptr<dfgPath> >& get_in_paths_cb(); // return all input paths to this register/port
     // return all output paths from this register/port, faster algorithm
@@ -114,7 +142,7 @@ namespace SDFG {
     void graphic_init();                // set initial graphic info.
 
     // remove open and static ports
-    void remove_useless_ports();
+    bool remove_useless_ports();
 
     // check functionalities
     bool is_const();            // is const or const after reset
