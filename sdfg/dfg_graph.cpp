@@ -895,6 +895,20 @@ list<shared_ptr<dfgEdge> > SDFG::dfgGraph::get_in_edges_cb(vertex_descriptor nid
   return rv;
 }
 
+int SDFG::dfgGraph::get_out_edges_type(vertex_descriptor nid) const {
+  int rv = 0;
+  BOOST_FOREACH(shared_ptr<dfgEdge> e, get_out_edges(nid))
+    rv |= e->type;
+  return rv;
+}
+
+int SDFG::dfgGraph::get_in_edges_type(vertex_descriptor nid) const {
+  int rv = 0;
+  BOOST_FOREACH(shared_ptr<dfgEdge> e, get_in_edges(nid))
+    rv |= e->type;
+  return rv;
+}
+
 ///////////////////////////////
 // graphic property
 ///////////////////////////////

@@ -99,6 +99,14 @@ list<shared_ptr<dfgEdge> > SDFG::dfgNode::get_in_edges_cb() const {
   return pg->get_in_edges_cb(id); 
 }
 
+int SDFG::dfgNode::get_in_edges_type() const {
+  return pg->get_in_edges_type(id);
+}
+
+int SDFG::dfgNode::get_out_edges_type() const {
+  return pg->get_out_edges_type(id);
+}
+
 dfgNode* SDFG::dfgNode::copy() const {
   dfgNode* rv = new dfgNode();
   rv->ptr = ptr;

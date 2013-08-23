@@ -184,6 +184,10 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     DFGG_FH_RF1(std::list<boost::shared_ptr<dfgEdge> >, get_in_edges_cb, const);
     std::list<boost::shared_ptr<dfgEdge> > get_in_edges(vertex_descriptor) const;
     std::list<boost::shared_ptr<dfgEdge> > get_in_edges_cb(vertex_descriptor) const;
+    DFGG_FH_RF1(int, get_out_edges_type, const);
+    int get_out_edges_type(vertex_descriptor) const;
+    DFGG_FH_RF1(int, get_in_edges_type, const);
+    int get_in_edges_type(vertex_descriptor) const;
 
     // graphic property
     unsigned int size_of_nodes() const;     // number of nodes in this graph
