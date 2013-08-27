@@ -191,16 +191,12 @@ int SDFG::dfgPath::cal_type_data(int t0, int t1) {
   }
 }
 
-int SDFG::dfgPath::cal_type_control(int t0, int t1) {
+int SDFG::dfgPath::cal_type_control(int t0, int) {
   return t0;
 }
 
 int SDFG::dfgPath::cal_type_data2control(int t0, int t1) {
-  int rv = 0x00;
   if(t0 == 0 || t1 == 0) return 0x0;
-  //if(t0 & (dfgEdge::SDFG_CAL|dfgEdge::SDFG_DAT)) rv |= (int)(dfgEdge::SDFG_CTL) >> 4;
-  //if(t0 & dfgEdge::SDFG_ASS)                     rv |= t1;
-  //return rv;
   return t1;
 }
 
