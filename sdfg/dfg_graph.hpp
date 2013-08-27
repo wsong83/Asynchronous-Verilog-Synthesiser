@@ -145,6 +145,7 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     DFGG_FH_RF1(std::list<boost::shared_ptr<dfgNode> >, get_target_cb, const);
     std::list<boost::shared_ptr<dfgNode> > get_target_cb(edge_descriptor) const;
     vertex_descriptor get_source_id(const edge_descriptor&) const;
+    vertex_descriptor get_source_id_cb(const edge_descriptor&) const;
     vertex_descriptor get_target_id(const edge_descriptor&) const;
 
     // hierarchical search
@@ -192,8 +193,12 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     std::list<boost::shared_ptr<dfgEdge> > get_in_edges_cb(vertex_descriptor, bool bself = true) const;
     DFGG_FH_RF1B(int, get_out_edges_type, const);
     int get_out_edges_type(vertex_descriptor, bool bself = true) const;
+    DFGG_FH_RF1B(int, get_out_edges_type_cb, const);
+    int get_out_edges_type_cb(vertex_descriptor, bool bself = true) const;
     DFGG_FH_RF1B(int, get_in_edges_type, const);
     int get_in_edges_type(vertex_descriptor, bool bself = true) const;
+    DFGG_FH_RF1B(int, get_in_edges_type_cb, const);
+    int get_in_edges_type_cb(vertex_descriptor, bool bself = true) const;
 
     // graphic property
     unsigned int size_of_nodes() const;     // number of nodes in this graph
@@ -213,6 +218,7 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     bool read(ogdf::Graph* const, ogdf::GraphAttributes* const);
 
     // analyse functions
+    void edge_type_propagate();                       // propagating the edge types
     boost::shared_ptr<dfgGraph> get_datapath() const; // extract all datapaths from an SDFG
     boost::shared_ptr<dfgGraph> extract_datapath(bool, bool) const; // a new extraction method
     boost::shared_ptr<dfgGraph> get_hier_RRG(bool hier = true) const; // get a hierarchical RRG from any SDFG
@@ -245,7 +251,14 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     edge_descriptor to_id(const edge_descriptor&) const;
     boost::shared_ptr<dfgNode> fsm_simplify_node(boost::shared_ptr<dfgNode>);  // simply the connection for a single FSM register
     boost::shared_ptr<dfgNode> copy_a_node(boost::shared_ptr<dfgGraph>, boost::shared_ptr<dfgNode>, bool use_full_name = false) const; // copy a node from this graph to a new graph and return the pointer of the new node
-
+    void edge_type_propagate_combi(boost::shared_ptr<dfgNode>, 
+                                   std::list<boost::shared_ptr<dfgNode> >&,
+                                   std::set<boost::shared_ptr<dfgNode> >&
+                                   );
+    void edge_type_propagate_reg(boost::shared_ptr<dfgNode>, 
+                                 std::list<boost::shared_ptr<dfgNode> >&,
+                                 std::set<boost::shared_ptr<dfgNode> >&
+                                 );
   };
 
 #undef DFGG_FH_F1  

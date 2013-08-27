@@ -95,8 +95,16 @@ int SDFG::dfgNode::get_in_edges_type(bool bself) const {
   return pg->get_in_edges_type(id, bself);
 }
 
+int SDFG::dfgNode::get_in_edges_type_cb(bool bself) const {
+  return pg->get_in_edges_type_cb(id, bself);
+}
+
 int SDFG::dfgNode::get_out_edges_type(bool bself) const {
   return pg->get_out_edges_type(id, bself);
+}
+
+int SDFG::dfgNode::get_out_edges_type_cb(bool bself) const {
+  return pg->get_out_edges_type_cb(id, bself);
 }
 
 dfgNode* SDFG::dfgNode::copy() const {

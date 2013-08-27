@@ -42,6 +42,94 @@ using std::string;
 using std::pair;
 using std::list;
 
+void SDFG::dfgGraph::edge_type_propagate() {
+  // get a list of all nodes
+  list<shared_ptr<dfgNode> > nlook_list;     // list of node to be processed
+  std::set<shared_ptr<dfgNode> > nlook_set;  // set of nodes to be processed
+  BOOST_FOREACH(shared_ptr<dfgNode> n, 
+                get_list_of_nodes(dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_PORT)) {
+    nlook_list.push_back(n);
+    nlook_set.insert(n);
+  }
+  
+  while(nlook_list.size()) {
+    shared_ptr<dfgNode> node = nlook_list.front();
+    nlook_list.pop_front();
+    nlook_set.erase(node);
+
+    switch(node->type) {
+    case dfgNode::SDFG_DF: 
+    case dfgNode::SDFG_GATE:
+    case dfgNode::SDFG_COMB:
+    case dfgNode::SDFG_IPORT:
+    case dfgNode::SDFG_OPORT:
+    case dfgNode::SDFG_PORT:
+      edge_type_propagate_combi(node, nlook_list, nlook_set);
+    case dfgNode::SDFG_FF:
+    case dfgNode::SDFG_LATCH:
+      edge_type_propagate_reg(node, nlook_list, nlook_set);
+    default:
+      assert(0 == "wrong SDFG node type!");
+    }
+  }
+}
+
+void SDFG::dfgGraph::edge_type_propagate_combi(shared_ptr<dfgNode> node, 
+                                               list<shared_ptr<dfgNode> >& nlook_list,
+                                               std::set<shared_ptr<dfgNode> >& nlook_set
+                                               ) {
+  if(node->type == dfgNode::SDFG_IPORT && node->pg->father == NULL) return; // top level input
+  
+  if(node->type == dfgNode::SDFG_OPORT && node->pg->father == NULL) {
+    // top level output
+    return;
+  }   
+  
+  int otype = node->get_out_edges_type_cb(false);
+  if(0 == (otype & ~dfgEdge::SDFG_CTL_MASK)) {
+    int etype;
+    // fanouts are all control
+    switch(otype) {
+    case dfgEdge::SDFG_CMP: etype = dfgEdge::SDFG_CMP; break;
+    case dfgEdge::SDFG_EQU: etype = dfgEdge::SDFG_EQU; break;
+    case dfgEdge::SDFG_ADR: etype = dfgEdge::SDFG_ADR; break;
+    default:
+      etype = dfgEdge::SDFG_CTL;
+    }
+    
+    BOOST_FOREACH(shared_ptr<dfgEdge> e, node->get_in_edges_cb(false)) {
+      if(e->type & dfgEdge::SDFG_DAT_MASK) {
+        e->type = dfgEdge::edge_type_t(etype);
+        shared_ptr<dfgNode> src = e->get_source();
+        if(!nlook_set.count(src)) {
+          if(src->type != dfgNode::SDFG_MODULE) {
+            nlook_list.push_back(src);
+            nlook_set.insert(src);
+          } else {
+            src = e->get_source_cb();
+            if(!nlook_set.count(src)) {
+              nlook_list.push_back(src);
+              nlook_set.insert(src);
+            }
+          }
+        }
+      }
+    }
+  }
+} 
+
+void SDFG::dfgGraph::edge_type_propagate_reg(shared_ptr<dfgNode> node, 
+                                             list<shared_ptr<dfgNode> >& nlook_list,
+                                             std::set<shared_ptr<dfgNode> >& nlook_set
+                                             ) {
+  BOOST_FOREACH(shared_ptr<dfgNode> n, node->get_in_nodes(false)) {
+    if(!nlook_set.count(n)) {
+      nlook_list.push_back(n);
+      nlook_set.insert(n);
+    }
+  }
+}
+
 shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath(bool with_fsm, bool with_ctl) const {
 
   // first get a hierarchical RRG from the SDFG

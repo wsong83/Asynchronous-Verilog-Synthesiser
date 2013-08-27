@@ -109,7 +109,9 @@ namespace SDFG {
     std::list<boost::shared_ptr<dfgEdge> > get_in_edges(bool bself = true) const;
     std::list<boost::shared_ptr<dfgEdge> > get_in_edges_cb(bool bself = true) const;
     int get_out_edges_type(bool bself = true) const;
+    int get_out_edges_type_cb(bool bself = true) const;
     int get_in_edges_type(bool bself = true) const;
+    int get_in_edges_type_cb(bool bself = true) const;
 
     boost::shared_ptr<dfgNode> flatten() const;   // move this node to one module higher, not sure how this work, do not use it
     std::string get_hier_name() const;            // get the hierarchical name of the name

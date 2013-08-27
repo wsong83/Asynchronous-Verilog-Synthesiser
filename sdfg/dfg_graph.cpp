@@ -475,12 +475,21 @@ vertex_descriptor SDFG::dfgGraph::get_source_id(const edge_descriptor& eid) cons
     return NULL;
 }
 
+vertex_descriptor SDFG::dfgGraph::get_source_id_cb(const edge_descriptor& eid) const {
+  shared_ptr<dfgNode> n = get_source_cb(eid);
+  if(n)
+    return n->id;
+  else
+    return NULL;
+}
+
 vertex_descriptor SDFG::dfgGraph::get_target_id(const edge_descriptor& eid) const {
   if(exist(eid))
     return boost::target(eid, bg_);
   else
     return NULL;
 }
+
 
 ///////////////////////////////
 // hierarchical search
@@ -905,10 +914,33 @@ int SDFG::dfgGraph::get_out_edges_type(vertex_descriptor nid, bool bself) const 
   return rv;
 }
 
+int SDFG::dfgGraph::get_out_edges_type_cb(vertex_descriptor nid, bool bself) const {
+  int rv = 0;
+  BOOST_FOREACH(shared_ptr<dfgEdge> e, get_out_edges_cb(nid)) {
+    if(bself)
+      rv |= e->type;
+    else {
+      shared_ptr<dfgNode> n = e->get_target();
+      if(n->type & dfgNode::SDFG_MODULE || n->id != nid)
+        rv |= e->type;        
+    }
+  }
+  return rv;
+}
+
 int SDFG::dfgGraph::get_in_edges_type(vertex_descriptor nid, bool bself) const {
   int rv = 0;
   BOOST_FOREACH(shared_ptr<dfgEdge> e, get_in_edges(nid)) {
     if(e->get_source_id() != nid || bself)
+      rv |= e->type;
+  }
+  return rv;
+}
+
+int SDFG::dfgGraph::get_in_edges_type_cb(vertex_descriptor nid, bool bself) const {
+  int rv = 0;
+  BOOST_FOREACH(shared_ptr<dfgEdge> e, get_in_edges_cb(nid)) {
+    if(e->get_source_id_cb() != nid || bself)
       rv |= e->type;
   }
   return rv;
