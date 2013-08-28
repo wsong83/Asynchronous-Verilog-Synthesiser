@@ -360,6 +360,7 @@ std::ostream& SDFG::dfgNode::streamout(std::ostream& os) const {
 
 bool SDFG::dfgNode::remove_useless_ports() {
   bool rv = false;
+
   std::map<std::string, std::string> m_port2sig = port2sig;
   BOOST_FOREACH(port2sig_type p2s, m_port2sig) {
     if(p2s.second.size() == 0) { // open or const input
@@ -372,6 +373,14 @@ bool SDFG::dfgNode::remove_useless_ports() {
 
 bool SDFG::dfgNode::check_integrity() const {
   if(type == SDFG_MODULE) {
+    BOOST_FOREACH(shared_ptr<dfgNode> n, get_in_nodes()) {
+      assert(sig2port.count(n->get_hier_name()));
+      assert(sig2port.find(n->get_hier_name())->second.size() > 0);
+    }
+    BOOST_FOREACH(shared_ptr<dfgNode> n, get_out_nodes()) {
+      assert(sig2port.count(n->get_hier_name()));
+      assert(sig2port.find(n->get_hier_name())->second.size() > 0);
+    }
     if(child) {
       assert(child->father == this);
       assert(child->check_integrity());
