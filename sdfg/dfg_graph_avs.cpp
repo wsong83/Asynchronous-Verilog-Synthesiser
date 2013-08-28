@@ -64,10 +64,12 @@ void SDFG::dfgGraph::edge_type_propagate() {
     case dfgNode::SDFG_IPORT:
     case dfgNode::SDFG_OPORT:
     case dfgNode::SDFG_PORT:
-      edge_type_propagate_combi(node, nlook_list, nlook_set);
+      edge_type_propagate_combi(node, nlook_list, nlook_set); 
+      break;
     case dfgNode::SDFG_FF:
     case dfgNode::SDFG_LATCH:
-      edge_type_propagate_reg(node, nlook_list, nlook_set);
+      edge_type_propagate_reg(node, nlook_list, nlook_set); 
+      break;
     default:
       assert(0 == "wrong SDFG node type!");
     }
@@ -90,9 +92,9 @@ void SDFG::dfgGraph::edge_type_propagate_combi(shared_ptr<dfgNode> node,
     int etype;
     // fanouts are all control
     switch(otype) {
-    case dfgEdge::SDFG_CMP: etype = dfgEdge::SDFG_CMP; break;
+      //case dfgEdge::SDFG_CMP: etype = dfgEdge::SDFG_CMP; break;
     case dfgEdge::SDFG_EQU: etype = dfgEdge::SDFG_EQU; break;
-    case dfgEdge::SDFG_ADR: etype = dfgEdge::SDFG_ADR; break;
+      //case dfgEdge::SDFG_ADR: etype = dfgEdge::SDFG_ADR; break;
     default:
       etype = dfgEdge::SDFG_CTL;
     }
@@ -101,17 +103,15 @@ void SDFG::dfgGraph::edge_type_propagate_combi(shared_ptr<dfgNode> node,
       if(e->type & dfgEdge::SDFG_DAT_MASK) {
         e->type = dfgEdge::edge_type_t(etype);
         shared_ptr<dfgNode> src = e->get_source();
-        if(!nlook_set.count(src)) {
-          if(src->type != dfgNode::SDFG_MODULE) {
-            nlook_list.push_back(src);
-            nlook_set.insert(src);
-          } else {
-            src = e->get_source_cb();
-            if(!nlook_set.count(src)) {
-              nlook_list.push_back(src);
-              nlook_set.insert(src);
-            }
-          }
+        
+        if(src->type == dfgNode::SDFG_MODULE)
+          src = e->get_source_cb();
+        
+        if(src->type != dfgNode::SDFG_FF && 
+           src->type != dfgNode::SDFG_LATCH &&
+           !nlook_set.count(src)) {
+          nlook_list.push_back(src);
+          nlook_set.insert(src);
         }
       }
     }
@@ -123,7 +123,10 @@ void SDFG::dfgGraph::edge_type_propagate_reg(shared_ptr<dfgNode> node,
                                              std::set<shared_ptr<dfgNode> >& nlook_set
                                              ) {
   BOOST_FOREACH(shared_ptr<dfgNode> n, node->get_in_nodes(false)) {
-    if(!nlook_set.count(n)) {
+    if(n->type != dfgNode::SDFG_FF && 
+       n->type != dfgNode::SDFG_LATCH &&
+       !nlook_set.count(n)
+       ) {
       nlook_list.push_back(n);
       nlook_set.insert(n);
     }
@@ -134,6 +137,7 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath(bool with_fsm, bool with_c
 
   // first get a hierarchical RRG from the SDFG
   shared_ptr<dfgGraph> hier_rrg = get_hier_RRG(false);
+  hier_rrg->edge_type_propagate();
 
   //shared_ptr<dfgGraph> hier_rrg = get_RRG();
 
@@ -193,7 +197,7 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath(bool with_fsm, bool with_c
       
       if((otype & dfgEdge::SDFG_DAT_MASK) || 
          ((itype & dfgEdge::SDFG_DAT_MASK) && 
-          (otype & (dfgEdge::SDFG_CMP | dfgEdge::SDFG_EQU | dfgEdge::SDFG_ADR))
+          (otype & (dfgEdge::SDFG_EQU))// | dfgEdge::SDFG_CMP | dfgEdge::SDFG_ADR))
           )
          )
         dp_type |= dfgNode::SDFG_DP_DATA;
@@ -205,12 +209,12 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath(bool with_fsm, bool with_c
     } else if(n->type == dfgNode::SDFG_DF && hier_rrg->exist(n)) {
       // remove all none data edges
       BOOST_FOREACH(shared_ptr<dfgEdge> e, n->get_in_edges(false)) {
-        if(!(e->type & (dfgEdge::SDFG_DAT_MASK | dfgEdge::SDFG_CMP | dfgEdge::SDFG_EQU | dfgEdge::SDFG_ADR)))
+        if(!(e->type & (dfgEdge::SDFG_DAT_MASK | dfgEdge::SDFG_EQU )))//| dfgEdge::SDFG_CMP | dfgEdge::SDFG_ADR)))
           hier_rrg->remove_edge(e);
       }
       
       BOOST_FOREACH(shared_ptr<dfgEdge> e, n->get_out_edges(false)) {
-        if(!(e->type & (dfgEdge::SDFG_DAT_MASK | dfgEdge::SDFG_CMP | dfgEdge::SDFG_EQU | dfgEdge::SDFG_ADR)))
+        if(!(e->type & (dfgEdge::SDFG_DAT_MASK | dfgEdge::SDFG_EQU )))//| dfgEdge::SDFG_CMP | dfgEdge::SDFG_ADR)))
           hier_rrg->remove_edge(e);
       }
     }
