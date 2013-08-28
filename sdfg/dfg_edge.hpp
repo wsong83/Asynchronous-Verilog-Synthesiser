@@ -77,6 +77,7 @@ namespace SDFG {
     boost::shared_ptr<dfgNode> get_target() const;
     std::list<boost::shared_ptr<dfgNode> > get_target_cb() const;
     vertex_descriptor get_source_id() const;
+    vertex_descriptor get_source_id_cb() const;
     vertex_descriptor get_target_id() const;
 
     std::list<std::pair<double, double> > bend; // bending points of the edge

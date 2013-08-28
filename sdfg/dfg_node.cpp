@@ -43,68 +43,68 @@ using std::pair;
 using std::list;
 
 
-unsigned int SDFG::dfgNode::size_out_edges() const { 
-  return pg->size_out_edges(id); 
+unsigned int SDFG::dfgNode::size_out_edges(bool bself) const { 
+  return pg->size_out_edges(id, bself); 
 }
 
-unsigned int SDFG::dfgNode::size_out_edges_ns() const { // ns: none-self edges
-  return pg->size_out_edges_ns(id); 
+unsigned int SDFG::dfgNode::size_out_edges_cb(bool bself) const { // cb: cross-boundar
+  return pg->size_out_edges_cb(id, bself); 
 }
 
-unsigned int SDFG::dfgNode::size_out_edges_cb() const { // cb: cross-boundar
-  return pg->size_out_edges_cb(id); 
+unsigned int SDFG::dfgNode::size_in_edges(bool bself) const {
+  return pg->size_in_edges(id, bself); 
 }
 
-unsigned int SDFG::dfgNode::size_in_edges() const {
-  return pg->size_in_edges(id); 
+unsigned int SDFG::dfgNode::size_in_edges_cb(bool bself) const { // cb: cross-boundar
+  return pg->size_in_edges_cb(id, bself); 
 }
 
-unsigned int SDFG::dfgNode::size_in_edges_ns() const { // ns: none-self edges
-  return pg->size_in_edges_ns(id); 
+list<shared_ptr<dfgNode> > SDFG::dfgNode::get_out_nodes(bool bself) const {
+  return pg->get_out_nodes(id, bself); 
 }
 
-unsigned int SDFG::dfgNode::size_in_edges_cb() const { // cb: cross-boundar
-  return pg->size_in_edges_cb(id); 
+list<shared_ptr<dfgNode> > SDFG::dfgNode::get_out_nodes_cb(bool bself) const {
+  return pg->get_out_nodes_cb(id, bself); 
 }
 
-list<shared_ptr<dfgNode> > SDFG::dfgNode::get_out_nodes() const {
-  return pg->get_out_nodes(id); 
+list<shared_ptr<dfgNode> > SDFG::dfgNode::get_in_nodes(bool bself) const {
+  return pg->get_in_nodes(id, bself); 
 }
 
-list<shared_ptr<dfgNode> > SDFG::dfgNode::get_out_nodes_cb() const {
-  return pg->get_out_nodes_cb(id); 
+list<shared_ptr<dfgNode> > SDFG::dfgNode::get_in_nodes_cb(bool bself) const {
+  return pg->get_in_nodes_cb(id, bself); 
 }
 
-list<shared_ptr<dfgNode> > SDFG::dfgNode::get_in_nodes() const {
-  return pg->get_in_nodes(id); 
+list<shared_ptr<dfgEdge> > SDFG::dfgNode::get_out_edges(bool bself) const {
+  return pg->get_out_edges(id, bself);
 }
 
-list<shared_ptr<dfgNode> > SDFG::dfgNode::get_in_nodes_cb() const {
-  return pg->get_in_nodes_cb(id); 
+list<shared_ptr<dfgEdge> > SDFG::dfgNode::get_out_edges_cb(bool bself) const {
+  return pg->get_out_edges_cb(id, bself); 
 }
 
-list<shared_ptr<dfgEdge> > SDFG::dfgNode::get_out_edges() const {
-  return pg->get_out_edges(id);
+list<shared_ptr<dfgEdge> > SDFG::dfgNode::get_in_edges(bool bself) const {
+  return pg->get_in_edges(id, bself);
 }
 
-list<shared_ptr<dfgEdge> > SDFG::dfgNode::get_out_edges_cb() const {
-  return pg->get_out_edges_cb(id); 
+list<shared_ptr<dfgEdge> > SDFG::dfgNode::get_in_edges_cb(bool bself) const {
+  return pg->get_in_edges_cb(id, bself); 
 }
 
-list<shared_ptr<dfgEdge> > SDFG::dfgNode::get_in_edges() const {
-  return pg->get_in_edges(id);
+int SDFG::dfgNode::get_in_edges_type(bool bself) const {
+  return pg->get_in_edges_type(id, bself);
 }
 
-list<shared_ptr<dfgEdge> > SDFG::dfgNode::get_in_edges_cb() const {
-  return pg->get_in_edges_cb(id); 
+int SDFG::dfgNode::get_in_edges_type_cb(bool bself) const {
+  return pg->get_in_edges_type_cb(id, bself);
 }
 
-int SDFG::dfgNode::get_in_edges_type() const {
-  return pg->get_in_edges_type(id);
+int SDFG::dfgNode::get_out_edges_type(bool bself) const {
+  return pg->get_out_edges_type(id, bself);
 }
 
-int SDFG::dfgNode::get_out_edges_type() const {
-  return pg->get_out_edges_type(id);
+int SDFG::dfgNode::get_out_edges_type_cb(bool bself) const {
+  return pg->get_out_edges_type_cb(id, bself);
 }
 
 dfgNode* SDFG::dfgNode::copy() const {
