@@ -61,6 +61,10 @@ vertex_descriptor SDFG::dfgEdge::get_source_id() const {
   return pg->get_source_id(id); 
 }
 
+vertex_descriptor SDFG::dfgEdge::get_source_id_cb() const {
+  return pg->get_source_id_cb(id); 
+}
+
 vertex_descriptor SDFG::dfgEdge::get_target_id() const {
   return pg->get_target_id(id); 
 }
