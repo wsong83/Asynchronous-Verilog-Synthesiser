@@ -307,7 +307,10 @@ shared_ptr<SDFG::RTree> netlist::CaseState::get_rtree() const {
   if(!has_default && num_of_case < (1 << exp->get_width())) num_of_case++; 
   
   // build the tree
-  rv->combine(exp_rtree, SDFG::dfgEdge::SDFG_EQU);
+  if(rv->get_all().size())
+    rv->combine(exp_rtree, SDFG::dfgEdge::SDFG_EQU);
+  else
+    rv->combine(exp_rtree, SDFG::dfgEdge::SDFG_DAT);
 
   // add self paths
   typedef std::pair<const string&, unsigned int> m_type;

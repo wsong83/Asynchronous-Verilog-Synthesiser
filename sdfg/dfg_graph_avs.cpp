@@ -46,10 +46,12 @@ void SDFG::dfgGraph::edge_type_propagate() {
   // get a list of all nodes
   list<shared_ptr<dfgNode> > nlook_list;     // list of node to be processed
   std::set<shared_ptr<dfgNode> > nlook_set;  // set of nodes to be processed
+  std::set<shared_ptr<dfgNode> > nall_set;   // all nodes that has been visited
   BOOST_FOREACH(shared_ptr<dfgNode> n, 
                 get_list_of_nodes(dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_PORT)) {
     nlook_list.push_back(n);
     nlook_set.insert(n);
+    nall_set.insert(n);
   }
   
   while(nlook_list.size()) {
@@ -64,11 +66,11 @@ void SDFG::dfgGraph::edge_type_propagate() {
     case dfgNode::SDFG_IPORT:
     case dfgNode::SDFG_OPORT:
     case dfgNode::SDFG_PORT:
-      edge_type_propagate_combi(node, nlook_list, nlook_set); 
+      edge_type_propagate_combi(node, nlook_list, nlook_set, nall_set);
       break;
     case dfgNode::SDFG_FF:
     case dfgNode::SDFG_LATCH:
-      edge_type_propagate_reg(node, nlook_list, nlook_set); 
+      edge_type_propagate_reg(node, nlook_list, nlook_set, nall_set);
       break;
     default:
       assert(0 == "wrong SDFG node type!");
@@ -78,34 +80,40 @@ void SDFG::dfgGraph::edge_type_propagate() {
 
 void SDFG::dfgGraph::edge_type_propagate_combi(shared_ptr<dfgNode> node, 
                                                list<shared_ptr<dfgNode> >& nlook_list,
-                                               std::set<shared_ptr<dfgNode> >& nlook_set
+                                               std::set<shared_ptr<dfgNode> >& nlook_set,
+                                               std::set<shared_ptr<dfgNode> >& nall_set
                                                ) {
   if(node->type == dfgNode::SDFG_IPORT && node->pg->father == NULL) return; // top level input
   
+  BOOST_FOREACH(shared_ptr<dfgNode> n, node->get_in_nodes_cb(false)) {
+    if(!nall_set.count(n)) {
+      nlook_list.push_back(n);
+      nlook_set.insert(n);
+      nall_set.insert(n);
+    }
+  }
+
   if(node->type == dfgNode::SDFG_OPORT && node->pg->father == NULL) {
     // top level output
     return;
   }   
-  
+
   int otype = node->get_out_edges_type_cb(false);
   if(0 == (otype & ~dfgEdge::SDFG_CTL_MASK)) {
     int etype;
     // fanouts are all control
     switch(otype) {
-      //case dfgEdge::SDFG_CMP: etype = dfgEdge::SDFG_CMP; break;
+    case dfgEdge::SDFG_CMP: etype = dfgEdge::SDFG_CMP; break;
     case dfgEdge::SDFG_EQU: etype = dfgEdge::SDFG_EQU; break;
-      //case dfgEdge::SDFG_ADR: etype = dfgEdge::SDFG_ADR; break;
+    case dfgEdge::SDFG_ADR: etype = dfgEdge::SDFG_ADR; break;
     default:
       etype = dfgEdge::SDFG_CTL;
     }
-    
+
     BOOST_FOREACH(shared_ptr<dfgEdge> e, node->get_in_edges_cb(false)) {
       if(e->type & dfgEdge::SDFG_DAT_MASK) {
         e->type = dfgEdge::edge_type_t(etype);
-        shared_ptr<dfgNode> src = e->get_source();
-        
-        if(src->type == dfgNode::SDFG_MODULE)
-          src = e->get_source_cb();
+        shared_ptr<dfgNode> src = e->get_source_cb();
         
         if(src->type != dfgNode::SDFG_FF && 
            src->type != dfgNode::SDFG_LATCH &&
@@ -120,9 +128,16 @@ void SDFG::dfgGraph::edge_type_propagate_combi(shared_ptr<dfgNode> node,
 
 void SDFG::dfgGraph::edge_type_propagate_reg(shared_ptr<dfgNode> node, 
                                              list<shared_ptr<dfgNode> >& nlook_list,
-                                             std::set<shared_ptr<dfgNode> >& nlook_set
+                                             std::set<shared_ptr<dfgNode> >& nlook_set,
+                                             std::set<shared_ptr<dfgNode> >& nall_set
                                              ) {
-  BOOST_FOREACH(shared_ptr<dfgNode> n, node->get_in_nodes(false)) {
+  BOOST_FOREACH(shared_ptr<dfgNode> n, node->get_in_nodes_cb(false)) {
+    if(!nall_set.count(n)) {
+      nlook_list.push_back(n);
+      nlook_set.insert(n);
+      nall_set.insert(n);
+    }
+
     if(n->type != dfgNode::SDFG_FF && 
        n->type != dfgNode::SDFG_LATCH &&
        !nlook_set.count(n)
@@ -185,21 +200,25 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath(bool with_fsm, bool with_c
         hier_rrg->remove_node(n);
     }
   }
+  
+  hier_rrg->remove_useless_nodes();
+  hier_rrg->edge_type_propagate();
   //hier_rrg->check_integrity();
 
   BOOST_FOREACH(shared_ptr<dfgNode> n, nlist) {
-    if(n->type & (dfgNode::SDFG_FF | dfgNode::SDFG_LATCH) ) {
+    if((n->type & (dfgNode::SDFG_FF | dfgNode::SDFG_LATCH)) && hier_rrg->exist(n)) {
       int dp_type = 0;
       int itype = n->get_in_edges_type(false);
       int otype = n->get_out_edges_type(false);      
 
       if(n->is_fsm()) dp_type |= dfgNode::SDFG_DP_FSM;
       
-      if((otype & dfgEdge::SDFG_DAT_MASK) || 
-         ((itype & dfgEdge::SDFG_DAT_MASK) && 
-          (otype & (dfgEdge::SDFG_EQU))// | dfgEdge::SDFG_CMP | dfgEdge::SDFG_ADR))
-          )
-         )
+      if((otype & dfgEdge::SDFG_DAT_MASK) ) // || 
+                                            // ((itype & dfgEdge::SDFG_DAT_MASK) && 
+                                            // (otype & (dfgEdge::SDFG_EQU))
+                                            // | dfgEdge::SDFG_CMP | dfgEdge::SDFG_ADR))
+                                            // )
+                                            // )
         dp_type |= dfgNode::SDFG_DP_DATA;
       
       if(otype & dfgEdge::SDFG_CTL_MASK)
@@ -209,12 +228,12 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath(bool with_fsm, bool with_c
     } else if(n->type == dfgNode::SDFG_DF && hier_rrg->exist(n)) {
       // remove all none data edges
       BOOST_FOREACH(shared_ptr<dfgEdge> e, n->get_in_edges(false)) {
-        if(!(e->type & (dfgEdge::SDFG_DAT_MASK | dfgEdge::SDFG_EQU )))//| dfgEdge::SDFG_CMP | dfgEdge::SDFG_ADR)))
+        if(!(e->type & (dfgEdge::SDFG_DAT_MASK))) // | dfgEdge::SDFG_EQU )))//| dfgEdge::SDFG_CMP | dfgEdge::SDFG_ADR)))
           hier_rrg->remove_edge(e);
       }
       
       BOOST_FOREACH(shared_ptr<dfgEdge> e, n->get_out_edges(false)) {
-        if(!(e->type & (dfgEdge::SDFG_DAT_MASK | dfgEdge::SDFG_EQU )))//| dfgEdge::SDFG_CMP | dfgEdge::SDFG_ADR)))
+        if(!(e->type & (dfgEdge::SDFG_DAT_MASK))) // | dfgEdge::SDFG_EQU )))//| dfgEdge::SDFG_CMP | dfgEdge::SDFG_ADR)))
           hier_rrg->remove_edge(e);
       }
     }
@@ -222,7 +241,7 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath(bool with_fsm, bool with_c
 
   // begin the trim
   BOOST_FOREACH(shared_ptr<dfgNode> n, nlist) {
-    if(n->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH)) {
+    if((n->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH)) && hier_rrg->exist(n)) {
       if(!(n->dp_type & dfgNode::SDFG_DP_DATA) && (n->dp_type & dfgNode::SDFG_DP_CTL)) {
         if(with_fsm && (n->dp_type & dfgNode::SDFG_DP_FSM)) continue;
         bool keep = false;
@@ -238,6 +257,9 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath(bool with_fsm, bool with_c
         hier_rrg->remove_node(n);
     }
   }
+  
+  hier_rrg->remove_useless_nodes();
+  hier_rrg->edge_type_propagate();
   //hier_rrg->check_integrity();
   
   // count from input
@@ -306,6 +328,7 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath(bool with_fsm, bool with_c
   //hier_rrg->check_integrity();
 
   hier_rrg->remove_useless_nodes();
+  hier_rrg->edge_type_propagate();
   hier_rrg->check_integrity();
   
   return hier_rrg;
@@ -405,7 +428,7 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_hier_RRG(bool hier) const {
   
   // node to visit
   list<shared_ptr<dfgNode> > nlist = 
-    get_list_of_nodes(dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_PORT);
+    get_list_of_nodes(dfgNode::SDFG_FF|dfgNode::SDFG_LATCH);
 
   // add node to the new graph
   BOOST_FOREACH(shared_ptr<dfgNode> nr, nlist)
@@ -431,21 +454,39 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_hier_RRG(bool hier) const {
         nlist.push_back(m);
       }
       ng->add_edge(nr->get_hier_name(), dfgEdge::SDFG_ASS, nr->get_hier_name(), m->get_hier_name());
-    }    
+    }
+  }
+
+  // add ports
+  list<shared_ptr<dfgNode> > plist = 
+    get_list_of_nodes(dfgNode::SDFG_PORT);
+
+  BOOST_FOREACH(shared_ptr<dfgNode> nr, plist) {
+    copy_a_node(ng, nr);
+    BOOST_FOREACH(shared_ptr<dfgNode> m, get_in_nodes(nr)) {
+      if(!ng->exist(m->get_hier_name()))
+        copy_a_node(ng, m);
+      ng->add_edge(m->get_hier_name(), dfgEdge::SDFG_ASS, m->get_hier_name(), nr->get_hier_name());
+    }
+    BOOST_FOREACH(shared_ptr<dfgNode> m, get_out_nodes(nr)) {
+      if(!ng->exist(m->get_hier_name())) {
+        copy_a_node(ng, m);
+        nlist.push_back(m);
+      }
+      ng->add_edge(nr->get_hier_name(), dfgEdge::SDFG_ASS, nr->get_hier_name(), m->get_hier_name());
+    }
   }
 
   // output paths
   while(!nlist.empty()) {
     shared_ptr<dfgNode> cn = nlist.front();
     nlist.pop_front();
-    if(cn->type != dfgNode::SDFG_OPORT){ // IPORT, FF and Latch
-      BOOST_FOREACH(shared_ptr<dfgPath> po, cn->get_out_paths_fast()) {
-        if(!ng->exist(po->tar->get_hier_name())) {
-          copy_a_node(ng, po->tar);
-          nlist.push_back(po->tar);
-        }
-        ng->add_edge_multi(cn->get_hier_name(), po->type, cn->get_hier_name(), po->tar->get_hier_name());
+    BOOST_FOREACH(shared_ptr<dfgPath> po, cn->get_out_paths_fast()) {
+      if(!ng->exist(po->tar->get_hier_name())) {
+        copy_a_node(ng, po->tar);
+        nlist.push_back(po->tar);
       }
+      ng->add_edge_multi(cn->get_hier_name(), po->type, cn->get_hier_name(), po->tar->get_hier_name()); 
     }
   }
 

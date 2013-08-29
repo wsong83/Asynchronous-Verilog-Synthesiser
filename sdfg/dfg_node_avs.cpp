@@ -501,17 +501,12 @@ void SDFG::dfgNode::out_path_type_update_fast(map<shared_ptr<dfgNode>, int>& rv,
   
   // check node type
   if((type & (SDFG_FF|SDFG_LATCH))         || // register
-     (type == SDFG_DF)                     || // module or port
-     pg->size_out_edges(id) == 0              // output
+     pg->size_out_edges(id) == 0              // no load
      ) {  // ending point
     if(rv.count(pn)) rv[pn] |= cp->type;
     else             rv[pn] = cp->type;
     if(cp->path.back().first != pn)
       rmap[cp->path.back().first][pn] = cp->path.back().second;
-    return;
-  }
-
-  if(pn->type & SDFG_MODULE) {  // module
     return;
   }
 
@@ -544,23 +539,27 @@ void SDFG::dfgNode::out_path_type_update_fast(map<shared_ptr<dfgNode>, int>& rv,
     
     // visit all out nodes
     BOOST_FOREACH(rmap_data_type& t, tmap) {
-      shared_ptr<dfgPath> p(new dfgPath(*cp));
-      p->push_back(pn, t.second);
-      t.first->out_path_type_update_fast(rv, p, rmap);
-      // update rmap
-      if(t.first != p->src) {
-        BOOST_FOREACH(rmap_data_type& m, rmap[t.first]) {
-          if(m.first) {
-            if(rmap[pn].count(m.first)) rmap[pn][m.first] |= dfgPath::cal_type(t.second, m.second);
-            else                        rmap[pn][m.first] = dfgPath::cal_type(t.second, m.second);
-          } else {
-            if(rmap[pn].count(t.first)) rmap[pn][t.first] |= t.second;
-            else                        rmap[pn][t.first] = t.second;
+      if(t.first->type & (SDFG_MODULE|SDFG_OPORT)) {  // module or output port
+        if(pn != cp->src) {
+          if(rv.count(pn)) rv[pn] |= cp->type;
+          else             rv[pn] = cp->type;
+        }
+      } else {
+        shared_ptr<dfgPath> p(new dfgPath(*cp));
+        p->push_back(pn, t.second);
+        t.first->out_path_type_update_fast(rv, p, rmap);
+        // update rmap
+        if(t.first != p->src) {
+          BOOST_FOREACH(rmap_data_type& m, rmap[t.first]) {
+            if(m.first) {
+              if(rmap[pn].count(m.first)) rmap[pn][m.first] |= dfgPath::cal_type(t.second, m.second);
+              else                        rmap[pn][m.first] = dfgPath::cal_type(t.second, m.second);
+            } else {
+              if(rmap[pn].count(t.first)) rmap[pn][t.first] |= t.second;
+              else                        rmap[pn][t.first] = t.second;
+            }
           }
         }
-      }
-      if(t.first->type & SDFG_MODULE) { // module, put this node as a terminal
-        rmap[pn][shared_ptr<dfgNode>()] = SDFG_DF;
       }
     }
   }
