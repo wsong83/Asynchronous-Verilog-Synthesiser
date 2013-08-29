@@ -253,10 +253,12 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     boost::shared_ptr<dfgNode> copy_a_node(boost::shared_ptr<dfgGraph>, boost::shared_ptr<dfgNode>, bool use_full_name = false) const; // copy a node from this graph to a new graph and return the pointer of the new node
     void edge_type_propagate_combi(boost::shared_ptr<dfgNode>, 
                                    std::list<boost::shared_ptr<dfgNode> >&,
+                                   std::set<boost::shared_ptr<dfgNode> >&,
                                    std::set<boost::shared_ptr<dfgNode> >&
                                    );
     void edge_type_propagate_reg(boost::shared_ptr<dfgNode>, 
                                  std::list<boost::shared_ptr<dfgNode> >&,
+                                 std::set<boost::shared_ptr<dfgNode> >&,
                                  std::set<boost::shared_ptr<dfgNode> >&
                                  );
   };
