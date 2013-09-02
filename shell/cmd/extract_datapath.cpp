@@ -196,12 +196,6 @@ void shell::CMD::CMDExtractDatapath::exec ( const std::string& str, Env * pEnv){
   dataDFG = dataDFG->extract_datapath(arg.bFsm, arg.bCtl);
   dataDFG = dataDFG->extract_datapath(arg.bFsm, arg.bCtl);
 
-  //  if(!tarDesign->DataDFG) {
-  //    tarDesign->DataDFG = tarDesign->DFG->get_datapath();
-  //    tarDesign->DataDFG->remove_useless_nodes();
-  //    tarDesign->DataDFG->check_integrity();
-  //  }
-
   dataDFG->write(fhandler);
 
   fhandler.close();
