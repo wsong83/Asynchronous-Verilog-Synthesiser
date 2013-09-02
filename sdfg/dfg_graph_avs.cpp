@@ -148,6 +148,15 @@ void SDFG::dfgGraph::edge_type_propagate_reg(shared_ptr<dfgNode> node,
   }
 }
 
+shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath_new(bool with_fsm, bool with_ctl) const {
+  shared_ptr<dfgGraph> hier_rrg = get_hier_RRG();
+
+  std::set<shared_ptr<dfgNode> > nlook_set;
+  std::list<shared_ptr<dfgNode> > nlook_list;
+  std::set<shared_ptr<dfgNode> > nall_set;
+
+}
+
 shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath(bool with_fsm, bool with_ctl) const {
 
   // first get a hierarchical RRG from the SDFG
