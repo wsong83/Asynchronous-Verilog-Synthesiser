@@ -153,6 +153,7 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
 
     // clear up the graph
     void remove_useless_nodes();
+    void remove_unlisted_nodes(const std::set<boost::shared_ptr<dfgNode> >&, bool);
 
     // existance check
     DFGG_FH_RF2(bool, exist, const);  //edge

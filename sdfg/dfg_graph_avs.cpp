@@ -154,6 +154,49 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath_new(bool with_fsm, bool wi
   std::set<shared_ptr<dfgNode> > nlook_set;
   std::list<shared_ptr<dfgNode> > nlook_list;
   std::set<shared_ptr<dfgNode> > nall_set;
+  std::set<shared_ptr<dfgNode> > nkeep_set;
+
+  BOOST_FOREACH(shared_ptr<dfgNode> n, hier_rrg->get_list_of_nodes(dfgNode::SDFG_OPORT)) {
+    nall_set.insert(n);
+    if(!(n->dp_type & (dfgNode::SDFG_DP_CTL|dfgNode::SDFG_DP_FSM))) {
+      nkeep_set.insert(n);
+      nlook_set.insert(n);
+      nlook_list.push_back(n);
+    }
+  }
+
+  while(nlook_set.size()) {
+    // get the next node to be processed
+    shared_ptr<dfgNode> node = nlook_list.front();
+    nlook_list.pop_front();
+    nlook_set.erase(node);
+
+    // check if it is a FF or a latch
+    if(node->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH)) {
+      BOOST_FOREACH(shared_ptr<dfgPath> path, node->get_in_paths_fast_cb()) {
+        shared_ptr<dfgNode> src = path->src;
+        if(src != node) { // not self loop
+          if(path->type & dfgEdge::SDFG_DAT_MASK) {
+            nkeep_set.insert(src);
+            if(!nall_set.count(src)) {
+              nlook_set.insert(src);
+              nlook_list.push_back(src);
+            }            
+          } else if(path->type & dfgEdge::SDFG_CTL_MASK) {
+            if(with_ctl || (with_fsm && src->is_fsm())) {
+              nkeep_set.insert(src);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  hier_rrg->remove_unlisted_nodes(nkeep_set, true);
+  hier_rrg->remove_useless_nodes();
+  hier_rrg->edge_type_propagate();
+  hier_rrg->check_integrity();
+  return hier_rrg;
 
 }
 
@@ -363,7 +406,7 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_hier_RRG(bool hier) const {
   BOOST_FOREACH(shared_ptr<dfgNode> nr, mlist) {
     shared_ptr<dfgNode> nnode = copy_a_node(ng, nr);
     if(hier) {
-      nnode->set_new_child(nr->child->get_hier_RRG());
+      nnode->set_new_child(nr->child->get_hier_RRG(hier));
     }
     BOOST_FOREACH(shared_ptr<dfgNode> m, get_in_nodes(nr)) {
       if(!ng->exist(m->get_hier_name()))
@@ -374,6 +417,7 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_hier_RRG(bool hier) const {
       if(!ng->exist(m->get_hier_name())) {
         copy_a_node(ng, m);
         nlist.push_back(m);
+        //assert(!(m->type & dfgNode::SDFG_MODULE));
       }
       ng->add_edge(nr->get_hier_name(), dfgEdge::SDFG_ASS, nr->get_hier_name(), m->get_hier_name());
     }
@@ -394,6 +438,7 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_hier_RRG(bool hier) const {
       if(!ng->exist(m->get_hier_name())) {
         copy_a_node(ng, m);
         nlist.push_back(m);
+        //assert(!(m->type & dfgNode::SDFG_MODULE));
       }
       ng->add_edge(nr->get_hier_name(), dfgEdge::SDFG_ASS, nr->get_hier_name(), m->get_hier_name());
     }
@@ -407,6 +452,7 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_hier_RRG(bool hier) const {
       if(!ng->exist(po->tar->get_hier_name())) {
         copy_a_node(ng, po->tar);
         nlist.push_back(po->tar);
+        //assert(!(po->tar->type & dfgNode::SDFG_MODULE));
       }
       ng->add_edge_multi(cn->get_hier_name(), po->type, cn->get_hier_name(), po->tar->get_hier_name()); 
     }

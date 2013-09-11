@@ -638,6 +638,22 @@ void SDFG::dfgGraph::remove_useless_nodes() {
   }
 }
 
+void SDFG::dfgGraph::remove_unlisted_nodes(const std::set<shared_ptr<dfgNode> >& nlist, bool hier) {
+  list<shared_ptr<dfgNode> > nlook_list;
+  BOOST_FOREACH(nodes_type npair, nodes) {
+    nlook_list.push_back(npair.second);
+  }
+
+  BOOST_FOREACH(shared_ptr<dfgNode> node, nlook_list) {
+    if((node->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH)) ||
+       ((node->type & dfgNode::SDFG_PORT) && father == NULL) ) {
+      if(!nlist.count(node))
+        remove_node(node);
+    } else if(hier && (node->type & dfgNode::SDFG_MODULE) && node->child)
+      node->child->remove_unlisted_nodes(nlist, hier);
+  }
+}
+
 ///////////////////////////////
 // existance check
 ///////////////////////////////

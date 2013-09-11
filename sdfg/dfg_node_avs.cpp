@@ -191,9 +191,11 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_out_paths_fast() {
   
   // visit all out nodes
   BOOST_FOREACH(rmap_data_type& m, tmap) {
-    shared_ptr<dfgPath> p(new dfgPath(*mp));
-    p->push_back(pn, m.second);
-    m.first->out_path_type_update_fast(out_paths, p, rmap);
+    if(!(m.first->type & (SDFG_MODULE|SDFG_OPORT))) {
+      shared_ptr<dfgPath> p(new dfgPath(*mp));
+      p->push_back(pn, m.second);
+      m.first->out_path_type_update_fast(out_paths, p, rmap);
+    }
   }
   
   list<shared_ptr<dfgPath> > rv;
@@ -497,6 +499,7 @@ void SDFG::dfgNode::out_path_type_update_fast(map<shared_ptr<dfgNode>, int>& rv,
   
   // this node
   shared_ptr<dfgNode> pn = pg->get_node(id);
+  assert(!(pn->type & SDFG_MODULE));
   //std::cout << get_full_name() << std::endl;
   
   // check node type
