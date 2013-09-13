@@ -98,7 +98,8 @@ void SDFG::dfgGraph::edge_type_propagate_combi(shared_ptr<dfgNode> node,
     return;
   }   
 
-  int otype = node->get_out_edges_type_cb(false);
+  // propagate to inputs
+  int otype = node->get_out_edges_type_cb();
   if(0 == (otype & ~dfgEdge::SDFG_CTL_MASK)) {
     int etype;
     // fanouts are all control
@@ -112,7 +113,7 @@ void SDFG::dfgGraph::edge_type_propagate_combi(shared_ptr<dfgNode> node,
 
     BOOST_FOREACH(shared_ptr<dfgEdge> e, node->get_in_edges_cb(false)) {
       if(e->type & dfgEdge::SDFG_DAT_MASK) {
-        e->type = dfgEdge::edge_type_t(etype);
+        e->type = dfgEdge::edge_type_t(dfgPath::cal_type(e->type, etype));
         shared_ptr<dfgNode> src = e->get_source_cb();
         
         if(src->type != dfgNode::SDFG_FF && 
@@ -120,6 +121,34 @@ void SDFG::dfgGraph::edge_type_propagate_combi(shared_ptr<dfgNode> node,
            !nlook_set.count(src)) {
           nlook_list.push_back(src);
           nlook_set.insert(src);
+        }
+      }
+    }
+  }
+
+  // propagate to outputs
+  int itype = node->get_in_edges_type_cb();
+  if(0 == (itype & ~dfgEdge::SDFG_CTL_MASK)) {
+    int etype;
+    // fanouts are all control
+    switch(itype) {
+    case dfgEdge::SDFG_CMP: etype = dfgEdge::SDFG_CMP; break;
+    case dfgEdge::SDFG_EQU: etype = dfgEdge::SDFG_EQU; break;
+    case dfgEdge::SDFG_ADR: etype = dfgEdge::SDFG_ADR; break;
+    default:
+      etype = dfgEdge::SDFG_CTL;
+    }
+
+    BOOST_FOREACH(shared_ptr<dfgEdge> e, node->get_out_edges_cb(false)) {
+      if(e->type & dfgEdge::SDFG_DAT_MASK) {
+        e->type = dfgEdge::edge_type_t(dfgPath::cal_type(etype, e->type));
+        shared_ptr<dfgNode> tar = e->get_target_cb().front();
+        
+        if(tar->type != dfgNode::SDFG_FF && 
+           tar->type != dfgNode::SDFG_LATCH &&
+           !nlook_set.count(tar)) {
+          nlook_list.push_back(tar);
+          nlook_set.insert(tar);
         }
       }
     }
