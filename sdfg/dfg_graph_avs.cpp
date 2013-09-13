@@ -179,18 +179,21 @@ void SDFG::dfgGraph::edge_type_propagate_reg(shared_ptr<dfgNode> node,
 
 shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath_new(bool with_fsm, bool with_ctl) const {
   shared_ptr<dfgGraph> hier_rrg = get_hier_RRG();
+  hier_rrg->edge_type_propagate();
 
   std::set<shared_ptr<dfgNode> > nlook_set;
   std::list<shared_ptr<dfgNode> > nlook_list;
   std::set<shared_ptr<dfgNode> > nall_set;
   std::set<shared_ptr<dfgNode> > nkeep_set;
 
-  BOOST_FOREACH(shared_ptr<dfgNode> n, hier_rrg->get_list_of_nodes(dfgNode::SDFG_OPORT)) {
-    nall_set.insert(n);
-    if(!(n->dp_type & (dfgNode::SDFG_DP_CTL|dfgNode::SDFG_DP_FSM))) {
-      nkeep_set.insert(n);
-      nlook_set.insert(n);
-      nlook_list.push_back(n);
+  BOOST_FOREACH(shared_ptr<dfgNode> n, hier_rrg->get_list_of_nodes(dfgNode::SDFG_PORT)) {
+    if(n->type == dfgNode::SDFG_OPORT) {
+      nall_set.insert(n);
+      if(!(n->dp_type & (dfgNode::SDFG_DP_CTL|dfgNode::SDFG_DP_FSM))) {
+        nkeep_set.insert(n);
+        nlook_set.insert(n);
+        nlook_list.push_back(n);
+      }
     }
   }
 
@@ -200,8 +203,9 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath_new(bool with_fsm, bool wi
     nlook_list.pop_front();
     nlook_set.erase(node);
 
-    // check if it is a FF or a latch
-    if(node->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH)) {
+    // check if it is a FF or a latch or a top level output port
+    if(node->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH) ||
+       ((node->pg->father == NULL) && (node->type & dfgNode::SDFG_PORT))) {
       BOOST_FOREACH(shared_ptr<dfgPath> path, node->get_in_paths_fast_cb()) {
         shared_ptr<dfgNode> src = path->src;
         if(src != node) { // not self loop
