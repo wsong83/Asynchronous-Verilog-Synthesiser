@@ -178,6 +178,9 @@ void SDFG::dfgGraph::edge_type_propagate_reg(shared_ptr<dfgNode> node,
 }
 
 shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath_new(bool with_fsm, bool with_ctl) const {
+  bool node_removed = false;
+  static unsigned int iter_count = 0;
+
   shared_ptr<dfgGraph> hier_rrg = get_hier_RRG();
   hier_rrg->edge_type_propagate();
 
@@ -185,6 +188,7 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath_new(bool with_fsm, bool wi
   std::list<shared_ptr<dfgNode> > nlook_list;
   std::set<shared_ptr<dfgNode> > nall_set;
   std::set<shared_ptr<dfgNode> > nkeep_set;
+  std::set<shared_ptr<dfgNode> > ndel_set;
 
   BOOST_FOREACH(shared_ptr<dfgNode> n, hier_rrg->get_list_of_nodes(dfgNode::SDFG_PORT)) {
     if(n->type == dfgNode::SDFG_OPORT) {
@@ -212,6 +216,7 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath_new(bool with_fsm, bool wi
           if(path->type & dfgEdge::SDFG_DAT_MASK) {
             nkeep_set.insert(src);
             if(!nall_set.count(src)) {
+              nall_set.insert(src);
               nlook_set.insert(src);
               nlook_list.push_back(src);
             }            
@@ -219,16 +224,39 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath_new(bool with_fsm, bool wi
             if(with_ctl || (with_fsm && src->is_fsm())) {
               nkeep_set.insert(src);
             }
+          } else {
+            ndel_set.insert(src);
           }
         }
       }
     }
   }
 
+  // check renew
+  BOOST_FOREACH(shared_ptr<dfgNode> n, nkeep_set) {
+    if(ndel_set.count(n))
+      ndel_set.erase(n);
+  }
+
+  if(ndel_set.size())  {
+    node_removed = true;
+    if(iter_count > 0)
+      BOOST_FOREACH(shared_ptr<dfgNode> n, ndel_set) 
+        std::cout << "node to be removed in iteration " << iter_count
+                  << ": " << n->get_full_name() << std::endl;
+  }
+
   hier_rrg->remove_unlisted_nodes(nkeep_set, true);
   hier_rrg->remove_useless_nodes();
   hier_rrg->edge_type_propagate();
   hier_rrg->check_integrity();
+
+  if(iter_count < 10 && node_removed) {
+    std::cout << "extraction iteration " << iter_count << std::endl;
+    iter_count++;
+    hier_rrg = hier_rrg->extract_datapath_new(with_fsm, with_ctl);
+  }
+
   return hier_rrg;
 
 }

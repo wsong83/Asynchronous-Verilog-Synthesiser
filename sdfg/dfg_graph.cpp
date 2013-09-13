@@ -208,7 +208,9 @@ void SDFG::dfgGraph::remove_node(vertex_descriptor nid) {
   shared_ptr<dfgNode> pn = nodes[nid];
 
   //std::cout << "remove node: " << *pn << std::endl;
-  
+  //std::cout << "remove node: " << pn->get_full_name() << std::endl;
+
+
   // remove all output edges
   {
     list<shared_ptr<dfgEdge> > elist = get_out_edges(nid);
@@ -515,6 +517,8 @@ shared_ptr<dfgNode> SDFG::dfgGraph::search_node(const string& nname) const {
 // clean up useless nodes
 ///////////////////////////////
 void SDFG::dfgGraph::remove_useless_nodes() {
+  //std::cout << "remove useless nodes in " << get_full_name() << std::endl;
+
   std::set<shared_ptr<dfgNode> > node_set;    // all the nodes to be checked
   std::list<shared_ptr<dfgNode> > node_list;  // the list store the same set 
 
