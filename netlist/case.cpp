@@ -284,8 +284,8 @@ bool netlist::CaseState::elaborate(std::set<shared_ptr<NetComp> >& to_del,
 shared_ptr<SDFG::RTree> netlist::CaseState::get_rtree() const {
   shared_ptr<SDFG::RTree> exp_rtree = exp->get_rtree();
   shared_ptr<SDFG::RTree> rv(new SDFG::RTree(false));
-  unsigned int num_of_case = 0;
-  map<string, unsigned int> target_count;
+  int num_of_case = 0;
+  map<string, int> target_count;
   bool has_default = false;
 
   // get all cases and count the target counts
