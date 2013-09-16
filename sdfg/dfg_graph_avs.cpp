@@ -240,10 +240,11 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath_new(bool with_fsm, bool wi
 
   if(ndel_set.size())  {
     node_removed = true;
-    if(iter_count > 0)
+    if(iter_count > 0) {
       BOOST_FOREACH(shared_ptr<dfgNode> n, ndel_set) 
         std::cout << "node to be removed in iteration " << iter_count
                   << ": " << n->get_full_name() << std::endl;
+    }
   }
 
   hier_rrg->remove_unlisted_nodes(nkeep_set, true);
@@ -257,9 +258,33 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath_new(bool with_fsm, bool wi
     hier_rrg = hier_rrg->extract_datapath_new(with_fsm, with_ctl);
   }
 
+  hier_rrg->remove_control_nodes();
+  
   return hier_rrg;
 
 }
+
+void SDFG::dfgGraph::remove_control_nodes(bool hier) {
+
+  list<shared_ptr<dfgEdge> > elook_list;
+  
+  BOOST_FOREACH(edges_type erec, edges)
+    elook_list.push_back(erec.second);
+
+  BOOST_FOREACH(shared_ptr<dfgEdge> e, elook_list) {
+    if(e->type & (dfgEdge::SDFG_CTL_MASK|dfgEdge::SDFG_CR_MASK))
+      remove_edge(e);
+  }
+
+  BOOST_FOREACH(shared_ptr<dfgNode> n, get_list_of_nodes(dfgNode::SDFG_MODULE))
+    n->child->remove_control_nodes(false);
+
+  remove_useless_nodes();
+  check_integrity();
+  edge_type_propagate();  
+
+}
+
 
 shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath(bool with_fsm, bool with_ctl) const {
 
