@@ -87,9 +87,9 @@ namespace SDFG {
     std::map<boost::shared_ptr<dfgNode>, int> opath_f, ipath_f, self_f; // record all output/input paths get from fast algorithm to avoid recalculation
 
 
-    dfgNode(): pg(NULL), node_index(0), type(SDFG_DF), position(0,0), bbox(0,0) {}
+    dfgNode(): pg(NULL), node_index(0), type(SDFG_DF), dp_type(SDFG_DP_NONE), position(0,0), bbox(0,0) {}
     dfgNode(const std::string& n, node_type_t t = SDFG_DF) : 
-      pg(NULL), name(n), node_index(0), type(t), position(0,0), bbox(0,0) {}
+      pg(NULL), name(n), node_index(0), type(t), dp_type(SDFG_DP_NONE), position(0,0), bbox(0,0) {}
     dfgNode* copy() const;      // copy content, not deep copy, orphan node generation
     void write(pugi::xml_node&, std::list<boost::shared_ptr<dfgGraph> >&) const;
     void write(void *, ogdf::GraphAttributes *);

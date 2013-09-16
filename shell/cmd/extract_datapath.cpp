@@ -191,16 +191,10 @@ void shell::CMD::CMDExtractDatapath::exec ( const std::string& str, Env * pEnv){
     tarDesign->DFG = tarDesign->extract_sdfg(true);
   }
 
-  shared_ptr<SDFG::dfgGraph> dataDFG = tarDesign->DFG->extract_datapath(arg.bFsm, arg.bCtl);
-  dataDFG = dataDFG->extract_datapath(arg.bFsm, arg.bCtl);
-  dataDFG = dataDFG->extract_datapath(arg.bFsm, arg.bCtl);
-  dataDFG = dataDFG->extract_datapath(arg.bFsm, arg.bCtl);
-
-  //  if(!tarDesign->DataDFG) {
-  //    tarDesign->DataDFG = tarDesign->DFG->get_datapath();
-  //    tarDesign->DataDFG->remove_useless_nodes();
-  //    tarDesign->DataDFG->check_integrity();
-  //  }
+  shared_ptr<SDFG::dfgGraph> dataDFG = tarDesign->DFG->extract_datapath_new(arg.bFsm, arg.bCtl);
+  //dataDFG = dataDFG->extract_datapath(arg.bFsm, arg.bCtl);
+  //dataDFG = dataDFG->extract_datapath(arg.bFsm, arg.bCtl);
+  //dataDFG = dataDFG->extract_datapath(arg.bFsm, arg.bCtl);
 
   dataDFG->write(fhandler);
 

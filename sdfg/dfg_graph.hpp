@@ -153,6 +153,7 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
 
     // clear up the graph
     void remove_useless_nodes();
+    void remove_unlisted_nodes(const std::set<boost::shared_ptr<dfgNode> >&, bool);
 
     // existance check
     DFGG_FH_RF2(bool, exist, const);  //edge
@@ -219,7 +220,7 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
 
     // analyse functions
     void edge_type_propagate();                       // propagating the edge types
-    boost::shared_ptr<dfgGraph> get_datapath() const; // extract all datapaths from an SDFG
+    boost::shared_ptr<dfgGraph> extract_datapath_new(bool, bool) const; // extract datapath form outputs
     boost::shared_ptr<dfgGraph> extract_datapath(bool, bool) const; // a new extraction method
     boost::shared_ptr<dfgGraph> get_hier_RRG(bool hier = true) const; // get a hierarchical RRG from any SDFG
     boost::shared_ptr<dfgGraph> get_RRG() const; // extract the register relation graph from a signal level DFG
@@ -261,6 +262,7 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
                                  std::set<boost::shared_ptr<dfgNode> >&,
                                  std::set<boost::shared_ptr<dfgNode> >&
                                  );
+    void remove_control_nodes(bool hier = true);
   };
 
 #undef DFGG_FH_F1  
