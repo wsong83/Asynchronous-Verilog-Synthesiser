@@ -177,7 +177,7 @@ void SDFG::dfgGraph::edge_type_propagate_reg(shared_ptr<dfgNode> node,
   }
 }
 
-shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath_new(bool with_fsm, bool with_ctl) const {
+shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath_new(bool with_fsm, bool with_ctl, bool to_rrg) const {
   bool node_removed = false;
   static unsigned int iter_count = 0;
 
@@ -255,12 +255,15 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath_new(bool with_fsm, bool wi
   if(iter_count < 10 && node_removed) {
     std::cout << "extraction iteration " << iter_count << std::endl;
     iter_count++;
-    hier_rrg = hier_rrg->extract_datapath_new(with_fsm, with_ctl);
+    hier_rrg = hier_rrg->extract_datapath_new(with_fsm, with_ctl, false);
   }
 
   hier_rrg->remove_control_nodes();
   
-  return hier_rrg;
+  if(to_rrg)
+    return hier_rrg->get_RRG();
+  else
+    return hier_rrg;
 
 }
 
