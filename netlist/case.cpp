@@ -151,6 +151,13 @@ void netlist::CaseItem::replace_variable(const VIdentifier& var, const Number& n
   if(body) body->replace_variable(var, num);
 }
 
+void netlist::CaseItem::replace_variable(const VIdentifier& var, const VIdentifier& nvar) {
+  BOOST_FOREACH(shared_ptr<Expression> e, exps) {
+    e->replace_variable(var, nvar);
+  }
+  if(body) body->replace_variable(var, nvar);
+}
+
 bool netlist::CaseItem::is_match(const Number& val) const {
   bool rv = false;
   if(exps.size() == 0) return true;                // default
@@ -327,6 +334,13 @@ void netlist::CaseState::replace_variable(const VIdentifier& var, const Number& 
   exp->replace_variable(var, num);
   BOOST_FOREACH(shared_ptr<CaseItem> ci, cases) {
     ci->replace_variable(var, num);
+  }
+}
+
+void netlist::CaseState::replace_variable(const VIdentifier& var, const VIdentifier& nvar) {
+  exp->replace_variable(var, nvar);
+  BOOST_FOREACH(shared_ptr<CaseItem> ci, cases) {
+    ci->replace_variable(var, nvar);
   }
 }
 

@@ -141,7 +141,7 @@ namespace netlist {
     virtual Block* deep_copy() const;
     NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
-    using NetComp::gen_sdfg;
+    NETLIST_GEN_SDFG;
     NETLIST_REPLACE_VARIABLE;
     virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
     

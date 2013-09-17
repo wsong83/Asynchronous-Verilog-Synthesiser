@@ -459,10 +459,47 @@ shared_ptr<SDFG::RTree> netlist::Block::get_rtree() const {
   return rv;
 }
 
+void netlist::Block::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
+
+  // put all modules into the graph
+  for_each(db_instance.begin(), db_instance.end(),
+           [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
+             if(m.second->type == Instance::modu_inst) {
+               shared_ptr<SDFG::dfgNode> n = G->add_node(m.first.name, SDFG::dfgNode::SDFG_MODULE);
+               n->ptr.insert(m.second);
+               shared_ptr<Module> subMod = G_ENV->find_module(m.second->mname);
+               if(subMod) { // has sub-module
+                 n->child_name = m.second->mname.name;
+                 n->child = subMod->extract_sdfg(true);
+                 n->child->father = n.get();
+               }
+             } else {           // gate
+               shared_ptr<SDFG::dfgNode> n = G->add_node(m.first.name, SDFG::dfgNode::SDFG_GATE);
+               n->ptr.insert(m.second);
+             }
+           });
+
+  BOOST_FOREACH(shared_ptr<NetComp>& m, statements) {
+    m->gen_sdfg(G);
+  }
+  for_each(db_instance.begin(), db_instance.end(),
+           [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
+             m.second->gen_sdfg(G);
+           });
+}
+
 void netlist::Block::replace_variable(const VIdentifier& var, const Number& num) {
   if(!db_var.count(var)) {
     BOOST_FOREACH(shared_ptr<NetComp> stm, statements) {
       stm->replace_variable(var, num);
+    }
+  }
+}
+
+void netlist::Block::replace_variable(const VIdentifier& var, const VIdentifier& nvar) {
+  if(!db_var.count(var)) {
+    BOOST_FOREACH(shared_ptr<NetComp> stm, statements) {
+      stm->replace_variable(var, nvar);
     }
   }
 }

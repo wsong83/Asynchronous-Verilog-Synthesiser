@@ -129,6 +129,11 @@ void netlist::Assign::replace_variable(const VIdentifier& var, const Number& num
   rexp->replace_variable(var, num);
 }
 
+void netlist::Assign::replace_variable(const VIdentifier& var, const VIdentifier& nvar) {
+  lval->replace_variable(var, nvar);
+  rexp->replace_variable(var, nvar);
+}
+
 shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifier& target, std::set<string> s_set) {
   shared_ptr<SDFG::RTree> rt = get_rtree();
   shared_ptr<Expression> rv;

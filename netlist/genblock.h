@@ -41,6 +41,8 @@ namespace netlist{
     // helpers
     virtual std::ostream& streamout(std::ostream&, unsigned int, bool) const;    
     using Block::set_father;
+    using Block::elaborate;
+    using Block::gen_sdfg;
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;

@@ -47,7 +47,7 @@ endif
 export LINKFLAGS = -lboost_regex -lgmpxx -lgmp -lboost_system -lboost_filesystem -lboost_program_options -ltcl -lboost_graph -lpthread $(OGDF_LIB)
 
 # targets
-SUBDIRS = preproc averilog netlist shell shell/cmd cpptcl sdfg pugixml ssa tool
+SUBDIRS = preproc averilog netlist shell shell/cmd cpptcl sdfg pugixml tool
 TESTDIRS = preproc/test shell/test
 BISONDIRS = averilog.bison
 

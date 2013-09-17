@@ -239,6 +239,10 @@ void netlist::Variable::replace_variable(const VIdentifier& var, const Number& n
   if(exp) exp->replace_variable(var, num);
 }
 
+void netlist::Variable::replace_variable(const VIdentifier& var, const VIdentifier& nvar) {
+  if(exp) exp->replace_variable(var, nvar);
+}
+
 unsigned int netlist::Variable::get_width() const {
   if(name.get_range().is_empty())
     return 1;
