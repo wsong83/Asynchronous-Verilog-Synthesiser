@@ -96,6 +96,34 @@ edge_descriptor SDFG::dfgGraph::to_id(const edge_descriptor& eid) const {
 }
 
 ///////////////////////////////
+// copy
+///////////////////////////////
+
+dfgGraph* SDFG::dfgGraph::deep_copy() const {
+
+  dfgGraph * G(new dfgGraph(name));
+
+  BOOST_FOREACH(nodes_type nrec, nodes) {
+    shared_ptr<dfgNode> node(nrec.second->copy());
+    node->set_hier_name(nrec.second->get_hier_name());
+    G->add_node(node);
+    if(node->type == dfgNode::SDFG_MODULE) {
+      node->child = shared_ptr<dfgGraph>(nrec.second->child->deep_copy());
+      node->child->father = node.get();
+    }
+  }
+
+  BOOST_FOREACH(edges_type erec, edges) {
+    G->add_edge(erec.second->name, erec.second->type, 
+                erec.second->get_source()->get_hier_name(),
+                erec.second->get_target()->get_hier_name());
+  }
+  
+  return G;
+}
+
+
+///////////////////////////////
 // add nodes and edges
 ///////////////////////////////
 void SDFG::dfgGraph::add_node(shared_ptr<dfgNode> node) {
@@ -1375,4 +1403,14 @@ shared_ptr<dfgGraph> SDFG::read(std::istream& istr) {
   G = gmap[G->name];
 
   return G;
+}
+
+shared_ptr<dfgNode> SDFG::dfgGraph::copy_a_node(shared_ptr<dfgGraph> G, shared_ptr<dfgNode> cn, bool use_full_name) const {
+  shared_ptr<dfgNode> nnode(cn->copy());
+  if(use_full_name)
+    nnode->set_hier_name(cn->get_full_name());
+  else
+    nnode->set_hier_name(cn->get_hier_name());
+  G->add_node(nnode);
+  return nnode;
 }

@@ -35,6 +35,11 @@
 
 #include "shell/env.h"
 
+#define BOOST_FILESYSTEM_VERSION 3
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
+using namespace boost::filesystem;
+
 using namespace SDFG;
 using boost::shared_ptr;
 using std::map;
@@ -181,8 +186,20 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath_new(bool with_fsm, bool wi
   bool node_removed = false;
   static unsigned int iter_count = 0;
 
-  shared_ptr<dfgGraph> hier_rrg = get_hier_RRG();
+  //shared_ptr<dfgGraph> hier_rrg = get_hier_RRG();
+  shared_ptr<dfgGraph> hier_rrg(deep_copy());
+
+  /*
+  ofstream fhandler;
+  fhandler.open("hier_rrg", std::ios_base::out|std::ios_base::trunc);
+  hier_rrg->write(fhandler);
+  fhandler.close();
+
   hier_rrg->edge_type_propagate();
+  fhandler.open("hier_rrg_prop", std::ios_base::out|std::ios_base::trunc);
+  hier_rrg->write(fhandler);
+  fhandler.close();
+
 
   std::set<shared_ptr<dfgNode> > nlook_set;
   std::list<shared_ptr<dfgNode> > nlook_list;
@@ -248,16 +265,21 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath_new(bool with_fsm, bool wi
   }
 
   hier_rrg->remove_unlisted_nodes(nkeep_set, true);
+  fhandler.open("hier_rrg_remove", std::ios_base::out|std::ios_base::trunc);
+  hier_rrg->write(fhandler);
+  fhandler.close();
+
   hier_rrg->remove_useless_nodes();
   hier_rrg->edge_type_propagate();
   hier_rrg->check_integrity();
 
-  if(iter_count < 10 && node_removed) {
-    std::cout << "extraction iteration " << iter_count << std::endl;
-    iter_count++;
-    hier_rrg = hier_rrg->extract_datapath_new(with_fsm, with_ctl, false);
-  }
+  //if(iter_count < 10 && node_removed) {
+  //  std::cout << "extraction iteration " << iter_count << std::endl;
+  //  iter_count++;
+  //  hier_rrg = hier_rrg->extract_datapath_new(with_fsm, with_ctl, false);
+  //}
 
+  */
   hier_rrg->remove_control_nodes();
   
   if(to_rrg)
@@ -739,12 +761,3 @@ shared_ptr<dfgNode> SDFG::dfgGraph::fsm_simplify_node(shared_ptr<dfgNode> n) {  
   return shared_ptr<dfgNode>();
 }
       
-shared_ptr<dfgNode> SDFG::dfgGraph::copy_a_node(shared_ptr<dfgGraph> G, shared_ptr<dfgNode> cn, bool use_full_name) const {
-  shared_ptr<dfgNode> nnode(cn->copy());
-  if(use_full_name)
-    nnode->set_hier_name(cn->get_full_name());
-  else
-    nnode->set_hier_name(cn->get_hier_name());
-  G->add_node(nnode);
-  return nnode;
-}

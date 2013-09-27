@@ -86,6 +86,9 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
 
     dfgGraph() : father(NULL), pModule(NULL) {}
     dfgGraph(const std::string& n) : father(NULL), name(n), pModule(NULL) {}
+
+    // copy
+    dfgGraph* deep_copy() const;
     
     // add nodes and edges
     void add_node(boost::shared_ptr<dfgNode>);
