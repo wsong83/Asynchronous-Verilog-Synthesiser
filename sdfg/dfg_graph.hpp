@@ -205,10 +205,10 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     int get_in_edges_type_cb(vertex_descriptor, bool bself = true) const;
 
     // graphic property
-    unsigned int size_of_nodes() const;     // number of nodes in this graph
-    unsigned int size_of_regs() const;      // number of FFs and Latchs
-    unsigned int size_of_combs() const;     // number of ports, combi, and deafult nodes
-    unsigned int size_of_modules() const;   // number of sub-modules 
+    unsigned int size_of_nodes(bool hier = false) const;     // number of nodes in this graph
+    unsigned int size_of_regs(bool hier = false) const;      // number of FFs and Latchs
+    unsigned int size_of_combs(bool hier = false) const;     // number of ports, combi, and deafult nodes
+    unsigned int size_of_modules(bool hier = false) const;   // number of sub-modules 
 
     // graphic
     bool layout();

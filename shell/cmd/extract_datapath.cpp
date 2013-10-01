@@ -41,6 +41,7 @@
 using namespace boost::filesystem;
 
 #include <boost/foreach.hpp>
+#include <ctime>
 
 using std::endl;
 using boost::shared_ptr;
@@ -195,6 +196,16 @@ void shell::CMD::CMDExtractDatapath::exec ( const std::string& str, Env * pEnv){
     CMDUniquify::exec("-quiet", pEnv);
     tarDesign->DFG = tarDesign->extract_sdfg(true);
   }
+  std::time_t rawtime;
+  struct std::tm * tinfo;
+  
+  std::time(&rawtime);
+  tinfo = std::localtime(&rawtime);
+
+  gEnv.stdOs << "SDFG, I/O " << tarDesign->DFG->get_list_of_nodes(SDFG::dfgNode::SDFG_PORT).size();
+  gEnv.stdOs << " Modules " << tarDesign->DFG->size_of_modules(true);
+  gEnv.stdOs << " Nodes " << tarDesign->DFG->size_of_nodes(true) << endl;
+  gEnv.stdOs << "Time: " << std::asctime(tinfo) << endl;
 
   shared_ptr<SDFG::dfgGraph> dataDFG = tarDesign->DFG->extract_datapath_new(arg.bFsm, arg.bCtl, arg.bRRG);
   //dataDFG = dataDFG->extract_datapath(arg.bFsm, arg.bCtl);
@@ -202,6 +213,14 @@ void shell::CMD::CMDExtractDatapath::exec ( const std::string& str, Env * pEnv){
   //dataDFG = dataDFG->extract_datapath(arg.bFsm, arg.bCtl);
 
   dataDFG->write(fhandler);
+
+  std::time(&rawtime);
+  tinfo = std::localtime(&rawtime);
+
+  gEnv.stdOs << "DatPath, I/O " << dataDFG->get_list_of_nodes(SDFG::dfgNode::SDFG_PORT).size();
+  gEnv.stdOs << " Modules " << dataDFG->size_of_modules(true);
+  gEnv.stdOs << " Nodes " << dataDFG->size_of_nodes(true) << endl;
+  gEnv.stdOs << "Time: " << std::asctime(tinfo) << endl;
 
   fhandler.close();
   gEnv.stdOs << "write the datapaths to " << outputFileName << endl;

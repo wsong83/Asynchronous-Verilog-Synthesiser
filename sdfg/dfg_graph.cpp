@@ -1031,38 +1031,46 @@ int SDFG::dfgGraph::get_in_edges_type_cb(vertex_descriptor nid, bool bself) cons
 ///////////////////////////////
 // graphic property
 ///////////////////////////////
-unsigned int SDFG::dfgGraph::size_of_nodes() const {
-  return nodes.size();
+unsigned int SDFG::dfgGraph::size_of_nodes(bool hier) const {
+  unsigned int cnt = 0;
+  if(hier) {
+    BOOST_FOREACH(shared_ptr<dfgNode> m, get_list_of_nodes(dfgNode::SDFG_MODULE)) {
+      if(m->child) cnt += m->child->size_of_nodes(true);
+    }
+  }
+  return cnt + nodes.size();
 }
 
-unsigned int SDFG::dfgGraph::size_of_regs() const {
-  unsigned int rv = 0;
-  for_each(nodes.begin(), nodes.end(),
-           [&](const pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
-               if(m.second->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH))
-                 rv++;
-             });
-  return rv;
+unsigned int SDFG::dfgGraph::size_of_regs(bool hier) const {
+  unsigned int cnt = 0;
+  if(hier) {
+    BOOST_FOREACH(shared_ptr<dfgNode> m, get_list_of_nodes(dfgNode::SDFG_MODULE)) {
+      if(m->child) cnt += m->child->size_of_regs(true);
+    }
+  }
+  return cnt + get_list_of_nodes(dfgNode::SDFG_FF|dfgNode::SDFG_LATCH).size();
 }
 
-unsigned int SDFG::dfgGraph::size_of_combs() const {
-  unsigned int rv = 0;
-  for_each(nodes.begin(), nodes.end(),
-           [&](const pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
-               if(! m.second->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_MODULE))
-                 rv++;
-             });
-  return rv;
+unsigned int SDFG::dfgGraph::size_of_combs(bool hier) const {
+  unsigned int cnt = 0;
+  if(hier) {
+    BOOST_FOREACH(shared_ptr<dfgNode> m, get_list_of_nodes(dfgNode::SDFG_MODULE)) {
+      if(m->child) cnt += m->child->size_of_combs(true);
+    }
+  }
+  return cnt 
+    + nodes.size() 
+    - get_list_of_nodes(dfgNode::SDFG_MODULE|dfgNode::SDFG_FF|dfgNode::SDFG_LATCH).size();
 }
 
-unsigned int SDFG::dfgGraph::size_of_modules() const {
-  unsigned int rv = 0;
-  for_each(nodes.begin(), nodes.end(),
-           [&](const pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
-               if(m.second->type & dfgNode::SDFG_MODULE)
-                 rv++;
-             });
-  return rv;
+unsigned int SDFG::dfgGraph::size_of_modules(bool hier) const {
+  unsigned int cnt = 0;
+  if(hier) {
+    BOOST_FOREACH(shared_ptr<dfgNode> m, get_list_of_nodes(dfgNode::SDFG_MODULE)) {
+      if(m->child) cnt += m->child->size_of_modules(true);
+    }
+  }
+  return cnt + get_list_of_nodes(dfgNode::SDFG_MODULE).size();
 }
 
 
