@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2014-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -40,6 +40,7 @@
 using namespace boost::filesystem;
 
 #include <boost/foreach.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "cppsaif/saif_parser.hpp"
 #include "cppsaif/saif_db.hpp"
@@ -47,6 +48,8 @@ using namespace boost::filesystem;
 using std::endl;
 using boost::shared_ptr;
 using std::list;
+using std::vector;
+using std::string;
 using namespace shell::CMD;
 
 
@@ -114,6 +117,18 @@ namespace {
 #endif
     }
   };
+
+  // annotate an instance
+  void annotate(
+                shared_ptr<netlist::Module>, shared_ptr<saif::SaifInstance>, 
+                unsigned long&, unsigned long&, shell::Env * );
+
+  // annotate a signal
+  void annotate_signal(
+                       shared_ptr<netlist::Module>,
+                       const string&, shared_ptr<saif::SaifSignal>,
+                       unsigned long&, unsigned long&);
+  
 }
 
 const std::string shell::CMD::CMDReadSaif::name = "read_saif"; 
@@ -191,5 +206,65 @@ bool shell::CMD::CMDReadSaif::exec ( const std::string& str, Env * pEnv){
     return false;
   }
 
+  // locate the target in saif
+  vector<string> hier;
+  boost::split(hier, arg.sSaifTop, boost::is_any_of("/"), boost::token_compress_on);
+  shared_ptr<saif::SaifInstance> tarSaif = sDB.top;
+  BOOST_FOREACH(const string& str, hier) {
+    if(!tarSaif->instances.count(str)) {
+      gEnv.stdOs << "Error: Fail to find the design name " << str << " in the saif file!" << endl;
+      return false;
+    } else {
+      tarSaif = tarSaif->instances[str];
+    }
+  }
+
+  unsigned long annotated = 0; 
+  unsigned long total = 0;
+  annotate(tarDesign, tarSaif, annotated, total, pEnv);
+
   return true;
+}
+
+namespace {
+  void annotate(shared_ptr<netlist::Module> tar, shared_ptr<saif::SaifInstance> saif, unsigned long& annotated, unsigned long& total, shell::Env * pEnv) {
+    if(!saif->signals.empty()) {
+      typedef std::pair<const string&, shared_ptr<saif::SaifSignal> > signal_type;
+      BOOST_FOREACH(signal_type sig, saif->signals) {
+        annotate_signal(tar, sig.first, sig.second, annotated, total);
+      }
+    }
+
+    if(!saif->instances.empty()) {
+      typedef std::pair<const string&, shared_ptr<saif::SaifInstance> > instance_type;
+      BOOST_FOREACH(instance_type inst, saif->instances) {
+        shared_ptr<netlist::Module> m_tar;
+        if(tar) {
+          shared_ptr<netlist::Instance> m_inst = tar->find_instance(inst.first);
+          if(m_inst) m_tar = pEnv->find_module(m_inst->mname);
+        }
+        annotate(m_tar, inst.second, annotated, total, pEnv);
+      }
+    }
+  }
+
+  void annotate_signal(shared_ptr<netlist::Module> tar,
+                       const string& name, shared_ptr<saif::SaifSignal> sig,
+                       unsigned long& annotated, unsigned long& total) {
+    if(sig->bits.empty()) {
+      total++;
+      if(tar) {
+        shared_ptr<netlist::Variable> var = tar->find_var(name);
+        if(var) {
+          var->annotate(sig->data->TC);
+          annotated++;
+        }
+      }
+    } else {
+      typedef std::pair<const int, shared_ptr<saif::SaifSignal> > bit_type;
+      BOOST_FOREACH(bit_type bit, sig->bits) {
+        annotate_signal(tar, name, bit.second, annotated, total);
+      }
+    }
+  }
 }

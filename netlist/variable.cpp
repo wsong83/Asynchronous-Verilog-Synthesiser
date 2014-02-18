@@ -45,16 +45,16 @@ using std::deque;
 
 
 netlist::Variable::Variable() 
-  : NetComp(tVariable), uid(0), signed_flag(false) {}
+  : NetComp(tVariable), uid(0), signed_flag(false), annotated(false) {}
 
 netlist::Variable::Variable(const shell::location& lloc) 
-  : NetComp(tVariable, lloc), uid(0), signed_flag(false) {}
+  : NetComp(tVariable, lloc), uid(0), signed_flag(false), annotated(false) {}
 
 netlist::Variable::Variable(const VIdentifier& id, vtype_t mtype)
-  : NetComp(tVariable), vtype(mtype), name(*(id.deep_copy())), uid(0), signed_flag(false) {}
+  : NetComp(tVariable), vtype(mtype), name(*(id.deep_copy())), uid(0), signed_flag(false), annotated(false) {}
 
 netlist::Variable::Variable(const Port& p)
-  : NetComp(tVariable, p.loc), vtype(TWire), uid(0), signed_flag(false) 
+  : NetComp(tVariable, p.loc), vtype(TWire), uid(0), signed_flag(false) , annotated(false)
 {
   VIdentifier *newName = p.name.deep_copy();
   name = *newName;
@@ -62,14 +62,14 @@ netlist::Variable::Variable(const Port& p)
 }
 
 netlist::Variable::Variable(const shell::location& lloc, const VIdentifier& id, vtype_t mtype)
-  : NetComp(tVariable, lloc), vtype(mtype), name(*(id.deep_copy())), uid(0), signed_flag(false) {}
+  : NetComp(tVariable, lloc), vtype(mtype), name(*(id.deep_copy())), uid(0), signed_flag(false), annotated(false) {}
 
 netlist::Variable::Variable(const VIdentifier& id, const shared_ptr<Expression>& expp, vtype_t mtype)
-  : NetComp(tVariable), vtype(mtype), name(*(id.deep_copy())), exp(expp), uid(0), signed_flag(false) {}
+  : NetComp(tVariable), vtype(mtype), name(*(id.deep_copy())), exp(expp), uid(0), signed_flag(false), annotated(false) {}
 
 netlist::Variable::Variable(const shell::location& lloc, const VIdentifier& id, 
                             const shared_ptr<Expression>& expp, vtype_t mtype)
-  : NetComp(tVariable, lloc), vtype(mtype), name(*(id.deep_copy())), exp(expp), uid(0), signed_flag(false) {}
+  : NetComp(tVariable, lloc), vtype(mtype), name(*(id.deep_copy())), exp(expp), uid(0), signed_flag(false), annotated(false) {}
 
 void netlist::Variable::set_value(const Number& num) {
   if(exp) exp->db_expunge();
@@ -250,3 +250,13 @@ unsigned int netlist::Variable::get_width() const {
     return name.get_range().get_width(name.get_range());
 }
 
+void netlist::Variable::annotate(mpz_class toggle) {
+  if(annotated) {
+    if(toggle_min < toggle) toggle_min = toggle;
+    toggle_max += toggle;
+  } else {
+    annotated = true;
+    toggle_min = toggle;
+    toggle_max = toggle;
+  }
+}
