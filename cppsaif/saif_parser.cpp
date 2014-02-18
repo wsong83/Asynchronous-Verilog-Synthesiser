@@ -30,20 +30,12 @@
 
 #include <fstream>
 #include "saif_util.hpp"
-#include "saif.hh"
 #include "saif_db.hpp"
+#include "saif.hh"
 
 
-saif::SaifParser::SaifParser(const std::string& fn)
-  : saif_file(fn) {}
-
-
-bool saif::SaifParser::parse(SaifDB * db)
-{
-  std::fstream saif_file_handler;
-  saif_file_handler.open(saif_file);
-
-  SaifLexer * lexer = new SaifLexer(&saif_file_handler);
+bool saif::SaifParser::operator() (SaifDB * db, std::istream * fhandler) {
+  SaifLexer * lexer = new SaifLexer(fhandler);
   saif_parser * parser = new saif_parser(lexer, db);
   return 0 == parser->parse();
 }

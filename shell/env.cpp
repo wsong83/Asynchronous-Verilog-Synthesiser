@@ -83,6 +83,7 @@ namespace {
   FUNC_WRAPPER_VOID(              CMDExtractRRG         )
   FUNC_WRAPPER_VOID(              CMDExtractSDFG        )
   FUNC_WRAPPER_VOID(              CMDHelp               )
+  FUNC_WRAPPER     (bool,         CMDReadSaif           )
   FUNC_WRAPPER     (bool,         CMDReportDFGPath      )
   FUNC_WRAPPER     (bool,         CMDReportFSM          )
   FUNC_WRAPPER     (bool,         CMDReportNetlist      )
@@ -171,6 +172,7 @@ bool shell::Env::initialise() {
   AVS_ENV_ADD_TCL_CMD(CMDExtractRRG);
   AVS_ENV_ADD_TCL_CMD(CMDExtractSDFG);
   AVS_ENV_ADD_TCL_CMD(CMDHelp);
+  AVS_ENV_ADD_TCL_CMD(CMDReadSaif);
   AVS_ENV_ADD_TCL_CMD(CMDReportDFGPath);
   AVS_ENV_ADD_TCL_CMD(CMDReportFSM);
   AVS_ENV_ADD_TCL_CMD(CMDReportNetlist);

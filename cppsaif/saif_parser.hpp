@@ -30,6 +30,7 @@
 #define SAIF_PARSER_H_
 
 #include <string>
+#include <iostream>
 
 namespace saif {
 
@@ -37,14 +38,7 @@ namespace saif {
 
   class SaifParser {
   public:
-    SaifParser(const std::string&);
-
-
-    bool parse(SaifDB *);
-
-  private:
-    const std::string saif_file;
-
+    bool operator () (SaifDB *, std::istream *);
   };
 
 }
