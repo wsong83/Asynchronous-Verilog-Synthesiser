@@ -99,7 +99,7 @@ namespace netlist {
     }
 
     bool count(const K& key) const {
-      return find(key);
+      return find(key).get() != NULL;
     }
 
     boost::shared_ptr<T> swap(const K& key, const boost::shared_ptr<T>& comp) {

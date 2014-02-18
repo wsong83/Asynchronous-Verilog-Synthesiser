@@ -103,7 +103,7 @@ RangeArray netlist::RangeArray::const_copy(const RangeArray& maxRange) const {
   RangeArray rv;
   // if maxRange is empty, it is a one-bit signal
   rv.child = RangeArrayCommon::const_copy( maxRange.child.empty() ?
-                                           Range(0) : maxRange.front()
+                                           Range(mpz_class(0)) : maxRange.front()
                                            );
   rv.const_reduced = const_reduced;
   rv.width = width;
@@ -157,7 +157,7 @@ RangeArray netlist::RangeArray::op_deduct(const RangeArray& rhs) const {
 
 bool netlist::RangeArray::op_equ(const RangeArray& rhs) const {
   RangeArray m;
-  m.child.push_back(shared_ptr<Range>(new Range(0))); // 1-bit
+  m.child.push_back(shared_ptr<Range>(new Range(mpz_class(0)))); // 1-bit
   if(child.empty()) return (rhs.child.empty() || m.RangeArrayCommon::op_equ(rhs.child));
   else if(rhs.child.empty()) return m.RangeArrayCommon::op_equ(child);
   else return RangeArrayCommon::op_equ(rhs.child);
@@ -165,7 +165,7 @@ bool netlist::RangeArray::op_equ(const RangeArray& rhs) const {
 
 Range netlist::RangeArray::get_flat_range(const RangeArray& select) const {
   if(child.empty()) {
-    return Range(0);
+    return Range(mpz_class(0));
   }
   else {
     pair<Number, Number> raw_range(0,0);
