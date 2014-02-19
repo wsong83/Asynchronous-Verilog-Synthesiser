@@ -223,6 +223,8 @@ bool shell::CMD::CMDReadSaif::exec ( const std::string& str, Env * pEnv){
   unsigned long total = 0;
   annotate(tarDesign, tarSaif, annotated, total, pEnv);
 
+  gEnv.stdOs << "Successfully annotated " << annotated << " in the total of " << total << " signals." << std::endl;
+
   return true;
 }
 
@@ -253,13 +255,17 @@ namespace {
                        unsigned long& annotated, unsigned long& total) {
     if(sig->bits.empty()) {
       total++;
+      bool is_annotated = false;
       if(tar) {
         shared_ptr<netlist::Variable> var = tar->find_var(name);
         if(var) {
           var->annotate(sig->data->TC);
           annotated++;
+          is_annotated = true;
         }
       }
+      //if(!is_annotated)
+      //  std::cout << "signal " << name << " is not annotated." << std::endl;
     } else {
       typedef std::pair<const int, shared_ptr<saif::SaifSignal> > bit_type;
       BOOST_FOREACH(bit_type bit, sig->bits) {
