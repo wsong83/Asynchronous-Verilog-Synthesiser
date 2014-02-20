@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -762,4 +762,51 @@ shared_ptr<dfgNode> SDFG::dfgGraph::fsm_simplify_node(shared_ptr<dfgNode> n) {  
   }
   return shared_ptr<dfgNode>();
 }
-      
+
+void SDFG::dfgGraph::clock_detect() {
+  // get all clock related nodes
+  std::set<shared_ptr<dfgNode> > clock_nodes;
+  std::list<shared_ptr<dfgNode> > clock_nodes_list;
+
+  std::list<shared_ptr<dfgNode> > nlist = 
+    get_list_of_nodes(dfgNode::SDFG_DF|dfgNode::SDFG_CMOB|dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|
+                      dfgNode::GATE);
+
+  BOOST_FOREACH(shared_ptr<dfgNode> cnode, nlist) {
+    // if a node has clock output edge, add it to potential clock nodes
+    if(cnode->get_out_edges_type_cb() & dfgEdge::SDFG_CLK) {
+      clock_nodes_list.push_back(cnode);
+    }
+  }
+
+  // verify the clock node
+  while(!clock_nodes_list.empty()) {
+    shared_ptr<dfgNode> cnode = clock_nodes_list.front();
+    clock_nodes_list.pop_front();
+
+    If(cnode->type & dfgNode::SDFG_IPORT == dfgNode::SDFG_IPORT) {
+      // source of a clock
+      clock_nodes.insert(cnode);
+      cnode->type = dfgNode::SDFG_IPORT_CLK;      
+    } else {                    // check and probably remove the node
+      switch(cnode->type) {
+      case dfgNode::SDFG_DF:
+      case dfgNode::SDFG_COMB:
+      case dfgNode::SDFG_LATCH:
+      case dfgNode::SDFG_GATE: {
+        if(cnode->size_in_edges() == 1) {
+          clock_nodes_list.push_back(cnode->get_in_nodes().front());
+        } else if(cnode->size_in_edges() > 1 && cnode->get_in_edges_type() & dfgEdge::SDFG_CLK) {
+          clock_nodes.insert(cnode);
+          std::cout << "Seems node " << cnode->get_full_name() << " is a gated clock?" << std::endl;
+        } else {
+          // should not reach here
+          std::cout << "Research this node " << cnode->get_full_name() << std::endl;
+          assert(0 == "node pattern impossible");
+        }
+        
+      }
+    }
+  }
+
+}

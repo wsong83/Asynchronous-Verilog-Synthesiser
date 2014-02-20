@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -238,6 +238,7 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
 
     std::map<boost::shared_ptr<dfgNode>, int > get_fsms_new() const; // extract fsms from RRG and DFG
     void fsm_simplify();  // simplify the FSM connection graph
+    void clock_detect();  // detect clock ports
 
     // other
     std::string get_full_name() const;
