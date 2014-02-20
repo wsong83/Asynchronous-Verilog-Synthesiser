@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -205,6 +205,7 @@ void draw_page(SDFG::dfgGraph& g, QPainter& painter, QPrinter& printer, std::set
                painter.drawText(name_point, (node.name + "(" + node.child_name + ")").c_str());
                break;
              }
+             case SDFG::dfgNode::SDFG_IPORT_CLK: // currently we do not differentiate clk from iport
              case SDFG::dfgNode::SDFG_IPORT: {
                painter.drawEllipse(bbox);
                painter.drawText(bbox, Qt::AlignCenter, "I");

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -69,6 +69,7 @@ void SDFG::dfgGraph::edge_type_propagate() {
     case dfgNode::SDFG_GATE:
     case dfgNode::SDFG_COMB:
     case dfgNode::SDFG_IPORT:
+    case dfgNode::SDFG_IPORT_CLK:
     case dfgNode::SDFG_OPORT:
     case dfgNode::SDFG_PORT:
       edge_type_propagate_combi(node, nlook_list, nlook_set, nall_set);
@@ -88,7 +89,8 @@ void SDFG::dfgGraph::edge_type_propagate_combi(shared_ptr<dfgNode> node,
                                                std::set<shared_ptr<dfgNode> >& nlook_set,
                                                std::set<shared_ptr<dfgNode> >& nall_set
                                                ) {
-  if(node->type == dfgNode::SDFG_IPORT && node->pg->father == NULL) return; // top level input
+  if(node->type & dfgNode::SDFG_IPORT  == dfgNode::SDFG_IPORT 
+     && node->pg->father == NULL) return; // top level input
   
   BOOST_FOREACH(shared_ptr<dfgNode> n, node->get_in_nodes_cb(false)) {
     if(!nall_set.count(n)) {

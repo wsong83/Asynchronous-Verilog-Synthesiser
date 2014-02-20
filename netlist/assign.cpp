@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -167,7 +167,8 @@ shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifie
             found_source = true;
             break;
           }
-          case SDFG::dfgNode::SDFG_IPORT: 
+          case SDFG::dfgNode::SDFG_IPORT:
+          case SDFG::dfgNode::SDFG_IPORT_CLK:
           case SDFG::dfgNode::SDFG_OPORT:   {
             if((pnode->pg->get_in_nodes_cb(pnode)).size()) {
               pnode = (pnode->pg->get_in_nodes_cb(pnode)).front(); // get the source from the higher hierarchy

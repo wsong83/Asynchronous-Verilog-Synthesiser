@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -132,7 +132,8 @@ void SDFG::dfgNode::graphic_init() {
     case SDFG_LATCH:   bbox = pair<double, double>(35.0, 20.0); break;
     case SDFG_MODULE:  bbox = pair<double, double>(60.0, 35.0); break;
     case SDFG_GATE:    bbox = pair<double, double>(35.0, 35.0); break;
-    case SDFG_IPORT:   bbox = pair<double, double>(20.0, 20.0); break;
+    case SDFG_IPORT:
+    case SDFG_IPORT_CLK:
     case SDFG_OPORT:   bbox = pair<double, double>(20.0, 20.0); break;
     case SDFG_PORT:    bbox = pair<double, double>(30.0, 30.0); break;
     default:           bbox = pair<double, double>(20.0, 20.0); break;
@@ -148,6 +149,7 @@ void SDFG::dfgNode::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<dfg
   case SDFG_LATCH:   stype = "latch";   break;
   case SDFG_MODULE:  stype = "module";  break;
   case SDFG_GATE:    stype = "gate";    break;
+  case SDFG_IPORT_CLK:          // currently we do not differentiate clk from iport in sdfg file
   case SDFG_IPORT:   stype = "iport";   break;
   case SDFG_OPORT:   stype = "oport";   break;
   case SDFG_PORT:    stype = "port";    break;
@@ -209,6 +211,7 @@ bool SDFG::dfgNode::read(const pugi::xml_node& xnode) {
   case 0xcc3d31e8: type = SDFG_LATCH;  break;
   case 0xfc9d7666: type = SDFG_MODULE; break;
   case 0x0cf87a65: type = SDFG_GATE;   break;
+    // may be we need SDFG_IPORT_CLK in the future
   case 0x9e1bf974: type = SDFG_IPORT;  break;
   case 0xfe1bf974: type = SDFG_OPORT;  break;
   case 0x0e1bf974: type = SDFG_PORT;   break;
@@ -296,7 +299,7 @@ void SDFG::dfgNode::remove_port_sig(const string& sname, int dir) {
           port2sig[sig] = string();
           sig2port[sname].erase(sig);
         } else if((child_node->type & SDFG_PORT) 
-                  && (child_node->type != SDFG_IPORT)
+                  && (child_node->type & SDFG_IPORT != SDFG_IPORT)
                   && dir >= 0) {
           port2sig[sig] = string();
           sig2port[sname].erase(sig);
@@ -347,6 +350,7 @@ std::ostream& SDFG::dfgNode::streamout(std::ostream& os) const {
   case SDFG_LATCH:  os << "latch";    break;
   case SDFG_MODULE: os << "module";   break;
   case SDFG_GATE:   os << "gate";     break;
+  case SDFG_IPORT_CLK:   // currently we do not differentiate clk from iport
   case SDFG_IPORT:  os << "in";       break;
   case SDFG_OPORT:  os << "out";      break;
   case SDFG_PORT:   os << "inout";    break;
@@ -391,7 +395,7 @@ bool SDFG::dfgNode::check_integrity() const {
         if(p2s.second.size() > 0) {
           assert(pg->exist(p2s.second));
           assert(p->type & SDFG_PORT);
-          if(p->type != SDFG_IPORT) {
+          if(p->type & SDFG_IPORT != SDFG_IPORT) {
             assert(pg->exist(id, p2s.second));
           }
           if(p->type != SDFG_OPORT) {

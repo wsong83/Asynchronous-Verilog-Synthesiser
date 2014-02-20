@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -62,6 +62,7 @@ namespace SDFG {
       SDFG_MODULE         = 0x00080, // module entity
       SDFG_GATE           = 0x00100, // gate
       SDFG_IPORT          = 0x00a00, // input port
+      SDFG_IPORT_CLK      = 0x00a01, // clk input
       SDFG_OPORT          = 0x00c00, // output port
       SDFG_PORT           = 0x00800  // all ports
     } type;
