@@ -103,6 +103,7 @@ namespace saif {
     boost::shared_ptr<SaifInstance> top;
     std::string top_name;
 
+    mpz_class get_duration(const std::string& unit) const;
     virtual std::ostream& streamout ( std::ostream& ) const;
   };
 

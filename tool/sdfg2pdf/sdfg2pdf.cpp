@@ -205,7 +205,6 @@ void draw_page(SDFG::dfgGraph& g, QPainter& painter, QPrinter& printer, std::set
                painter.drawText(name_point, (node.name + "(" + node.child_name + ")").c_str());
                break;
              }
-             case SDFG::dfgNode::SDFG_IPORT_CLK: // currently we do not differentiate clk from iport
              case SDFG::dfgNode::SDFG_IPORT: {
                painter.drawEllipse(bbox);
                painter.drawText(bbox, Qt::AlignCenter, "I");

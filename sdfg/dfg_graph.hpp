@@ -243,8 +243,8 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
 
     std::map<boost::shared_ptr<dfgNode>, int > get_fsms_new() const; // extract fsms from RRG and DFG
     void fsm_simplify();  // simplify the FSM connection graph
-    void clock_detect();  // detect clock ports
-    void annotate(shell::Env *, netlist::Module*); // annotate the switching activities in Module into the SDFG
+    void annotate_toggle(shell::Env *, netlist::Module*); // annotate the switching activities in Module into the SDFG
+    void annotate_rate();                                 // calculate the relative rate of each node
 
     // other
     std::string get_full_name() const;

@@ -323,7 +323,6 @@ void SDFG::dfgGraph::remove_port(const dfgNode& port) {
       // scan it again to get input/output count
       switch(port.type) {
       case dfgNode::SDFG_IPORT:
-      case dfgNode::SDFG_IPORT_CLK:
         father->pg->remove_edge(sname, father->get_hier_name());
         break;
       case dfgNode::SDFG_OPORT: 

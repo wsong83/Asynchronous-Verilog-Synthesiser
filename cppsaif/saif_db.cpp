@@ -105,6 +105,41 @@ std::ostream& saif::SaifInstance::streamout( std::ostream& os, const std::string
   return os;
 }
 
+mpz_class saif::SaifDB::get_duration(const std::string& unit) const {
+  
+  mpz_class full_duration;
+
+  if(timescale.second == "fs")
+    full_duration = duration * timescale.first;
+  else if(timescale.second == "ps")
+    full_duration = duration * timescale.first * mpz_class("1000");
+  else if(timescale.second == "ns")
+    full_duration = duration * timescale.first * mpz_class("1000000");
+  else if(timescale.second == "us")
+    full_duration = duration * timescale.first * mpz_class("1000000000");
+  else if(timescale.second == "ms")
+    full_duration = duration * timescale.first * mpz_class("1000000000000");
+  else if(timescale.second == "s")
+    full_duration = duration * timescale.first * mpz_class("1000000000000000");
+  else
+    assert(0 == "wrong timescale unit in the saif file");
+
+  if(unit == "fs")
+    return full_duration;
+  else if(unit == "ps")
+    return full_duration / mpz_class("1000");
+  else if(unit == "ns")
+    return full_duration / mpz_class("1000000");
+  else if(unit == "us")
+    return full_duration / mpz_class("1000000000");
+  else if(unit == "ms")
+    return full_duration / mpz_class("1000000000000");
+  else if(unit == "s")
+    return full_duration / mpz_class("1000000000000000");
+  else
+    return 0;
+}
+
 std::ostream& saif::SaifDB::streamout( std::ostream& os) const {
   os << "(SAIFILE" << std::endl;
   os << "(SAIFVERSION \"" << version << "\")" << std::endl;

@@ -76,7 +76,7 @@ namespace netlist {
     std::string get_short_string() const;
     bool check_post_elaborate(); /* check fan-in/out */
     bool is_useless() const { return fan[0].size() == 0 && fan[1].size() == 1; }
-    void annotate(mpz_class);
+    void annotate(mpz_class, mpz_class);
 
     VIdentifier name;
     std::map<unsigned int, VIdentifier *> fan[2]; /* fan[0] for fanin, fan[1] for fanout */

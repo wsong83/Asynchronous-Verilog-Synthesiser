@@ -168,7 +168,6 @@ shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifie
             break;
           }
           case SDFG::dfgNode::SDFG_IPORT:
-          case SDFG::dfgNode::SDFG_IPORT_CLK:
           case SDFG::dfgNode::SDFG_OPORT:   {
             if((pnode->pg->get_in_nodes_cb(pnode)).size()) {
               pnode = (pnode->pg->get_in_nodes_cb(pnode)).front(); // get the source from the higher hierarchy

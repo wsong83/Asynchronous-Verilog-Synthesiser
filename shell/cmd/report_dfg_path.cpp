@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -217,7 +217,7 @@ bool shell::CMD::CMDReportDFGPath::exec ( const std::string& str, Env * pEnv){
       gEnv.stdOs << "Error: Fail to find the specified ending point \"" << arg.sTarget << "\"." << endl;
     } else if(tar->type & (SDFG::dfgNode::SDFG_FF|SDFG::dfgNode::SDFG_LATCH)) {
     } else if(tar_p &&
-              (tar_p->type & SDFG::dfgNode::SDFG_PORT) && (tar_p->type & SDFG::dfgNode::SDFG_IPORT != SDFG::dfgNode::SDFG_IPORT) && 
+              (tar_p->type & SDFG::dfgNode::SDFG_PORT) && ((tar_p->type & SDFG::dfgNode::SDFG_IPORT) != SDFG::dfgNode::SDFG_IPORT) && 
               !(tar_p->pg->father)
               ) {
       tar = tar_p;

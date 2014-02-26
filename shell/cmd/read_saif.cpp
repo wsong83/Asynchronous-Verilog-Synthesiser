@@ -121,13 +121,13 @@ namespace {
   // annotate an instance
   void annotate(
                 shared_ptr<netlist::Module>, shared_ptr<saif::SaifInstance>, 
-                unsigned long&, unsigned long&, shell::Env * );
+                mpz_class, unsigned long&, unsigned long&, shell::Env * );
 
   // annotate a signal
   void annotate_signal(
                        shared_ptr<netlist::Module>,
                        const string&, shared_ptr<saif::SaifSignal>,
-                       unsigned long&, unsigned long&);
+                       mpz_class, unsigned long&, unsigned long&);
   
 }
 
@@ -221,7 +221,7 @@ bool shell::CMD::CMDReadSaif::exec ( const std::string& str, Env * pEnv){
 
   unsigned long annotated = 0; 
   unsigned long total = 0;
-  annotate(tarDesign, tarSaif, sDB.duration, annotated, total, pEnv);
+  annotate(tarDesign, tarSaif, sDB.get_duration("us"), annotated, total, pEnv);
 
   gEnv.stdOs << "Successfully annotated " << annotated << " in the total of " << total << " signals." << std::endl;
 
@@ -270,7 +270,7 @@ namespace {
     } else {
       typedef std::pair<const int, shared_ptr<saif::SaifSignal> > bit_type;
       BOOST_FOREACH(bit_type bit, sig->bits) {
-        annotate_signal(tar, name, bit.second, annotated, total);
+        annotate_signal(tar, name, bit.second, duration, annotated, total);
       }
     }
   }

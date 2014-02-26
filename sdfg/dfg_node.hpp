@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -62,7 +62,6 @@ namespace SDFG {
       SDFG_MODULE         = 0x00080, // module entity
       SDFG_GATE           = 0x00100, // gate
       SDFG_IPORT          = 0x00a00, // input port
-      SDFG_IPORT_CLK      = 0x00a01, // clk input
       SDFG_OPORT          = 0x00c00, // output port
       SDFG_PORT           = 0x00800  // all ports
     } type;
@@ -89,9 +88,10 @@ namespace SDFG {
 
     // toggle rate
     double toggle_min;          // minimal toggle rate, in unit of MHz
-    double toggle_high;         // minimal toggle rate, in unit of MHz
-    double toggle_rate;         // raltive toggle rate compared with its clock driver
-
+    double toggle_max;          // maximal toggle rate, in unit of MHz
+    double toggle_rate_min;     // minimal raltive toggle rate compared with its clock driver
+    double toggle_rate_max;     // maximal raltive toggle rate compared with its clock driver
+    
 
     dfgNode(): pg(NULL), node_index(0), type(SDFG_DF), dp_type(SDFG_DP_NONE), position(0,0), bbox(0,0) {}
     dfgNode(const std::string& n, node_type_t t = SDFG_DF) : 
