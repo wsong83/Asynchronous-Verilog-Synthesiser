@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -250,12 +250,13 @@ unsigned int netlist::Variable::get_width() const {
     return name.get_range().get_width(name.get_range());
 }
 
-void netlist::Variable::annotate(mpz_class toggle) {
+void netlist::Variable::annotate(mpz_class toggle, mpz_class duration) {
   if(annotated) {
     if(toggle_min < toggle) toggle_min = toggle;
     toggle_max += toggle;
   } else {
     annotated = true;
+    toggle_duration = duration;
     toggle_min = toggle;
     toggle_max = toggle;
   }

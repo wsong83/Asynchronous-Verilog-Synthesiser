@@ -87,6 +87,11 @@ namespace SDFG {
     std::list<boost::shared_ptr<dfgPath> > opath, ipath; // record all output/input paths to avoid recalculation
     std::map<boost::shared_ptr<dfgNode>, int> opath_f, ipath_f, self_f; // record all output/input paths get from fast algorithm to avoid recalculation
 
+    // toggle rate
+    double toggle_min;          // minimal toggle rate, in unit of MHz
+    double toggle_high;         // minimal toggle rate, in unit of MHz
+    double toggle_rate;         // raltive toggle rate compared with its clock driver
+
 
     dfgNode(): pg(NULL), node_index(0), type(SDFG_DF), dp_type(SDFG_DP_NONE), position(0,0), bbox(0,0) {}
     dfgNode(const std::string& n, node_type_t t = SDFG_DF) : 

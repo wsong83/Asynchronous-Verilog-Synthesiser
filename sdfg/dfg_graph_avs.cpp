@@ -89,7 +89,7 @@ void SDFG::dfgGraph::edge_type_propagate_combi(shared_ptr<dfgNode> node,
                                                std::set<shared_ptr<dfgNode> >& nlook_set,
                                                std::set<shared_ptr<dfgNode> >& nall_set
                                                ) {
-  if(node->type & dfgNode::SDFG_IPORT  == dfgNode::SDFG_IPORT 
+  if((node->type & dfgNode::SDFG_IPORT)  == dfgNode::SDFG_IPORT 
      && node->pg->father == NULL) return; // top level input
   
   BOOST_FOREACH(shared_ptr<dfgNode> n, node->get_in_nodes_cb(false)) {
@@ -768,9 +768,17 @@ void SDFG::dfgGraph::clock_detect() {
   std::set<shared_ptr<dfgNode> > clock_nodes;
   std::list<shared_ptr<dfgNode> > clock_nodes_list;
 
+  std::list<shared_ptr<dfgNode> > mlist = 
+    get_list_of_nodes(dfgNode::SDFG_MODULE);
+
+  BOOST_FOREACH(shared_ptr<dfgNode> m, mlist) {
+    if(m->child)
+      m->child->clock_detect();
+  }
+
   std::list<shared_ptr<dfgNode> > nlist = 
-    get_list_of_nodes(dfgNode::SDFG_DF|dfgNode::SDFG_CMOB|dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|
-                      dfgNode::GATE);
+    get_list_of_nodes(dfgNode::SDFG_DF|dfgNode::SDFG_COMB|dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|
+                      dfgNode::SDFG_GATE|dfgNode::SDFG_IPORT);
 
   BOOST_FOREACH(shared_ptr<dfgNode> cnode, nlist) {
     // if a node has clock output edge, add it to potential clock nodes
@@ -784,29 +792,89 @@ void SDFG::dfgGraph::clock_detect() {
     shared_ptr<dfgNode> cnode = clock_nodes_list.front();
     clock_nodes_list.pop_front();
 
-    If(cnode->type & dfgNode::SDFG_IPORT == dfgNode::SDFG_IPORT) {
+    if((cnode->type & dfgNode::SDFG_IPORT) == dfgNode::SDFG_IPORT || cnode->type == dfgNode::SDFG_IPORT) {
       // source of a clock
       clock_nodes.insert(cnode);
       cnode->type = dfgNode::SDFG_IPORT_CLK;      
     } else {                    // check and probably remove the node
-      switch(cnode->type) {
-      case dfgNode::SDFG_DF:
-      case dfgNode::SDFG_COMB:
-      case dfgNode::SDFG_LATCH:
-      case dfgNode::SDFG_GATE: {
-        if(cnode->size_in_edges() == 1) {
-          clock_nodes_list.push_back(cnode->get_in_nodes().front());
-        } else if(cnode->size_in_edges() > 1 && cnode->get_in_edges_type() & dfgEdge::SDFG_CLK) {
-          clock_nodes.insert(cnode);
-          std::cout << "Seems node " << cnode->get_full_name() << " is a gated clock?" << std::endl;
-        } else {
-          // should not reach here
-          std::cout << "Research this node " << cnode->get_full_name() << std::endl;
-          assert(0 == "node pattern impossible");
-        }
-        
+      if(cnode->size_in_edges() == 1) {
+        clock_nodes_list.push_back(cnode->get_in_nodes().front());
+      } else if(cnode->size_in_edges() > 1 && (cnode->get_in_edges_type() & dfgEdge::SDFG_CLK)) {
+        clock_nodes.insert(cnode);
+        std::cout << "Seems node " << cnode->get_full_name() << " is a gated clock?" << std::endl;
+      } else {
+        // should not reach here
+        std::cout << "Research this node " << cnode->get_full_name() << std::endl;
+        assert(0 == "node pattern impossible");
       }
     }
   }
 
+  BOOST_FOREACH(shared_ptr<dfgNode> n, clock_nodes) {
+    n->type = dfgNode::SDFG_IPORT_CLK;
+  }   
+}
+
+void SDFG::dfgGraph::annotate_toggle(shell::Env * gEnv, netlist::Module* pModule) {
+  // find out all the clocks
+  //clock_detect();
+
+  // annotate all nodes
+  /*
+  BOOST_FOREACH(nodes_type n, nodes) {
+    switch(n.second->type) {
+    case SDFG_DF:
+    case SDFG_COMB:
+    case SDFG_FF:
+    case SDFG_LATCH:
+    case SDFG_OPORT:
+    case SDFG_PORT: 
+    case SDFG_IPORT: {
+      shared_ptr<netlist::Variable> var = pModule->find_var(n.second->name);
+      if(var) {
+        n.second->toggle_min = var->toggle_min.get_d() / var->toggle_duration.get_d();
+        n.second->toggle_min = var->toggle_high.get_d() / var->toggle_duration.get_d();
+      }
+      break;
+    }
+    case SDFG_IPORT_CLK: {
+      shared_ptr<netlist::Variable> var = pModule->find_var(n.second->name);
+      if(var) {
+        n.second->toggle_min = var->toggle_min.get_d() / var->toggle_duration.get_d();
+        n.second->toggle_min = var->toggle_high.get_d() / var->toggle_duration.get_d();
+        n.second->toggle_rate = 1.0;
+      }
+      break;
+    }
+    case SDFG_MODULE: {
+      if(n.second->child) {
+        shared_ptr<netlist::Instance> instance = pModule->find_instance(n->name);
+        assert(insatnce);
+        shared_ptr<netlist::Module> module = gEnv->find_module(instance->mname);
+        assert(module);
+        n.second->child->annotate(gEnv, module);
+      }
+    }
+    }
+  }
+  */
+
+  // annotate the toggle of all nodes
+  BOOST_FOREACH(nodes_type n, nodes) {
+    if(n.second->type == SDFG_MODULE) {
+      if(n.second->child) {
+        shared_ptr<netlist::Instance> instance = pModule->find_instance(n->name);
+        assert(insatnce);
+        shared_ptr<netlist::Module> module = gEnv->find_module(instance->mname);
+        assert(module);
+        n.second->child->annotate(gEnv, module);
+      }
+    } else {
+      shared_ptr<netlist::Variable> var = pModule->find_var(n.second->name);
+      if(var) {
+        n.second->toggle_min = var->toggle_min.get_d() / var->toggle_duration.get_d();
+        n.second->toggle_min = var->toggle_high.get_d() / var->toggle_duration.get_d();
+      }
+    }
+  }
 }

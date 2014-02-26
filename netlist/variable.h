@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -84,6 +84,8 @@ namespace netlist {
     boost::shared_ptr<Expression> exp;
     boost::shared_ptr<SDFG::dfgNode> pDFGNode; // the corresponding node in the DFG
 
+    mpz_class toggle_duration, toggle_min, toggle_max;
+
   private:
 
     // helper
@@ -93,7 +95,6 @@ namespace netlist {
     
     bool signed_flag;
 
-    mpz_class toggle_min, toggle_max;
     bool annotated;
   };
 

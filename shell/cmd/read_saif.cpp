@@ -221,7 +221,7 @@ bool shell::CMD::CMDReadSaif::exec ( const std::string& str, Env * pEnv){
 
   unsigned long annotated = 0; 
   unsigned long total = 0;
-  annotate(tarDesign, tarSaif, annotated, total, pEnv);
+  annotate(tarDesign, tarSaif, sDB.duration, annotated, total, pEnv);
 
   gEnv.stdOs << "Successfully annotated " << annotated << " in the total of " << total << " signals." << std::endl;
 
@@ -229,11 +229,11 @@ bool shell::CMD::CMDReadSaif::exec ( const std::string& str, Env * pEnv){
 }
 
 namespace {
-  void annotate(shared_ptr<netlist::Module> tar, shared_ptr<saif::SaifInstance> saif, unsigned long& annotated, unsigned long& total, shell::Env * pEnv) {
+  void annotate(shared_ptr<netlist::Module> tar, shared_ptr<saif::SaifInstance> saif, mpz_class duration, unsigned long& annotated, unsigned long& total, shell::Env * pEnv) {
     if(!saif->signals.empty()) {
       typedef std::pair<const string&, shared_ptr<saif::SaifSignal> > signal_type;
       BOOST_FOREACH(signal_type sig, saif->signals) {
-        annotate_signal(tar, sig.first, sig.second, annotated, total);
+        annotate_signal(tar, sig.first, sig.second, duration, annotated, total);
       }
     }
 
@@ -245,13 +245,14 @@ namespace {
           shared_ptr<netlist::Instance> m_inst = tar->find_instance(inst.first);
           if(m_inst) m_tar = pEnv->find_module(m_inst->mname);
         }
-        annotate(m_tar, inst.second, annotated, total, pEnv);
+        annotate(m_tar, inst.second, duration, annotated, total, pEnv);
       }
     }
   }
 
   void annotate_signal(shared_ptr<netlist::Module> tar,
                        const string& name, shared_ptr<saif::SaifSignal> sig,
+                       mpz_class duration,
                        unsigned long& annotated, unsigned long& total) {
     if(sig->bits.empty()) {
       total++;
@@ -259,7 +260,7 @@ namespace {
       if(tar) {
         shared_ptr<netlist::Variable> var = tar->find_var(name);
         if(var) {
-          var->annotate(sig->data->TC);
+          var->annotate(sig->data->TC, duration);
           annotated++;
           is_annotated = true;
         }
