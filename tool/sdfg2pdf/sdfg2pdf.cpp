@@ -28,10 +28,13 @@
 
 #include "sdfg2pdf.hpp"
 
+#include <boost/lexical_cast.hpp>
+
 using std::string;
 using boost::shared_ptr;
 using std::list;
 using std::pair;
+using boost::lexical_cast;
 
 static const double MIN_ROUND_DIST = 10.0;
 static const double TOKEN_DIST = 5;
@@ -174,25 +177,37 @@ void draw_page(SDFG::dfgGraph& g, QPainter& painter, QPrinter& printer, std::set
              y -= h/2;
 
              QRectF bbox = QRectF(x, y, w, h);
-             QPoint name_point(x+w-5, y-5);
+             QPoint name_point(x+w+5, y-5);
+             QPoint toggle_point(x+w+5, y+h+5);
+             string toggle_txt;
+             toggle_txt  = "("  + lexical_cast<string>(node.toggle_min);
+             toggle_txt += ", " + lexical_cast<string>(node.toggle_max);
+             toggle_txt += "; " + lexical_cast<string>(node.toggle_rate_min);
+             toggle_txt += ", " + lexical_cast<string>(node.toggle_rate_max) + ")";
 
              switch(node.type) {
              case SDFG::dfgNode::SDFG_COMB: {
                painter.drawEllipse(bbox);
                painter.drawText(bbox, Qt::AlignCenter, "combi");
                painter.drawText(name_point, node.name.c_str());
+               if(node.is_annotated)
+                 painter.drawText(toggle_point, toggle_txt.c_str());
                break;
              }
              case SDFG::dfgNode::SDFG_FF: {
                painter.drawRect(bbox);
                painter.drawText(bbox, Qt::AlignCenter, "FF");
                painter.drawText(name_point, node.name.c_str());
+               if(node.is_annotated)
+                 painter.drawText(toggle_point, toggle_txt.c_str());
                break;
              }
              case SDFG::dfgNode::SDFG_LATCH: {
                painter.drawRect(bbox);
                painter.drawText(bbox, Qt::AlignCenter, "LAT");
                painter.drawText(name_point, node.name.c_str());
+               if(node.is_annotated)
+                 painter.drawText(toggle_point, toggle_txt.c_str());
                break;
              }
              case SDFG::dfgNode::SDFG_MODULE: {
@@ -211,6 +226,8 @@ void draw_page(SDFG::dfgGraph& g, QPainter& painter, QPrinter& printer, std::set
                //painter.setFont(QFont(PDF_FONT, PDF_FONT_SIZE-4));
                painter.drawText(name_point, node.name.c_str());
                //painter.setFont(font);
+               if(node.is_annotated)
+                 painter.drawText(toggle_point, toggle_txt.c_str());
                break;
              }
              case SDFG::dfgNode::SDFG_OPORT: {
@@ -219,6 +236,8 @@ void draw_page(SDFG::dfgGraph& g, QPainter& painter, QPrinter& printer, std::set
                //painter.setFont(QFont(PDF_FONT, PDF_FONT_SIZE-4));
                painter.drawText(name_point, node.name.c_str());
                //painter.setFont(font);
+               if(node.is_annotated)
+                 painter.drawText(toggle_point, toggle_txt.c_str());
                break;
              }
              case SDFG::dfgNode::SDFG_PORT: {
@@ -227,6 +246,8 @@ void draw_page(SDFG::dfgGraph& g, QPainter& painter, QPrinter& printer, std::set
                //painter.setFont(QFont(PDF_FONT, PDF_FONT_SIZE-4));
                painter.drawText(name_point, node.name.c_str());
                //painter.setFont(font);
+               if(node.is_annotated)
+                 painter.drawText(toggle_point, toggle_txt.c_str());
                break;
              }
              default: {
@@ -234,6 +255,8 @@ void draw_page(SDFG::dfgGraph& g, QPainter& painter, QPrinter& printer, std::set
                //painter.setFont(QFont(PDF_FONT, PDF_FONT_SIZE-4));
                painter.drawText(name_point, node.name.c_str());
                //painter.setFont(font);
+               if(node.is_annotated)
+                 painter.drawText(toggle_point, toggle_txt.c_str());
                break;
              }
              }

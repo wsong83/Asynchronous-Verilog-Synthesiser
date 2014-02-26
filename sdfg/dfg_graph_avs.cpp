@@ -657,6 +657,7 @@ void SDFG::dfgGraph::annotate_toggle(shell::Env * gEnv, netlist::Module* pModule
     } else {
       shared_ptr<netlist::Variable> var = pModule->find_var(n.second->name);
       if(var) {
+        n.second->is_annotated = true;
         n.second->toggle_min = var->toggle_min.get_d() / var->toggle_duration.get_d();
         n.second->toggle_max = var->toggle_max.get_d() / var->toggle_duration.get_d();
       }
@@ -670,7 +671,7 @@ void SDFG::dfgGraph::annotate_rate() {
     if(n.second->type == dfgNode::SDFG_MODULE) {
       if(n.second->child)
         n.second->child->annotate_rate();
-    } else {
+    } else if(n.second->is_annotated){
       n.second->toggle_rate_min = -1.0;
       n.second->toggle_rate_max = -1.0;
       list<shared_ptr<dfgPath> > paths = n.second->get_in_paths_fast_cb();

@@ -154,6 +154,14 @@ void SDFG::dfgNode::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<dfg
   default:           stype = "unknown";
   }    
   xnode.append_attribute("type") = stype.c_str();
+  
+  if(is_annotated) {
+    xnode.append_attribute("toggle_min") = toggle_min;
+    xnode.append_attribute("toggle_max") = toggle_max;
+    xnode.append_attribute("toggle_rate_min") = toggle_rate_min;
+    xnode.append_attribute("toggle_rate_max") = toggle_rate_max;
+  }
+
   if(type == SDFG_MODULE) {     // module
     if(child)  GList.push_back(child); // push the sub-module to the module list
     pugi::xml_node xmodule = xnode.append_child("module");
@@ -173,7 +181,7 @@ void SDFG::dfgNode::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<dfg
       xpos.append_attribute("x") = position.first;
       xpos.append_attribute("y") = position.second;
     }
-  }
+  } 
 }
 
 void SDFG::dfgNode::write(void *pnode, ogdf::GraphAttributes *pga) {
@@ -214,6 +222,14 @@ bool SDFG::dfgNode::read(const pugi::xml_node& xnode) {
   case 0x0e1bf974: type = SDFG_PORT;   break;
   case 0xbddbfb6d: type = SDFG_DF;     break;
   default: assert(0 == 1); return false;
+  }
+
+  if(xnode.attribute("toggle_min")) {
+    toggle_min = xnode.attribute("toggle_min").as_double();
+    toggle_min = xnode.attribute("toggle_max").as_double();
+    toggle_min = xnode.attribute("toggle_rate_min").as_double();
+    toggle_min = xnode.attribute("toggle_rat_max").as_double();
+    is_annotated = true;
   }
 
   if(type == SDFG_MODULE) {     // port map
@@ -296,7 +312,7 @@ void SDFG::dfgNode::remove_port_sig(const string& sname, int dir) {
           port2sig[sig] = string();
           sig2port[sname].erase(sig);
         } else if((child_node->type & SDFG_PORT) 
-                  && (child_node->type & SDFG_IPORT != SDFG_IPORT)
+                  && ((child_node->type & SDFG_IPORT) != SDFG_IPORT)
                   && dir >= 0) {
           port2sig[sig] = string();
           sig2port[sname].erase(sig);
@@ -391,7 +407,7 @@ bool SDFG::dfgNode::check_integrity() const {
         if(p2s.second.size() > 0) {
           assert(pg->exist(p2s.second));
           assert(p->type & SDFG_PORT);
-          if(p->type & SDFG_IPORT != SDFG_IPORT) {
+          if((p->type & SDFG_IPORT) != SDFG_IPORT) {
             assert(pg->exist(id, p2s.second));
           }
           if(p->type != SDFG_OPORT) {

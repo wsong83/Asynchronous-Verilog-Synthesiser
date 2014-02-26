@@ -225,6 +225,8 @@ bool shell::CMD::CMDReadSaif::exec ( const std::string& str, Env * pEnv){
 
   gEnv.stdOs << "Successfully annotated " << annotated << " in the total of " << total << " signals." << std::endl;
 
+  tarDesign
+
   return true;
 }
 
