@@ -49,6 +49,7 @@ namespace shell {
   class Env;
   namespace CMD {
     NEW_TCL_CMD(bool, CMDAnalyze);
+    NEW_TCL_CMD(bool, CMDAnnotateSaif);
     NEW_TCL_CMD(std::string, CMDCurrentDesign);
     NEW_TCL_CMD(std::string, CMDEcho);
     NEW_TCL_CMD(bool, CMDElaborate);

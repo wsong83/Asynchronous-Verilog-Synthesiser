@@ -75,6 +75,7 @@ namespace {
   }
 
   FUNC_WRAPPER     (bool,         CMDAnalyze            )
+  FUNC_WRAPPER     (bool,         CMDAnnotateSaif       )
   FUNC_WRAPPER     (std::string,  CMDCurrentDesign      )
   FUNC_WRAPPER     (std::string,  CMDEcho               )
   FUNC_WRAPPER     (bool,         CMDElaborate          )
@@ -165,6 +166,7 @@ bool shell::Env::initialise() {
     (shell::CMD::func::description, shell::CMD::func::help)   
 
   AVS_ENV_ADD_TCL_CMD(CMDAnalyze);
+  AVS_ENV_ADD_TCL_CMD(CMDAnnotateSaif);
   AVS_ENV_ADD_TCL_CMD(CMDCurrentDesign);
   AVS_ENV_ADD_TCL_CMD(CMDEcho);
   AVS_ENV_ADD_TCL_CMD(CMDElaborate);
