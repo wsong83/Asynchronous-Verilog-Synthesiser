@@ -96,6 +96,7 @@ namespace {
   FUNC_WRAPPER     (bool,         CMDSuppressMessage    )
   FUNC_WRAPPER     (bool,         CMDUniquify           )
   FUNC_WRAPPER     (bool,         CMDWrite              )
+  FUNC_WRAPPER     (bool,         CMDWriteSDFG          )
 
 #undef FUNC_WRAPPER
 #undef FUNC_WRAPPER_VOID
@@ -186,6 +187,7 @@ bool shell::Env::initialise() {
   AVS_ENV_ADD_TCL_CMD(CMDSuppressMessage);
   AVS_ENV_ADD_TCL_CMD(CMDUniquify);
   AVS_ENV_ADD_TCL_CMD(CMDWrite);
+  AVS_ENV_ADD_TCL_CMD(CMDWriteSDFG);
 
 #undef AVS_ENV_ADD_TCL_CMD
 

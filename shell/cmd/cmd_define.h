@@ -69,6 +69,7 @@ namespace shell {
     NEW_TCL_CMD(bool, CMDSuppressMessage);
     NEW_TCL_CMD(bool, CMDUniquify);
     NEW_TCL_CMD(bool, CMDWrite);
+    NEW_TCL_CMD(bool, CMDWriteSDFG);
 
 
     // help is different

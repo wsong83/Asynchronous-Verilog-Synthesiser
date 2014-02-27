@@ -663,6 +663,28 @@ void SDFG::dfgGraph::annotate_toggle(shell::Env * gEnv, netlist::Module* pModule
       }
     }
   }
+
+  // special treatment for all I/O ports
+  std::list<shared_ptr<dfgNode> > m_port_list = get_list_of_nodes(dfgNode::SDFG_PORT);
+  BOOST_FOREACH(shared_ptr<dfgNode> n, m_port_list) {
+    if(n->type == dfgNode::SDFG_IPORT) {
+      shared_ptr<dfgNode> m = n->get_out_nodes().front();
+      if(m->is_annotated) {
+        n->is_annotated = true;
+        n->toggle_min = m->toggle_min;
+        n->toggle_max = m->toggle_max;
+      }
+    }
+
+    if(n->type == dfgNode::SDFG_OPORT) {
+      shared_ptr<dfgNode> m = n->get_in_nodes().front();
+      if(m->is_annotated) {
+        n->is_annotated = true;
+        n->toggle_min = m->toggle_min;
+        n->toggle_max = m->toggle_max;
+      }
+    }
+  }
 }
 
 void SDFG::dfgGraph::annotate_rate() {

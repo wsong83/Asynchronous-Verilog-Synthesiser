@@ -226,9 +226,9 @@ bool SDFG::dfgNode::read(const pugi::xml_node& xnode) {
 
   if(xnode.attribute("toggle_min")) {
     toggle_min = xnode.attribute("toggle_min").as_double();
-    toggle_min = xnode.attribute("toggle_max").as_double();
-    toggle_min = xnode.attribute("toggle_rate_min").as_double();
-    toggle_min = xnode.attribute("toggle_rat_max").as_double();
+    toggle_max = xnode.attribute("toggle_max").as_double();
+    toggle_rate_min = xnode.attribute("toggle_rate_min").as_double();
+    toggle_rate_max = xnode.attribute("toggle_rate_max").as_double();
     is_annotated = true;
   }
 
