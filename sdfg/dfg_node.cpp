@@ -121,6 +121,11 @@ dfgNode* SDFG::dfgNode::copy() const {
   rv->node_index = 0;
   rv->type = type;
   rv->dp_type = dp_type;
+  rv->is_annotated = is_annotated;
+  rv->toggle_min = toggle_min;
+  rv->toggle_max = toggle_max;
+  rv->toggle_rate_min = toggle_rate_min;
+  rv->toggle_rate_max = toggle_rate_max;
   return rv;
 }
 

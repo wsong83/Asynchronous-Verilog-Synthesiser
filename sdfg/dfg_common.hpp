@@ -62,6 +62,9 @@ namespace SDFG {
   // show the hash value of a string
   void show_hash(const std::string&);
 
+  // format the output of double numbers
+  std::string format_double(double, unsigned int);
+
 }
 
 // forward decalration

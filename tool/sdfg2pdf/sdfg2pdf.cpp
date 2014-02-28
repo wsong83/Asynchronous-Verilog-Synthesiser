@@ -180,10 +180,10 @@ void draw_page(SDFG::dfgGraph& g, QPainter& painter, QPrinter& printer, std::set
              QPoint name_point(x+w+5, y-5);
              QPoint toggle_point(x+w+5, y+h+5);
              string toggle_txt;
-             toggle_txt  = "("  + lexical_cast<string>(node.toggle_min);
-             toggle_txt += ", " + lexical_cast<string>(node.toggle_max);
-             toggle_txt += "; " + lexical_cast<string>(node.toggle_rate_min);
-             toggle_txt += ", " + lexical_cast<string>(node.toggle_rate_max) + ")";
+             toggle_txt  = "("  + SDFG::format_double(node.toggle_min, 4);
+             toggle_txt += ", " + SDFG::format_double(node.toggle_max, 4);
+             toggle_txt += "; " + SDFG::format_double(node.toggle_rate_min, 2);
+             toggle_txt += ", " + SDFG::format_double(node.toggle_rate_max, 2) + ")";
 
              switch(node.type) {
              case SDFG::dfgNode::SDFG_COMB: {
