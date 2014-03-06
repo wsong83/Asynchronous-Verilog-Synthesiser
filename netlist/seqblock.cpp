@@ -326,6 +326,17 @@ void netlist::SeqBlock::replace_variable(const VIdentifier& var, const Number& n
   Block::replace_variable(var, num);
 }
 
+void netlist::SeqBlock::replace_variable(const VIdentifier& var, const VIdentifier& nvar) {
+  BOOST_FOREACH(shared_ptr<Expression> sl, slist_level) {
+    sl->replace_variable(var, nvar);
+  }
+  typedef pair<bool, shared_ptr<Expression> > sp_type;
+  BOOST_FOREACH(sp_type sp, slist_pulse) {
+    sp.second->replace_variable(var, nvar);
+  }
+  Block::replace_variable(var, nvar);
+}
+
 void netlist::SeqBlock::ssa_analysis(const VIdentifier& sname) {
   //std::cout << *this << std::endl;
   std::set<string> m_set;

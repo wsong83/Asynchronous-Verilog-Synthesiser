@@ -29,6 +29,7 @@
 #include "dfg_common.hpp"
 
 #include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
 #include <iostream>
 
 using namespace SDFG;
@@ -52,6 +53,13 @@ namespace SDFG {
   // display the hash id of a tring
   void show_hash(const string& str) {
     std::cout << "hash id of \"" << str << "\":" << boost::format("0x%x") % shash(str) << std::endl;
+  }
+
+  string format_double(double number, unsigned int sdec) {
+    std::ostringstream sos;
+    string format_string = "%1." + boost::lexical_cast<string>(sdec) + "f";
+    sos << boost::format(format_string) % number;
+    return sos.str();
   }
   
 }

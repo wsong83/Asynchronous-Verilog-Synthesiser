@@ -71,6 +71,13 @@ void netlist::ConElem::replace_variable(const VIdentifier& var, const Number& nu
   }
 }
 
+void netlist::ConElem::replace_variable(const VIdentifier& var, const VIdentifier& nvar) {
+  exp->replace_variable(var, nvar);
+  BOOST_FOREACH(shared_ptr<ConElem> ce, con) {
+    ce->replace_variable(var, nvar);
+  }
+}
+
 void netlist::ConElem::replace_variable(const VIdentifier& var, shared_ptr<Expression> rexp) {
   exp->replace_variable(var, rexp);
   BOOST_FOREACH(shared_ptr<ConElem> ce, con) {
@@ -274,6 +281,12 @@ void netlist::Concatenation::reduce() {
 void netlist::Concatenation::replace_variable(const VIdentifier& var, const Number& num) {
   BOOST_FOREACH(shared_ptr<ConElem> d, data) {
     d->replace_variable(var, num);
+  }
+}
+
+void netlist::Concatenation::replace_variable(const VIdentifier& var, const VIdentifier& nvar) {
+  BOOST_FOREACH(shared_ptr<ConElem> d, data) {
+    d->replace_variable(var, nvar);
   }
 }
 

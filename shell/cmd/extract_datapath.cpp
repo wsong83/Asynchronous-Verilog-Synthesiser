@@ -41,6 +41,7 @@
 using namespace boost::filesystem;
 
 #include <boost/foreach.hpp>
+#include <ctime>
 
 using std::endl;
 using boost::shared_ptr;
@@ -58,6 +59,7 @@ namespace {
     bool bQuiet;                // suppress information
     bool bFsm;                  // output FSMs
     bool bCtl;                  // output related control
+    bool bRRG;                  // reduce to RRG
     std::string sDesign;        // target design to be written out
     std::string sOutput;        // output file name
     
@@ -66,6 +68,7 @@ namespace {
       bQuiet(false),
       bFsm(false),
       bCtl(false),
+      bRRG(false),
       sDesign(""),
       sOutput("") {}
   };
@@ -78,6 +81,7 @@ BOOST_FUSION_ADAPT_STRUCT
  (bool, bQuiet)
  (bool, bFsm)
  (bool, bCtl)
+ (bool, bRRG)
  (std::string, sDesign)
  (std::string, sOutput)
  )
@@ -101,12 +105,13 @@ namespace {
           (lit("quiet")             >> blanks) [at_c<1>(_r1) = true]  ||
           (lit("with_fsm")          >> blanks) [at_c<2>(_r1) = true]  ||
           (lit("with_ctl")          >> blanks) [at_c<3>(_r1) = true]  ||
-          (lit("output") >> blanks >> filename >> blanks) [at_c<5>(_r1) = _1]
+          (lit("to_rrg")            >> blanks) [at_c<4>(_r1) = true]  ||
+          (lit("output") >> blanks >> filename >> blanks) [at_c<6>(_r1) = _1]
           );
       
       start = 
         *(args(_val))
-        >> -(identifier >> blanks) [at_c<4>(_val) = _1] 
+        >> -(identifier >> blanks) [at_c<5>(_val) = _1] 
         >> *(args(_val))
         ;
 
@@ -135,6 +140,7 @@ void shell::CMD::CMDExtractDatapath::help(Env& gEnv) {
   gEnv.stdOs << "   -quiet               suppress the optimization information." << endl;
   gEnv.stdOs << "   -with_fsm            show the data path related FSMs." << endl;
   gEnv.stdOs << "   -with_ctl            show the data path related control logic." << endl;
+  gEnv.stdOs << "   -to_rrg              reduce to RRG in the output graph." << endl;
   gEnv.stdOs << "   -output file_name    specify the output file name." << endl;
   gEnv.stdOs << "                        (in default is \"design_name.datapath\")" << endl;
 }
@@ -190,13 +196,31 @@ void shell::CMD::CMDExtractDatapath::exec ( const std::string& str, Env * pEnv){
     CMDUniquify::exec("-quiet", pEnv);
     tarDesign->DFG = tarDesign->extract_sdfg(true);
   }
+  std::time_t rawtime;
+  struct std::tm * tinfo;
+  
+  std::time(&rawtime);
+  tinfo = std::localtime(&rawtime);
 
-  shared_ptr<SDFG::dfgGraph> dataDFG = tarDesign->DFG->extract_datapath_new(arg.bFsm, arg.bCtl);
+  gEnv.stdOs << "SDFG, I/O " << tarDesign->DFG->get_list_of_nodes(SDFG::dfgNode::SDFG_PORT).size();
+  gEnv.stdOs << " Modules " << tarDesign->DFG->size_of_modules(true);
+  gEnv.stdOs << " Nodes " << tarDesign->DFG->size_of_nodes(true) << endl;
+  gEnv.stdOs << "Time: " << std::asctime(tinfo) << endl;
+
+  shared_ptr<SDFG::dfgGraph> dataDFG = tarDesign->DFG->extract_datapath_new(arg.bFsm, arg.bCtl, arg.bRRG);
   //dataDFG = dataDFG->extract_datapath(arg.bFsm, arg.bCtl);
   //dataDFG = dataDFG->extract_datapath(arg.bFsm, arg.bCtl);
   //dataDFG = dataDFG->extract_datapath(arg.bFsm, arg.bCtl);
 
   dataDFG->write(fhandler);
+
+  std::time(&rawtime);
+  tinfo = std::localtime(&rawtime);
+
+  gEnv.stdOs << "DatPath, I/O " << dataDFG->get_list_of_nodes(SDFG::dfgNode::SDFG_PORT).size();
+  gEnv.stdOs << " Modules " << dataDFG->size_of_modules(true);
+  gEnv.stdOs << " Nodes " << dataDFG->size_of_nodes(true) << endl;
+  gEnv.stdOs << "Time: " << std::asctime(tinfo) << endl;
 
   fhandler.close();
   gEnv.stdOs << "write the datapaths to " << outputFileName << endl;

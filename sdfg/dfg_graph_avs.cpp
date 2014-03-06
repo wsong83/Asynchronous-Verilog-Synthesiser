@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -34,6 +34,11 @@
 #include <boost/foreach.hpp>
 
 #include "shell/env.h"
+
+#define BOOST_FILESYSTEM_VERSION 3
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
+using namespace boost::filesystem;
 
 using namespace SDFG;
 using boost::shared_ptr;
@@ -83,7 +88,8 @@ void SDFG::dfgGraph::edge_type_propagate_combi(shared_ptr<dfgNode> node,
                                                std::set<shared_ptr<dfgNode> >& nlook_set,
                                                std::set<shared_ptr<dfgNode> >& nall_set
                                                ) {
-  if(node->type == dfgNode::SDFG_IPORT && node->pg->father == NULL) return; // top level input
+  if((node->type & dfgNode::SDFG_IPORT)  == dfgNode::SDFG_IPORT 
+     && node->pg->father == NULL) return; // top level input
   
   BOOST_FOREACH(shared_ptr<dfgNode> n, node->get_in_nodes_cb(false)) {
     if(!nall_set.count(n)) {
@@ -177,90 +183,16 @@ void SDFG::dfgGraph::edge_type_propagate_reg(shared_ptr<dfgNode> node,
   }
 }
 
-shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath_new(bool with_fsm, bool with_ctl) const {
-  bool node_removed = false;
-  static unsigned int iter_count = 0;
+shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath_new(bool with_fsm, bool with_ctl, bool to_rrg) const {
 
-  shared_ptr<dfgGraph> hier_rrg = get_hier_RRG();
-  hier_rrg->edge_type_propagate();
-
-  std::set<shared_ptr<dfgNode> > nlook_set;
-  std::list<shared_ptr<dfgNode> > nlook_list;
-  std::set<shared_ptr<dfgNode> > nall_set;
-  std::set<shared_ptr<dfgNode> > nkeep_set;
-  std::set<shared_ptr<dfgNode> > ndel_set;
-
-  BOOST_FOREACH(shared_ptr<dfgNode> n, hier_rrg->get_list_of_nodes(dfgNode::SDFG_PORT)) {
-    if(n->type == dfgNode::SDFG_OPORT) {
-      nall_set.insert(n);
-      if(!(n->dp_type & (dfgNode::SDFG_DP_CTL|dfgNode::SDFG_DP_FSM))) {
-        nkeep_set.insert(n);
-        nlook_set.insert(n);
-        nlook_list.push_back(n);
-      }
-    }
-  }
-
-  while(nlook_set.size()) {
-    // get the next node to be processed
-    shared_ptr<dfgNode> node = nlook_list.front();
-    nlook_list.pop_front();
-    nlook_set.erase(node);
-
-    // check if it is a FF or a latch or a top level output port
-    if(node->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH) ||
-       ((node->pg->father == NULL) && (node->type & dfgNode::SDFG_PORT))) {
-      BOOST_FOREACH(shared_ptr<dfgPath> path, node->get_in_paths_fast_cb()) {
-        shared_ptr<dfgNode> src = path->src;
-        if(src != node) { // not self loop
-          if(path->type & dfgEdge::SDFG_DAT_MASK) {
-            nkeep_set.insert(src);
-            if(!nall_set.count(src)) {
-              nall_set.insert(src);
-              nlook_set.insert(src);
-              nlook_list.push_back(src);
-            }            
-          } else if(path->type & dfgEdge::SDFG_CTL_MASK) {
-            if(with_ctl || (with_fsm && src->is_fsm())) {
-              nkeep_set.insert(src);
-            }
-          } else {
-            ndel_set.insert(src);
-          }
-        }
-      }
-    }
-  }
-
-  // check renew
-  BOOST_FOREACH(shared_ptr<dfgNode> n, nkeep_set) {
-    if(ndel_set.count(n))
-      ndel_set.erase(n);
-  }
-
-  if(ndel_set.size())  {
-    node_removed = true;
-    if(iter_count > 0) {
-      BOOST_FOREACH(shared_ptr<dfgNode> n, ndel_set) 
-        std::cout << "node to be removed in iteration " << iter_count
-                  << ": " << n->get_full_name() << std::endl;
-    }
-  }
-
-  hier_rrg->remove_unlisted_nodes(nkeep_set, true);
-  hier_rrg->remove_useless_nodes();
-  hier_rrg->edge_type_propagate();
-  hier_rrg->check_integrity();
-
-  if(iter_count < 10 && node_removed) {
-    std::cout << "extraction iteration " << iter_count << std::endl;
-    iter_count++;
-    hier_rrg = hier_rrg->extract_datapath_new(with_fsm, with_ctl);
-  }
+  shared_ptr<dfgGraph> hier_rrg(deep_copy());
 
   hier_rrg->remove_control_nodes();
   
-  return hier_rrg;
+  if(to_rrg)
+    return hier_rrg->get_RRG();
+  else
+    return hier_rrg;
 
 }
 
@@ -402,31 +334,6 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath(bool with_fsm, bool with_c
   
   // count from input
   std::set<shared_ptr<dfgNode> > nkeep;      // nodes to keep
-  // list<shared_ptr<dfgNode> > nlook = hier_rrg->get_list_of_nodes(dfgNode::SDFG_IPORT); // nodes to be processed
-  // std::set<shared_ptr<dfgNode> > nlook_set;
-  // BOOST_FOREACH(shared_ptr<dfgNode> n, nlook)
-  //   nlook_set.insert(n);
-
-  // while(nlook.size()) {
-  //   shared_ptr<dfgNode> n = nlook.front();
-  //   nlook.pop_front();
-    
-  //   if(n->size_out_edges() > 0) {
-  //     nkeep.insert(n);
-  //     BOOST_FOREACH(shared_ptr<dfgNode> nn, n->get_out_nodes()) {
-  //       if(!nkeep.count(nn)) {
-  //         nkeep.insert(nn);
-  //         if(!nlook_set.count(nn)) {
-  //           nlook.push_back(nn);
-  //           nlook_set.insert(nn);
-  //         }
-  //         BOOST_FOREACH(shared_ptr<dfgNode> nnn, nn->get_in_nodes())
-  //           nkeep.insert(nnn);
-  //       }
-  //     }
-  //   }
-  // }
-
   list<shared_ptr<dfgNode> > nlook = hier_rrg->get_list_of_nodes(dfgNode::SDFG_OPORT);
   std::set<shared_ptr<dfgNode> > nlook_set;
   BOOST_FOREACH(shared_ptr<dfgNode> n, nlook)
@@ -735,13 +642,108 @@ shared_ptr<dfgNode> SDFG::dfgGraph::fsm_simplify_node(shared_ptr<dfgNode> n) {  
   }
   return shared_ptr<dfgNode>();
 }
-      
-shared_ptr<dfgNode> SDFG::dfgGraph::copy_a_node(shared_ptr<dfgGraph> G, shared_ptr<dfgNode> cn, bool use_full_name) const {
-  shared_ptr<dfgNode> nnode(cn->copy());
-  if(use_full_name)
-    nnode->set_hier_name(cn->get_full_name());
-  else
-    nnode->set_hier_name(cn->get_hier_name());
-  G->add_node(nnode);
-  return nnode;
+
+void SDFG::dfgGraph::annotate_toggle(shell::Env * gEnv, netlist::Module* pModule) {
+  // annotate the toggle of all nodes
+  BOOST_FOREACH(nodes_type n, nodes) {
+    if(n.second->type == dfgNode::SDFG_MODULE) {
+      if(n.second->child) {
+        shared_ptr<netlist::Instance> instance = pModule->find_instance(n.second->name);
+        assert(instance);
+        shared_ptr<netlist::Module> module = gEnv->find_module(instance->mname);
+        assert(module);
+        n.second->child->annotate_toggle(gEnv, module.get());
+      }
+    } else {
+      shared_ptr<netlist::Variable> var = pModule->find_var(n.second->name);
+      if(var && var->is_annotated()) {
+        n.second->is_annotated = true;
+        n.second->toggle_min = var->toggle_min.get_d() / var->toggle_duration.get_d();
+        n.second->toggle_max = var->toggle_max.get_d() / var->toggle_duration.get_d();
+      }
+    }
+  }
+
+  // special treatment for all I/O ports
+  std::list<shared_ptr<dfgNode> > m_port_list = get_list_of_nodes(dfgNode::SDFG_PORT);
+  BOOST_FOREACH(shared_ptr<dfgNode> n, m_port_list) {
+    if(n->type == dfgNode::SDFG_IPORT) {
+      shared_ptr<dfgNode> m = n->get_out_nodes().front();
+      if(m->is_annotated) {
+        n->is_annotated = true;
+        n->toggle_min = m->toggle_min;
+        n->toggle_max = m->toggle_max;
+      }
+    }
+
+    if(n->type == dfgNode::SDFG_OPORT) {
+      shared_ptr<dfgNode> m = n->get_in_nodes().front();
+      if(m->is_annotated) {
+        n->is_annotated = true;
+        n->toggle_min = m->toggle_min;
+        n->toggle_max = m->toggle_max;
+      }
+    }
+  }
+}
+
+void SDFG::dfgGraph::annotate_rate() {
+  // annotate the toggle of all nodes
+  BOOST_FOREACH(nodes_type n, nodes) {
+    if(n.second->type == dfgNode::SDFG_MODULE) {
+      assert(n.second->child);
+      if(n.second->child)
+        n.second->child->annotate_rate();
+    } else if(n.second->is_annotated){
+      n.second->toggle_rate_min = -1.0;
+      n.second->toggle_rate_max = -1.0;
+      if(n.second->type == dfgNode::SDFG_FF) { // registers, which have direct connect of clocks
+        list<shared_ptr<dfgEdge> > iedges = get_in_edges_cb(n.second);
+        BOOST_FOREACH(shared_ptr<dfgEdge> e, iedges) {
+          // assuming a FF has only one clock source
+          if(e->type & dfgEdge::SDFG_CLK) {
+            shared_ptr<dfgNode> clk_source = get_source(e);
+            assert(clk_source->is_annotated);
+            n.second->toggle_rate_min = n.second->toggle_min / clk_source->toggle_max * 2.0;
+            if(n.second->toggle_max > clk_source->toggle_min * 0.5)
+              n.second->toggle_max = clk_source->toggle_min * 0.5;
+            n.second->toggle_rate_max = n.second->toggle_max / clk_source->toggle_min * 2.0;
+            break;
+          }
+        }
+      } else {                  // other nodes which can be treated as combinational nodes
+        list<shared_ptr<dfgPath> > paths = n.second->get_in_paths_fast_cb();
+        std::set<shared_ptr<dfgNode> > driving_reg;
+        std::set<shared_ptr<dfgNode> > clk_sources;
+        BOOST_FOREACH(shared_ptr<dfgPath> p, paths) {
+          if(p->src->type & dfgNode::SDFG_FF) {
+            driving_reg.insert(p->src);
+          }
+        }
+        BOOST_FOREACH(shared_ptr<dfgNode> n, driving_reg) {
+          list<shared_ptr<dfgPath> > ifpaths = n->get_in_paths_fast_cb();
+          BOOST_FOREACH(shared_ptr<dfgPath> p, ifpaths) {
+            if(p->type & dfgEdge::SDFG_CLK) {
+              clk_sources.insert(p->src);
+            }
+          }
+        }
+        if(clk_sources.size() == 0) {
+          continue;
+        } else if(clk_sources.size() == 1) {
+          shared_ptr<dfgNode> clk_source = *(clk_sources.begin());
+          assert(clk_source->is_annotated);
+          n.second->toggle_rate_min = n.second->toggle_min / clk_source->toggle_max * 2.0;
+          if(n.second->toggle_max > clk_source->toggle_min * 0.5)
+            n.second->toggle_max = clk_source->toggle_min * 0.5;
+          n.second->toggle_rate_max = n.second->toggle_max / clk_source->toggle_min * 2.0;
+        } else {
+          std::cout << "Node " << n.second->get_full_name() << " has multiple clock sources: " << std::endl;
+          BOOST_FOREACH(shared_ptr<dfgNode> n, clk_sources) {
+            std::cout << "  " << n->get_full_name() << std::endl;
+          }
+        }
+      }
+    }
+  }
 }

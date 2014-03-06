@@ -244,6 +244,10 @@ void netlist::Expression::replace_variable(const VIdentifier& var, const Number&
   eqn->replace_variable(var, num);
 }
 
+void netlist::Expression::replace_variable(const VIdentifier& var, const VIdentifier& nvar) {
+  eqn->replace_variable(var, nvar);
+}
+
 void netlist::Expression::replace_variable(const VIdentifier& var, shared_ptr<Expression> rexp) {
   eqn->replace_variable(var, rexp);
 }

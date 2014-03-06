@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -94,6 +94,34 @@ edge_descriptor SDFG::dfgGraph::to_id(shared_ptr<dfgEdge> pedge) const {
 edge_descriptor SDFG::dfgGraph::to_id(const edge_descriptor& eid) const {
   return eid;
 }
+
+///////////////////////////////
+// copy
+///////////////////////////////
+
+dfgGraph* SDFG::dfgGraph::deep_copy() const {
+
+  dfgGraph * G(new dfgGraph(name));
+
+  BOOST_FOREACH(nodes_type nrec, nodes) {
+    shared_ptr<dfgNode> node(nrec.second->copy());
+    node->set_hier_name(nrec.second->get_hier_name());
+    G->add_node(node);
+    if(node->type == dfgNode::SDFG_MODULE) {
+      node->child = shared_ptr<dfgGraph>(nrec.second->child->deep_copy());
+      node->child->father = node.get();
+    }
+  }
+
+  BOOST_FOREACH(edges_type erec, edges) {
+    G->add_edge(erec.second->name, erec.second->type, 
+                erec.second->get_source()->get_hier_name(),
+                erec.second->get_target()->get_hier_name());
+  }
+  
+  return G;
+}
+
 
 ///////////////////////////////
 // add nodes and edges
@@ -294,7 +322,7 @@ void SDFG::dfgGraph::remove_port(const dfgNode& port) {
 
       // scan it again to get input/output count
       switch(port.type) {
-      case dfgNode::SDFG_IPORT: 
+      case dfgNode::SDFG_IPORT:
         father->pg->remove_edge(sname, father->get_hier_name());
         break;
       case dfgNode::SDFG_OPORT: 
@@ -341,7 +369,7 @@ list<shared_ptr<dfgNode> > SDFG::dfgGraph::flatten() const{
   // connect all ports
   for_each(nodes.begin(), nodes.end(),
            [&](const pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
-               if(m.second->type == dfgNode::SDFG_IPORT) {
+             if((m.second->type & dfgNode::SDFG_IPORT) == dfgNode::SDFG_IPORT) {
                  shared_ptr<dfgNode> src = get_in_nodes_cb(m.second).front();
                  father->pg->add_edge(src->get_hier_name(), 
                                       get_in_edges_cb(m.second).front()->type,
@@ -435,7 +463,7 @@ shared_ptr<dfgNode> SDFG::dfgGraph::get_source_cb(edge_descriptor eid) const {
     if(!plist.empty()) {
       BOOST_FOREACH(const string& m, plist) {
         shared_ptr<dfgNode> n = inode->child->get_node(m);
-        if(n->type & dfgNode::SDFG_OPORT && n->type != dfgNode::SDFG_IPORT)
+        if(n->type & dfgNode::SDFG_OPORT && (n->type & dfgNode::SDFG_IPORT) != dfgNode::SDFG_IPORT)
           return n;
       }
       return shared_ptr<dfgNode>();
@@ -460,7 +488,7 @@ list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_target_cb(edge_descriptor eid) co
     if(!plist.empty()) {
       BOOST_FOREACH(const string& m, plist) {
         shared_ptr<dfgNode> n = onode->child->get_node(m);
-        if(n->type & dfgNode::SDFG_IPORT && n->type != dfgNode::SDFG_OPORT)
+        if(n->type & dfgNode::SDFG_IPORT && (n->type & dfgNode::SDFG_IPORT) != dfgNode::SDFG_OPORT)
           rv.push_back(n);
       }
     }
@@ -534,7 +562,7 @@ void SDFG::dfgGraph::remove_useless_nodes() {
     node_list.pop_front();
     node_set.erase(n);
     
-    if(n->type == dfgNode::SDFG_IPORT) { // input port
+    if((n->type & dfgNode::SDFG_IPORT) == dfgNode::SDFG_IPORT) { // input port
       if((size_out_edges(n, false) == 0) ||          // an input port with no load should be removed
          (father != NULL && 
           (!father->port2sig.count(n->name) ||            // port removed
@@ -766,7 +794,7 @@ unsigned int SDFG::dfgGraph::size_in_edges(vertex_descriptor nid, bool bself) co
 unsigned int SDFG::dfgGraph::size_in_edges_cb(vertex_descriptor nid, bool bself) const {
   if(nodes.count(nid)) {
     shared_ptr<dfgNode> pn = nodes.find(nid)->second;
-    if(pn->type == dfgNode::SDFG_IPORT) { // input port
+    if((pn->type & dfgNode::SDFG_IPORT) == dfgNode::SDFG_IPORT) { // input port
       if(father && father->port2sig.count(pn->get_hier_name()))
         return 1;
       else
@@ -838,14 +866,15 @@ list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_in_nodes_cb(vertex_descriptor nid
   list<shared_ptr<dfgNode> > rv;
   if(!nodes.count(nid)) return rv;
   shared_ptr<dfgNode> pn = nodes.find(nid)->second;
-  if(pn->type == dfgNode::SDFG_IPORT || pn->type == dfgNode::SDFG_PORT) { // input or I/O port
+  if((pn->type & dfgNode::SDFG_IPORT) == dfgNode::SDFG_IPORT 
+     || pn->type == dfgNode::SDFG_PORT) { // input or I/O port
     if(father && father->port2sig.count(pn->get_hier_name())) {
       if(father->port2sig.find(pn->get_hier_name())->second.size() > 0)
         rv.push_back(father->pg->get_node(father->port2sig.find(pn->get_hier_name())->second));
     }
   } 
   
-  if(pn->type != dfgNode::SDFG_IPORT) { // have internal inputs
+  if((pn->type & dfgNode::SDFG_IPORT) != dfgNode::SDFG_IPORT) { // have internal inputs
     GType::inv_adjacency_iterator nit, nend; //!! why inv_adjacency_iterator is in Graph instead of Trait?
     for(boost::tie(nit, nend) = boost::inv_adjacent_vertices(nid, bg_);
         nit != nend; ++nit) {
@@ -929,7 +958,7 @@ list<shared_ptr<dfgEdge> > SDFG::dfgGraph::get_in_edges_cb(vertex_descriptor nid
   list<shared_ptr<dfgEdge> > rv;
   if(nodes.count(nid)) {
     shared_ptr<dfgNode> pn = nodes.find(nid)->second;
-    if(pn->type == dfgNode::SDFG_IPORT || pn->type == dfgNode::SDFG_PORT) { // input or I/O port
+    if((pn->type & dfgNode::SDFG_IPORT) == dfgNode::SDFG_IPORT || pn->type == dfgNode::SDFG_PORT) { // input or I/O port
       if(pn && father && father->port2sig.count(pn->get_hier_name())) {
         string tar_name = father->port2sig.find(pn->get_hier_name())->second;
         if(tar_name.size() > 0) {
@@ -946,7 +975,7 @@ list<shared_ptr<dfgEdge> > SDFG::dfgGraph::get_in_edges_cb(vertex_descriptor nid
       }
     } 
 
-    if(pn->type != dfgNode::SDFG_IPORT) { // have internal outputs
+    if((pn->type & dfgNode::SDFG_IPORT) != dfgNode::SDFG_IPORT) { // have internal outputs
       GraphTraits::in_edge_iterator eit, eend;
       for(boost::tie(eit, eend) = boost::in_edges(nid, bg_);
           eit != eend; ++eit) {
@@ -1003,38 +1032,46 @@ int SDFG::dfgGraph::get_in_edges_type_cb(vertex_descriptor nid, bool bself) cons
 ///////////////////////////////
 // graphic property
 ///////////////////////////////
-unsigned int SDFG::dfgGraph::size_of_nodes() const {
-  return nodes.size();
+unsigned int SDFG::dfgGraph::size_of_nodes(bool hier) const {
+  unsigned int cnt = 0;
+  if(hier) {
+    BOOST_FOREACH(shared_ptr<dfgNode> m, get_list_of_nodes(dfgNode::SDFG_MODULE)) {
+      if(m->child) cnt += m->child->size_of_nodes(true);
+    }
+  }
+  return cnt + nodes.size();
 }
 
-unsigned int SDFG::dfgGraph::size_of_regs() const {
-  unsigned int rv = 0;
-  for_each(nodes.begin(), nodes.end(),
-           [&](const pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
-               if(m.second->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH))
-                 rv++;
-             });
-  return rv;
+unsigned int SDFG::dfgGraph::size_of_regs(bool hier) const {
+  unsigned int cnt = 0;
+  if(hier) {
+    BOOST_FOREACH(shared_ptr<dfgNode> m, get_list_of_nodes(dfgNode::SDFG_MODULE)) {
+      if(m->child) cnt += m->child->size_of_regs(true);
+    }
+  }
+  return cnt + get_list_of_nodes(dfgNode::SDFG_FF|dfgNode::SDFG_LATCH).size();
 }
 
-unsigned int SDFG::dfgGraph::size_of_combs() const {
-  unsigned int rv = 0;
-  for_each(nodes.begin(), nodes.end(),
-           [&](const pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
-               if(! m.second->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH|dfgNode::SDFG_MODULE))
-                 rv++;
-             });
-  return rv;
+unsigned int SDFG::dfgGraph::size_of_combs(bool hier) const {
+  unsigned int cnt = 0;
+  if(hier) {
+    BOOST_FOREACH(shared_ptr<dfgNode> m, get_list_of_nodes(dfgNode::SDFG_MODULE)) {
+      if(m->child) cnt += m->child->size_of_combs(true);
+    }
+  }
+  return cnt 
+    + nodes.size() 
+    - get_list_of_nodes(dfgNode::SDFG_MODULE|dfgNode::SDFG_FF|dfgNode::SDFG_LATCH).size();
 }
 
-unsigned int SDFG::dfgGraph::size_of_modules() const {
-  unsigned int rv = 0;
-  for_each(nodes.begin(), nodes.end(),
-           [&](const pair<const vertex_descriptor, shared_ptr<dfgNode> >& m) {
-               if(m.second->type & dfgNode::SDFG_MODULE)
-                 rv++;
-             });
-  return rv;
+unsigned int SDFG::dfgGraph::size_of_modules(bool hier) const {
+  unsigned int cnt = 0;
+  if(hier) {
+    BOOST_FOREACH(shared_ptr<dfgNode> m, get_list_of_nodes(dfgNode::SDFG_MODULE)) {
+      if(m->child) cnt += m->child->size_of_modules(true);
+    }
+  }
+  return cnt + get_list_of_nodes(dfgNode::SDFG_MODULE).size();
 }
 
 
@@ -1375,4 +1412,14 @@ shared_ptr<dfgGraph> SDFG::read(std::istream& istr) {
   G = gmap[G->name];
 
   return G;
+}
+
+shared_ptr<dfgNode> SDFG::dfgGraph::copy_a_node(shared_ptr<dfgGraph> G, shared_ptr<dfgNode> cn, bool use_full_name) const {
+  shared_ptr<dfgNode> nnode(cn->copy());
+  if(use_full_name)
+    nnode->set_hier_name(cn->get_full_name());
+  else
+    nnode->set_hier_name(cn->get_hier_name());
+  G->add_node(nnode);
+  return nnode;
 }

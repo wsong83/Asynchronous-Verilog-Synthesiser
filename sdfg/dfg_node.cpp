@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -121,6 +121,11 @@ dfgNode* SDFG::dfgNode::copy() const {
   rv->node_index = 0;
   rv->type = type;
   rv->dp_type = dp_type;
+  rv->is_annotated = is_annotated;
+  rv->toggle_min = toggle_min;
+  rv->toggle_max = toggle_max;
+  rv->toggle_rate_min = toggle_rate_min;
+  rv->toggle_rate_max = toggle_rate_max;
   return rv;
 }
 
@@ -132,7 +137,7 @@ void SDFG::dfgNode::graphic_init() {
     case SDFG_LATCH:   bbox = pair<double, double>(35.0, 20.0); break;
     case SDFG_MODULE:  bbox = pair<double, double>(60.0, 35.0); break;
     case SDFG_GATE:    bbox = pair<double, double>(35.0, 35.0); break;
-    case SDFG_IPORT:   bbox = pair<double, double>(20.0, 20.0); break;
+    case SDFG_IPORT:
     case SDFG_OPORT:   bbox = pair<double, double>(20.0, 20.0); break;
     case SDFG_PORT:    bbox = pair<double, double>(30.0, 30.0); break;
     default:           bbox = pair<double, double>(20.0, 20.0); break;
@@ -154,6 +159,21 @@ void SDFG::dfgNode::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<dfg
   default:           stype = "unknown";
   }    
   xnode.append_attribute("type") = stype.c_str();
+  
+  if(is_annotated) {
+    xnode.append_attribute("toggle_min") = toggle_min;
+    xnode.append_attribute("toggle_max") = toggle_max;
+    xnode.append_attribute("toggle_rate_min") = toggle_rate_min;
+    xnode.append_attribute("toggle_rate_max") = toggle_rate_max;
+    double diff;
+    diff = toggle_rate_min - xnode.attribute("toggle_rate_min").as_double();
+    if(diff < 0) diff = -diff;
+    assert(diff < 0.000001);
+    diff = toggle_rate_max - xnode.attribute("toggle_rate_max").as_double();
+    if(diff < 0) diff = -diff;
+    assert(diff < 0.000001);
+  }
+
   if(type == SDFG_MODULE) {     // module
     if(child)  GList.push_back(child); // push the sub-module to the module list
     pugi::xml_node xmodule = xnode.append_child("module");
@@ -173,7 +193,7 @@ void SDFG::dfgNode::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<dfg
       xpos.append_attribute("x") = position.first;
       xpos.append_attribute("y") = position.second;
     }
-  }
+  } 
 }
 
 void SDFG::dfgNode::write(void *pnode, ogdf::GraphAttributes *pga) {
@@ -214,6 +234,14 @@ bool SDFG::dfgNode::read(const pugi::xml_node& xnode) {
   case 0x0e1bf974: type = SDFG_PORT;   break;
   case 0xbddbfb6d: type = SDFG_DF;     break;
   default: assert(0 == 1); return false;
+  }
+
+  if(xnode.attribute("toggle_min")) {
+    toggle_min = xnode.attribute("toggle_min").as_double();
+    toggle_max = xnode.attribute("toggle_max").as_double();
+    toggle_rate_min = xnode.attribute("toggle_rate_min").as_double();
+    toggle_rate_max = xnode.attribute("toggle_rate_max").as_double();
+    is_annotated = true;
   }
 
   if(type == SDFG_MODULE) {     // port map
@@ -296,7 +324,7 @@ void SDFG::dfgNode::remove_port_sig(const string& sname, int dir) {
           port2sig[sig] = string();
           sig2port[sname].erase(sig);
         } else if((child_node->type & SDFG_PORT) 
-                  && (child_node->type != SDFG_IPORT)
+                  && ((child_node->type & SDFG_IPORT) != SDFG_IPORT)
                   && dir >= 0) {
           port2sig[sig] = string();
           sig2port[sname].erase(sig);
@@ -391,7 +419,7 @@ bool SDFG::dfgNode::check_integrity() const {
         if(p2s.second.size() > 0) {
           assert(pg->exist(p2s.second));
           assert(p->type & SDFG_PORT);
-          if(p->type != SDFG_IPORT) {
+          if((p->type & SDFG_IPORT) != SDFG_IPORT) {
             assert(pg->exist(id, p2s.second));
           }
           if(p->type != SDFG_OPORT) {

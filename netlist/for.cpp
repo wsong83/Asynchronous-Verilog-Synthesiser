@@ -174,3 +174,10 @@ void netlist::ForState::replace_variable(const VIdentifier& var, const Number& n
   if(incr) incr->replace_variable(var, num);
   body->replace_variable(var, num);
 }
+
+void netlist::ForState::replace_variable(const VIdentifier& var, const VIdentifier& nvar) {
+  if(init) init->replace_variable(var, nvar);
+  if(cond) cond->replace_variable(var, nvar);
+  if(incr) incr->replace_variable(var, nvar);
+  body->replace_variable(var, nvar);
+}

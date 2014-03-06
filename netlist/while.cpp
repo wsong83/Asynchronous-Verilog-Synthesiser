@@ -87,3 +87,8 @@ void netlist::WhileState::replace_variable(const VIdentifier& var, const Number&
   exp->replace_variable(var, num);
   body->replace_variable(var, num);
 }
+
+void netlist::WhileState::replace_variable(const VIdentifier& var, const VIdentifier& nvar) {
+  exp->replace_variable(var, nvar);
+  body->replace_variable(var, nvar);
+}

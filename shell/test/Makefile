@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+# Copyright (c) 2011-2014 Wei Song <songw@cs.man.ac.uk> 
 #    Advanced Processor Technologies Group, School of Computer Science
 #    University of Manchester, Manchester M13 9PL UK
 #
@@ -32,6 +32,7 @@ OTHER_OBJS += $(wildcard ../../shell/cmd/*.o)
 OTHER_OBJS += $(wildcard ../../preproc/*.o)
 OTHER_OBJS += $(wildcard ../../averilog/*.o)
 OTHER_OBJS += $(wildcard ../../cpptcl/*.o)
+OTHER_OBJS += $(wildcard ../../cppsaif/*.o)
 OTHER_OBJS += $(wildcard ../../sdfg/*.o)
 OTHER_OBJS += $(wildcard ../../pugixml/*.o)
 

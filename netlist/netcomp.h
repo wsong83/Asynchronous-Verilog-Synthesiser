@@ -96,7 +96,8 @@ namespace SDFG {
 
 #ifndef NETLIST_REPLACE_VARIABLE
 #define NETLIST_REPLACE_VARIABLE                   \
-  virtual void replace_variable(const VIdentifier&, const Number&);
+  virtual void replace_variable(const VIdentifier&, const Number&);  \
+  virtual void replace_variable(const VIdentifier&, const VIdentifier&);
 #endif
 
 namespace netlist{
@@ -127,6 +128,7 @@ namespace netlist{
     // replace a variable with a value in a block
     // use in unfolding for, while loops
     virtual void replace_variable(const VIdentifier&, const Number&);
+    virtual void replace_variable(const VIdentifier&, const VIdentifier&);
     // register variable identifiers to the variable database
     virtual void db_register(int);
     // expunge the variable identifier in the variable database

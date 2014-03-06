@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -75,6 +75,7 @@ namespace {
   }
 
   FUNC_WRAPPER     (bool,         CMDAnalyze            )
+  FUNC_WRAPPER     (bool,         CMDAnnotateSaif       )
   FUNC_WRAPPER     (std::string,  CMDCurrentDesign      )
   FUNC_WRAPPER     (std::string,  CMDEcho               )
   FUNC_WRAPPER     (bool,         CMDElaborate          )
@@ -83,6 +84,7 @@ namespace {
   FUNC_WRAPPER_VOID(              CMDExtractRRG         )
   FUNC_WRAPPER_VOID(              CMDExtractSDFG        )
   FUNC_WRAPPER_VOID(              CMDHelp               )
+  FUNC_WRAPPER     (bool,         CMDReadSaif           )
   FUNC_WRAPPER     (bool,         CMDReportDFGPath      )
   FUNC_WRAPPER     (bool,         CMDReportFSM          )
   FUNC_WRAPPER     (bool,         CMDReportNetlist      )
@@ -94,6 +96,7 @@ namespace {
   FUNC_WRAPPER     (bool,         CMDSuppressMessage    )
   FUNC_WRAPPER     (bool,         CMDUniquify           )
   FUNC_WRAPPER     (bool,         CMDWrite              )
+  FUNC_WRAPPER     (bool,         CMDWriteSDFG          )
 
 #undef FUNC_WRAPPER
 #undef FUNC_WRAPPER_VOID
@@ -164,6 +167,7 @@ bool shell::Env::initialise() {
     (shell::CMD::func::description, shell::CMD::func::help)   
 
   AVS_ENV_ADD_TCL_CMD(CMDAnalyze);
+  AVS_ENV_ADD_TCL_CMD(CMDAnnotateSaif);
   AVS_ENV_ADD_TCL_CMD(CMDCurrentDesign);
   AVS_ENV_ADD_TCL_CMD(CMDEcho);
   AVS_ENV_ADD_TCL_CMD(CMDElaborate);
@@ -171,6 +175,7 @@ bool shell::Env::initialise() {
   AVS_ENV_ADD_TCL_CMD(CMDExtractRRG);
   AVS_ENV_ADD_TCL_CMD(CMDExtractSDFG);
   AVS_ENV_ADD_TCL_CMD(CMDHelp);
+  AVS_ENV_ADD_TCL_CMD(CMDReadSaif);
   AVS_ENV_ADD_TCL_CMD(CMDReportDFGPath);
   AVS_ENV_ADD_TCL_CMD(CMDReportFSM);
   AVS_ENV_ADD_TCL_CMD(CMDReportNetlist);
@@ -182,6 +187,7 @@ bool shell::Env::initialise() {
   AVS_ENV_ADD_TCL_CMD(CMDSuppressMessage);
   AVS_ENV_ADD_TCL_CMD(CMDUniquify);
   AVS_ENV_ADD_TCL_CMD(CMDWrite);
+  AVS_ENV_ADD_TCL_CMD(CMDWriteSDFG);
 
 #undef AVS_ENV_ADD_TCL_CMD
 

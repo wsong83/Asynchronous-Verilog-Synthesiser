@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2014-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -20,8 +20,8 @@
  */
 
 /* 
- * shell command
- * 12/07/2012   Wei Song
+ * annotate a saif file for a design
+ * 26/02/2014   Wei Song
  *
  *
  */
@@ -32,12 +32,23 @@
 #include "cmd_define.h"
 #include "cmd_parse_base.h"
 #include "shell/env.h"
-#include "shell/cmd_utility.h"
+#include "shell/macro_name.h"
+#include "sdfg/sdfg.hpp"
+
+#define BOOST_FILESYSTEM_VERSION 3
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
+using namespace boost::filesystem;
+
 #include <boost/foreach.hpp>
 
 using std::endl;
-using namespace shell;
+using boost::shared_ptr;
+using std::list;
+using std::vector;
+using std::string;
 using namespace shell::CMD;
+
 
 namespace {
   namespace qi = boost::spirit::qi;
@@ -46,9 +57,11 @@ namespace {
 
   struct Argument {
     bool bHelp;                 // show help information
+    std::string sDesign;        // target design to be written out
     
     Argument() : 
-      bHelp(false) {}
+      bHelp(false),
+      sDesign("") {}
   };
 }
 
@@ -56,6 +69,7 @@ BOOST_FUSION_ADAPT_STRUCT
 (
  Argument,
  (bool, bHelp)
+ (std::string, sDesign)
  )
 
 namespace {
@@ -67,13 +81,20 @@ namespace {
     
     ArgParser() : ArgParser::base_type(start) {
       using qi::lit;
+      using ascii::char_;
+      using ascii::space;
       using phoenix::at_c;
-      using qi::_r1;
-      using qi::_val;
+      using namespace qi::labels;
 
-      args = lit('-') >> "help" >> blanks [at_c<0>(_r1) = true];
+      args = lit('-') >> 
+        ( (lit("help")              >> blanks) [at_c<0>(_r1) = true]         
+          );
       
-      start = args(_val) || qi::omit[+ascii::print];
+      start = 
+        *(args(_val))
+        >> -(identifier >> blanks) [at_c<1>(_val) = _1] 
+        >> *(args(_val))
+        ;
 
 #ifdef BOOST_SPIRIT_QI_DEBUG
       BOOST_SPIRIT_DEBUG_NODE(args);
@@ -87,20 +108,19 @@ namespace {
   };
 }
 
-const std::string shell::CMD::CMDShell::name = "shell"; 
-const std::string shell::CMD::CMDShell::description = 
-  "run a shell command.";
+const std::string shell::CMD::CMDAnnotateSaif::name = "annotate_saif"; 
+const std::string shell::CMD::CMDAnnotateSaif::description = 
+  "annotate a saif file for a design.";
 
-
-void shell::CMD::CMDShell::help(Env& gEnv) {
+void shell::CMD::CMDAnnotateSaif::help(Env& gEnv) {
   gEnv.stdOs << name << ": " << description << endl;
-  gEnv.stdOs << "    shell -help|command" << endl;
-  gEnv.stdOs << "    command             the shell command to run." << endl;
+  gEnv.stdOs << "    annotate_saif [options] [top]" << endl;
+  gEnv.stdOs << "    top                 the module to be annotated." << endl;               
   gEnv.stdOs << "Options:" << endl;
-  gEnv.stdOs << "   -help                usage information." << endl;
+  gEnv.stdOs << "   -help                show this help information." << endl;
 }
 
-std::string shell::CMD::CMDShell::exec(const std::string& str, Env * pEnv) {
+bool shell::CMD::CMDAnnotateSaif::exec ( const std::string& str, Env * pEnv){
 
   using std::string;
 
@@ -113,22 +133,38 @@ std::string shell::CMD::CMDShell::exec(const std::string& str, Env * pEnv) {
   bool r = qi::parse(it, end, parser, arg);
 
   if(!r || it != end) {
-    gEnv.stdOs << "Error: Wrong command syntax error! See usage by shell -help." << endl;
-    gEnv.stdOs << "    shell -help|command" << endl;
-    return string();
+    gEnv.stdOs << "Error: Wrong command syntax error! See usage by annotate_saif -help." << endl;
+    gEnv.stdOs << "    annotate_saif [options] top" << endl;
+    return false;
   }
 
   if(arg.bHelp) {        // print help information
     help(gEnv);
-    return string();
+    return true;
   }
 
-  // run the command
-  string command = str;
-  if(is_tcl_list(command)) command = command.substr(1, command.size()-2);
-  string rv = shell_exec(command);
-  if(rv.size() > 0 && rv[rv.size()-1] == '\n')
-    rv.erase(rv.size()-1);
-  return rv;
+  // get the top design
+  string designName;
+  shared_ptr<netlist::Module> tarDesign;
+  if(arg.sDesign.empty()) {
+    designName = gEnv.macroDB[MACRO_CURRENT_DESIGN].get_string();
+  } else {
+    designName = arg.sDesign;
+  }
+  tarDesign = gEnv.find_module(designName);
+  if(tarDesign.use_count() == 0) {
+    gEnv.stdOs << "Error: Failed to find the target design \"" << designName << "\"." << endl;
+    return false;
+  }
 
+  // get the SDFG
+  if(!tarDesign->DFG) {
+    gEnv.stdOs << "Error: No DFG has been extracted for the target design \"" << designName << "\"." << endl;
+    return false;
+  }
+  
+  tarDesign->DFG->annotate_toggle(pEnv, tarDesign.get());
+  tarDesign->DFG->annotate_rate();
+
+  return true;
 }

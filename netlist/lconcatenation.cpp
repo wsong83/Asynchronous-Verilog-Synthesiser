@@ -139,6 +139,12 @@ void netlist::LConcatenation::replace_variable(const VIdentifier& var, const Num
   }
 }
 
+void netlist::LConcatenation::replace_variable(const VIdentifier& var, const VIdentifier& nvar) {
+  BOOST_FOREACH(VIdentifier& d, data) {
+    d.replace_variable(var, nvar);
+  }
+}
+
 void netlist::LConcatenation::reduce() {
   BOOST_FOREACH(VIdentifier& v, data) 
     v.reduce();
