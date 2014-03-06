@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -86,10 +86,17 @@ namespace SDFG {
     std::list<boost::shared_ptr<dfgPath> > opath, ipath; // record all output/input paths to avoid recalculation
     std::map<boost::shared_ptr<dfgNode>, int> opath_f, ipath_f, self_f; // record all output/input paths get from fast algorithm to avoid recalculation
 
+    // toggle rate
+    bool   is_annotated;
+    double toggle_min;          // minimal toggle rate, in unit of MHz
+    double toggle_max;          // maximal toggle rate, in unit of MHz
+    double toggle_rate_min;     // minimal raltive toggle rate compared with its clock driver
+    double toggle_rate_max;     // maximal raltive toggle rate compared with its clock driver
+    
 
-    dfgNode(): pg(NULL), node_index(0), type(SDFG_DF), dp_type(SDFG_DP_NONE), position(0,0), bbox(0,0) {}
+    dfgNode(): pg(NULL), node_index(0), type(SDFG_DF), dp_type(SDFG_DP_NONE), is_annotated(false), position(0,0), bbox(0,0) {}
     dfgNode(const std::string& n, node_type_t t = SDFG_DF) : 
-      pg(NULL), name(n), node_index(0), type(t), dp_type(SDFG_DP_NONE), position(0,0), bbox(0,0) {}
+      pg(NULL), name(n), node_index(0), type(t), dp_type(SDFG_DP_NONE), is_annotated(false), position(0,0), bbox(0,0) {}
     dfgNode* copy() const;      // copy content, not deep copy, orphan node generation
     void write(pugi::xml_node&, std::list<boost::shared_ptr<dfgGraph> >&) const;
     void write(void *, ogdf::GraphAttributes *);

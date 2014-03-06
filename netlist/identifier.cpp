@@ -458,6 +458,10 @@ void netlist::VIdentifier::replace_variable(const VIdentifier& var, const Number
   m_select.replace_variable(var, num);
 }
 
+void netlist::VIdentifier::replace_variable(const VIdentifier& var, const VIdentifier& nvar) {
+  m_select.replace_variable(var, nvar);
+}
+
 shared_ptr<SDFG::RTree> netlist::VIdentifier::get_rtree() const {
   shared_ptr<SDFG::RTree> sel_tree = get_select().get_rtree();
   shared_ptr<SDFG::RTree> rv(new SDFG::RTree(name));

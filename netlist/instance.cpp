@@ -411,6 +411,15 @@ void netlist::Instance::replace_variable(const VIdentifier& var, const Number& n
   }
 }
 
+void netlist::Instance::replace_variable(const VIdentifier& var, const VIdentifier& nvar) {
+  BOOST_FOREACH(shared_ptr<PortConn> pc, port_list) {
+    pc->replace_variable(var, nvar);
+  }
+  BOOST_FOREACH(shared_ptr<ParaConn> pc, para_list) {
+    pc->replace_variable(var, nvar);
+  }
+}
+
 void netlist::Instance::set_mname(const MIdentifier& mod_name) {
   mname = mod_name;
 }

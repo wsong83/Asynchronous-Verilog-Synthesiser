@@ -63,7 +63,7 @@ NetComp* netlist::NetComp::deep_copy() const { /* deep copy a netlist component 
 }
 
 void netlist::NetComp::set_father(Block* pf) {
-  if((ctype == tNumber) || (ctype == tBlock)) {
+  if((ctype == tNumber) || (ctype == tBlock) || (ctype == tGenBlock)) {
     // here a naked pointer is used because tranfer this to shared_ptr is too complicated to be employed
     father = pf;
   } else {
@@ -83,6 +83,11 @@ std::string netlist::NetComp::get_hier_name() {
 void netlist::NetComp::replace_variable(const VIdentifier&, const Number&) {
   std::cerr << "ERROR!!, the replace_variable() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << endl;
   assert(0 == "the replace_variable() of NetComp is used");
+}
+
+void netlist::NetComp::replace_variable(const VIdentifier&, const VIdentifier&) {
+  std::cerr << "ERROR!!, the replace_variable() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << endl;
+  assert(0 == "the replace_variable() of NetComp is used");  
 }
 
 void netlist::NetComp::db_register(int) {

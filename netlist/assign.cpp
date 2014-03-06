@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -129,6 +129,11 @@ void netlist::Assign::replace_variable(const VIdentifier& var, const Number& num
   rexp->replace_variable(var, num);
 }
 
+void netlist::Assign::replace_variable(const VIdentifier& var, const VIdentifier& nvar) {
+  lval->replace_variable(var, nvar);
+  rexp->replace_variable(var, nvar);
+}
+
 shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifier& target, std::set<string> s_set) {
   shared_ptr<SDFG::RTree> rt = get_rtree();
   shared_ptr<Expression> rv;
@@ -162,7 +167,7 @@ shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifie
             found_source = true;
             break;
           }
-          case SDFG::dfgNode::SDFG_IPORT: 
+          case SDFG::dfgNode::SDFG_IPORT:
           case SDFG::dfgNode::SDFG_OPORT:   {
             if((pnode->pg->get_in_nodes_cb(pnode)).size()) {
               pnode = (pnode->pg->get_in_nodes_cb(pnode)).front(); // get the source from the higher hierarchy

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2011-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -49,6 +49,7 @@ namespace shell {
   class Env;
   namespace CMD {
     NEW_TCL_CMD(bool, CMDAnalyze);
+    NEW_TCL_CMD(bool, CMDAnnotateSaif);
     NEW_TCL_CMD(std::string, CMDCurrentDesign);
     NEW_TCL_CMD(std::string, CMDEcho);
     NEW_TCL_CMD(bool, CMDElaborate);
@@ -56,6 +57,7 @@ namespace shell {
     NEW_TCL_CMD(void, CMDExtractDatapath);
     NEW_TCL_CMD(void, CMDExtractRRG);
     NEW_TCL_CMD(void, CMDExtractSDFG);
+    NEW_TCL_CMD(bool, CMDReadSaif);
     NEW_TCL_CMD(bool, CMDReportDFGPath);
     NEW_TCL_CMD(bool, CMDReportFSM);
     NEW_TCL_CMD(bool, CMDReportNetlist);
@@ -67,6 +69,7 @@ namespace shell {
     NEW_TCL_CMD(bool, CMDSuppressMessage);
     NEW_TCL_CMD(bool, CMDUniquify);
     NEW_TCL_CMD(bool, CMDWrite);
+    NEW_TCL_CMD(bool, CMDWriteSDFG);
 
 
     // help is different

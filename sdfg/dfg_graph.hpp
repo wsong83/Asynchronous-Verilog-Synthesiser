@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -34,6 +34,11 @@
 #include <map>
 #include <list>
 #include "dfg_common.hpp"
+
+// forward declaration
+namespace shell {
+  class Env;
+}
 
 // the Synchronous Data-Flow Graph (SDFG) library
 namespace SDFG {
@@ -86,6 +91,9 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
 
     dfgGraph() : father(NULL), pModule(NULL) {}
     dfgGraph(const std::string& n) : father(NULL), name(n), pModule(NULL) {}
+
+    // copy
+    dfgGraph* deep_copy() const;
     
     // add nodes and edges
     void add_node(boost::shared_ptr<dfgNode>);
@@ -202,10 +210,10 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     int get_in_edges_type_cb(vertex_descriptor, bool bself = true) const;
 
     // graphic property
-    unsigned int size_of_nodes() const;     // number of nodes in this graph
-    unsigned int size_of_regs() const;      // number of FFs and Latchs
-    unsigned int size_of_combs() const;     // number of ports, combi, and deafult nodes
-    unsigned int size_of_modules() const;   // number of sub-modules 
+    unsigned int size_of_nodes(bool hier = false) const;     // number of nodes in this graph
+    unsigned int size_of_regs(bool hier = false) const;      // number of FFs and Latchs
+    unsigned int size_of_combs(bool hier = false) const;     // number of ports, combi, and deafult nodes
+    unsigned int size_of_modules(bool hier = false) const;   // number of sub-modules 
 
     // graphic
     bool layout();
@@ -220,7 +228,7 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
 
     // analyse functions
     void edge_type_propagate();                       // propagating the edge types
-    boost::shared_ptr<dfgGraph> extract_datapath_new(bool, bool) const; // extract datapath form outputs
+    boost::shared_ptr<dfgGraph> extract_datapath_new(bool, bool, bool) const; // extract datapath form outputs
     boost::shared_ptr<dfgGraph> extract_datapath(bool, bool) const; // a new extraction method
     boost::shared_ptr<dfgGraph> get_hier_RRG(bool hier = true) const; // get a hierarchical RRG from any SDFG
     boost::shared_ptr<dfgGraph> get_RRG() const; // extract the register relation graph from a signal level DFG
@@ -235,6 +243,8 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
 
     std::map<boost::shared_ptr<dfgNode>, int > get_fsms_new() const; // extract fsms from RRG and DFG
     void fsm_simplify();  // simplify the FSM connection graph
+    void annotate_toggle(shell::Env *, netlist::Module*); // annotate the switching activities in Module into the SDFG
+    void annotate_rate();                                 // calculate the relative rate of each node
 
     // other
     std::string get_full_name() const;

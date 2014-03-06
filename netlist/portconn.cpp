@@ -126,6 +126,21 @@ void netlist::PortConn::replace_variable(const VIdentifier& v, const Number& n) 
   }
 }
 
+void netlist::PortConn::replace_variable(const VIdentifier& v, const VIdentifier& nvar) {
+  switch(type) {
+  case CEXP:
+    exp->replace_variable(v, nvar); break;
+  case CVAR:
+    if(var == v) {
+      var.name = nvar.name;
+    } else {
+      var.replace_variable(v, nvar);
+    }
+    break;
+  default: ;
+  }
+}
+
 void netlist::PortConn::db_register(int) {
   switch(type) {
   case CEXP: 
@@ -306,6 +321,21 @@ void netlist::ParaConn::replace_variable(const VIdentifier& v, const Number& n) 
       num = n;
     } else {
       var.replace_variable(v, n);
+    }
+    break;
+  default: ;
+  }
+}
+
+void netlist::ParaConn::replace_variable(const VIdentifier& v, const VIdentifier& nvar) {
+  switch(type) {
+  case CEXP:
+    exp->replace_variable(v, nvar); break;
+  case CVAR:
+    if(var == v) {
+      var.name = nvar.name;
+    } else {
+      var.replace_variable(v, nvar);
     }
     break;
   default: ;

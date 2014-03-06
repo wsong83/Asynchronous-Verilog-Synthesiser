@@ -800,6 +800,19 @@ void netlist::Range::replace_variable(const VIdentifier& var, const Number& num)
   
 }
 
+void netlist::Range::replace_variable(const VIdentifier& var, const VIdentifier& nvar) {
+  if(rtype == TR_Var)
+    v->replace_variable(var, nvar);
+  
+  if(rtype == TR_Range) {
+    r.first->replace_variable(var, nvar);
+    r.second->replace_variable(var, nvar);
+  }
+
+  RangeArrayCommon::replace_variable(var, nvar);
+  
+}
+
 shared_ptr<SDFG::RTree> netlist::Range::get_rtree() const {
   shared_ptr<SDFG::RTree> rv(new SDFG::RTree(false));
   if(rtype == TR_Var) rv->add_tree(v->get_rtree());

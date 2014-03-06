@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -76,12 +76,16 @@ namespace netlist {
     std::string get_short_string() const;
     bool check_post_elaborate(); /* check fan-in/out */
     bool is_useless() const { return fan[0].size() == 0 && fan[1].size() == 1; }
+    void annotate(mpz_class, mpz_class);
+    bool is_annotated() const { return annotated; }
 
     VIdentifier name;
     std::map<unsigned int, VIdentifier *> fan[2]; /* fan[0] for fanin, fan[1] for fanout */
     unsigned int get_id();
     boost::shared_ptr<Expression> exp;
     boost::shared_ptr<SDFG::dfgNode> pDFGNode; // the corresponding node in the DFG
+
+    mpz_class toggle_duration, toggle_min, toggle_max;
 
   private:
 
@@ -91,6 +95,8 @@ namespace netlist {
     unsigned int uid;
     
     bool signed_flag;
+
+    bool annotated;
   };
 
   NETLIST_STREAMOUT(Variable);

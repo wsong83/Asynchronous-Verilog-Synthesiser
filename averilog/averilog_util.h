@@ -51,6 +51,7 @@ typedef shell::location YYLTYPE;
 
 // disable the bison location definition
 #define BISON_LOCATION_HH
+#define YY_YY_LOCATION_HH_INCLUDED
 #define YY_LOCATION_HH
 #include "averilog.hh"
 

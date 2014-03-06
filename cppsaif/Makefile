@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+# Copyright (c) 2011-2014 Wei Song <songw@cs.man.ac.uk> 
 #    Advanced Processor Technologies Group, School of Computer Science
 #    University of Manchester, Manchester M13 9PL UK
 #
@@ -19,28 +19,33 @@
 #
 # Makefile
 # Due to be replace by autoconf tool suite
-# 19/03/2013   Wei Song
+# 18/02/2012   Wei Song
 #
 #
 
 # variables
-INCDIRS = -I./ -I../
+INCDIRS = -I./ 
 
 # targets
-TARGETS = state_transfer.o state_space.o
-#state_transfer_graph.o 
-
+TARGETS = saif_db.o saif_util.o saif_parser.o
 HEADERS = $(wildcard ./*.hpp)
-# HEADERS += $(wildcard ../sdfg/*.h)
-HEADERS += $(wildcard ../shell/*.h)
 
 # actions
-all: $(TARGETS)
+all: saif.o $(TARGETS)
 
-$(TARGETS): %.o:%.cpp %.hpp $(HEADERS)
+$(TARGETS): %.o:%.cpp $(HEADERS)
+	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
+
+saif.o: saif.cc saif.hh $(HEADERS)
 	$(CXX) $(INCDIRS) $(CXXFLAGS) -c $< -o $@
 
 .PHONY: clean
 
 clean:
-	-rm *.o
+	-rm *.o saif.hh saif.cc stack.hh location.hh position.hh
+
+bison: saif.cc
+
+saif.cc: saif.y
+	$(BISON_EXE) $< 
+
