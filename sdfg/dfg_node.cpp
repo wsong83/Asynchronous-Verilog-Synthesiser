@@ -165,6 +165,13 @@ void SDFG::dfgNode::write(pugi::xml_node& xnode, std::list<boost::shared_ptr<dfg
     xnode.append_attribute("toggle_max") = toggle_max;
     xnode.append_attribute("toggle_rate_min") = toggle_rate_min;
     xnode.append_attribute("toggle_rate_max") = toggle_rate_max;
+    double diff;
+    diff = toggle_rate_min - xnode.attribute("toggle_rate_min").as_double();
+    if(diff < 0) diff = -diff;
+    assert(diff < 0.000001);
+    diff = toggle_rate_max - xnode.attribute("toggle_rate_max").as_double();
+    if(diff < 0) diff = -diff;
+    assert(diff < 0.000001);
   }
 
   if(type == SDFG_MODULE) {     // module

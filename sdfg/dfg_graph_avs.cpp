@@ -656,7 +656,7 @@ void SDFG::dfgGraph::annotate_toggle(shell::Env * gEnv, netlist::Module* pModule
       }
     } else {
       shared_ptr<netlist::Variable> var = pModule->find_var(n.second->name);
-      if(var) {
+      if(var && var->is_annotated()) {
         n.second->is_annotated = true;
         n.second->toggle_min = var->toggle_min.get_d() / var->toggle_duration.get_d();
         n.second->toggle_max = var->toggle_max.get_d() / var->toggle_duration.get_d();
@@ -691,17 +691,57 @@ void SDFG::dfgGraph::annotate_rate() {
   // annotate the toggle of all nodes
   BOOST_FOREACH(nodes_type n, nodes) {
     if(n.second->type == dfgNode::SDFG_MODULE) {
+      assert(n.second->child);
       if(n.second->child)
         n.second->child->annotate_rate();
     } else if(n.second->is_annotated){
       n.second->toggle_rate_min = -1.0;
       n.second->toggle_rate_max = -1.0;
-      list<shared_ptr<dfgPath> > paths = n.second->get_in_paths_fast_cb();
-      BOOST_FOREACH(shared_ptr<dfgPath> p, paths) {
-        if(p->type & dfgEdge::SDFG_CLK) {
-          n.second->toggle_rate_min = n.second->toggle_min / p->src->toggle_max;
-          n.second->toggle_rate_max = n.second->toggle_max / p->src->toggle_min;
-          break;
+      if(n.second->type == dfgNode::SDFG_FF) { // registers, which have direct connect of clocks
+        list<shared_ptr<dfgEdge> > iedges = get_in_edges_cb(n.second);
+        BOOST_FOREACH(shared_ptr<dfgEdge> e, iedges) {
+          // assuming a FF has only one clock source
+          if(e->type & dfgEdge::SDFG_CLK) {
+            shared_ptr<dfgNode> clk_source = get_source(e);
+            assert(clk_source->is_annotated);
+            n.second->toggle_rate_min = n.second->toggle_min / clk_source->toggle_max * 2.0;
+            if(n.second->toggle_max > clk_source->toggle_min * 0.5)
+              n.second->toggle_max = clk_source->toggle_min * 0.5;
+            n.second->toggle_rate_max = n.second->toggle_max / clk_source->toggle_min * 2.0;
+            break;
+          }
+        }
+      } else {                  // other nodes which can be treated as combinational nodes
+        list<shared_ptr<dfgPath> > paths = n.second->get_in_paths_fast_cb();
+        std::set<shared_ptr<dfgNode> > driving_reg;
+        std::set<shared_ptr<dfgNode> > clk_sources;
+        BOOST_FOREACH(shared_ptr<dfgPath> p, paths) {
+          if(p->src->type & dfgNode::SDFG_FF) {
+            driving_reg.insert(p->src);
+          }
+        }
+        BOOST_FOREACH(shared_ptr<dfgNode> n, driving_reg) {
+          list<shared_ptr<dfgPath> > ifpaths = n->get_in_paths_fast_cb();
+          BOOST_FOREACH(shared_ptr<dfgPath> p, ifpaths) {
+            if(p->type & dfgEdge::SDFG_CLK) {
+              clk_sources.insert(p->src);
+            }
+          }
+        }
+        if(clk_sources.size() == 0) {
+          continue;
+        } else if(clk_sources.size() == 1) {
+          shared_ptr<dfgNode> clk_source = *(clk_sources.begin());
+          assert(clk_source->is_annotated);
+          n.second->toggle_rate_min = n.second->toggle_min / clk_source->toggle_max * 2.0;
+          if(n.second->toggle_max > clk_source->toggle_min * 0.5)
+            n.second->toggle_max = clk_source->toggle_min * 0.5;
+          n.second->toggle_rate_max = n.second->toggle_max / clk_source->toggle_min * 2.0;
+        } else {
+          std::cout << "Node " << n.second->get_full_name() << " has multiple clock sources: " << std::endl;
+          BOOST_FOREACH(shared_ptr<dfgNode> n, clk_sources) {
+            std::cout << "  " << n->get_full_name() << std::endl;
+          }
         }
       }
     }
