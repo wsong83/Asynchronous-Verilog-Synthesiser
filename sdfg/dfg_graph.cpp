@@ -701,12 +701,14 @@ void SDFG::dfgGraph::remove_unlisted_nodes(const std::set<shared_ptr<dfgNode> >&
   }
 
   BOOST_FOREACH(shared_ptr<dfgNode> node, nlook_list) {
-    if((node->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH)) ||
-       ((father == NULL) && (node->type & dfgNode::SDFG_PORT)) ) {
-      if(!nlist.count(node))
-        remove_node(node);
-    } else if(hier && (node->type & dfgNode::SDFG_MODULE) && node->child)
-      node->child->remove_unlisted_nodes(nlist, hier);
+    if(node->type & dfgNode::SDFG_MODULE) {
+      if(hier && node->child) {
+        node->child->remove_unlisted_nodes(nlist, hier);
+        if(node->child->nodes.size() == 0)
+          remove_node(node);
+      }
+    } else if(!nlist.count(node))
+      remove_node(node);
   }
 }
 

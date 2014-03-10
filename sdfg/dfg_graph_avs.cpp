@@ -188,6 +188,7 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath_new(bool with_fsm, bool wi
   shared_ptr<dfgGraph> hier_rrg(deep_copy());
 
   hier_rrg->remove_control_nodes();
+  hier_rrg->remove_disconnected_nodes();
   
   if(to_rrg)
     return hier_rrg->get_RRG();
@@ -217,167 +218,29 @@ void SDFG::dfgGraph::remove_control_nodes(bool hier) {
 
 }
 
+void SDFG::dfgGraph::remove_disconnected_nodes() {
+  std::set<shared_ptr<dfgNode> > conn_nodes; // connected nodes
+  std::list<shared_ptr<dfgNode> > proc_nodes; // the nodes to be processed
 
-shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath(bool with_fsm, bool with_ctl) const {
+  proc_nodes = get_list_of_nodes(dfgNode::SDFG_OPORT);
 
-  // first get a hierarchical RRG from the SDFG
-  shared_ptr<dfgGraph> hier_rrg = get_hier_RRG(false);
-  hier_rrg->edge_type_propagate();
-
-  //shared_ptr<dfgGraph> hier_rrg = get_RRG();
-
-  list<shared_ptr<dfgNode> > nlist;          // nodes to be processed
-  BOOST_FOREACH(nodes_type nn, hier_rrg->nodes) {
-    nlist.push_back(nn.second);
-  }
-  
-  // get all sub modules ready
-  BOOST_FOREACH(shared_ptr<dfgNode> n, nlist) {
-    if(n->type & dfgNode::SDFG_MODULE) {
-      n->set_new_child(n->child->extract_datapath(with_fsm, with_ctl));
-    }
-  }
-
-  // remove default nodes
-  BOOST_FOREACH(shared_ptr<dfgNode> n, nlist) {
-    if(n->type == dfgNode::SDFG_DF) {
-      // remove all none data|control edges
-      BOOST_FOREACH(shared_ptr<dfgEdge> e, n->get_in_edges(false)) {
-        if(!(e->type & (dfgEdge::SDFG_DAT_MASK | dfgEdge::SDFG_CTL_MASK)))
-          hier_rrg->remove_edge(e);
-      }
-      
-      BOOST_FOREACH(shared_ptr<dfgEdge> e, n->get_out_edges(false)) {
-        if(!(e->type & (dfgEdge::SDFG_DAT_MASK | dfgEdge::SDFG_CTL_MASK)))
-          hier_rrg->remove_edge(e);
-      }
-
-      // remove the link to unused submodule ports
-      BOOST_FOREACH(shared_ptr<dfgEdge> e, n->get_in_edges(false)) {
-        shared_ptr<dfgNode> src = e->get_source();
-        if(src->type == dfgNode::SDFG_MODULE && !src->sig2port.count(n->get_hier_name()))
-          hier_rrg->remove_edge(e);
-      }
-
-      BOOST_FOREACH(shared_ptr<dfgEdge> e, n->get_out_edges(false)) {
-        shared_ptr<dfgNode> tar = e->get_target();
-        if(tar->type == dfgNode::SDFG_MODULE && !tar->sig2port.count(n->get_hier_name()))
-          hier_rrg->remove_edge(e);
-      }
-
-      // get rid of the edges connected to non-existed submodule ports
-      if((n->size_in_edges(false) == 0) || (n->size_out_edges(false) == 0))
-        hier_rrg->remove_node(n);
-    }
-  }
-  
-  hier_rrg->remove_useless_nodes();
-  hier_rrg->edge_type_propagate();
-  //hier_rrg->check_integrity();
-
-  BOOST_FOREACH(shared_ptr<dfgNode> n, nlist) {
-    if((n->type & (dfgNode::SDFG_FF | dfgNode::SDFG_LATCH)) && hier_rrg->exist(n)) {
-      int dp_type = 0;
-      int itype = n->get_in_edges_type(false);
-      int otype = n->get_out_edges_type(false);      
-
-      if(n->is_fsm()) dp_type |= dfgNode::SDFG_DP_FSM;
-      
-      if((otype & dfgEdge::SDFG_DAT_MASK) ) // || 
-                                            // ((itype & dfgEdge::SDFG_DAT_MASK) && 
-                                            // (otype & (dfgEdge::SDFG_EQU))
-                                            // | dfgEdge::SDFG_CMP | dfgEdge::SDFG_ADR))
-                                            // )
-                                            // )
-        dp_type |= dfgNode::SDFG_DP_DATA;
-      
-      if(otype & dfgEdge::SDFG_CTL_MASK)
-        dp_type |= dfgNode::SDFG_DP_CTL;
-
-      n->dp_type = (dfgNode::datapath_type_t)(dp_type);
-    } else if(n->type == dfgNode::SDFG_DF && hier_rrg->exist(n)) {
-      // remove all none data edges
-      BOOST_FOREACH(shared_ptr<dfgEdge> e, n->get_in_edges(false)) {
-        if(!(e->type & (dfgEdge::SDFG_DAT_MASK))) // | dfgEdge::SDFG_EQU )))//| dfgEdge::SDFG_CMP | dfgEdge::SDFG_ADR)))
-          hier_rrg->remove_edge(e);
-      }
-      
-      BOOST_FOREACH(shared_ptr<dfgEdge> e, n->get_out_edges(false)) {
-        if(!(e->type & (dfgEdge::SDFG_DAT_MASK))) // | dfgEdge::SDFG_EQU )))//| dfgEdge::SDFG_CMP | dfgEdge::SDFG_ADR)))
-          hier_rrg->remove_edge(e);
-      }
-    }
-  }
-
-  // begin the trim
-  BOOST_FOREACH(shared_ptr<dfgNode> n, nlist) {
-    if((n->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH)) && hier_rrg->exist(n)) {
-      if(!(n->dp_type & dfgNode::SDFG_DP_DATA) && (n->dp_type & dfgNode::SDFG_DP_CTL)) {
-        if(with_fsm && (n->dp_type & dfgNode::SDFG_DP_FSM)) continue;
-        bool keep = false;
-        if(with_ctl) {
-          BOOST_FOREACH(shared_ptr<dfgNode> nn, n->get_out_nodes(false)) {
-            if(nn->dp_type & dfgNode::SDFG_DP_DATA) { keep = true; break; }
-          }
-        }
-        if(!keep) hier_rrg->remove_node(n);
-      }
-    }else if(n->type == dfgNode::SDFG_DF && hier_rrg->exist(n)) {
-      if((n->size_in_edges(false) == 0) || (n->size_out_edges(false) == 0))
-        hier_rrg->remove_node(n);
-    }
-  }
-  
-  hier_rrg->remove_useless_nodes();
-  hier_rrg->edge_type_propagate();
-  //hier_rrg->check_integrity();
-  
-  // count from input
-  std::set<shared_ptr<dfgNode> > nkeep;      // nodes to keep
-  list<shared_ptr<dfgNode> > nlook = hier_rrg->get_list_of_nodes(dfgNode::SDFG_OPORT);
-  std::set<shared_ptr<dfgNode> > nlook_set;
-  BOOST_FOREACH(shared_ptr<dfgNode> n, nlook)
-    nlook_set.insert(n);
-  while(nlook.size()) {
-    shared_ptr<dfgNode> n = nlook.front();
-    nlook.pop_front();
-    
-    if(n->size_in_edges() > 0) {
-      nkeep.insert(n);
-      BOOST_FOREACH(shared_ptr<dfgNode> nn, n->get_in_nodes(false)) {
-        if(!nkeep.count(nn)) {
-          nkeep.insert(nn);
-          if(((!(nn->type & (dfgNode::SDFG_FF|dfgNode::SDFG_LATCH))) 
-              || (nn->dp_type & dfgNode::SDFG_DP_DATA)) 
-             && !nlook_set.count(nn)) {
-            nlook.push_back(nn);
-            nlook_set.insert(nn);
-          }
-        }
+  while(!proc_nodes.empty()) {
+    shared_ptr<dfgNode> n = proc_nodes.front();
+    proc_nodes.pop_front();
+    conn_nodes.insert(n);
+    list<shared_ptr<dfgNode> > ilist = n->get_in_nodes_cb();
+    BOOST_FOREACH(shared_ptr<dfgNode> m, ilist) {
+      if(!conn_nodes.count(m)) {
+        proc_nodes.push_back(m);
       }
     }
   }
   
+  remove_unlisted_nodes(conn_nodes, true);
+  check_integrity();
 
-  // to finally trim the graph
-  std::set<shared_ptr<dfgNode> > node_all;
-  BOOST_FOREACH(nodes_type nn, hier_rrg->nodes) {
-    node_all.insert(nn.second);
-  }
-
-  BOOST_FOREACH(shared_ptr<dfgNode> n, node_all) {
-    if(!nkeep.count(n))
-      hier_rrg->remove_node(n);
-  }
-
-  //hier_rrg->check_integrity();
-
-  hier_rrg->remove_useless_nodes();
-  hier_rrg->edge_type_propagate();
-  hier_rrg->check_integrity();
-  
-  return hier_rrg;
 }
+
 
 shared_ptr<dfgGraph> SDFG::dfgGraph::get_hier_RRG(bool hier) const {
 

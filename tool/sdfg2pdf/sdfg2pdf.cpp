@@ -157,7 +157,7 @@ void draw_page(SDFG::dfgGraph& g, QPainter& painter, QPrinter& printer, std::set
   }
   */
   // change size
-  QSizeF psize(bound.width()+200, bound.height()+200);
+  QSizeF psize(bound.width()+400, bound.height()+200);
   printer.setPaperSize(psize, QPrinter::DevicePixel);
   printer.setPageMargins(100, 100, 100, 100, QPrinter::DevicePixel);
   printer.newPage();
@@ -177,37 +177,42 @@ void draw_page(SDFG::dfgGraph& g, QPainter& painter, QPrinter& printer, std::set
              y -= h/2;
 
              QRectF bbox = QRectF(x, y, w, h);
-             QPoint name_point(x+w+5, y-5);
-             QPoint toggle_point(x+w+5, y+h+5);
+             QPoint name_point(x+w+5, y-6);
+             QPoint rate_point(x+w+5, y+9);
+             QPoint toggle_point(x+w+5, y+24);
              string toggle_txt;
+             string rate_txt;
              toggle_txt  = "("  + SDFG::format_double(node.toggle_min, 4);
-             toggle_txt += ", " + SDFG::format_double(node.toggle_max, 4);
-             toggle_txt += "; " + SDFG::format_double(node.toggle_rate_min, 2);
-             toggle_txt += ", " + SDFG::format_double(node.toggle_rate_max, 2) + ")";
+             toggle_txt += ", " + SDFG::format_double(node.toggle_max, 4) + ")";
+             rate_txt += "[" + SDFG::format_double(node.toggle_rate_min, 2);
+             rate_txt += ", " + SDFG::format_double(node.toggle_rate_max, 2) + "]";
+             
+             if(node.is_annotated) {
+               if(node.toggle_rate_min != -1.0) {
+                 painter.drawText(rate_point, rate_txt.c_str());
+                 painter.drawText(toggle_point, toggle_txt.c_str());
+               } else {
+                 painter.drawText(rate_point, toggle_txt.c_str());
+               }
+             }
 
              switch(node.type) {
              case SDFG::dfgNode::SDFG_COMB: {
                painter.drawEllipse(bbox);
                painter.drawText(bbox, Qt::AlignCenter, "combi");
                painter.drawText(name_point, node.name.c_str());
-               if(node.is_annotated)
-                 painter.drawText(toggle_point, toggle_txt.c_str());
                break;
              }
              case SDFG::dfgNode::SDFG_FF: {
                painter.drawRect(bbox);
                painter.drawText(bbox, Qt::AlignCenter, "FF");
                painter.drawText(name_point, node.name.c_str());
-               if(node.is_annotated)
-                 painter.drawText(toggle_point, toggle_txt.c_str());
                break;
              }
              case SDFG::dfgNode::SDFG_LATCH: {
                painter.drawRect(bbox);
                painter.drawText(bbox, Qt::AlignCenter, "LAT");
                painter.drawText(name_point, node.name.c_str());
-               if(node.is_annotated)
-                 painter.drawText(toggle_point, toggle_txt.c_str());
                break;
              }
              case SDFG::dfgNode::SDFG_MODULE: {
@@ -226,8 +231,6 @@ void draw_page(SDFG::dfgGraph& g, QPainter& painter, QPrinter& printer, std::set
                //painter.setFont(QFont(PDF_FONT, PDF_FONT_SIZE-4));
                painter.drawText(name_point, node.name.c_str());
                //painter.setFont(font);
-               if(node.is_annotated)
-                 painter.drawText(toggle_point, toggle_txt.c_str());
                break;
              }
              case SDFG::dfgNode::SDFG_OPORT: {
@@ -236,8 +239,6 @@ void draw_page(SDFG::dfgGraph& g, QPainter& painter, QPrinter& printer, std::set
                //painter.setFont(QFont(PDF_FONT, PDF_FONT_SIZE-4));
                painter.drawText(name_point, node.name.c_str());
                //painter.setFont(font);
-               if(node.is_annotated)
-                 painter.drawText(toggle_point, toggle_txt.c_str());
                break;
              }
              case SDFG::dfgNode::SDFG_PORT: {
@@ -246,8 +247,6 @@ void draw_page(SDFG::dfgGraph& g, QPainter& painter, QPrinter& printer, std::set
                //painter.setFont(QFont(PDF_FONT, PDF_FONT_SIZE-4));
                painter.drawText(name_point, node.name.c_str());
                //painter.setFont(font);
-               if(node.is_annotated)
-                 painter.drawText(toggle_point, toggle_txt.c_str());
                break;
              }
              default: {
@@ -255,8 +254,6 @@ void draw_page(SDFG::dfgGraph& g, QPainter& painter, QPrinter& printer, std::set
                //painter.setFont(QFont(PDF_FONT, PDF_FONT_SIZE-4));
                painter.drawText(name_point, node.name.c_str());
                //painter.setFont(font);
-               if(node.is_annotated)
-                 painter.drawText(toggle_point, toggle_txt.c_str());
                break;
              }
              }
