@@ -272,6 +272,7 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
                                  std::set<boost::shared_ptr<dfgNode> >&
                                  );
     void remove_control_nodes(bool hier = true);
+    void remove_disconnected_nodes();
   };
 
 #undef DFGG_FH_F1  

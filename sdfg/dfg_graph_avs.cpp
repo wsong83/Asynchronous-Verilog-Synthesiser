@@ -188,6 +188,7 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath_new(bool with_fsm, bool wi
   shared_ptr<dfgGraph> hier_rrg(deep_copy());
 
   hier_rrg->remove_control_nodes();
+  hier_rrg->remove_disconnected_nodes();
   
   if(to_rrg)
     return hier_rrg->get_RRG();
@@ -214,6 +215,29 @@ void SDFG::dfgGraph::remove_control_nodes(bool hier) {
   remove_useless_nodes();
   check_integrity();
   edge_type_propagate();  
+
+}
+
+void SDFG::dfgGraph::remove_disconnected_nodes() {
+  std::set<shared_ptr<dfgNode> > conn_nodes; // connected nodes
+  std::list<shared_ptr<dfgNode> > proc_nodes; // the nodes to be processed
+
+  proc_nodes = get_list_of_nodes(dfgNode::SDFG_OPORT);
+
+  while(!proc_nodes.empty()) {
+    shared_ptr<dfgNode> n = proc_nodes.front();
+    proc_nodes.pop_front();
+    conn_nodes.insert(n);
+    list<shared_ptr<dfgNode> > ilist = n->get_in_nodes_cb();
+    BOOST_FOREACH(shared_ptr<dfgNode> m, ilist) {
+      if(!conn_nodes.count(m)) {
+        proc_nodes.push_back(m);
+      }
+    }
+  }
+  
+  remove_unlisted_nodes(conn_nodes, true);
+  check_integrity();
 
 }
 
