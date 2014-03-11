@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2013-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -208,9 +208,8 @@ void shell::CMD::CMDExtractDatapath::exec ( const std::string& str, Env * pEnv){
   gEnv.stdOs << "Time: " << std::asctime(tinfo) << endl;
 
   shared_ptr<SDFG::dfgGraph> dataDFG = tarDesign->DFG->extract_datapath_new(arg.bFsm, arg.bCtl, arg.bRRG);
-  //dataDFG = dataDFG->extract_datapath(arg.bFsm, arg.bCtl);
-  //dataDFG = dataDFG->extract_datapath(arg.bFsm, arg.bCtl);
-  //dataDFG = dataDFG->extract_datapath(arg.bFsm, arg.bCtl);
+  tarDesign->DataDFG = dataDFG;
+  tarDesign->assign_dataDFG();
 
   dataDFG->write(fhandler);
 

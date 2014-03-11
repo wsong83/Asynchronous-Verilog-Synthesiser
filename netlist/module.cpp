@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -545,6 +545,23 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
   return G;
 }
 
+void netlist::Module::assign_dataDFG() {
+  assert(DataDFG);
+  DataDFG->pModule = this;
+  for_each(db_instance.begin(), db_instance.end(),
+           [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
+             if(m.second->type == Instance::modu_inst) {
+               shared_ptr<Module> subMod = G_ENV->find_module(m.second->mname);
+               shared_ptr<dfgNode> dfgMod = DataDFG->get_node(m.second->name.name);
+               assert(subMod);
+               if(subMod && dfgMod && dfgMod->child) {
+                 subMod->DataDFG = dfgMod->child;
+                 subMod->assign_dataDFG();
+               }
+             } 
+           });
+}
+
 std::set<string> netlist::Module::extract_fsms(bool verbose, bool force,
                                                shared_ptr<SDFG::dfgGraph> pRRG,
                                                unsigned int& num_n,
@@ -648,6 +665,7 @@ double netlist::Module::get_ratio_state_preserved_oport(map<VIdentifier, pair<bo
 }
 
 void netlist::Module::cal_partition(const double& acc_ratio, std::ostream& ostm, const std::set<string>& gFSMs, bool verbose) {
+  // recursively process starts from sub-modules
   DataBase<IIdentifier, Instance>::DBTM::iterator iit, iend;
   for(iit = db_instance.begin(), iend = db_instance.end(); iit != iend; ++iit) {
     if(iit->second->type == Instance::modu_inst) {

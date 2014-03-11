@@ -171,6 +171,12 @@ bool shell::CMD::CMDReportPartition::exec ( const std::string& str, Env * pEnv){
     return false;      
   }
 
+  if(!tarDesign->DataDFG) {
+    gEnv.stdOs << "Error: Datapaths are not extracted for the target design \"" << designName << "\"." << endl;
+    gEnv.stdOs << "       Use extract_datapath before report partition." << endl;
+    return false;      
+  }
+
   if(arg.sOutput.size() > 0) {
     ofstream fhandler;
     fhandler.open(system_complete(arg.sOutput), std::ios_base::out|std::ios_base::trunc);
