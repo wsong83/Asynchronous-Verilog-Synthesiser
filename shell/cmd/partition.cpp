@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2014-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -20,8 +20,8 @@
  */
 
 /* 
- * report possible partitions
- * 24/04/2013   Wei Song
+ * partition the design
+ * 12/03/2014   Wei Song
  *
  *
  */
@@ -34,12 +34,6 @@
 #include "shell/env.h"
 #include "shell/macro_name.h"
 #include "sdfg/sdfg.hpp"
-
-#define BOOST_FILESYSTEM_VERSION 3
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
-using namespace boost::filesystem;
-
 #include <boost/foreach.hpp>
 
 using std::endl;
@@ -55,15 +49,9 @@ namespace {
 
   struct Argument {
     bool bHelp;                 // show help information
-    double dRatio;              // the accept ratio
-    bool bVerbose;              // verbose output, report all sub modules
-    std::string sOutput;        // output file name
     
     Argument() : 
-      bHelp(false),
-      dRatio(0.8),
-      bVerbose(false),
-      sOutput("") {}
+      bHelp(false){}
   };
 }
 
@@ -72,9 +60,6 @@ BOOST_FUSION_ADAPT_STRUCT
 (
  Argument,
  (bool, bHelp)
- (double, dRatio)
- (bool, bVerbose)
- (std::string, sOutput)
  )
 
 namespace {
@@ -93,10 +78,7 @@ namespace {
       using namespace qi::labels;
 
       args = lit('-') >> 
-        ( (lit("help")   >> blanks)                         [at_c<0>(_r1) = true] ||
-          (lit("ratio")  >> blanks >> num_double >> blanks) [at_c<1>(_r1) = _1]   ||
-          (lit("verbose") >> blanks)                        [at_c<2>(_r1) = true] ||
-          (lit("output") >> blanks >> filename >> blanks)   [at_c<3>(_r1) = _1]
+        ( (lit("help")   >> blanks)                         [at_c<0>(_r1) = true]
           );
       
       start = *(args(_val));
@@ -111,21 +93,18 @@ namespace {
   };
 }
 
-const std::string shell::CMD::CMDReportPartition::name = "report_partition"; 
-const std::string shell::CMD::CMDReportPartition::description = 
-  "report possible partitions of the current design.";
+const std::string shell::CMD::CMDPartition::name = "partition"; 
+const std::string shell::CMD::CMDPartition::description = 
+  "partition the current design.";
 
-void shell::CMD::CMDReportPartition::help(Env& gEnv) {
+void shell::CMD::CMDPartition::help(Env& gEnv) {
   gEnv.stdOs << name << ": " << description << endl;
-  gEnv.stdOs << "    report_partition [options]" << endl;
+  gEnv.stdOs << "    partition [options]" << endl;
   gEnv.stdOs << "Options:" << endl;
   gEnv.stdOs << "   -help                show this help information." << endl;
-  gEnv.stdOs << "   -ratio double        the accept ratio (default 0.80)." << endl;
-  gEnv.stdOs << "   -verbose             report all sub-modules." << endl;
-  gEnv.stdOs << "   -output file_name    specify an output file otherwise print out." << endl;
 }
 
-bool shell::CMD::CMDReportPartition::exec ( const std::string& str, Env * pEnv){
+bool shell::CMD::CMDPartition::exec ( const std::string& str, Env * pEnv){
 
   using std::string;
 
@@ -138,8 +117,8 @@ bool shell::CMD::CMDReportPartition::exec ( const std::string& str, Env * pEnv){
   bool r = qi::parse(it, end, parser, arg);
 
   if(!r || it != end) {
-    gEnv.stdOs << "Error: Wrong command syntax error! See usage by report_partition -help." << endl;
-    gEnv.stdOs << "    report_partition [options]" << endl;
+    gEnv.stdOs << "Error: Wrong command syntax error! See usage by partition -help." << endl;
+    gEnv.stdOs << "    partition [options]" << endl;
     return false;
   }
 
@@ -171,20 +150,14 @@ bool shell::CMD::CMDReportPartition::exec ( const std::string& str, Env * pEnv){
     return false;      
   }
 
+  // check Datapath DFG is ready
   if(!tarDesign->DataDFG) {
     gEnv.stdOs << "Error: Datapaths are not extracted for the target design \"" << designName << "\"." << endl;
     gEnv.stdOs << "       Use extract_datapath before report partition." << endl;
     return false;      
   }
 
-  if(arg.sOutput.size() > 0) {
-    ofstream fhandler;
-    fhandler.open(system_complete(arg.sOutput), std::ios_base::out|std::ios_base::trunc);
-    tarDesign->cal_partition(arg.dRatio, fhandler, tarDesign->FSMs, arg.bVerbose);
-    fhandler.close();
-  } else {
-    tarDesign->cal_partition(arg.dRatio, gEnv.stdOs, tarDesign->FSMs, arg.bVerbose);
-  }
+  tarDesign->partition();
   
   return true;
 }

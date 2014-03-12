@@ -89,6 +89,7 @@ namespace netlist {
     // return the ratio of state preserve output ports
     double get_ratio_state_preserved_oport(std::map<VIdentifier, std::pair<bool, std::string> >&, const std::set<std::string>&);
     void cal_partition(const double&, std::ostream&, const std::set<std::string>&, bool);
+    void partition();
 
     // data
     MIdentifier name;
