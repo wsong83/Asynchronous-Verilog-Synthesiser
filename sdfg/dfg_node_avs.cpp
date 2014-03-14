@@ -321,6 +321,11 @@ list<shared_ptr<dfgPath> >& SDFG::dfgNode::get_in_paths_cb() {
 }
 
 list<shared_ptr<dfgPath> > SDFG::dfgNode::get_in_paths_fast_cb() {
+
+  if(this->get_full_name() == "BitStream_controller/mvx_mbAddrC_RF/data_out") {
+    std::cout << "analysing BitStream_controller/mvx_mbAddrC_RF/data_out" << std::endl;
+  }
+
   typedef pair<const shared_ptr<dfgNode>, int> rmap_data_type;
   shared_ptr<dfgNode> pn = pg->get_node(id);   // this node
   if(ipath_f.empty()) {
@@ -352,8 +357,8 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_in_paths_fast_cb() {
   list<shared_ptr<dfgPath> > rv;
   BOOST_FOREACH(rmap_data_type& m, ipath_f) {
     shared_ptr<dfgPath> mp(new dfgPath());
-    mp->push_front(m.first, m.second);
     mp->tar = pn;
+    mp->push_front(m.first, m.second);
     rv.push_back(mp);
   }
   return rv;

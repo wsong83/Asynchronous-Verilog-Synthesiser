@@ -725,7 +725,14 @@ void netlist::Module::partition() {
       BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ipaths)
         comb_itype |= p->type;
 
+      //if(op_dfg->name == "data_out") {
+      //  std::cout << op_dfg->get_full_name() << " itypes: " << comb_itype << std::endl;
+      //  BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ipaths)
+      //    std::cout << *p;
+      //}
+
       if(comb_itype & SDFG::dfgEdge::SDFG_ADR) { // possible a memory output
+        std::cout << "analyse " << op_dfg->get_full_name() << std::endl;
         std::list<shared_ptr<SDFG::dfgNode> > adr;
         std::list<shared_ptr<SDFG::dfgNode> > mem;
         BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ipaths) {
