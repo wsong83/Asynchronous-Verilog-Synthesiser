@@ -48,26 +48,29 @@ void SDFG::dfgPath::push_back(boost::shared_ptr<dfgNode> n, int et) {
 }
   
 void SDFG::dfgPath::push_front(boost::shared_ptr<dfgNode> n, int et) {
-  if(tar->get_full_name() == "BitStream_controller/mvx_mbAddrC_RF/data_out") {
-    std::cout << std::endl;
-    std::cout << *this;
-    std::cout << "push front "<< n->get_full_name() << " " << get_stype(et) << std::endl;
-  }
-  
   path.push_front(path_type(n, et));
   type = cal_type(et, type);
   node_set.insert(n);
   src = n;
-
-  if(tar->get_full_name() == "BitStream_controller/mvx_mbAddrC_RF/data_out") {
-    std::cout << "result:" << *this;
-  }
 }
 
 void SDFG::dfgPath::combine(boost::shared_ptr<dfgPath> p) {
   tar = p->tar;
   path.insert(path.end(), p->path.begin(), p->path.end());
   type = cal_type(type, p->type);
+}
+
+shared_ptr<dfgNode> SDFG::dfgPath::get_2nd_back() {
+  if(path.size() == 0) return shared_ptr<dfgNode>();
+  return path.back().first;
+}
+
+shared_ptr<dfgNode> SDFG::dfgPath::get_2nd_front() {
+  if(path.size() == 0) return shared_ptr<dfgNode>();
+  if(path.size() == 1) return tar;
+  std::list<path_type>::iterator it = path.begin();
+  it++;
+  return it->first;
 }
 
 std::ostream& SDFG::dfgPath::streamout(std::ostream& os) const {

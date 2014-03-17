@@ -334,6 +334,7 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_in_paths_fast_cb() {
     
     // cache
     map<shared_ptr<dfgNode>, map<shared_ptr<dfgNode>, int > > rmap; // node relation map
+    //            A                        B           T
     
     // initial operation
     map<shared_ptr<dfgNode>, int> tmap; // type map for next nodes
@@ -513,8 +514,12 @@ void SDFG::dfgNode::out_path_type_update_fast(map<shared_ptr<dfgNode>, int>& rv,
      ) {  // ending point
     if(rv.count(pn)) rv[pn] |= cp->type;
     else             rv[pn] = cp->type;
-    if(cp->path.back().first != pn)
-      rmap[cp->path.back().first][pn] = cp->path.back().second;
+    if(cp->get_2nd_back() != pn) {
+      if(rmap[cp->get_2nd_back()].count(pn))
+        rmap[cp->get_2nd_back()][pn] |= cp->path.back().second;
+      else
+        rmap[cp->get_2nd_back()][pn] = cp->path.back().second;
+    }
     return;
   }
 
@@ -587,8 +592,12 @@ void SDFG::dfgNode::out_path_type_update_fast_cb(map<shared_ptr<dfgNode>, int>& 
      ) {  // ending point
     if(rv.count(pn)) rv[pn] |= cp->type;
     else             rv[pn] = cp->type;
-    if(cp->path.back().first != pn)
-        rmap[cp->path.back().first][pn] = cp->path.back().second;
+    if(cp->get_2nd_back() != pn) {
+      if(rmap[cp->get_2nd_back()].count(pn))
+        rmap[cp->get_2nd_back()][pn] |= cp->path.back().second;
+      else
+        rmap[cp->get_2nd_back()][pn] = cp->path.back().second;
+    }
     //std::cout << "    " << pn->get_hier_name()  << " : " << rv.size() << ":" << cp->path.size() << std::endl;
     return;
   }
@@ -652,8 +661,12 @@ void SDFG::dfgNode::out_path_type_update_fast_im(map<shared_ptr<dfgNode>, int>& 
      ) {  // ending point
     if(rv.count(pn)) rv[pn] |= cp->type;
     else             rv[pn] = cp->type;
-    if(cp->path.back().first != pn)
-        rmap[cp->path.back().first][pn] = cp->path.back().second;
+    if(cp->get_2nd_back() != pn) {
+      if(rmap[cp->get_2nd_back()].count(pn))
+        rmap[cp->get_2nd_back()][pn] |= cp->path.back().second;
+      else
+        rmap[cp->get_2nd_back()][pn] = cp->path.back().second;
+    }
     //std::cout << "    " << pn->get_hier_name()  << " : " << rv.size() << ":" << cp->path.size() << std::endl;
     return;
   }
@@ -771,8 +784,12 @@ void SDFG::dfgNode::in_path_type_update_fast_cb(map<shared_ptr<dfgNode>, int>& r
      ) {  // ending point
     if(rv.count(pn)) rv[pn] |= cp->type;
     else             rv[pn] = cp->type;
-    if(cp->path.back().first != pn)
-        rmap[cp->path.back().first][pn] = cp->path.back().second;
+    if(cp->get_2nd_front() != pn) {
+      if(rmap[cp->get_2nd_front()].count(pn))
+        rmap[cp->get_2nd_front()][pn] |= cp->path.front().second;
+      else
+        rmap[cp->get_2nd_front()][pn] = cp->path.front().second;
+    }
     //std::cout << "    " << pn->get_hier_name()  << " : " << rv.size() << ":" << cp->path.size() << std::endl;
     return;
   }
@@ -830,8 +847,12 @@ void SDFG::dfgNode::in_path_type_update_fast_im(map<shared_ptr<dfgNode>, int>& r
      ) {  // ending point
     if(rv.count(pn)) rv[pn] |= cp->type;
     else             rv[pn] = cp->type;
-    if(cp->path.back().first != pn)
-        rmap[cp->path.back().first][pn] = cp->path.back().second;
+    if(cp->get_2nd_front() != pn) {
+      if(rmap[cp->get_2nd_front()].count(pn))
+        rmap[cp->get_2nd_front()][pn] |= cp->path.front().second;
+      else
+        rmap[cp->get_2nd_front()][pn] = cp->path.front().second;
+    }
     //std::cout << "    " << pn->get_hier_name()  << " : " << rv.size() << ":" << cp->path.size() << std::endl;
     return;
   }
@@ -895,8 +916,12 @@ void SDFG::dfgNode::self_path_update_cb(map<shared_ptr<dfgNode>, int>& rv, // re
     if(pn == cp->src) {
       if(rv.count(pn)) rv[pn] |= cp->type;        // save it into rv
       else             rv[pn] = cp->type;
-      if(cp->path.back().first != pn)
-        rmap[cp->path.back().first][pn] = cp->path.back().second;  // rmap should record a type for the source
+      if(cp->get_2nd_back() != pn) {
+        if(rmap[cp->get_2nd_back()].count(pn))
+          rmap[cp->get_2nd_back()][pn] |= cp->path.back().second;
+        else
+          rmap[cp->get_2nd_back()][pn] = cp->path.back().second;
+      }
     }
     return;
   }
