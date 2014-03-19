@@ -57,6 +57,7 @@ namespace shell {
     NEW_TCL_CMD(void, CMDExtractDatapath);
     NEW_TCL_CMD(void, CMDExtractRRG);
     NEW_TCL_CMD(void, CMDExtractSDFG);
+    NEW_TCL_CMD(bool, CMDPartition);
     NEW_TCL_CMD(bool, CMDReadSaif);
     NEW_TCL_CMD(bool, CMDReportDFGPath);
     NEW_TCL_CMD(bool, CMDReportFSM);

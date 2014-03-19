@@ -249,8 +249,8 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     std::string get_full_name() const;
     bool check_integrity() const; // check whether there is any illegal connections or mismatches in various maps
     
-    std::list<boost::shared_ptr<dfgNode> > get_list_of_nodes(unsigned int) const; // get a list of nodes of certain types
-    std::list<boost::shared_ptr<dfgNode> > get_list_of_nodes(unsigned int, const dfgGraph&) const; // get a list of nodes of certain types
+    std::list<boost::shared_ptr<dfgNode> > get_list_of_nodes(unsigned int, bool strict = false) const; // get a list of nodes of certain types
+    std::list<boost::shared_ptr<dfgNode> > get_list_of_nodes(unsigned int, const dfgGraph&, bool strict = false) const; // get a list of nodes of certain types
 
   private:
     // convert types to id

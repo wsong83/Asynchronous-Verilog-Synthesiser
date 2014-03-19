@@ -1360,17 +1360,21 @@ bool SDFG::dfgGraph::check_integrity() const {
   return true;
 }
 
-list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_list_of_nodes(unsigned int types) const {
+list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_list_of_nodes(unsigned int types, bool strict) const {
   list<shared_ptr<dfgNode> > nlist;
   typedef pair<const vertex_descriptor, shared_ptr<dfgNode> > node_record_type;
   BOOST_FOREACH(node_record_type nr, nodes) {
-    if(nr.second->type & types) nlist.push_back(nr.second);
+    if(strict) {
+      if(nr.second->type == types) nlist.push_back(nr.second);
+    } else {
+      if(nr.second->type & types) nlist.push_back(nr.second);
+    }
   }
   return nlist;
 }
 
-list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_list_of_nodes(unsigned int types, const dfgGraph& G) const {
-  return G.get_list_of_nodes(types);
+list<shared_ptr<dfgNode> > SDFG::dfgGraph::get_list_of_nodes(unsigned int types, const dfgGraph& G, bool strict) const {
+  return G.get_list_of_nodes(types, strict);
 }
 
 

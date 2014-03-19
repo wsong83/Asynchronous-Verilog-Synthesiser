@@ -54,6 +54,8 @@ namespace SDFG {
     void push_front(boost::shared_ptr<dfgNode>, int);
     void combine(boost::shared_ptr<dfgPath>);
     static int cal_type(int, int); // calculate the type
+    boost::shared_ptr<dfgNode> get_2nd_back();
+    boost::shared_ptr<dfgNode> get_2nd_front();
 
     // stream out
     std::ostream& streamout(std::ostream&) const;

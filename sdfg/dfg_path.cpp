@@ -60,6 +60,19 @@ void SDFG::dfgPath::combine(boost::shared_ptr<dfgPath> p) {
   type = cal_type(type, p->type);
 }
 
+shared_ptr<dfgNode> SDFG::dfgPath::get_2nd_back() {
+  if(path.size() == 0) return shared_ptr<dfgNode>();
+  return path.back().first;
+}
+
+shared_ptr<dfgNode> SDFG::dfgPath::get_2nd_front() {
+  if(path.size() == 0) return shared_ptr<dfgNode>();
+  if(path.size() == 1) return tar;
+  std::list<path_type>::iterator it = path.begin();
+  it++;
+  return it->first;
+}
+
 std::ostream& SDFG::dfgPath::streamout(std::ostream& os) const {
   if(src && tar) {
     os << src->get_full_name() << "->" 
