@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -545,6 +545,23 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
   return G;
 }
 
+void netlist::Module::assign_dataDFG() {
+  assert(DataDFG);
+  DataDFG->pModule = this;
+  for_each(db_instance.begin(), db_instance.end(),
+           [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
+             if(m.second->type == Instance::modu_inst) {
+               shared_ptr<Module> subMod = G_ENV->find_module(m.second->mname);
+               shared_ptr<dfgNode> dfgMod = DataDFG->get_node(m.second->name.name);
+               assert(subMod);
+               if(subMod && dfgMod && dfgMod->child) {
+                 subMod->DataDFG = dfgMod->child;
+                 subMod->assign_dataDFG();
+               }
+             } 
+           });
+}
+
 std::set<string> netlist::Module::extract_fsms(bool verbose, bool force,
                                                shared_ptr<SDFG::dfgGraph> pRRG,
                                                unsigned int& num_n,
@@ -648,6 +665,7 @@ double netlist::Module::get_ratio_state_preserved_oport(map<VIdentifier, pair<bo
 }
 
 void netlist::Module::cal_partition(const double& acc_ratio, std::ostream& ostm, const std::set<string>& gFSMs, bool verbose) {
+  // recursively process starts from sub-modules
   DataBase<IIdentifier, Instance>::DBTM::iterator iit, iend;
   for(iit = db_instance.begin(), iend = db_instance.end(); iit != iend; ++iit) {
     if(iit->second->type == Instance::modu_inst) {
@@ -675,6 +693,71 @@ void netlist::Module::cal_partition(const double& acc_ratio, std::ostream& ostm,
       }
       ostm << endl;
     }
+  }
+}
+
+void netlist::Module::partition() {
+  // process submodules
+  DataBase<IIdentifier, Instance>::DBTM::iterator iit, iend;
+  for(iit = db_instance.begin(), iend = db_instance.end(); iit != iend; ++iit) {
+    if(iit->second->type == Instance::modu_inst) {
+      shared_ptr<Module> subMod = G_ENV->find_module(iit->second->mname);
+      subMod->partition();
+    }
+  }
+
+  if(DFG->father != NULL && DataDFG) {     // sub modules and data path exists
+    unsigned int total = 0;
+    unsigned int pausible = 0;
+
+    std::list<shared_ptr<SDFG::dfgNode> > oports = DataDFG->get_list_of_nodes(SDFG::dfgNode::SDFG_OPORT, true);
+    BOOST_FOREACH(shared_ptr<SDFG::dfgNode> op, oports) {
+      // type the output port
+      shared_ptr<SDFG::dfgNode> op_dfg = DFG->get_node(op->get_hier_name());
+      if(op_dfg->get_in_edges_type() == SDFG::dfgEdge::SDFG_ASS)
+        op_dfg = op_dfg->get_in_nodes().front();
+      
+      //std::cout << "analyse " << op_dfg->get_full_name() << std::endl;
+      std::list<shared_ptr<SDFG::dfgPath> > ipaths = op_dfg->get_in_paths_fast_cb();
+      
+      // get the combined type
+      unsigned int comb_itype = 0;
+      BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ipaths)
+        comb_itype |= p->type;
+
+      //if(op_dfg->name == "data_out") {
+      //  std::cout << op_dfg->get_full_name() << " itypes: " << comb_itype << std::endl;
+      //  BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ipaths)
+      //    std::cout << *p;
+      //}
+
+      if(comb_itype & SDFG::dfgEdge::SDFG_ADR) { // possible a memory output
+        std::cout << "analyse " << op_dfg->get_full_name() << std::endl;
+        std::list<shared_ptr<SDFG::dfgNode> > adr;
+        std::list<shared_ptr<SDFG::dfgNode> > mem;
+        BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ipaths) {
+          if(p->type & SDFG::dfgEdge::SDFG_ADR)
+            adr.push_back(p->src);
+          else if(p->type & SDFG::dfgEdge::SDFG_DAT_MASK && p->src != op_dfg) {
+            if(p->src->get_in_edges_type() & SDFG::dfgEdge::SDFG_ADR)
+              mem.push_back(p->src);
+          }
+        }
+        if(adr.size() > 0 && mem.size() > 0) {
+          std::cout << op_dfg->get_full_name() << " [MEM DOUT]: " << std::endl;
+          std::cout << std::string(4, ' ');
+          BOOST_FOREACH(shared_ptr<SDFG::dfgNode> m, mem)
+            std::cout << m->get_full_name() << " ";
+          BOOST_FOREACH(shared_ptr<SDFG::dfgNode> a, adr)
+            std::cout << "[" << a->get_full_name() << "]";
+          std::cout << endl;
+        }
+      }
+      // find out the data rate
+      // try to find out the control pin
+    }
+  } else {
+    // do the partition
   }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -80,6 +80,7 @@ namespace netlist {
 
     // extract data flow graph
     boost::shared_ptr<SDFG::dfgGraph> extract_sdfg(bool);
+    void assign_dataDFG();      // assign sub-modules in the DataDFG to the pointers of sub-modules
 
     // extract FSMs
     std::set<std::string> extract_fsms(bool, bool, boost::shared_ptr<SDFG::dfgGraph>, unsigned int&, unsigned int&, unsigned int&);
@@ -88,6 +89,7 @@ namespace netlist {
     // return the ratio of state preserve output ports
     double get_ratio_state_preserved_oport(std::map<VIdentifier, std::pair<bool, std::string> >&, const std::set<std::string>&);
     void cal_partition(const double&, std::ostream&, const std::set<std::string>&, bool);
+    void partition();
 
     // data
     MIdentifier name;

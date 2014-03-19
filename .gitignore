@@ -30,4 +30,11 @@ shell/test/avs_shell
 
 
 ## Other
+*.pdf
+*.sdfg
+*.datapath
+*.rrg
+*~
+*.bak
+
 
