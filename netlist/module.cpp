@@ -716,48 +716,110 @@ void netlist::Module::partition() {
       shared_ptr<SDFG::dfgNode> op_dfg = DFG->get_node(op->get_hier_name());
       if(op_dfg->get_in_edges_type() == SDFG::dfgEdge::SDFG_ASS)
         op_dfg = op_dfg->get_in_nodes().front();
+
+      enum IO_TYPE {
+        IO_MEM              = 0x00001, // memory interface
+        IO_HS               = 0x00002  // handshake
+      };
+
+      unsigned int op_type = 0;
       
       //std::cout << "analyse " << op_dfg->get_full_name() << std::endl;
-      std::list<shared_ptr<SDFG::dfgPath> > ipaths = op_dfg->get_in_paths_fast_cb();
       
-      // get the combined type
-      unsigned int comb_itype = 0;
-      BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ipaths)
-        comb_itype |= p->type;
-
-      //if(op_dfg->name == "data_out") {
-      //  std::cout << op_dfg->get_full_name() << " itypes: " << comb_itype << std::endl;
-      //  BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ipaths)
-      //    std::cout << *p;
-      //}
-
-      if(comb_itype & SDFG::dfgEdge::SDFG_ADR) { // possible a memory output
-        std::cout << "analyse " << op_dfg->get_full_name() << std::endl;
-        std::list<shared_ptr<SDFG::dfgNode> > adr;
-        std::list<shared_ptr<SDFG::dfgNode> > mem;
-        BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ipaths) {
-          if(p->type & SDFG::dfgEdge::SDFG_ADR)
-            adr.push_back(p->src);
-          else if(p->type & SDFG::dfgEdge::SDFG_DAT_MASK && p->src != op_dfg) {
-            if(p->src->get_in_edges_type() & SDFG::dfgEdge::SDFG_ADR)
-              mem.push_back(p->src);
+      // exam for memory interfaces
+      {
+        std::list<shared_ptr<SDFG::dfgPath> > ipaths = op_dfg->get_in_paths_fast_cb();
+        // get the combined type
+        unsigned int comb_itype = 0;
+        BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ipaths)
+          comb_itype |= p->type;
+        
+        if(comb_itype & SDFG::dfgEdge::SDFG_ADR) { // possible a memory output
+          std::list<shared_ptr<SDFG::dfgNode> > adr;
+          std::list<shared_ptr<SDFG::dfgNode> > mem;
+          BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ipaths) {
+            if(p->type & SDFG::dfgEdge::SDFG_ADR)
+              adr.push_back(p->src);
+            else if(p->type & SDFG::dfgEdge::SDFG_DAT_MASK && p->src != op_dfg) {
+              if(p->src->get_in_edges_type() & SDFG::dfgEdge::SDFG_ADR)
+                mem.push_back(p->src);
+            }
+          }
+          if(adr.size() > 0 && mem.size() > 0) {
+            std::cout << "M: " << op_dfg->get_full_name() << " [MEM DOUT]: " << std::endl;
+            std::cout << std::string(4, ' ');
+            BOOST_FOREACH(shared_ptr<SDFG::dfgNode> m, mem)
+              std::cout << m->get_full_name() << " ";
+            BOOST_FOREACH(shared_ptr<SDFG::dfgNode> a, adr)
+              std::cout << "[" << a->get_full_name() << "]";
+            std::cout << endl;
+            op_type |= IO_MEM;
           }
         }
-        if(adr.size() > 0 && mem.size() > 0) {
-          std::cout << op_dfg->get_full_name() << " [MEM DOUT]: " << std::endl;
-          std::cout << std::string(4, ' ');
-          BOOST_FOREACH(shared_ptr<SDFG::dfgNode> m, mem)
-            std::cout << m->get_full_name() << " ";
-          BOOST_FOREACH(shared_ptr<SDFG::dfgNode> a, adr)
-            std::cout << "[" << a->get_full_name() << "]";
-          std::cout << endl;
-        }
       }
-      // find out the data rate
-      // try to find out the control pin
+
+      // exam for handshakes
+      if(!(op_type & IO_MEM))
+      {
+        // get the control of source
+        std::set<shared_ptr<SDFG::dfgNode> > s_ctls;
+        if(op_dfg->type & SDFG::dfgNode::SDFG_FF) {
+          std::list<shared_ptr<SDFG::dfgPath> > ipaths = op_dfg->get_in_paths_fast_cb();
+          BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ipaths) {
+            if(p->type & SDFG::dfgEdge::SDFG_CTL_MASK)
+              s_ctls.insert(p->src);
+          }
+        } else {
+          std::list<shared_ptr<SDFG::dfgPath> > idpaths = op->get_in_paths_fast_cb();
+          BOOST_FOREACH(shared_ptr<SDFG::dfgPath> dp, idpaths) {
+            shared_ptr<dfgNode> dn = dp->src->pg->pModule->DFG->get_node(dp->src->get_hier_name());
+            std::list<shared_ptr<SDFG::dfgPath> > ipaths = dn->get_in_paths_fast_cb();
+            BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ipaths) {
+              if(p->type & (SDFG::dfgEdge::SDFG_LOG | SDFG::dfgEdge::SDFG_EQU) && p->src->is_fsm())
+                s_ctls.insert(p->src);
+            }
+          }
+        }
+
+        // get the connected datapath node
+        std::set<shared_ptr<SDFG::dfgNode> > t_nodes;
+        std::list<shared_ptr<SDFG::dfgPath> > odpaths = op->get_out_paths_fast_cb();
+        BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, odpaths) {
+          shared_ptr<SDFG::dfgNode> tn = p->tar->pg->pModule->DFG->get_node(p->tar->get_hier_name());
+          if(tn->type & SDFG::dfgNode::SDFG_FF)
+            t_nodes.insert(tn);
+        }
+        unsigned int h_cnt = 0;
+        BOOST_FOREACH(shared_ptr<SDFG::dfgNode> t, t_nodes) {
+          std::list<shared_ptr<SDFG::dfgPath> > tcpaths = t->get_in_paths_fast_cb();
+          std::set<shared_ptr<SDFG::dfgNode> > cset;
+          BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, tcpaths) {
+            if(p->type & (SDFG::dfgEdge::SDFG_LOG | SDFG::dfgEdge::SDFG_EQU) && p->src->is_fsm())
+              if(s_ctls.count(p->src))
+                cset.insert(p->src);
+          }
+          if(cset.size()) {
+            
+            std::cout << "H: " << op_dfg->get_full_name() << " and " << t->get_full_name();
+            std::cout << " share the control of:" << std::endl;
+            std::cout << std::string(4, ' ');
+            BOOST_FOREACH(shared_ptr<SDFG::dfgNode> a, cset) {
+              std::cout << "[" << a->get_full_name() << "]";
+            }
+            std::cout << endl;
+            std::cout << std::string(4, ' ');
+            std::cout << t_nodes.size() << std::endl;
+            
+            h_cnt++;
+          }
+        }
+        if(h_cnt && h_cnt == t_nodes.size()) {
+          std::cout << "H: " << op_dfg->get_full_name() << " could be a handshake output" << std::endl;
+        }
+        
+      }
+
     }
-  } else {
-    // do the partition
   }
 }
 
