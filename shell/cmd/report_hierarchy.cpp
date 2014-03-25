@@ -56,19 +56,29 @@ namespace {
 
   struct Argument {
     bool bHelp;                 // show help information
+    bool bVerbose;              // show internal information
     
     Argument() : 
-      bHelp(false){}
+      bHelp(false),
+      bVerbose(false)
+    {}
   };
 
-  void report_hierarchy(shared_ptr<SDFG::dfgGraph>, unsigned int);
-  unsigned int port_type();
+  enum IO_TYPE {
+    IO_MEM              = 0x00001, // memory interface
+    IO_HS               = 0x00002  // handshake
+  };
+
+  void report_hierarchy(shared_ptr<SDFG::dfgGraph>, unsigned int, bool);
+  unsigned int port_type(shared_ptr<SDFG::dfgGraph>, shared_ptr<SDFG::dfgGraph>, shared_ptr<SDFG::dfgNode>, unsigned int, bool verbose = false);
+  void print_type(unsigned int);
 }
 
 BOOST_FUSION_ADAPT_STRUCT
 (
  Argument,
  (bool, bHelp)
+ (bool, bVerbose)
  )
 
 namespace {
@@ -86,7 +96,9 @@ namespace {
       using namespace qi::labels;
 
       args = lit('-') >> 
-        ( (lit("help")    >> blanks)                        [at_c<0>(_r1) = true]);
+        ( (lit("help")    >> blanks)                        [at_c<0>(_r1) = true]  ||
+          (lit("verbose") >> blanks)                        [at_c<1>(_r1) = true] 
+          );
       
       start = *(args(_val));
 
@@ -109,6 +121,7 @@ void shell::CMD::CMDReportHierarchy::help(Env& gEnv) {
   gEnv.stdOs << "    report_hierarchy [-help]" << endl;
   gEnv.stdOs << "Options:" << endl;
   gEnv.stdOs << "   -help                show this help information." << endl;
+  gEnv.stdOs << "   -verbose             show internal information." << endl;
 }
 
 bool shell::CMD::CMDReportHierarchy::exec ( const std::string& str, Env * pEnv){
@@ -158,13 +171,13 @@ bool shell::CMD::CMDReportHierarchy::exec ( const std::string& str, Env * pEnv){
     return false;      
   }
 
-  report_hierarchy(tarDesign->DFG, 0);
+  report_hierarchy(tarDesign->DFG, 0, arg.bVerbose);
 
   return true;
 }
 
 namespace {
-  void report_hierarchy(shared_ptr<SDFG::dfgGraph> g, unsigned int indent) {
+  void report_hierarchy(shared_ptr<SDFG::dfgGraph> g, unsigned int indent, bool verbose) {
     // get the data path graph
     shared_ptr<SDFG::dfgGraph> dg = g->pModule->DataDFG;
     if(dg) {
@@ -180,25 +193,148 @@ namespace {
       list<shared_ptr<SDFG::dfgNode> > mlist = g->get_list_of_nodes(SDFG::dfgNode::SDFG_MODULE);
 
       if(iports.size()) {
-        std::cout << string(indent, ' ') << " [I]";
-        BOOST_FOREACH(shared_ptr<SDFG::dfgNode> p, iports)
-          std::cout << " " << p->get_hier_name();
-        std::cout << endl;
+        std::cout << string(indent, ' ') << "[I]" << endl;
+        BOOST_FOREACH(shared_ptr<SDFG::dfgNode> p, iports) {
+          unsigned int ptype = port_type(g, dg, p, indent+2, verbose);
+          std::cout << string(indent, ' ') << p->get_hier_name();
+          if(ptype) print_type(ptype);
+          std::cout << endl;
+        }
       }
       
       if(oports.size()) {
-        std::cout << string(indent, ' ') << " [O]";
-        BOOST_FOREACH(shared_ptr<SDFG::dfgNode> p, oports)
-          std::cout << " " << p->get_hier_name();
-        std::cout << endl;
+        std::cout << string(indent, ' ') << "[O]" << endl;
+        BOOST_FOREACH(shared_ptr<SDFG::dfgNode> p, oports) {
+          unsigned int ptype = port_type(g, dg, p, indent+2, verbose);
+          std::cout << string(indent, ' ') << p->get_hier_name();
+          if(ptype) print_type(ptype);
+          std::cout << endl;
+        }
       }
 
       if(mlist.size()) {
+        std::cout << string(indent, ' ') << "[M]" << endl;
         BOOST_FOREACH(shared_ptr<SDFG::dfgNode> m, mlist) {
-          std::cout << string(indent, ' ') << " **" << m->get_hier_name() << endl;
-          report_hierarchy(m->child, indent + 2);
+          std::cout << string(indent, ' ') << "**" << m->get_hier_name() << endl;
+          report_hierarchy(m->child, indent + 4, verbose);
         }
       }
     }
   }
+
+  unsigned int port_type(shared_ptr<SDFG::dfgGraph> g, shared_ptr<SDFG::dfgGraph> dg, 
+                         shared_ptr<SDFG::dfgNode> dport, unsigned int indent, bool verbose) {
+    shared_ptr<SDFG::dfgNode> port = g->get_node(dport->get_hier_name());
+    if(port->get_in_edges_type() == SDFG::dfgEdge::SDFG_ASS)
+      port = port->get_in_nodes().front();
+
+    unsigned int ptype = 0;
+    
+    // exam for memory interfaces
+    if(dport->type == SDFG::dfgNode::SDFG_OPORT) {
+      list<shared_ptr<SDFG::dfgPath> > ipaths = port->get_in_paths_fast_cb();
+      // get the combined type
+      unsigned int comb_itype = 0;
+      BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ipaths)
+        comb_itype |= p->type;
+      
+      if(comb_itype & SDFG::dfgEdge::SDFG_ADR) { // possible a memory output
+        list<shared_ptr<SDFG::dfgNode> > adr;
+        list<shared_ptr<SDFG::dfgNode> > mem;
+        BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ipaths) {
+          if(p->type & SDFG::dfgEdge::SDFG_ADR)
+            adr.push_back(p->src);
+          else if(p->type & SDFG::dfgEdge::SDFG_DAT_MASK && p->src != port) {
+            if(p->src->get_in_edges_type() & SDFG::dfgEdge::SDFG_ADR)
+              mem.push_back(p->src);
+          }
+        }
+        if(adr.size() > 0 && mem.size() > 0) {
+          if(verbose) {
+            std::cout << "M: " << dport->get_full_name() << " [MEM DOUT]: " << std::endl;
+            std::cout << std::string(4, ' ');
+            BOOST_FOREACH(shared_ptr<SDFG::dfgNode> m, mem)
+              std::cout << m->get_full_name() << " ";
+            BOOST_FOREACH(shared_ptr<SDFG::dfgNode> a, adr)
+              std::cout << "[" << a->get_full_name() << "]";
+            std::cout << endl;
+          }
+          ptype = IO_MEM;
+        }
+      }
+    }
+
+    // exam for handshakes
+    if(!(ptype & IO_MEM)) {
+      // get the control of source
+      std::set<shared_ptr<SDFG::dfgNode> > s_ctls;
+      if(port->type & SDFG::dfgNode::SDFG_FF) {
+        list<shared_ptr<SDFG::dfgPath> > ipaths = port->get_in_paths_fast_cb();
+        BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ipaths) {
+          if(p->type & SDFG::dfgEdge::SDFG_CTL_MASK)
+            s_ctls.insert(p->src);
+        }
+      } else {
+        list<shared_ptr<SDFG::dfgPath> > idpaths = dport->get_in_paths_fast_cb();
+        BOOST_FOREACH(shared_ptr<SDFG::dfgPath> dp, idpaths) {
+          shared_ptr<SDFG::dfgNode> dn = 
+            dp->src->pg->pModule->DFG->get_node(dp->src->get_hier_name());
+          std::list<shared_ptr<SDFG::dfgPath> > ipaths = dn->get_in_paths_fast_cb();
+          BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ipaths) {
+            if(p->type & (SDFG::dfgEdge::SDFG_LOG | SDFG::dfgEdge::SDFG_EQU) && p->src->is_fsm())
+              s_ctls.insert(p->src);
+          }
+        }
+      }
+      
+      // get the connected datapath node
+      std::set<shared_ptr<SDFG::dfgNode> > t_nodes;
+      std::list<shared_ptr<SDFG::dfgPath> > odpaths = dport->get_out_paths_fast_cb();
+      BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, odpaths) {
+        shared_ptr<SDFG::dfgNode> tn = p->tar->pg->pModule->DFG->get_node(p->tar->get_hier_name());
+        if(tn->type & SDFG::dfgNode::SDFG_FF)
+          t_nodes.insert(tn);
+      }
+      unsigned int h_cnt = 0;
+      BOOST_FOREACH(shared_ptr<SDFG::dfgNode> t, t_nodes) {
+        std::list<shared_ptr<SDFG::dfgPath> > tcpaths = t->get_in_paths_fast_cb();
+        std::set<shared_ptr<SDFG::dfgNode> > cset;
+        BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, tcpaths) {
+          if(p->type & (SDFG::dfgEdge::SDFG_LOG | SDFG::dfgEdge::SDFG_EQU) && p->src->is_fsm())
+            if(s_ctls.count(p->src))
+              cset.insert(p->src);
+        }
+        if(cset.size()) {
+          if(verbose) {
+            std::cout << "H: " << dport->get_full_name() << " and " << t->get_full_name();
+            std::cout << " share the control of:" << std::endl;
+            std::cout << std::string(4, ' ');
+            BOOST_FOREACH(shared_ptr<SDFG::dfgNode> a, cset) {
+              std::cout << "[" << a->get_full_name() << "]";
+            }
+            std::cout << endl;
+            std::cout << std::string(4, ' ');
+            std::cout << t_nodes.size() << std::endl;
+          }
+          h_cnt++;
+        }
+      }
+      if(h_cnt && h_cnt == t_nodes.size()) {
+        if(verbose)
+          std::cout << "H: " << dport->get_full_name() << " could be a handshake output" << std::endl;
+        ptype = IO_HS;
+      }
+    }
+
+    return ptype;
+  }
+
+  void print_type(unsigned int t) {
+    switch(t) {
+    case IO_MEM: std::cout << "[Mem]"; break;
+    case IO_HS:  std::cout << "[Handshake]"; break;
+    default:     std::cout << "[Unkown]";
+    }
+  }
+
 }
