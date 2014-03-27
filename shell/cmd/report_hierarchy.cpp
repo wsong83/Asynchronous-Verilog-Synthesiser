@@ -232,7 +232,7 @@ namespace {
     
     // exam for memory interfaces
     if(dport->type == SDFG::dfgNode::SDFG_OPORT) {
-      list<shared_ptr<SDFG::dfgPath> > ipaths = port->get_in_paths_fast_cb();
+      list<shared_ptr<SDFG::dfgPath> > ipaths = port->get_in_paths_fast_in(g.get());
       // get the combined type
       unsigned int comb_itype = 0;
       BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ipaths)

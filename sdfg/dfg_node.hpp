@@ -135,6 +135,8 @@ namespace SDFG {
     std::list<boost::shared_ptr<dfgPath> > get_out_paths_fast_cb(); 
     // return all output paths from this register/port, inside the current module, faster algorithm
     std::list<boost::shared_ptr<dfgPath> > get_out_paths_fast_im(); 
+    // return all output paths from this register/port, inside certain top module, faster algorithm
+    std::list<boost::shared_ptr<dfgPath> > get_out_paths_fast_in(dfgGraph*);
     // return all output paths inside this module
     std::list<boost::shared_ptr<dfgPath> > get_out_paths_fast();
     // return all input paths to this register/port, fast algorithm
@@ -143,6 +145,8 @@ namespace SDFG {
     std::list<boost::shared_ptr<dfgPath> > get_in_paths_fast();
     // return all input paths from this register/port, inside the current module, faster algorithm
     std::list<boost::shared_ptr<dfgPath> > get_in_paths_fast_im(); 
+    // return all input paths from this register/port, inside certain top module, faster algorithm
+    std::list<boost::shared_ptr<dfgPath> > get_in_paths_fast_in(dfgGraph*);
     // return all self control paths that inside this module
     std::list<boost::shared_ptr<dfgPath> > get_self_path_cb();
 
