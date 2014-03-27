@@ -179,8 +179,8 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_out_paths_fast() {
   map<shared_ptr<dfgNode>, int> pmap = 
     path_search_base_fast(false, NULL, true);
 
-  shared_ptr<dfgPath> mp(new dfgPath());
   BOOST_FOREACH(rmap_data_type& m, pmap) {
+    shared_ptr<dfgPath> mp(new dfgPath());
     mp->tar = m.first;
     mp->push_front(pg->get_node(id), m.second);
     rv.push_back(mp);
@@ -198,8 +198,8 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_out_paths_fast_cb() {
   if(!opath_f.size()) opath_f = path_search_base_fast(true, NULL, true);
 
   // produce the path list
-  shared_ptr<dfgPath> mp(new dfgPath());
   BOOST_FOREACH(rmap_data_type& m, opath_f) {
+    shared_ptr<dfgPath> mp(new dfgPath());
     mp->tar = m.first;
     mp->push_front(pg->get_node(id), m.second);
     rv.push_back(mp);
@@ -217,8 +217,8 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_out_paths_fast_im() {
   map<shared_ptr<dfgNode>, int> pmap = 
     path_search_base_fast(true, pg, true);
 
-  shared_ptr<dfgPath> mp(new dfgPath());
   BOOST_FOREACH(rmap_data_type& m, pmap) {
+    shared_ptr<dfgPath> mp(new dfgPath());
     mp->tar = m.first;
     mp->push_front(pg->get_node(id), m.second);
     rv.push_back(mp);
@@ -269,8 +269,8 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_in_paths_fast() {
   map<shared_ptr<dfgNode>, int> pmap = 
     path_search_base_fast(false, NULL, false);
 
-  shared_ptr<dfgPath> mp(new dfgPath());
   BOOST_FOREACH(rmap_data_type& m, pmap) {
+    shared_ptr<dfgPath> mp(new dfgPath());
     mp->tar = pg->get_node(id);
     mp->push_front(m.first, m.second);
     rv.push_back(mp);
@@ -288,8 +288,8 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_in_paths_fast_cb() {
   if(!ipath_f.size()) ipath_f = path_search_base_fast(true, NULL, false);
 
   // produce the path list
-  shared_ptr<dfgPath> mp(new dfgPath());
   BOOST_FOREACH(rmap_data_type& m, ipath_f) {
+    shared_ptr<dfgPath> mp(new dfgPath());
     mp->tar = pg->get_node(id);
     mp->push_front(m.first, m.second);
     rv.push_back(mp);
@@ -307,8 +307,8 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_in_paths_fast_im() {
   map<shared_ptr<dfgNode>, int> pmap = 
     path_search_base_fast(true, pg, false);
 
-  shared_ptr<dfgPath> mp(new dfgPath());
   BOOST_FOREACH(rmap_data_type& m, pmap) {
+    shared_ptr<dfgPath> mp(new dfgPath());
     mp->tar = pg->get_node(id);
     mp->push_front(m.first, m.second);
     rv.push_back(mp);
@@ -565,6 +565,7 @@ map<shared_ptr<dfgNode>, int>
   BOOST_FOREACH(rmap_data_type& m, tmap) {
     shared_ptr<dfgPath> p(new dfgPath(*mp));
     p->push_front(direction ? pn : m.first, m.second);
+    if(!direction) p->tar = pn;
     m.first->path_update_fast(pmap, p, rmap, cross, top, direction);
   }
 
@@ -587,18 +588,22 @@ void SDFG::dfgNode::path_update_fast(map<shared_ptr<dfgNode>, int>& pmap,
     if(pmap.count(pn)) pmap[pn] |= cp->type;
     else               pmap[pn]  = cp->type;
     
+    /*
     shared_ptr<dfgNode> map_node = direction ? cp->get_2nd_back() : cp->get_2nd_front();
-    if(rmap[map_node].count(pn))
-      rmap[map_node][pn] |= direction ? cp->path.back().second : cp->path.front().second;
-    else
-      rmap[map_node][pn]  = direction ? cp->path.back().second : cp->path.front().second;
-    
+    if(map_node) {
+      if(rmap[map_node].count(pn))
+        rmap[map_node][pn] |= direction ? cp->path.back().second : cp->path.front().second;
+      else
+        rmap[map_node][pn]  = direction ? cp->path.back().second : cp->path.front().second;
+    }
+    */
+    if(!rmap.count(pn)) rmap[pn][pn] = 0;
     return;
   }
 
   // check loop
-  if(cp->node_set.count(pn)) {
-    if(direction) cp->tar = pn;
+  if(direction && cp->node_set.count(pn)) {
+    cp->tar = pn;
     G_ENV->error("SDFG-ANALYSE-0", toString(*cp));
     return;
   }
@@ -619,8 +624,15 @@ void SDFG::dfgNode::path_update_fast(map<shared_ptr<dfgNode>, int>& pmap,
     // visit all in nodes
     BOOST_FOREACH(rmap_data_type& t, tmap) {
       shared_ptr<dfgPath> p(new dfgPath(*cp));
-      if(direction)   p->push_back(pn, t.second);  
-      else            p->push_front(t.first, t.second);
+      if(direction)
+        p->push_back(pn, t.second);  
+      else {
+        if(p->node_set.count(t.first)) {
+          G_ENV->error("SDFG-ANALYSE-0", toString(*p));
+          continue;
+        }
+        p->push_front(t.first, t.second);
+      }
       t.first->path_update_fast(pmap, p, rmap, cross, top, direction);
 
       // update rmap
@@ -649,18 +661,21 @@ void SDFG::dfgNode::update_search_map(map<shared_ptr<dfgNode>, int>& tmap,
 
   // process the edges
   BOOST_FOREACH(shared_ptr<dfgEdge> e, elist) {
-    shared_ptr<dfgNode> cnode;
+    list<shared_ptr<dfgNode> > nlist;
 
     // get the connected node
     if(cross) {
-      if(direction)   cnode = e->pg->get_target_cb(e);
-      else            cnode = e->pg->get_source_cb(e);
-      if(!cnode->belong_to(top)) continue;
+      if(direction)   nlist = e->pg->get_target_cb(e);
+      else            nlist.push_back(e->pg->get_source_cb(e));
+      if(!nlist.front()->belong_to(top)) continue;
     } else
-      cnode = direction ? e->pg->get_target(e) : e->pg->get_source(e);
+      nlist.push_back(direction ? e->pg->get_target(e) : e->pg->get_source(e));
 
     // add the edge
-    if(tmap.count(cnode))  tmap[cnode] |= e->type;
-    else                   tmap[cnode] = e->type;
+    BOOST_FOREACH(shared_ptr<dfgNode> cnode, nlist) {
+      if(tmap.count(cnode))  tmap[cnode] |= e->type;
+      else                   tmap[cnode] = e->type;
+    }
   }
 }
+

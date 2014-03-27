@@ -386,6 +386,33 @@ std::ostream& SDFG::dfgNode::streamout(std::ostream& os) const {
   return os;
 }
 
+bool SDFG::dfgNode::belong_to(dfgGraph * top) const {
+  if(top == NULL || top->father == NULL) return true;
+  string top_name = top->get_full_name();
+  list<string> top_hier;
+  string node_name = get_full_name();
+  list<string> node_hier;
+
+  boost::char_separator<char> sep("/");
+  boost::tokenizer<boost::char_separator<char> > top_tokens(top_name, sep);
+  BOOST_FOREACH(const string& m, top_tokens) top_hier.push_back(m);
+  boost::tokenizer<boost::char_separator<char> > node_tokens(node_name, sep);  
+  BOOST_FOREACH(const string& m, node_tokens) node_hier.push_back(m);
+
+  while(!node_hier.empty() && !top_hier.empty()) {
+    if(top_hier.front() != node_hier.front()) return false;
+    else {
+      node_hier.pop_front();
+      top_hier.pop_front();
+    }
+  }
+
+  if(node_hier.empty()) return false;
+
+  return true;
+
+}
+
 bool SDFG::dfgNode::remove_useless_ports() {
   bool rv = false;
 

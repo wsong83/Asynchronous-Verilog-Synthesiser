@@ -150,6 +150,9 @@ namespace SDFG {
     std::pair<double, double> bbox;     // bounding box
     void graphic_init();                // set initial graphic info.
 
+    // hierarchy
+    bool belong_to(dfgGraph*) const;
+
     // remove open and static ports
     bool remove_useless_ports();
 
