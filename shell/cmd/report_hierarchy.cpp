@@ -326,6 +326,36 @@ namespace {
       }
     }
 
+    if(!(ptype & IO_MEM)) {     // check for handshake, new
+      // find the possible common father
+      if(!port->pg->father == NULL) { 
+        SDFG::dfgGraph* commGraph = port->pg->father->pg;
+        
+        // find the connected port
+        std::set<shared_ptr<SDFG::dfgNode> > connNodes; // connect nodes in other modules
+        std::set<shared_ptr<SDFG::dfgNode> > locNodes;  // the nodes in current modules
+        list<shared_ptr<SDFG::dfgPath> > mLocPaths;     // local paths
+        list<shared_ptr<SDFG::dfgPath> > mConnPaths;    // connect paths
+                
+        if(port->type == SDFG::dfgNode::SDFG_IPORT) {
+          mLocPaths = port->get_out_paths_fast_in(port->pg);
+          mConnPaths = port->get_in_paths_fast_in(commGraph);
+        } else {
+          mLocPaths = port->get_in_paths_fast_in(port->pg);
+          mConnPaths = port->get_out_paths_fast_in(commGraph);          
+        }
+        // assembly the sets
+        BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, mLocPaths)
+          locNodes.insert(p->tar);
+        BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, mConnPaths)
+          locNodes.insert(p->src);
+        
+        // find out the common control
+        std::set<shared_ptr<SDFG::dfgNode> > coonCtls, locCtls;
+        BOOST_FOREACH(shared_ptr<dfgNode>)
+
+    }
+
     return ptype;
   }
 
