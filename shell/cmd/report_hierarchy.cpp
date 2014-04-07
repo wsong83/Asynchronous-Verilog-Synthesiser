@@ -293,35 +293,37 @@ namespace {
             connNodes.insert(p->tar->get_synonym(p->tar->pg->pModule->DFG.get()));
         }
 
-        // find out the common control
-        std::set<shared_ptr<SDFG::dfgNode> > connCtls, locCtls;
-        BOOST_FOREACH(shared_ptr<SDFG::dfgNode> l, locNodes) {
-          list<shared_ptr<SDFG::dfgPath> > ctlPaths = l->get_in_paths_fast_in(commGraph);
-          BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ctlPaths)
-            if(p->type & SDFG::dfgEdge::SDFG_CTL_MASK)
-              locCtls.insert(p->src);
-        }
-        BOOST_FOREACH(shared_ptr<SDFG::dfgNode> c, connNodes) {
-          list<shared_ptr<SDFG::dfgPath> > ctlPaths = c->get_in_paths_fast_in(commGraph);
-          BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ctlPaths)
-            if(p->type & SDFG::dfgEdge::SDFG_CTL_MASK)
-              connCtls.insert(p->src);
-        }
-        
-        std::set<shared_ptr<SDFG::dfgNode> > commCtls;
-        BOOST_FOREACH(shared_ptr<SDFG::dfgNode> l, locCtls)
-          if(connCtls.count(l))
-            commCtls.insert(l);
-
-        if(commCtls.size() > 0) { // probably handshake
-          if(verbose) {
-            std::cout << "H: " << dport->get_full_name() << " [Hand Shake]: " << std::endl;
-            std::cout << std::string(4, ' ');
-            BOOST_FOREACH(shared_ptr<SDFG::dfgNode> l, commCtls)
-              std::cout << l->get_full_name() << " ";
-            std::cout << endl;
+        if(locNodes.size() == 1 || connNodes.size() == 1) { // only consider when it is one to many or many to one case
+          // find out the common control
+          std::set<shared_ptr<SDFG::dfgNode> > connCtls, locCtls;
+          BOOST_FOREACH(shared_ptr<SDFG::dfgNode> l, locNodes) {
+            list<shared_ptr<SDFG::dfgPath> > ctlPaths = l->get_in_paths_fast_in(commGraph);
+            BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ctlPaths)
+              if(p->type & SDFG::dfgEdge::SDFG_CTL_MASK)
+                locCtls.insert(p->src);
           }
-          ptype = IO_HS;
+          BOOST_FOREACH(shared_ptr<SDFG::dfgNode> c, connNodes) {
+            list<shared_ptr<SDFG::dfgPath> > ctlPaths = c->get_in_paths_fast_in(commGraph);
+            BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ctlPaths)
+              if(p->type & SDFG::dfgEdge::SDFG_CTL_MASK)
+                connCtls.insert(p->src);
+          }
+          
+          std::set<shared_ptr<SDFG::dfgNode> > commCtls;
+          BOOST_FOREACH(shared_ptr<SDFG::dfgNode> l, locCtls)
+            if(connCtls.count(l))
+              commCtls.insert(l);
+          
+          if(commCtls.size() > 0) { // probably handshake
+            if(verbose) {
+              std::cout << "H: " << dport->get_full_name() << " [Hand Shake]: " << std::endl;
+              std::cout << std::string(4, ' ');
+              BOOST_FOREACH(shared_ptr<SDFG::dfgNode> l, commCtls)
+                std::cout << l->get_full_name() << " ";
+              std::cout << endl;
+            }
+            ptype = IO_HS;
+          }
         }
       }
     }
