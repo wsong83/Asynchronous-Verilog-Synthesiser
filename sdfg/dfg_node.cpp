@@ -426,6 +426,10 @@ bool SDFG::dfgNode::remove_useless_ports() {
   return rv;
 }
 
+shared_ptr<dfgNode> SDFG::dfgNode::get_synonym(dfgGraph * otherG) const {
+  return otherG->get_node(get_hier_name());
+}
+
 bool SDFG::dfgNode::check_integrity() const {
   if(type == SDFG_MODULE) {
     BOOST_FOREACH(shared_ptr<dfgNode> n, get_in_nodes()) {

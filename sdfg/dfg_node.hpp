@@ -163,6 +163,7 @@ namespace SDFG {
     // check functionalities
     bool is_const();            // is const or const after reset
     int is_fsm() const;
+    boost::shared_ptr<dfgNode> get_synonym(dfgGraph *) const;
     std::string get_fsm_type() const;
     static std::string get_fsm_type(int);
 
