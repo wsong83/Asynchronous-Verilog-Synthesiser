@@ -135,6 +135,8 @@ namespace SDFG {
     std::list<boost::shared_ptr<dfgPath> > get_out_paths_fast_cb(); 
     // return all output paths from this register/port, inside the current module, faster algorithm
     std::list<boost::shared_ptr<dfgPath> > get_out_paths_fast_im(); 
+    // return all output paths from this register/port, inside certain top module, faster algorithm
+    std::list<boost::shared_ptr<dfgPath> > get_out_paths_fast_in(dfgGraph*);
     // return all output paths inside this module
     std::list<boost::shared_ptr<dfgPath> > get_out_paths_fast();
     // return all input paths to this register/port, fast algorithm
@@ -143,6 +145,8 @@ namespace SDFG {
     std::list<boost::shared_ptr<dfgPath> > get_in_paths_fast();
     // return all input paths from this register/port, inside the current module, faster algorithm
     std::list<boost::shared_ptr<dfgPath> > get_in_paths_fast_im(); 
+    // return all input paths from this register/port, inside certain top module, faster algorithm
+    std::list<boost::shared_ptr<dfgPath> > get_in_paths_fast_in(dfgGraph*);
     // return all self control paths that inside this module
     std::list<boost::shared_ptr<dfgPath> > get_self_path_cb();
 
@@ -152,6 +156,7 @@ namespace SDFG {
 
     // hierarchy
     bool belong_to(dfgGraph*) const;
+    boost::shared_ptr<dfgGraph> get_connected_module(boost::shared_ptr<dfgNode>) const;
 
     // remove open and static ports
     bool remove_useless_ports();
@@ -159,6 +164,7 @@ namespace SDFG {
     // check functionalities
     bool is_const();            // is const or const after reset
     int is_fsm() const;
+    boost::shared_ptr<dfgNode> get_synonym(dfgGraph *) const;
     std::string get_fsm_type() const;
     static std::string get_fsm_type(int);
 

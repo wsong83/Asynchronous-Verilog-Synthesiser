@@ -196,9 +196,11 @@ namespace {
         std::cout << string(indent, ' ') << "[I]" << endl;
         BOOST_FOREACH(shared_ptr<SDFG::dfgNode> p, iports) {
           unsigned int ptype = port_type(g, dg, p, indent+2, verbose);
-          std::cout << string(indent, ' ') << p->get_hier_name();
-          if(ptype) print_type(ptype);
-          std::cout << endl;
+          if(ptype || verbose) {
+            std::cout << string(indent, ' ') << p->get_hier_name();
+            if(ptype) print_type(ptype);
+            std::cout << endl;
+          }
         }
       }
       
@@ -206,9 +208,11 @@ namespace {
         std::cout << string(indent, ' ') << "[O]" << endl;
         BOOST_FOREACH(shared_ptr<SDFG::dfgNode> p, oports) {
           unsigned int ptype = port_type(g, dg, p, indent+2, verbose);
-          std::cout << string(indent, ' ') << p->get_hier_name();
-          if(ptype) print_type(ptype);
-          std::cout << endl;
+          if(ptype || verbose) {
+            std::cout << string(indent, ' ') << p->get_hier_name();
+            if(ptype) print_type(ptype);
+            std::cout << endl;
+          }
         }
       }
 
@@ -224,15 +228,15 @@ namespace {
 
   unsigned int port_type(shared_ptr<SDFG::dfgGraph> g, shared_ptr<SDFG::dfgGraph> dg, 
                          shared_ptr<SDFG::dfgNode> dport, unsigned int indent, bool verbose) {
-    shared_ptr<SDFG::dfgNode> port = g->get_node(dport->get_hier_name());
-    if(port->get_in_edges_type() == SDFG::dfgEdge::SDFG_ASS)
-      port = port->get_in_nodes().front();
-
     unsigned int ptype = 0;
     
     // exam for memory interfaces
     if(dport->type == SDFG::dfgNode::SDFG_OPORT) {
-      list<shared_ptr<SDFG::dfgPath> > ipaths = port->get_in_paths_fast_cb();
+      shared_ptr<SDFG::dfgNode> port = g->get_node(dport->get_hier_name());
+      if(port->get_in_edges_type() == SDFG::dfgEdge::SDFG_ASS)
+        port = port->get_in_nodes().front();
+      
+      list<shared_ptr<SDFG::dfgPath> > ipaths = port->get_in_paths_fast_in(g.get());
       // get the combined type
       unsigned int comb_itype = 0;
       BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ipaths)
@@ -264,65 +268,72 @@ namespace {
       }
     }
 
-    // exam for handshakes
-    if(!(ptype & IO_MEM)) {
-      // get the control of source
-      std::set<shared_ptr<SDFG::dfgNode> > s_ctls;
-      if(port->type & SDFG::dfgNode::SDFG_FF) {
-        list<shared_ptr<SDFG::dfgPath> > ipaths = port->get_in_paths_fast_cb();
-        BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ipaths) {
-          if(p->type & SDFG::dfgEdge::SDFG_CTL_MASK)
-            s_ctls.insert(p->src);
-        }
-      } else {
-        list<shared_ptr<SDFG::dfgPath> > idpaths = dport->get_in_paths_fast_cb();
-        BOOST_FOREACH(shared_ptr<SDFG::dfgPath> dp, idpaths) {
-          shared_ptr<SDFG::dfgNode> dn = 
-            dp->src->pg->pModule->DFG->get_node(dp->src->get_hier_name());
-          std::list<shared_ptr<SDFG::dfgPath> > ipaths = dn->get_in_paths_fast_cb();
-          BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ipaths) {
-            if(p->type & (SDFG::dfgEdge::SDFG_LOG | SDFG::dfgEdge::SDFG_EQU) && p->src->is_fsm())
-              s_ctls.insert(p->src);
-          }
-        }
-      }
+    if(!(ptype & IO_MEM) && dport->pg->father != NULL) {     // check for handshake, new
+      shared_ptr<SDFG::dfgNode> port = g->get_node(dport->get_hier_name());
+
+      // find the connected flip-flops
+      std::set<shared_ptr<SDFG::dfgNode> > connNodes; // connect nodes in other modules
+      std::set<shared_ptr<SDFG::dfgNode> > locNodes;  // the nodes in current modules
+      list<shared_ptr<SDFG::dfgPath> > mLocPaths;     // local paths
+      list<shared_ptr<SDFG::dfgPath> > mConnPaths;    // connect paths
       
-      // get the connected datapath node
-      std::set<shared_ptr<SDFG::dfgNode> > t_nodes;
-      std::list<shared_ptr<SDFG::dfgPath> > odpaths = dport->get_out_paths_fast_cb();
-      BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, odpaths) {
-        shared_ptr<SDFG::dfgNode> tn = p->tar->pg->pModule->DFG->get_node(p->tar->get_hier_name());
-        if(tn->type & SDFG::dfgNode::SDFG_FF)
-          t_nodes.insert(tn);
+      // assembly the sets
+      if(port->type == SDFG::dfgNode::SDFG_IPORT) {
+        mLocPaths = dport->get_out_paths_fast_in(dport->pg);
+        mConnPaths = dport->get_in_paths_fast_cb();
+        BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, mLocPaths)
+          locNodes.insert(p->tar->get_synonym(p->tar->pg->pModule->DFG.get()));
+        BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, mConnPaths)
+          connNodes.insert(p->src->get_synonym(p->src->pg->pModule->DFG.get()));
+      } else {
+        mLocPaths = dport->get_in_paths_fast_in(dport->pg);
+        mConnPaths = dport->get_out_paths_fast_cb();          
+        BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, mLocPaths)
+          locNodes.insert(p->src->get_synonym(p->src->pg->pModule->DFG.get()));
+        BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, mConnPaths)
+          connNodes.insert(p->tar->get_synonym(p->tar->pg->pModule->DFG.get()));
       }
-      unsigned int h_cnt = 0;
-      BOOST_FOREACH(shared_ptr<SDFG::dfgNode> t, t_nodes) {
-        std::list<shared_ptr<SDFG::dfgPath> > tcpaths = t->get_in_paths_fast_cb();
-        std::set<shared_ptr<SDFG::dfgNode> > cset;
-        BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, tcpaths) {
-          if(p->type & (SDFG::dfgEdge::SDFG_LOG | SDFG::dfgEdge::SDFG_EQU) && p->src->is_fsm())
-            if(s_ctls.count(p->src))
-              cset.insert(p->src);
-        }
-        if(cset.size()) {
-          if(verbose) {
-            std::cout << "H: " << dport->get_full_name() << " and " << t->get_full_name();
-            std::cout << " share the control of:" << std::endl;
-            std::cout << std::string(4, ' ');
-            BOOST_FOREACH(shared_ptr<SDFG::dfgNode> a, cset) {
-              std::cout << "[" << a->get_full_name() << "]";
-            }
-            std::cout << endl;
-            std::cout << std::string(4, ' ');
-            std::cout << t_nodes.size() << std::endl;
+
+      if(locNodes.size() == 1 && connNodes.size() == 1) { // only consider when it is one to one case
+        shared_ptr<SDFG::dfgNode> connNode = *(connNodes.begin());
+        shared_ptr<SDFG::dfgNode> locNode = *(locNodes.begin());
+
+        // find out the local and connected module
+        shared_ptr<SDFG::dfgGraph> connModule = locNode->get_connected_module(connNode);
+        shared_ptr<SDFG::dfgGraph> locModule = connNode->get_connected_module(locNode);
+        
+        if(connModule && locModule 
+           //&& locModule.get() == port->pg
+           ) {
+
+          // find out the common control
+          std::set<shared_ptr<SDFG::dfgNode> > locCtls, connCtls, commCtls;
+          list<shared_ptr<SDFG::dfgPath> > ctlPaths = locNode->get_in_paths_fast_cb();
+          BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ctlPaths) {
+            if(p->src->belong_to(locModule.get()))
+              locCtls.insert(p->src);
+            else if(p->src->belong_to(connModule.get()))
+              connCtls.insert(p->src);
           }
-          h_cnt++;
+          ctlPaths = connNode->get_in_paths_fast_cb();
+          BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ctlPaths) {
+            if(p->src->belong_to(locModule.get()) && locCtls.count(p->src))
+              commCtls.insert(p->src);
+            else if(p->src->belong_to(connModule.get()) && connCtls.count(p->src))
+              commCtls.insert(p->src);
+          }
+          
+          if(commCtls.size() > 0) { // probably handshake
+            if(verbose) {
+              std::cout << "H: " << dport->get_full_name() << " [Hand Shake]: " << std::endl;
+              std::cout << std::string(4, ' ');
+              BOOST_FOREACH(shared_ptr<SDFG::dfgNode> l, commCtls)
+                std::cout << l->get_full_name() << " ";
+              std::cout << endl;
+            }
+            ptype = IO_HS;
+          }
         }
-      }
-      if(h_cnt && h_cnt == t_nodes.size()) {
-        if(verbose)
-          std::cout << "H: " << dport->get_full_name() << " could be a handshake output" << std::endl;
-        ptype = IO_HS;
       }
     }
 

@@ -209,13 +209,17 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_out_paths_fast_cb() {
 }
 
 list<shared_ptr<dfgPath> > SDFG::dfgNode::get_out_paths_fast_im() {
+  return get_out_paths_fast_in(pg);
+}
+
+list<shared_ptr<dfgPath> > SDFG::dfgNode::get_out_paths_fast_in(dfgGraph * top) {
 
   list<shared_ptr<dfgPath> > rv;
   typedef pair<const shared_ptr<dfgNode>, int> rmap_data_type;
 
   // generate the path map
   map<shared_ptr<dfgNode>, int> pmap = 
-    path_search_base_fast(true, pg, true);
+    path_search_base_fast(true, top, true);
 
   BOOST_FOREACH(rmap_data_type& m, pmap) {
     shared_ptr<dfgPath> mp(new dfgPath());
@@ -299,13 +303,17 @@ list<shared_ptr<dfgPath> > SDFG::dfgNode::get_in_paths_fast_cb() {
 }
 
 list<shared_ptr<dfgPath> > SDFG::dfgNode::get_in_paths_fast_im() {
+  return get_in_paths_fast_in(pg);
+}
+
+list<shared_ptr<dfgPath> > SDFG::dfgNode::get_in_paths_fast_in(dfgGraph * top) {
 
   list<shared_ptr<dfgPath> > rv;
   typedef pair<const shared_ptr<dfgNode>, int> rmap_data_type;
 
   // generate the path map
   map<shared_ptr<dfgNode>, int> pmap = 
-    path_search_base_fast(true, pg, false);
+    path_search_base_fast(true, top, false);
 
   BOOST_FOREACH(rmap_data_type& m, pmap) {
     shared_ptr<dfgPath> mp(new dfgPath());
