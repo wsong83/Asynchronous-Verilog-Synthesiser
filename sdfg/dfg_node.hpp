@@ -156,6 +156,7 @@ namespace SDFG {
 
     // hierarchy
     bool belong_to(dfgGraph*) const;
+    boost::shared_ptr<dfgGraph> get_connected_module(boost::shared_ptr<dfgNode>) const;
 
     // remove open and static ports
     bool remove_useless_ports();
