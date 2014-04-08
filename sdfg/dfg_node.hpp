@@ -135,12 +135,18 @@ namespace SDFG {
     std::list<boost::shared_ptr<dfgPath> > get_out_paths_fast_cb(); 
     // return all output paths from this register/port, inside the current module, faster algorithm
     std::list<boost::shared_ptr<dfgPath> > get_out_paths_fast_im(); 
+    // return all output paths from this register/port, inside certain top module, faster algorithm
+    std::list<boost::shared_ptr<dfgPath> > get_out_paths_fast_in(dfgGraph*);
     // return all output paths inside this module
     std::list<boost::shared_ptr<dfgPath> > get_out_paths_fast();
     // return all input paths to this register/port, fast algorithm
     std::list<boost::shared_ptr<dfgPath> > get_in_paths_fast_cb(); 
+    // return all input paths inside this module
+    std::list<boost::shared_ptr<dfgPath> > get_in_paths_fast();
     // return all input paths from this register/port, inside the current module, faster algorithm
     std::list<boost::shared_ptr<dfgPath> > get_in_paths_fast_im(); 
+    // return all input paths from this register/port, inside certain top module, faster algorithm
+    std::list<boost::shared_ptr<dfgPath> > get_in_paths_fast_in(dfgGraph*);
     // return all self control paths that inside this module
     std::list<boost::shared_ptr<dfgPath> > get_self_path_cb();
 
@@ -148,12 +154,17 @@ namespace SDFG {
     std::pair<double, double> bbox;     // bounding box
     void graphic_init();                // set initial graphic info.
 
+    // hierarchy
+    bool belong_to(dfgGraph*) const;
+    boost::shared_ptr<dfgGraph> get_connected_module(boost::shared_ptr<dfgNode>) const;
+
     // remove open and static ports
     bool remove_useless_ports();
 
     // check functionalities
     bool is_const();            // is const or const after reset
     int is_fsm() const;
+    boost::shared_ptr<dfgNode> get_synonym(dfgGraph *) const;
     std::string get_fsm_type() const;
     static std::string get_fsm_type(int);
 
@@ -172,33 +183,25 @@ namespace SDFG {
                                 boost::shared_ptr<dfgPath>&,
                                 std::map<boost::shared_ptr<dfgNode>, std::map<boost::shared_ptr<dfgNode>, int> >&,
                                 std::set<boost::shared_ptr<dfgNode> >&); // helper for get_in_paths()
-    void out_path_type_update_fast(std::map<boost::shared_ptr<dfgNode>, int>&,
-                                   boost::shared_ptr<dfgPath>&,
-                                   std::map<boost::shared_ptr<dfgNode>, 
-                                            std::map<boost::shared_ptr<dfgNode>, int> >&);
-    void out_path_type_update_fast_cb(std::map<boost::shared_ptr<dfgNode>, int>&,
-                                      boost::shared_ptr<dfgPath>&,
-                                      std::map<boost::shared_ptr<dfgNode>, 
-                                               std::map<boost::shared_ptr<dfgNode>, int> >&);
-    void out_path_type_update_fast_im(std::map<boost::shared_ptr<dfgNode>, int>&,
-                                      boost::shared_ptr<dfgPath>&,
-                                      std::map<boost::shared_ptr<dfgNode>, 
-                                               std::map<boost::shared_ptr<dfgNode>, int> >&,
-                                      unsigned int);
     void self_path_update_cb(std::map<boost::shared_ptr<dfgNode>, int>&,
                              boost::shared_ptr<dfgPath>&,
                              std::map<boost::shared_ptr<dfgNode>, 
-                                      std::map<boost::shared_ptr<dfgNode>, int> >&,
+                             std::map<boost::shared_ptr<dfgNode>, int> >&,
                              unsigned int);
-    void in_path_type_update_fast_cb(std::map<boost::shared_ptr<dfgNode>, int>&,
-                                     boost::shared_ptr<dfgPath>&,
-                                     std::map<boost::shared_ptr<dfgNode>, 
-                                              std::map<boost::shared_ptr<dfgNode>, int> >&);
-    void in_path_type_update_fast_im(std::map<boost::shared_ptr<dfgNode>, int>&,
-                                     boost::shared_ptr<dfgPath>&,
-                                     std::map<boost::shared_ptr<dfgNode>, 
-                                              std::map<boost::shared_ptr<dfgNode>, int> >&,
-                                     unsigned int);
+    std::map<boost::shared_ptr<dfgNode>, int>
+    path_search_base_fast(bool,      // cross boundary 
+                          dfgGraph*, // top module
+                          bool       // input 0, or output 1
+                          );
+
+    void path_update_fast(std::map<boost::shared_ptr<dfgNode>, int>&, // path map
+                          boost::shared_ptr<dfgPath>,                 // main path
+                          std::map<boost::shared_ptr<dfgNode>, 
+                          std::map<boost::shared_ptr<dfgNode>, int > >&, // path cache
+                          bool, dfgGraph*, bool);
+
+    void update_search_map(std::map<boost::shared_ptr<dfgNode>, int>&, // target map
+                           bool, dfgGraph*, bool);
   };
 
   inline std::ostream& operator<< (std::ostream& os, const dfgNode& node) {

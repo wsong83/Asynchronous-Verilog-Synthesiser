@@ -87,6 +87,7 @@ namespace {
   FUNC_WRAPPER     (bool,         CMDPartition          )
   FUNC_WRAPPER     (bool,         CMDReadSaif           )
   FUNC_WRAPPER     (bool,         CMDReportDFGPath      )
+  FUNC_WRAPPER     (bool,         CMDReportHierarchy    )
   FUNC_WRAPPER     (bool,         CMDReportFSM          )
   FUNC_WRAPPER     (bool,         CMDReportNetlist      )
   FUNC_WRAPPER     (bool,         CMDReportPartition    )
@@ -180,6 +181,7 @@ bool shell::Env::initialise() {
   AVS_ENV_ADD_TCL_CMD(CMDReadSaif);
   AVS_ENV_ADD_TCL_CMD(CMDReportDFGPath);
   AVS_ENV_ADD_TCL_CMD(CMDReportFSM);
+  AVS_ENV_ADD_TCL_CMD(CMDReportHierarchy);
   AVS_ENV_ADD_TCL_CMD(CMDReportNetlist);
   AVS_ENV_ADD_TCL_CMD(CMDReportPartition);
   AVS_ENV_ADD_TCL_CMD(CMDReportPorts);

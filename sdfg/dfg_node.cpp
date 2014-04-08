@@ -386,6 +386,71 @@ std::ostream& SDFG::dfgNode::streamout(std::ostream& os) const {
   return os;
 }
 
+bool SDFG::dfgNode::belong_to(dfgGraph * top) const {
+  if(top == NULL || top->father == NULL) return true;
+  string top_name = top->get_full_name();
+  list<string> top_hier;
+  string node_name = get_full_name();
+  list<string> node_hier;
+
+  boost::char_separator<char> sep("/");
+  boost::tokenizer<boost::char_separator<char> > top_tokens(top_name, sep);
+  BOOST_FOREACH(const string& m, top_tokens) top_hier.push_back(m);
+  boost::tokenizer<boost::char_separator<char> > node_tokens(node_name, sep);  
+  BOOST_FOREACH(const string& m, node_tokens) node_hier.push_back(m);
+
+  while(!node_hier.empty() && !top_hier.empty()) {
+    if(top_hier.front() != node_hier.front()) return false;
+    else {
+      node_hier.pop_front();
+      top_hier.pop_front();
+    }
+  }
+
+  if(node_hier.empty()) return false;
+
+  return true;
+}
+
+shared_ptr<dfgGraph> SDFG::dfgNode::get_connected_module(shared_ptr<dfgNode> cNode) const {
+  // get the module node
+  dfgNode * cModule;
+  if(cNode->type != SDFG_MODULE) {
+    if(cNode->pg->father == NULL)
+      return shared_ptr<dfgGraph>();
+    else
+      cModule = cNode->pg->father;
+  }
+
+  string conn_name = cModule->get_full_name();
+  list<string> conn_hier;
+  string node_name = get_full_name();
+  list<string> node_hier;  
+
+  boost::char_separator<char> sep("/");
+  boost::tokenizer<boost::char_separator<char> > conn_tokens(conn_name, sep);
+  BOOST_FOREACH(const string& m, conn_tokens) conn_hier.push_back(m);
+  boost::tokenizer<boost::char_separator<char> > node_tokens(node_name, sep);  
+  BOOST_FOREACH(const string& m, node_tokens) node_hier.push_back(m);
+
+  while(!node_hier.empty() && !conn_hier.empty()) {
+    if(conn_hier.front() != node_hier.front()) break;
+    else {
+      node_hier.pop_front();
+      conn_hier.pop_front();
+    }
+  }
+  
+  if(node_hier.size() <= 1 || conn_hier.size() <= 1)
+    return shared_ptr<dfgGraph>();
+
+  for(unsigned int i=1; i<conn_hier.size(); i++)
+    cModule = cModule->pg->father;
+
+  return cModule->child;
+
+}
+
 bool SDFG::dfgNode::remove_useless_ports() {
   bool rv = false;
 
@@ -397,6 +462,10 @@ bool SDFG::dfgNode::remove_useless_ports() {
     }
   }
   return rv;
+}
+
+shared_ptr<dfgNode> SDFG::dfgNode::get_synonym(dfgGraph * otherG) const {
+  return otherG->get_node(get_hier_name());
 }
 
 bool SDFG::dfgNode::check_integrity() const {

@@ -61,6 +61,7 @@ namespace shell {
     NEW_TCL_CMD(bool, CMDReadSaif);
     NEW_TCL_CMD(bool, CMDReportDFGPath);
     NEW_TCL_CMD(bool, CMDReportFSM);
+    NEW_TCL_CMD(bool, CMDReportHierarchy);
     NEW_TCL_CMD(bool, CMDReportNetlist);
     NEW_TCL_CMD(bool, CMDReportPartition);
     NEW_TCL_CMD(bool, CMDReportPorts);
