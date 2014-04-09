@@ -337,7 +337,7 @@ void netlist::Module::elab_inparse() {
   std::set<VIdentifier> to_del_var;
   typedef pair<const VIdentifier, shared_ptr<Variable> > var_type;
   BOOST_FOREACH(var_type var, db_var.db_list) {
-    if(var.second->get_vtype() == Variable::TParam || var.second->get_vtype() == Variable::TLParam) {
+    if(var.second->get_vtype() & (Variable::TParam | Variable::TLParam)) {
       db_param.insert(var.first, var.second);
       to_del_var.insert(var.first);
     }
