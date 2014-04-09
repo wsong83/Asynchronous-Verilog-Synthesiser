@@ -39,7 +39,12 @@ namespace netlist {
   public:
 
     enum vtype_t {
-      TVar, TWire, TReg, TParam, TLParam, TGenvar
+      TVar    = 0x0001, 
+      TWire   = 0x0002, 
+      TReg    = 0x0004, 
+      TParam  = 0x0008, 
+      TLParam = 0x0010, 
+      TGenvar = 0x0020
     } vtype;
 
     Variable();
