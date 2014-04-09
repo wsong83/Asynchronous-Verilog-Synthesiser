@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -134,12 +134,14 @@ netlist::Range::Range(const Range_Exp& sel, int updown)
   shared_ptr<Expression> first(sel.first->deep_copy());
   Range_Exp m_sel;
   if(updown == 1) { // positive colon
-    *first+*(sel.second);
+    Expression constOne(Number(1));
+    *first+*(sel.second) - constOne;
     m_sel.first = first;
     m_sel.second.reset(sel.first->deep_copy());
   } else if(updown == -1){ // negtive colon
+    Expression constOne(Number(1));
     m_sel.first.reset(sel.first->deep_copy());
-    *first - *(sel.second);
+    (*first - *(sel.second)) + constOne;
     m_sel.second = first;
   } else {
     // error
@@ -171,12 +173,14 @@ netlist::Range::Range(const location& lloc, const Range_Exp& sel, int updown)
   shared_ptr<Expression> first(sel.first->deep_copy());
   Range_Exp m_sel;
   if(updown == 1) { // positive colon
-    *first+*(sel.second);
+    Expression constOne(Number(1));
+    (*first+*(sel.second)) - constOne;
     m_sel.first = first;
     m_sel.second.reset(sel.first->deep_copy());
   } else if(updown == -1){ // negtive colon
+    Expression constOne(Number(1));
     m_sel.first.reset(sel.first->deep_copy());
-    *first - *(sel.second);
+    (*first - *(sel.second)) + constOne;
     m_sel.second = first;
   } else {
     // error
