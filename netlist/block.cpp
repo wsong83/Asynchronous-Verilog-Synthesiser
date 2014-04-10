@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -352,6 +352,107 @@ void netlist::Block::elab_inparse() {
   BOOST_FOREACH(shared_ptr<NetComp> var, to_del) {
     statements.remove(var);
   }
+
+  ///////////////////////////
+  // new implementation
+  
+  // step 1
+  // handle the unamed embedded blocks
+  list<shared_ptr<Block> > embedded_blocks;
+  BOOST_FOREACH(shared_ptr<NetComp> st, statements) {
+    if(st->get_type() == tBlock) {
+      SP_CAST(m, Block, st);
+      if(!m->is_named()) {
+        m->elab_inparse();
+        embedded_blocks.push_back(m);
+      }
+    }
+  }
+  
+  // step 2
+  // classify and sort the current block
+  
+  // to add list, used when some statements are replaced
+  map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add;
+  typedef pair<const shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add_type;
+  // to delete list, when some statements are put in databases
+  std::set<shared_ptr<NetComp> > to_del;
+
+  // step 2.1
+  // find out variables and database them
+  BOOST_FOREACH(shared_ptr<NetComp> st, statements) {
+    if(st->get_type() == tVariable) {
+      SP_CAST(m, Variable, st);
+      if(find_var(m->name)) {
+        // double definition
+        G_ENV->error(m->loc, "SYN-VAR-1", m->name.name, toString(find_var(m->name)->loc));
+      } else {
+        if(m->exp) {            // handle the initial assignment
+          if(m->vtype == Variable::TWire) { 
+            // initial assignment to a wire is a continueous assignment
+            shared_ptr<LConcatenation> lhs(new LConcatenation(m->loc, m->name));
+            shared_ptr<Assign> asgn(new Assign(m->loc, lhs, m->exp, true));
+            asgn->set_continuous();
+            to_add[m].push_back(asgn);
+            m->exp.reset();
+          } else if(m->vtype != Variable::TParam && m->vtype != Variable::TLParam) {
+            G_ENV->error(m->loc, "SYN-VAR-4", m->name.name);
+            m->exp.reset();
+          }
+        }
+        db_var.insert(m->name, m);
+      }
+    }
+  }
+  BOOST_FOREACH(to_add_type m, to_add)
+    statements.splice(std::find(statements.begin(), statements.end(), m.first), m.second);
+  to_add.clear();
+  BOOST_FOREACH(shared_ptr<NetComp> m, to_del)
+    statements.remove(m);
+  to_del.clear();
+  
+  // 2.2 find out all instances and functions
+  BOOST_FOREACH(shared_ptr<NetComp> st, statements) {
+    if(st->get_type() == tInstance) {
+      SP_CAST(m, Instance, st);
+      if(!m->is_named()) {
+        G_ENV->error(m->loc, "SYN-INST-1");
+        m->set_default_name(new_IId());
+      }
+      if(db_instance.find(m->name)) {
+        shared_ptr<Instance> m_inst = db_instance.find(m->name);
+        if(m_inst->is_named() && m->is_named()) {
+          G_ENV->error(m->loc, "SYN-INST-0", m->name.name, toString(m_inst->loc));
+        }
+        if(m->is_named() && !m_inst->is_named()) {
+          db_instance.erase(m_inst->name);
+          IIdentifier m_iid = m_inst->name;
+          while(db_instance.find(m_iid)) {++m_iid; }
+          m_inst->set_default_name(m_iid);
+          db_instance.insert(m_inst->name, m_inst);
+        } else {
+          IIdentifier m_iid = m->name;
+          while(db_instance.find(m_iid)) {++m_iid; }
+          m->set_default_name(m_iid);
+        }
+      }
+      db_instance.insert(m->name, m);
+      to_del.insert(st);
+    } else if (st->get_type() == tFunction) {
+      SP_CAST(m, Function, st);
+      if(db_func.count(m->fname)) {
+        G_ENV->error(m->loc, "SYN-FUNC-0", m->fname.name, toString(db_func.find(m->fname)->loc));
+      } else {
+        m->elab_inparse();
+        db_func.insert(m->fname, m);
+      }
+      to_del.insert(st);
+    }
+  }
+  BOOST_FOREACH(shared_ptr<NetComp> m, to_del)
+    statements.remove(m);
+  to_del.clear();  
+  
 }
 
 Block* netlist::Block::deep_copy() const {
