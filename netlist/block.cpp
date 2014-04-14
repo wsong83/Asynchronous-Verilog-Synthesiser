@@ -261,6 +261,7 @@ void netlist::Block::elab_inparse() {
         }
         db_var.insert(m->name, m);
       }
+      to_del.insert(st);
     }
   }
   BOOST_FOREACH(to_add_type m, to_add)
