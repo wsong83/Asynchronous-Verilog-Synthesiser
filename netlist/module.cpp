@@ -316,7 +316,7 @@ void netlist::Module::elab_inparse() {
   std::set<shared_ptr<NetComp> > to_del;
 
   Block::elab_inparse();
-
+  
   BOOST_FOREACH(shared_ptr<NetComp> st, statements) {
     switch(st->get_type()) {
     case tPort: {

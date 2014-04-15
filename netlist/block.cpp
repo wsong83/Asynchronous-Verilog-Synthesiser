@@ -200,6 +200,7 @@ ostream& netlist::Block::streamout(ostream& os, unsigned int indent, bool fl_pre
   
     db_var.streamout(os, indent+2);
     if(db_var.size() > 0) os << endl;
+
   } else if((!is_else) || (statements.front()->get_type() != tIf))
     os << endl;
 
@@ -224,6 +225,12 @@ ostream& netlist::Block::streamout(ostream& os, unsigned int indent, bool fl_pre
     boost::static_pointer_cast<IfState>(statements.front())->streamout(os, indent, true);
   }
 
+  if(db_instance.size() != 0)
+    db_instance.streamout(os, indent+2);
+
+  if(db_func.size() != 0)
+    db_func.streamout(os, indent+2);
+
   if(named || (!db_var.empty()) || (!db_instance.empty()) || (statements.size() != 1))
     os << string(indent, ' ') << "end" << endl;
   return os;
@@ -231,7 +238,8 @@ ostream& netlist::Block::streamout(ostream& os, unsigned int indent, bool fl_pre
 
 void netlist::Block::elab_inparse() {
   // classify and sort the current block
-  
+  //std::cout << "--------------- BLOCK ELAB INPARSE() " << std::endl;
+  //std::cout << *this << std::endl;
   // to add list, used when some statements are replaced
   map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add;
   typedef pair<const shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add_type;
@@ -270,7 +278,10 @@ void netlist::Block::elab_inparse() {
   BOOST_FOREACH(shared_ptr<NetComp> m, to_del)
     statements.remove(m);
   to_del.clear();
-  
+
+  //std::cout << "********** BLOCK ELAB INPARSE [after variable] *******" << std::endl;
+  //std::cout << *this;
+
   // find out all instances and functions
   BOOST_FOREACH(shared_ptr<NetComp> st, statements) {
     if(st->get_type() == tInstance) {
@@ -281,22 +292,25 @@ void netlist::Block::elab_inparse() {
       }
       if(db_instance.find(m->name)) {
         shared_ptr<Instance> m_inst = db_instance.find(m->name);
-        if(m_inst->is_named() && m->is_named()) {
-          G_ENV->error(m->loc, "SYN-INST-0", m->name.name, toString(m_inst->loc));
-        }
-        if(m->is_named() && !m_inst->is_named()) {
-          db_instance.erase(m_inst->name);
-          IIdentifier m_iid = m_inst->name;
-          while(db_instance.find(m_iid)) {++m_iid; }
-          m_inst->set_default_name(m_iid);
-          db_instance.insert(m_inst->name, m_inst);
-        } else {
-          IIdentifier m_iid = m->name;
-          while(db_instance.find(m_iid)) {++m_iid; }
-          m->set_default_name(m_iid);
-        }
+	if(m_inst) {
+	  if(m_inst->is_named() && m->is_named()) {
+	    G_ENV->error(m->loc, "SYN-INST-0", m->name.name, toString(m_inst->loc));
+	  }
+	  if(m->is_named() && !m_inst->is_named()) {
+	    db_instance.erase(m_inst->name);
+	    IIdentifier m_iid = m_inst->name;
+	    while(db_instance.find(m_iid)) {++m_iid; }
+	    m_inst->set_default_name(m_iid);
+	    db_instance.insert(m_inst->name, m_inst);
+	  } else {
+	    IIdentifier m_iid = m->name;
+	    while(db_instance.find(m_iid)) {++m_iid; }
+	    m->set_default_name(m_iid);
+	  }
+	}
       }
       db_instance.insert(m->name, m);
+      //std::cout << "insert a new instance " << m->name << std::endl;
       to_del.insert(st);
     } else if (st->get_type() == tFunction) {
       SP_CAST(m, Function, st);
@@ -349,6 +363,9 @@ void netlist::Block::elab_inparse() {
   BOOST_FOREACH(shared_ptr<NetComp> m, to_del)
     statements.remove(m);
   to_del.clear();  
+
+  //std::cout << "********** BLOCK ELAB INPARSE [after all] *******" << std::endl;
+  //std::cout << *this;
   
 }
 
