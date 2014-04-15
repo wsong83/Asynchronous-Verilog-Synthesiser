@@ -114,6 +114,12 @@ void netlist::GenBlock::db_register(int) {
       m.second->db_register(1);
     });
   BOOST_FOREACH(shared_ptr<NetComp>& m, statements) m->db_register(1);
+  for_each(db_instance.begin(), db_instance.end(), [](pair<const IIdentifier, shared_ptr<Instance> >& m) {
+	m.second->db_register(1);
+      });
+  for_each(db_func.begin(), db_func.end(), [](pair<const FIdentifier, shared_ptr<Function> >& m) {
+	m.second->db_register(1);
+      });
 }
 
 void netlist::GenBlock::db_expunge() {
@@ -121,4 +127,10 @@ void netlist::GenBlock::db_expunge() {
       m.second->db_expunge();
     });
   BOOST_FOREACH(shared_ptr<NetComp>& m, statements) m->db_expunge();
+  for_each(db_instance.begin(), db_instance.end(), [](pair<const IIdentifier, shared_ptr<Instance> >& m) {
+	m.second->db_expunge();
+      });
+  for_each(db_func.begin(), db_func.end(), [](pair<const FIdentifier, shared_ptr<Function> >& m) {
+	m.second->db_expunge();
+      });
 }

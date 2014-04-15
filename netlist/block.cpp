@@ -412,6 +412,12 @@ void netlist::Block::db_register(int) {
       m.second->db_register(1);
     });
   for_each(statements.begin(), statements.end(), [](shared_ptr<NetComp>& m) {m->db_register(1);});
+  for_each(db_instance.begin(), db_instance.end(), [](pair<const IIdentifier, shared_ptr<Instance> >& m) {
+	m.second->db_register(1);
+      });
+  for_each(db_func.begin(), db_func.end(), [](pair<const FIdentifier, shared_ptr<Function> >& m) {
+	m.second->db_register(1);
+      });
 }
 
 void netlist::Block::db_expunge() {
@@ -419,6 +425,12 @@ void netlist::Block::db_expunge() {
       m.second->db_expunge();
     });
   for_each(statements.begin(), statements.end(), [](shared_ptr<NetComp>& m) {m->db_expunge();});
+  for_each(db_instance.begin(), db_instance.end(), [](pair<const IIdentifier, shared_ptr<Instance> >& m) {
+	m.second->db_expunge();
+      });
+  for_each(db_func.begin(), db_func.end(), [](pair<const FIdentifier, shared_ptr<Function> >& m) {
+	m.second->db_expunge();
+      });
 }
 
 bool netlist::Block::elaborate(std::set<shared_ptr<NetComp> >&,
