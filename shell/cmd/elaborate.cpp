@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -202,9 +202,15 @@ bool shell::CMD::CMDElaborate::exec (const std::string& str, Env * pEnv){
     }
   }
 
+  //std::cout << "---------- Design before copy ---------" << std::endl;
+  //std::cout << *tarDesign ;
+
   // duplicate the design
   shared_ptr<netlist::Module> mDesign(tarDesign->deep_copy());
   
+  //std::cout << "+++++++++ Design after copy ++++++++++ " << std::endl;
+  //std::cout << *mDesign ;
+
   // check and extract parameters
   string pstr;
   if(arg.pvPara.size()) {
@@ -245,6 +251,9 @@ bool shell::CMD::CMDElaborate::exec (const std::string& str, Env * pEnv){
     shared_ptr<netlist::Module> curDgn = moduleQueue.front();
     moduleQueue.pop_front();
     
+    //std::cout << "------ Module Elaboration [Before calculate name] ----------" << std::endl;
+    //std::cout << *curDgn;
+
     // get the updated module name
     curDgn->calculate_name(newName);
     
@@ -266,12 +275,18 @@ bool shell::CMD::CMDElaborate::exec (const std::string& str, Env * pEnv){
     
     // update the design name
     curDgn->set_name(newName);
-    
+
+    //std::cout << "------ Module Elaboration [After calculate name] ----------" << std::endl;
+    //std::cout << *curDgn; 
+
     // elaborate it;
     if(!curDgn->elaborate(moduleQueue, moduleMap)) {
       //gEnv.stdOs << *curDgn;
       return false;
     }
+    
+    //std::cout << "------ Module Elaboration [After elaboration] ----------" << std::endl;
+    //std::cout << *curDgn; 
     
   }
   

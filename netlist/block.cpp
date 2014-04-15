@@ -386,7 +386,11 @@ Block* netlist::Block::deep_copy() const {
   rv->unnamed_block = unnamed_block;
   rv->unnamed_instance = unnamed_instance;
   rv->unnamed_var = unnamed_var;
-  
+ 
+  // special components in Blocks
+  DATABASE_DEEP_COPY_FUN(db_instance,  IIdentifier,  Instance,  rv->db_instance );
+  DATABASE_DEEP_COPY_FUN(db_func,      FIdentifier,  Function,  rv->db_func     );
+
   rv->set_father();
   rv->elab_inparse();
   return rv;

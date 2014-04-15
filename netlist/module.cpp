@@ -195,13 +195,10 @@ Module* netlist::Module::deep_copy() const {
   DATABASE_DEEP_COPY_FUN(db_port,      VIdentifier,  Port,      rv->db_port     );
   DATABASE_DEEP_COPY_FUN(db_param,     VIdentifier,  Variable,  rv->db_param    );
   DATABASE_DEEP_COPY_FUN(db_instance,  IIdentifier,  Instance,  rv->db_instance );
+  DATABASE_DEEP_COPY_FUN(db_func,      FIdentifier,  Function,  rv->db_func     );
   
   // set father
   rv->set_father();
-
-  // SDFG
-  rv->DFG = DFG;
-  rv->RRG = RRG;
 
   return rv;
 }
