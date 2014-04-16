@@ -128,6 +128,10 @@ ERR_DEFINE("ELAB-FOR-4",
            EError,   1,
            "cannot evaluate the increment assignment \"%1%\" of the for statement");
 
+ERR_DEFINE("ELAB-FOR-5",
+           EError,   0,
+           "define functions in a for statement is not supported yet.");
+
 ERR_DEFINE("ELAB-IF-0", 
            EError,   0, 
            "illegal place for an if statement.");

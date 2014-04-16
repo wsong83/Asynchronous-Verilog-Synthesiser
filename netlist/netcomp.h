@@ -135,7 +135,8 @@ namespace netlist{
     virtual void db_expunge();
     virtual bool elaborate(std::set<boost::shared_ptr<NetComp> >&,
                            std::map<boost::shared_ptr<NetComp>, std::list<boost::shared_ptr<NetComp> > >&);
-    virtual void unfold(NetComp *);
+    // unfold for before elaboration
+    virtual void unfold();
     virtual unsigned int get_width() const;
     virtual void set_width(const unsigned int&);
     virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>);

@@ -29,6 +29,8 @@
 #include "component.h"
 #include "shell/env.h"
 #include <algorithm>
+#include <map>
+#include <boost/foreach.hpp>
 
 using namespace netlist;
 using std::ostream;
@@ -38,6 +40,7 @@ using shell::location;
 using std::vector;
 using std::list;
 using std::map;
+using std::pair;
 
 netlist::ForState::ForState(
                             const shared_ptr<Assign>& init,
@@ -166,6 +169,91 @@ bool netlist::ForState::elaborate(std::set<shared_ptr<NetComp> >& to_del,
   to_del.insert(get_sp());
 
   return true;
+}
+
+void netlist::ForState::unfold() {
+  // set up the initial assignment
+  if(!init) {
+    G_ENV->error(loc, "ELAB-FOR-0");
+    return;
+  } else if(!init->rexp->is_valuable()) {
+    G_ENV->error(init->loc, "ELAB-FOR-1", toString(*(init->rexp)));
+    return;
+  } else if(init->lval->size() != 1) {
+    G_ENV->error(init->loc, "ELAB-FOR-2", toString(*(init->lval)));
+    return;
+  }
+
+  VIdentifier& var = init->lval->front();
+  Number num = init->rexp->get_value();
+  
+  // unfold the for statement
+  shared_ptr<Expression> m_cond(cond->deep_copy());
+  m_cond->replace_variable(var, num);
+  m_cond->reduce();
+  if(!m_cond->is_valuable()) {
+    G_ENV->error(cond->loc, "ELAB-FOR-3", toString(*cond));
+    return;
+  }
+
+  // the new body
+  shared_ptr<Block> newBody(new Block(body->loc, body->name));
+  newBody->set_father(father);
+  bool body_named = body->is_named();
+  string namePrefix = body->name.name;
+
+  while(m_cond->get_value().is_true()) {
+    // replace variable in the body
+    shared_ptr<Block> m_blk(body->deep_copy());
+    m_blk->replace_variable(var, num);
+
+    // set up the new names for instances
+    if(body_named) {
+      // define functions in a named for loop is not supported
+      if(m_blk->db_func.size())
+	G_ENV->error(m_blk->loc, "ELAB-FOR-5");
+
+      if(m_blk->db_instance.size()) { // rename module instances
+	// prepare the prefix for this iteration
+	string locPrefix = namePrefix + num.get_value().get_str(10) + ".";
+
+	// set/map to store the old and new instances
+	std::set<IIdentifier> to_del;
+	map<IIdentifier, shared_ptr<Instance> > to_add;
+	// rename the instances
+	for_each(m_blk->db_instance.begin_order(), m_blk->db_instance.end_order(),
+		 [&](pair<const IIdentifier, shared_ptr<Instance> >& inst) {
+		     inst.second->name.add_prefix(locPrefix);
+		     to_add[inst.second->name] = inst.second;
+		     to_del.insert(inst.first);
+		   });
+      }
+    }
+
+    // copy the statements in the body to the new body
+    
+
+    // increment
+    if(!incr || incr->lval->size() != 1 || incr->lval->front() != var) {
+      G_ENV->error(cond->loc, "ELAB-FOR-4", toString(*incr));
+      return;
+    }
+    shared_ptr<Assign> m_incr(incr->deep_copy());
+    m_incr->rexp->replace_variable(var, num);
+    m_incr->rexp->reduce();
+    if(!m_incr->rexp->is_valuable()) {
+      G_ENV->error(cond->loc, "ELAB-FOR-4", toString(*incr));
+      return;
+    }
+    
+    // update num
+    num = m_incr->rexp->get_value();
+    m_cond.reset(cond->deep_copy());
+    m_cond->replace_variable(var, num);
+    m_cond->reduce();
+  }
+
+
 }
 
 void netlist::ForState::replace_variable(const VIdentifier& var, const Number& num) {
