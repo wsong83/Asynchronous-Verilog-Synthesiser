@@ -57,6 +57,7 @@ namespace netlist {
     // build up the internal databases
     virtual void elab_inparse(); /* resolve the content in statements during parsing */
     /* elaborate the design */
+    virtual void unfold(NetComp *);	// unfold for loops in block and generate blocks
     bool elaborate(std::deque<boost::shared_ptr<Module> >&,
                    std::map<MIdentifier, boost::shared_ptr<Module> > &); 
     virtual boost::shared_ptr<NetComp> get_sp();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -108,6 +108,11 @@ bool netlist::NetComp::elaborate(std::set<shared_ptr<NetComp> >&,
   std::cerr << "ERROR!!, the elaborate() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << endl;
   assert(0 == "elaborate() of NetComp is used");
   return false;
+}
+
+void netlist::NetComp::unfold(NetComp *) {
+  std::cerr << "ERROR!! the unfold() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << endl;
+  assert(0 == "unfold() of NetComp is used");
 }
 
 unsigned int netlist::NetComp::get_width() const {
