@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2013-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -59,7 +59,7 @@ void netlist::FuncCall::set_father(Block *pf) {
 
 ostream& netlist::FuncCall::streamout(ostream& os, unsigned int indent) const {
   os << string(indent, ' ');
-  os << fname.name << "(";
+  os << fname.get_name() << "(";
   int i = 0;
   int s = args.size() - 1;
   BOOST_FOREACH(shared_ptr<Expression> arg, args) {
@@ -70,9 +70,9 @@ ostream& netlist::FuncCall::streamout(ostream& os, unsigned int indent) const {
   return os;
 }
 
-FuncCall* netlist::FuncCall::deep_copy() const {
-  FuncCall* rv = new FuncCall();
-  rv->loc = loc;
+FuncCall* netlist::FuncCall::deep_copy(FuncCall* rv) const {
+  if(!rv) rv = new FuncCall();
+  NetComp::deep_copy(rv);
   rv->fname = fname;
   rv->valuable = valuable;
   BOOST_FOREACH(shared_ptr<Expression> arg, args) 

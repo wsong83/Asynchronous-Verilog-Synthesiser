@@ -344,30 +344,30 @@ module_declaration
     : "module" module_identifier ';' module_items "endmodule"                   
     {
       shared_ptr<Module> m(new Module(@$, $2, $4));
-      if(!Lib.insert(m)) av_env.error(@$, "SYN-MODULE-0", $2.name); 
-      av_env.error("SYN-MODULE-3", m->name.name, Lib.name);
+      if(!Lib.insert(m)) av_env.error(@$, "SYN-MODULE-0", $2.get_name()); 
+      av_env.error("SYN-MODULE-3", m->name.get_name(), Lib.name);
       //cout<< *m;
     }
     | "module" module_identifier '(' ')' ';' module_items "endmodule"                   
     {
       shared_ptr<Module> m(new Module(@$, $2, $6));
-      if(!Lib.insert(m)) av_env.error(@$, "SYN-MODULE-0", $2.name); 
-      av_env.error("SYN-MODULE-3", m->name.name, Lib.name);
+      if(!Lib.insert(m)) av_env.error(@$, "SYN-MODULE-0", $2.get_name()); 
+      av_env.error("SYN-MODULE-3", m->name.get_name(), Lib.name);
       //cout<< *m;
     }
     | "module" module_identifier '(' list_of_port_identifiers ')' ';' module_items "endmodule"
     { 
       shared_ptr<Module> m(new Module(@$, $2, $4, $7));
-      if(!Lib.insert(m)) av_env.error(@$, "SYN-MODULE-0", $2.name); 
-      av_env.error("SYN-MODULE-3", m->name.name, Lib.name);
+      if(!Lib.insert(m)) av_env.error(@$, "SYN-MODULE-0", $2.get_name()); 
+      av_env.error("SYN-MODULE-3", m->name.get_name(), Lib.name);
       //cout<< *m;
     }
     | "module" module_identifier '#' '(' parameter_declaration ')' '(' list_of_port_identifiers ')' ';'
       module_items "endmodule"
     {
       shared_ptr<Module> m(new Module(@$, $2, $5, $8, $11));
-      if(!Lib.insert(m)) av_env.error(@$, "SYN-MODULE-0", $2.name); 
-      av_env.error("SYN-MODULE-3", m->name.name, Lib.name);
+      if(!Lib.insert(m)) av_env.error(@$, "SYN-MODULE-0", $2.get_name()); 
+      av_env.error("SYN-MODULE-3", m->name.get_name(), Lib.name);
       //cout<< *m;
     }
     ;

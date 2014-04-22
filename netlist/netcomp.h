@@ -120,7 +120,7 @@ namespace netlist{
     // the internal stream out method, to avoid friend declarations
     virtual std::ostream& streamout (std::ostream& os, unsigned int) const;    
     // deep copy when the content of a shared_ptr must be duplicated
-    virtual NetComp* deep_copy() const;
+    virtual NetComp* deep_copy( NetComp * rv) const;
     // set the father block pointer
     virtual void set_father(Block* pf);
     // get the hierarchy name

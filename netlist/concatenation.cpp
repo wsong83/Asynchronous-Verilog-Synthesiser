@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -131,9 +131,9 @@ ostream& netlist::ConElem::streamout(ostream& os, unsigned int indent) const {
   return os;
 }
 
-ConElem* netlist::ConElem::deep_copy() const {
-  ConElem* rv = new ConElem();
-  rv->loc = loc;
+ConElem* netlist::ConElem::deep_copy(ConElem * rv) const {
+  if(!rv) rv = new ConElem();
+  NetComp::deep_copy(rv);
   rv->exp = shared_ptr<Expression>(exp->deep_copy());
   BOOST_FOREACH(shared_ptr<ConElem> ce, con) {
     rv->con.push_back(shared_ptr<ConElem>(ce->deep_copy()));
@@ -320,9 +320,9 @@ void netlist::Concatenation::db_expunge() {
   BOOST_FOREACH(shared_ptr<ConElem> d, data) d->db_expunge();
 }
 
-Concatenation* netlist::Concatenation::deep_copy() const {
-  Concatenation* rv = new Concatenation();
-  rv->loc = loc;
+Concatenation* netlist::Concatenation::deep_copy(Concatenation* rv) const {
+  if(!rv) rv = new Concatenation();
+  NetComp::deep_copy(rv);
   BOOST_FOREACH(const shared_ptr<ConElem>& m, data)
     rv->data.push_back(shared_ptr<ConElem>(m->deep_copy()));
   return rv;

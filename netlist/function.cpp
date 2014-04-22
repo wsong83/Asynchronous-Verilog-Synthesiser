@@ -155,20 +155,9 @@ ostream& netlist::Function::streamout(ostream& os, unsigned int indent, bool fl_
   return os;
 }
  
-Function* netlist::Function::deep_copy() const {
-  Function* rv = new Function();
-  
-  rv->loc = loc;
-  rv->name = name;
-  rv->named = named;
-
-  // data in Block
-  BOOST_FOREACH(const shared_ptr<NetComp>& comp, statements)
-    rv->statements.push_back(shared_ptr<NetComp>(comp->deep_copy()));
-  DATABASE_DEEP_COPY_FUN(db_var,      VIdentifier, Variable,  rv->db_var       );
-  rv->unnamed_block = unnamed_block;
-  rv->unnamed_instance = unnamed_instance;
-  rv->unnamed_var = unnamed_var;
+Function* netlist::Function::deep_copy(Function* rv) const {
+  if(!rv) rv = new Function();
+  Block::deep_copy(rv);
 
   // data in Function
   rv->fname = fname;

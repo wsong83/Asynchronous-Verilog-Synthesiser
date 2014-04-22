@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -57,7 +57,7 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
-    virtual ConElem* deep_copy() const;
+    virtual ConElem* deep_copy(ConElem *) const;
     NETLIST_DB_DECL;
     NETLIST_REPLACE_VARIABLE;
     void replace_variable(const VIdentifier&, boost::shared_ptr<Expression>); // replace a vid with an expression     
@@ -91,7 +91,7 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
-    virtual Concatenation* deep_copy() const;
+    virtual Concatenation* deep_copy(Concatenation *) const;
     NETLIST_DB_DECL;
     NETLIST_REPLACE_VARIABLE;
     void replace_variable(const VIdentifier&, boost::shared_ptr<Expression>); // replace a vid with an expression 

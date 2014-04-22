@@ -49,10 +49,10 @@ namespace netlist {
     NETLIST_SET_FATHER_DECL;
     void hash_update();			   /* update the nearly unique hash id */
     virtual std::string get_name() const { return name; }
-    virtual void set_name(std::string& newName) { name = newName; hash_update(); }
+    virtual void set_name(const std::string& newName) { name = newName; hash_update(); }
     virtual std::string get_suffix() const;
     virtual bool replace_suffix(const std::string& newSuffix);
-    virtual void add_suffix(const std::string7 newSuffix);
+    virtual void add_suffix(const std::string& newSuffix);
     virtual void suffix_increase();
     virtual void add_prefix(const std::string& prefix);
 
