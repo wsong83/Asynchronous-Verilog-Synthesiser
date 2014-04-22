@@ -55,7 +55,7 @@ netlist::Range::Range(const location& lloc, const mpz_class& rl, const mpz_class
 netlist::Range::Range(const shared_ptr<Expression>& sel)
   : NetComp(tRange), dim(false), rtype(TR_Var) 
 { 
-  shared_ptr<Expression> m(sel->deep_copy());
+  shared_ptr<Expression> m(sel->deep_copy(NULL));
   m->reduce();
   if(m->is_valuable()) {	// constant expression, value it now
     c = m->get_value().get_value();
@@ -68,7 +68,7 @@ netlist::Range::Range(const shared_ptr<Expression>& sel)
 netlist::Range::Range(const location& lloc, const shared_ptr<Expression>& sel)
   : NetComp(tRange, lloc), dim(false), rtype(TR_Var) 
 { 
-  shared_ptr<Expression> m(sel->deep_copy());
+  shared_ptr<Expression> m(sel->deep_copy(NULL));
   m->reduce();
   if(m->is_valuable()) {	// constant expression, value it now
     c = m->get_value().get_value();
@@ -81,7 +81,7 @@ netlist::Range::Range(const location& lloc, const shared_ptr<Expression>& sel)
 netlist::Range::Range(const Range_Exp& sel, bool dimm)
   : NetComp(tRange), dim(dimm), rtype(TR_Range) 
 { 
-  Range_Exp m(shared_ptr<Expression>(sel.first->deep_copy()), shared_ptr<Expression>(sel.second->deep_copy()));
+  Range_Exp m(shared_ptr<Expression>(sel.first->deep_copy(NULL)), shared_ptr<Expression>(sel.second->deep_copy(NULL)));
   m.first->reduce();
   m.second->reduce();
   if(*(m.first) == *(m.second)) {	// only one bit is selected
@@ -106,7 +106,7 @@ netlist::Range::Range(const Range_Exp& sel, bool dimm)
 netlist::Range::Range(const location& lloc, const Range_Exp& sel, bool dimm)
   : NetComp(tRange, lloc), dim(dimm), rtype(TR_Range) 
 { 
-  Range_Exp m(shared_ptr<Expression>(sel.first->deep_copy()), shared_ptr<Expression>(sel.second->deep_copy()));
+  Range_Exp m(shared_ptr<Expression>(sel.first->deep_copy(NULL)), shared_ptr<Expression>(sel.second->deep_copy(NULL)));
   m.first->reduce();
   m.second->reduce();
   if(*(m.first) == *(m.second)) {	// only one bit is selected
@@ -131,16 +131,16 @@ netlist::Range::Range(const location& lloc, const Range_Exp& sel, bool dimm)
 netlist::Range::Range(const Range_Exp& sel, int updown)
   : NetComp(tRange), dim(false), rtype(TR_Range)
 {
-  shared_ptr<Expression> first(sel.first->deep_copy());
+  shared_ptr<Expression> first(sel.first->deep_copy(NULL));
   Range_Exp m_sel;
   if(updown == 1) { // positive colon
     Expression constOne(Number(1));
     *first+*(sel.second) - constOne;
     m_sel.first = first;
-    m_sel.second.reset(sel.first->deep_copy());
+    m_sel.second.reset(sel.first->deep_copy(NULL));
   } else if(updown == -1){ // negtive colon
     Expression constOne(Number(1));
-    m_sel.first.reset(sel.first->deep_copy());
+    m_sel.first.reset(sel.first->deep_copy(NULL));
     (*first - *(sel.second)) + constOne;
     m_sel.second = first;
   } else {
@@ -170,16 +170,16 @@ netlist::Range::Range(const Range_Exp& sel, int updown)
 netlist::Range::Range(const location& lloc, const Range_Exp& sel, int updown)
   : NetComp(tRange, lloc), dim(false), rtype(TR_Range)
 {
-  shared_ptr<Expression> first(sel.first->deep_copy());
+  shared_ptr<Expression> first(sel.first->deep_copy(NULL));
   Range_Exp m_sel;
   if(updown == 1) { // positive colon
     Expression constOne(Number(1));
     (*first+*(sel.second)) - constOne;
     m_sel.first = first;
-    m_sel.second.reset(sel.first->deep_copy());
+    m_sel.second.reset(sel.first->deep_copy(NULL));
   } else if(updown == -1){ // negtive colon
     Expression constOne(Number(1));
-    m_sel.first.reset(sel.first->deep_copy());
+    m_sel.first.reset(sel.first->deep_copy(NULL));
     (*first - *(sel.second)) + constOne;
     m_sel.second = first;
   } else {
@@ -703,12 +703,14 @@ ostream& netlist::Range::streamout(ostream& os, unsigned int indent) const {
   return streamout(os, indent, "");
 }
 
-Range* netlist::Range::deep_copy() const {
-  Range* rv = new Range();
+Range* netlist::Range::deep_copy(Range *rv) const {
+  if(!rv) rv = new Range();
+  NetComp::deep_copy(rv);
+  RangeArrayCommon::deep_copy(rv);
   switch(rtype) {
   case TR_Const: rv->c = c; break;
-  case TR_Var: rv->v = shared_ptr<Expression>(v->deep_copy()); break;
-  case TR_Range: rv->r = Range_Exp(shared_ptr<Expression>(r.first->deep_copy()), shared_ptr<Expression>(r.second->deep_copy())); break;
+  case TR_Var: rv->v = shared_ptr<Expression>(v->deep_copy(NULL)); break;
+  case TR_Range: rv->r = Range_Exp(shared_ptr<Expression>(r.first->deep_copy(NULL)), shared_ptr<Expression>(r.second->deep_copy(NULL))); break;
   case TR_CRange: rv->cr = cr; break;
   case TR_Empty: break;
   default: // should not go here
@@ -716,9 +718,6 @@ Range* netlist::Range::deep_copy() const {
   }
   rv->dim = dim;
   rv->rtype = rtype;
-  rv->child = RangeArrayCommon::deep_copy();
-  rv->loc = loc;
-  rv->width = width;
   return rv;
 }
 

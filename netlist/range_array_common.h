@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -71,6 +71,7 @@ namespace netlist {
     // inherit from NetComp, actually not
     NETLIST_SET_FATHER_DECL;
     std::list<boost::shared_ptr<Range> > deep_copy() const;
+    void deep_copy(RangeArrayCommon *) const;
     NETLIST_DB_DECL;
     unsigned int get_width(const Range&) const; // considering child
     unsigned int get_width(const Range&); // considering child

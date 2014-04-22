@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -113,7 +113,7 @@ RangeArray netlist::RangeArray::const_copy(const RangeArray& maxRange) const {
 RangeArray netlist::RangeArray::deep_object_copy() const {
   RangeArray rv;
   for_each(child.begin(), child.end(), [&](const shared_ptr<Range>& m) {
-      rv.child.push_back(shared_ptr<Range>(m->deep_copy()));
+      rv.child.push_back(shared_ptr<Range>(m->deep_copy(NULL)));
     });
   rv.const_reduced = const_reduced;
   rv.width = width;
@@ -199,13 +199,11 @@ ostream& RangeArray::streamout (ostream& os, unsigned int indent) const {
   return RangeArrayCommon::streamout(os, indent, "");
 }
 
-RangeArray* netlist::RangeArray::deep_copy() const {
-  RangeArray* rv = new RangeArray();
-  for_each(child.begin(), child.end(), [&](const shared_ptr<Range>& m) {
-      rv->child.push_back(shared_ptr<Range>(m->deep_copy()));
-    });
+RangeArray* netlist::RangeArray::deep_copy(RangeArray *rv) const {
+  if(!rv) rv = new RangeArray();
+  NetComp::deep_copy(rv);
+  RangeArrayCommon::deep_copy(rv);
   rv->const_reduced = const_reduced;
-  rv->width = width;
   return rv;
 }
 
