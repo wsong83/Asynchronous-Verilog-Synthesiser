@@ -47,7 +47,7 @@ using std::vector;
 using boost::shared_ptr;
 using shell::location;
 using std::pair;
-using boost::lexical_cast
+using boost::lexical_cast;
 
 ////////////////////////////// Base class /////////////////
 netlist::Identifier::Identifier() : numbered(false) {}
@@ -85,6 +85,15 @@ void netlist::Identifier::set_father(Block *pf) {
   father = pf;
 }
 
+Identifier* netlist::Identifier::deep_copy(Identifier *rv) const {
+  if(!rv) rv = new Identifier();
+  NetComp::deep_copy(rv);
+  rv->name = name;
+  rv->hashid = hashid;
+  rv->numbered = numbered;
+  return rv;
+}
+
 void netlist::Identifier::hash_update() {
   boost::hash<string> s2i;
   hashid = s2i(name);
@@ -116,7 +125,7 @@ void netlist::Identifier::add_suffix(const string& newSuffix) {
   set_name(name + "_" + newSuffix);
 }
 
-void netlist::Identifer::suffix_increase () {
+void netlist::Identifier::suffix_increase () {
   string oldSuffix = get_suffix();
   if(oldSuffix.size()) {	// already has a suffix
     string newSuffix = "_" + lexical_cast<string>(atoi(oldSuffix.c_str())+1);
@@ -126,7 +135,7 @@ void netlist::Identifer::suffix_increase () {
   }
 }
 
-void add_prefix(const string& newPrefix) {
+void netlist::Identifier::add_prefix(const string& newPrefix) {
   set_name(newPrefix + "." + name);
 }
 
@@ -165,6 +174,7 @@ netlist::BIdentifier::BIdentifier(const averilog::avID &id)
 netlist::BIdentifier::BIdentifier(const location& lloc, const averilog::avID &id)
   : Identifier(tBlockName, lloc, id.name), anonymous(false) {  }
 
+/*
 BIdentifier& netlist::BIdentifier::operator++ () {
   if(!anonymous) return *this;	// named block idenitifers cannot slef-increase
 
@@ -175,6 +185,7 @@ BIdentifier& netlist::BIdentifier::operator++ () {
   set_name(newName);  
   return *this;
 }
+*/
 
 //////////////////////////////// Function identifier /////////////////
 netlist::FIdentifier::FIdentifier() : Identifier(NetComp::tFuncName) { }
@@ -410,8 +421,9 @@ void netlist::VIdentifier::db_expunge() {
   m_select.db_expunge();
 }
 
-VIdentifier* netlist::VIdentifier::deep_copy() const {
-  VIdentifier* rv = Identifier::deep_copy();
+VIdentifier* netlist::VIdentifier::deep_copy(VIdentifier *rv) const {
+  if(!rv) rv = new VIdentifier();
+  Identifier::deep_copy(rv);
   rv->value = this->value;
   rv->uid = 0;                  // unregistered
   rv->m_range = m_range.deep_object_copy();

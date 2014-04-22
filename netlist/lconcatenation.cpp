@@ -105,12 +105,12 @@ ostream& netlist::LConcatenation::streamout(ostream& os, unsigned int indent) co
   return os;
 }
 
-LConcatenation* netlist::LConcatenation::deep_copy() const {
-  LConcatenation* rv = new LConcatenation();
-  rv->loc = loc;
+LConcatenation* netlist::LConcatenation::deep_copy(LConcatenation *rv) const {
+  if(!rv) rv = new LConcatenation();
+  NetComp::deep_copy(rv);
   rv->valid = valid;
   BOOST_FOREACH(const VIdentifier& m, data) {
-    VIdentifier* mp = m.deep_copy();
+    VIdentifier* mp = m.deep_copy(NULL);
     rv->data.push_back(*mp);
     delete mp;
   }
@@ -128,7 +128,7 @@ void netlist::LConcatenation::db_expunge() {
 shared_ptr<SDFG::RTree> netlist::LConcatenation::get_rtree() const {
   shared_ptr<SDFG::RTree> rv(new SDFG::RTree(false));
   BOOST_FOREACH(const VIdentifier& m, data) {
-    rv->add_tree(m.get_select().get_rtree(), m.name, SDFG::dfgEdge::SDFG_ADR); 
+    rv->add_tree(m.get_select().get_rtree(), m.get_name(), SDFG::dfgEdge::SDFG_ADR); 
   }
   return rv;
 }
