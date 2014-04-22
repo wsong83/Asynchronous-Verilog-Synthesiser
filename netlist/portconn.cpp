@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -95,14 +95,14 @@ void netlist::PortConn::set_father(Block* pf) {
   var.set_father(pf);
 }
 
-PortConn* netlist::PortConn::deep_copy() const {
-  PortConn* rv = new PortConn();
-  rv->loc = loc;
+PortConn* netlist::PortConn::deep_copy(PortConn *rv) const {
+  if(!rv) rv = new PortConn();
+  NetComp::deep_copy(rv);
   rv->pname = pname;
   rv->named = named;
   rv->dir = dir;
-  if(exp.use_count() != 0) rv->exp.reset(exp->deep_copy());
-  VIdentifier *pm = var.deep_copy();
+  if(exp.use_count() != 0) rv->exp.reset(exp->deep_copy(NULL));
+  VIdentifier *pm = var.deep_copy(NULL);
   rv->var = *pm;
   delete pm;
   rv->num = num;
@@ -132,7 +132,7 @@ void netlist::PortConn::replace_variable(const VIdentifier& v, const VIdentifier
     exp->replace_variable(v, nvar); break;
   case CVAR:
     if(var == v) {
-      var.name = nvar.name;
+      var.set_name(nvar.get_name());
     } else {
       var.replace_variable(v, nvar);
     }
@@ -197,7 +197,7 @@ bool netlist::PortConn::elaborate(std::set<shared_ptr<NetComp> >&,
 }
 
 std::ostream& netlist::PortConn::streamout (std::ostream& os, unsigned int) const {
-  if(named) os << "." << pname.name << "(";
+  if(named) os << "." << pname.get_name() << "(";
   switch(type) {
   case CEXP: os << *exp; break;
   case CVAR: os << var; break;
@@ -251,13 +251,13 @@ void netlist::ParaConn::set_father(Block* pf) {
   var.set_father(pf);
 }
 
-ParaConn* netlist::ParaConn::deep_copy() const {
-  ParaConn* rv = new ParaConn();
-  rv->loc = loc;
+ParaConn* netlist::ParaConn::deep_copy(ParaConn *rv) const {
+  if(!rv) rv = new ParaConn();
+  NetComp::deep_copy(rv);
   rv->pname = pname;
   rv->named = named;
-  if(exp.use_count() != 0) rv->exp.reset(exp->deep_copy());
-  VIdentifier *pm = var.deep_copy();
+  if(exp.use_count() != 0) rv->exp.reset(exp->deep_copy(NULL));
+  VIdentifier *pm = var.deep_copy(NULL);
   rv->var = *pm;
   delete pm;
   rv->num = num;
@@ -333,7 +333,7 @@ void netlist::ParaConn::replace_variable(const VIdentifier& v, const VIdentifier
     exp->replace_variable(v, nvar); break;
   case CVAR:
     if(var == v) {
-      var.name = nvar.name;
+      var.set_name(nvar.get_name());
     } else {
       var.replace_variable(v, nvar);
     }
@@ -343,7 +343,7 @@ void netlist::ParaConn::replace_variable(const VIdentifier& v, const VIdentifier
 }
 
 std::ostream& netlist::ParaConn::streamout (std::ostream& os, unsigned int) const {
-  if(named) os << "." << pname.name << "(";
+  if(named) os << "." << pname.get_name() << "(";
   switch(type) {
   case CEXP: os << *exp; break;
   case CVAR: os << var; break;

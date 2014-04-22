@@ -43,10 +43,10 @@ using std::map;
 using std::list;
 
 netlist::Port::Port(const VIdentifier& pid)
-  : NetComp(tPort), name(*(pid.deep_copy())), ptype(0), dir(-2), signed_flag(false) {}
+  : NetComp(tPort), name(*(pid.deep_copy(NULL))), ptype(0), dir(-2), signed_flag(false) {}
 
 netlist::Port::Port(const location& lloc, const VIdentifier& pid)
-  : NetComp(tPort, lloc), name(*(pid.deep_copy())), ptype(0), dir(-2), signed_flag(false) {}
+  : NetComp(tPort, lloc), name(*(pid.deep_copy(NULL))), ptype(0), dir(-2), signed_flag(false) {}
 
 netlist::Port::Port(const location& lloc)
   : NetComp(tPort, lloc), ptype(0), dir(-2), signed_flag(false) {}
@@ -73,7 +73,7 @@ bool netlist::Port::elaborate(std::set<shared_ptr<NetComp> >&,
 }
 
 shared_ptr<Expression> netlist::Port::get_combined_expression(const VIdentifier& target, std::set<string> s_set) {
-  shared_ptr<SDFG::dfgNode> pnode = get_module()->DFG->get_node(target.name);
+  shared_ptr<SDFG::dfgNode> pnode = get_module()->DFG->get_node(target.get_name());
   shared_ptr<Expression> rv(new Expression(target));
   assert(pnode);
   bool found_source = false;
@@ -109,7 +109,7 @@ shared_ptr<Expression> netlist::Port::get_combined_expression(const VIdentifier&
   }
   assert(pnode);
   if(pnode->type & SDFG::dfgNode::SDFG_LATCH) {
-    G_ENV->error("ANA-SSA-1", pnode->get_full_name(), get_module()->DFG->get_node(target.name)->get_full_name());
+    G_ENV->error("ANA-SSA-1", pnode->get_full_name(), get_module()->DFG->get_node(target.get_name())->get_full_name());
   }
   if(s_set.count(pnode->get_full_name())) {
     G_ENV->error("ANA-SSA-2", pnode->get_full_name());
@@ -134,13 +134,15 @@ shared_ptr<Expression> netlist::Port::get_combined_expression(const VIdentifier&
   return rv;
 }
 
-Port* netlist::Port::deep_copy() const {
-  Port *rv = new Port(loc);
-  VIdentifier *mname = name.deep_copy();
+Port* netlist::Port::deep_copy(Port *rv) const {
+  if(!rv) rv = new Port(loc);
+  NetComp::deep_copy(rv);
+  VIdentifier *mname = name.deep_copy(NULL);
   rv->name = *mname;
   delete mname;
   rv->dir = dir;
   rv->ptype = ptype;
+  rv->signed_flag = signed_flag;
   return rv;
 }      
 
@@ -157,7 +159,7 @@ ostream& netlist::Port::streamout(ostream& os, unsigned int indent) const {
 
   if(signed_flag) os << "signed ";
   name.get_range().RangeArrayCommon::streamout(os, 0, "", true, false); // show range of declaration 
-  name.get_range().RangeArrayCommon::streamout(os, 1, name.name, true, true); // show dimension of declaration
+  name.get_range().RangeArrayCommon::streamout(os, 1, name.get_name(), true, true); // show dimension of declaration
   os << ";" << endl;
 
   return os;

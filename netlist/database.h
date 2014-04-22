@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -244,10 +244,10 @@ namespace netlist {
 {                                                                                  \
   std::map<K, boost::shared_ptr<T> >::const_iterator it, end;                      \
   for(it=DN.begin(), end=DN.end(); it!=end; it++)                                  \
-    R.insert(it->first, boost::shared_ptr<T>(it->second->deep_copy()));            \
+    R.insert(it->first, boost::shared_ptr<T>(it->second->deep_copy(NULL)));        \
   std::list<std::pair<const K, boost::shared_ptr<T> > >::const_iterator oit, oend; \
   for(oit=DN.begin_order(), oend=DN.end_order(); oit!=oend; oit++)                 \
-    R.insert(oit->first, boost::shared_ptr<T>(oit->second->deep_copy()));          \
+    R.insert(oit->first, boost::shared_ptr<T>(oit->second->deep_copy(NULL)));      \
 }
 #endif
 
