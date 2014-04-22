@@ -33,7 +33,7 @@
 
 namespace netlist {
 
-  class ConElem {               /* element of a concatenation */
+  class ConElem : public NetComp {               /* element of a concatenation */
     /* A concatenation is a list<ConElem>
      * while every element is <exprssion, concatenation>,
      * representing something like {3{a,b}},
@@ -66,7 +66,6 @@ namespace netlist {
 
     boost::shared_ptr<Expression> exp;
     std::list<boost::shared_ptr<ConElem> > con;
-    shell::location loc;
     Block* father;
     unsigned int width;
 

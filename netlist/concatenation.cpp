@@ -40,22 +40,22 @@ using boost::shared_ptr;
 using std::list;
 using std::for_each;
 
-netlist::ConElem::ConElem() : father(NULL), width(0) {}
+netlist::ConElem::ConElem() : NetComp(tConElem), father(NULL), width(0) {}
 
-netlist::ConElem::ConElem(const shell::location& lloc) : loc(lloc), father(NULL), width(0){}
+netlist::ConElem::ConElem(const shell::location& lloc) : NetComp(tConElem, lloc), father(NULL), width(0){}
 
 netlist::ConElem::ConElem(const shared_ptr<Expression>& expr, const list<shared_ptr<ConElem> >& elems)
-  : exp(expr), con(elems), father(NULL), width(0) {}
+  : NetComp(tConElem), exp(expr), con(elems), father(NULL), width(0) {}
 
 netlist::ConElem::ConElem(const shell::location& lloc, const shared_ptr<Expression>& expr, 
                           const list<shared_ptr<ConElem> >& elems)
-  : exp(expr), con(elems), loc(lloc), father(NULL), width(0) {}
+  : NetComp(tConElem, lloc), exp(expr), con(elems), father(NULL), width(0) {}
 
 netlist::ConElem::ConElem(const shared_ptr<Expression>& expr)
-  : exp(expr), father(NULL), width(0) {}
+  : NetComp(tConElem), exp(expr), father(NULL), width(0) {}
 
 netlist::ConElem::ConElem(const shell::location& lloc, const shared_ptr<Expression>& expr)
-  : exp(expr), loc(lloc), father(NULL), width(0) {}
+  : NetComp(tConElem, lloc), exp(expr), father(NULL), width(0) {}
 
 void netlist::ConElem::reduce() {
   exp->reduce();
@@ -134,9 +134,9 @@ ostream& netlist::ConElem::streamout(ostream& os, unsigned int indent) const {
 ConElem* netlist::ConElem::deep_copy(ConElem * rv) const {
   if(!rv) rv = new ConElem();
   NetComp::deep_copy(rv);
-  rv->exp = shared_ptr<Expression>(exp->deep_copy());
+  rv->exp = shared_ptr<Expression>(exp->deep_copy(NULL));
   BOOST_FOREACH(shared_ptr<ConElem> ce, con) {
-    rv->con.push_back(shared_ptr<ConElem>(ce->deep_copy()));
+    rv->con.push_back(shared_ptr<ConElem>(ce->deep_copy(NULL)));
   }
   return rv;
 }
@@ -239,7 +239,7 @@ void netlist::Concatenation::reduce() {
     } else {			// a {x{con}}
       if((*it)->exp->is_valuable()) { // x is a const number, repeat con for x times
         for(mpz_class i = (*it)->exp->get_value().get_value(); i!=0; i--) {
-          shared_ptr<ConElem> newConElem((*it)->deep_copy());
+          shared_ptr<ConElem> newConElem((*it)->deep_copy(NULL));
           data.insert(it, newConElem->con.begin(), newConElem->con.end());
         }
         data.erase(it);
@@ -324,7 +324,7 @@ Concatenation* netlist::Concatenation::deep_copy(Concatenation* rv) const {
   if(!rv) rv = new Concatenation();
   NetComp::deep_copy(rv);
   BOOST_FOREACH(const shared_ptr<ConElem>& m, data)
-    rv->data.push_back(shared_ptr<ConElem>(m->deep_copy()));
+    rv->data.push_back(shared_ptr<ConElem>(m->deep_copy(NULL)));
   return rv;
 }
 

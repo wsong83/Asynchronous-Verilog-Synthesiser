@@ -76,7 +76,7 @@ FuncCall* netlist::FuncCall::deep_copy(FuncCall* rv) const {
   rv->fname = fname;
   rv->valuable = valuable;
   BOOST_FOREACH(shared_ptr<Expression> arg, args) 
-    rv->args.push_back(shared_ptr<Expression>(arg->deep_copy()));
+    rv->args.push_back(shared_ptr<Expression>(arg->deep_copy(NULL)));
   return rv;
 }
 
