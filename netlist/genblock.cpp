@@ -83,27 +83,15 @@ ostream& netlist::GenBlock::streamout(ostream& os, unsigned int indent, bool fl_
   return os;
 }
 
-GenBlock* netlist::GenBlock::deep_copy() const {
-  GenBlock* rv = new GenBlock();
-  rv->loc = loc;
-  rv->name = name;
-  rv->named = named;
-  
-  // data in Block
-  BOOST_FOREACH(const shared_ptr<NetComp>& comp, statements)
-    rv->statements.push_back(shared_ptr<NetComp>(comp->deep_copy())); 
-  
-  DATABASE_DEEP_COPY_FUN(db_var,      VIdentifier, Variable,  rv->db_var       );
-  rv->unnamed_block = unnamed_block;
-  rv->unnamed_instance = unnamed_instance;
-  rv->unnamed_var = unnamed_var;
+GenBlock* netlist::GenBlock::deep_copy(GenBlock *rv) const {
+  bool base_call = rv != NULL;
+  if(!rv) rv = new GenBlock();
+  Block::deep_copy(rv);
 
-  // special components in Blocks
-  DATABASE_DEEP_COPY_FUN(db_instance,  IIdentifier,  Instance,  rv->db_instance );
-  DATABASE_DEEP_COPY_FUN(db_func,      FIdentifier,  Function,  rv->db_func     );
-
-  rv->set_father();
-  rv->elab_inparse();
+  if(!base_call) {
+    rv->set_father();
+    rv->elab_inparse();
+  }
   return rv;
 }
 

@@ -156,15 +156,18 @@ bool netlist::Block::add_statements(const shared_ptr<Block>& body) {
 }
 
 BIdentifier& netlist::Block::new_BId() {
-  return ++unnamed_block;
+  unnamed_block.suffix_increase();
+  return unnamed_block;
 }
 
 IIdentifier& netlist::Block::new_IId() {
-  return ++unnamed_instance;
+  unnamed_instance.suffix_increase();
+  return unnamed_instance;
 }
 
 VIdentifier& netlist::Block::new_VId() {
-  return ++unnamed_var;
+  unnamed_var.suffix_increase();
+  return unnamed_var;
 }
 
 shared_ptr<Instance> netlist::Block::find_instance(const IIdentifier& key) const {
@@ -252,7 +255,7 @@ void netlist::Block::elab_inparse() {
       SP_CAST(m, Variable, st);
       if(find_var(m->name)) {
         // double definition
-        G_ENV->error(m->loc, "SYN-VAR-1", m->name.name, toString(find_var(m->name)->loc));
+        G_ENV->error(m->loc, "SYN-VAR-1", m->name.get_name(), toString(find_var(m->name)->loc));
       } else {
         if(m->exp) {            // handle the initial assignment
           if(m->vtype == Variable::TWire) { 
@@ -263,7 +266,7 @@ void netlist::Block::elab_inparse() {
             to_add[m].push_back(asgn);
             m->exp.reset();
           } else if(m->vtype != Variable::TParam && m->vtype != Variable::TLParam) {
-            G_ENV->error(m->loc, "SYN-VAR-4", m->name.name);
+            G_ENV->error(m->loc, "SYN-VAR-4", m->name.get_name());
             m->exp.reset();
           }
         }
@@ -294,17 +297,17 @@ void netlist::Block::elab_inparse() {
         shared_ptr<Instance> m_inst = db_instance.find(m->name);
 	if(m_inst) {
 	  if(m_inst->is_named() && m->is_named()) {
-	    G_ENV->error(m->loc, "SYN-INST-0", m->name.name, toString(m_inst->loc));
+	    G_ENV->error(m->loc, "SYN-INST-0", m->name.get_name(), toString(m_inst->loc));
 	  }
 	  if(m->is_named() && !m_inst->is_named()) {
 	    db_instance.erase(m_inst->name);
 	    IIdentifier m_iid = m_inst->name;
-	    while(db_instance.find(m_iid)) {++m_iid; }
+	    while(db_instance.find(m_iid)) {m_iid.suffix_increase(); }
 	    m_inst->set_default_name(m_iid);
 	    db_instance.insert(m_inst->name, m_inst);
 	  } else {
 	    IIdentifier m_iid = m->name;
-	    while(db_instance.find(m_iid)) {++m_iid; }
+	    while(db_instance.find(m_iid)) {m_iid.suffix_increase(); }
 	    m->set_default_name(m_iid);
 	  }
 	}
@@ -315,7 +318,7 @@ void netlist::Block::elab_inparse() {
     } else if (st->get_type() == tFunction) {
       SP_CAST(m, Function, st);
       if(db_func.count(m->fname)) {
-        G_ENV->error(m->loc, "SYN-FUNC-0", m->fname.name, toString(db_func.find(m->fname)->loc));
+        G_ENV->error(m->loc, "SYN-FUNC-0", m->fname.get_name(), toString(db_func.find(m->fname)->loc));
       } else {
         m->elab_inparse();
         db_func.insert(m->fname, m);
@@ -329,7 +332,7 @@ void netlist::Block::elab_inparse() {
           for_each(m->db_var.begin_order(), m->db_var.end_order(),
                    [&](pair<const VIdentifier, shared_ptr<Variable> >& var) {
                      if(find_var(var.first))
-                       G_ENV->error(var.second->loc, "SYN-VAR-1", var.first.name, toString(find_var(var.first)->loc));
+                       G_ENV->error(var.second->loc, "SYN-VAR-1", var.first.get_name(), toString(find_var(var.first)->loc));
                      else
                        db_var.insert(var.first, var.second);
                    });
@@ -338,7 +341,7 @@ void netlist::Block::elab_inparse() {
           for_each(m->db_instance.begin(), m->db_instance.end(),
                    [&](pair<const IIdentifier, shared_ptr<Instance> >& inst) {
                      if(db_instance.find(inst.first))
-                       G_ENV->error(inst.second->loc, "SYN-INST-1", inst.first.name);
+                       G_ENV->error(inst.second->loc, "SYN-INST-1", inst.first.get_name());
                      else
                        db_instance.insert(inst.first, inst.second);
                    });                       
@@ -347,7 +350,7 @@ void netlist::Block::elab_inparse() {
           for_each(m->db_func.begin(), m->db_func.end(),
                    [&](pair<const FIdentifier, shared_ptr<Function> >& func) {
                      if(db_func.find(func.first)) 
-                       G_ENV->error(func.second->loc, "SYN-FUNC-0", func.first.name, toString(db_func.find(func.first)->loc));
+                       G_ENV->error(func.second->loc, "SYN-FUNC-0", func.first.get_name(), toString(db_func.find(func.first)->loc));
                      else
                        db_func.insert(func.first, func.second);
                    });
@@ -369,9 +372,13 @@ void netlist::Block::elab_inparse() {
   
 }
 
-Block* netlist::Block::deep_copy() const {
-  Block* rv = new Block();
-  rv->loc = loc;
+Block* netlist::Block::deep_copy(Block *rv) const {
+  bool base_call = true;
+  if(!rv) {
+    rv = new Block();
+    base_call = false;
+  }
+  NetComp::deep_copy(rv);
   rv->name = name;
   rv->named = named;
   
@@ -379,7 +386,7 @@ Block* netlist::Block::deep_copy() const {
   // lambda expression, need C++0x support
   for_each(statements.begin(), statements.end(),
            [rv](const shared_ptr<NetComp>& comp) { 
-             rv->statements.push_back(shared_ptr<NetComp>(comp->deep_copy())); 
+             rv->statements.push_back(shared_ptr<NetComp>(comp->deep_copy(NULL))); 
            });
   
   DATABASE_DEEP_COPY_FUN(db_var,      VIdentifier, Variable,  rv->db_var       );
@@ -391,8 +398,10 @@ Block* netlist::Block::deep_copy() const {
   DATABASE_DEEP_COPY_FUN(db_instance,  IIdentifier,  Instance,  rv->db_instance );
   DATABASE_DEEP_COPY_FUN(db_func,      FIdentifier,  Function,  rv->db_func     );
 
-  rv->set_father();
-  rv->elab_inparse();
+  if(!base_call) {
+    rv->set_father();
+    rv->elab_inparse();
+  }
   return rv;
 }
 
@@ -496,16 +505,16 @@ void netlist::Block::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
   for_each(db_instance.begin(), db_instance.end(),
            [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
              if(m.second->type == Instance::modu_inst) {
-               shared_ptr<SDFG::dfgNode> n = G->add_node(m.first.name, SDFG::dfgNode::SDFG_MODULE);
+               shared_ptr<SDFG::dfgNode> n = G->add_node(m.first.get_name(), SDFG::dfgNode::SDFG_MODULE);
                n->ptr.insert(m.second);
                shared_ptr<Module> subMod = G_ENV->find_module(m.second->mname);
                if(subMod) { // has sub-module
-                 n->child_name = m.second->mname.name;
+                 n->child_name = m.second->mname.get_name();
                  n->child = subMod->extract_sdfg(true);
                  n->child->father = n.get();
                }
              } else {           // gate
-               shared_ptr<SDFG::dfgNode> n = G->add_node(m.first.name, SDFG::dfgNode::SDFG_GATE);
+               shared_ptr<SDFG::dfgNode> n = G->add_node(m.first.get_name(), SDFG::dfgNode::SDFG_GATE);
                n->ptr.insert(m.second);
              }
            });
@@ -541,7 +550,7 @@ shared_ptr<Expression> netlist::Block::get_combined_expression(const VIdentifier
     shared_ptr<Expression> mexp = stm->get_combined_expression(target, s_set);
     if(mexp) {
       if(rv) {
-        G_ENV->error("ANA-SSA-0", get_module()->DFG->get_node(target.name)->get_full_name(), toString(*rv), toString(*mexp));
+        G_ENV->error("ANA-SSA-0", get_module()->DFG->get_node(target.get_name())->get_full_name(), toString(*rv), toString(*mexp));
       }
       //assert(!rv);
       rv = mexp;

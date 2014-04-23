@@ -58,7 +58,7 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
-    virtual Variable* deep_copy() const;
+    virtual Variable* deep_copy(Variable*) const;
     NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
     NETLIST_REPLACE_VARIABLE;

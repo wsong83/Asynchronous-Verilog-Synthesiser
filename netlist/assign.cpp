@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -112,12 +112,19 @@ shared_ptr<SDFG::RTree> netlist::Assign::get_rtree() const {
 }
 
 
-Assign* netlist::Assign::deep_copy() const {
-  Assign* rv = new Assign( loc,
-                           shared_ptr<LConcatenation>(lval->deep_copy()),
-                           shared_ptr<Expression>(rexp->deep_copy()),
-                           blocking
-                           );
+Assign* netlist::Assign::deep_copy(Assign *rv) const {
+  if(!rv) {
+    rv = new Assign( loc,
+                     shared_ptr<LConcatenation>(lval->deep_copy(NULL)),
+                     shared_ptr<Expression>(rexp->deep_copy(NULL)),
+                     blocking
+                     );
+  } else {
+    rv->lval.reset(lval->deep_copy(NULL));
+    rv->rexp.reset(rexp->deep_copy(NULL));
+    rv->blocking = blocking;
+  }
+  NetComp::deep_copy(rv);
   rv->name = name;
   rv->named = named;
   rv->continuous = continuous;
@@ -137,13 +144,13 @@ void netlist::Assign::replace_variable(const VIdentifier& var, const VIdentifier
 shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifier& target, std::set<string> s_set) {
   shared_ptr<SDFG::RTree> rt = get_rtree();
   shared_ptr<Expression> rv;
-  if(rt->tree.count(target.name)) {
+  if(rt->tree.count(target.get_name())) {
     //std::cout << *this << std::endl;
-    rv.reset(rexp->deep_copy());
+    rv.reset(rexp->deep_copy(NULL));
     // handle all signals in the expression
-    std::set<string> sig_set = rt->get_all(target.name);
+    std::set<string> sig_set = rt->get_all(target.get_name());
     BOOST_FOREACH(const string& sname, sig_set) {
-      if(sname != target.name) { // other signals
+      if(sname != target.get_name()) { // other signals
         //std::cout << sname << std::endl;
         shared_ptr<SDFG::dfgNode> pnode = get_module()->DFG->get_node(sname);
         assert(pnode);
