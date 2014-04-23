@@ -345,6 +345,8 @@ void netlist::Module::elab_inparse() {
 
 }
 
+void netlist::Module::unfold() {
+}
 
 bool netlist::Module::elaborate(std::deque<shared_ptr<Module> >& mfifo,
                                 map<MIdentifier, shared_ptr<Module> > & mmap) {

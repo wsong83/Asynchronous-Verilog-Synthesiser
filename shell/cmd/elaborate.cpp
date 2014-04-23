@@ -206,7 +206,7 @@ bool shell::CMD::CMDElaborate::exec (const std::string& str, Env * pEnv){
   //std::cout << *tarDesign ;
 
   // duplicate the design
-  shared_ptr<netlist::Module> mDesign(tarDesign->deep_copy());
+  shared_ptr<netlist::Module> mDesign(tarDesign->deep_copy(NULL));
   
   //std::cout << "+++++++++ Design after copy ++++++++++ " << std::endl;
   //std::cout << *mDesign ;
@@ -218,7 +218,7 @@ bool shell::CMD::CMDElaborate::exec (const std::string& str, Env * pEnv){
     BOOST_FOREACH(paraType& m, arg.pvPara) {
       shared_ptr<netlist::Variable> mpara = mDesign->db_param.find(m.first);
       if(!mpara) {
-        gEnv.stdOs << "Error: Fail to find parameter \"" << m.first << "\" in module \"" << mDesign->name.name << "\"." << endl;
+        gEnv.stdOs << "Error: Fail to find parameter \"" << m.first << "\" in module \"" << mDesign->name.get_name() << "\"." << endl;
         gEnv.stdOs << "The available parameters are as follows:" << endl;
         gEnv.stdOs << tarDesign->db_param;
         return false;
@@ -271,7 +271,7 @@ bool shell::CMD::CMDElaborate::exec (const std::string& str, Env * pEnv){
       }
       param_str += "\"";
     }
-    gEnv.error("ELAB-0", curDgn->name.name, param_str);
+    gEnv.error("ELAB-0", curDgn->name.get_name(), param_str);
     
     // update the design name
     curDgn->set_name(newName);
@@ -296,7 +296,7 @@ bool shell::CMD::CMDElaborate::exec (const std::string& str, Env * pEnv){
     });
   
   //set current design to this design
-  gEnv.tclInterp->tcli.set_variable(MACRO_CURRENT_DESIGN, mDesign->name.name);
+  gEnv.tclInterp->tcli.set_variable(MACRO_CURRENT_DESIGN, mDesign->name.get_name());
   return true;
 }
 

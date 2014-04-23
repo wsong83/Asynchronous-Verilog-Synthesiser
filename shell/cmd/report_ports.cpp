@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2013-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -230,7 +230,7 @@ bool shell::CMD::CMDReportPorts::exec ( const std::string& str, Env * pEnv){
   gEnv.stdOs << "\n[Port Expressions]" << std::endl;
   if(arg.svPorts.empty()) {     // all output ports
     BOOST_FOREACH(shared_ptr<netlist::Port> p, op_set) {
-      if(!setOmitPorts.count(p->name.name)) {
+      if(!setOmitPorts.count(p->name.get_name())) {
         std::set<string> m_set;
         std::cout << p->name << std::endl;
         shared_ptr<netlist::Expression> combi_exp = p->get_combined_expression(p->name, m_set);
@@ -240,7 +240,7 @@ bool shell::CMD::CMDReportPorts::exec ( const std::string& str, Env * pEnv){
     }
   } else {                      // selected output ports
     BOOST_FOREACH(shared_ptr<netlist::Port> p, op_set) {
-      if(setPorts.count(p->name.name)) {
+      if(setPorts.count(p->name.get_name())) {
         std::set<string> m_set;
         std::cout << p->name << std::endl;
         shared_ptr<netlist::Expression> combi_exp = p->get_combined_expression(p->name, m_set);
