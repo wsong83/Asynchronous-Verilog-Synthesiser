@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -62,13 +62,13 @@ ostream& netlist::WhileState::streamout(ostream& os, unsigned int indent) const 
   return os;
 }
 
-WhileState* netlist::WhileState::deep_copy() const {
-  WhileState* rv = new WhileState(loc);
+WhileState* netlist::WhileState::deep_copy(WhileState *rv) const {
+  if(!rv) rv = new WhileState(loc);
   rv->name = name;
   rv->named = named;
   
-  if(exp) rv->exp.reset(exp->deep_copy());
-  if(body) rv->body.reset(body->deep_copy());
+  if(exp) rv->exp.reset(exp->deep_copy(NULL));
+  if(body) rv->body.reset(body->deep_copy(NULL));
 
   return rv;
 }

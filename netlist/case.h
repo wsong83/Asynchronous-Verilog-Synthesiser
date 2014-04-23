@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -50,7 +50,7 @@ namespace netlist{
     // helpers
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
-    virtual CaseItem* deep_copy() const;
+    virtual CaseItem* deep_copy(CaseItem*) const;
     NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
     bool is_default() const {return exps.size() == 0; }
@@ -88,7 +88,7 @@ namespace netlist{
     // helpers
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
-    virtual CaseState* deep_copy() const;
+    virtual CaseState* deep_copy(CaseState*) const;
     NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
     void set_name(const BIdentifier& nm) {name = nm; named=true;}

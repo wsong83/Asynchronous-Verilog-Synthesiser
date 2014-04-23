@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -107,11 +107,13 @@ void netlist::CaseItem::set_father(Block *pf) {
     body->set_father(pf);
 }
 
-CaseItem* netlist::CaseItem::deep_copy() const {
-  CaseItem* rv = new CaseItem(loc);
-  if(body) rv->body.reset(body->deep_copy());
+CaseItem* netlist::CaseItem::deep_copy(CaseItem *rv) const {
+  if(!rv) rv = new CaseItem(loc);
+  NetComp::deep_copy(rv);
+
+  if(body) rv->body.reset(body->deep_copy(NULL));
   BOOST_FOREACH(const  shared_ptr<Expression>& m, exps)
-    rv->exps.push_back(shared_ptr<Expression>(m->deep_copy()));
+    rv->exps.push_back(shared_ptr<Expression>(m->deep_copy(NULL)));
   return rv;
 }
 
@@ -236,14 +238,16 @@ void netlist::CaseState::set_father(Block *pf) {
     it->set_father(pf);
 }
 
-CaseState* netlist::CaseState::deep_copy() const {
-  CaseState* rv = new CaseState(loc);
+CaseState* netlist::CaseState::deep_copy(CaseState *rv) const {
+  if(!rv) rv = new CaseState(loc);
+  NetComp::deep_copy(rv);
+  
   rv->name = name;
   rv->named = named;
   rv->case_type = case_type;
-  if(exp) rv->exp.reset(exp->deep_copy());
+  if(exp) rv->exp.reset(exp->deep_copy(NULL));
   BOOST_FOREACH(const shared_ptr<CaseItem>& m, cases)
-    rv->cases.push_back(shared_ptr<CaseItem>(m->deep_copy()));
+    rv->cases.push_back(shared_ptr<CaseItem>(m->deep_copy(NULL)));
   return rv;
 }
 
@@ -376,8 +380,8 @@ shared_ptr<Expression> netlist::CaseState::get_combined_expression(const VIdenti
   while(!m_case_exps.empty()) {
     shared_ptr<Expression> cond;
     BOOST_FOREACH(shared_ptr<Expression> e, m_case_exps.back().first) {
-      shared_ptr<Expression> case_exp(e->deep_copy());
-      shared_ptr<Expression> case_var(exp->deep_copy());
+      shared_ptr<Expression> case_exp(e->deep_copy(NULL));
+      shared_ptr<Expression> case_var(exp->deep_copy(NULL));
       case_exp->append(Operation::oCEq, *case_var);
       if(cond) {
         cond->append(Operation::oLOr, *case_exp);

@@ -84,15 +84,17 @@ ostream& netlist::ForState::streamout(ostream& os, unsigned int indent) const {
   return os;
 }
 
-ForState* netlist::ForState::deep_copy() const {
-  ForState* rv = new ForState(loc);
+ForState* netlist::ForState::deep_copy(ForState *rv) const {
+  if(!rv) rv = new ForState(loc);
+  NetComp::deep_copy(rv);
+
   rv->name = name;
   rv->named = named;
   
-  if(init) rv->init.reset(init->deep_copy());
-  if(cond) rv->cond.reset(cond->deep_copy());
-  if(incr) rv->incr.reset(incr->deep_copy());
-  if(body) rv->body.reset(body->deep_copy());
+  if(init) rv->init.reset(init->deep_copy(NULL));
+  if(cond) rv->cond.reset(cond->deep_copy(NULL));
+  if(incr) rv->incr.reset(incr->deep_copy(NULL));
+  if(body) rv->body.reset(body->deep_copy(NULL));
 
   return rv;
 }
@@ -129,7 +131,7 @@ bool netlist::ForState::elaborate(std::set<shared_ptr<NetComp> >& to_del,
   Number num = init->rexp->get_value();
 
   // unfold the for statement
-  shared_ptr<Expression> m_cond(cond->deep_copy());
+  shared_ptr<Expression> m_cond(cond->deep_copy(NULL));
   m_cond->replace_variable(var, num);
   m_cond->reduce();
   if(!m_cond->is_valuable()) {
@@ -138,7 +140,7 @@ bool netlist::ForState::elaborate(std::set<shared_ptr<NetComp> >& to_del,
   }
 
   while(m_cond->get_value().is_true()) {
-    shared_ptr<Block> m_blk(body->deep_copy());
+    shared_ptr<Block> m_blk(body->deep_copy(NULL));
     m_blk->replace_variable(var, num);
     to_add[get_sp()].push_back(m_blk);
     m_blk->set_father(father);
@@ -150,7 +152,7 @@ bool netlist::ForState::elaborate(std::set<shared_ptr<NetComp> >& to_del,
       G_ENV->error(cond->loc, "ELAB-FOR-4", toString(*incr));
       return false;
     }
-    shared_ptr<Assign> m_incr(incr->deep_copy());
+    shared_ptr<Assign> m_incr(incr->deep_copy(NULL));
     m_incr->rexp->replace_variable(var, num);
     m_incr->rexp->reduce();
     if(!m_incr->rexp->is_valuable()) {
@@ -160,7 +162,7 @@ bool netlist::ForState::elaborate(std::set<shared_ptr<NetComp> >& to_del,
     
     // update num
     num = m_incr->rexp->get_value();
-    m_cond.reset(cond->deep_copy());
+    m_cond.reset(cond->deep_copy(NULL));
     m_cond->replace_variable(var, num);
     m_cond->reduce();
   }
@@ -188,7 +190,7 @@ void netlist::ForState::unfold() {
   Number num = init->rexp->get_value();
   
   // unfold the for statement
-  shared_ptr<Expression> m_cond(cond->deep_copy());
+  shared_ptr<Expression> m_cond(cond->deep_copy(NULL));
   m_cond->replace_variable(var, num);
   m_cond->reduce();
   if(!m_cond->is_valuable()) {
@@ -200,11 +202,11 @@ void netlist::ForState::unfold() {
   shared_ptr<Block> newBody(new Block(body->loc, body->name));
   newBody->set_father(father);
   bool body_named = body->is_named();
-  string namePrefix = body->name.name;
+  string namePrefix = body->name.get_name();
 
   while(m_cond->get_value().is_true()) {
     // replace variable in the body
-    shared_ptr<Block> m_blk(body->deep_copy());
+    shared_ptr<Block> m_blk(body->deep_copy(NULL));
     m_blk->replace_variable(var, num);
 
     // set up the new names for instances
@@ -238,7 +240,7 @@ void netlist::ForState::unfold() {
       G_ENV->error(cond->loc, "ELAB-FOR-4", toString(*incr));
       return;
     }
-    shared_ptr<Assign> m_incr(incr->deep_copy());
+    shared_ptr<Assign> m_incr(incr->deep_copy(NULL));
     m_incr->rexp->replace_variable(var, num);
     m_incr->rexp->reduce();
     if(!m_incr->rexp->is_valuable()) {
@@ -248,7 +250,7 @@ void netlist::ForState::unfold() {
     
     // update num
     num = m_incr->rexp->get_value();
-    m_cond.reset(cond->deep_copy());
+    m_cond.reset(cond->deep_copy(NULL));
     m_cond->replace_variable(var, num);
     m_cond->reduce();
   }

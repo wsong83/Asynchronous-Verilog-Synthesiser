@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -116,14 +116,16 @@ ostream& netlist::IfState::streamout(ostream& os, unsigned int indent, bool fl_p
 
 }
 
-IfState* netlist::IfState::deep_copy() const {
-  IfState* rv = new IfState(loc);
+IfState* netlist::IfState::deep_copy(IfState *rv) const {
+  if(!rv) rv = new IfState(loc);
+  NetComp::deep_copy(rv);
+
   rv->name = name;
   rv->named = named;
   
-  if(exp) rv->exp.reset(exp->deep_copy());
-  if(ifcase) rv->ifcase.reset(ifcase->deep_copy());
-  if(elsecase) rv->elsecase.reset(elsecase->deep_copy());
+  if(exp) rv->exp.reset(exp->deep_copy(NULL));
+  if(ifcase) rv->ifcase.reset(ifcase->deep_copy(NULL));
+  if(elsecase) rv->elsecase.reset(elsecase->deep_copy(NULL));
 
   return rv;
 }
@@ -210,14 +212,14 @@ shared_ptr<Expression> netlist::IfState::get_combined_expression(const VIdentifi
   if(if_exp || else_exp) {
     if(if_exp) {
       if(else_exp) 
-        rv.reset(exp->deep_copy()->append(Operation::oQuestion, *if_exp, *else_exp));
+        rv.reset(exp->deep_copy(NULL)->append(Operation::oQuestion, *if_exp, *else_exp));
       else {
         Expression self_loop(target);
-        rv.reset(exp->deep_copy()->append(Operation::oQuestion, *if_exp, self_loop));
+        rv.reset(exp->deep_copy(NULL)->append(Operation::oQuestion, *if_exp, self_loop));
       }
     } else {
       Expression self_loop(target);
-      rv.reset(exp->deep_copy()->append(Operation::oQuestion, self_loop, *else_exp));      
+      rv.reset(exp->deep_copy(NULL)->append(Operation::oQuestion, self_loop, *else_exp));      
     }
   }
   //std::cout << "IfState: (target)" << target << " Exp: " << *rv << std::endl;
