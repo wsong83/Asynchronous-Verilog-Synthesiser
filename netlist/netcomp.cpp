@@ -57,15 +57,15 @@ ostream& netlist::NetComp::streamout (ostream& os, unsigned int) const {
 }
     
 NetComp* netlist::NetComp::deep_copy( NetComp * rv) const { /* deep copy a netlist component */
-  if(src == NULL) {
-    std::cerr << "ERROR!!, the deep_copy() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << endl;
-    assert(0 == "the deep_copy() of NetComp is used");
-    return NULL;
-  } else {
+  if(rv) {
     rv->ctype = ctype;
     rv->loc = loc;
     return rv;
-  }
+  } else {
+    std::cerr << "ERROR!!, the deep_copy() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << endl;
+    assert(0 == "the deep_copy() of NetComp is used");
+    return NULL;
+  } 
 }
 
 void netlist::NetComp::set_father(Block* pf) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -179,7 +179,7 @@ void netlist::Instance::set_father(Block *pf) {
 
 ostream& netlist::Instance::streamout(ostream& os, unsigned int indent) const {
   // the module name
-  os << string(indent, ' ') << mname.name << " ";
+  os << string(indent, ' ') << mname.get_name() << " ";
 
   // parameter list
   if(!para_list.empty()) {
@@ -219,9 +219,9 @@ ostream& netlist::Instance::streamout(ostream& os, unsigned int indent) const {
   return os;
 }
 
-Instance* netlist::Instance::deep_copy() const {
-  Instance* rv = new Instance();
-  rv->loc = loc;
+Instance* netlist::Instance::deep_copy(Instance *rv) const {
+  if(!rv) rv = new Instance();
+  NetComp::deep_copy(rv);
   rv->mname = mname;
   rv->name = name;
   rv->named = named;
@@ -229,10 +229,10 @@ Instance* netlist::Instance::deep_copy() const {
   //rv->module_ptr = module_ptr;
 
   BOOST_FOREACH(const shared_ptr<PortConn>& p, port_list)
-    rv->port_list.push_back(shared_ptr<PortConn>(p->deep_copy()));
+    rv->port_list.push_back(shared_ptr<PortConn>(p->deep_copy(NULL)));
 
   BOOST_FOREACH(const shared_ptr<ParaConn>& p, para_list)
-    rv->para_list.push_back(shared_ptr<ParaConn>(p->deep_copy()));
+    rv->para_list.push_back(shared_ptr<ParaConn>(p->deep_copy(NULL)));
     
   return rv;
 }
@@ -256,7 +256,7 @@ bool netlist::Instance::update_ports() {
     // find the module
     shared_ptr<Module> modp = G_ENV->find_module(mname);
     if(modp.use_count() == 0) {
-      G_ENV->error(loc, "ELAB-INST-0", mname.name);
+      G_ENV->error(loc, "ELAB-INST-0", mname.get_name());
       return false;
       // in the future, should check for cell library for library cells
     } else {
@@ -268,7 +268,7 @@ bool netlist::Instance::update_ports() {
     for(it=port_list.begin(), end=port_list.end(); it!=end; it++) {
       shared_ptr<Port> portp = modp->find_port((*it)->pname);
       if(portp.use_count() == 0) {
-        G_ENV->error(loc, "ELAB-INST-1", (*it)->pname.name, mname.name);
+        G_ENV->error(loc, "ELAB-INST-1", (*it)->pname.get_name(), mname.get_name());
         return false;
       } else {
         (*it)->set_dir(portp->get_dir());
@@ -317,7 +317,7 @@ bool netlist::Instance::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
     // find the module in library
     shared_ptr<Module> tarModule = G_ENV->find_module(mname);
     if(tarModule.use_count() == 0) {
-      G_ENV->error(loc,"ELAB-INST-0", mname.name);
+      G_ENV->error(loc,"ELAB-INST-0", mname.get_name());
       return false;
     }
     
@@ -325,7 +325,7 @@ bool netlist::Instance::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
     string newName;
     rv &= tarModule->calculate_name(newName, para_list);
     if(!rv) {
-      G_ENV->error(loc, "ELAB-INST-2", mname.name);
+      G_ENV->error(loc, "ELAB-INST-2", mname.get_name());
       return false;
     }
     
@@ -335,7 +335,7 @@ bool netlist::Instance::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
     // check the new name in module map
     if(!mmap.count(newName)) {
       // if not elaborated yet, add it to the map and the module queue
-      shared_ptr<Module> newModule(tarModule->deep_copy());
+      shared_ptr<Module> newModule(tarModule->deep_copy(NULL));
       mfifo.push_back(newModule);
       mmap[newName] = newModule;
       
@@ -354,7 +354,7 @@ bool netlist::Instance::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
 
 void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
   // find out the node
-  shared_ptr<dfgNode> node = G->get_node(name.name);
+  shared_ptr<dfgNode> node = G->get_node(name.get_name());
   assert(node);
   
   BOOST_FOREACH(shared_ptr<PortConn> m, port_list) {
@@ -367,16 +367,16 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
           G->add_edge_multi(e.first, e.second, e.first, exp_node->name);
         }
         G->add_edge(exp_node->name, dfgEdge::SDFG_ASS, exp_node->name, node->name);
-        node->add_port_sig(m->pname.name + "_P", exp_node->name);
+        node->add_port_sig(m->pname.get_name() + "_P", exp_node->name);
         break;
       }
       case PortConn::CVAR: {    // variable
-        G->add_edge(m->var.name, dfgEdge::SDFG_ASS, m->var.name, node->name);
-        node->add_port_sig(m->pname.name + "_P", m->var.name);
+        G->add_edge(m->var.get_name(), dfgEdge::SDFG_ASS, m->var.get_name(), node->name);
+        node->add_port_sig(m->pname.get_name() + "_P", m->var.get_name());
         break;
       }
       case PortConn::CNUM: {    // constant number
-        node->add_port_sig(m->pname.name + "_P", "");
+        node->add_port_sig(m->pname.get_name() + "_P", "");
         break;
       }
       default:
@@ -387,12 +387,12 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
     if(m->get_dir() >= 0) {     // output
       switch(m->type) {
       case PortConn::CVAR: {    // variable
-        G->add_edge(m->pname.name, dfgEdge::SDFG_ASS, node->name, m->var.name);
-        node->add_port_sig(m->pname.name + "_P", m->var.name);
+        G->add_edge(m->pname.get_name(), dfgEdge::SDFG_ASS, node->name, m->var.get_name());
+        node->add_port_sig(m->pname.get_name() + "_P", m->var.get_name());
         break;
       }
       case PortConn::COPEN: {   // open
-        node->add_port_sig(m->pname.name + "_P", "");
+        node->add_port_sig(m->pname.get_name() + "_P", "");
         break;
       }
       default:

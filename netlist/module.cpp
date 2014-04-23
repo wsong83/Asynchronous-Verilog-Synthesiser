@@ -124,7 +124,7 @@ ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
     it = db_port.begin_order();
     end = db_port.end_order();
     while(it != end){
-      os << it->second->name.name;
+      os << it->second->name.get_name();
       it++;
       if(it != end)
         os << ", ";
@@ -176,21 +176,12 @@ ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
   return os;
 }
 
-Module* netlist::Module::deep_copy() const {
-  Module* rv = new Module();
-  rv->loc = loc;
+Module* netlist::Module::deep_copy(Module *rv) const {
+  bool base_call = rv != NULL;
+  if(!rv) rv = new Module();
+  Block::deep_copy(rv);
   rv->set_name(name);
   
-  // data in Block
-  // lambda expression, need C++0x support
-  BOOST_FOREACH(const shared_ptr<NetComp>& comp, statements)
-    rv->statements.push_back(shared_ptr<NetComp>(comp->deep_copy())); 
-  
-  DATABASE_DEEP_COPY_FUN(db_var,      VIdentifier, Variable,  rv->db_var        );
-  rv->unnamed_block = unnamed_block;
-  rv->unnamed_instance = unnamed_instance;
-  rv->unnamed_var = unnamed_var;
-
   // data in Module;
   DATABASE_DEEP_COPY_FUN(db_port,      VIdentifier,  Port,      rv->db_port     );
   DATABASE_DEEP_COPY_FUN(db_param,     VIdentifier,  Variable,  rv->db_param    );
@@ -198,7 +189,9 @@ Module* netlist::Module::deep_copy() const {
   DATABASE_DEEP_COPY_FUN(db_func,      FIdentifier,  Function,  rv->db_func     );
   
   // set father
-  rv->set_father();
+  if(!base_call) {
+    rv->set_father();
+  }
 
   return rv;
 }
@@ -281,7 +274,7 @@ bool netlist::Module::calculate_name( string& newName,
   BOOST_FOREACH(const shared_ptr<ParaConn>& m, mplist) {
     shared_ptr<Variable> paramp = tmpModule->db_param.find(m->pname);
     if(paramp.use_count() == 0) {
-      G_ENV->error(m->loc, "ELAB-PARA-1", m->pname.name, tmpModule->name.name);
+      G_ENV->error(m->loc, "ELAB-PARA-1", m->pname.get_name(), tmpModule->name.get_name());
       rv = false;
       break;
     }
@@ -301,15 +294,15 @@ bool netlist::Module::calculate_name( string& newName,
   tmpModule->db_register(0);
 
   // resolve all parameters and get the new name
-  newName = tmpModule->name.name;
+  newName = tmpModule->name.get_name();
   for_each(tmpModule->db_param.begin_order(), tmpModule->db_param.end_order(), 
            [&](pair<const VIdentifier, shared_ptr<Variable> >& m) {
              if(rv && m.second->vtype == Variable::TParam) {
                rv &= m.second->update();
                if(!rv) 
-                 G_ENV->error(m.second->loc, "ELAB-PARA-0", m.second->name.name, tmpModule->name.name);
+                 G_ENV->error(m.second->loc, "ELAB-PARA-0", m.second->name.get_name(), tmpModule->name.get_name());
                else
-                 newName += string("_") + m.second->name.name + m.second->get_value().get_value().get_str();
+                 newName += string("_") + m.second->name.get_name() + m.second->get_value().get_value().get_str();
              }
            });
   return rv;
@@ -359,7 +352,7 @@ bool netlist::Module::elaborate(std::deque<shared_ptr<Module> >& mfifo,
   std::set<shared_ptr<NetComp> > to_del;
   map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > > to_add;
 
-  //std::cout << "elab " << name.name << std::endl;
+  //std::cout << "elab " << name.get_name() << std::endl;
 
   // before register all variable, update the port direction of all instance
   // as it will affect the direction of wires
@@ -458,7 +451,7 @@ void netlist::Module::get_hier(list<shared_ptr<Module> >& mfifo,
   for_each(db_instance.begin(), db_instance.end(),
            [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
              shared_ptr<Module> tarModule = G_ENV->find_module(m.second->mname);
-             if(tarModule && !mmap.count(tarModule->name.name)) {
+             if(tarModule && !mmap.count(tarModule->name.get_name())) {
                mfifo.push_front(tarModule);
                myqueue.push_front(tarModule);
                mmap.insert(tarModule->name);
@@ -471,17 +464,17 @@ void netlist::Module::get_hier(list<shared_ptr<Module> >& mfifo,
 
 shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
   if(!quiet)
-    G_ENV->error("SDFG-EXTRACT-1", name.name);
+    G_ENV->error("SDFG-EXTRACT-1", name.get_name());
 
   if(DFG) return DFG;
 
   // else, build a new
-  shared_ptr<dfgGraph> G(new dfgGraph(name.name));
+  shared_ptr<dfgGraph> G(new dfgGraph(name.get_name()));
   
   // put all ports into the list
   for_each(db_port.begin_order(), db_port.end_order(), 
            [&](const pair<const VIdentifier, shared_ptr<Port> >& m) {
-             shared_ptr<dfgNode> n = G->add_node(m.first.name + "_P", dfgNode::SDFG_PORT);
+             shared_ptr<dfgNode> n = G->add_node(m.first.get_name() + "_P", dfgNode::SDFG_PORT);
              switch(m.second->get_dir()) {
              case  1: n->type = dfgNode::SDFG_OPORT; break;
              case -1: n->type = dfgNode::SDFG_IPORT; break;
@@ -493,7 +486,7 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
   // put all signals into the list
   for_each(db_var.begin_order(), db_var.end_order(),
            [&](const pair<const VIdentifier, shared_ptr<Variable> >& m) {
-             shared_ptr<dfgNode> n = G->add_node(m.first.name, dfgNode::SDFG_DF);
+             shared_ptr<dfgNode> n = G->add_node(m.first.get_name(), dfgNode::SDFG_DF);
              n->ptr.insert(m.second);
              m.second->pDFGNode = n;
            });
@@ -503,14 +496,14 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
            [&](const pair<const VIdentifier, shared_ptr<Port> >& m) {
              switch(m.second->get_dir()) {
              case  1:           // output
-               G->add_edge(m.first.name, dfgEdge::SDFG_ASS, m.first.name, m.first.name + "_P"); 
+               G->add_edge(m.first.get_name(), dfgEdge::SDFG_ASS, m.first.get_name(), m.first.get_name() + "_P"); 
                break;
              case -1:           // input
-               G->add_edge(m.first.name, dfgEdge::SDFG_ASS, m.first.name + "_P", m.first.name); 
+               G->add_edge(m.first.get_name(), dfgEdge::SDFG_ASS, m.first.get_name() + "_P", m.first.get_name()); 
                break;
              default:           // inout
-               G->add_edge(m.first.name, dfgEdge::SDFG_ASS, m.first.name, m.first.name + "_P"); 
-               G->add_edge(m.first.name, dfgEdge::SDFG_ASS, m.first.name + "_P", m.first.name);
+               G->add_edge(m.first.get_name(), dfgEdge::SDFG_ASS, m.first.get_name(), m.first.get_name() + "_P"); 
+               G->add_edge(m.first.get_name(), dfgEdge::SDFG_ASS, m.first.get_name() + "_P", m.first.get_name());
              }
            });
 
@@ -518,16 +511,16 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
   for_each(db_instance.begin(), db_instance.end(),
            [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
              if(m.second->type == Instance::modu_inst) {
-               shared_ptr<dfgNode> n = G->add_node(m.first.name, dfgNode::SDFG_MODULE);
+               shared_ptr<dfgNode> n = G->add_node(m.first.get_name(), dfgNode::SDFG_MODULE);
                n->ptr.insert(m.second);
                shared_ptr<Module> subMod = G_ENV->find_module(m.second->mname);
                if(subMod) { // has sub-module
-                 n->child_name = m.second->mname.name;
+                 n->child_name = m.second->mname.get_name();
                  n->child = subMod->extract_sdfg(quiet);
                  n->child->father = n.get();
                }
              } else {           // gate
-               shared_ptr<dfgNode> n = G->add_node(m.first.name, dfgNode::SDFG_GATE);
+               shared_ptr<dfgNode> n = G->add_node(m.first.get_name(), dfgNode::SDFG_GATE);
                n->ptr.insert(m.second);
              }
            });
@@ -555,7 +548,7 @@ void netlist::Module::assign_dataDFG() {
            [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
              if(m.second->type == Instance::modu_inst) {
                shared_ptr<Module> subMod = G_ENV->find_module(m.second->mname);
-               shared_ptr<dfgNode> dfgMod = DataDFG->get_node(m.second->name.name);
+               shared_ptr<dfgNode> dfgMod = DataDFG->get_node(m.second->name.get_name());
                assert(subMod);
                if(subMod && dfgMod && dfgMod->child) {
                  subMod->DataDFG = dfgMod->child;
@@ -615,7 +608,7 @@ double netlist::Module::get_ratio_state_preserved_oport(map<VIdentifier, pair<bo
   DataBase<VIdentifier, Port, true>::DBTL::iterator pit, pend;
   for(pit = db_port.begin_order(), pend = db_port.end_order(); pit != pend; ++pit) {
     if(pit->second->get_dir() >= 0) { // output or inout
-      shared_ptr<SDFG::dfgNode> pnode = DFG->get_node(pit->second->name.name + "_P");
+      shared_ptr<SDFG::dfgNode> pnode = DFG->get_node(pit->second->name.get_name() + "_P");
       bool is_state_preserved = false; // preserve state
       bool has_ff_input = false;
       string data_source("");
@@ -691,7 +684,7 @@ void netlist::Module::cal_partition(const double& acc_ratio, std::ostream& ostm,
         const unsigned int const_size_of_name = 28;
         ostm << string(4, ' ');
         ostm << p.first << 
-          string(p.first.name.size() > const_size_of_name - 4 ? 4 : const_size_of_name - p.first.name.size(), ' ') << 
+          string(p.first.get_name().size() > const_size_of_name - 4 ? 4 : const_size_of_name - p.first.get_name().size(), ' ') << 
           p.second.first << "\t" << p.second.second << std::endl;
       }
       ostm << endl;
