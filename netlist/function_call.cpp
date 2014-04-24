@@ -70,8 +70,10 @@ ostream& netlist::FuncCall::streamout(ostream& os, unsigned int indent) const {
   return os;
 }
 
-FuncCall* netlist::FuncCall::deep_copy(FuncCall* rv) const {
-  if(!rv) rv = new FuncCall();
+FuncCall* netlist::FuncCall::deep_copy(NetComp* bp) const {
+  FuncCall *rv;
+  if(!bp) rv = new FuncCall();
+  else    rv = static_cast<FuncCall *>(bp); // C++ does not support multiple dispatch
   NetComp::deep_copy(rv);
   rv->fname = fname;
   rv->valuable = valuable;

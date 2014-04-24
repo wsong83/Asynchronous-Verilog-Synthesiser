@@ -41,7 +41,7 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
-    virtual Port* deep_copy(Port*) const;
+    virtual Port* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
     virtual boost::shared_ptr<Expression> get_combined_expression(const VIdentifier&, std::set<std::string>);

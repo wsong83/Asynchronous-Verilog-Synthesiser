@@ -83,9 +83,14 @@ ostream& netlist::GenBlock::streamout(ostream& os, unsigned int indent, bool fl_
   return os;
 }
 
-GenBlock* netlist::GenBlock::deep_copy(GenBlock *rv) const {
-  bool base_call = rv != NULL;
-  if(!rv) rv = new GenBlock();
+GenBlock* netlist::GenBlock::deep_copy(NetComp* bp) const {
+  bool base_call = true;
+  GenBlock *rv;
+  if(!bp) {
+    rv = new GenBlock();
+    base_call = false;
+  } else
+    rv = static_cast<GenBlock *>(bp); // C++ does not support multiple dispatch
   Block::deep_copy(rv);
 
   if(!base_call) {

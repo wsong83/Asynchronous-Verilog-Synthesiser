@@ -53,7 +53,7 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
-    virtual ForState* deep_copy(ForState*) const;
+    virtual ForState* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
     NETLIST_REPLACE_VARIABLE;

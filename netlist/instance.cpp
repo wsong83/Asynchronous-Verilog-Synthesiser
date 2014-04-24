@@ -219,8 +219,10 @@ ostream& netlist::Instance::streamout(ostream& os, unsigned int indent) const {
   return os;
 }
 
-Instance* netlist::Instance::deep_copy(Instance *rv) const {
-  if(!rv) rv = new Instance();
+Instance* netlist::Instance::deep_copy(NetComp* bp) const {
+  Instance *rv;
+  if(!bp) rv = new Instance();
+  else    rv = static_cast<Instance *>(bp); // C++ does not support multiple dispatch
   NetComp::deep_copy(rv);
   rv->mname = mname;
   rv->name = name;

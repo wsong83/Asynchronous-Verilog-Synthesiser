@@ -62,8 +62,12 @@ ostream& netlist::WhileState::streamout(ostream& os, unsigned int indent) const 
   return os;
 }
 
-WhileState* netlist::WhileState::deep_copy(WhileState *rv) const {
-  if(!rv) rv = new WhileState(loc);
+WhileState* netlist::WhileState::deep_copy(NetComp* bp) const {
+  WhileState *rv;
+  if(!bp) rv = new WhileState(loc);
+  else    rv = static_cast<WhileState *>(bp); // C++ does not support multiple dispatch
+  NetComp::deep_copy(rv);
+
   rv->name = name;
   rv->named = named;
   

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -105,8 +105,10 @@ ostream& netlist::LConcatenation::streamout(ostream& os, unsigned int indent) co
   return os;
 }
 
-LConcatenation* netlist::LConcatenation::deep_copy(LConcatenation *rv) const {
-  if(!rv) rv = new LConcatenation();
+LConcatenation* netlist::LConcatenation::deep_copy(NetComp* bp) const {
+  LConcatenation *rv;
+  if(!bp) rv = new LConcatenation();
+  else    rv = static_cast<LConcatenation *>(bp); // C++ does not support multiple dispatch
   NetComp::deep_copy(rv);
   rv->valid = valid;
   BOOST_FOREACH(const VIdentifier& m, data) {

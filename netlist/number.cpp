@@ -218,8 +218,9 @@ ostream& netlist::Number::streamout (ostream& os, unsigned int indent) const{
   return os;
 }
 
-Number* netlist::Number::deep_copy(Number * rv) const {
-  if(rv) {
+Number* netlist::Number::deep_copy(NetComp* bp) const {
+  if(bp) {
+    Number *rv = static_cast<Number*>(bp); // C++ does not support multiple dispatch
     NetComp::deep_copy(rv);
     rv->num_leng = num_leng;
     rv->txt_value = txt_value;

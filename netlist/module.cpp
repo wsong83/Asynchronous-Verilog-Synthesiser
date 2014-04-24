@@ -176,9 +176,14 @@ ostream& netlist::Module::streamout(ostream& os, unsigned int indent) const {
   return os;
 }
 
-Module* netlist::Module::deep_copy(Module *rv) const {
-  bool base_call = rv != NULL;
-  if(!rv) rv = new Module();
+Module* netlist::Module::deep_copy(NetComp* bp) const {
+  bool base_call = true;
+  Module *rv;
+  if(!bp) {
+    rv = new Module();
+    base_call = false;
+  } else
+    rv = static_cast<Module *>(bp); // C++ does not support multiple dispatch
   Block::deep_copy(rv);
   rv->set_name(name);
   

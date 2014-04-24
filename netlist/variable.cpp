@@ -185,12 +185,14 @@ unsigned int netlist::Variable::get_id() {
   return rv;
 }
     
-Variable* netlist::Variable::deep_copy(Variable *rv) const {
-  if(!rv) {
+Variable* netlist::Variable::deep_copy(NetComp *bp) const {
+  Variable *rv;
+  if(!bp) {
     VIdentifier * newid = name.deep_copy(NULL);
     rv = new Variable(loc, *newid, vtype);
     delete newid;
-  }
+  } else 
+    rv = static_cast<Variable *>(bp); // C++ does not support multiple dispatch
   NetComp::deep_copy(rv);
   
   if(exp) rv->exp.reset(exp->deep_copy(NULL));

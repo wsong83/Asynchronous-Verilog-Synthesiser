@@ -46,7 +46,7 @@ namespace netlist{
 
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
-    virtual GenBlock* deep_copy(GenBlock*) const;
+    virtual GenBlock* deep_copy(NetComp*) const;
     virtual void db_register(int iod = 1);
     virtual void db_expunge();
 

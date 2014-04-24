@@ -138,7 +138,7 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
     using NetComp::set_father;
-    virtual Block* deep_copy(Block*) const;
+    virtual Block* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
     NETLIST_GEN_SDFG;

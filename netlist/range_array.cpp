@@ -199,8 +199,10 @@ ostream& RangeArray::streamout (ostream& os, unsigned int indent) const {
   return RangeArrayCommon::streamout(os, indent, "");
 }
 
-RangeArray* netlist::RangeArray::deep_copy(RangeArray *rv) const {
-  if(!rv) rv = new RangeArray();
+RangeArray* netlist::RangeArray::deep_copy(NetComp* bp) const {
+  RangeArray *rv;
+  if(!bp) rv = new RangeArray();
+  else    rv = static_cast<RangeArray *>(bp); // C++ does not support multiple dispatch
   NetComp::deep_copy(rv);
   RangeArrayCommon::deep_copy(rv);
   rv->const_reduced = const_reduced;

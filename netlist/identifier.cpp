@@ -85,8 +85,10 @@ void netlist::Identifier::set_father(Block *pf) {
   father = pf;
 }
 
-Identifier* netlist::Identifier::deep_copy(Identifier *rv) const {
-  if(!rv) rv = new Identifier();
+Identifier* netlist::Identifier::deep_copy(NetComp *bp) const {
+  Identifier *rv;
+  if(!bp) rv = new Identifier();
+  else    rv = static_cast<Identifier *>(bp); // C++ does not support multiple dispatch
   NetComp::deep_copy(rv);
   rv->name = name;
   rv->hashid = hashid;
@@ -421,8 +423,10 @@ void netlist::VIdentifier::db_expunge() {
   m_select.db_expunge();
 }
 
-VIdentifier* netlist::VIdentifier::deep_copy(VIdentifier *rv) const {
-  if(!rv) rv = new VIdentifier();
+VIdentifier* netlist::VIdentifier::deep_copy(NetComp* bp) const {
+  VIdentifier *rv;
+  if(!bp) rv = new VIdentifier();
+  else    rv = static_cast<VIdentifier *>(bp); // C++ does not support multiple dispatch
   Identifier::deep_copy(rv);
   rv->value = this->value;
   rv->uid = 0;                  // unregistered

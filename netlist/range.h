@@ -82,7 +82,7 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
-    virtual Range* deep_copy(Range*) const;
+    virtual Range* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
     unsigned int get_width() const;   // only the range
     unsigned int get_width(const Range&) const; // considering child

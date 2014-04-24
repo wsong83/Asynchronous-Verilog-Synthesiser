@@ -47,7 +47,7 @@ namespace netlist{
     virtual void elab_inparse(); /* resolve the content in statements during parsing */
     NETLIST_SET_FATHER_DECL;
     virtual void set_father();   /* set the father pointer to all sub-elements */
-    virtual Function* deep_copy(Function*) const;
+    virtual Function* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
 

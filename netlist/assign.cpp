@@ -112,14 +112,16 @@ shared_ptr<SDFG::RTree> netlist::Assign::get_rtree() const {
 }
 
 
-Assign* netlist::Assign::deep_copy(Assign *rv) const {
-  if(!rv) {
-    rv = new Assign( loc,
-                     shared_ptr<LConcatenation>(lval->deep_copy(NULL)),
-                     shared_ptr<Expression>(rexp->deep_copy(NULL)),
-                     blocking
-                     );
+Assign* netlist::Assign::deep_copy(NetComp* bp) const {
+  Assign *rv;
+  if(!bp) {
+    rv =  new Assign( loc,
+                      shared_ptr<LConcatenation>(lval->deep_copy(NULL)),
+                      shared_ptr<Expression>(rexp->deep_copy(NULL)),
+                      blocking
+                      );
   } else {
+    rv = static_cast<Assign *>(bp); // C++ does not support multiple dispatch
     rv->lval.reset(lval->deep_copy(NULL));
     rv->rexp.reset(rexp->deep_copy(NULL));
     rv->blocking = blocking;

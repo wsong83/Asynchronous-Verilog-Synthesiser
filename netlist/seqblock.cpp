@@ -189,12 +189,15 @@ void netlist::SeqBlock::set_father(Block *pf) {
     it->set_father(pf);
 }
 
-SeqBlock* netlist::SeqBlock::deep_copy(SeqBlock* rv) const {
+SeqBlock* netlist::SeqBlock::deep_copy(NetComp* bp) const {
   bool base_call = true;
-  if(!rv) {
+  SeqBlock *rv;
+  if(!bp) {
     rv = new SeqBlock();
     base_call = false;
-  }
+  } else
+    rv = static_cast<SeqBlock *>(bp); // C++ does not support multiple dispatch
+
   Block::deep_copy(rv);
 
   // data in SeqBlock

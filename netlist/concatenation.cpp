@@ -131,8 +131,10 @@ ostream& netlist::ConElem::streamout(ostream& os, unsigned int indent) const {
   return os;
 }
 
-ConElem* netlist::ConElem::deep_copy(ConElem * rv) const {
-  if(!rv) rv = new ConElem();
+ConElem* netlist::ConElem::deep_copy(NetComp* bp) const {
+  ConElem* rv;
+  if(!bp) rv = new ConElem();
+  else    rv = static_cast<ConElem *>(bp); // C++ does not support multiple dispatch
   NetComp::deep_copy(rv);
   rv->exp = shared_ptr<Expression>(exp->deep_copy(NULL));
   BOOST_FOREACH(shared_ptr<ConElem> ce, con) {
@@ -320,8 +322,10 @@ void netlist::Concatenation::db_expunge() {
   BOOST_FOREACH(shared_ptr<ConElem> d, data) d->db_expunge();
 }
 
-Concatenation* netlist::Concatenation::deep_copy(Concatenation* rv) const {
-  if(!rv) rv = new Concatenation();
+Concatenation* netlist::Concatenation::deep_copy(NetComp* bp) const {
+  Concatenation *rv;
+  if(!bp) rv = new Concatenation();
+  else    rv = static_cast<Concatenation*>(bp); // C++ does not support multiple dispatch
   NetComp::deep_copy(rv);
   BOOST_FOREACH(const shared_ptr<ConElem>& m, data)
     rv->data.push_back(shared_ptr<ConElem>(m->deep_copy(NULL)));

@@ -76,7 +76,7 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
-    RangeArray* deep_copy(RangeArray*) const;
+    RangeArray* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
     unsigned int get_width(const RangeArray&) const;
     unsigned int get_width(const RangeArray&);

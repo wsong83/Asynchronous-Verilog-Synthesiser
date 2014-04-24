@@ -84,8 +84,10 @@ ostream& netlist::ForState::streamout(ostream& os, unsigned int indent) const {
   return os;
 }
 
-ForState* netlist::ForState::deep_copy(ForState *rv) const {
-  if(!rv) rv = new ForState(loc);
+ForState* netlist::ForState::deep_copy(NetComp* bp) const {
+  ForState *rv;
+  if(!bp) rv = new ForState(loc);
+  else    rv = static_cast<ForState *>(bp); // C++ does not support multiple dispatch
   NetComp::deep_copy(rv);
 
   rv->name = name;

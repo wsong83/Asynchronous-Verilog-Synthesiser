@@ -54,7 +54,7 @@ namespace netlist{
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
     using Block::set_father;
-    virtual SeqBlock* deep_copy(SeqBlock*) const;
+    virtual SeqBlock* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
     NETLIST_GEN_SDFG;
     NETLIST_REPLACE_VARIABLE;

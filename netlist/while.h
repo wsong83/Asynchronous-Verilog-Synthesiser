@@ -42,7 +42,7 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
-    virtual WhileState* deep_copy(WhileState*) const;
+    virtual WhileState* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
     NETLIST_REPLACE_VARIABLE;
 

@@ -116,8 +116,10 @@ ostream& netlist::IfState::streamout(ostream& os, unsigned int indent, bool fl_p
 
 }
 
-IfState* netlist::IfState::deep_copy(IfState *rv) const {
-  if(!rv) rv = new IfState(loc);
+IfState* netlist::IfState::deep_copy(NetComp* bp) const {
+  IfState *rv;
+  if(!bp) rv = new IfState(loc);
+  else    rv = static_cast<IfState *>(bp); // C++ does not support multiple dispatch
   NetComp::deep_copy(rv);
 
   rv->name = name;

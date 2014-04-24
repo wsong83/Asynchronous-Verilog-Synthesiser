@@ -43,7 +43,7 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
-    virtual LConcatenation* deep_copy(LConcatenation*) const;
+    virtual LConcatenation* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
     NETLIST_REPLACE_VARIABLE;
     virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;

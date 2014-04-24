@@ -375,8 +375,10 @@ ostream& netlist::Operation::streamout(ostream& os, unsigned int indent) const {
   return os;
 }
 
-Operation* netlist::Operation::deep_copy(Operation* rv) const {
-  if(!rv) rv = new Operation();
+Operation* netlist::Operation::deep_copy(NetComp* bp) const {
+  Operation *rv;
+  if(!bp) rv = new Operation();
+  else    rv = static_cast<Operation *>(bp); // C++ does not support multiple dispatch
   NetComp::deep_copy(rv);
   rv->otype = this->otype;
   rv->valuable = this->valuable;

@@ -134,8 +134,10 @@ shared_ptr<Expression> netlist::Port::get_combined_expression(const VIdentifier&
   return rv;
 }
 
-Port* netlist::Port::deep_copy(Port *rv) const {
-  if(!rv) rv = new Port(loc);
+Port* netlist::Port::deep_copy(NetComp* bp) const {
+  Port *rv;
+  if(!bp) rv = new Port(loc);
+  else    rv = static_cast<Port *>(bp); // C++ does not support multiple dispatch
   NetComp::deep_copy(rv);
   VIdentifier *mname = name.deep_copy(NULL);
   rv->name = *mname;

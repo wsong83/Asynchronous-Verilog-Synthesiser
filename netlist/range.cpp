@@ -703,8 +703,10 @@ ostream& netlist::Range::streamout(ostream& os, unsigned int indent) const {
   return streamout(os, indent, "");
 }
 
-Range* netlist::Range::deep_copy(Range *rv) const {
-  if(!rv) rv = new Range();
+Range* netlist::Range::deep_copy(NetComp* bp) const {
+  Range *rv;
+  if(!bp) rv = new Range();
+  else    rv = static_cast<Range *>(bp); // C++ does not support multiple dispatch
   NetComp::deep_copy(rv);
   RangeArrayCommon::deep_copy(rv);
   switch(rtype) {

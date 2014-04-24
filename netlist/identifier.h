@@ -47,7 +47,7 @@ namespace netlist {
     int compare(const Identifier& rhs) const; /* compare two identifiers */
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
-    virtual Identifier* deep_copy(Identifier*) const;
+    virtual Identifier* deep_copy(NetComp*) const;
     void hash_update();			   /* update the nearly unique hash id */
     virtual std::string get_name() const { return name; }
     virtual void set_name(const std::string& newName) { name = newName; hash_update(); }
@@ -189,7 +189,7 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
-    virtual VIdentifier* deep_copy(VIdentifier*) const;
+    virtual VIdentifier* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
     NETLIST_REPLACE_VARIABLE;
     virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;

@@ -372,12 +372,15 @@ void netlist::Block::elab_inparse() {
   
 }
 
-Block* netlist::Block::deep_copy(Block *rv) const {
+Block* netlist::Block::deep_copy(NetComp* bp) const {
   bool base_call = true;
-  if(!rv) {
+  Block *rv;
+  if(!bp) {
     rv = new Block();
     base_call = false;
-  }
+  } else
+    rv = static_cast<Block *>(bp); // C++ does not support multiple dispatch
+
   NetComp::deep_copy(rv);
   rv->name = name;
   rv->named = named;

@@ -50,7 +50,7 @@ namespace netlist{
     // helpers
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
-    virtual CaseItem* deep_copy(CaseItem*) const;
+    virtual CaseItem* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
     bool is_default() const {return exps.size() == 0; }
@@ -88,7 +88,7 @@ namespace netlist{
     // helpers
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
-    virtual CaseState* deep_copy(CaseState*) const;
+    virtual CaseState* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
     void set_name(const BIdentifier& nm) {name = nm; named=true;}

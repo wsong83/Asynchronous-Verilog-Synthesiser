@@ -88,7 +88,7 @@ namespace netlist {
     bool is_inout() const { return dir == 0; }
     NETLIST_SET_FATHER_DECL;
     NETLIST_REPLACE_VARIABLE;
-    virtual PortConn* deep_copy(PortConn*) const;
+    virtual PortConn* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
     NETLIST_STREAMOUT_DECL;
@@ -123,7 +123,7 @@ namespace netlist {
 
     NETLIST_SET_FATHER_DECL;
     NETLIST_REPLACE_VARIABLE;
-    virtual ParaConn* deep_copy(ParaConn*) const;
+    virtual ParaConn* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
     NETLIST_STREAMOUT_DECL;

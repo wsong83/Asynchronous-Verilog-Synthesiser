@@ -107,8 +107,10 @@ void netlist::CaseItem::set_father(Block *pf) {
     body->set_father(pf);
 }
 
-CaseItem* netlist::CaseItem::deep_copy(CaseItem *rv) const {
-  if(!rv) rv = new CaseItem(loc);
+CaseItem* netlist::CaseItem::deep_copy(NetComp* bp) const {
+  CaseItem *rv;
+  if(!bp) rv = new CaseItem();
+  else    rv = static_cast<CaseItem *>(bp); // C++ does not support multiple dispatch
   NetComp::deep_copy(rv);
 
   if(body) rv->body.reset(body->deep_copy(NULL));
@@ -238,8 +240,10 @@ void netlist::CaseState::set_father(Block *pf) {
     it->set_father(pf);
 }
 
-CaseState* netlist::CaseState::deep_copy(CaseState *rv) const {
-  if(!rv) rv = new CaseState(loc);
+CaseState* netlist::CaseState::deep_copy(NetComp* bp) const {
+  CaseState *rv;
+  if(!bp) rv = new CaseState();
+  else    rv = static_cast<CaseState *>(bp); // C++ does not support multiple dispatch
   NetComp::deep_copy(rv);
   
   rv->name = name;

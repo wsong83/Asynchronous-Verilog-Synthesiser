@@ -57,7 +57,7 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
-    virtual ConElem* deep_copy(ConElem *) const;
+    virtual ConElem* deep_copy(NetComp *) const;
     NETLIST_DB_DECL;
     NETLIST_REPLACE_VARIABLE;
     void replace_variable(const VIdentifier&, boost::shared_ptr<Expression>); // replace a vid with an expression     
@@ -90,7 +90,7 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
-    virtual Concatenation* deep_copy(Concatenation *) const;
+    virtual Concatenation* deep_copy(NetComp *) const;
     NETLIST_DB_DECL;
     NETLIST_REPLACE_VARIABLE;
     void replace_variable(const VIdentifier&, boost::shared_ptr<Expression>); // replace a vid with an expression 

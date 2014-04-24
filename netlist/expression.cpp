@@ -222,8 +222,10 @@ void netlist::Expression::set_father(Block *pf) {
   eqn->set_father(pf);
 }
 
-Expression* netlist::Expression::deep_copy(Expression *rv) const {
-  if(!rv) rv = new Expression();
+Expression* netlist::Expression::deep_copy(NetComp* bp) const {
+  Expression *rv;
+  if(!bp) rv = new Expression();
+  else    rv = static_cast<Expression *>(bp); // C++ does not support multiple dispatch
   NetComp::deep_copy(rv);
   assert(eqn);
   rv->eqn = shared_ptr<Operation>(eqn->deep_copy(NULL));

@@ -95,8 +95,10 @@ void netlist::PortConn::set_father(Block* pf) {
   var.set_father(pf);
 }
 
-PortConn* netlist::PortConn::deep_copy(PortConn *rv) const {
-  if(!rv) rv = new PortConn();
+PortConn* netlist::PortConn::deep_copy(NetComp* bp) const {
+  PortConn *rv;
+  if(!bp) rv = new PortConn();
+  else    rv = static_cast<PortConn *>(bp); // C++ does not support multiple dispatch
   NetComp::deep_copy(rv);
   rv->pname = pname;
   rv->named = named;
@@ -251,8 +253,10 @@ void netlist::ParaConn::set_father(Block* pf) {
   var.set_father(pf);
 }
 
-ParaConn* netlist::ParaConn::deep_copy(ParaConn *rv) const {
-  if(!rv) rv = new ParaConn();
+ParaConn* netlist::ParaConn::deep_copy(NetComp* bp) const {
+  ParaConn *rv;
+  if(!bp) rv = new ParaConn();
+  else    rv = static_cast<ParaConn *>(bp); // C++ does not support multiple dispatch
   NetComp::deep_copy(rv);
   rv->pname = pname;
   rv->named = named;
