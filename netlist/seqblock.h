@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -54,7 +54,7 @@ namespace netlist{
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
     using Block::set_father;
-    virtual SeqBlock* deep_copy() const;
+    virtual SeqBlock* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
     NETLIST_GEN_SDFG;
     NETLIST_REPLACE_VARIABLE;

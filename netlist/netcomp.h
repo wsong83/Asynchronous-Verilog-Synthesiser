@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -120,7 +120,7 @@ namespace netlist{
     // the internal stream out method, to avoid friend declarations
     virtual std::ostream& streamout (std::ostream& os, unsigned int) const;    
     // deep copy when the content of a shared_ptr must be duplicated
-    virtual NetComp* deep_copy() const;
+    virtual NetComp* deep_copy( NetComp * rv) const;
     // set the father block pointer
     virtual void set_father(Block* pf);
     // get the hierarchy name
@@ -135,6 +135,8 @@ namespace netlist{
     virtual void db_expunge();
     virtual bool elaborate(std::set<boost::shared_ptr<NetComp> >&,
                            std::map<boost::shared_ptr<NetComp>, std::list<boost::shared_ptr<NetComp> > >&);
+    // unfold for before elaboration
+    virtual void unfold();
     virtual unsigned int get_width() const;
     virtual void set_width(const unsigned int&);
     virtual void gen_sdfg(boost::shared_ptr<SDFG::dfgGraph>);

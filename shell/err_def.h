@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -127,6 +127,10 @@ ERR_DEFINE("ELAB-FOR-3",
 ERR_DEFINE("ELAB-FOR-4",
            EError,   1,
            "cannot evaluate the increment assignment \"%1%\" of the for statement");
+
+ERR_DEFINE("ELAB-FOR-5",
+           EError,   0,
+           "define functions in a for statement is not supported yet.");
 
 ERR_DEFINE("ELAB-IF-0", 
            EError,   0, 
@@ -285,6 +289,10 @@ ERR_DEFINE("SYN-INST-0",
 ERR_DEFINE("SYN-INST-1",   
            EWarning,   0, 
            "primary gate is unnamed and will be named by a default name.");
+
+ERR_DEFINE("SYN-INST-2",   
+           EWarning,   1, 
+           "instance \"%1\" defined in an unnamed embedded block has a same name in its parent block is not supported yet.");
 
 // duplicated module definition. The duplicated module will be ignored.
 ERR_DEFINE("SYN-MODULE-0", 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -83,23 +83,20 @@ ostream& netlist::GenBlock::streamout(ostream& os, unsigned int indent, bool fl_
   return os;
 }
 
-GenBlock* netlist::GenBlock::deep_copy() const {
-  GenBlock* rv = new GenBlock();
-  rv->loc = loc;
-  rv->name = name;
-  rv->named = named;
-  
-  // data in Block
-  BOOST_FOREACH(const shared_ptr<NetComp>& comp, statements)
-    rv->statements.push_back(shared_ptr<NetComp>(comp->deep_copy())); 
-  
-  DATABASE_DEEP_COPY_FUN(db_var,      VIdentifier, Variable,  rv->db_var       );
-  rv->unnamed_block = unnamed_block;
-  rv->unnamed_instance = unnamed_instance;
-  rv->unnamed_var = unnamed_var;
+GenBlock* netlist::GenBlock::deep_copy(NetComp* bp) const {
+  bool base_call = true;
+  GenBlock *rv;
+  if(!bp) {
+    rv = new GenBlock();
+    base_call = false;
+  } else
+    rv = static_cast<GenBlock *>(bp); // C++ does not support multiple dispatch
+  Block::deep_copy(rv);
 
-  rv->set_father();
-  rv->elab_inparse();
+  if(!base_call) {
+    rv->set_father();
+    rv->elab_inparse();
+  }
   return rv;
 }
 
@@ -110,6 +107,12 @@ void netlist::GenBlock::db_register(int) {
       m.second->db_register(1);
     });
   BOOST_FOREACH(shared_ptr<NetComp>& m, statements) m->db_register(1);
+  for_each(db_instance.begin(), db_instance.end(), [](pair<const IIdentifier, shared_ptr<Instance> >& m) {
+	m.second->db_register(1);
+      });
+  for_each(db_func.begin(), db_func.end(), [](pair<const FIdentifier, shared_ptr<Function> >& m) {
+	m.second->db_register(1);
+      });
 }
 
 void netlist::GenBlock::db_expunge() {
@@ -117,4 +120,10 @@ void netlist::GenBlock::db_expunge() {
       m.second->db_expunge();
     });
   BOOST_FOREACH(shared_ptr<NetComp>& m, statements) m->db_expunge();
+  for_each(db_instance.begin(), db_instance.end(), [](pair<const IIdentifier, shared_ptr<Instance> >& m) {
+	m.second->db_expunge();
+      });
+  for_each(db_func.begin(), db_func.end(), [](pair<const FIdentifier, shared_ptr<Function> >& m) {
+	m.second->db_expunge();
+      });
 }

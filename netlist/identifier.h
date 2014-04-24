@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -47,11 +47,23 @@ namespace netlist {
     int compare(const Identifier& rhs) const; /* compare two identifiers */
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
+    virtual Identifier* deep_copy(NetComp*) const;
     void hash_update();			   /* update the nearly unique hash id */
+    virtual std::string get_name() const { return name; }
+    virtual void set_name(const std::string& newName) { name = newName; hash_update(); }
+    virtual std::string get_suffix() const;
+    virtual bool replace_suffix(const std::string& newSuffix);
+    virtual void add_suffix(const std::string& newSuffix);
+    virtual void suffix_increase();
+    virtual void add_prefix(const std::string& prefix);
 
+  protected:
     // data
     std::string name;		/* the name of the identifier */
+
+  private:
     unsigned int hashid;	/* the nearly unique heash id */
+    bool numbered;              // whether it is numbered (suffix)
 
   };
   
@@ -72,9 +84,6 @@ namespace netlist {
     BIdentifier(const averilog::avID& );
     BIdentifier(const shell::location&, const averilog::avID& );
 
-    // helpers
-    BIdentifier& operator++ ();
-
   private:
     bool anonymous;
   };
@@ -90,8 +99,6 @@ namespace netlist {
     FIdentifier(const shell::location&, const std::string&);
     FIdentifier(const shell::location&, const averilog::avID&);
     
-    // helpers
-
   };
   NETLIST_STREAMOUT(FIdentifier);
 
@@ -107,11 +114,7 @@ namespace netlist {
     MIdentifier(const shell::location&, const averilog::avID& );
     
     // helpers
-    MIdentifier& operator++ ();
     NETLIST_STREAMOUT_DECL;
-
-  private:
-    bool numbered;
 
   };
   NETLIST_STREAMOUT(MIdentifier);
@@ -127,12 +130,6 @@ namespace netlist {
     IIdentifier(const averilog::avID&);
     IIdentifier(const shell::location&, const averilog::avID&);
 
-    // helpers
-    IIdentifier& operator++ ();
-    IIdentifier& add_prefix (const Identifier&);
-
-  private:
-    bool numbered;
   };
   NETLIST_STREAMOUT(IIdentifier);
 
@@ -175,8 +172,6 @@ namespace netlist {
     virtual ~VIdentifier();
 
     //helpers
-    VIdentifier& operator++ ();
-    VIdentifier& add_prefix (const Identifier&);
     const RangeArray& get_range() const {return m_range;}
     const RangeArray& get_select() const {return m_select;}
     RangeArray& get_range() {return m_range;}
@@ -194,7 +189,7 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_SET_FATHER_DECL;
     NETLIST_STREAMOUT_DECL;
-    virtual VIdentifier* deep_copy() const;
+    virtual VIdentifier* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
     NETLIST_REPLACE_VARIABLE;
     virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
@@ -204,7 +199,6 @@ namespace netlist {
     Number value;
     RangeArray m_range;
     RangeArray m_select;
-    bool numbered;                 /* true when it is numbered unnamed variable */
     boost::shared_ptr<Variable> pvar;     /* the wire/reg/var in the database */
     unsigned int uid;              /* used as the key to search this variable as fanin or fanout */
   };

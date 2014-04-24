@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -105,12 +105,14 @@ ostream& netlist::LConcatenation::streamout(ostream& os, unsigned int indent) co
   return os;
 }
 
-LConcatenation* netlist::LConcatenation::deep_copy() const {
-  LConcatenation* rv = new LConcatenation();
-  rv->loc = loc;
+LConcatenation* netlist::LConcatenation::deep_copy(NetComp* bp) const {
+  LConcatenation *rv;
+  if(!bp) rv = new LConcatenation();
+  else    rv = static_cast<LConcatenation *>(bp); // C++ does not support multiple dispatch
+  NetComp::deep_copy(rv);
   rv->valid = valid;
   BOOST_FOREACH(const VIdentifier& m, data) {
-    VIdentifier* mp = m.deep_copy();
+    VIdentifier* mp = m.deep_copy(NULL);
     rv->data.push_back(*mp);
     delete mp;
   }
@@ -128,7 +130,7 @@ void netlist::LConcatenation::db_expunge() {
 shared_ptr<SDFG::RTree> netlist::LConcatenation::get_rtree() const {
   shared_ptr<SDFG::RTree> rv(new SDFG::RTree(false));
   BOOST_FOREACH(const VIdentifier& m, data) {
-    rv->add_tree(m.get_select().get_rtree(), m.name, SDFG::dfgEdge::SDFG_ADR); 
+    rv->add_tree(m.get_select().get_rtree(), m.get_name(), SDFG::dfgEdge::SDFG_ADR); 
   }
   return rv;
 }

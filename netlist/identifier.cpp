@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -47,22 +47,23 @@ using std::vector;
 using boost::shared_ptr;
 using shell::location;
 using std::pair;
+using boost::lexical_cast;
 
 ////////////////////////////// Base class /////////////////
-netlist::Identifier::Identifier() {}
+netlist::Identifier::Identifier() : numbered(false) {}
 
-netlist::Identifier::Identifier(NetComp::ctype_t ctype) : NetComp(ctype) {}
+netlist::Identifier::Identifier(NetComp::ctype_t ctype) : NetComp(ctype),  numbered(false) {}
 
-netlist::Identifier::Identifier(NetComp::ctype_t ctype, const shell::location& lloc) : NetComp(ctype, lloc) {}
+netlist::Identifier::Identifier(NetComp::ctype_t ctype, const shell::location& lloc) : NetComp(ctype, lloc), numbered(false) {}
 
 netlist::Identifier::Identifier(ctype_t ctype, const string& nm)
-  : NetComp(ctype), name(nm)
+  : NetComp(ctype), name(nm), numbered(false)
 {
   hash_update();
 }
 
 netlist::Identifier::Identifier(ctype_t ctype, const location& lloc, const string& nm)
-  : NetComp(ctype, lloc), name(nm)
+  : NetComp(ctype, lloc), name(nm), numbered(false) 
 {
   hash_update();
 }
@@ -84,10 +85,61 @@ void netlist::Identifier::set_father(Block *pf) {
   father = pf;
 }
 
+Identifier* netlist::Identifier::deep_copy(NetComp *bp) const {
+  Identifier *rv;
+  if(!bp) rv = new Identifier();
+  else    rv = static_cast<Identifier *>(bp); // C++ does not support multiple dispatch
+  NetComp::deep_copy(rv);
+  rv->name = name;
+  rv->hashid = hashid;
+  rv->numbered = numbered;
+  return rv;
+}
+
 void netlist::Identifier::hash_update() {
   boost::hash<string> s2i;
   hashid = s2i(name);
 }  
+
+string netlist::Identifier::get_suffix() const {
+  const boost::regex numbered_name("_(\\d+)\\z");
+  boost::smatch mr;
+
+  if(numbered && boost::regex_search(name, mr, numbered_name))
+    return mr.str().substr(1);
+  else
+    return string();
+}
+
+bool netlist::Identifier::replace_suffix(const string& newSuffix) {
+  const boost::regex numbered_name("_(\\d+)\\z");
+  boost::smatch mr;
+
+  if(numbered && boost::regex_search(name, mr, numbered_name)) {
+    set_name(boost::regex_replace(name, numbered_name, "_"+newSuffix));
+    return true;
+  } else {
+    return false;
+  }
+}
+
+void netlist::Identifier::add_suffix(const string& newSuffix) {
+  set_name(name + "_" + newSuffix);
+}
+
+void netlist::Identifier::suffix_increase () {
+  string oldSuffix = get_suffix();
+  if(oldSuffix.size()) {	// already has a suffix
+    string newSuffix = "_" + lexical_cast<string>(atoi(oldSuffix.c_str())+1);
+    replace_suffix(newSuffix);
+  } else {
+    add_suffix("0");
+  }
+}
+
+void netlist::Identifier::add_prefix(const string& newPrefix) {
+  set_name(newPrefix + "." + name);
+}
 
 bool netlist::operator< (const Identifier& lhs, const Identifier& rhs) {
   return lhs.compare(rhs) < 0;
@@ -124,16 +176,18 @@ netlist::BIdentifier::BIdentifier(const averilog::avID &id)
 netlist::BIdentifier::BIdentifier(const location& lloc, const averilog::avID &id)
   : Identifier(tBlockName, lloc, id.name), anonymous(false) {  }
 
+/*
 BIdentifier& netlist::BIdentifier::operator++ () {
   if(!anonymous) return *this;	// named block idenitifers cannot slef-increase
 
   // increase the block sequence by 1
-  name = string("B") + boost::lexical_cast<string>(atoi(name.substr(1).c_str()) + 1);
-
-  hash_update();
-  
+  string origName = get_name();
+  unsigned int index = atoi(name.substr(1).c_str()) + 1;
+  string newName = "B" + lexical_cast<string>(index);
+  set_name(newName);  
   return *this;
 }
+*/
 
 //////////////////////////////// Function identifier /////////////////
 netlist::FIdentifier::FIdentifier() : Identifier(NetComp::tFuncName) { }
@@ -149,43 +203,22 @@ netlist::FIdentifier::FIdentifier(const location& lloc, const averilog::avID &id
 
 //////////////////////////////// Module identifier /////////////////
 netlist::MIdentifier::MIdentifier() 
-  : Identifier(tModuleName), numbered(false) {}
+  : Identifier(tModuleName) {}
 
 netlist::MIdentifier::MIdentifier(const shell::location& lloc) 
-  : Identifier(tModuleName, lloc), numbered(false) {}
+  : Identifier(tModuleName, lloc) {}
 
 netlist::MIdentifier::MIdentifier(const string& nm)
-  : Identifier(tModuleName, nm), numbered(false) {  }
+  : Identifier(tModuleName, nm) {  }
 
 netlist::MIdentifier::MIdentifier(const location& lloc, const string& nm)
-  : Identifier(tModuleName, lloc, nm), numbered(false) {  }
+  : Identifier(tModuleName, lloc, nm) {  }
 
 netlist::MIdentifier::MIdentifier(const averilog::avID &id)
-  : Identifier(tModuleName, id.name), numbered(false) {  }
+  : Identifier(tModuleName, id.name) {  }
 
 netlist::MIdentifier::MIdentifier(const location& lloc, const averilog::avID &id)
-  : Identifier(tModuleName, lloc, id.name), numbered(false) {  }
-
-MIdentifier& netlist::MIdentifier::operator++ () {
-  const boost::regex numbered_name("_(\\d+)\\z");
-  boost::smatch mr;
-
-  if(numbered && boost::regex_search(name, mr, numbered_name)) { // numbered already
-    //the new sufix
-    string new_suffix = 
-      string("_") + boost::lexical_cast<string>(atoi(mr.str().substr(1).c_str()) + 1);
-    
-    // replace the name
-    name = boost::regex_replace(name, numbered_name, new_suffix);
-  } else { 			// not numbered yet
-    name = name + string("_0"); // directly add a suffix
-  }
-
-  hash_update();
-  numbered = true;
-
-  return *this;
-}
+  : Identifier(tModuleName, lloc, id.name) {  }
 
 ostream& netlist::MIdentifier::streamout(ostream& os, unsigned int indent) const{
   os << string(indent, ' ') << "module " << name;
@@ -194,49 +227,22 @@ ostream& netlist::MIdentifier::streamout(ostream& os, unsigned int indent) const
     
 //////////////////////////////// Instance identifier /////////////////
 netlist::IIdentifier::IIdentifier()
-  : Identifier(tInstName, "u_0"), numbered(true) {  }
+  : Identifier(tInstName, "u") { add_suffix("0"); }
 
 netlist::IIdentifier::IIdentifier(const location& lloc)
-  : Identifier(tInstName, lloc, "u_0"), numbered(true) {  }
+  : Identifier(tInstName, lloc, "u") { add_suffix("0"); }
 
 netlist::IIdentifier::IIdentifier(const string& nm)
-  : Identifier(tInstName, nm), numbered(false) {  }
+  : Identifier(tInstName, nm) {  }
 
 netlist::IIdentifier::IIdentifier(const location& lloc, const string& nm)
-  : Identifier(tInstName, lloc, nm), numbered(false) {  }
+  : Identifier(tInstName, lloc, nm) {  }
 
 netlist::IIdentifier::IIdentifier(const averilog::avID& id)
-  : Identifier(tInstName, id.name), numbered(false) { }
+  : Identifier(tInstName, id.name) { }
 
 netlist::IIdentifier::IIdentifier(const location& lloc, const averilog::avID& id)
-  : Identifier(tInstName, lloc, id.name), numbered(false) { }
-
-IIdentifier& netlist::IIdentifier::operator++ () {
-  const boost::regex numbered_name("_(\\d+)\\z");
-  boost::smatch mr;
-
-  if(numbered && boost::regex_search(name, mr, numbered_name)) { // numbered already
-    //the new sufix
-    string new_suffix = 
-      string("_") + boost::lexical_cast<string>(atoi(mr.str().substr(1).c_str()) + 1);
-    
-    // replace the name
-    name = boost::regex_replace(name, numbered_name, new_suffix);
-  } else { 			// not numbered yet
-    name = name + string("_0"); // directly add a suffix
-  }
-
-  hash_update();
-  numbered = true;
-
-  return *this;
-}
-
-IIdentifier& netlist::IIdentifier::add_prefix(const Identifier& prefix) {
-  name = prefix.name + "_" + name;
-  hash_update();
-  return *this;
-}
+  : Identifier(tInstName, lloc, id.name) { }
 
 //////////////////////////////// port identifier /////////////////
 netlist::PoIdentifier::PoIdentifier() 
@@ -271,58 +277,31 @@ ostream& netlist::PoIdentifier::streamout(ostream& os, unsigned int indent) cons
 
 //////////////////////////////// variable identifier /////////////////
 netlist::VIdentifier::VIdentifier()
-  : Identifier(tVarName, "n_0"), numbered(true), uid(0) {  }
+  : Identifier(tVarName, "n"), uid(0) { add_suffix("0"); }
 
 netlist::VIdentifier::VIdentifier(const location& lloc)
-  : Identifier(tVarName, lloc, "n_0"), numbered(true), uid(0) {  }
+  : Identifier(tVarName, lloc, "n"), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const string& nm)
-  : Identifier(tVarName, nm), numbered(false), uid(0) {  }
+  : Identifier(tVarName, nm), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const location& lloc, const string& nm)
-  : Identifier(tVarName, lloc, nm), numbered(false), uid(0) {  }
+  : Identifier(tVarName, lloc, nm), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const averilog::avID& id)
-  : Identifier(tVarName, id.name), numbered(false), uid(0) { }
+  : Identifier(tVarName, id.name), uid(0) { }
 
 netlist::VIdentifier::VIdentifier(const location& lloc, const averilog::avID& id)
-  : Identifier(tVarName, lloc, id.name), numbered(false), uid(0) { }
+  : Identifier(tVarName, lloc, id.name), uid(0) { }
 
 netlist::VIdentifier::VIdentifier(const string& nm, const RangeArray& rg)
-  : Identifier(tVarName, nm), m_range(rg), numbered(false), uid(0) {  }
+  : Identifier(tVarName, nm), m_range(rg), uid(0) {  }
 
 netlist::VIdentifier::VIdentifier(const location& lloc, const string& nm, const RangeArray& rg)
-  : Identifier(tVarName, lloc, nm), m_range(rg), numbered(false), uid(0) {  }
+  : Identifier(tVarName, lloc, nm), m_range(rg), uid(0) {  }
 
 netlist::VIdentifier::~VIdentifier() {
   db_expunge();
-}
-
-VIdentifier& netlist::VIdentifier::operator++ () {
-  const boost::regex numbered_name("_(\\d+)\\z");
-  boost::smatch mr;
-
-  if(numbered && boost::regex_search(name, mr, numbered_name)) { // numbered already
-    //the new sufix
-    string new_suffix = 
-      string("_") + boost::lexical_cast<string>(atoi(mr.str().substr(1).c_str()) + 1);
-    
-    // replace the name
-    name = boost::regex_replace(name, numbered_name, new_suffix);
-  } else { 			// not numbered yet
-    name = name + string("_0"); // directly add a suffix
-  }
-
-  hash_update();
-  numbered = true;
-
-  return *this;
-}
-
-VIdentifier& netlist::VIdentifier::add_prefix(const Identifier& prefix) {
-  name = prefix.name + "_" + name;
-  hash_update();
-  return *this;
 }
 
 bool netlist::VIdentifier::is_valuable() const {
@@ -444,10 +423,12 @@ void netlist::VIdentifier::db_expunge() {
   m_select.db_expunge();
 }
 
-VIdentifier* netlist::VIdentifier::deep_copy() const {
-  VIdentifier* rv = new VIdentifier(this->loc, this->name);
+VIdentifier* netlist::VIdentifier::deep_copy(NetComp* bp) const {
+  VIdentifier *rv;
+  if(!bp) rv = new VIdentifier();
+  else    rv = static_cast<VIdentifier *>(bp); // C++ does not support multiple dispatch
+  Identifier::deep_copy(rv);
   rv->value = this->value;
-  rv->numbered = this->numbered;
   rv->uid = 0;                  // unregistered
   rv->m_range = m_range.deep_object_copy();
   rv->m_select = m_select.deep_object_copy();
