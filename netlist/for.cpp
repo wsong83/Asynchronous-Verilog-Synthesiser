@@ -201,41 +201,63 @@ void netlist::ForState::unfold() {
   }
 
   // the new body
-  shared_ptr<Block> newBody(new Block(body->loc, body->name));
-  newBody->set_father(father);
+  shared_ptr<Block> newBody(new Block(body->loc));
   bool body_named = body->is_named();
-  string namePrefix = body->name.get_name();
-
+  
   while(m_cond->get_value().is_true()) {
-    // replace variable in the body
+    // replace the index variable in the body
     shared_ptr<Block> m_blk(body->deep_copy(NULL));
     m_blk->replace_variable(var, num);
 
     // set up the new names for instances
     if(body_named) {
+      // prepare the prefix for this iteration
+      string locPrefix = body->name.get_name() + num.get_value().get_str(10) + ".";
+
       // define functions in a named for loop is not supported
       if(m_blk->db_func.size())
-	G_ENV->error(m_blk->loc, "ELAB-FOR-5");
+        G_ENV->error(m_blk->loc, "ELAB-FOR-5");
 
       if(m_blk->db_instance.size()) { // rename module instances
-	// prepare the prefix for this iteration
-	string locPrefix = namePrefix + num.get_value().get_str(10) + ".";
+        // set to store the old instances
+        std::set<IIdentifier> instances;
+        // rename the instances
+        for_each(m_blk->db_instance.begin(), m_blk->db_instance.end(),
+                 [&](pair<const IIdentifier, shared_ptr<Instance> >& inst) {
+                   instances.insert(inst.first)
+                     });
+        BOOST_FOREACH(IIdentifier inst, instances) {
+          IIdentifier new_id = inst;
+          new_id.add_prefix(locPrefix);
+          shared_ptr<Instance> pinst = m_blk->db_instance.find(inst);
+          pinst->set_name(new_id);
+          m_blk->db_instance.insert(new_id, pint);
+          m_blk->db_instance.erase(inst);
+        }
+      }
 
-	// set/map to store the old and new instances
-	std::set<IIdentifier> to_del;
-	map<IIdentifier, shared_ptr<Instance> > to_add;
-	// rename the instances
-	for_each(m_blk->db_instance.begin_order(), m_blk->db_instance.end_order(),
-		 [&](pair<const IIdentifier, shared_ptr<Instance> >& inst) {
-		     inst.second->name.add_prefix(locPrefix);
-		     to_add[inst.second->name] = inst.second;
-		     to_del.insert(inst.first);
-		   });
+      if(m_blk->db_var.size()) {  // rename variables
+        // set to store the old variables
+        std::set<VIdentifier> variables;
+        // rename the variables
+        for_each(m_blk->db_var.begin_order(), m_blk->db_var.end_order(),
+                 [&](pair<const VIdentifier, shared_ptr<Variable> >& bvar) {
+                   variables.insert(bvar.first)
+                     });
+        BOOST_FOREACH(VIdentifier bvar, variables) {
+          VIdentifier new_id = bvar;
+          new_id.add_prefix(locPrefix);
+          shared_ptr<Variable> pvar = m_blk->db_var.find(bvar);
+          pvar->name = new_id;
+          m_blk->db_var.insert(new_id, pvar);
+          m_blk->db_var.erase(bvar);
+          m_blk->replace_variable(bvar, new_id);
+        }
       }
     }
 
     // copy the statements in the body to the new body
-    
+    newBody->elab_add_block(m_blk);
 
     // increment
     if(!incr || incr->lval->size() != 1 || incr->lval->front() != var) {
@@ -257,6 +279,8 @@ void netlist::ForState::unfold() {
     m_cond->reduce();
   }
 
+  // replace with the new body
+  body = newBody;
 
 }
 

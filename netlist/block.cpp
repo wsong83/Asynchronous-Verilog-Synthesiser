@@ -155,6 +155,38 @@ bool netlist::Block::add_statements(const shared_ptr<Block>& body) {
   return true;
 }
 
+bool netlist::Block::elab_add_block(const shared_ptr<Block>& b) {
+  for_each(b->db_func.begin(), b->db_func.end(),
+           [&](pair<const FIdentifier, shared_ptr<Function> >& item) {
+             if(db_func.count(item.first)) {
+               G_ENV->error(b->loc, "ELAB-FOR-5", item.fist.get_name());
+             } else {
+               db_func.insert(item.first, item.second);
+             }
+           });
+  for_each(b->db_instance.begin(), b->db_instance.end(),
+           [&](pair<const IIdentifier, shared_ptr<Instance> >& item) {
+             if(db_instance.count(item.first)) {
+               G_ENV->error(b->loc, "ELAB-FOR-5", item.fist.get_name());
+             } else {
+               newBody->db_instance.insert(item.first, item.second);
+             }
+           });
+  for_each(b->db_var.begin_order(), b->db_var.end_order(),
+           [&](pair<const VIdentifier, shared_ptr<Variable> >& item) {
+             if(db_var.count(item.first)) {
+               G_ENV->error(b->loc, "ELAB-FOR-5", item.fist.get_name());
+             } else {
+               db_var.insert(item.first, item.second);
+             }
+           });
+  for_each(b->statements.begin(), b->statements.end(),
+           [&](shared_ptr<NetComp> item) {
+             statements.push_back(item);
+           });
+  return true;
+}
+
 BIdentifier& netlist::Block::new_BId() {
   unnamed_block.suffix_increase();
   return unnamed_block;
@@ -443,6 +475,12 @@ void netlist::Block::db_expunge() {
   for_each(db_func.begin(), db_func.end(), [](pair<const FIdentifier, shared_ptr<Function> >& m) {
 	m.second->db_expunge();
       });
+}
+
+void netlist::Block::unfold() {
+  BOOST_FOREACH(shared_ptr<NetComp> item, statements) {
+    
+  }
 }
 
 bool netlist::Block::elaborate(std::set<shared_ptr<NetComp> >&,
