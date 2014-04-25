@@ -477,10 +477,40 @@ void netlist::Block::db_expunge() {
       });
 }
 
-void netlist::Block::unfold() {
+shared_ptr<Block> netlist::Block::unfold() {
+  map<shared_ptr<NetComp>, shared_ptr<Block> > replace_map;
+  typedef pair<const shared_ptr<NetComp>, shared_ptr<Block> > replace_map_type;
+  
+  // unfold content
   BOOST_FOREACH(shared_ptr<NetComp> item, statements) {
-    
+    shared_ptr<Block> rB;       // the reduced block
+    switch(item->get_type()) {
+    case tCase:      rB = boost::static_pointer_cast<CaseState>(item)->unfold();  break;
+    case tFor:       rB = boost::static_pointer_cast<ForState>(item)->unfold();   break;
+    case tGenBlock:  rB = boost::static_pointer_cast<GenBlock>(item)->unfold();   break;
+    case tIf:        rB = boost::static_pointer_cast<IfState>(item)->unfold();    break;
+    case tSeqBlock:  rB = boost::static_pointer_cast<SeqBlock>(item)->unfold();   break;
+    case tWhile:     rB = boost::static_pointer_cast<WhileState>(item)->unfold(); break;
+    case tAssign:    rB = boost::static_pointer_cast<Assign>(item)->unfold();     break;
+    case tBlock:     rB = boost::static_pointer_cast<Block>(item)->unfold();      break;
+    default:
+      assert(0 == "Item should not in a Block.");
+    }
+    if(rB) {                  // reduced to a block
+      replace_map[item] = rB;
+    }
   }
+
+  // replace the statements
+  BOOST_FOREACH(replace_map_type rB, replace_map) {
+    elab_replace_statement(rB.fist, rB.second);
+  }
+
+  // move the unfold of for to here.
+  // rename variables if the block has a name
+  // make the block unnamed
+  // combine internal contents
+  
 }
 
 bool netlist::Block::elaborate(std::set<shared_ptr<NetComp> >&,

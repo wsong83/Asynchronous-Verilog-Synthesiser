@@ -117,6 +117,7 @@ namespace netlist {
     bool add_statements(const boost::shared_ptr<Block>&);    /* add several statements */
 
     bool elab_add_block(const boost::shared_ptr<Block>&); // add the content of another block to this block, not in an embedded block style
+    bool elab_replace_statement(const boost::shared_ptr<NetComp>&, boost::shared_ptr<Block>); // replace a statement with the content of a block
     
     virtual void elab_inparse(); /* resolve the content in statements during parsing */
 
