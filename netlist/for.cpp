@@ -175,17 +175,17 @@ bool netlist::ForState::elaborate(std::set<shared_ptr<NetComp> >& to_del,
   return true;
 }
 
-void netlist::ForState::unfold() {
+shared_ptr<Block> netlist::ForState::unfold() {
   // set up the initial assignment
   if(!init) {
     G_ENV->error(loc, "ELAB-FOR-0");
-    return;
+    return shared_ptr<Block>();
   } else if(!init->rexp->is_valuable()) {
     G_ENV->error(init->loc, "ELAB-FOR-1", toString(*(init->rexp)));
-    return;
+    return shared_ptr<Block>();
   } else if(init->lval->size() != 1) {
     G_ENV->error(init->loc, "ELAB-FOR-2", toString(*(init->lval)));
-    return;
+    return shared_ptr<Block>();
   }
 
   VIdentifier& var = init->lval->front();
@@ -197,7 +197,7 @@ void netlist::ForState::unfold() {
   m_cond->reduce();
   if(!m_cond->is_valuable()) {
     G_ENV->error(cond->loc, "ELAB-FOR-3", toString(*cond));
-    return;
+    return shared_ptr<Block>();
   }
 
   // the new body
@@ -224,14 +224,14 @@ void netlist::ForState::unfold() {
         // rename the instances
         for_each(m_blk->db_instance.begin(), m_blk->db_instance.end(),
                  [&](pair<const IIdentifier, shared_ptr<Instance> >& inst) {
-                   instances.insert(inst.first)
+                   instances.insert(inst.first);
                      });
         BOOST_FOREACH(IIdentifier inst, instances) {
           IIdentifier new_id = inst;
           new_id.add_prefix(locPrefix);
           shared_ptr<Instance> pinst = m_blk->db_instance.find(inst);
           pinst->set_name(new_id);
-          m_blk->db_instance.insert(new_id, pint);
+          m_blk->db_instance.insert(new_id, pinst);
           m_blk->db_instance.erase(inst);
         }
       }
@@ -242,7 +242,7 @@ void netlist::ForState::unfold() {
         // rename the variables
         for_each(m_blk->db_var.begin_order(), m_blk->db_var.end_order(),
                  [&](pair<const VIdentifier, shared_ptr<Variable> >& bvar) {
-                   variables.insert(bvar.first)
+                   variables.insert(bvar.first);
                      });
         BOOST_FOREACH(VIdentifier bvar, variables) {
           VIdentifier new_id = bvar;
@@ -262,14 +262,14 @@ void netlist::ForState::unfold() {
     // increment
     if(!incr || incr->lval->size() != 1 || incr->lval->front() != var) {
       G_ENV->error(cond->loc, "ELAB-FOR-4", toString(*incr));
-      return;
+      return shared_ptr<Block>();
     }
     shared_ptr<Assign> m_incr(incr->deep_copy(NULL));
     m_incr->rexp->replace_variable(var, num);
     m_incr->rexp->reduce();
     if(!m_incr->rexp->is_valuable()) {
       G_ENV->error(cond->loc, "ELAB-FOR-4", toString(*incr));
-      return;
+      return shared_ptr<Block>();
     }
     
     // update num
@@ -279,8 +279,7 @@ void netlist::ForState::unfold() {
     m_cond->reduce();
   }
 
-  // replace with the new body
-  body = newBody;
+  return newBody;
 
 }
 

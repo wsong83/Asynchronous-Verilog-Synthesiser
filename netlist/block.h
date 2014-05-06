@@ -117,7 +117,7 @@ namespace netlist {
     bool add_statements(const boost::shared_ptr<Block>&);    /* add several statements */
 
     bool elab_add_block(const boost::shared_ptr<Block>&); // add the content of another block to this block, not in an embedded block style
-    bool elab_replace_statement(const boost::shared_ptr<NetComp>&, boost::shared_ptr<Block>); // replace a statement with the content of a block
+    bool elab_replace_statement(const boost::shared_ptr<NetComp>&, const boost::shared_ptr<Block>); // replace a statement with the content of a block
     
     virtual void elab_inparse(); /* resolve the content in statements during parsing */
 
@@ -143,7 +143,7 @@ namespace netlist {
     using NetComp::set_father;
     virtual Block* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
-    virtual void unfold();	// unfold for loops in block and generate blocks
+    virtual boost::shared_ptr<Block> unfold();	// unfold for loops in block and generate blocks
     NETLIST_ELABORATE_DECL;
     NETLIST_GEN_SDFG;
     NETLIST_REPLACE_VARIABLE;

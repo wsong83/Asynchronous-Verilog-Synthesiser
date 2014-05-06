@@ -156,34 +156,48 @@ bool netlist::Block::add_statements(const shared_ptr<Block>& body) {
 }
 
 bool netlist::Block::elab_add_block(const shared_ptr<Block>& b) {
-  for_each(b->db_func.begin(), b->db_func.end(),
+  return elab_replace_statement(shared_ptr<NetComp>(), b);
+}
+
+bool netlist::Block::elab_replace_statement(const shared_ptr<NetComp>& st, const shared_ptr<Block> nb) {
+  // find out the original statement
+  list<shared_ptr<NetComp> >::iterator it;
+  if(st)
+    it = std::find(statements.begin(), statements.end(), st);
+  else
+    it = statements.end();
+
+  // insert the new statements from the new block
+  for_each(nb->db_func.begin(), nb->db_func.end(),
            [&](pair<const FIdentifier, shared_ptr<Function> >& item) {
              if(db_func.count(item.first)) {
-               G_ENV->error(b->loc, "ELAB-FOR-5", item.fist.get_name());
+               G_ENV->error(loc, "ELAB-FOR-5", item.first.get_name());
              } else {
                db_func.insert(item.first, item.second);
              }
            });
-  for_each(b->db_instance.begin(), b->db_instance.end(),
+  for_each(nb->db_instance.begin(), nb->db_instance.end(),
            [&](pair<const IIdentifier, shared_ptr<Instance> >& item) {
              if(db_instance.count(item.first)) {
-               G_ENV->error(b->loc, "ELAB-FOR-5", item.fist.get_name());
+               G_ENV->error(loc, "ELAB-FOR-5", item.first.get_name());
              } else {
-               newBody->db_instance.insert(item.first, item.second);
+               db_instance.insert(item.first, item.second);
              }
            });
-  for_each(b->db_var.begin_order(), b->db_var.end_order(),
+  for_each(nb->db_var.begin_order(), nb->db_var.end_order(),
            [&](pair<const VIdentifier, shared_ptr<Variable> >& item) {
              if(db_var.count(item.first)) {
-               G_ENV->error(b->loc, "ELAB-FOR-5", item.fist.get_name());
+               G_ENV->error(loc, "ELAB-FOR-5", item.first.get_name());
              } else {
                db_var.insert(item.first, item.second);
              }
            });
-  for_each(b->statements.begin(), b->statements.end(),
-           [&](shared_ptr<NetComp> item) {
-             statements.push_back(item);
-           });
+  statements.insert(it, nb->statements.begin(), nb->statements.end());
+
+  // remove the original statement
+  if(st)
+    statements.erase(it);
+  
   return true;
 }
 
@@ -483,19 +497,7 @@ shared_ptr<Block> netlist::Block::unfold() {
   
   // unfold content
   BOOST_FOREACH(shared_ptr<NetComp> item, statements) {
-    shared_ptr<Block> rB;       // the reduced block
-    switch(item->get_type()) {
-    case tCase:      rB = boost::static_pointer_cast<CaseState>(item)->unfold();  break;
-    case tFor:       rB = boost::static_pointer_cast<ForState>(item)->unfold();   break;
-    case tGenBlock:  rB = boost::static_pointer_cast<GenBlock>(item)->unfold();   break;
-    case tIf:        rB = boost::static_pointer_cast<IfState>(item)->unfold();    break;
-    case tSeqBlock:  rB = boost::static_pointer_cast<SeqBlock>(item)->unfold();   break;
-    case tWhile:     rB = boost::static_pointer_cast<WhileState>(item)->unfold(); break;
-    case tAssign:    rB = boost::static_pointer_cast<Assign>(item)->unfold();     break;
-    case tBlock:     rB = boost::static_pointer_cast<Block>(item)->unfold();      break;
-    default:
-      assert(0 == "Item should not in a Block.");
-    }
+    shared_ptr<Block> rB = item->unfold();
     if(rB) {                  // reduced to a block
       replace_map[item] = rB;
     }
@@ -503,14 +505,64 @@ shared_ptr<Block> netlist::Block::unfold() {
 
   // replace the statements
   BOOST_FOREACH(replace_map_type rB, replace_map) {
-    elab_replace_statement(rB.fist, rB.second);
+    elab_replace_statement(rB.first, rB.second);
   }
 
-  // move the unfold of for to here.
-  // rename variables if the block has a name
-  // make the block unnamed
-  // combine internal contents
-  
+  if(named) {                   // block is named
+    // add the block name to all instance, variables and functions
+    // instances
+    std::set<IIdentifier> instances;
+    for_each(db_instance.begin(), db_instance.end(),
+             [&](pair<const IIdentifier, shared_ptr<Instance> >& inst) {
+               instances.insert(inst.first);
+                 });
+    BOOST_FOREACH(IIdentifier inst, instances) {
+      IIdentifier new_id = inst;
+      new_id.add_prefix(name.get_name());
+      shared_ptr<Instance> pinst = db_instance.find(inst);
+      pinst->set_name(new_id);
+      db_instance.insert(new_id, pinst);
+      db_instance.erase(inst);
+    }
+
+    // variables
+    std::set<VIdentifier> variables;
+    for_each(db_var.begin_order(), db_var.end_order(),
+             [&](pair<const VIdentifier, shared_ptr<Variable> >& bvar) {
+               variables.insert(bvar.first);
+                 });
+    BOOST_FOREACH(VIdentifier bvar, variables) {
+      VIdentifier new_id = bvar;
+      new_id.add_prefix(name.get_name());
+      shared_ptr<Variable> pvar = db_var.find(bvar);
+      pvar->name = new_id;
+      db_var.insert(new_id, pvar);
+      db_var.erase(bvar);
+      replace_variable(bvar, new_id);
+    }
+
+    /*
+    // functions
+    std::set<FIdentifier> functions;
+    for_each(db_func.begin(), db_func.end(),
+             [&](pair<const FIdentifier, shared_ptr<Function> >& func) {
+               functions.insert(func.first);
+                 });
+    BOOST_FOREACH(FIdentifier func, functions) {
+      FIdentifier new_id = func;
+      new_id.add_prefix(name.get_name());
+      shared_ptr<Function> pfunc = db_func.find(func);
+      pfunc->set_name(new_id);
+      db_func.insert(new_id, pfunc);
+      db_func.erase(func);
+    }
+    */
+
+    // change the block to be unamed
+    named = false;
+  }
+
+  return static_pointer_cast<Block>(shared_from_this());
 }
 
 bool netlist::Block::elaborate(std::set<shared_ptr<NetComp> >&,

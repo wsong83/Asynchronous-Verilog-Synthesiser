@@ -116,9 +116,10 @@ bool netlist::NetComp::elaborate(std::set<shared_ptr<NetComp> >&,
   return false;
 }
 
-void netlist::NetComp::unfold() {
+shared_ptr<Block> netlist::NetComp::unfold() {
   std::cerr << "ERROR!! the unfold() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << endl;
   assert(0 == "unfold() of NetComp is used");
+  return shared_ptr<Block>();
 }
 
 unsigned int netlist::NetComp::get_width() const {
