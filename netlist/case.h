@@ -57,6 +57,7 @@ namespace netlist{
     bool is_match(const Number&) const; /* whether this case match with the number (arguement) */
     virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
     NETLIST_REPLACE_VARIABLE;
+    void unfold();	// unfold for loops in block and generate blocks
 
     // data
     std::list<boost::shared_ptr<Expression> > exps;
@@ -95,7 +96,8 @@ namespace netlist{
     bool is_named() const { return named; }
     virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
     NETLIST_REPLACE_VARIABLE;
-    
+    virtual boost::shared_ptr<Block> unfold();	// unfold for loops in block and generate blocks
+   
     // data
     BIdentifier name;           /* dummy name for search index */
     boost::shared_ptr<Expression> exp;

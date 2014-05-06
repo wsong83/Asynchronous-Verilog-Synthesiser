@@ -227,3 +227,9 @@ shared_ptr<Expression> netlist::IfState::get_combined_expression(const VIdentifi
   //std::cout << "IfState: (target)" << target << " Exp: " << *rv << std::endl;
   return rv;
 }
+
+shared_ptr<Block> netlist::IfState::unfold() {
+  ifcase = ifcase->unfold();
+  if(elsecase) elsecase = elsecase->unfold();
+  return shared_ptr<Block>();
+}
