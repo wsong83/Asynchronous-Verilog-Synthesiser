@@ -117,6 +117,7 @@ bool netlist::Identifier::replace_suffix(const string& newSuffix) {
 
   if(numbered && boost::regex_search(name, mr, numbered_name)) {
     set_name(boost::regex_replace(name, numbered_name, "_"+newSuffix));
+    numbered = true;
     return true;
   } else {
     return false;
@@ -125,12 +126,13 @@ bool netlist::Identifier::replace_suffix(const string& newSuffix) {
 
 void netlist::Identifier::add_suffix(const string& newSuffix) {
   set_name(name + "_" + newSuffix);
+  numbered = true;
 }
 
 void netlist::Identifier::suffix_increase () {
   string oldSuffix = get_suffix();
   if(oldSuffix.size()) {	// already has a suffix
-    string newSuffix = "_" + lexical_cast<string>(atoi(oldSuffix.c_str())+1);
+    string newSuffix = lexical_cast<string>(atoi(oldSuffix.c_str())+1);
     replace_suffix(newSuffix);
   } else {
     add_suffix("0");
@@ -165,10 +167,10 @@ netlist::BIdentifier::BIdentifier(const location& lloc, const string& nm)
   : Identifier(tBlockName, lloc, nm), anonymous(false)  {  }
 
 netlist::BIdentifier::BIdentifier()
-  : Identifier(tBlockName, "B0"), anonymous(true)  {  }
+  : Identifier(tBlockName, "B"), anonymous(true)  {  }
 
 netlist::BIdentifier::BIdentifier(const location& lloc)
-  : Identifier(tBlockName, lloc, "B0"), anonymous(true)  {  }
+  : Identifier(tBlockName, lloc, "B"), anonymous(true)  {  }
 
 netlist::BIdentifier::BIdentifier(const averilog::avID &id)
   : Identifier(tBlockName, id.name), anonymous(false) {  }

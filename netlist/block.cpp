@@ -198,6 +198,8 @@ bool netlist::Block::elab_replace_statement(const shared_ptr<NetComp>& st, const
   if(st)
     statements.erase(it);
   
+  set_father();
+  
   return true;
 }
 

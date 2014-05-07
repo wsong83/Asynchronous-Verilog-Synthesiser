@@ -386,7 +386,7 @@ bool netlist::Module::elaborate(std::deque<shared_ptr<Module> >& mfifo,
   // unfold the module to handle all generation loops
   unfold();
 
-  std::cout << *this;
+  //std::cout << *this;
 
   // before register all variable, update the port direction of all instance
   // as it will affect the direction of wires
