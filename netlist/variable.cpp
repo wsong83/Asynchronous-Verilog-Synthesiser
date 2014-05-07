@@ -227,7 +227,7 @@ bool netlist::Variable::elaborate(std::set<shared_ptr<NetComp> >&,
   }
 
   if(vtype & (TParam | TLParam))
-    update();
+    exp->reduce();
 
   return true;
 }
@@ -241,10 +241,12 @@ string netlist::Variable::get_short_string() const {
 }
 
 void netlist::Variable::replace_variable(const VIdentifier& var, const Number& num) {
+  name.replace_variable(var, num);
   if(exp) exp->replace_variable(var, num);
 }
 
 void netlist::Variable::replace_variable(const VIdentifier& var, const VIdentifier& nvar) {
+  name.replace_variable(var, nvar);
   if(exp) exp->replace_variable(var, nvar);
 }
 

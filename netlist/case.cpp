@@ -162,6 +162,11 @@ void netlist::CaseItem::replace_variable(const VIdentifier& var, const VIdentifi
   if(body) body->replace_variable(var, nvar);
 }
 
+shared_ptr<Block> netlist::CaseItem::unfold() {
+  body = body->unfold();
+  return shared_ptr<Block>();
+}
+
 bool netlist::CaseItem::is_match(const Number& val) const {
   bool rv = false;
   if(exps.size() == 0) return true;                // default
@@ -350,6 +355,27 @@ void netlist::CaseState::replace_variable(const VIdentifier& var, const VIdentif
   BOOST_FOREACH(shared_ptr<CaseItem> ci, cases) {
     ci->replace_variable(var, nvar);
   }
+}
+
+shared_ptr<Block> netlist::CaseState::unfold() {
+  // unfold the child cases
+  BOOST_FOREACH(shared_ptr<CaseItem> c, cases) {
+    c->unfold();
+  }
+
+  // reduce
+  exp->reduce();
+
+  if(exp->is_valuable()) {
+    Number exp_val = exp->get_value();
+    // find the case item
+    BOOST_FOREACH(shared_ptr<CaseItem>& m, cases) {
+      if (m->is_match(exp_val))
+        return m->body;
+    }
+  }
+
+  return shared_ptr<Block>();
 }
 
 shared_ptr<Expression> netlist::CaseState::get_combined_expression(const VIdentifier& target, std::set<string> s_set) {

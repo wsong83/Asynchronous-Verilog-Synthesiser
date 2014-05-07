@@ -72,6 +72,14 @@ bool netlist::Port::elaborate(std::set<shared_ptr<NetComp> >&,
   return true;
 }
 
+void netlist::Port::replace_variable(const VIdentifier& var, const Number& num) {
+  name.replace_variable(var, num);
+}
+
+void netlist::Port::replace_variable(const VIdentifier& var, const VIdentifier& nvar) {
+  name.replace_variable(var, nvar);
+}
+
 shared_ptr<Expression> netlist::Port::get_combined_expression(const VIdentifier& target, std::set<string> s_set) {
   shared_ptr<SDFG::dfgNode> pnode = get_module()->DFG->get_node(target.get_name());
   shared_ptr<Expression> rv(new Expression(target));

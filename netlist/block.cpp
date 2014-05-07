@@ -155,6 +155,54 @@ bool netlist::Block::add_statements(const shared_ptr<Block>& body) {
   return true;
 }
 
+bool netlist::Block::elab_add_block(const shared_ptr<Block>& b) {
+  return elab_replace_statement(shared_ptr<NetComp>(), b);
+}
+
+bool netlist::Block::elab_replace_statement(const shared_ptr<NetComp>& st, const shared_ptr<Block> nb) {
+  // find out the original statement
+  list<shared_ptr<NetComp> >::iterator it;
+  if(st)
+    it = std::find(statements.begin(), statements.end(), st);
+  else
+    it = statements.end();
+
+  // insert the new statements from the new block
+  for_each(nb->db_func.begin(), nb->db_func.end(),
+           [&](pair<const FIdentifier, shared_ptr<Function> >& item) {
+             if(db_func.count(item.first)) {
+               G_ENV->error(loc, "ELAB-FOR-5", item.first.get_name());
+             } else {
+               db_func.insert(item.first, item.second);
+             }
+           });
+  for_each(nb->db_instance.begin(), nb->db_instance.end(),
+           [&](pair<const IIdentifier, shared_ptr<Instance> >& item) {
+             if(db_instance.count(item.first)) {
+               G_ENV->error(loc, "ELAB-FOR-5", item.first.get_name());
+             } else {
+               db_instance.insert(item.first, item.second);
+             }
+           });
+  for_each(nb->db_var.begin_order(), nb->db_var.end_order(),
+           [&](pair<const VIdentifier, shared_ptr<Variable> >& item) {
+             if(db_var.count(item.first)) {
+               G_ENV->error(loc, "ELAB-FOR-5", item.first.get_name());
+             } else {
+               db_var.insert(item.first, item.second);
+             }
+           });
+  statements.insert(it, nb->statements.begin(), nb->statements.end());
+
+  // remove the original statement
+  if(st)
+    statements.erase(it);
+  
+  set_father();
+  
+  return true;
+}
+
 BIdentifier& netlist::Block::new_BId() {
   unnamed_block.suffix_increase();
   return unnamed_block;
@@ -445,6 +493,81 @@ void netlist::Block::db_expunge() {
       });
 }
 
+shared_ptr<Block> netlist::Block::unfold() {
+  map<shared_ptr<NetComp>, shared_ptr<Block> > replace_map;
+  typedef pair<const shared_ptr<NetComp>, shared_ptr<Block> > replace_map_type;
+  
+  // unfold content
+  BOOST_FOREACH(shared_ptr<NetComp> item, statements) {
+    shared_ptr<Block> rB = item->unfold();
+    if(rB) {                  // reduced to a block
+      replace_map[item] = rB;
+    }
+  }
+
+  // replace the statements
+  BOOST_FOREACH(replace_map_type rB, replace_map) {
+    elab_replace_statement(rB.first, rB.second);
+  }
+
+  if(named && get_type() != tModule && get_type() != tSeqBlock) { // block is named
+    // add the block name to all instance, variables and functions
+    // instances
+    std::set<IIdentifier> instances;
+    for_each(db_instance.begin(), db_instance.end(),
+             [&](pair<const IIdentifier, shared_ptr<Instance> >& inst) {
+               instances.insert(inst.first);
+                 });
+    BOOST_FOREACH(IIdentifier inst, instances) {
+      IIdentifier new_id = inst;
+      new_id.add_prefix(name.get_name());
+      shared_ptr<Instance> pinst = db_instance.find(inst);
+      pinst->set_name(new_id);
+      db_instance.insert(new_id, pinst);
+      db_instance.erase(inst);
+    }
+
+    // variables
+    std::set<VIdentifier> variables;
+    for_each(db_var.begin_order(), db_var.end_order(),
+             [&](pair<const VIdentifier, shared_ptr<Variable> >& bvar) {
+               variables.insert(bvar.first);
+                 });
+    BOOST_FOREACH(VIdentifier bvar, variables) {
+      VIdentifier new_id = bvar;
+      new_id.add_prefix(name.get_name());
+      shared_ptr<Variable> pvar = db_var.find(bvar);
+      pvar->name = new_id;
+      db_var.insert(new_id, pvar);
+      db_var.erase(bvar);
+      replace_variable(bvar, new_id);
+    }
+
+    /*
+    // functions
+    std::set<FIdentifier> functions;
+    for_each(db_func.begin(), db_func.end(),
+             [&](pair<const FIdentifier, shared_ptr<Function> >& func) {
+               functions.insert(func.first);
+                 });
+    BOOST_FOREACH(FIdentifier func, functions) {
+      FIdentifier new_id = func;
+      new_id.add_prefix(name.get_name());
+      shared_ptr<Function> pfunc = db_func.find(func);
+      pfunc->set_name(new_id);
+      db_func.insert(new_id, pfunc);
+      db_func.erase(func);
+    }
+    */
+
+    // change the block to be unamed
+    if(named && get_type() != tModule && get_type() != tSeqBlock)
+      named = false;
+  }
+
+  return static_pointer_cast<Block>(shared_from_this());
+}
+
 bool netlist::Block::elaborate(std::set<shared_ptr<NetComp> >&,
                                map<shared_ptr<NetComp>, list<shared_ptr<NetComp> > >&) {
 
@@ -536,6 +659,14 @@ void netlist::Block::replace_variable(const VIdentifier& var, const Number& num)
     BOOST_FOREACH(shared_ptr<NetComp> stm, statements) {
       stm->replace_variable(var, num);
     }
+    for_each(db_instance.begin(), db_instance.end(),
+             [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
+               m.second->replace_variable(var, num);
+             });
+    for_each(db_var.begin_order(), db_var.end_order(),
+             [&](const pair<const VIdentifier, shared_ptr<Variable> >& m) {
+               m.second->replace_variable(var, num);
+             });
   }
 }
 
@@ -544,6 +675,14 @@ void netlist::Block::replace_variable(const VIdentifier& var, const VIdentifier&
     BOOST_FOREACH(shared_ptr<NetComp> stm, statements) {
       stm->replace_variable(var, nvar);
     }
+    for_each(db_instance.begin(), db_instance.end(),
+             [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
+               m.second->replace_variable(var, nvar);
+             });
+    for_each(db_var.begin_order(), db_var.end_order(),
+             [&](const pair<const VIdentifier, shared_ptr<Variable> >& m) {
+               m.second->replace_variable(var, nvar);
+             });
   }
 }
 

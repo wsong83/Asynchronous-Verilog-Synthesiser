@@ -44,6 +44,7 @@ namespace netlist {
     virtual Port* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
+    NETLIST_REPLACE_VARIABLE;
     virtual boost::shared_ptr<Expression> get_combined_expression(const VIdentifier&, std::set<std::string>);
    
     // helpers
@@ -69,3 +70,6 @@ namespace netlist {
 }
 
 #endif
+// Local Variables:
+// mode: c++
+// End:

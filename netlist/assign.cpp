@@ -111,6 +111,9 @@ shared_ptr<SDFG::RTree> netlist::Assign::get_rtree() const {
   return lrf;
 }
 
+shared_ptr<Block> netlist::Assign::unfold() {
+  return shared_ptr<Block>();
+}
 
 Assign* netlist::Assign::deep_copy(NetComp* bp) const {
   Assign *rv;

@@ -132,6 +132,10 @@ ERR_DEFINE("ELAB-FOR-5",
            EError,   0,
            "define functions in a for statement is not supported yet.");
 
+ERR_DEFINE("ELAB-FOR-6",
+           EError,   1,
+           "the variable/instance/function name \"%1%\" conflicts in unfolding a for statement.");
+
 ERR_DEFINE("ELAB-IF-0", 
            EError,   0, 
            "illegal place for an if statement.");
@@ -356,3 +360,8 @@ ERR_DEFINE("SYN-VAR-3",
 ERR_DEFINE("SYN-VAR-4",    
            EWarning, 1, 
            "in declaration initialisation for variable \"%1%\" will be ignored.");
+
+
+// Local Variables:
+// mode: c++
+// End:

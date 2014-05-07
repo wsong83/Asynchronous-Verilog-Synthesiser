@@ -57,7 +57,7 @@ namespace netlist {
     NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
     NETLIST_REPLACE_VARIABLE;
-    virtual void unfold ();
+    virtual boost::shared_ptr<Block> unfold();      /* unfold the for statement */
 
     // helpers
     void set_name(const BIdentifier& nm) { name = nm; named = true;}
@@ -81,3 +81,6 @@ namespace netlist {
 }
 
 #endif
+// Local Variables:
+// mode: c++
+// End:

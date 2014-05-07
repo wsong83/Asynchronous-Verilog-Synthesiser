@@ -96,3 +96,8 @@ void netlist::WhileState::replace_variable(const VIdentifier& var, const VIdenti
   exp->replace_variable(var, nvar);
   body->replace_variable(var, nvar);
 }
+
+shared_ptr<Block> netlist::WhileState::unfold() {
+  std::cout << "unfold() for while is not supported yet" << std::endl;
+  return shared_ptr<Block>();
+}

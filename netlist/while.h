@@ -45,6 +45,7 @@ namespace netlist {
     virtual WhileState* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
     NETLIST_REPLACE_VARIABLE;
+    virtual boost::shared_ptr<Block> unfold();	// unfold for loops in block and generate blocks
 
     // helpers
     void set_name(const BIdentifier& nm) { name = nm; named = true;}
