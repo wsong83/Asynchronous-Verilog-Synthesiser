@@ -229,7 +229,19 @@ shared_ptr<Expression> netlist::IfState::get_combined_expression(const VIdentifi
 }
 
 shared_ptr<Block> netlist::IfState::unfold() {
+  // unfold the childs
   ifcase = ifcase->unfold();
   if(elsecase) elsecase = elsecase->unfold();
+
+  // reduce the statement
+  exp->reduce();
+
+  if(exp->is_valuable()) {
+    if(exp->get_value().is_false()) // false
+      return elsecase;
+    else
+      return ifcase;
+  } 
+
   return shared_ptr<Block>();
 }

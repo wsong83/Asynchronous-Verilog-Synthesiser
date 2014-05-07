@@ -358,9 +358,23 @@ void netlist::CaseState::replace_variable(const VIdentifier& var, const VIdentif
 }
 
 shared_ptr<Block> netlist::CaseState::unfold() {
+  // unfold the child cases
   BOOST_FOREACH(shared_ptr<CaseItem> c, cases) {
     c->unfold();
   }
+
+  // reduce
+  exp->reduce();
+
+  if(exp->is_valuable()) {
+    Number exp_val = exp->get_value();
+    // find the case item
+    BOOST_FOREACH(shared_ptr<CaseItem>& m, cases) {
+      if (m->is_match(exp_val))
+        return m->body;
+    }
+  }
+
   return shared_ptr<Block>();
 }
 
