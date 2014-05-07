@@ -226,8 +226,9 @@ bool netlist::Variable::elaborate(std::set<shared_ptr<NetComp> >&,
     return false;  
   }
 
-  if(vtype & (TParam | TLParam))
-    update();
+  // now using replace_variable() in module because parameters are replaced before db_register
+  //if(vtype & (TParam | TLParam))
+  //  update();
 
   return true;
 }

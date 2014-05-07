@@ -360,3 +360,8 @@ ERR_DEFINE("SYN-VAR-3",
 ERR_DEFINE("SYN-VAR-4",    
            EWarning, 1, 
            "in declaration initialisation for variable \"%1%\" will be ignored.");
+
+
+// Local Variables:
+// mode: c++
+// End:
