@@ -243,6 +243,10 @@ shared_ptr<SDFG::RTree> netlist::SeqBlock::get_rtree() const {
   return Block::get_rtree();
 }
 
+shared_ptr<Block> netlist::SeqBlock::unfold() {
+  Block::unfold();
+  return shared_ptr<Block>();
+}
 
 void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
   assert(db_var.empty());

@@ -436,10 +436,12 @@ VIdentifier* netlist::VIdentifier::deep_copy(NetComp* bp) const {
 }
 
 void netlist::VIdentifier::replace_variable(const VIdentifier& var, const Number& num) {
+  m_range.replace_variable(var, num);
   m_select.replace_variable(var, num);
 }
 
 void netlist::VIdentifier::replace_variable(const VIdentifier& var, const VIdentifier& nvar) {
+  m_range.replace_variable(var, nvar);
   m_select.replace_variable(var, nvar);
 }
 

@@ -508,7 +508,7 @@ shared_ptr<Block> netlist::Block::unfold() {
     elab_replace_statement(rB.first, rB.second);
   }
 
-  if(named) {                   // block is named
+  if(named && get_type() != tModule && get_type() != tSeqBlock) { // block is named
     // add the block name to all instance, variables and functions
     // instances
     std::set<IIdentifier> instances;
@@ -559,7 +559,8 @@ shared_ptr<Block> netlist::Block::unfold() {
     */
 
     // change the block to be unamed
-    named = false;
+    if(named && get_type() != tModule && get_type() != tSeqBlock)
+      named = false;
   }
 
   return static_pointer_cast<Block>(shared_from_this());
@@ -656,6 +657,14 @@ void netlist::Block::replace_variable(const VIdentifier& var, const Number& num)
     BOOST_FOREACH(shared_ptr<NetComp> stm, statements) {
       stm->replace_variable(var, num);
     }
+    for_each(db_instance.begin(), db_instance.end(),
+             [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
+               m.second->replace_variable(var, num);
+             });
+    for_each(db_var.begin_order(), db_var.end_order(),
+             [&](const pair<const VIdentifier, shared_ptr<Variable> >& m) {
+               m.second->replace_variable(var, num);
+             });
   }
 }
 
@@ -664,6 +673,14 @@ void netlist::Block::replace_variable(const VIdentifier& var, const VIdentifier&
     BOOST_FOREACH(shared_ptr<NetComp> stm, statements) {
       stm->replace_variable(var, nvar);
     }
+    for_each(db_instance.begin(), db_instance.end(),
+             [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
+               m.second->replace_variable(var, nvar);
+             });
+    for_each(db_var.begin_order(), db_var.end_order(),
+             [&](const pair<const VIdentifier, shared_ptr<Variable> >& m) {
+               m.second->replace_variable(var, nvar);
+             });
   }
 }
 

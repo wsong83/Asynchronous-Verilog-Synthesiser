@@ -361,28 +361,32 @@ bool netlist::Module::elaborate(std::deque<shared_ptr<Module> >& mfifo,
   // reduce all parameters
   for_each(db_param.begin_order(), db_param.end_order(), [&](pair<const VIdentifier, shared_ptr<Variable> >& m) {
       rv &= m.second->elaborate(to_del, to_add);
-    });
-  //std::cout << "after param elaboration: " << std::endl << *this;
-  if(!rv) return rv;
-
-  // replace all parameters
-  for_each(db_param.begin_order(), db_param.end_order(), [&](pair<const VIdentifier, shared_ptr<Variable> >& m) {
       if(!m.second->is_valuable()) {
         G_ENV->error(m.second->loc, "ELAB-PARA-0", m.first.get_name(), name.get_name());
         rv = false;
       } else {
         replace_variable(m.first, m.second->get_value());
+        for_each(db_param.begin_order(), db_param.end_order(), [&](pair<const VIdentifier, shared_ptr<Variable> >& par) {
+            par.second->replace_variable(m.first, m.second->get_value());
+          });
+        for_each(db_port.begin_order(), db_port.end_order(), [&](pair<const VIdentifier, shared_ptr<Port> >& par) {
+            par.second->replace_variable(m.first, m.second->get_value());
+          });
       }
     });
-  
+
+  //std::cout << "after param elaboration: " << std::endl << *this;
   if(!rv) 
     return rv;
   else
     db_param.clear();
   
+  //std::cout << *this;
+
   // unfold the module to handle all generation loops
   unfold();
 
+  std::cout << *this;
 
   // before register all variable, update the port direction of all instance
   // as it will affect the direction of wires

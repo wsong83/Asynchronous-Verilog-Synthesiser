@@ -226,9 +226,8 @@ bool netlist::Variable::elaborate(std::set<shared_ptr<NetComp> >&,
     return false;  
   }
 
-  // now using replace_variable() in module because parameters are replaced before db_register
-  //if(vtype & (TParam | TLParam))
-  //  update();
+  if(vtype & (TParam | TLParam))
+    exp->reduce();
 
   return true;
 }
@@ -242,10 +241,12 @@ string netlist::Variable::get_short_string() const {
 }
 
 void netlist::Variable::replace_variable(const VIdentifier& var, const Number& num) {
+  name.replace_variable(var, num);
   if(exp) exp->replace_variable(var, num);
 }
 
 void netlist::Variable::replace_variable(const VIdentifier& var, const VIdentifier& nvar) {
+  name.replace_variable(var, nvar);
   if(exp) exp->replace_variable(var, nvar);
 }
 
