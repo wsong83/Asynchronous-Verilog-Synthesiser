@@ -162,8 +162,9 @@ void netlist::CaseItem::replace_variable(const VIdentifier& var, const VIdentifi
   if(body) body->replace_variable(var, nvar);
 }
 
-void netlist::CaseItem::unfold() {
+shared_ptr<Block> netlist::CaseItem::unfold() {
   body = body->unfold();
+  return shared_ptr<Block>();
 }
 
 bool netlist::CaseItem::is_match(const Number& val) const {

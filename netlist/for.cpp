@@ -202,59 +202,20 @@ shared_ptr<Block> netlist::ForState::unfold() {
 
   // the new body
   shared_ptr<Block> newBody(new Block(body->loc));
-  bool body_named = body->is_named();
   
   while(m_cond->get_value().is_true()) {
     // replace the index variable in the body
     shared_ptr<Block> m_blk(body->deep_copy(NULL));
     m_blk->replace_variable(var, num);
 
-    // set up the new names for instances
-    if(body_named) {
-      // prepare the prefix for this iteration
-      string locPrefix = body->name.get_name() + num.get_value().get_str(10) + ".";
-
-      // define functions in a named for loop is not supported
-      if(m_blk->db_func.size())
-        G_ENV->error(m_blk->loc, "ELAB-FOR-5");
-
-      if(m_blk->db_instance.size()) { // rename module instances
-        // set to store the old instances
-        std::set<IIdentifier> instances;
-        // rename the instances
-        for_each(m_blk->db_instance.begin(), m_blk->db_instance.end(),
-                 [&](pair<const IIdentifier, shared_ptr<Instance> >& inst) {
-                   instances.insert(inst.first);
-                     });
-        BOOST_FOREACH(IIdentifier inst, instances) {
-          IIdentifier new_id = inst;
-          new_id.add_prefix(locPrefix);
-          shared_ptr<Instance> pinst = m_blk->db_instance.find(inst);
-          pinst->set_name(new_id);
-          m_blk->db_instance.insert(new_id, pinst);
-          m_blk->db_instance.erase(inst);
-        }
-      }
-
-      if(m_blk->db_var.size()) {  // rename variables
-        // set to store the old variables
-        std::set<VIdentifier> variables;
-        // rename the variables
-        for_each(m_blk->db_var.begin_order(), m_blk->db_var.end_order(),
-                 [&](pair<const VIdentifier, shared_ptr<Variable> >& bvar) {
-                   variables.insert(bvar.first);
-                     });
-        BOOST_FOREACH(VIdentifier bvar, variables) {
-          VIdentifier new_id = bvar;
-          new_id.add_prefix(locPrefix);
-          shared_ptr<Variable> pvar = m_blk->db_var.find(bvar);
-          pvar->name = new_id;
-          m_blk->db_var.insert(new_id, pvar);
-          m_blk->db_var.erase(bvar);
-          m_blk->replace_variable(bvar, new_id);
-        }
-      }
+    // set up the new name if needed
+    if(body->is_named()) {
+      string locPrefix = body->name.get_name() + num.get_value().get_str(10);
+      m_blk->name.add_prefix(locPrefix);
     }
+
+    // unfold the block
+    m_blk = m_blk->unfold();
 
     // copy the statements in the body to the new body
     newBody->elab_add_block(m_blk);
