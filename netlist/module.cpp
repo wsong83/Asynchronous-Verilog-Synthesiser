@@ -484,36 +484,29 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
   // put all ports into the list
   for_each(db_port.begin_order(), db_port.end_order(), 
            [&](const pair<const VIdentifier, shared_ptr<Port> >& m) {
-             shared_ptr<dfgNode> n = G->add_node(m.first.get_name() + "_P", dfgNode::SDFG_PORT);
-             switch(m.second->get_dir()) {
-             case  1: n->type = dfgNode::SDFG_OPORT; break;
-             case -1: n->type = dfgNode::SDFG_IPORT; break;
-             default: ;
-             }
-             n->ptr.insert(m.second);
-           });
+             shared_ptr<dfgNode> nport = G->add_node(m.first.get_name() + "_P", dfgNode::SDFG_PORT);
+             nport->ptr.insert(m.second);
 
-  // put all signals into the list
-  for_each(db_var.begin_order(), db_var.end_order(),
-           [&](const pair<const VIdentifier, shared_ptr<Variable> >& m) {
-             shared_ptr<dfgNode> n = G->add_node(m.first.get_name(), dfgNode::SDFG_DF);
-             n->ptr.insert(m.second);
-             m.second->pDFGNode = n;
-           });
-  
-  // link port to signals
-  for_each(db_port.begin_order(), db_port.end_order(), 
-           [&](const pair<const VIdentifier, shared_ptr<Port> >& m) {
+             // also add the corresponding signal and connect them
+             shared_ptr<dfgNode> nsig = G->add_node(m.first.get_name(), dfgNode::SDFG_DF);
+             nsig->ptr.insert(db_var.find(m.first));
+             
+             // connect signals to ports
              switch(m.second->get_dir()) {
-             case  1:           // output
-               G->add_edge(m.first.get_name(), dfgEdge::SDFG_ASS, m.first.get_name(), m.first.get_name() + "_P"); 
+             case  1: {         // output
+               nport->type = dfgNode::SDFG_OPORT; 
+               G->add_edge(m.first.get_name(), dfgEdge::SDFG_ASS, nsig, nport);
                break;
-             case -1:           // input
-               G->add_edge(m.first.get_name(), dfgEdge::SDFG_ASS, m.first.get_name() + "_P", m.first.get_name()); 
+             }
+             case -1: {         // input
+               nport->type = dfgNode::SDFG_IPORT; 
+               G->add_edge(m.first.get_name(), dfgEdge::SDFG_ASS, nport, nsig);
                break;
-             default:           // inout
-               G->add_edge(m.first.get_name(), dfgEdge::SDFG_ASS, m.first.get_name(), m.first.get_name() + "_P"); 
-               G->add_edge(m.first.get_name(), dfgEdge::SDFG_ASS, m.first.get_name() + "_P", m.first.get_name());
+             }
+             default: {         // inout
+               G->add_edge(m.first.get_name(), dfgEdge::SDFG_ASS, nsig, nport);
+               G->add_edge(m.first.get_name(), dfgEdge::SDFG_ASS, nport, nsig);
+             }
              }
            });
 
