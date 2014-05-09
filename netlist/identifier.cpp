@@ -343,6 +343,14 @@ Number netlist::VIdentifier::get_value() const {
   else return Number(txt_value.substr(str_range.first, str_size));
 }
 
+string netlist::VIdentifier::get_selected_name() const {
+  if(m_select.is_empty() || !m_select.is_valuable())
+    return get_name();
+  else {                        // need to output selector
+    return get_name() + toString(m_select);
+  }
+}
+
 void netlist::VIdentifier::reduce() {
   m_range.reduce();
   m_select.reduce();

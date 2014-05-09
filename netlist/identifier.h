@@ -179,7 +179,7 @@ namespace netlist {
     bool is_valuable() const;
     Number get_value() const;
     void set_value(const Number& p) { value = p; }
-    //const std::string& get_txt_value() const { return value.get_txt_value(); }
+    virtual std::string get_selected_name() const;
     void db_register(const boost::shared_ptr<Variable>&, int);
     bool db_registered() const { return uid != 0; }
     void reset_uid(unsigned int id) { uid = id; } /* only used by Variable::get_id() */
