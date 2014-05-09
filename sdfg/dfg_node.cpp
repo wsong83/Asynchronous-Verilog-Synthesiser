@@ -116,6 +116,7 @@ dfgNode* SDFG::dfgNode::copy() const {
   rv->port2sig = port2sig;
   rv->pg = NULL;
   rv->name = name;
+  rv->select = select;
   rv->hier = hier;
   rv->id = NULL;
   rv->node_index = 0;

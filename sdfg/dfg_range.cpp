@@ -28,10 +28,14 @@
 
 #include "dfg_range.hpp"
 #include <boost/foreach.hpp>
+#include <boost/tokenizer.hpp>
+#include <boost/lexical_cast.hpp>
+#include <string>
 
 using std::pair;
 using std::list;
-
+using std::string;
+using namespace SDFG;
 
 SDFG::dfgRangeElement::dfgRangeElement(int r)
   : r_pair(r, r) {}
@@ -86,3 +90,36 @@ bool SDFG::dfgRange::is_same(const dfgRange& r) const {
     return true;
 }
 
+pair<string, dfgRange> SDFG::divide_signal_name(const string& sname) {
+  list<string> name_and_range;
+  
+  // get name and ranges
+  boost::char_separator<char> sep("[]");
+  boost::tokenizer<boost::char_separator<char> > tokens(sname, sep);
+  BOOST_FOREACH(const string& m, tokens) {
+    name_and_range.push_back(m);
+  }
+
+  // get the signal name
+  pair<string, dfgRange> rv;
+  rv.first = name_and_range.front();
+  name_and_range.pop_front();
+  
+  // get ranges
+  BOOST_FOREACH(const string& m, name_and_range) {
+    boost::char_separator<char> rsep(":");
+    boost::tokenizer<boost::char_separator<char> > rtokens(m, rsep);
+    list<int> ranges;
+    BOOST_FOREACH(const string& r, rtokens)
+      ranges.push_back(boost::lexical_cast<int>(r));
+    
+    // push the range to the range expression
+    if(ranges.size() == 1)
+      rv.second.push_back(dfgRangeElement(ranges.front()));
+    else
+      rv.second.push_back(dfgRangeElement(ranges.front(), ranges.back()));
+  }
+
+  return rv;
+  
+}

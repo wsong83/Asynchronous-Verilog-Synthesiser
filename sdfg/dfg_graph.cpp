@@ -1328,8 +1328,12 @@ bool SDFG::dfgGraph::check_integrity() const {
   }
   
   BOOST_FOREACH(node_map_type nm, node_map) {
-    assert(nodes.count(nm.second));
-    assert(nodes.find(nm.second)->second->get_hier_name() == nm.first);
+    BOOST_FOREACH(named_nodes_type mm, nm.second) {
+      assert(mm.second);
+      vertex_descriptor nid = mm.second->id;
+      assert(nodes.count(nid));
+      assert(nodes.find(nid)->second->get_hier_name() == mm.first);
+    }
   }
   
   BOOST_FOREACH(nodes_type n, nodes) {

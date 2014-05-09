@@ -50,6 +50,7 @@ namespace SDFG {
     typedef std::pair<const std::string, std::string> port2sig_type;
     dfgGraph* pg;                                       // a pointer pointing to the father Graph
     std::string name;                                   // description of this node
+    dfgRange select;                                    // the range select
     std::list<std::string> hier;                        // hierarchy prefix (name of flattened modules) 
     vertex_descriptor id;                               // node id
     unsigned int node_index;   // when nodes are stored in listS, vertext_descriptors are no longer

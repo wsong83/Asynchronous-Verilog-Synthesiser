@@ -31,6 +31,7 @@
 
 #include <list>
 #include <utility>
+#include <string>
 
 namespace SDFG {
   
@@ -96,6 +97,10 @@ namespace SDFG {
   inline bool operator== (const dfgRange& lhs, const dfgRange& rhs) {
     return rhs.is_same(lhs);
   }
+
+
+  // helper function to handle the range of signals
+  std::pair<std::string, dfgRange> divide_signal_name(const std::string&);
 
 }
 
