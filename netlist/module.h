@@ -52,7 +52,7 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
     using NetComp::set_father;
-    virtual Module* deep_copy() const;
+    virtual Module* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
     // build up the internal databases
     virtual void elab_inparse(); /* resolve the content in statements during parsing */

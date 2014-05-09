@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -222,11 +222,13 @@ void netlist::Expression::set_father(Block *pf) {
   eqn->set_father(pf);
 }
 
-Expression* netlist::Expression::deep_copy() const {
-  Expression* rv = new Expression();
-  rv->loc = loc;
+Expression* netlist::Expression::deep_copy(NetComp* bp) const {
+  Expression *rv;
+  if(!bp) rv = new Expression();
+  else    rv = static_cast<Expression *>(bp); // C++ does not support multiple dispatch
+  NetComp::deep_copy(rv);
   assert(eqn);
-  rv->eqn = shared_ptr<Operation>(eqn->deep_copy());
+  rv->eqn = shared_ptr<Operation>(eqn->deep_copy(NULL));
   return rv;
 }
 

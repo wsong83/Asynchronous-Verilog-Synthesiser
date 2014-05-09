@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -65,7 +65,7 @@ list<shared_ptr<Range> > netlist::RangeArrayCommon::const_copy(const list<shared
     // when the child is empty but maxRange is valid
     // it is actuall copy from a VIdentifier range
     // in this case, copy the rest from maxRange to this for range calculation
-    rv.push_back(shared_ptr<Range>(maxRange.deep_copy()));
+    rv.push_back(shared_ptr<Range>(maxRange.deep_copy(NULL)));
   } else {
     BOOST_FOREACH(const shared_ptr<Range>& m, rhs) {
       assert(m);
@@ -230,8 +230,14 @@ void netlist::RangeArrayCommon::set_father(Block* pf) {
 list<shared_ptr<Range> > netlist::RangeArrayCommon::deep_copy() const {
   list<shared_ptr<Range> > rv;
   BOOST_FOREACH(const shared_ptr<Range>& m, child) 
-    rv.push_back(shared_ptr<Range>(m->deep_copy()));
+    rv.push_back(shared_ptr<Range>(m->deep_copy(NULL)));
   return rv;
+}
+
+void netlist::RangeArrayCommon::deep_copy(RangeArrayCommon *rv) const {
+  assert(rv);
+  rv->child = deep_copy();
+  rv->width = width;
 }
 
 void netlist::RangeArrayCommon::db_register(int iod) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -115,6 +115,9 @@ namespace netlist {
                  const boost::shared_ptr<Expression>&, const boost::shared_ptr<Assign>&, const boost::shared_ptr<Block>&);
 
     bool add_statements(const boost::shared_ptr<Block>&);    /* add several statements */
+
+    bool elab_add_block(const boost::shared_ptr<Block>&); // add the content of another block to this block, not in an embedded block style
+    bool elab_replace_statement(const boost::shared_ptr<NetComp>&, const boost::shared_ptr<Block>); // replace a statement with the content of a block
     
     virtual void elab_inparse(); /* resolve the content in statements during parsing */
 
@@ -138,8 +141,9 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
     using NetComp::set_father;
-    virtual Block* deep_copy() const;
+    virtual Block* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
+    virtual boost::shared_ptr<Block> unfold();	// unfold for loops in block and generate blocks
     NETLIST_ELABORATE_DECL;
     NETLIST_GEN_SDFG;
     NETLIST_REPLACE_VARIABLE;

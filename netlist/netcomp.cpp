@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -56,10 +56,16 @@ ostream& netlist::NetComp::streamout (ostream& os, unsigned int) const {
   return os;
 }
     
-NetComp* netlist::NetComp::deep_copy() const { /* deep copy a netlist component */
-  std::cerr << "ERROR!!, the deep_copy() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << endl;
-  assert(0 == "the deep_copy() of NetComp is used");
-  return(new NetComp());
+NetComp* netlist::NetComp::deep_copy( NetComp * rv) const { /* deep copy a netlist component */
+  if(rv) {
+    rv->ctype = ctype;
+    rv->loc = loc;
+    return rv;
+  } else {
+    std::cerr << "ERROR!!, the deep_copy() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << endl;
+    assert(0 == "the deep_copy() of NetComp is used");
+    return NULL;
+  } 
 }
 
 void netlist::NetComp::set_father(Block* pf) {
@@ -108,6 +114,12 @@ bool netlist::NetComp::elaborate(std::set<shared_ptr<NetComp> >&,
   std::cerr << "ERROR!!, the elaborate() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << endl;
   assert(0 == "elaborate() of NetComp is used");
   return false;
+}
+
+shared_ptr<Block> netlist::NetComp::unfold() {
+  std::cerr << "ERROR!! the unfold() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << endl;
+  assert(0 == "unfold() of NetComp is used");
+  return shared_ptr<Block>();
 }
 
 unsigned int netlist::NetComp::get_width() const {

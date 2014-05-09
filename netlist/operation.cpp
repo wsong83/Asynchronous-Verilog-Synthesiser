@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -375,16 +375,18 @@ ostream& netlist::Operation::streamout(ostream& os, unsigned int indent) const {
   return os;
 }
 
-Operation* netlist::Operation::deep_copy() const {
-  Operation* rv = new Operation();
-  rv->loc = loc;
+Operation* netlist::Operation::deep_copy(NetComp* bp) const {
+  Operation *rv;
+  if(!bp) rv = new Operation();
+  else    rv = static_cast<Operation *>(bp); // C++ does not support multiple dispatch
+  NetComp::deep_copy(rv);
   rv->otype = this->otype;
   rv->valuable = this->valuable;
-  if(data) rv->data = shared_ptr<NetComp>(data->deep_copy());
+  if(data) rv->data = shared_ptr<NetComp>(data->deep_copy(NULL));
   if(child.size()) {
     rv->child = vector<shared_ptr<Operation> >(child.size());
     for(unsigned int i=0; i<child.size(); i++) 
-      rv->child[i].reset(child[i]->deep_copy());
+      rv->child[i].reset(child[i]->deep_copy(NULL));
   }
   return rv;
 }
@@ -635,7 +637,7 @@ void netlist::Operation::replace_variable(const VIdentifier& var, const VIdentif
   switch(otype) {
   case oVar: {
     if(get_var() == var) {      // found rand replace
-      get_var().name = nvar.name;
+      get_var().set_name(nvar.get_name());
     } else {
       get_var().replace_variable(var, nvar);
     }
@@ -706,7 +708,7 @@ void netlist::Operation::replace_variable(const VIdentifier& var, shared_ptr<Exp
   switch(otype) {
   case oVar: {
     if(get_var() == var) {      // found rand replace
-      shared_ptr<Expression> tmp_exp(reqn->deep_copy());
+      shared_ptr<Expression> tmp_exp(reqn->deep_copy(NULL));
       *this = tmp_exp->get_op();
     }
     break;
@@ -1358,7 +1360,7 @@ list<OpPair> netlist::Operation::breakToCases() const {
   case oVar:
   case oCon:
   case oFun: 
-    rv.push_back(OpPair(shared_ptr<Operation>(), shared_ptr<Operation>(deep_copy())));
+    rv.push_back(OpPair(shared_ptr<Operation>(), shared_ptr<Operation>(deep_copy(NULL))));
     break;
   case oUPos: 
     rv = child[0]->breakToCases(); 
@@ -1407,19 +1409,19 @@ list<OpPair> netlist::Operation::breakToCases() const {
       if(p0.first) {
         BOOST_FOREACH(OpPair p1, lop1) {
           if(p1.first) {
-            shared_ptr<Operation> np0_1(p0.first->deep_copy());
-            shared_ptr<Operation> np0_2(p0.second->deep_copy());
-            shared_ptr<Operation> np1_1(p1.first->deep_copy());
-            shared_ptr<Operation> np1_2(p1.second->deep_copy());
+            shared_ptr<Operation> np0_1(p0.first->deep_copy(NULL));
+            shared_ptr<Operation> np0_2(p0.second->deep_copy(NULL));
+            shared_ptr<Operation> np1_1(p1.first->deep_copy(NULL));
+            shared_ptr<Operation> np1_2(p1.second->deep_copy(NULL));
             shared_ptr<Operation> np_1(new Operation(oLAnd, np0_1, np1_1));
             shared_ptr<Operation> np_2(new Operation(otype, np0_2, np1_2));
             np_1->reduce();
             np_2->reduce();
             rv.push_back(OpPair(np_1, np_2));
           } else {
-            shared_ptr<Operation> np0_1(p0.first->deep_copy());
-            shared_ptr<Operation> np0_2(p0.second->deep_copy());
-            shared_ptr<Operation> np1_2(p1.second->deep_copy());
+            shared_ptr<Operation> np0_1(p0.first->deep_copy(NULL));
+            shared_ptr<Operation> np0_2(p0.second->deep_copy(NULL));
+            shared_ptr<Operation> np1_2(p1.second->deep_copy(NULL));
             shared_ptr<Operation> np_2(new Operation(otype, np0_2, np1_2));
             np_2->reduce();
             rv.push_back(OpPair(np0_1, np_2));            
@@ -1428,15 +1430,15 @@ list<OpPair> netlist::Operation::breakToCases() const {
       } else {
         BOOST_FOREACH(OpPair p1, lop1) {
           if(p1.first) {
-            shared_ptr<Operation> np0_2(p0.second->deep_copy());
-            shared_ptr<Operation> np1_1(p1.first->deep_copy());
-            shared_ptr<Operation> np1_2(p1.second->deep_copy());
+            shared_ptr<Operation> np0_2(p0.second->deep_copy(NULL));
+            shared_ptr<Operation> np1_1(p1.first->deep_copy(NULL));
+            shared_ptr<Operation> np1_2(p1.second->deep_copy(NULL));
             shared_ptr<Operation> np_2(new Operation(otype, np0_2, np1_2));
             np_2->reduce();
             rv.push_back(OpPair(np1_1, np_2));
           } else {
-            shared_ptr<Operation> np0_2(p0.second->deep_copy());
-            shared_ptr<Operation> np1_2(p1.second->deep_copy());
+            shared_ptr<Operation> np0_2(p0.second->deep_copy(NULL));
+            shared_ptr<Operation> np1_2(p1.second->deep_copy(NULL));
             shared_ptr<Operation> np_2(new Operation(otype, np0_2, np1_2));
             np_2->reduce();
             rv.push_back(OpPair(p1.first, np_2));            
@@ -1453,19 +1455,19 @@ list<OpPair> netlist::Operation::breakToCases() const {
     
     BOOST_FOREACH(OpPair A, op0) {
       BOOST_FOREACH(OpPair B, op1) {
-        shared_ptr<Operation> d(B.second->deep_copy());
-        shared_ptr<Operation> bAs(A.second->deep_copy());
+        shared_ptr<Operation> d(B.second->deep_copy(NULL));
+        shared_ptr<Operation> bAs(A.second->deep_copy(NULL));
         shared_ptr<Operation> c;
         if(A.first) {
-          shared_ptr<Operation> bAf(A.first->deep_copy());
+          shared_ptr<Operation> bAf(A.first->deep_copy(NULL));
           c.reset(new Operation(oLAnd, bAf, bAs));
           if(B.first) {  // A.f && A.s && B.f  -> B.s
-            shared_ptr<Operation> bBf(B.first->deep_copy());
+            shared_ptr<Operation> bBf(B.first->deep_copy(NULL));
             c.reset(new Operation(oLAnd, c, bBf));
           } // else A.f && A.s  -> B.s     
         } else {
           if(B.first) {  // A.s && B.f -> B.s
-            shared_ptr<Operation> bBf(B.first->deep_copy());
+            shared_ptr<Operation> bBf(B.first->deep_copy(NULL));
             c.reset(new Operation(oLAnd, bAs, bBf));
           } else {       // A.s -> B.s
             c = bAs;
@@ -1475,18 +1477,18 @@ list<OpPair> netlist::Operation::breakToCases() const {
       }
       
       BOOST_FOREACH(OpPair B, op2) {
-        shared_ptr<Operation> d(B.second->deep_copy());
+        shared_ptr<Operation> d(B.second->deep_copy(NULL));
         shared_ptr<Operation> c;
         if(A.first) {
-          shared_ptr<Operation> bAf(A.first->deep_copy());
+          shared_ptr<Operation> bAf(A.first->deep_copy(NULL));
           c = bAf;
           if(B.first) {  // A.f && B.f  -> B.s
-            shared_ptr<Operation> bBf(B.first->deep_copy());
+            shared_ptr<Operation> bBf(B.first->deep_copy(NULL));
             c.reset(new Operation(oLAnd, c, bBf));
           } // else A.f -> B.s     
         } else {
           if(B.first) {  // B.f -> B.s
-            shared_ptr<Operation> bBf(B.first->deep_copy());
+            shared_ptr<Operation> bBf(B.first->deep_copy(NULL));
             c = bBf;
           } // else B.s
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -175,7 +175,7 @@ bool shell::CMD::CMDUniquify::exec(const std::string& str, Env * pEnv) {
                        if(!mname_map.count(m.second->mname))
                          mname_map[m.second->mname] = m.second->mname;
                        while(true) {
-                         ++mname_map[m.second->mname];
+                         mname_map[m.second->mname].suffix_increase();
                          if(gEnv.find_module(mname_map[m.second->mname]))
                            continue;
                          else
@@ -187,7 +187,7 @@ bool shell::CMD::CMDUniquify::exec(const std::string& str, Env * pEnv) {
                          gEnv.stdOs << "rename module \"" 
                                     << m.second->mname 
                                     << "\" to \"" 
-                                    << mname_map[m.second->mname].name
+                                    << mname_map[m.second->mname].get_name()
                                     << "\"." << endl;
                        }
                        
@@ -197,14 +197,14 @@ bool shell::CMD::CMDUniquify::exec(const std::string& str, Env * pEnv) {
                      
                      existed_module_set.insert(m.second->mname);
                    } else {     // normal module
-                     shared_ptr<netlist::Module> new_pm(pm->deep_copy()); // make a duplicate
+                     shared_ptr<netlist::Module> new_pm(pm->deep_copy(NULL)); // make a duplicate
                      new_pm->db_register(0);
 
                      // get a new name
                      if(!mname_map.count(pm->name))
                        mname_map[pm->name] = pm->name;
                      while(true) {
-                       ++mname_map[pm->name];
+                       mname_map[pm->name].suffix_increase();
                        if(gEnv.find_module(mname_map[pm->name]))
                          continue;
                        else
@@ -213,9 +213,9 @@ bool shell::CMD::CMDUniquify::exec(const std::string& str, Env * pEnv) {
                      
                      if(!arg.bQuiet) {
                        gEnv.stdOs << "rename module \"" 
-                                  << new_pm->name.name 
+                                  << new_pm->name.get_name() 
                                   << "\" to \"" 
-                                  << mname_map[pm->name].name
+                                  << mname_map[pm->name].get_name()
                                   << "\"." << endl;
                      }
                      new_pm->set_name(mname_map[pm->name]);  // set a new name

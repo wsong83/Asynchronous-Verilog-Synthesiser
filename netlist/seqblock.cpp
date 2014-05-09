@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -163,7 +163,7 @@ void netlist::SeqBlock::elab_inparse() {
   Block::elab_inparse();
 
   // handle sensitive list
-  if(slist_level.size() == 1 && slist_level.front()->is_variable() && slist_level.front()->get_variable().name == "*") {
+  if(slist_level.size() == 1 && slist_level.front()->is_variable() && slist_level.front()->get_variable().get_name() == "*") {
     // automatic sensitive list filling
     slist_level.clear();
 
@@ -189,29 +189,28 @@ void netlist::SeqBlock::set_father(Block *pf) {
     it->set_father(pf);
 }
 
-SeqBlock* netlist::SeqBlock::deep_copy() const {
-  SeqBlock* rv = new SeqBlock();
-  rv->loc = loc;
-  rv->name = name;
-  rv->named = named;
-  
-  // data in Block
-  BOOST_FOREACH(const shared_ptr<NetComp>& comp, statements)
-    rv->statements.push_back(shared_ptr<NetComp>(comp->deep_copy()));
-  DATABASE_DEEP_COPY_FUN(db_var,      VIdentifier, Variable,  rv->db_var       );
-  rv->unnamed_block = unnamed_block;
-  rv->unnamed_instance = unnamed_instance;
-  rv->unnamed_var = unnamed_var;
+SeqBlock* netlist::SeqBlock::deep_copy(NetComp* bp) const {
+  bool base_call = true;
+  SeqBlock *rv;
+  if(!bp) {
+    rv = new SeqBlock();
+    base_call = false;
+  } else
+    rv = static_cast<SeqBlock *>(bp); // C++ does not support multiple dispatch
+
+  Block::deep_copy(rv);
 
   // data in SeqBlock
   rv->sensitive = sensitive;
   for_each(slist_pulse.begin(), slist_pulse.end(), [&](const pair<bool, shared_ptr<Expression> > m) {
-      rv->slist_pulse.push_back(pair<bool, shared_ptr<Expression> >(m.first, shared_ptr<Expression>(m.second->deep_copy())));
+      rv->slist_pulse.push_back(pair<bool, shared_ptr<Expression> >(m.first, shared_ptr<Expression>(m.second->deep_copy(NULL))));
     });
   BOOST_FOREACH(const shared_ptr<Expression>& m, slist_level)
-    rv->slist_level.push_back(shared_ptr<Expression>(m->deep_copy()));
+    rv->slist_level.push_back(shared_ptr<Expression>(m->deep_copy(NULL)));
 
-  rv->set_father();
+  if(!base_call) {
+    rv->set_father();
+  }
   return rv;
 }
 
@@ -244,6 +243,10 @@ shared_ptr<SDFG::RTree> netlist::SeqBlock::get_rtree() const {
   return Block::get_rtree();
 }
 
+shared_ptr<Block> netlist::SeqBlock::unfold() {
+  Block::unfold();
+  return shared_ptr<Block>();
+}
 
 void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
   assert(db_var.empty());

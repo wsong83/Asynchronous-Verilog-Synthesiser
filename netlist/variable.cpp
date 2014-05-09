@@ -51,25 +51,25 @@ netlist::Variable::Variable(const shell::location& lloc)
   : NetComp(tVariable, lloc), uid(0), signed_flag(false), annotated(false) {}
 
 netlist::Variable::Variable(const VIdentifier& id, vtype_t mtype)
-  : NetComp(tVariable), vtype(mtype), name(*(id.deep_copy())), uid(0), signed_flag(false), annotated(false) {}
+  : NetComp(tVariable), vtype(mtype), name(*(id.deep_copy(NULL))), uid(0), signed_flag(false), annotated(false) {}
 
 netlist::Variable::Variable(const Port& p)
   : NetComp(tVariable, p.loc), vtype(TWire), uid(0), signed_flag(false) , annotated(false)
 {
-  VIdentifier *newName = p.name.deep_copy();
+  VIdentifier *newName = p.name.deep_copy(NULL);
   name = *newName;
   delete newName;
 }
 
 netlist::Variable::Variable(const shell::location& lloc, const VIdentifier& id, vtype_t mtype)
-  : NetComp(tVariable, lloc), vtype(mtype), name(*(id.deep_copy())), uid(0), signed_flag(false), annotated(false) {}
+  : NetComp(tVariable, lloc), vtype(mtype), name(*(id.deep_copy(NULL))), uid(0), signed_flag(false), annotated(false) {}
 
 netlist::Variable::Variable(const VIdentifier& id, const shared_ptr<Expression>& expp, vtype_t mtype)
-  : NetComp(tVariable), vtype(mtype), name(*(id.deep_copy())), exp(expp), uid(0), signed_flag(false), annotated(false) {}
+  : NetComp(tVariable), vtype(mtype), name(*(id.deep_copy(NULL))), exp(expp), uid(0), signed_flag(false), annotated(false) {}
 
 netlist::Variable::Variable(const shell::location& lloc, const VIdentifier& id, 
                             const shared_ptr<Expression>& expp, vtype_t mtype)
-  : NetComp(tVariable, lloc), vtype(mtype), name(*(id.deep_copy())), exp(expp), uid(0), signed_flag(false), annotated(false) {}
+  : NetComp(tVariable, lloc), vtype(mtype), name(*(id.deep_copy(NULL))), exp(expp), uid(0), signed_flag(false), annotated(false) {}
 
 void netlist::Variable::set_value(const Number& num) {
   if(exp) exp->db_expunge();
@@ -79,7 +79,7 @@ void netlist::Variable::set_value(const Number& num) {
 
 void netlist::Variable::set_value(const VIdentifier& var) {
   if(exp) exp->db_expunge();
-  VIdentifier * varp = var.deep_copy();
+  VIdentifier * varp = var.deep_copy(NULL);
   exp.reset(new Expression(*varp));
   exp->db_register(1);
   delete varp;
@@ -88,7 +88,7 @@ void netlist::Variable::set_value(const VIdentifier& var) {
 
 void netlist::Variable::set_value(const shared_ptr<Expression>& mexp) {
   if(exp) exp->db_expunge();
-  exp.reset(mexp->deep_copy());
+  exp.reset(mexp->deep_copy(NULL));
   exp->db_register(1);
   update();
 }
@@ -134,7 +134,7 @@ ostream& netlist::Variable::streamout(ostream& os, unsigned int indent) const {
   }
   if(signed_flag) os << "signed ";
   name.get_range().RangeArrayCommon::streamout(os, 0, "", true, false); // show range of declaration 
-  name.get_range().RangeArrayCommon::streamout(os, 1, name.name, true, true); // show dimension of declaration
+  name.get_range().RangeArrayCommon::streamout(os, 1, name.get_name(), true, true); // show dimension of declaration
   if(exp) { os << " = " << *exp; }
   os << ";" << endl;
   return os;
@@ -185,14 +185,19 @@ unsigned int netlist::Variable::get_id() {
   return rv;
 }
     
-Variable* netlist::Variable::deep_copy() const {
-  VIdentifier * newid = name.deep_copy();
-  Variable *rv = new Variable(loc, *newid, vtype);
-  delete newid;
-  if(exp) rv->exp.reset(exp->deep_copy());
+Variable* netlist::Variable::deep_copy(NetComp *bp) const {
+  Variable *rv;
+  if(!bp) {
+    VIdentifier * newid = name.deep_copy(NULL);
+    rv = new Variable(loc, *newid, vtype);
+    delete newid;
+  } else 
+    rv = static_cast<Variable *>(bp); // C++ does not support multiple dispatch
+  NetComp::deep_copy(rv);
+  
+  if(exp) rv->exp.reset(exp->deep_copy(NULL));
   rv->signed_flag = signed_flag;
   // every time a variable is deep copied, all fan-in and -out connections are lost and need to regenerated
-  rv->pDFGNode = pDFGNode;
 
   return rv;
 }
@@ -212,34 +217,36 @@ bool netlist::Variable::elaborate(std::set<shared_ptr<NetComp> >&,
   name.get_range().reduce(true);
 
   if(!name.get_range().is_valuable()) {
-    G_ENV->error(loc, "ELAB-RANGE-0", name.name);
+    G_ENV->error(loc, "ELAB-RANGE-0", name.get_name());
     return false;
   }
   
   if(!name.get_range().is_declaration()) {
-    G_ENV->error(loc, "ELAB-VAR-5", name.name);
+    G_ENV->error(loc, "ELAB-VAR-5", name.get_name());
     return false;  
   }
 
   if(vtype & (TParam | TLParam))
-    update();
+    exp->reduce();
 
   return true;
 }
 
 // used in shell/cmd/elaborate.cpp
 string netlist::Variable::get_short_string() const {
-  string rv = name.name;
+  string rv = name.get_name();
   rv += "=";
   rv += toString(*exp);
   return rv;
 }
 
 void netlist::Variable::replace_variable(const VIdentifier& var, const Number& num) {
+  name.replace_variable(var, num);
   if(exp) exp->replace_variable(var, num);
 }
 
 void netlist::Variable::replace_variable(const VIdentifier& var, const VIdentifier& nvar) {
+  name.replace_variable(var, nvar);
   if(exp) exp->replace_variable(var, nvar);
 }
 

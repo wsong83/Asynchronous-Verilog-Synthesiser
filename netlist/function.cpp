@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2013-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -155,20 +155,11 @@ ostream& netlist::Function::streamout(ostream& os, unsigned int indent, bool fl_
   return os;
 }
  
-Function* netlist::Function::deep_copy() const {
-  Function* rv = new Function();
-  
-  rv->loc = loc;
-  rv->name = name;
-  rv->named = named;
-
-  // data in Block
-  BOOST_FOREACH(const shared_ptr<NetComp>& comp, statements)
-    rv->statements.push_back(shared_ptr<NetComp>(comp->deep_copy()));
-  DATABASE_DEEP_COPY_FUN(db_var,      VIdentifier, Variable,  rv->db_var       );
-  rv->unnamed_block = unnamed_block;
-  rv->unnamed_instance = unnamed_instance;
-  rv->unnamed_var = unnamed_var;
+Function* netlist::Function::deep_copy(NetComp* bp) const {
+  Function *rv;
+  if(!bp) rv = new Function();
+  else    rv = static_cast<Function*>(bp); // C++ does not support multiple dispatch
+  Block::deep_copy(rv);
 
   // data in Function
   rv->fname = fname;

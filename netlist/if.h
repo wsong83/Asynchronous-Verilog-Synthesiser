@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -49,12 +49,13 @@ namespace netlist {
     // inherit from NetComp
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
-    virtual IfState* deep_copy() const;
+    virtual IfState* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
     NETLIST_REPLACE_VARIABLE;
     virtual boost::shared_ptr<Expression> get_combined_expression(const VIdentifier&, std::set<std::string>);
     virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
+    virtual boost::shared_ptr<Block> unfold();	// unfold for loops in block and generate blocks
 
     //data
     boost::shared_ptr<Expression> exp; /* the condition expression */

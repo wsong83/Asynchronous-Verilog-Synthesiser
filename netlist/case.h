@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -50,13 +50,14 @@ namespace netlist{
     // helpers
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
-    virtual CaseItem* deep_copy() const;
+    virtual CaseItem* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
     bool is_default() const {return exps.size() == 0; }
     bool is_match(const Number&) const; /* whether this case match with the number (arguement) */
     virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
     NETLIST_REPLACE_VARIABLE;
+    virtual boost::shared_ptr<Block> unfold();	// unfold for loops in block and generate blocks
 
     // data
     std::list<boost::shared_ptr<Expression> > exps;
@@ -88,14 +89,15 @@ namespace netlist{
     // helpers
     NETLIST_STREAMOUT_DECL;
     NETLIST_SET_FATHER_DECL;
-    virtual CaseState* deep_copy() const;
+    virtual CaseState* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
     NETLIST_ELABORATE_DECL;
     void set_name(const BIdentifier& nm) {name = nm; named=true;}
     bool is_named() const { return named; }
     virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
     NETLIST_REPLACE_VARIABLE;
-    
+    virtual boost::shared_ptr<Block> unfold();	// unfold for loops in block and generate blocks
+   
     // data
     BIdentifier name;           /* dummy name for search index */
     boost::shared_ptr<Expression> exp;

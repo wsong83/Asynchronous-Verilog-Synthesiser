@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -34,6 +34,7 @@ enum ctype_t {
   tCaseItem,                /* a case item */
   tCase,                    /* a case statement */
   tConcatenation,           /* concatenation */
+  tConElem,                 /* concatenation element */
   tExp,                     /* expression */
   tFor,                     /* for statement */
   tFuncName,                /* function name */
@@ -72,6 +73,7 @@ std::string get_type_name() const {
   case tCaseItem:        rv = "Case Item";               break;
   case tCase:            rv = "Case Statement";          break;
   case tConcatenation:   rv = "Concatenation";           break;
+  case tConElem:         rv = "Concatenation Element";   break;
   case tExp:             rv = "Expression";              break;
   case tFor:             rv = "For Statement";           break;
   case tFuncName:        rv = "Function Name";           break;

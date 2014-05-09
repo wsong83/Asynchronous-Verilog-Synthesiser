@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -218,8 +218,17 @@ ostream& netlist::Number::streamout (ostream& os, unsigned int indent) const{
   return os;
 }
 
-Number* netlist::Number::deep_copy() const {
-  return (new Number(*this));
+Number* netlist::Number::deep_copy(NetComp* bp) const {
+  if(bp) {
+    Number *rv = static_cast<Number*>(bp); // C++ does not support multiple dispatch
+    NetComp::deep_copy(rv);
+    rv->num_leng = num_leng;
+    rv->txt_value = txt_value;
+    rv->valuable = valuable;
+    rv->sign_flag = sign_flag;
+    return rv;
+  } else
+    return (new Number(*this));
 }
 
 void netlist::Number::concatenate(const Number& rhs) {
