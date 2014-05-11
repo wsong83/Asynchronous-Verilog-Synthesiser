@@ -81,9 +81,9 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     std::map<vertex_descriptor, boost::shared_ptr<dfgNode> > nodes;
     typedef std::pair<const vertex_descriptor, boost::shared_ptr<dfgNode> > nodes_type;
 
-    typedef std::list<boost::shared_ptr<dfgNode> > named_nodes_type;
+    typedef std::set<boost::shared_ptr<dfgNode> > named_nodes_type;
     std::map<std::string, named_nodes_type> node_map;
-    typedef std::pair<const std::string, vertex_descriptor> node_map_type;
+    typedef std::pair<const std::string, named_nodes_type> node_map_type;
     std::map<unsigned int, vertex_descriptor> index_map;
     typedef std::pair<const unsigned int, vertex_descriptor> index_map_type;
     std::map<unsigned int, edge_descriptor> edge_map;
@@ -142,7 +142,8 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
       return get_edge(to_id(n1), to_id(n2), etype);
     }  
     boost::shared_ptr<dfgEdge> get_edge(vertex_descriptor, vertex_descriptor, dfgEdge::edge_type_t) const;
-    DFGG_FH_RF1(boost::shared_ptr<dfgNode>, get_node, const);
+    std::set<boost::shared_ptr<dfgNode> > get_node(const std::string&) const; // get a group of node whose ranges cover the asked node
+    boost::shared_ptr<dfgNode> get_node(std::pair<std::string, dfgRange>) const; // get a specific node with range
     boost::shared_ptr<dfgNode> get_node(vertex_descriptor) const;
     DFGG_FH_RF1(boost::shared_ptr<dfgNode>, get_source, const);
     boost::shared_ptr<dfgNode> get_source(edge_descriptor) const;
@@ -157,7 +158,7 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     vertex_descriptor get_target_id(const edge_descriptor&) const;
 
     // hierarchical search
-    boost::shared_ptr<dfgNode> search_node(const std::string&) const;
+    std::set<boost::shared_ptr<dfgNode> > search_node(const std::string&) const;
 
     // clear up the graph
     void remove_useless_nodes();
@@ -171,7 +172,9 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
         return exist(to_id(n1), to_id(n2), etype);
     }
     bool exist(vertex_descriptor, vertex_descriptor, dfgEdge::edge_type_t) const; // edge 
-    DFGG_FH_RF1(bool, exist, const);
+    bool exist(std::pair<std::string, dfgRange>) const; // check a specific name with a range
+    bool exist(const std::string&) const;
+    bool exist(boost::shared_ptr<dfgNode>) const;
     bool exist(vertex_descriptor) const;
     bool exist(edge_descriptor) const;
 
