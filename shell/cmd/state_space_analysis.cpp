@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2013-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -149,7 +149,7 @@ void shell::CMD::CMDStateSpaceAnalysis::exec ( const std::string& str, Env * pEn
   }
 
   // find the dfgNode
-  shared_ptr<SDFG::dfgNode> pnode = cDesign->RRG->get_node(arg.sController);
+  shared_ptr<SDFG::dfgNode> pnode = cDesign->RRG->get_node(SDFG::divide_signal_name(arg.sController));
   if(!pnode) {
     gEnv.stdOs << "Error: target controller \"" << arg.sController << "\" not found." << endl;
     return;

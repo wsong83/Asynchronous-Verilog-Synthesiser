@@ -267,7 +267,7 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
         G->add_edge_multi(e.first, e.second, e.first, t.first);
     }
     //std::cout << std::endl;
-    G->get_node(t.first)->ptr.insert(get_sp());
+    G->get_node(SDFG::divide_signal_name(t.first))->ptr.insert(get_sp());
   }
 
   if(!slist_pulse.empty()) {    // ff
@@ -292,7 +292,7 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
     
     // handle the nodes
     BOOST_FOREACH(SDFG::RTree::sub_tree_type& t, rt->tree) {
-      shared_ptr<SDFG::dfgNode> node = G->get_node(t.first);
+      shared_ptr<SDFG::dfgNode> node = G->get_node(SDFG::divide_signal_name(t.first));
       assert(node);
       node->type = SDFG::dfgNode::SDFG_FF;
       
@@ -313,7 +313,7 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
       //if(t.second.count(t.first))
       //G->get_node(t.first)->type = SDFG::dfgNode::SDFG_LATCH; // self-loop means latch
       //else
-        G->get_node(t.first)->type = SDFG::dfgNode::SDFG_COMB;
+      G->get_node(SDFG::divide_signal_name(t.first))->type = SDFG::dfgNode::SDFG_COMB;
     }
   }
 }

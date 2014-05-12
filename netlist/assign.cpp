@@ -100,7 +100,7 @@ void netlist::Assign::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
     BOOST_FOREACH(SDFG::RTree::rtree_edge_type& e, t.second) {
       G->add_edge_multi(e.first, e.second, e.first, t.first);
     }
-    G->get_node(t.first)->ptr.insert(get_sp());
+    G->get_node(SDFG::divide_signal_name(t.first))->ptr.insert(get_sp());
   }
 }
 
@@ -157,7 +157,7 @@ shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifie
     BOOST_FOREACH(const string& sname, sig_set) {
       if(sname != target.get_name()) { // other signals
         //std::cout << sname << std::endl;
-        shared_ptr<SDFG::dfgNode> pnode = get_module()->DFG->get_node(sname);
+        shared_ptr<SDFG::dfgNode> pnode = get_module()->DFG->get_node(SDFG::divide_signal_name(sname));
         assert(pnode);
         bool found_source = false;
         while(!found_source) {
@@ -194,7 +194,7 @@ shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifie
         }
         assert(pnode);
         if(pnode->type & SDFG::dfgNode::SDFG_LATCH) {
-          G_ENV->error("ANA-SSA-1", pnode->get_full_name(), get_module()->DFG->get_node(sname)->get_full_name());
+          G_ENV->error("ANA-SSA-1", pnode->get_full_name(), get_module()->DFG->get_node(SDFG::divide_signal_name(sname))->get_full_name());
         }
         if(s_set.count(pnode->get_full_name())) {
           G_ENV->error("ANA-SSA-2", pnode->get_full_name());

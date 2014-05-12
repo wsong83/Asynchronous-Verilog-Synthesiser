@@ -356,7 +356,7 @@ bool netlist::Instance::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
 
 void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
   // find out the node
-  shared_ptr<dfgNode> node = G->get_node(name.get_name());
+  shared_ptr<dfgNode> node = G->get_node(SDFG::divide_signal_name(name.get_name()));
   assert(node);
   
   BOOST_FOREACH(shared_ptr<PortConn> m, port_list) {
