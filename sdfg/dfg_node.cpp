@@ -317,7 +317,7 @@ void SDFG::dfgNode::remove_port_sig(const string& sname, int dir) {
     // remove the port map connection
     std::set<string> m_slist = sig2port[sname]; // local copy
     BOOST_FOREACH(const string& sig, m_slist) {
-      shared_ptr<dfgNode> child_node = child->get_node(sig);
+      shared_ptr<dfgNode> child_node = child->get_node(SDFG::divide_signal_name(sig));
       if(child_node) {
         if((child_node->type & SDFG_PORT) 
            && (child_node->type != SDFG_OPORT)
@@ -466,7 +466,7 @@ bool SDFG::dfgNode::remove_useless_ports() {
 }
 
 shared_ptr<dfgNode> SDFG::dfgNode::get_synonym(dfgGraph * otherG) const {
-  return otherG->get_node(get_hier_name());
+  return otherG->get_node(SDFG::divide_signal_name(get_hier_name()));
 }
 
 bool SDFG::dfgNode::check_integrity() const {
@@ -484,7 +484,7 @@ bool SDFG::dfgNode::check_integrity() const {
       assert(child->check_integrity());
       BOOST_FOREACH(port2sig_type p2s, port2sig) {
         assert(child->exist(p2s.first));
-        shared_ptr<dfgNode> p = child->get_node(p2s.first);
+        shared_ptr<dfgNode> p = child->get_node(SDFG::divide_signal_name(p2s.first));
         assert(p);
         if(p2s.second.size() > 0) {
           assert(pg->exist(p2s.second));
