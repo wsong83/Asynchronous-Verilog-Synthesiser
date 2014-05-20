@@ -37,59 +37,6 @@ using std::list;
 using std::string;
 using namespace SDFG;
 
-SDFG::dfgRangeElement::dfgRangeElement(int r)
-  : r_pair(r, r) {}
-
-SDFG::dfgRangeElement::dfgRangeElement(int lr, int rr)
-{
-  if(lr >= rr)
-    r_pair = pair<int, int>(lr, rr);
-  else
-    r_pair = pair<int, int>(rr, lr);
-}
-
-bool SDFG::dfgRangeElement::is_enclosed(const dfgRangeElement& r) const {
-  return (r_pair.first >= r.r_pair.first && r_pair.second <= r.r_pair.second);
-}
-
-bool SDFG::dfgRangeElement::is_same(const dfgRangeElement& r) const {
-  return (r_pair.first == r.r_pair.first && r_pair.second == r.r_pair.second);
-}
-
-void SDFG::dfgRange::push_front(const dfgRangeElement& r) {
-  r_array.push_front(r);
-}
-
-void SDFG::dfgRange::push_back(const dfgRangeElement& r) {
-  r_array.push_back(r);
-}
-
-bool SDFG::dfgRange::is_enclosed(const dfgRange& r) const {
-  list<dfgRangeElement>::const_iterator lit = r_array.begin();
-  list<dfgRangeElement>::const_iterator rit = r.r_array.begin();
-  while(lit != r_array.end() && rit != r.r_array.end()) {
-    if(!(*lit >= *rit))
-      return false;
-  }
-  if(lit == r_array.end()) 
-    return true;   // a sub range is always enclosed to a full range
-  else
-    return false;  // a full range is not considered enclosed in a sub range
-}
-
-bool SDFG::dfgRange::is_same(const dfgRange& r) const {
-  list<dfgRangeElement>::const_iterator lit = r_array.begin();
-  list<dfgRangeElement>::const_iterator rit = r.r_array.begin();
-  while(lit != r_array.end() && rit != r.r_array.end()) {
-    if(!(*lit == *rit))
-      return false;
-  }
-  if(lit != r_array.end() || rit != r.r_array.end()) 
-    return false;
-  else
-    return true;
-}
-
 pair<string, dfgRange> SDFG::divide_signal_name(const string& sname) {
   list<string> name_and_range;
   

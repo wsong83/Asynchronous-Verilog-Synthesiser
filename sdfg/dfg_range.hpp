@@ -29,75 +29,12 @@
 #ifndef _SDFG_RANGE_H_
 #define _SDFG_RANGE_H_
 
-#include <list>
-#include <utility>
-#include <string>
+#include "cpprange/cpp_range.hpp"
 
 namespace SDFG {
-  
-  class dfgRangeElement {
-  public:
-    dfgRangeElement(int);
-    dfgRangeElement(int, int);
 
-    bool is_enclosed(const dfgRangeElement&) const;
-    bool is_same(const dfgRangeElement&) const;
-
-  private:
-    std::pair<int, int> r_pair; // specific range expression
-  };
-
-  inline bool operator> (const dfgRangeElement& lhs, const dfgRangeElement& rhs) {
-    return lhs.is_enclosed(rhs) && !lhs.is_same(rhs);
-  }
-
-  inline bool operator>= (const dfgRangeElement& lhs, const dfgRangeElement& rhs) {
-    return lhs.is_enclosed(rhs);
-  }
-
-  inline bool operator< (const dfgRangeElement& lhs, const dfgRangeElement& rhs) {
-    return rhs.is_enclosed(lhs) && !rhs.is_same(lhs);
-  }
-
-  inline bool operator<= (const dfgRangeElement& lhs, const dfgRangeElement& rhs) {
-    return rhs.is_enclosed(lhs);
-  }
-  
-  inline bool operator== (const dfgRangeElement& lhs, const dfgRangeElement& rhs) {
-    return rhs.is_same(lhs);
-  }
-
-  class dfgRange {
-  public:    
-    void push_front(const dfgRangeElement&);
-    void push_back(const dfgRangeElement&);
-    bool is_enclosed(const dfgRange&) const;
-    bool is_same(const dfgRange&) const;
-
-  private:
-    std::list<dfgRangeElement> r_array; // the range array
-  };
-
-  inline bool operator> (const dfgRange& lhs, const dfgRange& rhs) {
-    return lhs.is_enclosed(rhs) && !lhs.is_same(rhs);
-  }
-
-  inline bool operator>= (const dfgRange& lhs, const dfgRange& rhs) {
-    return lhs.is_enclosed(rhs);
-  }
-
-  inline bool operator< (const dfgRange& lhs, const dfgRange& rhs) {
-    return rhs.is_enclosed(lhs) && !rhs.is_same(lhs);
-  }
-
-  inline bool operator<= (const dfgRange& lhs, const dfgRange& rhs) {
-    return rhs.is_enclosed(lhs);
-  }
-  
-  inline bool operator== (const dfgRange& lhs, const dfgRange& rhs) {
-    return rhs.is_same(lhs);
-  }
-
+  typedef CppRange::RangeElement<int> dfgRangeElement;
+  typedef CppRange::Range<int> dfgRange;
 
   // helper function to handle the range of signals
   std::pair<std::string, dfgRange> divide_signal_name(const std::string&);
