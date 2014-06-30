@@ -18,31 +18,35 @@
  */
 
 /* 
- * An C++ STL static range calculation library
- * 09/05/2014   Wei Song
+ * Define utility functions fot the C++ STL static range calculation library
+ * 25/06/2014   Wei Song
  *
  *
  */
 
-#ifndef _CPP_RANGE_H_
-#define _CPP_RANGE_H_
+#ifndef _CPP_RANGE_UTIL_DEF_H_
+#define _CPP_RANGE_UTIL_DEF_H_
 
-// forward definitions of the utility functions
-#include "cpp_range_util_def.hpp"
+#include <list>
+#include <string>
 
-// RangeElement
-#include "cpp_range_element.hpp"
+namespace CppRange {
 
-// Simple multi-dimensional Range
-// Does not allow operations when ranges have multiple different dimensions
-#include "cpp_range_multi.hpp"
+  // forward decaration
+  template<class T> class RangeElement;
+  template<class T> class Range;
+  template<class T> class RangeMapBase;
+  template<class T> class RangeMap;
+  
+  // parse a string into a range element
+  template<class T>
+  RangeElement<T> parse_range (const std::string&);
 
-// Complex multi-dimensional Range
-// Allow arbitrary different dimensions
-#include "cpp_range_map_base.hpp"
-#include "cpp_range_map.hpp"
+  // parse a string into a list of range element
+  template<class T>
+  std::list<RangeElement<T> > parse_range_list (const std::string&);
 
-// the utility function
-#include "cpp_range_util.hpp"
+
+}
 
 #endif

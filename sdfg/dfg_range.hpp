@@ -35,6 +35,7 @@ namespace SDFG {
 
   typedef CppRange::RangeElement<int> dfgRangeElement;
   typedef CppRange::Range<int> dfgRange;
+  typedef CppRange::RangeMap<int> dfgRangeMap;
 
   // helper function to handle the range of signals
   std::pair<std::string, dfgRange> divide_signal_name(const std::string&);

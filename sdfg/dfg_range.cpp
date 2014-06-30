@@ -62,9 +62,9 @@ pair<string, dfgRange> SDFG::divide_signal_name(const string& sname) {
     
     // push the range to the range expression
     if(ranges.size() == 1)
-      rv.second.push_back(dfgRangeElement(ranges.front()));
+      rv.second.add_lower(dfgRangeElement(ranges.front()));
     else
-      rv.second.push_back(dfgRangeElement(ranges.front(), ranges.back()));
+      rv.second.add_lower(dfgRangeElement(ranges.front(), ranges.back()));
   }
 
   return rv;
