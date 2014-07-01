@@ -366,19 +366,23 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
         shared_ptr<dfgNode> exp_node = G->add_node(UniName::uni_name(), dfgNode::SDFG_COMB);
         shared_ptr<SDFG::RTree> exp_tree = m->exp->get_rtree();
         BOOST_FOREACH(SDFG::RTree::rtree_edge_type& e, exp_tree->tree[SDFG::RTree::DTarget]) {
-          G->add_edge_multi(e.first, e.second, e.first, exp_node->name);
+          if(!G->exist(SDFG::divide_signal_name(e.first)))
+            G->add_node(e.first, dfgNode::SDFG_DF);
+          G->add_edge_multi(e.first, e.second, e.first, exp_node);
         }
-        G->add_edge(exp_node->name, dfgEdge::SDFG_ASS, exp_node->name, node->name);
-        node->add_port_sig(m->pname.get_name() + "_P", exp_node->name);
+        G->add_edge(exp_node->name, dfgEdge::SDFG_ASS, exp_node, node);
+        node->add_port_sig(m->pname.get_selected_name() + "_P", exp_node->name);
         break;
       }
       case PortConn::CVAR: {    // variable
-        G->add_edge(m->var.get_name(), dfgEdge::SDFG_ASS, m->var.get_name(), node->name);
-        node->add_port_sig(m->pname.get_name() + "_P", m->var.get_name());
+        if(!G->exist(SDFG::divide_signal_name(m->var.get_selected_name())))
+          G->add_node(m->var.get_selected_name(), dfgNode::SDFG_DF);
+        G->add_edge(m->var.get_name(), dfgEdge::SDFG_ASS, m->var.get_selected_name(), node);
+        node->add_port_sig(m->pname.get_selected_name() + "_P", m->var.get_selected_name());
         break;
       }
       case PortConn::CNUM: {    // constant number
-        node->add_port_sig(m->pname.get_name() + "_P", "");
+        node->add_port_sig(m->pname.get_selected_name() + "_P", "");
         break;
       }
       default:
@@ -389,12 +393,14 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
     if(m->get_dir() >= 0) {     // output
       switch(m->type) {
       case PortConn::CVAR: {    // variable
-        G->add_edge(m->pname.get_name(), dfgEdge::SDFG_ASS, node->name, m->var.get_name());
-        node->add_port_sig(m->pname.get_name() + "_P", m->var.get_name());
+        if(!G->exist(SDFG::divide_signal_name(m->var.get_selected_name())))
+          G->add_node(m->var.get_selected_name(), dfgNode::SDFG_DF);
+        G->add_edge(m->pname.get_name(), dfgEdge::SDFG_ASS, node, m->var.get_selected_name());
+        node->add_port_sig(m->pname.get_name() + "_P", m->var.get_selected_name());
         break;
       }
       case PortConn::COPEN: {   // open
-        node->add_port_sig(m->pname.get_name() + "_P", "");
+        node->add_port_sig(m->pname.get_selected_name() + "_P", "");
         break;
       }
       default:

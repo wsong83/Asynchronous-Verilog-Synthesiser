@@ -96,8 +96,12 @@ bool netlist::Assign::elaborate(std::set<shared_ptr<NetComp> >&,
 void netlist::Assign::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
   shared_ptr<SDFG::RTree> ass_tree = get_rtree();
   BOOST_FOREACH(SDFG::RTree::sub_tree_type& t, ass_tree->tree) {
-    assert(t.first != SDFG::RTree::DTarget); 
+    assert(t.first != SDFG::RTree::DTarget);
+    if(!G->exist(SDFG::divide_signal_name(t.first)))
+      G->add_node(t.first, SDFG::dfgNode::SDFG_DF);
     BOOST_FOREACH(SDFG::RTree::rtree_edge_type& e, t.second) {
+      if(!G->exist(SDFG::divide_signal_name(e.first)))
+        G->add_node(e.first, SDFG::dfgNode::SDFG_DF);
       G->add_edge_multi(e.first, e.second, e.first, t.first);
     }
     G->get_node(SDFG::divide_signal_name(t.first))->ptr.insert(get_sp());

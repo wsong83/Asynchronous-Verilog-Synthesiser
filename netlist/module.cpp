@@ -488,7 +488,7 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
              nport->ptr.insert(m.second);
 
              // also add the corresponding signal and connect them
-             shared_ptr<dfgNode> nsig = G->add_node(m.first.get_name(), dfgNode::SDFG_DF);
+             shared_ptr<dfgNode> nsig = G->add_node(m.first.get_selected_name(), dfgNode::SDFG_DF);
              nsig->ptr.insert(db_var.find(m.first));
              
              // connect signals to ports

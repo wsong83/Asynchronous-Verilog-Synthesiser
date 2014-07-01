@@ -345,7 +345,7 @@ Number netlist::VIdentifier::get_value() const {
 
 string netlist::VIdentifier::get_selected_name() const {
   if(m_select.is_empty() || !m_select.is_valuable())
-    return get_name();
+    return get_name() + toString(pvar->name.get_range());
   else {                        // need to output selector
     return get_name() + toString(m_select);
   }
@@ -457,7 +457,7 @@ void netlist::VIdentifier::replace_variable(const VIdentifier& var, const VIdent
 
 shared_ptr<SDFG::RTree> netlist::VIdentifier::get_rtree() const {
   shared_ptr<SDFG::RTree> sel_tree = get_select().get_rtree();
-  shared_ptr<SDFG::RTree> rv(new SDFG::RTree(name));
+  shared_ptr<SDFG::RTree> rv(new SDFG::RTree(get_selected_name()));
   rv->add_tree(sel_tree, SDFG::dfgEdge::SDFG_ADR);
   return rv;
 }

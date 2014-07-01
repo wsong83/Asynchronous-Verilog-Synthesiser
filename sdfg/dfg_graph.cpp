@@ -141,10 +141,7 @@ void SDFG::dfgGraph::add_node(shared_ptr<dfgNode> node) {
   node->id = boost::add_vertex(bg_);
   nodes[node->id] = node;
   pair<string, dfgRange> sname = divide_signal_name(node->get_hier_name());
-  if(node_map.count(sname.first)) {
-    // add the node to the list, user should make sure it has a different select from other existing nodes
-    node_map[sname.first].insert(node);
-  }
+  node_map[sname.first].insert(node);
   node->pg = this;
   // generate and store an index
   unsigned int m_index = shash(node->get_hier_name());
@@ -446,7 +443,7 @@ std::set<shared_ptr<dfgNode> > SDFG::dfgGraph::get_node(const string& nname) con
   std::set<shared_ptr<dfgNode> > rv;
   if(node_map.count(name_range.first)) {
     BOOST_FOREACH(const shared_ptr<dfgNode> n, node_map.find(name_range.first)->second) {
-      if(n->select > name_range.second)
+      if(n->select.overlap(name_range.second))
         rv.insert(n);
     }
   }

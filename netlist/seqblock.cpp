@@ -257,14 +257,18 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
 
   BOOST_FOREACH(SDFG::RTree::sub_tree_type& t, rt->tree) {
     assert(t.first != SDFG::RTree::DTarget); 
+    if(!G->exist(SDFG::divide_signal_name(t.first)))
+      G->add_node(t.first, SDFG::dfgNode::SDFG_DF);
+
     BOOST_FOREACH(SDFG::RTree::rtree_edge_type& e, t.second) {
       if(slist_pulse.empty()) {
-        if(e.second != SDFG::dfgEdge::SDFG_DDP) {
+        if(e.second != SDFG::dfgEdge::SDFG_DDP)
           e.second &= ~(SDFG::dfgEdge::SDFG_DDP); // remove self-data=path when it is not a ff (assuming no implicit latch)
-          G->add_edge_multi(e.first, e.second, e.first, t.first);
-        }
-      } else
-        G->add_edge_multi(e.first, e.second, e.first, t.first);
+      }
+
+      if(!G->exist(SDFG::divide_signal_name(e.first)))
+        G->add_node(e.first, SDFG::dfgNode::SDFG_DF);
+      G->add_edge_multi(e.first, e.second, e.first, t.first);
     }
     //std::cout << std::endl;
     G->get_node(SDFG::divide_signal_name(t.first))->ptr.insert(get_sp());
@@ -292,19 +296,21 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
     
     // handle the nodes
     BOOST_FOREACH(SDFG::RTree::sub_tree_type& t, rt->tree) {
-      shared_ptr<SDFG::dfgNode> node = G->get_node(SDFG::divide_signal_name(t.first));
-      assert(node);
-      node->type = SDFG::dfgNode::SDFG_FF;
+      G->get_node(SDFG::divide_signal_name(t.first))->type = SDFG::dfgNode::SDFG_FF;
       
       // handle clock
       string clk_name = *(clks.begin());
+      if(!G->exist(SDFG::divide_signal_name(clk_name)))
+        G->add_node(clk_name, SDFG::dfgNode::SDFG_DF);      
       G->add_edge(clk_name, SDFG::dfgEdge::SDFG_CLK, clk_name, t.first);
-    }
 
-    // handle the reset signals
-    if(rsts.size() > 0) {
-      BOOST_FOREACH(shared_ptr<SDFG::dfgEdge> e, G->get_out_edges(*(rsts.begin())))
-        e->type = SDFG::dfgEdge::SDFG_RST;
+      // handle the reset signals
+      if(rsts.size() > 0) {
+        BOOST_FOREACH(shared_ptr<SDFG::dfgEdge> e, G->get_in_edges(t.first)) {
+          if(rsts.count(SDFG::divide_signal_name(G->get_source(e)->name).first))
+            e->type = SDFG::dfgEdge::SDFG_RST;
+        }
+      }
     }
 
   } else {                      // combinational
