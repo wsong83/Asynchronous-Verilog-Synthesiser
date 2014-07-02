@@ -34,6 +34,7 @@
 #include <boost/format.hpp>
 #include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/tuple/tuple.hpp>
 
 using namespace SDFG;
 using boost::shared_ptr;
@@ -42,6 +43,13 @@ using std::string;
 using std::pair;
 using std::list;
 
+
+SDFG::dfgNode::dfgNode(const std::string& n, node_type_t t) 
+  : pg(NULL), node_index(0), type(t), dp_type(SDFG_DP_NONE), 
+    is_annotated(false), position(0,0), bbox(0,0) 
+{
+  boost::tie(name, select) = divide_signal_name(n);
+}
 
 unsigned int SDFG::dfgNode::size_out_edges(bool bself) const { 
   return pg->size_out_edges(id, bself); 

@@ -392,6 +392,7 @@ namespace CppRange {
       return false;
     }
     if(empty()) return r.empty();
+    if(r.empty()) return false;
     if(!comparable(r)) {
 #ifndef CPP_RANGE_NO_EXCEPTION
       throw(RangeException_NonComparable(toString(), r.toString(), "=="));
@@ -766,7 +767,7 @@ namespace CppRange {
   // two ranges are equal
   template <class T>
   inline bool operator== (const Range<T>& lhs, const Range<T>& rhs) {
-    return rhs.equal(lhs);
+    return lhs.equal(rhs);
   }
 
   // two ranges are not equal

@@ -78,7 +78,7 @@ vertex_descriptor SDFG::dfgGraph::to_id(const string& sname) const {
   string name;
   boost::tie(name, range) = divide_signal_name(sname);
   if(node_map.count(name)) {
-    BOOST_FOREACH(shared_ptr<dfgNode> m, node_map.find(sname)->second) {
+    BOOST_FOREACH(shared_ptr<dfgNode> m, node_map.find(name)->second) {
       if(m->select == range)
         return m->id;
     }
