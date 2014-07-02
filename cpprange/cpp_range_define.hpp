@@ -24,11 +24,15 @@
  *
  */
 
+// for the averilog project, use assert instead
+// 02/07/2014
+
 #ifndef _CPP_RANGE_DEFINE_H_
 #define _CPP_RANGE_DEFINE_H_
 
 #include <exception>
 #include <string>
+#include <cassert>
 
 namespace CppRange {
 
@@ -72,6 +76,11 @@ namespace CppRange {
   // Invalid range expression
   class RangeException_InvalidRange : public RangeException_Base {
   public:
+
+    RangeException_InvalidRange() {
+      assert(0 == "Exception: Invalid range definition");
+    }
+
     virtual const char* what() const throw() {
       return "Exception: Invalid range definition";
     }
@@ -87,7 +96,14 @@ namespace CppRange {
     const std::string op;
 
     RangeException_NonPresentable(const std::string& lhs_arg, const std::string& rhs_arg, const std::string& op_arg)
-      : lhs(lhs_arg), rhs(rhs_arg), op(op_arg) {}
+      : lhs(lhs_arg), rhs(rhs_arg), op(op_arg) {
+      std::string msg( 
+                      "Exception: The result of " 
+                      + lhs + " " + op + " " + rhs + 
+                      " cannot be represented using a Range. Use RangeMap instead."
+                       );
+      assert(0 == msg.c_str());
+    }
 
     virtual const char* what() const throw() {
       std::string msg( 
@@ -109,7 +125,14 @@ namespace CppRange {
     const std::string op;
 
     RangeException_NonOperable(const std::string& lhs_arg, const std::string& rhs_arg, const std::string& op_arg)
-      : lhs(lhs_arg), rhs(rhs_arg), op(op_arg) {}
+      : lhs(lhs_arg), rhs(rhs_arg), op(op_arg) {
+      std::string msg( 
+                      "Exception: " + lhs + " " + op + " " + rhs + 
+                      " is not operable because more than one dimensions are different." +
+                      "Use RangeMap instead.")
+        ;
+      assert(0 == msg.c_str());
+    }
 
     virtual const char* what() const throw() {
       std::string msg( 
@@ -131,7 +154,13 @@ namespace CppRange {
     const std::string op;
 
     RangeException_NonComparable(const std::string& lhs_arg, const std::string& rhs_arg, const std::string& op_arg)
-      : lhs(lhs_arg), rhs(rhs_arg), op(op_arg) {}
+      : lhs(lhs_arg), rhs(rhs_arg), op(op_arg) {
+      std::string msg(
+                      "Exception: " + lhs + " " + op + " " + rhs + 
+                      " is not operable because they have different number of dimensions."
+                      );
+      assert(0 == msg.c_str());
+    }
 
     virtual const char* what() const throw() {
       std::string msg(
