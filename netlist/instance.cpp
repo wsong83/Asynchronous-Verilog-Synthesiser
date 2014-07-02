@@ -375,10 +375,12 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
         break;
       }
       case PortConn::CVAR: {    // variable
-        if(!G->exist(SDFG::divide_signal_name(m->var.get_selected_name())))
-          G->add_node(m->var.get_selected_name(), dfgNode::SDFG_DF);
-        G->add_edge(m->var.get_name(), dfgEdge::SDFG_ASS, m->var.get_selected_name(), node);
-        node->add_port_sig(m->pname.get_selected_name() + "_P", m->var.get_selected_name());
+        string var_full_name = SDFG::get_full_selected_name(m->var.get_selected_name(), 
+                                                            toString(m->var.get_full_range()));
+        if(!G->exist(SDFG::divide_signal_name(var_full_name)))
+          G->add_node(var_full_name, dfgNode::SDFG_DF);
+        G->add_edge(m->var.get_name(), dfgEdge::SDFG_ASS, var_full_name, node);
+        node->add_port_sig(m->pname.get_selected_name() + "_P", var_full_name);
         break;
       }
       case PortConn::CNUM: {    // constant number
@@ -393,10 +395,12 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
     if(m->get_dir() >= 0) {     // output
       switch(m->type) {
       case PortConn::CVAR: {    // variable
-        if(!G->exist(SDFG::divide_signal_name(m->var.get_selected_name())))
-          G->add_node(m->var.get_selected_name(), dfgNode::SDFG_DF);
-        G->add_edge(m->pname.get_name(), dfgEdge::SDFG_ASS, node, m->var.get_selected_name());
-        node->add_port_sig(m->pname.get_selected_name() + "_P", m->var.get_selected_name());
+        string var_full_name = SDFG::get_full_selected_name(m->var.get_selected_name(), 
+                                                            toString(m->var.get_full_range()));
+        if(!G->exist(SDFG::divide_signal_name(var_full_name)))
+          G->add_node(var_full_name, dfgNode::SDFG_DF);
+        G->add_edge(m->pname.get_name(), dfgEdge::SDFG_ASS, node, var_full_name);
+        node->add_port_sig(m->pname.get_selected_name() + "_P", var_full_name);
         break;
       }
       case PortConn::COPEN: {   // open

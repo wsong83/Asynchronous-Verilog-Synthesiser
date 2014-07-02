@@ -30,6 +30,7 @@
 #include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/tuple/tuple.hpp>
 #include <string>
 
 using std::pair;
@@ -68,5 +69,21 @@ pair<string, dfgRange> SDFG::divide_signal_name(const string& sname) {
   }
 
   return rv;
+  
+}
+
+string SDFG::get_full_selected_name(const string& selected_name, const string& full_range) {
+  string sname;
+  dfgRange select;
+  dfgRange f_range(full_range);
+  
+  boost::tie(sname, select) = divide_signal_name(selected_name);
+
+  if(f_range.dimension() > select.dimension()) {
+    for(unsigned int i=select.dimension(); i<f_range.dimension(); i++)
+      select.add_lower(f_range[i]);
+  }
+
+  return sname + select.toString();
   
 }

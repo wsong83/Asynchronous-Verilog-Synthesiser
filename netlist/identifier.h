@@ -172,6 +172,7 @@ namespace netlist {
     virtual ~VIdentifier();
 
     //helpers
+    const RangeArray& get_full_range() const; // get the range from pvar
     const RangeArray& get_range() const {return m_range;}
     const RangeArray& get_select() const {return m_select;}
     RangeArray& get_range() {return m_range;}
