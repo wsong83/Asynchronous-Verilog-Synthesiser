@@ -443,7 +443,7 @@ std::set<shared_ptr<dfgNode> > SDFG::dfgGraph::get_node(const string& nname) con
   std::set<shared_ptr<dfgNode> > rv;
   if(node_map.count(name_range.first)) {
     BOOST_FOREACH(const shared_ptr<dfgNode> n, node_map.find(name_range.first)->second) {
-      if(n->select.overlap(name_range.second))
+      if(n->select == name_range.second || n->select.overlap(name_range.second))
         rv.insert(n);
     }
   }

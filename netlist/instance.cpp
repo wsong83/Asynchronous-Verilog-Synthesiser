@@ -396,7 +396,7 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
         if(!G->exist(SDFG::divide_signal_name(m->var.get_selected_name())))
           G->add_node(m->var.get_selected_name(), dfgNode::SDFG_DF);
         G->add_edge(m->pname.get_name(), dfgEdge::SDFG_ASS, node, m->var.get_selected_name());
-        node->add_port_sig(m->pname.get_name() + "_P", m->var.get_selected_name());
+        node->add_port_sig(m->pname.get_selected_name() + "_P", m->var.get_selected_name());
         break;
       }
       case PortConn::COPEN: {   // open

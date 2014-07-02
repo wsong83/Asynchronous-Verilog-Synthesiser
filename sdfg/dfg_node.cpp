@@ -45,10 +45,10 @@ using std::list;
 
 
 SDFG::dfgNode::dfgNode(const std::string& n, node_type_t t) 
-  : pg(NULL), node_index(0), type(t), dp_type(SDFG_DP_NONE), 
+  : pg(NULL), name(n), node_index(0), type(t), dp_type(SDFG_DP_NONE), 
     is_annotated(false), position(0,0), bbox(0,0) 
 {
-  boost::tie(name, select) = divide_signal_name(n);
+  select = divide_signal_name(n).second;
 }
 
 unsigned int SDFG::dfgNode::size_out_edges(bool bself) const { 
@@ -345,10 +345,8 @@ void SDFG::dfgNode::remove_port_sig(const string& sname, int dir) {
 }
 
 void SDFG::dfgNode::add_port_sig(const string& pname, const string& sname) {
-  if(type == SDFG_MODULE && child->exist(pname)) {
-    port2sig[pname] = sname;
-    sig2port[sname].insert(pname);
-  }
+  port2sig[pname] = sname;
+  sig2port[sname].insert(pname);
 }
 
 void SDFG::dfgNode::remap_ports() {
