@@ -484,11 +484,15 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
   // put all ports into the list
   for_each(db_port.begin_order(), db_port.end_order(), 
            [&](const pair<const VIdentifier, shared_ptr<Port> >& m) {
-             shared_ptr<dfgNode> nport = G->add_node(m.first.get_selected_name() + "_P", dfgNode::SDFG_PORT);
+             VIdentifier& pname = m.second->name;
+             string psig_full_name = 
+               SDFG::get_full_selected_name(pname.get_selected_name(),
+                                            toString(pname.get_full_range()));
+             shared_ptr<dfgNode> nport = G->add_node(pname.get_name() + "_P", dfgNode::SDFG_PORT);
              nport->ptr.insert(m.second);
 
              // also add the corresponding signal and connect them
-             shared_ptr<dfgNode> nsig = G->add_node(m.first.get_selected_name(), dfgNode::SDFG_DF);
+             shared_ptr<dfgNode> nsig = G->add_node(psig_full_name, dfgNode::SDFG_DF);
              nsig->ptr.insert(db_var.find(m.first));
              
              // connect signals to ports

@@ -345,6 +345,9 @@ void SDFG::dfgNode::remove_port_sig(const string& sname, int dir) {
 }
 
 void SDFG::dfgNode::add_port_sig(const string& pname, const string& sname) {
+  if(child) {
+    assert(child->exist(pname));
+  }
   port2sig[pname] = sname;
   sig2port[sname].insert(pname);
 }
