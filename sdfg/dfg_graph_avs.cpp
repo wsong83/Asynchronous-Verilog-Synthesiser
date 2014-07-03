@@ -285,12 +285,12 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_hier_RRG(bool hier) const {
       nnode->set_new_child(nr->child->get_hier_RRG(hier));
     }
     BOOST_FOREACH(shared_ptr<dfgNode> m, get_in_nodes(nr)) {
-      if(!ng->exist(m->get_hier_name()))
+      if(!ng->exist(divide_signal_name(m->get_hier_name())))
         copy_a_node(ng, m);
       ng->add_edge(m->get_hier_name(), dfgEdge::SDFG_ASS, m->get_hier_name(), nr->get_hier_name());
     }
     BOOST_FOREACH(shared_ptr<dfgNode> m, get_out_nodes(nr)) {
-      if(!ng->exist(m->get_hier_name())) {
+      if(!ng->exist(divide_signal_name(m->get_hier_name()))) {
         copy_a_node(ng, m);
         nlist.push_back(m);
         //assert(!(m->type & dfgNode::SDFG_MODULE));
@@ -306,12 +306,12 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_hier_RRG(bool hier) const {
   BOOST_FOREACH(shared_ptr<dfgNode> nr, plist) {
     copy_a_node(ng, nr);
     BOOST_FOREACH(shared_ptr<dfgNode> m, get_in_nodes(nr)) {
-      if(!ng->exist(m->get_hier_name()))
+      if(!ng->exist(divide_signal_name(m->get_hier_name())))
         copy_a_node(ng, m);
       ng->add_edge(m->get_hier_name(), dfgEdge::SDFG_ASS, m->get_hier_name(), nr->get_hier_name());
     }
     BOOST_FOREACH(shared_ptr<dfgNode> m, get_out_nodes(nr)) {
-      if(!ng->exist(m->get_hier_name())) {
+      if(!ng->exist(divide_signal_name(m->get_hier_name()))) {
         copy_a_node(ng, m);
         nlist.push_back(m);
         //assert(!(m->type & dfgNode::SDFG_MODULE));
@@ -325,7 +325,7 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_hier_RRG(bool hier) const {
     shared_ptr<dfgNode> cn = nlist.front();
     nlist.pop_front();
     BOOST_FOREACH(shared_ptr<dfgPath> po, cn->get_out_paths_fast()) {
-      if(!ng->exist(po->tar->get_hier_name())) {
+      if(!ng->exist(divide_signal_name(po->tar->get_hier_name()))) {
         copy_a_node(ng, po->tar);
         nlist.push_back(po->tar);
         //assert(!(po->tar->type & dfgNode::SDFG_MODULE));
@@ -355,7 +355,7 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_RRG() const {
     nlist.pop_front();
     list<shared_ptr<dfgPath> > po = cn->get_out_paths_fast_cb();
     BOOST_FOREACH(shared_ptr<dfgPath>p, po) {
-      if(!ng->exist(p->tar->get_full_name())) { // add the new node to the RRG
+      if(!ng->exist(divide_signal_name(p->tar->get_full_name()))) { // add the new node to the RRG
         copy_a_node(ng, p->tar, true);
         nlist.push_back(p->tar);
       }

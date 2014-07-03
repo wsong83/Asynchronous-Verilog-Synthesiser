@@ -496,7 +496,7 @@ bool SDFG::dfgNode::check_integrity() const {
         shared_ptr<dfgNode> p = child->get_node(SDFG::divide_signal_name(p2s.first));
         assert(p);
         if(p2s.second.size() > 0) {
-          assert(pg->exist(p2s.second));
+          assert(pg->exist(divide_signal_name(p2s.second)));
           assert(p->type & SDFG_PORT);
           if((p->type & SDFG_IPORT) != SDFG_IPORT) {
             assert(pg->exist(id, p2s.second));
