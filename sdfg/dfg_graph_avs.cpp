@@ -630,3 +630,42 @@ void SDFG::dfgGraph::annotate_rate() {
     }
   }
 }
+
+void SDFG::dfgGraph::connect_partial_nodes() {
+  typedef std::pair<shared_ptr<dfgNode>, shared_ptr<dfgNode> > node_arc;
+  std::list<node_arc> arc_to_add;
+  BOOST_FOREACH(node_map_type named_node, node_map) {
+    BOOST_FOREACH(shared_ptr<dfgNode> n, named_node.second) {
+      if(!(n->type & dfgNode::SDFG_PORT)) {
+        if(get_in_nodes(n, false).size() == 0) {
+          dfgRange p_range = n->select;
+          std::set<shared_ptr<dfgNode> > src_set;
+          BOOST_FOREACH(shared_ptr<dfgNode> src, named_node.second) {
+            if(get_in_nodes(src, false).size() > 0 && p_range.overlap(src->select))
+              src_set.insert(src);
+          }
+
+          if(src_set.size()) 
+            arc_to_add.push_back(node_arc(*(src_set.begin()),n));
+        }
+        
+        if(get_out_nodes(n, false).size() == 0) {
+          dfgRange p_range = n->select;
+          std::set<shared_ptr<dfgNode> > tar_set;
+          BOOST_FOREACH(shared_ptr<dfgNode> tar, named_node.second) {
+            if(get_out_nodes(tar, false).size() > 0 && p_range.overlap(tar->select))
+              tar_set.insert(tar);
+          }
+
+          if(tar_set.size()) 
+            arc_to_add.push_back(node_arc(n, *(tar_set.begin())));
+        }
+      }
+    }
+  }
+
+  BOOST_FOREACH(node_arc a, arc_to_add) {
+    add_edge(a.first->get_hier_name(), dfgEdge::SDFG_ASS, a.first, a.second);
+  }
+
+}

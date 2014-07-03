@@ -541,6 +541,8 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
              m.second->gen_sdfg(G);
            });
   
+  G->connect_partial_nodes();
+
   G->check_integrity();
 
   DFG = G;

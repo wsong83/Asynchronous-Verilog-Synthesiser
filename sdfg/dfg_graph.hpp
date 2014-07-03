@@ -248,6 +248,8 @@ rtype func_name(T1 d1, T2 d2) bconst { return func_name(to_id(d1), to_id(d2)); }
     void annotate_toggle(shell::Env *, netlist::Module*); // annotate the switching activities in Module into the SDFG
     void annotate_rate();                                 // calculate the relative rate of each node
 
+    void connect_partial_nodes(); // connect the nodes with partial ranges with the full range nodes by assigna arcs
+
     // other
     std::string get_full_name() const;
     bool check_integrity() const; // check whether there is any illegal connections or mismatches in various maps
