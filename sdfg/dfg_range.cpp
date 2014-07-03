@@ -84,6 +84,7 @@ string SDFG::get_full_selected_name(const string& selected_name, const string& f
       select.add_lower(f_range[i]);
   }
 
-  return sname + select.toString();
+  if(select.empty()) return sname;
+  else               return sname + select.toString();
   
 }
