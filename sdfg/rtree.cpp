@@ -157,9 +157,14 @@ std::ostream& SDFG::RTree::streamout(std::ostream& os) const {
 
 void SDFG::RTree::copy_subtree(const string& root,  const map<string, int>& st, int rtype) {
   BOOST_FOREACH(const rtree_edge_type& e, st) {
-    if(tree[root].count(e.first))
-      tree[root][e.first] |= dfgPath::cal_type(e.second, rtype);
-    else
+    if(tree[root].count(e.first)) {
+      unsigned int nt = dfgPath::cal_type(e.second, rtype);
+      if(!(tree[root][e.first] & dfgEdge::SDFG_DDP))
+        nt &= ~dfgEdge::SDFG_DDP; 
+      // if a target exists and there is no DDP path, 
+      // the parallel statements should not introduce a new DDF path
+      tree[root][e.first] |= nt;
+    } else
       tree[root][e.first] = dfgPath::cal_type(e.second, rtype);
   }
 }
