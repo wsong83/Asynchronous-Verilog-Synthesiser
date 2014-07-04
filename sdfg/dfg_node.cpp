@@ -141,15 +141,15 @@ dfgNode* SDFG::dfgNode::copy() const {
 void SDFG::dfgNode::graphic_init() {
   if(bbox.first == 0.0)
     switch(type) {
-    case SDFG_COMB:    bbox = pair<double, double>(40.0, 25.0); break;
-    case SDFG_FF:      bbox = pair<double, double>(20.0, 20.0); break;
-    case SDFG_LATCH:   bbox = pair<double, double>(35.0, 20.0); break;
-    case SDFG_MODULE:  bbox = pair<double, double>(60.0, 35.0); break;
-    case SDFG_GATE:    bbox = pair<double, double>(35.0, 35.0); break;
+    case SDFG_COMB:    bbox = boost::make_tuple(40.0, 25.0); break;
+    case SDFG_FF:      bbox = boost::make_tuple(20.0, 20.0); break;
+    case SDFG_LATCH:   bbox = boost::make_tuple(35.0, 20.0); break;
+    case SDFG_MODULE:  bbox = boost::make_tuple(60.0, 35.0); break;
+    case SDFG_GATE:    bbox = boost::make_tuple(35.0, 35.0); break;
     case SDFG_IPORT:
-    case SDFG_OPORT:   bbox = pair<double, double>(20.0, 20.0); break;
-    case SDFG_PORT:    bbox = pair<double, double>(30.0, 30.0); break;
-    default:           bbox = pair<double, double>(20.0, 20.0); break;
+    case SDFG_OPORT:   bbox = boost::make_tuple(20.0, 20.0); break;
+    case SDFG_PORT:    bbox = boost::make_tuple(30.0, 30.0); break;
+    default:           bbox = boost::make_tuple(20.0, 20.0); break;
     }    
 }
 

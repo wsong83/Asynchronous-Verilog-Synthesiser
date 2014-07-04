@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2014-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -20,152 +20,84 @@
  */
 
 /* 
- * relation tree and forest needed in SDFG generation
- * 02/11/2012   Wei Song
+ * relation tree used to extract the input arcs for a set of signals in a block
+ * 04/07/2014   Wei Song
  *
  *
  */
 
-#include "rtree.hpp"
-#include <map>
-#include <boost/foreach.hpp>
-#include <boost/format.hpp>
 
-#include "dfg_path.hpp"
+#include "rtree.hpp"
+#include <boost/tuple/tuple.hpp>
+#include <boost/foreach.hpp>
+#include "dfg_edge.hpp"
 
 using namespace SDFG;
 using std::string;
-using std::list;
-using std::map;
+using std::multimap;
+using std::pair;
+using std::set;
 using boost::shared_ptr;
 
-string const SDFG::RTree::DTarget("@");
+///////////////////////////////////
+//    Constructor
+ 
 
-SDFG::RTree::RTree(bool default_case) {
-  if(default_case) tree[DTarget] = map<string, int>();
-}
+// construct a leaf
+RTree::RTree(const string& root, const dfgRange& select, unsigned int t)
+  : root(root), select(select), relation(t) {}
 
-SDFG::RTree::RTree(const string& sig, int etype) {
-  tree[DTarget][sig] = etype;
-}
 
-SDFG::RTree::RTree(shared_ptr<RTree> st, int etype) {
-  assert(st->tree.size() == 1 && st->tree.count(DTarget));
-  add_tree(st, etype);
-}
+///////////////////////////////////
+//    Tree builders
 
-SDFG::RTree::RTree(shared_ptr<RTree> st0, shared_ptr<RTree> st1, int etype) {
-  assert(st0->tree.size() == 1 && st0->tree.count(DTarget));
-  assert(st1->tree.size() == 1 && st1->tree.count(DTarget));
-
-  add_tree(st0, etype)->add_tree(st1, etype);
-}
-  
-SDFG::RTree::RTree(shared_ptr<RTree> stc, shared_ptr<RTree> st0, shared_ptr<RTree> st1) {
-  assert(stc->tree.size() == 1 && stc->tree.count(DTarget));
-  assert(st0->tree.size() == 1 && st0->tree.count(DTarget));
-  assert(st1->tree.size() == 1 && st1->tree.count(DTarget));
-  
-  add_tree(stc, SDFG::dfgEdge::SDFG_LOG)->add_tree(st0)->add_tree(st1);
-}
-
-RTree* SDFG::RTree::add_edge(const string& sig, int etype) {
-  assert(tree.size() == 1 && tree.count(DTarget));
-  return add_edge(sig, DTarget, etype);
-}
-
-RTree* SDFG::RTree::add_edge(const string& sig, const string& root, int etype) {
-  assert(tree.count(root));
-  if(tree[root].count(sig))
-    tree[root][sig] |= etype;
-  else
-    tree[root][sig] = etype;
-  return this;
-}
-
-RTree* SDFG::RTree::add_tree(shared_ptr<RTree> pt, int rtype) {
-  BOOST_FOREACH(sub_tree_type& t, pt->tree) {
-    if(!tree.count(t.first)) tree[t.first] = map<string, int>();
-    copy_subtree(t.first, t.second, rtype);
-  }
-  return this;
-}
-
-RTree* SDFG::RTree::add_tree(shared_ptr<RTree> pt, const string& root, int rtype) {
-  BOOST_FOREACH(sub_tree_type& t, pt->tree) {
-    if(t.first == DTarget) {    // default sub-tree
-      if(!tree.count(root)) tree[root] = map<string, int>();
-      copy_subtree(root, t.second, rtype);
-    } else {                    // named sub-tree
-      if(!tree.count(t.first)) tree[t.first] = map<string, int>();
-      copy_subtree(t.first, t.second, rtype);
-    }
-  }
-  return this;
-}
-
-RTree* SDFG::RTree::combine(shared_ptr<RTree> rhs, int rtype) {
-  //std::cout << "combine:" << std::endl;
-  //std::cout << "this:\n" << *this << std::endl;
-  //std::cout << "rhs:\n" << *rhs << std::endl;
-  BOOST_FOREACH(sub_tree_type& t, tree) {
-    add_tree(rhs, t.first, rtype);
-  }
-  //std::cout << "result:\n" << *this << std::endl;
-  return this;
-}
-
-std::set<string> SDFG::RTree::get_control(const string& t) const {
-  return get_signals (dfgEdge::SDFG_CTL_MASK, t);
-}
-
-std::set<string> SDFG::RTree::get_data(const string& t) const {
-  return get_signals (dfgEdge::SDFG_DAT_MASK, t);
-}
-
-std::set<string> SDFG::RTree::get_all(const string& t) const {
-  return get_signals (dfgEdge::SDFG_DAT_MASK | dfgEdge::SDFG_CTL_MASK | dfgEdge::SDFG_CR_MASK, t);
-}
-
-std::set<string> SDFG::RTree::get_signals(int stype, const string& sig) const {
-  std::set<string> rv;
-  if(sig == "") {
-    BOOST_FOREACH(const sub_tree_type& st, tree) {
-      BOOST_FOREACH(const rtree_edge_type& se, st.second) {
-        if(se.second & stype) rv.insert(se.first);
-      }
-    }
-  } else {
-    if(tree.count(sig)) {
-      BOOST_FOREACH(const rtree_edge_type& se, tree.find(sig)->second) {
-        if(se.second & stype) rv.insert(se.first);
+// add a leaf node
+RTree& RTree::add(shared_ptr<RTree> leaf, seq) {
+  if(leaves.count(leaf.root)) { // there is a match in the tree
+    typename leaf_map::iterator it, iend;
+    boost::tie(it, iend) = leaves.equal_range(leaf.root);
+    for(; it!=iend; ++it) {
+      if(seq) {
+        if(it->select == leaf.select) {
+          if(!(it->relation & dfgEdge::SDFG_DFF))  leaf.relation &= ~dfgEdge::SDFG_DFF;
+          it->relation |= leaf.relation;
+          assert(leaf.leaves.empty());
+          return *this;
+        }
+      } else {
+        if(it->select == leaf.select && it->relation == leaf.relation) {
+          it->combine(leaf.leaves);
+          return *this;
+        }
       }
     }
   }
-  return rv;
+
+  // if goes here, add the leaf directly
+  leaves.insert(boost::make_tuple(leaf.root, leaf));
+  fname_set.insert(leaf.root);
+  return *this;
 }
 
-std::ostream& SDFG::RTree::streamout(std::ostream& os) const {
-  BOOST_FOREACH(const sub_tree_type& t, tree) {
-    os << t.first << ": " << std::endl;
-    BOOST_FOREACH(const rtree_edge_type& e, t.second) {
-      os << "    " << dfgPath::get_stype(e.second) << " " << e.first << std::endl;
-    }
+// combine two leaf maps
+void RTree::combine(const leaf_map& fmap, bool seq) {
+  typename leaf_map::const_iterator it;
+  for(it = fmap.begin; it != fmap.end(); ++it)
+    add(*it, seq); 
+}
+
+///////////////////////////////////
+//    Helpers
+
+// flatten the sub-tree
+void RTree::flatten() {
+  leaf_map orig_map = leaves;
+  leaves.clear();
+
+  typename leaf_map::iterator it;
+  for(it=orig_map.begin(); it!=orig_map.end(); ++it) {
+    it->flatten();
+    
   }
-  return os;
+  
 }
-
-void SDFG::RTree::copy_subtree(const string& root,  const map<string, int>& st, int rtype) {
-  BOOST_FOREACH(const rtree_edge_type& e, st) {
-    if(tree[root].count(e.first)) {
-      unsigned int nt = dfgPath::cal_type(e.second, rtype);
-      if(!(tree[root][e.first] & dfgEdge::SDFG_DDP))
-        nt &= ~dfgEdge::SDFG_DDP; 
-      // if a target exists and there is no DDP path, 
-      // the parallel statements should not introduce a new DDF path
-      tree[root][e.first] |= nt;
-    } else
-      tree[root][e.first] = dfgPath::cal_type(e.second, rtype);
-  }
-}
-

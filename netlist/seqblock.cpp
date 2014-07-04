@@ -31,6 +31,7 @@
 #include "shell/env.h"
 #include <algorithm>
 #include <boost/foreach.hpp>
+#include <boost/tuple/tuple.hpp>
 #include "sdfg/rtree.hpp"
 #include "sdfg/sdfg.hpp"
 
@@ -101,9 +102,9 @@ netlist::SeqBlock::SeqBlock(list<pair<int, shared_ptr<Expression> > >& slist, co
   list<pair<int, shared_ptr<Expression> > >::iterator it, end;
   for(it=slist.begin(), end=slist.end(); it!=end; it++) {
     if(it->first > 0)
-      slist_pulse.push_back(pair<bool, shared_ptr<Expression> >(true, it->second));
+      slist_pulse.push_back(boost::make_tuple(true, it->second));
     else if(it->first < 0)
-      slist_pulse.push_back(pair<bool, shared_ptr<Expression> >(false, it->second));
+      slist_pulse.push_back(boost::make_tuple(false, it->second));
     else
       slist_level.push_back(it->second);
   }
@@ -127,9 +128,9 @@ netlist::SeqBlock::SeqBlock(const location& lloc, list<pair<int, shared_ptr<Expr
   list<pair<int, shared_ptr<Expression> > >::iterator it, end;
   for(it=slist.begin(), end=slist.end(); it!=end; it++) {
     if(it->first > 0)
-      slist_pulse.push_back(pair<bool, shared_ptr<Expression> >(true, it->second));
+      slist_pulse.push_back(boost::make_tuple(true, it->second));
     else if(it->first < 0)
-      slist_pulse.push_back(pair<bool, shared_ptr<Expression> >(false, it->second));
+      slist_pulse.push_back(boost::make_tuple(false, it->second));
     else
       slist_level.push_back(it->second);
   }
@@ -203,7 +204,7 @@ SeqBlock* netlist::SeqBlock::deep_copy(NetComp* bp) const {
   // data in SeqBlock
   rv->sensitive = sensitive;
   for_each(slist_pulse.begin(), slist_pulse.end(), [&](const pair<bool, shared_ptr<Expression> > m) {
-      rv->slist_pulse.push_back(pair<bool, shared_ptr<Expression> >(m.first, shared_ptr<Expression>(m.second->deep_copy(NULL))));
+      rv->slist_pulse.push_back(boost::make_tuple(m.first, shared_ptr<Expression>(m.second->deep_copy(NULL))));
     });
   BOOST_FOREACH(const shared_ptr<Expression>& m, slist_level)
     rv->slist_level.push_back(shared_ptr<Expression>(m->deep_copy(NULL)));

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2014-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -20,8 +20,8 @@
  */
 
 /* 
- * relation tree and forest needed in SDFG generation
- * 02/11/2012   Wei Song
+ * relation tree used to extract the input arcs for a set of signals in a block
+ * 04/07/2014   Wei Song
  *
  *
  */
@@ -33,53 +33,60 @@
 #include <string>
 #include <set>
 #include <map>
+#include <dfg_range.hpp>
 #include <boost/shared_ptr.hpp>
-
-// pugixml library
-#include "pugixml/pugixml.hpp"
-
-#include "dfg_edge.hpp"
 
 namespace SDFG {
 
-  class RTree {
-  public:
-    static const std::string DTarget;
-    RTree(bool default_case = true);
-    RTree(const std::string&, int etype = dfgEdge::SDFG_ASS);
-    RTree(boost::shared_ptr<RTree>, int);
-    RTree(boost::shared_ptr<RTree>, boost::shared_ptr<RTree>, int);
-    RTree(boost::shared_ptr<RTree>, boost::shared_ptr<RTree>, boost::shared_ptr<RTree>);
-    
-    std::map<std::string, std::map<std::string, int> > tree; 
-    typedef std::pair<const std::string, std::map<std::string, int> > sub_tree_type;
-    typedef std::pair<const std::string, int> rtree_edge_type;
+  // forward declaration
+  class RTree;
 
+  // global type definition
+  typedef std::list<shared_ptr<RTree> > leaf_list_type;
+  typedef std::pair<const std::string&, leaf_list_type> leaves_type;
+  typedef std::multimap<std::string, leaf_list_type> leaf_map;
+
+  class RTree : public dfgRangeMap {
+
+    std::string root;                           // the root of this sub-tree 
+    unsigned int relation;                      // relation (type) with higher node 
+
+    std::set<std::string> fanme_set;            // store the leaf names 
+    leaf_map leaves;                            // store the leaves with different ranges and types
+
+  public:
+    RTree(const string&, const dfgRangeMap& select = dfgRangeMap(), 
+          unsigned int t = dfgEdge::SDFG_ASS);
+    
+    // builders
+
+    // when seq = true, combine sequential statements
+    RTree& add(boost::shared_ptr<RTree>, bool seq = false); // add a sub tree
+    void combine(const leaf_map&, bool seq = false);        // combine a map of leaves
 
     // helpers
-    RTree* add_edge(const std::string&, int etype = dfgEdge::SDFG_ASS); // add an signal to the tree
-    RTree* add_edge(const std::string&, const std::string&, int etype = dfgEdge::SDFG_ASS); // add an signal to the tree
-    RTree* add_tree(boost::shared_ptr<RTree>, int etype = dfgEdge::SDFG_ASS); // add a parallel tree to this tree
-    RTree* add_tree(boost::shared_ptr<RTree>, const std::string&, int etype = dfgEdge::SDFG_ASS); // add a tree and set a root for the default targeted sub-tree
-    RTree* combine(boost::shared_ptr<RTree>, int etype = dfgEdge::SDFG_ASS); // assign the default sub-tree to the named sub-trees of this tree
+    void flatten();                             // remove all hierarchies 
 
-    std::set<std::string> get_control(const std::string& = "") const;
-    std::set<std::string> get_data(const std::string& = "") const;
-    std::set<std::string> get_all(const std::string& = "") const;
-    std::set<std::string> get_signals(int, const std::string& = "") const;
+    // other
+    friend class RForest;
 
-
-    // debug
-    std::ostream& streamout (std::ostream& os) const;
-    
-  private:
-    void copy_subtree(const std::string&, const std::map<std::string, int>&, int);
   };
 
-  inline std::ostream& operator<< ( std::ostream& os, const RTree& rhs) {
-    return rhs.streamout(os);
-  }
+
+  class RForest {
+
+    leaf_map trees;                             // all trees in this forest 
+
+  public:
+    
+    //builder
+    RForest& add(boost::shared_ptr<RTree>);     // add a tree
+    RForest& combine(const RForest&);           // combine with another tree 
+
+  };
+
 
 }
+
 
 #endif

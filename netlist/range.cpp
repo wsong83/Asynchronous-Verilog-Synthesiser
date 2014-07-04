@@ -28,6 +28,7 @@
 
 #include "component.h"
 #include "sdfg/rtree.hpp"
+#include <boost/tuple/tuple.hpp>
 
 using namespace netlist;
 using std::ostream;
@@ -209,9 +210,9 @@ netlist::Range::Range(const location& lloc, const Range_Exp& sel, int updown)
 pair<long, long> netlist::Range::get_plain_range() const {
   switch(rtype) {
   case TR_Const:
-    return pair<long, long>(c.get_value().get_si(),c.get_value().get_si());
+    return boost::make_tuple(c.get_value().get_si(),c.get_value().get_si());
   case TR_CRange:
-    return pair<long, long>(cr.first.get_value().get_si(), cr.second.get_value().get_si());
+    return boost::make_tuple(cr.first.get_value().get_si(), cr.second.get_value().get_si());
   default:
     assert(0 == "Wrong range type!");
     return pair<long, long>();

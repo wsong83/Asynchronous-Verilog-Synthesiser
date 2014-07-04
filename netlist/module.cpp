@@ -30,6 +30,7 @@
 #include "shell/env.h"
 #include <algorithm>
 #include <boost/foreach.hpp>
+#include <boost/tuple/tuple.hpp>
 #include "sdfg/sdfg.hpp"
 
 using namespace netlist;
@@ -655,10 +656,10 @@ double netlist::Module::get_ratio_state_preserved_oport(map<VIdentifier, pair<bo
       
       if(has_ff_input) {
         num_of_oports++;
-        port_ana[pit->first] = pair<bool, string>(is_state_preserved, data_source);
+        port_ana[pit->first] = boost::make_tuple(is_state_preserved, data_source);
         if(is_state_preserved) num_of_spports++;
       } else {
-        port_ana[pit->first] = pair<bool, string>(false, "[through wire]");
+        port_ana[pit->first] = boost::make_tuple(false, string("[through wire]"));
       }
     }
   }
