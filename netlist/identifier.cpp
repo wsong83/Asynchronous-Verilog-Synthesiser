@@ -306,6 +306,10 @@ netlist::VIdentifier::~VIdentifier() {
   db_expunge();
 }
 
+const RangeArray& netlist::VIdentifier::get_full_range() const {
+  return pvar->name.get_range();
+}
+
 bool netlist::VIdentifier::is_valuable() const {
   return value.is_valid() && m_select.is_valuable();
 }
@@ -341,6 +345,14 @@ Number netlist::VIdentifier::get_value() const {
   // get the substr
   if(str_size == 0) return 0;
   else return Number(txt_value.substr(str_range.first, str_size));
+}
+
+string netlist::VIdentifier::get_selected_name() const {
+  if(m_select.is_empty() || !m_select.is_valuable())
+    return get_name() + toString(get_full_range());
+  else {                        // need to output selector
+    return get_name() + toString(m_select);
+  }
 }
 
 void netlist::VIdentifier::reduce() {
@@ -449,7 +461,10 @@ void netlist::VIdentifier::replace_variable(const VIdentifier& var, const VIdent
 
 shared_ptr<SDFG::RTree> netlist::VIdentifier::get_rtree() const {
   shared_ptr<SDFG::RTree> sel_tree = get_select().get_rtree();
-  shared_ptr<SDFG::RTree> rv(new SDFG::RTree(name));
+  shared_ptr<SDFG::RTree> 
+    rv(new SDFG::RTree(SDFG::get_full_selected_name(get_selected_name(),
+                                                    toString(get_full_range())
+                                                    )));
   rv->add_tree(sel_tree, SDFG::dfgEdge::SDFG_ADR);
   return rv;
 }

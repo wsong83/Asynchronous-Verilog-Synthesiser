@@ -285,12 +285,12 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_hier_RRG(bool hier) const {
       nnode->set_new_child(nr->child->get_hier_RRG(hier));
     }
     BOOST_FOREACH(shared_ptr<dfgNode> m, get_in_nodes(nr)) {
-      if(!ng->exist(m->get_hier_name()))
+      if(!ng->exist(divide_signal_name(m->get_hier_name())))
         copy_a_node(ng, m);
       ng->add_edge(m->get_hier_name(), dfgEdge::SDFG_ASS, m->get_hier_name(), nr->get_hier_name());
     }
     BOOST_FOREACH(shared_ptr<dfgNode> m, get_out_nodes(nr)) {
-      if(!ng->exist(m->get_hier_name())) {
+      if(!ng->exist(divide_signal_name(m->get_hier_name()))) {
         copy_a_node(ng, m);
         nlist.push_back(m);
         //assert(!(m->type & dfgNode::SDFG_MODULE));
@@ -306,12 +306,12 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_hier_RRG(bool hier) const {
   BOOST_FOREACH(shared_ptr<dfgNode> nr, plist) {
     copy_a_node(ng, nr);
     BOOST_FOREACH(shared_ptr<dfgNode> m, get_in_nodes(nr)) {
-      if(!ng->exist(m->get_hier_name()))
+      if(!ng->exist(divide_signal_name(m->get_hier_name())))
         copy_a_node(ng, m);
       ng->add_edge(m->get_hier_name(), dfgEdge::SDFG_ASS, m->get_hier_name(), nr->get_hier_name());
     }
     BOOST_FOREACH(shared_ptr<dfgNode> m, get_out_nodes(nr)) {
-      if(!ng->exist(m->get_hier_name())) {
+      if(!ng->exist(divide_signal_name(m->get_hier_name()))) {
         copy_a_node(ng, m);
         nlist.push_back(m);
         //assert(!(m->type & dfgNode::SDFG_MODULE));
@@ -325,7 +325,7 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_hier_RRG(bool hier) const {
     shared_ptr<dfgNode> cn = nlist.front();
     nlist.pop_front();
     BOOST_FOREACH(shared_ptr<dfgPath> po, cn->get_out_paths_fast()) {
-      if(!ng->exist(po->tar->get_hier_name())) {
+      if(!ng->exist(divide_signal_name(po->tar->get_hier_name()))) {
         copy_a_node(ng, po->tar);
         nlist.push_back(po->tar);
         //assert(!(po->tar->type & dfgNode::SDFG_MODULE));
@@ -355,7 +355,7 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::get_RRG() const {
     nlist.pop_front();
     list<shared_ptr<dfgPath> > po = cn->get_out_paths_fast_cb();
     BOOST_FOREACH(shared_ptr<dfgPath>p, po) {
-      if(!ng->exist(p->tar->get_full_name())) { // add the new node to the RRG
+      if(!ng->exist(divide_signal_name(p->tar->get_full_name()))) { // add the new node to the RRG
         copy_a_node(ng, p->tar, true);
         nlist.push_back(p->tar);
       }
@@ -629,4 +629,43 @@ void SDFG::dfgGraph::annotate_rate() {
       }
     }
   }
+}
+
+void SDFG::dfgGraph::connect_partial_nodes() {
+  typedef std::pair<shared_ptr<dfgNode>, shared_ptr<dfgNode> > node_arc;
+  std::list<node_arc> arc_to_add;
+  BOOST_FOREACH(node_map_type named_node, node_map) {
+    BOOST_FOREACH(shared_ptr<dfgNode> n, named_node.second) {
+      if(!(n->type & dfgNode::SDFG_PORT)) {
+        if(get_in_nodes(n, false).size() == 0) {
+          dfgRange p_range = n->select;
+          std::set<shared_ptr<dfgNode> > src_set;
+          BOOST_FOREACH(shared_ptr<dfgNode> src, named_node.second) {
+            if(get_in_nodes(src, false).size() > 0 && p_range.overlap(src->select))
+              src_set.insert(src);
+          }
+
+          if(src_set.size()) 
+            arc_to_add.push_back(node_arc(*(src_set.begin()),n));
+        }
+        
+        if(get_out_nodes(n, false).size() == 0) {
+          dfgRange p_range = n->select;
+          std::set<shared_ptr<dfgNode> > tar_set;
+          BOOST_FOREACH(shared_ptr<dfgNode> tar, named_node.second) {
+            if(get_out_nodes(tar, false).size() > 0 && p_range.overlap(tar->select))
+              tar_set.insert(tar);
+          }
+
+          if(tar_set.size()) 
+            arc_to_add.push_back(node_arc(n, *(tar_set.begin())));
+        }
+      }
+    }
+  }
+
+  BOOST_FOREACH(node_arc a, arc_to_add) {
+    add_edge(a.first->get_hier_name(), dfgEdge::SDFG_ASS, a.first, a.second);
+  }
+
 }

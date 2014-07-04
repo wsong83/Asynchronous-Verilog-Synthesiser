@@ -34,6 +34,7 @@
 #include <boost/format.hpp>
 #include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/tuple/tuple.hpp>
 
 using namespace SDFG;
 using boost::shared_ptr;
@@ -42,6 +43,13 @@ using std::string;
 using std::pair;
 using std::list;
 
+
+SDFG::dfgNode::dfgNode(const std::string& n, node_type_t t) 
+  : pg(NULL), name(n), node_index(0), type(t), dp_type(SDFG_DP_NONE), 
+    is_annotated(false), position(0,0), bbox(0,0) 
+{
+  select = divide_signal_name(n).second;
+}
 
 unsigned int SDFG::dfgNode::size_out_edges(bool bself) const { 
   return pg->size_out_edges(id, bself); 
@@ -116,6 +124,7 @@ dfgNode* SDFG::dfgNode::copy() const {
   rv->port2sig = port2sig;
   rv->pg = NULL;
   rv->name = name;
+  rv->select = select;
   rv->hier = hier;
   rv->id = NULL;
   rv->node_index = 0;
@@ -316,7 +325,7 @@ void SDFG::dfgNode::remove_port_sig(const string& sname, int dir) {
     // remove the port map connection
     std::set<string> m_slist = sig2port[sname]; // local copy
     BOOST_FOREACH(const string& sig, m_slist) {
-      shared_ptr<dfgNode> child_node = child->get_node(sig);
+      shared_ptr<dfgNode> child_node = child->get_node(SDFG::divide_signal_name(sig));
       if(child_node) {
         if((child_node->type & SDFG_PORT) 
            && (child_node->type != SDFG_OPORT)
@@ -336,10 +345,11 @@ void SDFG::dfgNode::remove_port_sig(const string& sname, int dir) {
 }
 
 void SDFG::dfgNode::add_port_sig(const string& pname, const string& sname) {
-  if(type == SDFG_MODULE && child->exist(pname)) {
-    port2sig[pname] = sname;
-    sig2port[sname].insert(pname);
+  if(child) {
+    assert(child->exist(pname));
   }
+  port2sig[pname] = sname;
+  sig2port[sname].insert(pname);
 }
 
 void SDFG::dfgNode::remap_ports() {
@@ -465,7 +475,7 @@ bool SDFG::dfgNode::remove_useless_ports() {
 }
 
 shared_ptr<dfgNode> SDFG::dfgNode::get_synonym(dfgGraph * otherG) const {
-  return otherG->get_node(get_hier_name());
+  return otherG->get_node(SDFG::divide_signal_name(get_hier_name()));
 }
 
 bool SDFG::dfgNode::check_integrity() const {
@@ -483,10 +493,10 @@ bool SDFG::dfgNode::check_integrity() const {
       assert(child->check_integrity());
       BOOST_FOREACH(port2sig_type p2s, port2sig) {
         assert(child->exist(p2s.first));
-        shared_ptr<dfgNode> p = child->get_node(p2s.first);
+        shared_ptr<dfgNode> p = child->get_node(SDFG::divide_signal_name(p2s.first));
         assert(p);
         if(p2s.second.size() > 0) {
-          assert(pg->exist(p2s.second));
+          assert(pg->exist(divide_signal_name(p2s.second)));
           assert(p->type & SDFG_PORT);
           if((p->type & SDFG_IPORT) != SDFG_IPORT) {
             assert(pg->exist(id, p2s.second));

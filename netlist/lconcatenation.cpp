@@ -130,7 +130,11 @@ void netlist::LConcatenation::db_expunge() {
 shared_ptr<SDFG::RTree> netlist::LConcatenation::get_rtree() const {
   shared_ptr<SDFG::RTree> rv(new SDFG::RTree(false));
   BOOST_FOREACH(const VIdentifier& m, data) {
-    rv->add_tree(m.get_select().get_rtree(), m.get_name(), SDFG::dfgEdge::SDFG_ADR); 
+    rv->add_tree(m.get_select().get_rtree(), 
+                 SDFG::get_full_selected_name(m.get_selected_name(),
+                                              toString(m.get_full_range())
+                                              ),
+                 SDFG::dfgEdge::SDFG_ADR);
   }
   return rv;
 }

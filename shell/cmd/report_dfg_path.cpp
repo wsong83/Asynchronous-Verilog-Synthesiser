@@ -190,77 +190,68 @@ bool shell::CMD::CMDReportDFGPath::exec ( const std::string& str, Env * pEnv){
     gEnv.stdOs << "Error: At least one of the starting point or the ending point must be specified." << endl;
   }
   
-  shared_ptr<SDFG::dfgNode> src, src_p;
-  shared_ptr<SDFG::dfgNode> tar, tar_p;
+  std::set<shared_ptr<SDFG::dfgNode> > src, tar;
 
-  if(!arg.sSource.empty()) {
-    src = G->search_node(arg.sSource);
-    src_p = G->search_node(arg.sSource + "_P");
-    if(!src) {
-      gEnv.stdOs << "Error: Fail to find the specified starting point \"" << arg.sSource << "\"." << endl;
-    } else if(src->type & (SDFG::dfgNode::SDFG_FF|SDFG::dfgNode::SDFG_LATCH)) {
-    } else if(src_p && 
-              (src_p->type & SDFG::dfgNode::SDFG_PORT) && (src_p->type != SDFG::dfgNode::SDFG_OPORT) && 
-              !(src_p->pg->father)
-              ) {
-      src = src_p;
-    } else {
-      gEnv.stdOs << "Error: The starting point of a path must be a FF/Latch or top-level input port." << endl;
-      return false;
-    }
+  // possible register and latches
+  BOOST_FOREACH(shared_ptr<SDFG::dfgNode> n, G->search_node(arg.sSource)) {
+    if(n->type & (SDFG::dfgNode::SDFG_FF|SDFG::dfgNode::SDFG_LATCH))
+      src.insert(n);
+  }
+  
+  // possible ports
+  BOOST_FOREACH(shared_ptr<SDFG::dfgNode> n, G->search_node(arg.sSource + "_P")) {
+    if((n->type & SDFG::dfgNode::SDFG_PORT) && (n->type != SDFG::dfgNode::SDFG_OPORT) && !n->pg->father)
+      src.insert(n);
+  }
+  // possible register and latches
+  BOOST_FOREACH(shared_ptr<SDFG::dfgNode> n, G->search_node(arg.sTarget)) {
+    if(n->type & (SDFG::dfgNode::SDFG_FF|SDFG::dfgNode::SDFG_LATCH))
+      src.insert(n);
+  }
+  
+  // possible ports
+  BOOST_FOREACH(shared_ptr<SDFG::dfgNode> n, G->search_node(arg.sTarget + "_P")) {
+    if((n->type & SDFG::dfgNode::SDFG_PORT) && (n->type != SDFG::dfgNode::SDFG_IPORT) && !n->pg->father)
+      src.insert(n);
   }
 
-  if(!arg.sTarget.empty()) {
-    tar = G->search_node(arg.sTarget);
-    tar_p = G->search_node(arg.sTarget + "_P");
-    if(!tar) {
-      gEnv.stdOs << "Error: Fail to find the specified ending point \"" << arg.sTarget << "\"." << endl;
-    } else if(tar->type & (SDFG::dfgNode::SDFG_FF|SDFG::dfgNode::SDFG_LATCH)) {
-    } else if(tar_p &&
-              (tar_p->type & SDFG::dfgNode::SDFG_PORT) && ((tar_p->type & SDFG::dfgNode::SDFG_IPORT) != SDFG::dfgNode::SDFG_IPORT) && 
-              !(tar_p->pg->father)
-              ) {
-      tar = tar_p;
-    } else {
-      gEnv.stdOs << "Error: The ending point of a path must be a FF/Latch or top-level output port." << endl;
-      return false;
-    }
+  if(!arg.sSource.empty() && src.empty()) {
+    gEnv.stdOs << "Error: Fail to find the specified starting point \"" << arg.sSource << "\"." << endl;
+    return false;
   }
+  
+  if(!arg.sTarget.empty() && tar.empty()) {
+    gEnv.stdOs << "Error: Fail to find the specified ending point \"" << arg.sTarget << "\"." << endl;
+    return false;
+  } 
 
   list<shared_ptr<SDFG::dfgPath> > plist;
-  std::set<shared_ptr<SDFG::dfgNode> > targets;
-  if(tar)
-    targets.insert(tar);
-  std::set<shared_ptr<SDFG::dfgNode> > sources;
-  if(src)
-    sources.insert(src);
+  arg.nMax = arg.nMax < 0 ? 10 : arg.nMax;
 
-  if(!sources.empty()) {
-    BOOST_FOREACH(shared_ptr<SDFG::dfgNode> s, sources) {
-      list<shared_ptr<SDFG::dfgPath> > mp = arg.bFast ? s->get_out_paths_fast_cb() : s->get_out_paths_cb();
-      BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, mp) {
-        if(targets.empty() || targets.count(p->tar)) {
-          if((int)(plist.size()) < (arg.nMax < 0 ? 10 : arg.nMax))
-             plist.push_back(p);
-           else break;
-        }
+  BOOST_FOREACH(shared_ptr<SDFG::dfgNode> s, src) {
+    list<shared_ptr<SDFG::dfgPath> > mp = arg.bFast ? s->get_out_paths_fast_cb() : s->get_out_paths_cb();
+    BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, mp) {
+      if(tar.empty() || tar.count(p->tar)) {
+        if((int)(plist.size()) < arg.nMax)
+          plist.push_back(p);
+        else break;
       }
-      if((int)(plist.size()) >= (arg.nMax < 0 ? 10 : arg.nMax)) 
-        break;
     }
-  } else {
-    BOOST_FOREACH(shared_ptr<SDFG::dfgNode> t, targets) {
-      list<shared_ptr<SDFG::dfgPath> > mp = arg.bFast ? t->get_in_paths_fast_cb() : t->get_in_paths_cb();
-      BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, mp) {
-        if(sources.empty() || sources.count(p->tar)) {
-           if((int)(plist.size()) < (arg.nMax < 0 ? 10 : arg.nMax))
-             plist.push_back(p);
-           else break;
-        }
+    if((int)(plist.size()) >= arg.nMax) 
+      break;
+  }
+
+  BOOST_FOREACH(shared_ptr<SDFG::dfgNode> t, tar) {
+    list<shared_ptr<SDFG::dfgPath> > mp = arg.bFast ? t->get_in_paths_fast_cb() : t->get_in_paths_cb();
+    BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, mp) {
+      if(src.empty() || src.count(p->src)) {
+        if((int)(plist.size()) < arg.nMax)
+          plist.push_back(p);
+        else break;
       }
-      if((int)(plist.size()) >= (arg.nMax < 0 ? 10 : arg.nMax)) 
-        break;
     }
+    if((int)(plist.size()) >= arg.nMax) 
+      break;
   }
 
   int index = 0;

@@ -81,7 +81,7 @@ void netlist::Port::replace_variable(const VIdentifier& var, const VIdentifier& 
 }
 
 shared_ptr<Expression> netlist::Port::get_combined_expression(const VIdentifier& target, std::set<string> s_set) {
-  shared_ptr<SDFG::dfgNode> pnode = get_module()->DFG->get_node(target.get_name());
+  shared_ptr<SDFG::dfgNode> pnode = get_module()->DFG->get_node(SDFG::divide_signal_name(target.get_name()));
   shared_ptr<Expression> rv(new Expression(target));
   assert(pnode);
   bool found_source = false;
@@ -117,7 +117,7 @@ shared_ptr<Expression> netlist::Port::get_combined_expression(const VIdentifier&
   }
   assert(pnode);
   if(pnode->type & SDFG::dfgNode::SDFG_LATCH) {
-    G_ENV->error("ANA-SSA-1", pnode->get_full_name(), get_module()->DFG->get_node(target.get_name())->get_full_name());
+    G_ENV->error("ANA-SSA-1", pnode->get_full_name(), get_module()->DFG->get_node(SDFG::divide_signal_name(target.get_name()))->get_full_name());
   }
   if(s_set.count(pnode->get_full_name())) {
     G_ENV->error("ANA-SSA-2", pnode->get_full_name());

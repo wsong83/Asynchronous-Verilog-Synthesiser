@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -206,15 +206,15 @@ bool shell::CMD::CMDReportFSM::exec ( const std::string& str, Env * pEnv){
     BOOST_FOREACH(const string& fsm_name, fsms) {
       gEnv.stdOs << "[" << ++index << "]  ";
       gEnv.stdOs <<  fsm_name << " ";
-      gEnv.stdOs << tarDesign->RRG->get_node(fsm_name)->get_fsm_type();
+      gEnv.stdOs << tarDesign->RRG->get_node(SDFG::divide_signal_name(fsm_name))->get_fsm_type();
       gEnv.stdOs << endl;
       if(arg.bSpace) {
-        std::set<shared_ptr<netlist::NetComp> > node_set = tarDesign->RRG->get_node(fsm_name)->ptr;
+        std::set<shared_ptr<netlist::NetComp> > node_set = tarDesign->RRG->get_node(SDFG::divide_signal_name(fsm_name))->ptr;
         BOOST_FOREACH(shared_ptr<netlist::NetComp> pnode, node_set) {
           if(pnode->get_type() == netlist::NetComp::tSeqBlock)
             // use the local name rather than the full name
             boost::static_pointer_cast<netlist::SeqBlock>(pnode)->
-              ssa_analysis(netlist::VIdentifier(tarDesign->RRG->get_node(fsm_name)->name));
+              ssa_analysis(netlist::VIdentifier(tarDesign->RRG->get_node(SDFG::divide_signal_name(fsm_name))->name));
         }
       }
     }
@@ -222,7 +222,7 @@ bool shell::CMD::CMDReportFSM::exec ( const std::string& str, Env * pEnv){
     // build the fsm connection graph
     std::set<shared_ptr<SDFG::dfgNode> > fsms_nodes;
     BOOST_FOREACH(const string& fsm_name, fsms) {
-      fsms_nodes.insert(tarDesign->RRG->get_node(fsm_name));
+      fsms_nodes.insert(tarDesign->RRG->get_node(SDFG::divide_signal_name(fsm_name)));
     }
     shared_ptr<SDFG::dfgGraph> fsm_graph = 
       tarDesign->RRG->build_reg_graph(fsms_nodes);
