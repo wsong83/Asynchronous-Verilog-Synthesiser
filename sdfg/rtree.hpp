@@ -33,39 +33,32 @@
 #include <string>
 #include <set>
 #include <map>
-#include <dfg_range.hpp>
-#include <boost/shared_ptr.hpp>
+#include "dfg_range.hpp"
+#include "dfg_edge.hpp"
 
 namespace SDFG {
 
-  // forward declaration
-  class RTree;
-
-  // global type definition
-  typedef std::list<shared_ptr<RTree> > leaf_list_type;
-  typedef std::pair<const std::string&, leaf_list_type> leaves_type;
-  typedef std::multimap<std::string, leaf_list_type> leaf_map;
-
-  class RTree : public dfgRangeMap {
+  class RTree {
 
     std::string root;                           // the root of this sub-tree 
+    dfgRangeMap select;                         // the range expression
     unsigned int relation;                      // relation (type) with higher node 
 
-    std::set<std::string> fanme_set;            // store the leaf names 
-    leaf_map leaves;                            // store the leaves with different ranges and types
+    std::set<std::string> fname_set;            // store the leaf names 
+    std::multimap<std::string, RTree> leaves;   // store the leaves with different ranges and types
 
   public:
-    RTree(const string&, const dfgRangeMap& select = dfgRangeMap(), 
+    RTree(const std::string&, const dfgRangeMap& select = dfgRangeMap(), 
           unsigned int t = dfgEdge::SDFG_ASS);
     
     // builders
 
     // when seq = true, combine sequential statements
-    RTree& add(boost::shared_ptr<RTree>, bool seq = false); // add a sub tree
-    void combine(const leaf_map&, bool seq = false);        // combine a map of leaves
-
-    // helpers
+    RTree& add(const RTree&);                   // add a sub tree, unflattened
+    RTree& combine(const RTree&);               // combine a map of leaves, unflattened
     void flatten();                             // remove all hierarchies 
+    void flatten_insert();                      // add a relation in the flattened tree
+    void combine_sequential(const RTree&);      // combined a sequential flattened tree
 
     // other
     friend class RForest;
@@ -73,16 +66,26 @@ namespace SDFG {
   };
 
 
+  typedef std::multimap<std::string, RTree> leaf_map;
+  typedef std::map<std::string, 
+                   std::map<std::string, 
+                            std::list<boost::tuple<SDFG::dfgRangeMap,
+                                                   SDFG::dfgRangeMap,
+                                                   unsigned int
+                                                   > > > > plain_map;
   class RForest {
 
+    std::set<std::string> tname_set;            // store the tree names 
     leaf_map trees;                             // all trees in this forest 
 
   public:
     
     //builder
-    RForest& add(boost::shared_ptr<RTree>);     // add a tree
+    RForest& add(const RTree&);                 // add a tree
     RForest& combine(const RForest&);           // combine with another tree 
-
+    void flatten();                             // remove all hierarchies 
+    void combine_sequential(const RForest&);    // combined a sequential flattened tree
+    const plain_map& get_plain_map() const;     // get a plain map to draw SDFG
   };
 
 

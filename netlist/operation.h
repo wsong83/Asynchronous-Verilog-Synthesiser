@@ -129,7 +129,7 @@ namespace netlist {
     virtual Operation* deep_copy(NetComp*) const; 
     NETLIST_DB_DECL;
     NETLIST_REPLACE_VARIABLE;
-    virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
+    virtual SDFG::RTree get_rtree() const;
     virtual unsigned int get_width() const;
 
     // state space analysis

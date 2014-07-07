@@ -47,7 +47,6 @@
 #include "averilog_util.h"
 #include "averilog.lex.h"
 #include <boost/foreach.hpp>
-#include <boost/tuple/tuple.hpp>
   using namespace netlist;
   using namespace averilog;
   using std::string;
@@ -781,13 +780,13 @@ list_of_port_identifiers
 
 list_of_variable_identifiers 
     : variable_identifier
-    { $$.push_back(boost::make_tuple($1, shared_ptr<Expression>())); }
+    { $$.push_back(pair<VIdentifier,shared_ptr<Expression> >($1, shared_ptr<Expression>())); }
     | variable_identifier '=' expression
-    { $$.push_back(boost::make_tuple($1, $3)); } 
+    { $$.push_back(pair<VIdentifier,shared_ptr<Expression> >($1, $3)); } 
     | list_of_variable_identifiers ',' variable_identifier 
-    { $$.push_back(boost::make_tuple($3, shared_ptr<Expression>())); }
+    { $$.push_back(pair<VIdentifier,shared_ptr<Expression> >($3, shared_ptr<Expression>())); }
     | list_of_variable_identifiers ',' variable_identifier '=' expression 
-    { $$.push_back(boost::make_tuple($3, $5)); }
+    { $$.push_back(pair<VIdentifier,shared_ptr<Expression> >($3, $5)); }
     ;
 
 // A.2.4 Declaration assignments
@@ -1160,7 +1159,7 @@ always_construct
     { 
       list<pair<int, shared_ptr<Expression> > > slist;
       VIdentifier wild("*");
-      slist.push_back(boost::make_tuple(0, shared_ptr<Expression>(new Expression(wild))));
+      slist.push_back(pair<int, shared_ptr<Expression> >(0, shared_ptr<Expression>(new Expression(wild))));
       $$.reset(new SeqBlock(@$, slist, $6));
     }
     | "always" '@' '(' event_expressions ')' statement_or_null
@@ -1171,7 +1170,7 @@ always_construct
     { 
       list<pair<int, shared_ptr<Expression> > > slist;
       VIdentifier wild("*");
-      slist.push_back(boost::make_tuple(0, shared_ptr<Expression>(new Expression(wild))));
+      slist.push_back(pair<int, shared_ptr<Expression> >(0, shared_ptr<Expression>(new Expression(wild))));
       $$.reset(new SeqBlock(@$, slist, $4));
     }
     | "always" statement
@@ -1260,9 +1259,9 @@ event_expressions
     ;
 
 event_expression
-    : expression              { $$ = boost::make_tuple(0, $1); }
-    | "posedge" expression    { $$ = boost::make_tuple(1, $2); }
-    | "negedge" expression    { $$ = boost::make_tuple(-1, $2); }
+    : expression              { $$ = pair<int, shared_ptr<Expression> >(0, $1); }
+    | "posedge" expression    { $$ = pair<int, shared_ptr<Expression> >(1, $2); }
+    | "negedge" expression    { $$ = pair<int, shared_ptr<Expression> >(-1, $2); }
     ;
 
 case_items
@@ -1349,11 +1348,11 @@ expression
 range_expression
     : expression                    { $$.reset( new Range(@$, $1)); }       
     | expression ':' expression     
-    { $$.reset( new Range(@$, boost::make_tuple($1,$3))); }
+    { $$.reset( new Range(@$, pair<shared_ptr<Expression>,shared_ptr<Expression> >($1,$3))); }
     | expression "+:" expression    
-    { $$.reset( new Range(@$, boost::make_tuple($1,$3), 1)); }
+    { $$.reset( new Range(@$, pair<shared_ptr<Expression>,shared_ptr<Expression> >($1,$3), 1)); }
     | expression "-:" expression    
-    { $$.reset( new Range(@$, boost::make_tuple($1,$3), -1)); }
+    { $$.reset( new Range(@$, pair<shared_ptr<Expression>,shared_ptr<Expression> >($1,$3), -1)); }
     ;
 
 //A.8.4 Primaries

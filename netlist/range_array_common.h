@@ -78,7 +78,7 @@ namespace netlist {
     void set_width(const unsigned int&, const Range&);
     void replace_variable(const VIdentifier&, const Number&);
     void replace_variable(const VIdentifier&, const VIdentifier&);
-    virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
+    virtual SDFG::RTree get_rtree() const;
     
   protected:
     std::list<boost::shared_ptr<Range> > child; // the range expressions of the lower dimension
