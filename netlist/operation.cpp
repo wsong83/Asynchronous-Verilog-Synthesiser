@@ -442,7 +442,7 @@ SDFG::RTree netlist::Operation::get_rtree() const {
   case oVar: return get_var().get_rtree();
   case oCon: return get_con().get_rtree();
   case oNULL:
-  case oNum: return shared_ptr<SDFG::RTree>(new SDFG::RTree());
+  case oNum: return SDFG::RTree("");
   case oFun: return get_fun().get_rtree();
   case oUPos:
   case oUNeg:

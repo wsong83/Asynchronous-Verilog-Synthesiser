@@ -39,7 +39,7 @@ using std::pair;
 using std::set;
 using boost::shared_ptr;
 
-/* ------------------------ RTree ----------------------- */
+/* ------------------------ RRelation ----------------------- */
 
 
 ///////////////////////////////////
@@ -47,8 +47,19 @@ using boost::shared_ptr;
  
 
 // construct a leaf
-RTree::RTree(const string& root, const dfgRange& select, unsigned int t)
-  : root(root), select(select), relation(t) {}
+RTree::RRelation(const string& n, const dfgRange& select, unsigned int t)
+  : name(n), select(select), type(t) {}
+
+
+/* ------------------------ RTree ----------------------- */
+
+
+///////////////////////////////////
+//    Constructor
+
+// construct a leaf
+RTree::RTree(const string& root, const dfgRange& select)
+  : root(root), select(select) {}
 
 
 ///////////////////////////////////

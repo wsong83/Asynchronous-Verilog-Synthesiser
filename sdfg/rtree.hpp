@@ -38,24 +38,35 @@
 
 namespace SDFG {
 
+  class RRelation {
+    std::string name;
+    dfgRangeMap select;
+    unsigned int type;
+    
+  public:
+    RRelation(const std::string& n = "", const dfgRangeMap& select = dfgRangeMap(), 
+              unsigned int t = dfgEdge::SDFG_ASS);
+    
+    friend class RTree;
+  }
+
   class RTree {
 
     std::string root;                           // the root of this sub-tree 
     dfgRangeMap select;                         // the range expression
-    unsigned int relation;                      // relation (type) with higher node 
 
     std::set<std::string> fname_set;            // store the leaf names 
-    std::multimap<std::string, RTree> leaves;   // store the leaves with different ranges and types
+    std::multimap<std::string, RRelation> leaves;   
+                                                // store the leaves with different ranges and types
 
   public:
-    RTree(const std::string&, const dfgRangeMap& select = dfgRangeMap(), 
-          unsigned int t = dfgEdge::SDFG_ASS);
+    RTree(const std::string& n = "", const dfgRangeMap& select = dfgRangeMap());
     
     // builders
 
     // when seq = true, combine sequential statements
-    RTree& add(const RTree&);                   // add a sub tree, unflattened
-    RTree& combine(const RTree&);               // combine a map of leaves, unflattened
+    void add(const RRelation&);                 // add a sub tree, unflattened
+    void combine(const RTree&);                 // combine a map of leaves, unflattened
     void flatten();                             // remove all hierarchies 
     void flatten_insert();                      // add a relation in the flattened tree
     void combine_sequential(const RTree&);      // combined a sequential flattened tree
