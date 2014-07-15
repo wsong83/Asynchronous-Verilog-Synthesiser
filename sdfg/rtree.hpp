@@ -48,14 +48,15 @@ namespace SDFG {
               unsigned int t = dfgEdge::SDFG_ASS);
     
     friend class RTree;
-  }
+    friend class RForest;
+  };
 
   class RTree {
 
-    std::string root;                           // the root of this sub-tree 
+    std::string name;                           // the root of this sub-tree 
     dfgRangeMap select;                         // the range expression
 
-    std::set<std::string> fname_set;            // store the leaf names 
+    std::set<std::string> nameSet;              // store the leaf names 
     std::multimap<std::string, RRelation> leaves;   
                                                 // store the leaves with different ranges and types
 
@@ -67,17 +68,19 @@ namespace SDFG {
     // when seq = true, combine sequential statements
     void add(const RRelation&);                 // add a sub tree, unflattened
     void combine(const RTree&);                 // combine a map of leaves, unflattened
-    void flatten();                             // remove all hierarchies 
-    void flatten_insert();                      // add a relation in the flattened tree
-    void combine_sequential(const RTree&);      // combined a sequential flattened tree
+    void combine_seq(const RTree&);             // combined a sequential flattened tree
+    RTree& assign_type(unsigned int);           // assign a type which may override the original type
 
     // other
     friend class RForest;
 
+  private:
+    void normalize();                           // normalize a tree after some modification
+
   };
 
 
-  typedef std::multimap<std::string, RTree> leaf_map;
+  typedef std::multimap<std::string, RRelation> leaf_map;
   typedef std::map<std::string, 
                    std::map<std::string, 
                             std::list<boost::tuple<SDFG::dfgRangeMap,
@@ -86,16 +89,14 @@ namespace SDFG {
                                                    > > > > plain_map;
   class RForest {
 
-    std::set<std::string> tname_set;            // store the tree names 
+    std::set<std::string> nameSet;              // store the tree names 
     leaf_map trees;                             // all trees in this forest 
 
   public:
     
     //builder
-    RForest& add(const RTree&);                 // add a tree
-    RForest& combine(const RForest&);           // combine with another tree 
-    void flatten();                             // remove all hierarchies 
-    void combine_sequential(const RForest&);    // combined a sequential flattened tree
+    void add(const RTree&);                     // add a tree
+    void combine(const RForest&);               // combine with another tree 
     const plain_map& get_plain_map() const;     // get a plain map to draw SDFG
   };
 
