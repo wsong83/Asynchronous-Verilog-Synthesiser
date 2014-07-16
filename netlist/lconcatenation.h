@@ -46,7 +46,7 @@ namespace netlist {
     virtual LConcatenation* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
     NETLIST_REPLACE_VARIABLE;
-    virtual SDFG::RTree get_rtree() const;
+    SDFG::RForest get_rforest() const;
 
     // helpers
     bool is_valid() const { return valid; }

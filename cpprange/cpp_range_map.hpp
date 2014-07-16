@@ -88,6 +88,7 @@ namespace CppRange {
     RangeMap combine(const RangeMap& r) const;          // get the union of this and r
     RangeMap intersection(const RangeMap& r) const;     // get the intersection of this and r
     RangeMap complement(const RangeMap& r) const;       // subtract r from this range
+    std::list<Range<T> > toRange() const;               // convert a RangeMap
     
     std::ostream& streamout(std::ostream& os) const;    // stream out the range
     std::string toString() const;                       // simple conversion to string 
@@ -402,6 +403,12 @@ namespace CppRange {
       return RangeMap(); // or throw an exception
     }
     return RangeMap(RangeMapBase<T>::complement(child, r.child));
+  }
+
+  // convert to a list of ranges
+  template<class T> inline
+  std::list<Range<T> > RangeMap<T>::toRange() const {
+    return RangeMapBase<T>::toRange(child);
   }
 
   // stream out function

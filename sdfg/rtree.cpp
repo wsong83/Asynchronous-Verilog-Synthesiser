@@ -85,11 +85,11 @@ void RTree::add(const RRelation& leaf) {
 }
 
 // combine two leaf maps
-void RTree::combine(const RTree& t) {
+RTree& RTree::combine(const RTree& t) {
   typename leaf_map::const_iterator it;
   for(it = t.leaves.begin(); it != t.leaves.end(); ++it)
     add(it->second); 
-  return;
+  return *this;
 }
 
 // combined a sequential flattened tree
@@ -132,7 +132,7 @@ void RTree::normalize() {
 
 void RForest::add(const RTree& t) {
   if(trees.count(t.name)) {
-    typename leaf_map::iterator it, iend;
+    typename tree_map::iterator it, iend;
     boost::tie(it, iend) = trees.equal_range(t.root);
     for(; it!=iend; ++it) {
       if(it->second.select.overlap(t.select)) {
@@ -164,18 +164,19 @@ void RForest::add(const RTree& t) {
 
 // combine with another tree 
 void RForest::combine(const RForest& f) {
-  typename leaf_map::iterator it;
+  typename tree_map::iterator it;
   for(it=f.trees.begin(); it!=f.trees.end(); ++it) {
     add(it->second);
   }
 }
 
 // get a plain map to draw SDFG
-const plain_map& RForest::get_plain_map() const {
+const plain_map RForest::get_plain_map() const {
   plain_map rv;
 
   // build a plain map
-  leaf_map::iterator it, sit;
+  tree_map::iterator it;
+  leaf_map::iterator sit;
   for(it = trees.begin(); it != trees.end(); ++it) {
     for(sit = it->leaves.begin(); sit != it->leaves.end(); ++sit)
       rv[it->second.name][sit->second.name] = boost::make_tuple(it->second.select, sit->second.select, sit->second.type);

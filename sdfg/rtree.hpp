@@ -51,14 +51,15 @@ namespace SDFG {
     friend class RForest;
   };
 
+  typedef std::multimap<std::string, RRelation> leaf_map;
+
   class RTree {
 
     std::string name;                           // the root of this sub-tree 
     dfgRangeMap select;                         // the range expression
 
-    std::set<std::string> nameSet;              // store the leaf names 
-    std::multimap<std::string, RRelation> leaves;   
-                                                // store the leaves with different ranges and types
+    //std::set<std::string> nameSet;              // store the leaf names 
+    leaf_map leaves;                            // store the leaves with different ranges and types
 
   public:
     RTree(const std::string& n = "", const dfgRangeMap& select = dfgRangeMap());
@@ -67,7 +68,7 @@ namespace SDFG {
 
     // when seq = true, combine sequential statements
     void add(const RRelation&);                 // add a sub tree, unflattened
-    void combine(const RTree&);                 // combine a map of leaves, unflattened
+    RTree& combine(const RTree&);               // combine a map of leaves, unflattened
     void combine_seq(const RTree&);             // combined a sequential flattened tree
     RTree& assign_type(unsigned int);           // assign a type which may override the original type
 
@@ -80,24 +81,28 @@ namespace SDFG {
   };
 
 
-  typedef std::multimap<std::string, RRelation> leaf_map;
-  typedef std::map<std::string, 
-                   std::map<std::string, 
-                            std::list<boost::tuple<SDFG::dfgRangeMap,
-                                                   SDFG::dfgRangeMap,
-                                                   unsigned int
-                                                   > > > > plain_map;
+  typedef std::multimap<std::string, RTree> tree_map;
+  typedef std::list<boost::tuple<SDFG::dfgRangeMap,
+                                 SDFG::dfgRangeMap,
+                                 unsigned int
+                                 > > plain_relation;
+  typedef std::map<std::string, plain_relation> plain_map_item;
+  typedef std::map<std::string, plain_map_item> plain_map;
   class RForest {
 
-    std::set<std::string> nameSet;              // store the tree names 
-    leaf_map trees;                             // all trees in this forest 
+    //std::set<std::string> nameSet;              // store the tree names 
+    tree_map trees;                             // all trees in this forest 
 
   public:
+
+    // accessor
+    tree_map::iterator begin() { return trees.begin(); }
+    tree_map::iterator end() { return trees.end(); }
     
     //builder
     void add(const RTree&);                     // add a tree
     void combine(const RForest&);               // combine with another tree 
-    const plain_map& get_plain_map() const;     // get a plain map to draw SDFG
+    const plain_map get_plain_map() const;     // get a plain map to draw SDFG
   };
 
 

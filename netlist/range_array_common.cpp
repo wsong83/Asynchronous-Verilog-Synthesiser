@@ -301,10 +301,10 @@ list<shared_ptr<Range> >& netlist::RangeArrayCommon::sort(list<shared_ptr<Range>
   return rhs;
 }
 
-shared_ptr<SDFG::RTree> netlist::RangeArrayCommon::get_rtree() const {
-  shared_ptr<SDFG::RTree> rv(new SDFG::RTree());
+SDFG::RTree netlist::RangeArrayCommon::get_rtree() const {
+  SDFG::RTree rv;
   BOOST_FOREACH(const shared_ptr<Range> r, child) {
-    rv->add_tree(r->get_rtree());
+    rv.combine(r->get_rtree());
   }
   return rv;
 }

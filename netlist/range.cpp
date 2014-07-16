@@ -210,9 +210,9 @@ netlist::Range::Range(const location& lloc, const Range_Exp& sel, int updown)
 pair<long, long> netlist::Range::get_plain_range() const {
   switch(rtype) {
   case TR_Const:
-    return boost::make_tuple(c.get_value().get_si(),c.get_value().get_si());
+    return pair<long,long>(c.get_value().get_si(),c.get_value().get_si());
   case TR_CRange:
-    return boost::make_tuple(cr.first.get_value().get_si(), cr.second.get_value().get_si());
+    return pair<long,long>(cr.first.get_value().get_si(), cr.second.get_value().get_si());
   default:
     assert(0 == "Wrong range type!");
     return pair<long, long>();
@@ -819,12 +819,12 @@ void netlist::Range::replace_variable(const VIdentifier& var, const VIdentifier&
   
 }
 
-shared_ptr<SDFG::RTree> netlist::Range::get_rtree() const {
-  shared_ptr<SDFG::RTree> rv(new SDFG::RTree(false));
-  if(rtype == TR_Var) rv->add_tree(v->get_rtree());
-  else if(rtype == TR_Range) rv->add_tree(r.first->get_rtree())->add_tree(r.second->get_rtree());
+SDFG::RTree netlist::Range::get_rtree() const {
+  SDFG::RTree rv;
+  if(rtype == TR_Var) return rv = v->get_rtree();
+  else if(rtype == TR_Range) rv = r.first->get_rtree().combine(r.second->get_rtree());
   
-  rv->add_tree(RangeArrayCommon::get_rtree());
+  rv.combine(RangeArrayCommon::get_rtree());
   return rv;
 }
   

@@ -89,6 +89,7 @@ namespace CppRange {
     RangeMapBase intersection(const RangeMapBase& r) const;
                                                         // get the intersection of this and r
     
+    std::list<Range<T> > toRange() const;               // convert a RangeMap to Ranges
     std::ostream& streamout(std::ostream& os) const;    // stream out the range
     std::string toString() const;                       // simple conversion to string 
   protected:
@@ -119,6 +120,8 @@ namespace CppRange {
     static void normalize(std::list<RangeMapBase>&);    // normalize a range list
     static void add_child(std::list<RangeMapBase>&, const RangeMapBase&);
                                                         // add a Range into a list of ranges
+    static std::list<Range<T> > toRange(const std::list<RangeMapBase>&);
+                                                        // convert a RangeMap to Ranges
     static std::ostream& streamout(const std::list<RangeMapBase>&, std::ostream& os);
                                                         // stream out a range list
     static std::string toString(const std::list<RangeMapBase>&);                       
@@ -293,6 +296,15 @@ namespace CppRange {
     else return rv;
   }
   
+  // convert to a list of ranges
+  template<class T> inline
+  std::list<Range<T> > RangeMapBase<T>::toRange() const {
+    std::list<Range<T> > rv = toRange(child);
+    BOOST_FOREACH(Range<T>& r, rv) 
+      r.add_upper(*this);
+    return rv;
+  }
+
   // stream out function
   template<class T> inline
   std::ostream& RangeMapBase<T>::streamout(std::ostream& os) const{
@@ -642,6 +654,18 @@ namespace CppRange {
     if(!mr.empty()) rlist.insert(lit, mr);
     
     normalize(rlist);
+  }
+
+  // convert to a list of ranges
+  template<class T> inline
+  std::list<Range<T> > RangeMapBase<T>::toRange(const std::list<RangeMapBase>& rlist) {
+    std::list<Range<T> > rv;
+    for(typename std::list<RangeMapBase<T> >::const_iterator it = rlist.begin();
+        it != rlist.end(); ++it) {
+      std::list<Range<T> > slist = it->toRange();
+      rv.insert(rv.end(), slist.begin(), slist.end());
+    }
+    return rv;
   }
 
   // stream out the child list

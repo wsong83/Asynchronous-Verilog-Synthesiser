@@ -45,7 +45,7 @@ namespace netlist {
     NETLIST_ELABORATE_DECL;
     NETLIST_GEN_SDFG;
     NETLIST_REPLACE_VARIABLE;
-    virtual SDFG::RTree get_rtree() const;
+    virtual SDFG::RForest get_rforest() const;
     virtual boost::shared_ptr<Block> unfold();
 
     // helpers

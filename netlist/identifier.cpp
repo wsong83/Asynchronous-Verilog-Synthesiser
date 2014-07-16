@@ -459,13 +459,13 @@ void netlist::VIdentifier::replace_variable(const VIdentifier& var, const VIdent
   m_select.replace_variable(var, nvar);
 }
 
-shared_ptr<SDFG::RTree> netlist::VIdentifier::get_rtree() const {
-  shared_ptr<SDFG::RTree> sel_tree = get_select().get_rtree();
-  shared_ptr<SDFG::RTree> 
-    rv(new SDFG::RTree(SDFG::get_full_selected_name(get_selected_name(),
-                                                    toString(get_full_range())
-                                                    )));
-  rv->add_tree(sel_tree, SDFG::dfgEdge::SDFG_ADR);
+SDFG::RTree netlist::VIdentifier::get_rtree() const {
+  SDFG::RTree sel_tree = get_select().get_rtree();
+  std::pair<string, SDFG::dfgRange> npair = 
+    SDFG::divide_signal_name(SDFG::get_full_selected_name(get_selected_name(),
+                                                          toString(get_full_range())));
+  SDFG::RTree rv(npair.first, SDFG::dfgRangeMap(npair.second));
+  rv.combine(get_select().get_rtree().assign_type(SDFG::dfgEdge::SDFG_ADR));
   return rv;
 }
 
