@@ -46,6 +46,11 @@ namespace SDFG {
   public:
     RRelation(const std::string& n = "", const dfgRangeMap& select = dfgRangeMap(), 
               unsigned int t = dfgEdge::SDFG_ASS);
+
+    // accessor
+    const dfgRangeMap& get_select() const { return select; }
+    const std::string& get_name() const { return name; }
+    unsigned int get_type() const { return type; }
     
     friend class RTree;
     friend class RForest;
@@ -74,6 +79,9 @@ namespace SDFG {
     // accessor
     const dfgRangeMap& get_select() const { return select; }
     const std::string& get_name() const { return name; }
+    leaf_map::iterator begin() { return leaves.begin(); }
+    leaf_map::iterator end() { return leaves.end(); }
+    typedef leaf_map::iterator iterator;
 
     // helper
     sig_map get_all_signals() const;            // return a map of all right hand side signals 
@@ -106,6 +114,7 @@ namespace SDFG {
     // accessor
     tree_map::iterator begin() { return trees.begin(); }
     tree_map::iterator end() { return trees.end(); }
+    typedef tree_map::iterator iterator;
     
     //builder
     void add(const RTree&);                     // add a tree
@@ -115,6 +124,7 @@ namespace SDFG {
     sig_map get_all_signals() const;            // return a map of all right hand side signals 
     sig_map get_data_signals() const;           // return a map of all right hand side data sources
     sig_map get_control_signals() const;        // return a map of all control signals
+    sig_map get_target_signals() const;         // return a map of all targets
 
     const plain_map get_plain_map() const;      // get a plain map to draw SDFG
     

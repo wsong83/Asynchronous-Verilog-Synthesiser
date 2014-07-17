@@ -47,7 +47,7 @@ using boost::shared_ptr;
  
 
 // construct a leaf
-RTree::RRelation(const string& n, const dfgRange& select, unsigned int t)
+RRelation::RRelation(const string& n, const dfgRangeMap& select, unsigned int t)
   : name(n), select(select), type(t) {}
 
 
@@ -58,7 +58,7 @@ RTree::RRelation(const string& n, const dfgRange& select, unsigned int t)
 //    Constructor
 
 // construct a leaf
-RTree::RTree(const string& n, const dfgRange& select)
+RTree::RTree(const string& n, const dfgRangeMap& select)
   : name(n), select(select) {}
 
 
@@ -79,8 +79,8 @@ void RTree::add(const RRelation& leaf) {
   }
 
   // if goes here, add the leaf directly
-  leaves.insert(boost::make_tuple(leaf.name, leaf));
-  nameSet.insert(leaf.name);
+  leaves.insert(pair<string, RRelation>(leaf.name, leaf));
+  //nameSet.insert(leaf.name);
   return;
 }
 
@@ -94,16 +94,16 @@ RTree& RTree::combine(const RTree& t) {
 
 // combined a sequential flattened tree
 void RTree::combine_seq(const RTree& t) {
-  typename leaf_map::iterator it;
+  typename leaf_map::const_iterator it;
   for(it=t.leaves.begin(); it!=t.leaves.end(); ++it) {
-    if(it->second.relation != dfgEdge::SDFG_DDP)
+    if(it->second.type != dfgEdge::SDFG_DDP)
       add(it->second);
   }
 }
 
 // assign a new type
 RTree& RTree::assign_type(unsigned int t) {
-  typename leaf_map::const_iterator it;
+  typename leaf_map::iterator it;
   for(it = leaves.begin(); it != leaves.end(); ++it)
     it->second.type = dfgPath::cal_type(it->second.type, t);
   normalize();
@@ -124,7 +124,7 @@ sig_map RTree::get_data_signals() const {
   sig_map rv;
   typename leaf_map::const_iterator it;
   for(it = leaves.begin(); it != leaves.end(); ++it)
-    if(it->second.type & dfgEdge::SDFG_DATA_MASK)
+    if(it->second.type & dfgEdge::SDFG_DAT_MASK)
       rv[it->second.name] = rv[it->second.name].combine(it->second.select);
   return rv;
 }
@@ -162,7 +162,7 @@ void RTree::normalize() {
 void RForest::add(const RTree& t) {
   if(trees.count(t.name)) {
     typename tree_map::iterator it, iend;
-    boost::tie(it, iend) = trees.equal_range(t.root);
+    boost::tie(it, iend) = trees.equal_range(t.name);
     for(; it!=iend; ++it) {
       if(it->second.select.overlap(t.select)) {
         if(it->second.select == t.select) {
@@ -186,14 +186,14 @@ void RForest::add(const RTree& t) {
     }
   }
   
-  tname_set.insert(t.name);
-  trees.insert(boost::make_tuple(t.name, t));
-  return *this;
+  //tname_set.insert(t.name);
+  trees.insert(pair<string, RTree>(t.name, t));
+  return;
 }
 
 // combine with another tree 
 void RForest::combine(const RForest& f) {
-  typename tree_map::iterator it;
+  typename tree_map::const_iterator it;
   for(it=f.trees.begin(); it!=f.trees.end(); ++it) {
     add(it->second);
   }
@@ -202,8 +202,8 @@ void RForest::combine(const RForest& f) {
 // return a map of all right hand side signals
 sig_map RForest::get_all_signals() const {
   sig_map rv;
-  typename tree_map::iterator it;
-  for(it=f.trees.begin(); it!=f.trees.end(); ++it) {
+  typename tree_map::const_iterator it;
+  for(it=trees.begin(); it!=trees.end(); ++it) {
     sig_map tmap = it->second.get_all_signals();
     rv.insert(tmap.begin(), tmap.end());
   }
@@ -213,8 +213,8 @@ sig_map RForest::get_all_signals() const {
 // return a map of all right hand data sources
 sig_map RForest::get_data_signals() const {
   sig_map rv;
-  typename tree_map::iterator it;
-  for(it=f.trees.begin(); it!=f.trees.end(); ++it) {
+  typename tree_map::const_iterator it;
+  for(it=trees.begin(); it!=trees.end(); ++it) {
     sig_map tmap = it->second.get_data_signals();
     rv.insert(tmap.begin(), tmap.end());
   }
@@ -224,10 +224,20 @@ sig_map RForest::get_data_signals() const {
 // return a map of all control signals
 sig_map RForest::get_control_signals() const {
   sig_map rv;
-  typename tree_map::iterator it;
-  for(it=f.trees.begin(); it!=f.trees.end(); ++it) {
+  typename tree_map::const_iterator it;
+  for(it=trees.begin(); it!=trees.end(); ++it) {
     sig_map tmap = it->second.get_control_signals();
     rv.insert(tmap.begin(), tmap.end());
+  }
+  return rv;
+}
+
+// return a map of all targets
+sig_map RForest::get_target_signals() const {
+  sig_map rv;
+  typename tree_map::const_iterator it;
+  for(it=trees.begin(); it!=trees.end(); ++it) {
+    rv[it->second.get_name()] = rv[it->second.get_name()].combine(it->second.get_select());
   }
   return rv;
 }
@@ -237,11 +247,13 @@ const plain_map RForest::get_plain_map() const {
   plain_map rv;
 
   // build a plain map
-  tree_map::iterator it;
-  leaf_map::iterator sit;
+  tree_map::const_iterator it;
+  leaf_map::const_iterator sit;
   for(it = trees.begin(); it != trees.end(); ++it) {
-    for(sit = it->leaves.begin(); sit != it->leaves.end(); ++sit)
-      rv[it->second.name][sit->second.name] = boost::make_tuple(it->second.select, sit->second.select, sit->second.type);
+    for(sit = it->second.leaves.begin(); sit != it->second.leaves.end(); ++sit)
+      rv[it->second.name][sit->second.name].push_back(
+        boost::tuple<dfgRangeMap, dfgRangeMap, unsigned int>
+        (it->second.select, sit->second.select, sit->second.type));
   }
 
   return rv;

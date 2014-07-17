@@ -162,34 +162,45 @@ bool netlist::IfState::elaborate(std::set<shared_ptr<NetComp> >& to_del,
   return true;
 }
 
-shared_ptr<SDFG::RTree> netlist::IfState::get_rtree() const {
+SDFG::RForest netlist::IfState::get_rforest() const {
 
-  shared_ptr<SDFG::RTree> rv(new SDFG::RTree(false));
-  map<string, unsigned int> target_count;
+  // build the forest
+  SDFG::RForest rv, if_rt, else_rt;
+  if_rt = ifcase->get_rforest();
+  if(elsecase)
+    else_rt = elsecase->get_rforest();
 
-  shared_ptr<SDFG::RTree> ifcase_rtree = ifcase->get_rtree();
-  BOOST_FOREACH(SDFG::RTree::sub_tree_type& t, ifcase_rtree->tree) {
-    if(target_count.count(t.first)) target_count[t.first]++;
-    else                            target_count[t.first] = 1;
+  rv.combine(if_rt);
+  rv.combine(else_rt);
+  
+  // self-loop
+  if(elsecase) {
+    SDFG::sig_map smap = rv.get_target_signals();
+    list<SDFG::sig_map> if_smap;
+    if_smap.push_back(if_rt.get_target_signals());
+    if_smap.push_back(else_rt.get_target_signals());
+    
+    BOOST_FOREACH(SDFG::sig_map smap_item, if_smap) {
+      for(SDFG::sig_map::iterator it=smap.begin(); it!=smap.end(); ++it) {
+        if(smap_item.count(it->first)) {
+          if(smap_item[it->first].proper_subset(it->second)) {
+            SDFG::dfgRangeMap r = it->second.complement(smap_item[it->first]);
+            SDFG::RTree mt(it->first, r);
+            mt.add(SDFG::RRelation(it->first, r, SDFG::dfgEdge::SDFG_DDP));
+            rv.add(mt);
+          }
+        } else {
+          SDFG::dfgRangeMap r = it->second;
+          SDFG::RTree mt(it->first, r);
+          mt.add(SDFG::RRelation(it->first, r, SDFG::dfgEdge::SDFG_DDP));
+          rv.add(mt);
+        }
+      }
+    }
   }
-  rv->add_tree(ifcase_rtree);
 
-  shared_ptr<SDFG::RTree> elsecase_rtree(new SDFG::RTree(false));
-  if(elsecase) elsecase_rtree = elsecase->get_rtree();
-  BOOST_FOREACH(SDFG::RTree::sub_tree_type& t, elsecase_rtree->tree) {
-    if(target_count.count(t.first)) target_count[t.first]++;
-    else                            target_count[t.first] = 1;
-  }
-  rv->add_tree(elsecase_rtree);
-
-  rv->combine(exp->get_rtree(), SDFG::dfgEdge::SDFG_LOG);
-
-  // add self paths
-  typedef std::pair<const string&, unsigned int> m_type;
-  BOOST_FOREACH(m_type t, target_count) {
-    if(t.second < 2)
-      rv->add_edge(t.first, t.first, SDFG::dfgEdge::SDFG_DDP);
-  }
+  SDFG::RTree exp_rt = exp->get_rtree();
+  rv.add(exp_rt.assign_type(SDFG::dfgEdge::SDFG_LOG));
 
   return rv;
 }

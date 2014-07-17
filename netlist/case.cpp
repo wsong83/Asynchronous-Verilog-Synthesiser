@@ -144,8 +144,8 @@ bool netlist::CaseItem::elaborate(std::set<shared_ptr<NetComp> >& to_del,
   return true;
 }
 
-shared_ptr<SDFG::RTree> netlist::CaseItem::get_rtree() const {
-  return body->get_rtree();
+SDFG::RForest netlist::CaseItem::get_rforest() const {
+  return body->get_rforest();
 }
 
 void netlist::CaseItem::replace_variable(const VIdentifier& var, const Number& num) {
@@ -301,43 +301,65 @@ bool netlist::CaseState::elaborate(std::set<shared_ptr<NetComp> >& to_del,
 
 } 
 
-shared_ptr<SDFG::RTree> netlist::CaseState::get_rtree() const {
-  shared_ptr<SDFG::RTree> exp_rtree = exp->get_rtree();
-  shared_ptr<SDFG::RTree> rv(new SDFG::RTree(false));
+SDFG::RForest netlist::CaseState::get_rforest() const {
+  SDFG::RTree exp_rtree = exp->get_rtree();
+  SDFG::RForest rv;
   int num_of_case = 0;
   map<string, int> target_count;
   bool has_default = false;
 
+  list<SDFG::sig_map> case_smap;
   // get all cases and count the target counts
   BOOST_FOREACH(shared_ptr<CaseItem> m, cases) {
-    shared_ptr<SDFG::RTree> case_rtree = m->get_rtree();
-    BOOST_FOREACH(SDFG::RTree::sub_tree_type& t, case_rtree->tree) {
-      if(target_count.count(t.first)) target_count[t.first]++;
-      else                            target_count[t.first] = 1;
-    }
+    // add the case
+    SDFG::RForest case_rtree = m->get_rforest();
+    rv.combine(case_rtree);
+    case_smap.push_back(case_rtree.get_target_signals());    
+
     num_of_case++;
-    rv->add_tree(case_rtree);
     if(m->is_default()) {
       has_default = true;
       break;
     }
   }
   
-  // no default, all target counts increased by 1
-  if(!has_default && num_of_case < (1 << exp->get_width())) num_of_case++; 
-  
-  // build the tree
-  if(rv->get_all().size())
-    rv->combine(exp_rtree, SDFG::dfgEdge::SDFG_EQU);
-  else
-    rv->combine(exp_rtree, SDFG::dfgEdge::SDFG_DAT);
-
-  // add self paths
-  typedef std::pair<const string&, unsigned int> m_type;
-  BOOST_FOREACH(m_type t, target_count) {
-    if(t.second < num_of_case)
-      rv->add_edge(t.first, t.first, SDFG::dfgEdge::SDFG_DDP);
+  // no default, or case not full, add self loops
+  if(!has_default && num_of_case < (1 << exp->get_width())) {
+    SDFG::sig_map smap_all = rv.get_target_signals();
+    for(SDFG::sig_map::iterator it=smap_all.begin(); it!=smap_all.end(); ++it) {
+      SDFG::dfgRangeMap r = it->second;
+      SDFG::RTree mt(it->first, r);
+      mt.add(SDFG::RRelation(it->first, r, SDFG::dfgEdge::SDFG_DDP));
+      rv.add(mt);
+    }
+  } else {
+    // chase for latch
+    SDFG::sig_map smap_all = rv.get_target_signals();
+    SDFG::RForest sloops;
+    BOOST_FOREACH(SDFG::sig_map smap_item, case_smap) {
+      for(SDFG::sig_map::iterator it=smap_all.begin(); it!=smap_all.end(); ++it) {
+        if(smap_item.count(it->first)) {
+          if(smap_item[it->first].proper_subset(it->second)) {
+            SDFG::dfgRangeMap r = it->second.complement(smap_item[it->first]);
+            SDFG::RTree mt(it->first, r);
+            mt.add(SDFG::RRelation(it->first, r, SDFG::dfgEdge::SDFG_DDP));
+            rv.add(mt);
+          }
+        } else {
+          SDFG::dfgRangeMap r = it->second;
+          SDFG::RTree mt(it->first, r);
+          mt.add(SDFG::RRelation(it->first, r, SDFG::dfgEdge::SDFG_DDP));
+          rv.add(mt);
+        }
+      }
+    }
   }
+  
+  // avoid translating ROM into case
+  if(rv.get_data_signals().size())
+    rv.add(exp_rtree.assign_type(SDFG::dfgEdge::SDFG_EQU));
+  else
+    rv.add(exp_rtree.assign_type(SDFG::dfgEdge::SDFG_DAT));
 
   //std::cout << *this << *rv << std::endl;
   return rv;
