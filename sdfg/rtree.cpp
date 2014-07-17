@@ -110,6 +110,35 @@ RTree& RTree::assign_type(unsigned int t) {
   return *this;
 }
 
+// return a map of all right hand side signals
+sig_map RTree::get_all_signals() const {
+  sig_map rv;
+  typename leaf_map::const_iterator it;
+  for(it = leaves.begin(); it != leaves.end(); ++it)
+    rv[it->second.name] = rv[it->second.name].combine(it->second.select);
+  return rv;
+}
+
+// return a map of all right hand data sources
+sig_map RTree::get_data_signals() const {
+  sig_map rv;
+  typename leaf_map::const_iterator it;
+  for(it = leaves.begin(); it != leaves.end(); ++it)
+    if(it->second.type & dfgEdge::SDFG_DATA_MASK)
+      rv[it->second.name] = rv[it->second.name].combine(it->second.select);
+  return rv;
+}
+
+// return a map of all control signals
+sig_map RTree::get_control_signals() const {
+  sig_map rv;
+  typename leaf_map::const_iterator it;
+  for(it = leaves.begin(); it != leaves.end(); ++it)
+    if(it->second.type & dfgEdge::SDFG_CTL_MASK)
+      rv[it->second.name] = rv[it->second.name].combine(it->second.select);
+  return rv;
+}
+
 // normalize a tree after some modification
 void RTree::normalize() {
   leaf_map orig_tree = leaves;
@@ -168,6 +197,39 @@ void RForest::combine(const RForest& f) {
   for(it=f.trees.begin(); it!=f.trees.end(); ++it) {
     add(it->second);
   }
+}
+
+// return a map of all right hand side signals
+sig_map RForest::get_all_signals() const {
+  sig_map rv;
+  typename tree_map::iterator it;
+  for(it=f.trees.begin(); it!=f.trees.end(); ++it) {
+    sig_map tmap = it->second.get_all_signals();
+    rv.insert(tmap.begin(), tmap.end());
+  }
+  return rv;
+}
+
+// return a map of all right hand data sources
+sig_map RForest::get_data_signals() const {
+  sig_map rv;
+  typename tree_map::iterator it;
+  for(it=f.trees.begin(); it!=f.trees.end(); ++it) {
+    sig_map tmap = it->second.get_data_signals();
+    rv.insert(tmap.begin(), tmap.end());
+  }
+  return rv;
+}
+
+// return a map of all control signals
+sig_map RForest::get_control_signals() const {
+  sig_map rv;
+  typename tree_map::iterator it;
+  for(it=f.trees.begin(); it!=f.trees.end(); ++it) {
+    sig_map tmap = it->second.get_control_signals();
+    rv.insert(tmap.begin(), tmap.end());
+  }
+  return rv;
 }
 
 // get a plain map to draw SDFG

@@ -52,6 +52,7 @@ namespace SDFG {
   };
 
   typedef std::multimap<std::string, RRelation> leaf_map;
+  typedef std::map<std::string, dfgRangeMap> sig_map;
 
   class RTree {
 
@@ -71,6 +72,11 @@ namespace SDFG {
     RTree& combine(const RTree&);               // combine a map of leaves, unflattened
     void combine_seq(const RTree&);             // combined a sequential flattened tree
     RTree& assign_type(unsigned int);           // assign a type which may override the original type
+
+    // helper
+    sig_map get_all_signals() const;            // return a map of all right hand side signals 
+    sig_map get_data_signals() const;           // return a map of all right hand side data sources
+    sig_map get_control_signals() const;        // return a map of all control signals
 
     // other
     friend class RForest;
@@ -102,7 +108,14 @@ namespace SDFG {
     //builder
     void add(const RTree&);                     // add a tree
     void combine(const RForest&);               // combine with another tree 
-    const plain_map get_plain_map() const;     // get a plain map to draw SDFG
+
+    // helpers
+    sig_map get_all_signals() const;            // return a map of all right hand side signals 
+    sig_map get_data_signals() const;           // return a map of all right hand side data sources
+    sig_map get_control_signals() const;        // return a map of all control signals
+
+    const plain_map get_plain_map() const;      // get a plain map to draw SDFG
+    
   };
 
 
