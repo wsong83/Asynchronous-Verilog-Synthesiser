@@ -66,12 +66,14 @@ namespace SDFG {
     RTree(const std::string& n = "", const dfgRangeMap& select = dfgRangeMap());
     
     // builders
-
-    // when seq = true, combine sequential statements
     void add(const RRelation&);                 // add a sub tree, unflattened
     RTree& combine(const RTree&);               // combine a map of leaves, unflattened
     void combine_seq(const RTree&);             // combined a sequential flattened tree
     RTree& assign_type(unsigned int);           // assign a type which may override the original type
+
+    // accessor
+    const dfgRangeMap& get_select() const { return select; }
+    const std::string& get_name() const { return name; }
 
     // helper
     sig_map get_all_signals() const;            // return a map of all right hand side signals 
