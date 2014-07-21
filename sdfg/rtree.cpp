@@ -50,6 +50,17 @@ using boost::shared_ptr;
 RRelation::RRelation(const string& n, const dfgRangeMap& select, unsigned int t)
   : name(n), select(select), type(t) {}
 
+// stream out
+std::ostream& RRelation::streamout(std::ostream& os) const {
+  std::list<dfgRange> rlist = select.toRange();
+  std::list<dfgRange>::iterator it = rlist.begin();
+  while(it != rlist.end()) {
+    os << "{" << name << it->toString() << "<" << dfgPath::get_stype(type) << ">}";
+    ++it;
+    if(it != rlist.end()) os << ";";
+  }
+  return os;
+}
 
 /* ------------------------ RTree ----------------------- */
 
@@ -139,6 +150,20 @@ sig_map RTree::get_control_signals() const {
   return rv;
 }
 
+// stream out
+std::ostream& RTree::streamout(std::ostream& os) const {
+  os << name << select.toString() << std::endl;
+  leaf_map::const_iterator it = leaves.begin();
+  while(it != leaves.end()) {
+    it->second.streamout(os);
+    ++it;
+    if(it != leaves.end())
+      os << ";";
+  }
+  os << std::endl;
+  return os;
+}
+
 // normalize a tree after some modification
 void RTree::normalize() {
   leaf_map orig_tree = leaves;
@@ -147,7 +172,6 @@ void RTree::normalize() {
   for(it = orig_tree.begin(); it != orig_tree.end(); ++it)
     add(it->second);
 }
-
 
 /* ------------------------ RForest ----------------------- */
 
@@ -242,8 +266,17 @@ sig_map RForest::get_target_signals() const {
   return rv;
 }
 
+// stream out
+std::ostream& RForest::streamout(std::ostream& os) const {
+  tree_map::const_iterator it = trees.begin();
+  while(it != trees.end()) {
+    it->second.streamout(os);
+  }
+  return os;
+}
+
 // get a plain map to draw SDFG
-const plain_map RForest::get_plain_map() const {
+plain_map RForest::get_plain_map() const {
   plain_map rv;
 
   // build a plain map

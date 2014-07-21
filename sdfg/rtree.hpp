@@ -33,6 +33,7 @@
 #include <string>
 #include <set>
 #include <map>
+#include <ostream>
 #include "dfg_range.hpp"
 #include "dfg_edge.hpp"
 
@@ -51,6 +52,9 @@ namespace SDFG {
     const dfgRangeMap& get_select() const { return select; }
     const std::string& get_name() const { return name; }
     unsigned int get_type() const { return type; }
+
+    // helper
+    std::ostream& streamout(std::ostream&) const;
     
     friend class RTree;
     friend class RForest;
@@ -88,6 +92,8 @@ namespace SDFG {
     sig_map get_data_signals() const;           // return a map of all right hand side data sources
     sig_map get_control_signals() const;        // return a map of all control signals
 
+    std::ostream& streamout(std::ostream&) const;
+
     // other
     friend class RForest;
 
@@ -96,6 +102,9 @@ namespace SDFG {
 
   };
 
+  inline std::ostream& operator << (std::ostream& os, const RTree& t) {
+    return t.streamout(os);
+  }
 
   typedef std::multimap<std::string, RTree> tree_map;
   typedef std::list<boost::tuple<SDFG::dfgRangeMap,
@@ -104,6 +113,7 @@ namespace SDFG {
                                  > > plain_relation;
   typedef std::map<std::string, plain_relation> plain_map_item;
   typedef std::map<std::string, plain_map_item> plain_map;
+
   class RForest {
 
     //std::set<std::string> nameSet;              // store the tree names 
@@ -126,9 +136,15 @@ namespace SDFG {
     sig_map get_control_signals() const;        // return a map of all control signals
     sig_map get_target_signals() const;         // return a map of all targets
 
-    const plain_map get_plain_map() const;      // get a plain map to draw SDFG
+    std::ostream& streamout(std::ostream&) const;
+
+    plain_map get_plain_map() const;            // get a plain map to draw SDFG
     
   };
+
+  inline std::ostream& operator << (std::ostream& os, const RForest& f) {
+    return f.streamout(os);
+  }
 
 
 }
