@@ -200,7 +200,10 @@ SDFG::RForest netlist::IfState::get_rforest() const {
   }
 
   SDFG::RTree exp_rt = exp->get_rtree();
-  rv.add(exp_rt.assign_type(SDFG::dfgEdge::SDFG_LOG));
+  exp_rt.assign_type(SDFG::dfgEdge::SDFG_LOG);
+  for(SDFG::RForest::iterator it = rv.begin(); it != rv.end(); ++it) {
+    it->second.combine(exp_rt);
+  }
 
   return rv;
 }

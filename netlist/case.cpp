@@ -357,9 +357,13 @@ SDFG::RForest netlist::CaseState::get_rforest() const {
   
   // avoid translating ROM into case
   if(rv.get_data_signals().size())
-    rv.add(exp_rtree.assign_type(SDFG::dfgEdge::SDFG_EQU));
+    exp_rtree.assign_type(SDFG::dfgEdge::SDFG_EQU);
   else
-    rv.add(exp_rtree.assign_type(SDFG::dfgEdge::SDFG_DAT));
+    exp_rtree.assign_type(SDFG::dfgEdge::SDFG_DAT);
+
+  for(SDFG::RForest::iterator it = rv.begin(); it != rv.end(); ++it) {
+    it->second.combine(exp_rtree);
+  }
 
   //std::cout << *this << *rv << std::endl;
   return rv;

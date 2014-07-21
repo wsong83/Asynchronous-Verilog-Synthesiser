@@ -133,6 +133,9 @@ SDFG::RForest netlist::Assign::get_rforest() const {
   SDFG::tree_map::iterator it;
   for(it=lrf.begin(); it!=lrf.end(); ++it)
     it->second.combine(rrf);
+  std::cout << *this;
+  std::cout << lrf;
+  std::cout << "tree: " << rrf << std::endl;
   return lrf;
 }
 

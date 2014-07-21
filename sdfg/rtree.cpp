@@ -152,7 +152,7 @@ sig_map RTree::get_control_signals() const {
 
 // stream out
 std::ostream& RTree::streamout(std::ostream& os) const {
-  os << name << select.toString() << std::endl;
+  os << name << select.toString() << "<-" << leaves.size() << std::endl;
   leaf_map::const_iterator it = leaves.begin();
   while(it != leaves.end()) {
     it->second.streamout(os);
@@ -188,7 +188,7 @@ void RForest::add(const RTree& t) {
     typename tree_map::iterator it, iend;
     boost::tie(it, iend) = trees.equal_range(t.name);
     for(; it!=iend; ++it) {
-      if(it->second.select.overlap(t.select)) {
+      if(it->second.select.overlap(t.select) || it->second.select == t.select) {
         if(it->second.select == t.select) {
           it->second.combine_seq(t);
           return;
@@ -271,6 +271,7 @@ std::ostream& RForest::streamout(std::ostream& os) const {
   tree_map::const_iterator it = trees.begin();
   while(it != trees.end()) {
     it->second.streamout(os);
+    ++it;
   }
   return os;
 }

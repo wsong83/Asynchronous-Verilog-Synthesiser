@@ -118,7 +118,7 @@ netlist::SeqBlock::SeqBlock(list<pair<int, shared_ptr<Expression> > >& slist, co
   elab_inparse();
 
 }
-      
+
 netlist::SeqBlock::SeqBlock(const location& lloc, list<pair<int, shared_ptr<Expression> > >& slist, const shared_ptr<Block>& body) 
   : Block(*body)
 {
@@ -256,6 +256,8 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
   assert(db_instance.empty());
 
   SDFG::RForest rt = get_rforest();
+  std::cout << *this << std::endl;
+  std::cout << rt << std::endl;
   SDFG::sig_map cset = rt.get_control_signals();        // to store all control signals
   SDFG::plain_map rmap = rt.get_plain_map();
 
