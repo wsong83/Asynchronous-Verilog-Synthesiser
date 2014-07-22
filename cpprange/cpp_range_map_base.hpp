@@ -299,9 +299,13 @@ namespace CppRange {
   // convert to a list of ranges
   template<class T> inline
   std::list<Range<T> > RangeMapBase<T>::toRange() const {
-    std::list<Range<T> > rv = toRange(child);
-    BOOST_FOREACH(Range<T>& r, rv) 
-      r.add_upper(*this);
+    std::list<Range<T> > rv;
+    if(child.size()) {
+      rv = toRange(child);
+      BOOST_FOREACH(Range<T>& r, rv) 
+        r.add_upper(*this);
+    } else 
+      rv.push_back(Range<T>(static_cast<RangeElement<T> >(*this)));
     return rv;
   }
 

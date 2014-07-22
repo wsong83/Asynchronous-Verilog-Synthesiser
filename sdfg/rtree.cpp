@@ -52,12 +52,16 @@ RRelation::RRelation(const string& n, const dfgRangeMap& select, unsigned int t)
 
 // stream out
 std::ostream& RRelation::streamout(std::ostream& os) const {
-  std::list<dfgRange> rlist = select.toRange();
-  std::list<dfgRange>::iterator it = rlist.begin();
-  while(it != rlist.end()) {
-    os << "{" << name << it->toString() << "<" << dfgPath::get_stype(type) << ">}";
-    ++it;
-    if(it != rlist.end()) os << ";";
+  if(!select.empty()) {
+    std::list<dfgRange> rlist = select.toRange();
+    std::list<dfgRange>::iterator it = rlist.begin();
+    while(it != rlist.end()) {
+      os << "{" << name << it->toString() << "<" << dfgPath::get_stype(type) << ">}";
+      ++it;
+      if(it != rlist.end()) os << ";";
+    }
+  } else {
+    os << "{" << name << select.toString() << "<" << dfgPath::get_stype(type) << ">}";
   }
   return os;
 }
@@ -152,7 +156,7 @@ sig_map RTree::get_control_signals() const {
 
 // stream out
 std::ostream& RTree::streamout(std::ostream& os) const {
-  os << name << select.toString() << "<-" << leaves.size() << std::endl;
+  os << name << select.toString() << "<-" << std::endl;
   leaf_map::const_iterator it = leaves.begin();
   while(it != leaves.end()) {
     it->second.streamout(os);

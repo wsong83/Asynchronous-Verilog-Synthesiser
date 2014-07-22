@@ -56,6 +56,7 @@ namespace CppRange {
     // constructors
     
     Range() {}
+    explicit Range(const RangeElement<T>&);             // single dimension construction 
     explicit Range(const std::list<RangeElement<T> >&); // construct from a list of 
                                                         // RangeElements
     explicit Range(const std::vector<RangeElement<T> >&);
@@ -132,6 +133,11 @@ namespace CppRange {
   // implementation of class methods
 
   // constructors
+
+  // construct from a list of RangeElements
+  template<class T> inline
+  Range<T>::Range(const RangeElement<T>& l)
+  {r_array.push_back(l); } 
 
   // construct from a list of RangeElements
   template<class T> inline

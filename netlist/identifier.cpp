@@ -460,11 +460,12 @@ void netlist::VIdentifier::replace_variable(const VIdentifier& var, const VIdent
 }
 
 SDFG::RTree netlist::VIdentifier::get_rtree() const {
-  SDFG::RTree sel_tree = get_select().get_rtree();
+  SDFG::RTree rv;
   std::pair<string, SDFG::dfgRange> npair = 
     SDFG::divide_signal_name(SDFG::get_full_selected_name(get_selected_name(),
                                                           toString(get_full_range())));
-  SDFG::RTree rv(npair.first, SDFG::dfgRangeMap(npair.second));
+  SDFG::RRelation var(npair.first, SDFG::dfgRangeMap(npair.second));
+  rv.add(var);
   rv.combine(get_select().get_rtree().assign_type(SDFG::dfgEdge::SDFG_ADR));
   return rv;
 }
