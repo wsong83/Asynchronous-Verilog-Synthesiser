@@ -30,6 +30,7 @@
 #include "shell/env.h"
 #include <algorithm>
 #include <boost/foreach.hpp>
+#include <boost/tuple/tuple.hpp>
 #include "sdfg/sdfg.hpp"
 
 using namespace netlist;
@@ -484,36 +485,33 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
   // put all ports into the list
   for_each(db_port.begin_order(), db_port.end_order(), 
            [&](const pair<const VIdentifier, shared_ptr<Port> >& m) {
-             shared_ptr<dfgNode> n = G->add_node(m.first.get_name() + "_P", dfgNode::SDFG_PORT);
-             switch(m.second->get_dir()) {
-             case  1: n->type = dfgNode::SDFG_OPORT; break;
-             case -1: n->type = dfgNode::SDFG_IPORT; break;
-             default: ;
-             }
-             n->ptr.insert(m.second);
-           });
+             VIdentifier& pname = m.second->name;
+             string psig_full_name = 
+               SDFG::get_full_selected_name(pname.get_selected_name(),
+                                            toString(pname.get_full_range()));
+             shared_ptr<dfgNode> nport = G->add_node(pname.get_name() + "_P", dfgNode::SDFG_PORT);
+             nport->ptr.insert(m.second);
 
-  // put all signals into the list
-  for_each(db_var.begin_order(), db_var.end_order(),
-           [&](const pair<const VIdentifier, shared_ptr<Variable> >& m) {
-             shared_ptr<dfgNode> n = G->add_node(m.first.get_name(), dfgNode::SDFG_DF);
-             n->ptr.insert(m.second);
-             m.second->pDFGNode = n;
-           });
-  
-  // link port to signals
-  for_each(db_port.begin_order(), db_port.end_order(), 
-           [&](const pair<const VIdentifier, shared_ptr<Port> >& m) {
+             // also add the corresponding signal and connect them
+             shared_ptr<dfgNode> nsig = G->add_node(psig_full_name, dfgNode::SDFG_DF);
+             nsig->ptr.insert(db_var.find(m.first));
+             
+             // connect signals to ports
              switch(m.second->get_dir()) {
-             case  1:           // output
-               G->add_edge(m.first.get_name(), dfgEdge::SDFG_ASS, m.first.get_name(), m.first.get_name() + "_P"); 
+             case  1: {         // output
+               nport->type = dfgNode::SDFG_OPORT; 
+               G->add_edge(m.first.get_name(), dfgEdge::SDFG_ASS, nsig, nport);
                break;
-             case -1:           // input
-               G->add_edge(m.first.get_name(), dfgEdge::SDFG_ASS, m.first.get_name() + "_P", m.first.get_name()); 
+             }
+             case -1: {         // input
+               nport->type = dfgNode::SDFG_IPORT; 
+               G->add_edge(m.first.get_name(), dfgEdge::SDFG_ASS, nport, nsig);
                break;
-             default:           // inout
-               G->add_edge(m.first.get_name(), dfgEdge::SDFG_ASS, m.first.get_name(), m.first.get_name() + "_P"); 
-               G->add_edge(m.first.get_name(), dfgEdge::SDFG_ASS, m.first.get_name() + "_P", m.first.get_name());
+             }
+             default: {         // inout
+               G->add_edge(m.first.get_name(), dfgEdge::SDFG_ASS, nsig, nport);
+               G->add_edge(m.first.get_name(), dfgEdge::SDFG_ASS, nport, nsig);
+             }
              }
            });
 
@@ -544,6 +542,8 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
              m.second->gen_sdfg(G);
            });
   
+  G->connect_partial_nodes();
+
   G->check_integrity();
 
   DFG = G;
@@ -558,7 +558,7 @@ void netlist::Module::assign_dataDFG() {
            [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
              if(m.second->type == Instance::modu_inst) {
                shared_ptr<Module> subMod = G_ENV->find_module(m.second->mname);
-               shared_ptr<dfgNode> dfgMod = DataDFG->get_node(m.second->name.get_name());
+               shared_ptr<dfgNode> dfgMod = DataDFG->get_node(SDFG::divide_signal_name(m.second->name.get_name()));
                assert(subMod);
                if(subMod && dfgMod && dfgMod->child) {
                  subMod->DataDFG = dfgMod->child;
@@ -573,6 +573,9 @@ std::set<string> netlist::Module::extract_fsms(bool verbose, bool force,
                                                unsigned int& num_n,
                                                unsigned int& num_r,
                                                unsigned int& num_pf) {
+
+  G_ENV->error("SDFG-FSM-0", name.get_name());
+
   if(!fsm_extracted || force) {
     assert(DFG);
     
@@ -618,7 +621,7 @@ double netlist::Module::get_ratio_state_preserved_oport(map<VIdentifier, pair<bo
   DataBase<VIdentifier, Port, true>::DBTL::iterator pit, pend;
   for(pit = db_port.begin_order(), pend = db_port.end_order(); pit != pend; ++pit) {
     if(pit->second->get_dir() >= 0) { // output or inout
-      shared_ptr<SDFG::dfgNode> pnode = DFG->get_node(pit->second->name.get_name() + "_P");
+      shared_ptr<SDFG::dfgNode> pnode = DFG->get_node(SDFG::divide_signal_name(pit->second->name.get_name() + "_P"));
       bool is_state_preserved = false; // preserve state
       bool has_ff_input = false;
       string data_source("");
@@ -659,7 +662,7 @@ double netlist::Module::get_ratio_state_preserved_oport(map<VIdentifier, pair<bo
         port_ana[pit->first] = pair<bool, string>(is_state_preserved, data_source);
         if(is_state_preserved) num_of_spports++;
       } else {
-        port_ana[pit->first] = pair<bool, string>(false, "[through wire]");
+        port_ana[pit->first] = pair<bool, string>(false, string("[through wire]"));
       }
     }
   }
@@ -719,7 +722,7 @@ void netlist::Module::partition() {
     std::list<shared_ptr<SDFG::dfgNode> > oports = DataDFG->get_list_of_nodes(SDFG::dfgNode::SDFG_OPORT, true);
     BOOST_FOREACH(shared_ptr<SDFG::dfgNode> op, oports) {
       // type the output port
-      shared_ptr<SDFG::dfgNode> op_dfg = DFG->get_node(op->get_hier_name());
+      shared_ptr<SDFG::dfgNode> op_dfg = DFG->get_node(SDFG::divide_signal_name(op->get_hier_name()));
       if(op_dfg->get_in_edges_type() == SDFG::dfgEdge::SDFG_ASS)
         op_dfg = op_dfg->get_in_nodes().front();
 
@@ -778,7 +781,7 @@ void netlist::Module::partition() {
         } else {
           std::list<shared_ptr<SDFG::dfgPath> > idpaths = op->get_in_paths_fast_cb();
           BOOST_FOREACH(shared_ptr<SDFG::dfgPath> dp, idpaths) {
-            shared_ptr<dfgNode> dn = dp->src->pg->pModule->DFG->get_node(dp->src->get_hier_name());
+            shared_ptr<dfgNode> dn = dp->src->pg->pModule->DFG->get_node(SDFG::divide_signal_name(dp->src->get_hier_name()));
             std::list<shared_ptr<SDFG::dfgPath> > ipaths = dn->get_in_paths_fast_cb();
             BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, ipaths) {
               if(p->type & (SDFG::dfgEdge::SDFG_LOG | SDFG::dfgEdge::SDFG_EQU) && p->src->is_fsm())
@@ -791,7 +794,7 @@ void netlist::Module::partition() {
         std::set<shared_ptr<SDFG::dfgNode> > t_nodes;
         std::list<shared_ptr<SDFG::dfgPath> > odpaths = op->get_out_paths_fast_cb();
         BOOST_FOREACH(shared_ptr<SDFG::dfgPath> p, odpaths) {
-          shared_ptr<SDFG::dfgNode> tn = p->tar->pg->pModule->DFG->get_node(p->tar->get_hier_name());
+          shared_ptr<SDFG::dfgNode> tn = p->tar->pg->pModule->DFG->get_node(SDFG::divide_signal_name(p->tar->get_hier_name()));
           if(tn->type & SDFG::dfgNode::SDFG_FF)
             t_nodes.insert(tn);
         }

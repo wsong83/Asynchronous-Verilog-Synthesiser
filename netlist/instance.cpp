@@ -356,7 +356,7 @@ bool netlist::Instance::elaborate(std::deque<boost::shared_ptr<Module> >& mfifo,
 
 void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
   // find out the node
-  shared_ptr<dfgNode> node = G->get_node(name.get_name());
+  shared_ptr<dfgNode> node = G->get_node(SDFG::divide_signal_name(name.get_name()));
   assert(node);
   
   BOOST_FOREACH(shared_ptr<PortConn> m, port_list) {
@@ -364,17 +364,29 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
       switch(m->type) {
       case PortConn::CEXP: {    // expression
         shared_ptr<dfgNode> exp_node = G->add_node(UniName::uni_name(), dfgNode::SDFG_COMB);
-        shared_ptr<SDFG::RTree> exp_tree = m->exp->get_rtree();
-        BOOST_FOREACH(SDFG::RTree::rtree_edge_type& e, exp_tree->tree[SDFG::RTree::DTarget]) {
-          G->add_edge_multi(e.first, e.second, e.first, exp_node->name);
+        SDFG::RTree exp_tree = m->exp->get_rtree();
+        for(SDFG::RTree::iterator it=exp_tree.begin(); it!=exp_tree.end(); ++it) {
+          list<SDFG::dfgRange> rlist = it->second.get_select().toRange();
+          BOOST_FOREACH(SDFG::dfgRange r, rlist) {
+            shared_ptr<SDFG::dfgNode> pnode;
+            if(!G->exist(pair<string, SDFG::dfgRange>(it->second.get_name(), r)))
+              pnode = G->add_node(SDFG::combine_signal_name(it->second.get_name(),r), dfgNode::SDFG_DF);
+            else
+              pnode = G->get_node(pair<string, SDFG::dfgRange>(it->second.get_name(), r));
+            G->add_edge_multi(it->second.get_name(), it->second.get_type(), pnode, exp_node);
+          }
         }
-        G->add_edge(exp_node->name, dfgEdge::SDFG_ASS, exp_node->name, node->name);
+        G->add_edge(exp_node->name, dfgEdge::SDFG_ASS, exp_node, node);
         node->add_port_sig(m->pname.get_name() + "_P", exp_node->name);
         break;
       }
       case PortConn::CVAR: {    // variable
-        G->add_edge(m->var.get_name(), dfgEdge::SDFG_ASS, m->var.get_name(), node->name);
-        node->add_port_sig(m->pname.get_name() + "_P", m->var.get_name());
+        string var_full_name = SDFG::get_full_selected_name(m->var.get_selected_name(), 
+                                                            toString(m->var.get_full_range()));
+        if(!G->exist(SDFG::divide_signal_name(var_full_name)))
+          G->add_node(var_full_name, dfgNode::SDFG_DF);
+        G->add_edge(m->var.get_name(), dfgEdge::SDFG_ASS, var_full_name, node);
+        node->add_port_sig(m->pname.get_name() + "_P", var_full_name);
         break;
       }
       case PortConn::CNUM: {    // constant number
@@ -389,8 +401,12 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
     if(m->get_dir() >= 0) {     // output
       switch(m->type) {
       case PortConn::CVAR: {    // variable
-        G->add_edge(m->pname.get_name(), dfgEdge::SDFG_ASS, node->name, m->var.get_name());
-        node->add_port_sig(m->pname.get_name() + "_P", m->var.get_name());
+        string var_full_name = SDFG::get_full_selected_name(m->var.get_selected_name(), 
+                                                            toString(m->var.get_full_range()));
+        if(!G->exist(SDFG::divide_signal_name(var_full_name)))
+          G->add_node(var_full_name, dfgNode::SDFG_DF);
+        G->add_edge(m->pname.get_name(), dfgEdge::SDFG_ASS, node, var_full_name);
+        node->add_port_sig(m->pname.get_name() + "_P", var_full_name);
         break;
       }
       case PortConn::COPEN: {   // open

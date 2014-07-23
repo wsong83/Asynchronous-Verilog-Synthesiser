@@ -50,6 +50,7 @@ namespace SDFG {
     typedef std::pair<const std::string, std::string> port2sig_type;
     dfgGraph* pg;                                       // a pointer pointing to the father Graph
     std::string name;                                   // description of this node
+    dfgRange select;                                    // the range select
     std::list<std::string> hier;                        // hierarchy prefix (name of flattened modules) 
     vertex_descriptor id;                               // node id
     unsigned int node_index;   // when nodes are stored in listS, vertext_descriptors are no longer
@@ -95,8 +96,7 @@ namespace SDFG {
     
 
     dfgNode(): pg(NULL), node_index(0), type(SDFG_DF), dp_type(SDFG_DP_NONE), is_annotated(false), position(0,0), bbox(0,0) {}
-    dfgNode(const std::string& n, node_type_t t = SDFG_DF) : 
-      pg(NULL), name(n), node_index(0), type(t), dp_type(SDFG_DP_NONE), is_annotated(false), position(0,0), bbox(0,0) {}
+    dfgNode(const std::string&, node_type_t t = SDFG_DF);
     dfgNode* copy() const;      // copy content, not deep copy, orphan node generation
     void write(pugi::xml_node&, std::list<boost::shared_ptr<dfgGraph> >&) const;
     void write(void *, ogdf::GraphAttributes *);

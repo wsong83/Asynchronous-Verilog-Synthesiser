@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2013-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -158,8 +158,8 @@ bool shell::CMD::CMDSetPortType::exec ( const std::string& str, Env * pEnv){
   }
 
   // find the port 
-  shared_ptr<SDFG::dfgNode> node = G->search_node(arg.sPort+"_P");
-  if(!node) {
+  std::set<shared_ptr<SDFG::dfgNode> > node = G->search_node(arg.sPort+"_P");
+  if(node.empty()) {
     gEnv.stdOs << "Error: the port \"" << arg.sPort << "\" cannot be found." << endl;
     return false;
   }
@@ -175,7 +175,8 @@ bool shell::CMD::CMDSetPortType::exec ( const std::string& str, Env * pEnv){
     return false;
   }
 
-  node->dp_type = ntype;
+  BOOST_FOREACH(shared_ptr<SDFG::dfgNode> n, node)
+    n->dp_type = ntype;
   return true;
 
 }

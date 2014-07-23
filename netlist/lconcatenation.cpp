@@ -127,10 +127,17 @@ void netlist::LConcatenation::db_expunge() {
   BOOST_FOREACH(VIdentifier& m, data) m.db_expunge();
 }
 
-shared_ptr<SDFG::RTree> netlist::LConcatenation::get_rtree() const {
-  shared_ptr<SDFG::RTree> rv(new SDFG::RTree(false));
+SDFG::RForest netlist::LConcatenation::get_rforest() const {
+  SDFG::RForest rv;
   BOOST_FOREACH(const VIdentifier& m, data) {
-    rv->add_tree(m.get_select().get_rtree(), m.get_name(), SDFG::dfgEdge::SDFG_ADR); 
+    std::pair<string, SDFG::dfgRange> npair = 
+      SDFG::divide_signal_name(SDFG::get_full_selected_name(m.get_selected_name(),
+                                                            toString(m.get_full_range())));
+
+    SDFG::RTree t(npair.first, SDFG::dfgRangeMap(npair.second));
+    SDFG::RTree adr_exp = m.get_select().get_rtree().assign_type(SDFG::dfgEdge::SDFG_ADR);
+    t.combine(adr_exp);
+    rv.add(t);
   }
   return rv;
 }

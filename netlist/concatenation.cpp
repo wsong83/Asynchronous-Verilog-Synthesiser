@@ -85,13 +85,13 @@ void netlist::ConElem::replace_variable(const VIdentifier& var, shared_ptr<Expre
   }  
 }
 
-shared_ptr<SDFG::RTree> netlist::ConElem::get_rtree() const {
-  shared_ptr<SDFG::RTree> rv(new SDFG::RTree(false));
+SDFG::RTree netlist::ConElem::get_rtree() const {
+  SDFG::RTree rv("");
   if(exp)
-    rv->add_tree(exp->get_rtree());
+    rv.combine(exp->get_rtree());
   
   BOOST_FOREACH(shared_ptr<ConElem> m, con) {
-    rv->add_tree(m->get_rtree());
+    rv.combine(m->get_rtree());
   }
   return rv;
 }
@@ -298,10 +298,10 @@ void netlist::Concatenation::replace_variable(const VIdentifier& var, shared_ptr
   }
 }
 
-shared_ptr<SDFG::RTree> netlist::Concatenation::get_rtree() const {
-  shared_ptr<SDFG::RTree> rv(new SDFG::RTree());
+SDFG::RTree netlist::Concatenation::get_rtree() const {
+  SDFG::RTree rv("");
   BOOST_FOREACH(shared_ptr<ConElem> d, data) {
-    rv->add_tree(d->get_rtree());
+    rv.combine(d->get_rtree());
   }
   return rv;
 }

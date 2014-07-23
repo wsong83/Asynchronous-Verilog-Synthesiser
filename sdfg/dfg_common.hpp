@@ -73,4 +73,6 @@ namespace netlist {
   class Module; 
 } 
 
+#include "dfg_range.hpp"
+
 #endif

@@ -436,13 +436,13 @@ void netlist::Operation::reduce() {
   }
 }
 
-shared_ptr<SDFG::RTree> netlist::Operation::get_rtree() const {
+SDFG::RTree netlist::Operation::get_rtree() const {
 
   switch(otype) {
   case oVar: return get_var().get_rtree();
   case oCon: return get_con().get_rtree();
   case oNULL:
-  case oNum: return shared_ptr<SDFG::RTree>(new SDFG::RTree());
+  case oNum: return SDFG::RTree("");
   case oFun: return get_fun().get_rtree();
   case oUPos:
   case oUNeg:
@@ -454,9 +454,7 @@ shared_ptr<SDFG::RTree> netlist::Operation::get_rtree() const {
   case oUNor:
   case oUXor:
   case oUNxor: 
-    return shared_ptr<SDFG::RTree>(new SDFG::RTree(child[0]->get_rtree(), 
-                                                   SDFG::dfgEdge::SDFG_DAT)
-                                   );
+    return child[0]->get_rtree().assign_type(SDFG::dfgEdge::SDFG_DAT);
   case oPower:
   case oTime:
   case oDiv:
@@ -467,46 +465,48 @@ shared_ptr<SDFG::RTree> netlist::Operation::get_rtree() const {
   case oAnd:
   case oXor:
   case oNxor:
-  case oOr:
-    return shared_ptr<SDFG::RTree>(new SDFG::RTree(child[0]->get_rtree(),
-                                                   child[1]->get_rtree(),
-                                                   SDFG::dfgEdge::SDFG_DAT)
-                                   );
+  case oOr: {
+    SDFG::RTree rv = child[0]->get_rtree();
+    rv.combine(child[1]->get_rtree());
+    return rv.assign_type(SDFG::dfgEdge::SDFG_DAT);
+  }
   case oLAnd:
-  case oLOr: 
-    return shared_ptr<SDFG::RTree>(new SDFG::RTree(child[0]->get_rtree(),
-                                                   child[1]->get_rtree(),
-                                                   SDFG::dfgEdge::SDFG_LOG)
-                                   );
+  case oLOr: {
+    SDFG::RTree rv = child[0]->get_rtree();
+    rv.combine(child[1]->get_rtree());
+    return rv.assign_type(SDFG::dfgEdge::SDFG_LOG);
+  }
   case oAdd:
-  case oMinus:
-    return shared_ptr<SDFG::RTree>(new SDFG::RTree(child[0]->get_rtree(),
-                                                   child[1]->get_rtree(),
-                                                   SDFG::dfgEdge::SDFG_CAL)
-                                   );
+  case oMinus: {
+    SDFG::RTree rv = child[0]->get_rtree();
+    rv.combine(child[1]->get_rtree());
+    return rv.assign_type(SDFG::dfgEdge::SDFG_CAL);
+  }
   case oLess:
   case oLe:
   case oGreat:
-  case oGe:
-    return shared_ptr<SDFG::RTree>(new SDFG::RTree(child[0]->get_rtree(),
-                                                   child[1]->get_rtree(),
-                                                   SDFG::dfgEdge::SDFG_CMP)
-                                   );
+  case oGe: {
+    SDFG::RTree rv = child[0]->get_rtree();
+    rv.combine(child[1]->get_rtree());
+    return rv.assign_type(SDFG::dfgEdge::SDFG_CMP);
+  }
   case oEq:
   case oNeq:
   case oCEq:
-  case oCNeq:
-    return shared_ptr<SDFG::RTree>(new SDFG::RTree(child[0]->get_rtree(),
-                                                   child[1]->get_rtree(),
-                                                   SDFG::dfgEdge::SDFG_EQU)
-                                   );
-  case oQuestion:
-    return shared_ptr<SDFG::RTree>(new SDFG::RTree(child[0]->get_rtree(),
-                                                   child[1]->get_rtree(),
-                                                   child[2]->get_rtree())
-                                   );
+  case oCNeq: {
+    SDFG::RTree rv = child[0]->get_rtree();
+    rv.combine(child[1]->get_rtree());
+    return rv.assign_type(SDFG::dfgEdge::SDFG_EQU);
+  }
+  case oQuestion: {
+    SDFG::RTree rv = child[0]->get_rtree().assign_type(SDFG::dfgEdge::SDFG_LOG);
+    rv.combine(child[1]->get_rtree());
+    rv.combine(child[2]->get_rtree());
+    return rv;
+  }
   default:
     assert(0 == "wrong operation type!");
+    return SDFG::RTree();
   }  
 }
 

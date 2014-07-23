@@ -229,10 +229,10 @@ namespace {
   unsigned int port_type(shared_ptr<SDFG::dfgGraph> g, shared_ptr<SDFG::dfgGraph> dg, 
                          shared_ptr<SDFG::dfgNode> dport, unsigned int indent, bool verbose) {
     unsigned int ptype = 0;
-    
+   
     // exam for memory interfaces
     if(dport->type == SDFG::dfgNode::SDFG_OPORT) {
-      shared_ptr<SDFG::dfgNode> port = g->get_node(dport->get_hier_name());
+      shared_ptr<SDFG::dfgNode> port = g->get_node(SDFG::divide_signal_name(dport->get_hier_name()));
       if(port->get_in_edges_type() == SDFG::dfgEdge::SDFG_ASS)
         port = port->get_in_nodes().front();
       
@@ -269,7 +269,7 @@ namespace {
     }
 
     if(!(ptype & IO_MEM) && dport->pg->father != NULL) {     // check for handshake, new
-      shared_ptr<SDFG::dfgNode> port = g->get_node(dport->get_hier_name());
+      shared_ptr<SDFG::dfgNode> port = g->get_node(SDFG::divide_signal_name(dport->get_hier_name()));
 
       // find the connected flip-flops
       std::set<shared_ptr<SDFG::dfgNode> > connNodes; // connect nodes in other modules

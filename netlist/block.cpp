@@ -617,10 +617,10 @@ bool netlist::Block::elaborate(std::set<shared_ptr<NetComp> >&,
   return true;
 }
 
-shared_ptr<SDFG::RTree> netlist::Block::get_rtree() const {
-  shared_ptr<SDFG::RTree> rv(new SDFG::RTree(false));
+SDFG::RForest netlist::Block::get_rforest() const {
+  SDFG::RForest rv;
   BOOST_FOREACH(const shared_ptr<NetComp>& m, statements) {
-    rv->add_tree(m->get_rtree());
+    rv.combine(m->get_rforest());
   }
   return rv;
 }
@@ -692,7 +692,7 @@ shared_ptr<Expression> netlist::Block::get_combined_expression(const VIdentifier
     shared_ptr<Expression> mexp = stm->get_combined_expression(target, s_set);
     if(mexp) {
       if(rv) {
-        G_ENV->error("ANA-SSA-0", get_module()->DFG->get_node(target.get_name())->get_full_name(), toString(*rv), toString(*mexp));
+        G_ENV->error("ANA-SSA-0", get_module()->DFG->get_node(SDFG::divide_signal_name(target.get_name()))->get_full_name(), toString(*rv), toString(*mexp));
       }
       //assert(!rv);
       rv = mexp;

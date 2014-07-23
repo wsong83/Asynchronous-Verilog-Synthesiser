@@ -147,7 +147,7 @@ namespace netlist {
     NETLIST_ELABORATE_DECL;
     NETLIST_GEN_SDFG;
     NETLIST_REPLACE_VARIABLE;
-    virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
+    virtual SDFG::RForest get_rforest() const;
     
     // analysis
     // return the combined expression assigning a signal

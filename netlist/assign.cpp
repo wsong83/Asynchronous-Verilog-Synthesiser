@@ -31,6 +31,7 @@
 #include "sdfg/sdfg.hpp"
 #include "sdfg/rtree.hpp"
 #include <boost/foreach.hpp>
+#include <boost/tuple/tuple.hpp>
 
 using namespace netlist;
 using std::ostream;
@@ -94,20 +95,44 @@ bool netlist::Assign::elaborate(std::set<shared_ptr<NetComp> >&,
 }
 
 void netlist::Assign::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
-  shared_ptr<SDFG::RTree> ass_tree = get_rtree();
-  BOOST_FOREACH(SDFG::RTree::sub_tree_type& t, ass_tree->tree) {
-    assert(t.first != SDFG::RTree::DTarget); 
-    BOOST_FOREACH(SDFG::RTree::rtree_edge_type& e, t.second) {
-      G->add_edge_multi(e.first, e.second, e.first, t.first);
+  SDFG::plain_map rmap = get_rforest().get_plain_map();
+  SDFG::plain_map::iterator rm_it;
+  for(rm_it = rmap.begin(); rm_it != rmap.end(); ++rm_it) {
+    SDFG::plain_map_item::iterator rm_item_it;
+    for(rm_item_it = rm_it->second.begin(); rm_item_it != rm_it->second.end(); ++rm_item_it) {
+      SDFG::plain_relation::iterator rm_r_it;
+      for(rm_r_it = rm_item_it->second.begin(); rm_r_it != rm_item_it->second.end(); ++rm_r_it) {
+        string tar(rm_it->first), src(rm_item_it->first);
+        list<SDFG::dfgRange> tarRanges = boost::get<0>(*rm_r_it).toRange();
+        list<SDFG::dfgRange> srcRanges = boost::get<1>(*rm_r_it).toRange();
+        unsigned int rtype = boost::get<2>(*rm_r_it);
+        BOOST_FOREACH(SDFG::dfgRange& tr, tarRanges) {
+          shared_ptr<SDFG::dfgNode> ptar;
+          if(!G->exist(std::pair<string, SDFG::dfgRange>(tar, tr)))
+            ptar = G->add_node(SDFG::combine_signal_name(tar,tr), SDFG::dfgNode::SDFG_DF);
+          else
+            ptar = G->get_node(std::pair<string, SDFG::dfgRange>(tar, tr));
+          ptar->ptr.insert(get_sp());
+          BOOST_FOREACH(SDFG::dfgRange& sr, srcRanges) {
+            shared_ptr<SDFG::dfgNode> psrc;
+            if(!G->exist(std::pair<string, SDFG::dfgRange>(src, sr)))
+              psrc = G->add_node(SDFG::combine_signal_name(src,sr), SDFG::dfgNode::SDFG_DF);
+            else
+              psrc = G->get_node(std::pair<string, SDFG::dfgRange>(src, sr));
+            G->add_edge_multi(src, rtype, psrc, ptar);
+          }
+        }
+      }
     }
-    G->get_node(t.first)->ptr.insert(get_sp());
   }
 }
 
-shared_ptr<SDFG::RTree> netlist::Assign::get_rtree() const {
-  shared_ptr<SDFG::RTree> lrf = lval->get_rtree();
-  shared_ptr<SDFG::RTree> rrf = rexp->get_rtree();
-  lrf->combine(rrf);
+SDFG::RForest netlist::Assign::get_rforest() const {
+  SDFG::RForest lrf = lval->get_rforest();
+  SDFG::RTree rrf = rexp->get_rtree();
+  SDFG::tree_map::iterator it;
+  for(it=lrf.begin(); it!=lrf.end(); ++it)
+    it->second.combine(rrf);
   return lrf;
 }
 
@@ -147,17 +172,23 @@ void netlist::Assign::replace_variable(const VIdentifier& var, const VIdentifier
 }
 
 shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifier& target, std::set<string> s_set) {
-  shared_ptr<SDFG::RTree> rt = get_rtree();
+  // 16/07/2014  rewrite rtree and temporarily disable this method
+  //shared_ptr<SDFG::RTree> rt = get_rtree();
+  SDFG::RTree rt = get_rtree();
   shared_ptr<Expression> rv;
-  if(rt->tree.count(target.get_name())) {
+  // 16/07/2014  rewrite rtree and temporarily disable this method
+  //if(rt->tree.count(target.get_name())) {
+  if(false) {
     //std::cout << *this << std::endl;
     rv.reset(rexp->deep_copy(NULL));
     // handle all signals in the expression
-    std::set<string> sig_set = rt->get_all(target.get_name());
+    // 16/07/2014  rewrite rtree and temporarily disable this method
+    //std::set<string> sig_set = rt->get_all(target.get_name());
+    std::set<string> sig_set;
     BOOST_FOREACH(const string& sname, sig_set) {
       if(sname != target.get_name()) { // other signals
         //std::cout << sname << std::endl;
-        shared_ptr<SDFG::dfgNode> pnode = get_module()->DFG->get_node(sname);
+        shared_ptr<SDFG::dfgNode> pnode = get_module()->DFG->get_node(SDFG::divide_signal_name(sname));
         assert(pnode);
         bool found_source = false;
         while(!found_source) {
@@ -194,7 +225,7 @@ shared_ptr<Expression> netlist::Assign::get_combined_expression(const VIdentifie
         }
         assert(pnode);
         if(pnode->type & SDFG::dfgNode::SDFG_LATCH) {
-          G_ENV->error("ANA-SSA-1", pnode->get_full_name(), get_module()->DFG->get_node(sname)->get_full_name());
+          G_ENV->error("ANA-SSA-1", pnode->get_full_name(), get_module()->DFG->get_node(SDFG::divide_signal_name(sname))->get_full_name());
         }
         if(s_set.count(pnode->get_full_name())) {
           G_ENV->error("ANA-SSA-2", pnode->get_full_name());
