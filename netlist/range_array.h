@@ -82,7 +82,7 @@ namespace netlist {
     unsigned int get_width(const RangeArray&);
     void set_width(const unsigned int&, const RangeArray&);
     NETLIST_REPLACE_VARIABLE;
-    virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
+    virtual SDFG::RTree get_rtree() const;
 
   private:
     bool const_reduced;

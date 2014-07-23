@@ -34,16 +34,12 @@
 namespace SDFG {
 
   typedef CppRange::RangeElement<int> dfgRangeElement;
-
-  class dfgRange : public CppRange::Range<int> {
-  public:
-    dfgRange() {}
-    dfgRange(const std::string& rexp) 
-      : Range<int>(rexp) {}
-  };
+  typedef CppRange::Range<int> dfgRange;
+  typedef CppRange::RangeMap<int> dfgRangeMap;
 
   // helper function to handle the range of signals
   std::pair<std::string, dfgRange> divide_signal_name(const std::string&);
+  std::string combine_signal_name(const std::string&, const dfgRange&);
 
   // helper function to fill the missing lower dimensions
   std::string get_full_selected_name(const std::string& selected_name, 

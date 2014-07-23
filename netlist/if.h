@@ -54,7 +54,7 @@ namespace netlist {
     NETLIST_ELABORATE_DECL;
     NETLIST_REPLACE_VARIABLE;
     virtual boost::shared_ptr<Expression> get_combined_expression(const VIdentifier&, std::set<std::string>);
-    virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
+    virtual SDFG::RForest get_rforest() const;
     virtual boost::shared_ptr<Block> unfold();	// unfold for loops in block and generate blocks
 
     //data

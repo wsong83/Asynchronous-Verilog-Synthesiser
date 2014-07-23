@@ -72,6 +72,11 @@ pair<string, dfgRange> SDFG::divide_signal_name(const string& sname) {
   
 }
 
+std::string SDFG::combine_signal_name(const string& root_name, const dfgRange& select) {
+  if(select.empty()) return root_name;
+  else return root_name + select.toString();
+}
+
 string SDFG::get_full_selected_name(const string& selected_name, const string& full_range) {
   string sname;
   dfgRange select;

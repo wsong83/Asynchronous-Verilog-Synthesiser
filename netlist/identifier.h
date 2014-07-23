@@ -193,7 +193,7 @@ namespace netlist {
     virtual VIdentifier* deep_copy(NetComp*) const;
     NETLIST_DB_DECL;
     NETLIST_REPLACE_VARIABLE;
-    virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
+    virtual SDFG::RTree get_rtree() const;
     virtual unsigned int get_width() const;
 
   private:
@@ -204,7 +204,6 @@ namespace netlist {
     unsigned int uid;              /* used as the key to search this variable as fanin or fanout */
   };
   NETLIST_STREAMOUT(VIdentifier);
-
 
 }
 

@@ -27,6 +27,7 @@
  */
 
 #include "component.h"
+#include "sdfg/rtree.hpp"
 
 using namespace netlist;
 using std::ostream;
@@ -138,10 +139,16 @@ void netlist::NetComp::gen_sdfg(shared_ptr<SDFG::dfgGraph>) {
   assert(0 == "gen_sdfg() of NetComp is used");
 } 
 
-shared_ptr<SDFG::RTree> netlist::NetComp::get_rtree() const {
+SDFG::RTree netlist::NetComp::get_rtree() const {
   std::cerr << "ERROR!!, the get_rtree() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << endl;
   assert(0 == "get_rtree() of NetComp is used");
-  return shared_ptr<SDFG::RTree>();
+  return SDFG::RTree();
+}
+
+SDFG::RForest netlist::NetComp::get_rforest() const {
+  std::cerr << "ERROR!!, the get_rforest() of NetComp is used!!! The component type is \"" << get_type_name() << "\"." << endl;
+  assert(0 == "get_rforest() of NetComp is used");
+  return SDFG::RForest();
 }
 
 shared_ptr<NetComp> netlist::NetComp::get_sp(){

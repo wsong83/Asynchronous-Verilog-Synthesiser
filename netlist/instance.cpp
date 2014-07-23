@@ -364,11 +364,17 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
       switch(m->type) {
       case PortConn::CEXP: {    // expression
         shared_ptr<dfgNode> exp_node = G->add_node(UniName::uni_name(), dfgNode::SDFG_COMB);
-        shared_ptr<SDFG::RTree> exp_tree = m->exp->get_rtree();
-        BOOST_FOREACH(SDFG::RTree::rtree_edge_type& e, exp_tree->tree[SDFG::RTree::DTarget]) {
-          if(!G->exist(SDFG::divide_signal_name(e.first)))
-            G->add_node(e.first, dfgNode::SDFG_DF);
-          G->add_edge_multi(e.first, e.second, e.first, exp_node);
+        SDFG::RTree exp_tree = m->exp->get_rtree();
+        for(SDFG::RTree::iterator it=exp_tree.begin(); it!=exp_tree.end(); ++it) {
+          list<SDFG::dfgRange> rlist = it->second.get_select().toRange();
+          BOOST_FOREACH(SDFG::dfgRange r, rlist) {
+            shared_ptr<SDFG::dfgNode> pnode;
+            if(!G->exist(pair<string, SDFG::dfgRange>(it->second.get_name(), r)))
+              pnode = G->add_node(SDFG::combine_signal_name(it->second.get_name(),r), dfgNode::SDFG_DF);
+            else
+              pnode = G->get_node(pair<string, SDFG::dfgRange>(it->second.get_name(), r));
+            G->add_edge_multi(it->second.get_name(), it->second.get_type(), pnode, exp_node);
+          }
         }
         G->add_edge(exp_node->name, dfgEdge::SDFG_ASS, exp_node, node);
         node->add_port_sig(m->pname.get_name() + "_P", exp_node->name);

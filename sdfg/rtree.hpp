@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Wei Song <songw@cs.man.ac.uk> 
+ * Copyright (c) 2014-2014 Wei Song <songw@cs.man.ac.uk> 
  *    Advanced Processor Technologies Group, School of Computer Science
  *    University of Manchester, Manchester M13 9PL UK
  *
@@ -20,8 +20,8 @@
  */
 
 /* 
- * relation tree and forest needed in SDFG generation
- * 02/11/2012   Wei Song
+ * relation tree used to extract the input arcs for a set of signals in a block
+ * 04/07/2014   Wei Song
  *
  *
  */
@@ -33,53 +33,121 @@
 #include <string>
 #include <set>
 #include <map>
-#include <boost/shared_ptr.hpp>
-
-// pugixml library
-#include "pugixml/pugixml.hpp"
-
+#include <ostream>
+#include "dfg_range.hpp"
 #include "dfg_edge.hpp"
 
 namespace SDFG {
 
-  class RTree {
+  class RRelation {
+    std::string name;
+    dfgRangeMap select;
+    unsigned int type;
+    
   public:
-    static const std::string DTarget;
-    RTree(bool default_case = true);
-    RTree(const std::string&, int etype = dfgEdge::SDFG_ASS);
-    RTree(boost::shared_ptr<RTree>, int);
-    RTree(boost::shared_ptr<RTree>, boost::shared_ptr<RTree>, int);
-    RTree(boost::shared_ptr<RTree>, boost::shared_ptr<RTree>, boost::shared_ptr<RTree>);
+    RRelation(const std::string& n = "", const dfgRangeMap& select = dfgRangeMap(), 
+              unsigned int t = dfgEdge::SDFG_ASS);
+
+    // accessor
+    const dfgRangeMap& get_select() const { return select; }
+    const std::string& get_name() const { return name; }
+    unsigned int get_type() const { return type; }
+
+    // helper
+    std::ostream& streamout(std::ostream&) const;
     
-    std::map<std::string, std::map<std::string, int> > tree; 
-    typedef std::pair<const std::string, std::map<std::string, int> > sub_tree_type;
-    typedef std::pair<const std::string, int> rtree_edge_type;
-
-
-    // helpers
-    RTree* add_edge(const std::string&, int etype = dfgEdge::SDFG_ASS); // add an signal to the tree
-    RTree* add_edge(const std::string&, const std::string&, int etype = dfgEdge::SDFG_ASS); // add an signal to the tree
-    RTree* add_tree(boost::shared_ptr<RTree>, int etype = dfgEdge::SDFG_ASS); // add a parallel tree to this tree
-    RTree* add_tree(boost::shared_ptr<RTree>, const std::string&, int etype = dfgEdge::SDFG_ASS); // add a tree and set a root for the default targeted sub-tree
-    RTree* combine(boost::shared_ptr<RTree>, int etype = dfgEdge::SDFG_ASS); // assign the default sub-tree to the named sub-trees of this tree
-
-    std::set<std::string> get_control(const std::string& = "") const;
-    std::set<std::string> get_data(const std::string& = "") const;
-    std::set<std::string> get_all(const std::string& = "") const;
-    std::set<std::string> get_signals(int, const std::string& = "") const;
-
-
-    // debug
-    std::ostream& streamout (std::ostream& os) const;
-    
-  private:
-    void copy_subtree(const std::string&, const std::map<std::string, int>&, int);
+    friend class RTree;
+    friend class RForest;
   };
 
-  inline std::ostream& operator<< ( std::ostream& os, const RTree& rhs) {
-    return rhs.streamout(os);
+  typedef std::multimap<std::string, RRelation> leaf_map;
+  typedef std::map<std::string, dfgRangeMap> sig_map;
+
+  class RTree {
+
+    std::string name;                           // the root of this sub-tree 
+    dfgRangeMap select;                         // the range expression
+
+    //std::set<std::string> nameSet;              // store the leaf names 
+    leaf_map leaves;                            // store the leaves with different ranges and types
+
+  public:
+    RTree(const std::string& n = "", const dfgRangeMap& select = dfgRangeMap());
+    
+    // builders
+    void add(const RRelation&);                 // add a sub tree, unflattened
+    RTree& combine(const RTree&);               // combine a map of leaves, unflattened
+    void combine_seq(const RTree&);             // combined a sequential flattened tree
+    RTree& assign_type(unsigned int);           // assign a type which may override the original type
+
+    // accessor
+    const dfgRangeMap& get_select() const { return select; }
+    const std::string& get_name() const { return name; }
+    leaf_map::iterator begin() { return leaves.begin(); }
+    leaf_map::iterator end() { return leaves.end(); }
+    typedef leaf_map::iterator iterator;
+
+    // helper
+    sig_map get_all_signals() const;            // return a map of all right hand side signals 
+    sig_map get_data_signals() const;           // return a map of all right hand side data sources
+    sig_map get_control_signals() const;        // return a map of all control signals
+
+    std::ostream& streamout(std::ostream&) const;
+
+    // other
+    friend class RForest;
+
+  private:
+    void normalize();                           // normalize a tree after some modification
+
+  };
+
+  inline std::ostream& operator << (std::ostream& os, const RTree& t) {
+    return t.streamout(os);
   }
 
+  typedef std::multimap<std::string, RTree> tree_map;
+  typedef std::list<boost::tuple<SDFG::dfgRangeMap,
+                                 SDFG::dfgRangeMap,
+                                 unsigned int
+                                 > > plain_relation;
+  typedef std::map<std::string, plain_relation> plain_map_item;
+  typedef std::map<std::string, plain_map_item> plain_map;
+
+  class RForest {
+
+    //std::set<std::string> nameSet;              // store the tree names 
+    tree_map trees;                             // all trees in this forest 
+
+  public:
+
+    // accessor
+    tree_map::iterator begin() { return trees.begin(); }
+    tree_map::iterator end() { return trees.end(); }
+    typedef tree_map::iterator iterator;
+    
+    //builder
+    void add(const RTree&);                     // add a tree
+    void combine(const RForest&);               // combine with another tree 
+
+    // helpers
+    sig_map get_all_signals() const;            // return a map of all right hand side signals 
+    sig_map get_data_signals() const;           // return a map of all right hand side data sources
+    sig_map get_control_signals() const;        // return a map of all control signals
+    sig_map get_target_signals() const;         // return a map of all targets
+
+    std::ostream& streamout(std::ostream&) const;
+
+    plain_map get_plain_map() const;            // get a plain map to draw SDFG
+    
+  };
+
+  inline std::ostream& operator << (std::ostream& os, const RForest& f) {
+    return f.streamout(os);
+  }
+
+
 }
+
 
 #endif

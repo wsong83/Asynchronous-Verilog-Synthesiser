@@ -61,7 +61,7 @@ namespace netlist {
     NETLIST_DB_DECL;
     NETLIST_REPLACE_VARIABLE;
     void replace_variable(const VIdentifier&, boost::shared_ptr<Expression>); // replace a vid with an expression     
-    virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
+    virtual SDFG::RTree get_rtree() const;
     virtual unsigned int get_width() const;
 
     boost::shared_ptr<Expression> exp;
@@ -94,7 +94,7 @@ namespace netlist {
     NETLIST_DB_DECL;
     NETLIST_REPLACE_VARIABLE;
     void replace_variable(const VIdentifier&, boost::shared_ptr<Expression>); // replace a vid with an expression 
-    virtual boost::shared_ptr<SDFG::RTree> get_rtree() const;
+    virtual SDFG::RTree get_rtree() const;
     virtual unsigned int get_width() const;
 
     // data

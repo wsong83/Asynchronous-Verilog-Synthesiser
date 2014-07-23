@@ -30,6 +30,7 @@
 #include "shell/env.h"
 #include <algorithm>
 #include <boost/foreach.hpp>
+#include <boost/tuple/tuple.hpp>
 #include "sdfg/sdfg.hpp"
 
 using namespace netlist;
@@ -572,6 +573,9 @@ std::set<string> netlist::Module::extract_fsms(bool verbose, bool force,
                                                unsigned int& num_n,
                                                unsigned int& num_r,
                                                unsigned int& num_pf) {
+
+  G_ENV->error("SDFG-FSM-0", name.get_name());
+
   if(!fsm_extracted || force) {
     assert(DFG);
     
@@ -658,7 +662,7 @@ double netlist::Module::get_ratio_state_preserved_oport(map<VIdentifier, pair<bo
         port_ana[pit->first] = pair<bool, string>(is_state_preserved, data_source);
         if(is_state_preserved) num_of_spports++;
       } else {
-        port_ana[pit->first] = pair<bool, string>(false, "[through wire]");
+        port_ana[pit->first] = pair<bool, string>(false, string("[through wire]"));
       }
     }
   }
