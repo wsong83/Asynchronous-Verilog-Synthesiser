@@ -370,7 +370,7 @@ void netlist::Instance::gen_sdfg(shared_ptr<dfgGraph> G) {
           BOOST_FOREACH(SDFG::dfgRange r, rlist) {
             shared_ptr<SDFG::dfgNode> pnode;
             if(!G->exist(pair<string, SDFG::dfgRange>(it->second.get_name(), r)))
-              pnode = G->add_node(it->second.get_name() + r.toString(), dfgNode::SDFG_DF);
+              pnode = G->add_node(SDFG::combine_signal_name(it->second.get_name(),r), dfgNode::SDFG_DF);
             else
               pnode = G->get_node(pair<string, SDFG::dfgRange>(it->second.get_name(), r));
             G->add_edge_multi(it->second.get_name(), it->second.get_type(), pnode, exp_node);

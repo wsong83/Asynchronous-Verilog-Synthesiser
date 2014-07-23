@@ -256,15 +256,13 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
   assert(db_instance.empty());
 
   SDFG::RForest rt = get_rforest();
-  std::cout << *this << std::endl;
-  std::cout << rt << std::endl;
   SDFG::sig_map cset = rt.get_control_signals();        // to store all control signals
   SDFG::plain_map rmap = rt.get_plain_map();
 
   SDFG::plain_map::iterator rm_it;
   for(rm_it = rmap.begin(); rm_it != rmap.end(); ++rm_it) {
     SDFG::plain_map_item::iterator rm_item_it;
-    for(rm_item_it = rm_it->second.begin(); rm_item_it != rm_it->second.end(); ++rm_it) {
+    for(rm_item_it = rm_it->second.begin(); rm_item_it != rm_it->second.end(); ++rm_item_it) {
       SDFG::plain_relation::iterator rm_r_it;
       for(rm_r_it = rm_item_it->second.begin(); rm_r_it != rm_item_it->second.end(); ++rm_r_it) {
         string tar(rm_it->first), src(rm_item_it->first);
@@ -276,14 +274,14 @@ void netlist::SeqBlock::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
         BOOST_FOREACH(SDFG::dfgRange& tr, tarRanges) {
           shared_ptr<SDFG::dfgNode> ptar;
           if(!G->exist(std::pair<string, SDFG::dfgRange>(tar, tr)))
-            ptar = G->add_node(tar+tr.toString(), SDFG::dfgNode::SDFG_DF);
+            ptar = G->add_node(SDFG::combine_signal_name(tar,tr), SDFG::dfgNode::SDFG_DF);
           else
             ptar = G->get_node(std::pair<string, SDFG::dfgRange>(tar, tr));
           ptar->ptr.insert(get_sp());
           BOOST_FOREACH(SDFG::dfgRange& sr, srcRanges) {
             shared_ptr<SDFG::dfgNode> psrc;
             if(!G->exist(std::pair<string, SDFG::dfgRange>(src, sr)))
-              psrc = G->add_node(src+sr.toString(), SDFG::dfgNode::SDFG_DF);
+              psrc = G->add_node(SDFG::combine_signal_name(src,sr), SDFG::dfgNode::SDFG_DF);
             else
               psrc = G->get_node(std::pair<string, SDFG::dfgRange>(src, sr));
             G->add_edge_multi(src, rtype, psrc, ptar);
