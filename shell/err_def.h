@@ -212,6 +212,14 @@ ERR_DEFINE("SDFG-ANALYSE-0",
            EInfo,   1, 
            "a loop is detected: %1%");
 
+ERR_DEFINE("SDFG-DATAPATH-0", 
+           EInfo,   1, 
+           "removing control nodes for module \"%1%\".");
+
+ERR_DEFINE("SDFG-DATAPATH-1", 
+           EInfo,   1, 
+           "removing disconnected nodes for module \"%1%\".");
+
 ERR_DEFINE("SDFG-DEDUCTION-0", 
            EInfo,   1, 
            "node \"%1%\" is considered to be a driver of clock signal.");
@@ -231,6 +239,10 @@ ERR_DEFINE("SDFG-EXTRACT-0",
 ERR_DEFINE("SDFG-EXTRACT-1", 
            EInfo,   1, 
            "extracting SDFG for module \"%1%\".");
+
+ERR_DEFINE("SDFG-FSM-0", 
+           EInfo,   1, 
+           "extracting controllers for module \"%1%\".");
 
 ERR_DEFINE("SDFG-SIMPLIFY-0", 
            EInfo,   1, 

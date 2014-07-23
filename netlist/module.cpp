@@ -573,6 +573,9 @@ std::set<string> netlist::Module::extract_fsms(bool verbose, bool force,
                                                unsigned int& num_n,
                                                unsigned int& num_r,
                                                unsigned int& num_pf) {
+
+  G_ENV->error("SDFG-FSM-0", name.get_name());
+
   if(!fsm_extracted || force) {
     assert(DFG);
     

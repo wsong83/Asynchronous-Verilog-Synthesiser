@@ -90,8 +90,7 @@ namespace CppRange {
     RangeMap complement(const RangeMap& r) const;       // subtract r from this range
     std::list<Range<T> > toRange() const;               // convert a RangeMap
     
-    std::ostream& streamout(std::ostream& os) const;    // stream out the range
-    std::string toString() const;                       // simple conversion to string 
+    std::string toString(bool compress = true) const;   // simple conversion to string 
 
   private:
     virtual bool comparable(const RangeMap& r) const;   // ? this and r can be compared 
@@ -298,6 +297,7 @@ namespace CppRange {
       return false;
     }
     if(empty()) return r.empty();
+    if(r.empty()) return false;
     if(!comparable(r)) {
 #ifndef CPP_RANGE_NO_EXCEPTION
       throw(RangeException_NonComparable(toString(), r.toString(), "=="));
@@ -411,23 +411,14 @@ namespace CppRange {
     return RangeMapBase<T>::toRange(child);
   }
 
-  // stream out function
-  template<class T> inline
-  std::ostream& RangeMap<T>::streamout(std::ostream& os) const{
-    if(!valid() || empty()) {
-      os << "[]";
-      return os;
-    } else return RangeMapBase<T>::streamout(child, os);
-  }
-
   // convert to string
   template<class T> inline
-  std::string RangeMap<T>::toString() const {
+  std::string RangeMap<T>::toString(bool compress) const {
     std::string rv;
     if(!valid() || empty())
       rv = "[]";
     else 
-      rv = RangeMapBase<T>::toString(child);
+      rv = RangeMapBase<T>::toString(child, compress);
     return rv;
   }
 
@@ -478,7 +469,8 @@ namespace CppRange {
   // standard out stream
   template<class T>
   std::ostream& operator<< (std::ostream& os, const RangeMap<T>& r) {
-    return r.streamout(os);
+    os << r.toString();
+    return os;
   }
 
 }

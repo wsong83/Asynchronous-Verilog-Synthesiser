@@ -90,8 +90,7 @@ namespace CppRange {
                                                         // get the intersection of this and r
     
     std::list<Range<T> > toRange() const;               // convert a RangeMap to Ranges
-    std::ostream& streamout(std::ostream& os) const;    // stream out the range
-    std::string toString() const;                       // simple conversion to string 
+    std::string toString(bool compress = true) const;   // simple conversion to string 
   protected:
 
     void set_child(const std::list<RangeMapBase>&);     // set a new child range list 
@@ -122,9 +121,7 @@ namespace CppRange {
                                                         // add a Range into a list of ranges
     static std::list<Range<T> > toRange(const std::list<RangeMapBase>&);
                                                         // convert a RangeMap to Ranges
-    static std::ostream& streamout(const std::list<RangeMapBase>&, std::ostream& os);
-                                                        // stream out a range list
-    static std::string toString(const std::list<RangeMapBase>&);                       
+    static std::string toString(const std::list<RangeMapBase>&, bool compress = true);
                                                         // simple conversion to string 
 
   private:
@@ -239,7 +236,6 @@ namespace CppRange {
   // check whether range r is equal with this range
   template<class T> inline
   bool RangeMapBase<T>::equal(const RangeMapBase& r) const {
-    if(empty()) return r.empty();
     return RangeElement<T>::equal(r) && equal(child, r.child);
   }
   
@@ -249,7 +245,7 @@ namespace CppRange {
   RangeMapBase<T>::combine(const RangeMapBase& r) const {
     boost::tuple<RangeMapBase, RangeMapBase, RangeMapBase> rv;
     
-    RangeElement<T> RAnd = RangeElement<T>::combine(r);
+    RangeElement<T> RAnd = RangeElement<T>::intersection(r);
     if(!RAnd.empty()) {
       // get the standard division
       RangeElement<T> rH, rM, rL;
@@ -309,17 +305,10 @@ namespace CppRange {
     return rv;
   }
 
-  // stream out function
-  template<class T> inline
-  std::ostream& RangeMapBase<T>::streamout(std::ostream& os) const{
-    RangeElement<T>::streamout(os);
-    return streamout(child, os);
-  }
-
   // convert to string
   template<class T> inline
-  std::string RangeMapBase<T>::toString() const{
-    return RangeElement<T>::toString() + toString(child);
+  std::string RangeMapBase<T>::toString(bool compress) const{
+    return RangeElement<T>::toString() + toString(child, compress);
   }
 
   //////////////////////////////////
@@ -672,42 +661,22 @@ namespace CppRange {
     return rv;
   }
 
-  // stream out the child list
-  template<class T> inline
-  std::ostream& RangeMapBase<T>::streamout(const std::list<RangeMapBase>& rlist, std::ostream& os) {
-    if(!rlist.empty()) {
-      if(rlist.size() > 1) {  // more than one sub-ranges
-        os << "{";
-        for(typename std::list<RangeMapBase<T> >::const_iterator it = rlist.begin();
-            it != rlist.end(); ) {
-          os << *it;
-          ++it;
-          if(it != rlist.end()) os << ";";
-        }
-        os << "}";
-      } else {                // only one sub-range
-        os << rlist.front();
-      }
-    }
-    return os;
-  }
-
   // convert to string
   template<class T> inline
-  std::string RangeMapBase<T>::toString(const std::list<RangeMapBase>& rlist) {
+  std::string RangeMapBase<T>::toString(const std::list<RangeMapBase>& rlist, bool compress) {
     std::string rv;
     if(!rlist.empty()) {
       if(rlist.size() > 1) {  // more than one sub-ranges
         rv += "{";
         for(typename std::list<RangeMapBase<T> >::const_iterator it = rlist.begin();
             it != rlist.end(); ) {
-          rv += it->toString();
+          rv += it->toString(compress);
           ++it;
           if(it != rlist.end()) rv += ";";
         }
         rv += "}";
       } else {                // only one sub-range
-        rv += rlist.front().toString();
+        rv += rlist.front().toString(compress);
       }
     }
     return rv;
@@ -716,7 +685,8 @@ namespace CppRange {
   // standard out stream
   template<class T>
   std::ostream& operator<< (std::ostream& os, const RangeMapBase<T>& r) {
-    return r.streamout(os);
+    os << r.toString();
+    return os;
   }
 
 }

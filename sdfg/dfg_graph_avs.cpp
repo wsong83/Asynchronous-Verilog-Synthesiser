@@ -199,6 +199,8 @@ shared_ptr<dfgGraph> SDFG::dfgGraph::extract_datapath_new(bool with_fsm, bool wi
 
 void SDFG::dfgGraph::remove_control_nodes(bool hier) {
 
+  G_ENV->error("SDFG-DATAPATH-0", get_full_name());
+
   list<shared_ptr<dfgEdge> > elook_list;
   
   BOOST_FOREACH(edges_type erec, edges)
@@ -222,6 +224,8 @@ void SDFG::dfgGraph::remove_disconnected_nodes() {
   std::set<shared_ptr<dfgNode> > oconn_nodes; // output connected nodes
   std::set<shared_ptr<dfgNode> > iconn_nodes; // input connected nodes
   std::list<shared_ptr<dfgNode> > proc_nodes; // the nodes to be processed
+
+  G_ENV->error("SDFG-DATAPATH-1", get_full_name());
 
   proc_nodes = get_list_of_nodes(dfgNode::SDFG_OPORT, true);
 

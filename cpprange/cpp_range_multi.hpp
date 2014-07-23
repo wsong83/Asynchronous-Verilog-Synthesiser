@@ -118,8 +118,7 @@ namespace CppRange {
     boost::tuple<Range, Range, Range>
     divide(const Range& r) const;                       // standard divide/partition this and r
     
-    std::ostream& streamout(std::ostream& os) const;    // stream out the range
-    std::string toString() const;                       // simple conversion to string 
+    std::string toString(bool compress = true) const;   // simple conversion to string 
 
   private:
     bool comparable(const Range& r) const;              // ? this and r can be compared 
@@ -682,25 +681,14 @@ namespace CppRange {
     return rv;
   }
 
-  // stream out the range
-  template<class T> inline
-  std::ostream& Range<T>::streamout(std::ostream& os) const{
-    if(empty()) os << "[]";
-    else {
-      for(unsigned int i=0; i<r_array.size(); i++)
-        os << r_array[i];
-    }
-    return os;
-  }
-
   // convert to string
   template<class T> inline
-  std::string Range<T>::toString() const {
+  std::string Range<T>::toString(bool compress) const {
     std::string rv;
     if(empty()) rv = "[]";
     else {
       for(unsigned int i=0; i<r_array.size(); i++)
-        rv += r_array[i].toString();
+        rv += r_array[i].toString(compress);
     }
     return rv;
   }
@@ -805,7 +793,8 @@ namespace CppRange {
   // standard out stream
   template<class T>
   std::ostream& operator<< (std::ostream& os, const Range<T>& r) {
-    return r.streamout(os);
+    os << r.toString();
+    return os;
   }
 
 }

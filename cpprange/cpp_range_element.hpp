@@ -94,8 +94,7 @@ namespace CppRange {
     boost::tuple<RangeElement, RangeElement, RangeElement>
     divide(const RangeElement& r) const;                // standard divide/partition this and r
     
-    std::ostream& streamout(std::ostream& os) const;    // stream out the range
-    std::string toString() const;                       // simple conversion to string 
+    std::string toString(bool compress = true) const;   // simple conversion to string 
   };
 
 }
@@ -414,28 +413,16 @@ namespace CppRange {
     return rv;
   }
 
-  // stream out the range
-  template<class T> inline
-  std::ostream& RangeElement<T>::streamout(std::ostream& os) const {
-    os << "[";
-    if(!empty()) {
-      os << upper();
-      if(upper() != lower()) 
-    os << ":" << lower();
-    }
-    os << "]";
-    return os;
-  }
-
   // convert to string
   template<class T> inline
-  std::string RangeElement<T>::toString() const {
-    return 
-      "[" +
-      boost::lexical_cast<std::string>(upper()) +
-      ":" +
-      boost::lexical_cast<std::string>(lower()) +
-      "]";
+  std::string RangeElement<T>::toString(bool compress) const {
+    if(empty()) return "[]";
+    else if(compress && upper() == lower())
+      return "[" + boost::lexical_cast<std::string>(upper()) + "]";
+    else
+      return 
+        "[" + boost::lexical_cast<std::string>(upper()) +
+        ":" + boost::lexical_cast<std::string>(lower()) + "]";
   }
 
   /////////////////////////////////////////////
@@ -512,7 +499,8 @@ namespace CppRange {
   // standard out stream
   template<class T>
   std::ostream& operator<< (std::ostream& os, const RangeElement<T>& r) {
-    return r.streamout(os);
+    os << r.toString();
+    return os;
   }
 
 }
