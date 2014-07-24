@@ -224,6 +224,7 @@ void SDFG::dfgGraph::remove_disconnected_nodes() {
   std::set<shared_ptr<dfgNode> > oconn_nodes; // output connected nodes
   std::set<shared_ptr<dfgNode> > iconn_nodes; // input connected nodes
   std::list<shared_ptr<dfgNode> > proc_nodes; // the nodes to be processed
+  std::set<shared_ptr<dfgNode> > conn_nodes;
 
   G_ENV->error("SDFG-DATAPATH-1", get_full_name());
 
@@ -233,7 +234,7 @@ void SDFG::dfgGraph::remove_disconnected_nodes() {
     shared_ptr<dfgNode> n = proc_nodes.front();
     proc_nodes.pop_front();
     oconn_nodes.insert(n);
-    list<shared_ptr<dfgNode> > ilist = n->get_in_nodes_cb();
+    list<shared_ptr<dfgNode> > ilist = n->get_in_nodes();
     BOOST_FOREACH(shared_ptr<dfgNode> m, ilist) {
       if(!oconn_nodes.count(m)) {
         proc_nodes.push_back(m);
@@ -247,7 +248,7 @@ void SDFG::dfgGraph::remove_disconnected_nodes() {
     shared_ptr<dfgNode> n = proc_nodes.front();
     proc_nodes.pop_front();
     iconn_nodes.insert(n);
-    list<shared_ptr<dfgNode> > olist = n->get_out_nodes_cb();
+    list<shared_ptr<dfgNode> > olist = n->get_out_nodes();
     BOOST_FOREACH(shared_ptr<dfgNode> m, olist) {
       if(!iconn_nodes.count(m)) {
         proc_nodes.push_back(m);
@@ -255,14 +256,55 @@ void SDFG::dfgGraph::remove_disconnected_nodes() {
     }
   }
 
-  std::set<shared_ptr<dfgNode> > conn_nodes;
   BOOST_FOREACH(shared_ptr<dfgNode> q, iconn_nodes) {
     if(oconn_nodes.count(q))  conn_nodes.insert(q);
   }
 
-  remove_unlisted_nodes(conn_nodes, true);
+  remove_unlisted_nodes(conn_nodes, false);
   check_integrity();
 
+  // process all instances
+  proc_nodes = get_list_of_nodes(dfgNode::SDFG_MODULE, true);
+  BOOST_FOREACH(shared_ptr<dfgNode> n, proc_nodes) {
+    n->child->remove_disconnected_nodes();
+  }
+
+  // rocess this module again
+  proc_nodes = get_list_of_nodes(dfgNode::SDFG_OPORT, true);
+
+  while(!proc_nodes.empty()) {
+    shared_ptr<dfgNode> n = proc_nodes.front();
+    proc_nodes.pop_front();
+    oconn_nodes.insert(n);
+    list<shared_ptr<dfgNode> > ilist = n->get_in_nodes();
+    BOOST_FOREACH(shared_ptr<dfgNode> m, ilist) {
+      if(!oconn_nodes.count(m)) {
+        proc_nodes.push_back(m);
+      }
+    }
+  }
+  
+  proc_nodes = get_list_of_nodes(dfgNode::SDFG_IPORT, true);
+
+  while(!proc_nodes.empty()) {
+    shared_ptr<dfgNode> n = proc_nodes.front();
+    proc_nodes.pop_front();
+    iconn_nodes.insert(n);
+    list<shared_ptr<dfgNode> > olist = n->get_out_nodes();
+    BOOST_FOREACH(shared_ptr<dfgNode> m, olist) {
+      if(!iconn_nodes.count(m)) {
+        proc_nodes.push_back(m);
+      }
+    }
+  }
+
+  conn_nodes.clear();
+  BOOST_FOREACH(shared_ptr<dfgNode> q, iconn_nodes) {
+    if(oconn_nodes.count(q))  conn_nodes.insert(q);
+  }
+
+  remove_unlisted_nodes(conn_nodes, false);
+  check_integrity();
 }
 
 
