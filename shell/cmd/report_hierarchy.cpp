@@ -45,6 +45,7 @@ using namespace boost::filesystem;
 using std::endl;
 using boost::shared_ptr;
 using std::list;
+using std::map;
 using std::string;
 using namespace shell::CMD;
 
@@ -225,6 +226,70 @@ namespace {
       }
     }
   }
+
+  using namespace SDFG;
+  typedef map<string, list<shared_ptr<dfgNode> > > info_map;
+
+  list<shared_ptr<dfgNode> > get_driving_node(shared_ptr<dfgNode> port_arg) {
+    std::set<shared_ptr<dfgNode> > visited;
+    std::list<shared_ptr<dfgNode> > proc, rv;
+
+    proc.push_back(port_arg);
+
+    while(!proc.empty()) {
+      shared_ptr<dfgNode> cnode = proc.front();
+      proc.pop_front();
+      visited.insert(cnode);
+
+      if(cnode->type == dfgNode::SDFG_IPORT) {
+        std::list<shared_ptr<dfgNode> > drivers = cnode.get_in_nodes_cb();
+        BOOST_FOREACH(shared_ptr<dfgNode> n, drivers) {
+          if(!visited.count(n)) proc.push_back(n);
+        }
+      } else {
+        std::list<shared_ptr<dfgNode> > drivers = cnode.get_in_nodes_cb();
+        if(drivers.size() > 1 || (drivers.front()->type & (dfgNode::SDFG_COMB | dfgNode::SDFG_FF)))
+          rv.insert(cnode);
+        else {
+          BOOST_FOREACH(shared_ptr<dfgNode> n, drivers) {
+            if(!visited.count(n)) proc.push_back(n);
+          }
+        } 
+      }
+    }
+    
+    return rv;
+  }
+
+  info_map interface_type(shared_ptr<dfgNode> port_arg) {
+    info_map rv;
+    list<shared_ptr<dfgNode> > nlist = get_driving_output(port_arg);
+    if(nlist.size() > 1) {
+      rv["Other"] = nlist;
+      return rv;
+    } else if(nlist.size() == 0) {
+      rv["NONE"].clear();
+      return rv;
+    }
+
+    // get the real node
+    shared_ptr<dfgNode> node = nlist.front();
+
+    if(!node.interface_map.empty())
+      return node.interface_map;
+
+    intface_check_wire(node, rv);
+    intface_check_pipe(node, rv);
+    intface_check_mem(node, rv);
+    intface_check_bus(node, rv);
+    intface_check_hand(node, rv);
+
+    node.interface_map = rv;
+    return rv;
+  }
+
+
+
 
   unsigned int port_type(shared_ptr<SDFG::dfgGraph> g, shared_ptr<SDFG::dfgGraph> dg, 
                          shared_ptr<SDFG::dfgNode> dport, unsigned int indent, bool verbose) {
