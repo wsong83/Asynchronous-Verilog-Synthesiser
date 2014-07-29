@@ -83,15 +83,7 @@ namespace SDFG {
       SDFG_DP_FSM         = 0x00300  // elements on control paths
     } dp_type;
 
-    enum interface_type_t { 
-      SDFG_INT_NONE       = 0x00000, // unknown yet
-      SDFG_INT_WIRE       = 0x00001, // wire
-      SDFG_INT_PIPE       = 0x00002, // pipeline
-      SDFG_INT_MEM        = 0x00004, // memory
-      SDFG_INT_BUS        = 0x00008, // bus
-      SDFG_INT_HAND       = 0x00010, // handshake
-      SDFG_INT_OTHER      = 0x80000  // currently cannot understand
-    };
+    std::map<std::string, std::list<boost::shared_ptr<dfgNode> > > interface_map;
 
     // only available in register graph
     std::list<boost::shared_ptr<dfgPath> > opath, ipath; // record all output/input paths to avoid recalculation
