@@ -184,7 +184,7 @@ namespace {
       if(n)
         std::cout << n->get_full_name() << " ";
       else
-        std::cout << "[] ";
+        std::cout << "@ ";
     }
   }
 
@@ -256,10 +256,10 @@ namespace {
 
 
   shared_ptr<dfgNode> get_driving_node(shared_ptr<dfgNode> port) {
-    shared_ptr<dfgNode> rv = port;
+    shared_ptr<dfgNode> rv = get_SDFG_node(port);
     while(rv->size_in_edges_cb() == 1 && rv->get_in_edges_type_cb() == dfgEdge::SDFG_ASS)
       rv = rv->get_in_nodes_cb().front();
-    return rv;
+    return get_DATA_node(rv);
   }
 
   void interface_check_wire(shared_ptr<dfgNode> node, info_map& rv) {
@@ -291,6 +291,7 @@ namespace {
           return;
       }
       nlist.push_back(src);
+      std::cout << "check pipe, nlist add "<< src->get_full_name() << " due to the path to " << p->tar->get_full_name()<< std::endl;
     }
     rv["PIPE"] = nlist;
   }
@@ -413,7 +414,6 @@ namespace {
         BOOST_FOREACH(shared_ptr<dfgNode> p, iports) {
           info_map ptype  = interface_type(p);
           std::cout << string(indent, ' ') << p->get_hier_name() << endl;
-          std::cout << string(indent+2, ' ') ;
           print_ptype(ptype, indent+2);
         }
       }
@@ -423,7 +423,6 @@ namespace {
         BOOST_FOREACH(shared_ptr<dfgNode> p, oports) {
           info_map ptype  = interface_type(p);
           std::cout << string(indent, ' ') << p->get_hier_name() << endl;
-          std::cout << string(indent+2, ' ') ;
           print_ptype(ptype, indent+2);
         }
       }
@@ -431,7 +430,7 @@ namespace {
       if(mlist.size()) {
         std::cout << string(indent, ' ') << "[M]" << endl;
         BOOST_FOREACH(shared_ptr<dfgNode> m, mlist) {
-          std::cout << string(indent, ' ') << "**" << m->get_hier_name() << endl;
+          std::cout << string(indent, ' ') << "**" << m->get_hier_name() << "(" << m->child_name << ")" << endl;
           report_hierarchy(m->child, indent + 4, verbose);
         }
       }
