@@ -270,6 +270,9 @@ void SDFG::dfgGraph::remove_disconnected_nodes() {
   }
 
   // rocess this module again
+  iconn_nodes.clear();
+  oconn_nodes.clear();
+  conn_nodes.clear();
   proc_nodes = get_list_of_nodes(dfgNode::SDFG_OPORT, true);
 
   while(!proc_nodes.empty()) {
@@ -298,7 +301,6 @@ void SDFG::dfgGraph::remove_disconnected_nodes() {
     }
   }
 
-  conn_nodes.clear();
   BOOST_FOREACH(shared_ptr<dfgNode> q, iconn_nodes) {
     if(oconn_nodes.count(q))  conn_nodes.insert(q);
   }

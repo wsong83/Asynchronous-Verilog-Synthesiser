@@ -285,19 +285,18 @@ namespace {
     list<shared_ptr<dfgNode> > nlist;
     BOOST_FOREACH(shared_ptr<dfgPath> p, iplist) {
       shared_ptr<dfgNode> src = p->src;
-      list<shared_ptr<dfgNode> > snodes = src->get_in_nodes_cb();
-      BOOST_FOREACH(shared_ptr<dfgNode> n, snodes) {
-        if(n == src)
+      list<shared_ptr<dfgPath> > snodes = src->get_in_paths_fast_im();
+      BOOST_FOREACH(shared_ptr<dfgPath> p, snodes) {
+        if(p->src == src)
           return;
       }
       nlist.push_back(src);
-      std::cout << "check pipe, nlist add "<< src->get_full_name() << " due to the path to " << p->tar->get_full_name()<< std::endl;
     }
     rv["PIPE"] = nlist;
   }
 
   void interface_check_mem(shared_ptr<dfgNode> node, info_map& rv) {
-    list<shared_ptr<dfgPath> > plist = get_SDFG_node(node)->get_in_paths_fast_cb();
+    list<shared_ptr<dfgPath> > plist = get_SDFG_node(node)->get_in_paths_fast_im();
     unsigned int ptype = 0;
     BOOST_FOREACH(shared_ptr<dfgPath> p, plist)
         ptype |= p->type;

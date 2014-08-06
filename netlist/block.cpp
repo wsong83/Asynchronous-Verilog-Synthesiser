@@ -620,7 +620,7 @@ bool netlist::Block::elaborate(std::set<shared_ptr<NetComp> >&,
 SDFG::RForest netlist::Block::get_rforest() const {
   SDFG::RForest rv;
   BOOST_FOREACH(const shared_ptr<NetComp>& m, statements) {
-    rv.combine(m->get_rforest());
+    rv.combine(m->get_rforest(), true);
   }
   return rv;
 }
