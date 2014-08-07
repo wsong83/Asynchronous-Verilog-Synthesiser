@@ -537,6 +537,7 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
   BOOST_FOREACH(shared_ptr<NetComp>& m, statements) {
     m->gen_sdfg(G);
   }
+
   for_each(db_instance.begin(), db_instance.end(),
            [&](const pair<const IIdentifier, shared_ptr<Instance> >& m) {
              m.second->gen_sdfg(G);
