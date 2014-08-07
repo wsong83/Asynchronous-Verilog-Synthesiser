@@ -544,6 +544,7 @@ shared_ptr<dfgGraph> netlist::Module::extract_sdfg(bool quiet) {
            });
   
   G->connect_partial_nodes();
+  G->correct_conections();
 
   G->check_integrity();
 

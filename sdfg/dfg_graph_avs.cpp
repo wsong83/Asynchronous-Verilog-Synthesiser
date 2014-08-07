@@ -694,6 +694,14 @@ void SDFG::dfgGraph::connect_partial_nodes() {
           }
         }
 
+        if(get_out_nodes(n, false).size() == 0) {
+          dfgRange p_range = n->select;
+          BOOST_FOREACH(shared_ptr<dfgNode> tar, named_node.second) {
+            if(get_out_nodes(tar, false).size() > 0 && p_range.overlap(tar->select))
+              arc_to_add.push_back(node_arc(n, tar));
+          }
+        }
+
       }
     }
   }
@@ -704,3 +712,44 @@ void SDFG::dfgGraph::connect_partial_nodes() {
 
 }
     
+void SDFG::dfgGraph::correct_conections() {
+  BOOST_FOREACH(node_map_type named_node, node_map) {
+    std::set<shared_ptr<dfgNode> > fset, cset; // flip-flops and connection nodes
+    BOOST_FOREACH(shared_ptr<dfgNode> n, named_node.second) {
+      if(n->type & (dfgNode::SDFG_FF|dfgNode::SDFG_COMB))
+        fset.insert(n);
+      else
+        cset.insert(n);
+    }
+
+    if(fset.empty())
+      continue;
+
+    // process the cset
+    BOOST_FOREACH(shared_ptr<dfgNode> cnode, cset) {
+      list<shared_ptr<dfgEdge> > elist = cnode->get_in_edges();
+      BOOST_FOREACH(shared_ptr<dfgEdge> e, elist) {
+        if(divide_signal_name(e->get_source()->get_hier_name()).first != named_node.first) {
+          BOOST_FOREACH(shared_ptr<dfgNode> ff, fset) {
+            if(ff->select.overlap(cnode->select)) {
+              add_edge(e->name, e->type, e->get_source_id(), ff);
+            }
+          }
+          remove_edge(e);
+        }
+      }
+
+      elist = cnode->get_out_edges();
+      BOOST_FOREACH(shared_ptr<dfgEdge> e, elist) {
+        if(divide_signal_name(e->get_target()->get_hier_name()).first == named_node.first) {
+          BOOST_FOREACH(shared_ptr<dfgNode> ff, fset) {
+            if(ff->select.overlap(cnode->select)) {
+              add_edge(e->name, e->type, ff, e->get_target_id());
+            }
+          }
+          remove_edge(e);
+        }
+      }
+    }
+  }
+}
