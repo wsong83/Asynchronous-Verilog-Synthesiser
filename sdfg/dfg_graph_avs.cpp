@@ -270,6 +270,9 @@ void SDFG::dfgGraph::remove_disconnected_nodes() {
   }
 
   // rocess this module again
+  iconn_nodes.clear();
+  oconn_nodes.clear();
+  conn_nodes.clear();
   proc_nodes = get_list_of_nodes(dfgNode::SDFG_OPORT, true);
 
   while(!proc_nodes.empty()) {
@@ -298,7 +301,6 @@ void SDFG::dfgGraph::remove_disconnected_nodes() {
     }
   }
 
-  conn_nodes.clear();
   BOOST_FOREACH(shared_ptr<dfgNode> q, iconn_nodes) {
     if(oconn_nodes.count(q))  conn_nodes.insert(q);
   }
@@ -677,35 +679,30 @@ void SDFG::dfgGraph::annotate_rate() {
   }
 }
 
+
 void SDFG::dfgGraph::connect_partial_nodes() {
   typedef std::pair<shared_ptr<dfgNode>, shared_ptr<dfgNode> > node_arc;
   std::list<node_arc> arc_to_add;
   BOOST_FOREACH(node_map_type named_node, node_map) {
     BOOST_FOREACH(shared_ptr<dfgNode> n, named_node.second) {
       if(!(n->type & dfgNode::SDFG_PORT)) {
-        if(get_in_nodes(n, false).size() == 0) {
+        if(get_in_nodes(n).size() == 0) {
           dfgRange p_range = n->select;
-          std::set<shared_ptr<dfgNode> > src_set;
           BOOST_FOREACH(shared_ptr<dfgNode> src, named_node.second) {
-            if(get_in_nodes(src, false).size() > 0 && p_range.overlap(src->select))
-              src_set.insert(src);
+            if(get_in_nodes(src).size() > 0 && p_range.overlap(src->select))
+              arc_to_add.push_back(node_arc(src, n));
           }
-
-          if(src_set.size()) 
-            arc_to_add.push_back(node_arc(*(src_set.begin()),n));
         }
-        
+        /*
         if(get_out_nodes(n, false).size() == 0) {
           dfgRange p_range = n->select;
-          std::set<shared_ptr<dfgNode> > tar_set;
           BOOST_FOREACH(shared_ptr<dfgNode> tar, named_node.second) {
             if(get_out_nodes(tar, false).size() > 0 && p_range.overlap(tar->select))
-              tar_set.insert(tar);
+              arc_to_add.push_back(node_arc(n, tar));
           }
-
-          if(tar_set.size()) 
-            arc_to_add.push_back(node_arc(n, *(tar_set.begin())));
         }
+        */
+
       }
     }
   }
@@ -714,4 +711,54 @@ void SDFG::dfgGraph::connect_partial_nodes() {
     add_edge(a.first->get_hier_name(), dfgEdge::SDFG_ASS, a.first, a.second);
   }
 
+}
+    
+void SDFG::dfgGraph::correct_conections() {
+  BOOST_FOREACH(node_map_type named_node, node_map) {
+    std::set<shared_ptr<dfgNode> > fset, cset; // flip-flops and connection nodes
+    BOOST_FOREACH(shared_ptr<dfgNode> n, named_node.second) {
+      if(n->type & (dfgNode::SDFG_FF|dfgNode::SDFG_COMB))
+        fset.insert(n);
+      else
+        cset.insert(n);
+    }
+
+    dfgRangeMap full_range;
+    if(fset.empty())
+      continue;
+    else {
+      BOOST_FOREACH(shared_ptr<dfgNode> n, fset) {
+        full_range = full_range.combine(dfgRangeMap(n->select));
+      }
+    }
+
+    // process the cset
+    BOOST_FOREACH(shared_ptr<dfgNode> cnode, cset) {
+      if(dfgRangeMap(cnode->select).subset(full_range)) {
+        list<shared_ptr<dfgEdge> > elist = cnode->get_in_edges();
+        BOOST_FOREACH(shared_ptr<dfgEdge> e, elist) {
+          if(divide_signal_name(e->get_source()->get_hier_name()).first != named_node.first ) {
+            BOOST_FOREACH(shared_ptr<dfgNode> ff, fset) {
+              if(ff->select.overlap(cnode->select)) {
+                add_edge(e->name, e->type, e->get_source_id(), ff);
+              }
+            }
+            remove_edge(e);
+          }
+        }
+        
+        elist = cnode->get_out_edges();
+        BOOST_FOREACH(shared_ptr<dfgEdge> e, elist) {
+          if(divide_signal_name(e->get_target()->get_hier_name()).first == named_node.first) {
+            BOOST_FOREACH(shared_ptr<dfgNode> ff, fset) {
+              if(ff->select.overlap(cnode->select)) {
+                add_edge(e->name, e->type, ff, e->get_target_id());
+              }
+            }
+            remove_edge(e);
+          }
+        }
+      }
+    }
+  }
 }

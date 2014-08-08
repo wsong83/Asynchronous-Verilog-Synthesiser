@@ -172,14 +172,13 @@ SDFG::RForest netlist::IfState::get_rforest() const {
 
   rv.combine(if_rt);
   rv.combine(else_rt);
-  
+
   // self-loop
+  SDFG::sig_map smap = rv.get_target_signals();
   if(elsecase) {
-    SDFG::sig_map smap = rv.get_target_signals();
     list<SDFG::sig_map> if_smap;
     if_smap.push_back(if_rt.get_target_signals());
     if_smap.push_back(else_rt.get_target_signals());
-    
     BOOST_FOREACH(SDFG::sig_map smap_item, if_smap) {
       for(SDFG::sig_map::iterator it=smap.begin(); it!=smap.end(); ++it) {
         if(smap_item.count(it->first)) {
@@ -197,6 +196,13 @@ SDFG::RForest netlist::IfState::get_rforest() const {
         }
       }
     }
+  } else {
+    for(SDFG::sig_map::iterator it=smap.begin(); it!=smap.end(); ++it) {
+      SDFG::dfgRangeMap r = it->second;
+      SDFG::RTree mt(it->first, r);
+      mt.add(SDFG::RRelation(it->first, r, SDFG::dfgEdge::SDFG_DDP));
+      rv.add(mt);
+    } 
   }
 
   SDFG::RTree exp_rt = exp->get_rtree();
@@ -238,7 +244,6 @@ shared_ptr<Expression> netlist::IfState::get_combined_expression(const VIdentifi
       rv.reset(exp->deep_copy(NULL)->append(Operation::oQuestion, self_loop, *else_exp));      
     }
   }
-  //std::cout << "IfState: (target)" << target << " Exp: " << *rv << std::endl;
   return rv;
 }
 

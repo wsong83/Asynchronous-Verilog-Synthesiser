@@ -83,6 +83,8 @@ namespace SDFG {
       SDFG_DP_FSM         = 0x00300  // elements on control paths
     } dp_type;
 
+    std::map<std::string, std::list<boost::shared_ptr<dfgNode> > > interface_map;
+
     // only available in register graph
     std::list<boost::shared_ptr<dfgPath> > opath, ipath; // record all output/input paths to avoid recalculation
     std::map<boost::shared_ptr<dfgNode>, int> opath_f, ipath_f, self_f; // record all output/input paths get from fast algorithm to avoid recalculation
@@ -176,8 +178,8 @@ namespace SDFG {
     void out_path_type_update_cb(std::list<boost::shared_ptr<dfgPath> >&,
                                  boost::shared_ptr<dfgPath>&,
                                  std::map<boost::shared_ptr<dfgNode>, 
-                                          std::map<boost::shared_ptr<dfgNode>, int> >&,
-      std::set<boost::shared_ptr<dfgNode> >&); // helper for get_out_paths()
+                                 std::map<boost::shared_ptr<dfgNode>, int> >&,
+                                 std::set<boost::shared_ptr<dfgNode> >&); // helper for get_out_paths()
 
     void in_path_type_update_cb(std::list<boost::shared_ptr<dfgPath> >&,
                                 boost::shared_ptr<dfgPath>&,
