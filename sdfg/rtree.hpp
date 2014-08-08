@@ -76,8 +76,8 @@ namespace SDFG {
     
     // builders
     void add(const RRelation&);                 // add a sub tree, unflattened
-    RTree& combine(const RTree&);               // combine a map of leaves, unflattened
-    void combine_seq(const RTree&);             // combined a sequential flattened tree
+    RTree& combine(const RTree&, bool seq = false);
+                                                // combined trees
     RTree& assign_type(unsigned int);           // assign a type which may override the original type
 
     // accessor
@@ -91,6 +91,7 @@ namespace SDFG {
     sig_map get_all_signals() const;            // return a map of all right hand side signals 
     sig_map get_data_signals() const;           // return a map of all right hand side data sources
     sig_map get_control_signals() const;        // return a map of all control signals
+    bool count(const std::string& n) const { return leaves.count(n); }
 
     std::ostream& streamout(std::ostream&) const;
 
@@ -127,14 +128,16 @@ namespace SDFG {
     typedef tree_map::iterator iterator;
     
     //builder
-    void add(const RTree&);                     // add a tree
-    void combine(const RForest&);               // combine with another tree 
+    void add(const RTree&, bool seq = false);   // add a tree
+    void combine(const RForest&, bool seq = false);
+                                                // combine with another tree 
 
     // helpers
     sig_map get_all_signals() const;            // return a map of all right hand side signals 
     sig_map get_data_signals() const;           // return a map of all right hand side data sources
     sig_map get_control_signals() const;        // return a map of all control signals
     sig_map get_target_signals() const;         // return a map of all targets
+    bool count(const std::string& n) const { return trees.count(n); }
 
     std::ostream& streamout(std::ostream&) const;
 

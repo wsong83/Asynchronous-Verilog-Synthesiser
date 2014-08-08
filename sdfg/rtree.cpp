@@ -99,21 +99,14 @@ void RTree::add(const RRelation& leaf) {
   return;
 }
 
-// combine two leaf maps
-RTree& RTree::combine(const RTree& t) {
-  typename leaf_map::const_iterator it;
-  for(it = t.leaves.begin(); it != t.leaves.end(); ++it)
-    add(it->second); 
-  return *this;
-}
-
 // combined a sequential flattened tree
-void RTree::combine_seq(const RTree& t) {
+RTree& RTree::combine(const RTree& t, bool seq) {
   typename leaf_map::const_iterator it;
   for(it=t.leaves.begin(); it!=t.leaves.end(); ++it) {
-    if(it->second.type != dfgEdge::SDFG_DDP)
+    if(!seq || it->second.type != dfgEdge::SDFG_DDP)
       add(it->second);
   }
+  return *this;
 }
 
 // assign a new type
@@ -187,20 +180,20 @@ void RTree::normalize() {
 ///////////////////////////////////
 //    Forest builders
 
-void RForest::add(const RTree& t) {
+void RForest::add(const RTree& t, bool seq) {
   if(trees.count(t.name)) {
     typename tree_map::iterator it, iend;
     boost::tie(it, iend) = trees.equal_range(t.name);
     for(; it!=iend; ++it) {
       if(it->second.select.overlap(t.select) || it->second.select == t.select) {
         if(it->second.select == t.select) {
-          it->second.combine_seq(t);
+          it->second.combine(t, seq);
           return;
         } else {
           RTree mtree = it->second;
           dfgRangeMap rangeShared = it->second.select.intersection(t.select);
           it->second.select = rangeShared;
-          it->second.combine_seq(t);
+          it->second.combine(t, seq);
           mtree.select = mtree.select.complement(rangeShared);
           if(!mtree.select.empty())
             add(mtree);
@@ -220,10 +213,10 @@ void RForest::add(const RTree& t) {
 }
 
 // combine with another tree 
-void RForest::combine(const RForest& f) {
+void RForest::combine(const RForest& f, bool seq) {
   typename tree_map::const_iterator it;
   for(it=f.trees.begin(); it!=f.trees.end(); ++it) {
-    add(it->second);
+    add(it->second, seq);
   }
 }
 

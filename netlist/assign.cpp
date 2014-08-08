@@ -109,9 +109,11 @@ void netlist::Assign::gen_sdfg(shared_ptr<SDFG::dfgGraph> G) {
         BOOST_FOREACH(SDFG::dfgRange& tr, tarRanges) {
           shared_ptr<SDFG::dfgNode> ptar;
           if(!G->exist(std::pair<string, SDFG::dfgRange>(tar, tr)))
-            ptar = G->add_node(SDFG::combine_signal_name(tar,tr), SDFG::dfgNode::SDFG_DF);
-          else
+            ptar = G->add_node(SDFG::combine_signal_name(tar,tr), SDFG::dfgNode::SDFG_COMB);
+          else {
             ptar = G->get_node(std::pair<string, SDFG::dfgRange>(tar, tr));
+            ptar->type = SDFG::dfgNode::SDFG_COMB;
+          }
           ptar->ptr.insert(get_sp());
           BOOST_FOREACH(SDFG::dfgRange& sr, srcRanges) {
             shared_ptr<SDFG::dfgNode> psrc;
