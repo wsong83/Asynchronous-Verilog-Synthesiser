@@ -693,7 +693,7 @@ void SDFG::dfgGraph::connect_partial_nodes() {
               arc_to_add.push_back(node_arc(src, n));
           }
         }
-
+        /*
         if(get_out_nodes(n, false).size() == 0) {
           dfgRange p_range = n->select;
           BOOST_FOREACH(shared_ptr<dfgNode> tar, named_node.second) {
@@ -701,6 +701,7 @@ void SDFG::dfgGraph::connect_partial_nodes() {
               arc_to_add.push_back(node_arc(n, tar));
           }
         }
+        */
 
       }
     }
@@ -722,32 +723,40 @@ void SDFG::dfgGraph::correct_conections() {
         cset.insert(n);
     }
 
+    dfgRangeMap full_range;
     if(fset.empty())
       continue;
+    else {
+      BOOST_FOREACH(shared_ptr<dfgNode> n, fset) {
+        full_range = full_range.combine(dfgRangeMap(n->select));
+      }
+    }
 
     // process the cset
     BOOST_FOREACH(shared_ptr<dfgNode> cnode, cset) {
-      list<shared_ptr<dfgEdge> > elist = cnode->get_in_edges();
-      BOOST_FOREACH(shared_ptr<dfgEdge> e, elist) {
-        if(divide_signal_name(e->get_source()->get_hier_name()).first != named_node.first) {
-          BOOST_FOREACH(shared_ptr<dfgNode> ff, fset) {
-            if(ff->select.overlap(cnode->select)) {
-              add_edge(e->name, e->type, e->get_source_id(), ff);
+      if(dfgRangeMap(cnode->select).subset(full_range)) {
+        list<shared_ptr<dfgEdge> > elist = cnode->get_in_edges();
+        BOOST_FOREACH(shared_ptr<dfgEdge> e, elist) {
+          if(divide_signal_name(e->get_source()->get_hier_name()).first != named_node.first ) {
+            BOOST_FOREACH(shared_ptr<dfgNode> ff, fset) {
+              if(ff->select.overlap(cnode->select)) {
+                add_edge(e->name, e->type, e->get_source_id(), ff);
+              }
             }
+            remove_edge(e);
           }
-          remove_edge(e);
         }
-      }
-
-      elist = cnode->get_out_edges();
-      BOOST_FOREACH(shared_ptr<dfgEdge> e, elist) {
-        if(divide_signal_name(e->get_target()->get_hier_name()).first == named_node.first) {
-          BOOST_FOREACH(shared_ptr<dfgNode> ff, fset) {
-            if(ff->select.overlap(cnode->select)) {
-              add_edge(e->name, e->type, ff, e->get_target_id());
+        
+        elist = cnode->get_out_edges();
+        BOOST_FOREACH(shared_ptr<dfgEdge> e, elist) {
+          if(divide_signal_name(e->get_target()->get_hier_name()).first == named_node.first) {
+            BOOST_FOREACH(shared_ptr<dfgNode> ff, fset) {
+              if(ff->select.overlap(cnode->select)) {
+                add_edge(e->name, e->type, ff, e->get_target_id());
+              }
             }
+            remove_edge(e);
           }
-          remove_edge(e);
         }
       }
     }
