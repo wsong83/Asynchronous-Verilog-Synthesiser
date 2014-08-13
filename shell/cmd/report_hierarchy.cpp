@@ -65,11 +65,6 @@ namespace {
     {}
   };
 
-  enum IO_TYPE {
-    IO_MEM              = 0x00001, // memory interface
-    IO_HS               = 0x00002  // handshake
-  };
-
   void report_hierarchy(shared_ptr<SDFG::dfgGraph>, unsigned int, bool);
 }
 
