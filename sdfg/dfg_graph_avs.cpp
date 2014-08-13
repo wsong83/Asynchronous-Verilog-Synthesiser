@@ -228,19 +228,6 @@ void SDFG::dfgGraph::remove_disconnected_nodes() {
 
   G_ENV->error("SDFG-DATAPATH-1", get_full_name());
 
-  if(father != NULL) {
-    proc_nodes = get_list_of_nodes(dfgNode::SDFG_OPORT, true);
-    BOOST_FOREACH(shared_ptr<dfgNode> p, proc_nodes) {
-      if(p->size_out_edges_cb() == 0)
-        remove_node(p);
-    }
-    proc_nodes = get_list_of_nodes(dfgNode::SDFG_IPORT, true);
-    BOOST_FOREACH(shared_ptr<dfgNode> p, proc_nodes) {
-      if(p->size_in_edges_cb() == 0)
-        remove_node(p);
-    }
-  }
-
   proc_nodes = get_list_of_nodes(dfgNode::SDFG_OPORT, true);
 
   while(!proc_nodes.empty()) {
@@ -280,16 +267,6 @@ void SDFG::dfgGraph::remove_disconnected_nodes() {
   proc_nodes = get_list_of_nodes(dfgNode::SDFG_MODULE, true);
   BOOST_FOREACH(shared_ptr<dfgNode> n, proc_nodes) {
     n->child->remove_disconnected_nodes();
-    list<shared_ptr<dfgEdge> > ilist = n->get_in_edges();
-    BOOST_FOREACH(shared_ptr<dfgEdge> ie, ilist) {
-      if(ie->get_target_cb().empty())
-        remove_edge(ie);
-    }
-    list<shared_ptr<dfgEdge> > olist = n->get_out_edges();
-    BOOST_FOREACH(shared_ptr<dfgEdge> oe, olist) {
-      if(!oe->get_source_cb())
-        remove_edge(oe);
-    }    
   }
 
   // rocess this module again
