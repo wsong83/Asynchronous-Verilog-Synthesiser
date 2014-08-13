@@ -728,6 +728,11 @@ void netlist::Module::partition() {
       if(op_dfg->get_in_edges_type() == SDFG::dfgEdge::SDFG_ASS)
         op_dfg = op_dfg->get_in_nodes().front();
 
+      enum IO_TYPE {
+        IO_MEM              = 0x00001, // memory interface
+        IO_HS               = 0x00002  // handshake
+      };
+
       unsigned int op_type = 0;
       
       //std::cout << "analyse " << op_dfg->get_full_name() << std::endl;

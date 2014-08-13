@@ -65,6 +65,11 @@ namespace {
     {}
   };
 
+  enum IO_TYPE {
+    IO_MEM              = 0x00001, // memory interface
+    IO_HS               = 0x00002  // handshake
+  };
+
   void report_hierarchy(shared_ptr<SDFG::dfgGraph>, unsigned int, bool);
 }
 
@@ -239,21 +244,22 @@ namespace {
 
   shared_ptr<dfgNode> get_SDFG_node(shared_ptr<dfgNode> n) {
     shared_ptr<dfgNode> m = n->pg->pModule->DFG->get_node(divide_signal_name(n->get_hier_name()));
-    assert(m);
     return m;
   }
 
   shared_ptr<dfgNode> get_DATA_node(shared_ptr<dfgNode> n) {
     shared_ptr<dfgNode> m = n->pg->pModule->DataDFG->get_node(divide_signal_name(n->get_hier_name()));
-    assert(m);
     return m;
   }
 
 
   shared_ptr<dfgNode> get_driving_node(shared_ptr<dfgNode> port) {
     shared_ptr<dfgNode> rv = get_SDFG_node(port);
-    while(rv->size_in_edges_cb() == 1 && rv->get_in_edges_type_cb() == dfgEdge::SDFG_ASS)
-      rv = rv->get_in_nodes_cb().front();
+    while(rv->size_in_edges_cb() == 1 && rv->get_in_edges_type_cb() == dfgEdge::SDFG_ASS) {
+      shared_ptr<dfgNode> newDrive = rv->get_in_nodes_cb().front();
+      if(get_DATA_node(newDrive)) rv = newDrive;
+      else break;
+    }
     return get_DATA_node(rv);
   }
 
@@ -271,23 +277,50 @@ namespace {
 
     if(ntype & (~dfgNode::SDFG_IPORT))
       return;
-    else
-      rv["WIRE"] = nlist;
+    else {
+      if(nlist.empty())  rv["WIRE"].push_back(node);
+      else               rv["WIRE"] = nlist;
+    }
   }
 
   void interface_check_pipe(shared_ptr<dfgNode> node, info_map& rv) {
-    list<shared_ptr<dfgPath> > iplist = node->get_in_paths_cb();
-    list<shared_ptr<dfgNode> > nlist;
-    BOOST_FOREACH(shared_ptr<dfgPath> p, iplist) {
-      shared_ptr<dfgNode> src = p->src;
-      list<shared_ptr<dfgPath> > snodes = src->get_in_paths_fast_im();
-      BOOST_FOREACH(shared_ptr<dfgPath> p, snodes) {
-        if(p->src == src)
-          return;
+    std::set<shared_ptr<dfgNode> > levelOne, levelTwo;
+
+    // level two FFs -> level one FFs
+
+    // get the level one
+    if(node->type & (dfgNode::SDFG_LATCH | dfgNode::SDFG_FF))
+      levelOne.insert(node);
+    else {
+      list<shared_ptr<dfgPath> > ipaths = node->get_in_paths_cb();
+      BOOST_FOREACH(shared_ptr<dfgPath> p, ipaths) {
+        if(p->src == node) return;
+        if(p->src->type & (dfgNode::SDFG_LATCH | dfgNode::SDFG_FF))
+          levelOne.insert(p->src);
       }
-      nlist.push_back(src);
     }
-    rv["PIPE"] = nlist;
+
+    // check level one anf form level two
+    BOOST_FOREACH(shared_ptr<dfgNode> n, levelOne) {
+      list<shared_ptr<dfgPath> > ipaths = n->get_in_paths_cb();
+      BOOST_FOREACH(shared_ptr<dfgPath> p, ipaths) {
+        if(p->src == n) return;
+        levelTwo.insert(p->src);
+      }
+    }
+
+    // check level two
+    BOOST_FOREACH(shared_ptr<dfgNode> n, levelTwo) {
+      list<shared_ptr<dfgPath> > ipaths = n->get_in_paths_cb();
+      BOOST_FOREACH(shared_ptr<dfgPath> p, ipaths) {
+        if(p->src == n) return;
+      }
+    }
+
+    if(!levelOne.empty()) {
+      rv["PIPE"].insert(rv["PIPE"].end(), levelOne.begin(), levelOne.end());
+      rv["PIPE"].insert(rv["PIPE"].end(), levelTwo.begin(), levelTwo.end());
+    }
   }
 
   void interface_check_mem(shared_ptr<dfgNode> node, info_map& rv) {
