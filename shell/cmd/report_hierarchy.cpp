@@ -358,7 +358,10 @@ namespace {
     list<shared_ptr<dfgPath> > iplist, oplist;
     std::set<shared_ptr<dfgNode> > srcs, tars, ctls;
     
-    iplist = node->get_in_paths_fast_cb();
+    if(node->type & dfgNode::SDFG_FF)
+      srcs.insert(get_SDFG_node(node));
+    else
+      iplist = node->get_in_paths_fast_cb();
     oplist = node->get_out_paths_fast_cb();
     
     BOOST_FOREACH(shared_ptr<dfgPath> p, iplist) {
@@ -367,44 +370,41 @@ namespace {
     }
 
     BOOST_FOREACH(shared_ptr<dfgPath> p, oplist) {
-      if(p->tar->type & dfgNode::SDFG_FF)
+      if(p->tar->type & dfgNode::SDFG_FF && !srcs.count(get_SDFG_node(p->tar)))
         tars.insert(get_SDFG_node(p->tar));
     }
 
-    std::set<shared_ptr<dfgNode> > mctls;
 
-    BOOST_FOREACH(shared_ptr<dfgNode> n, srcs) {
-      list<shared_ptr<dfgPath> > clist = n->get_in_paths_fast_cb();
-      BOOST_FOREACH(shared_ptr<dfgPath> p, clist) {
-        if(p->type & dfgEdge::SDFG_CTL_MASK && p->src != p->tar)
-          mctls.insert(p->src);
+    BOOST_FOREACH(shared_ptr<dfgNode> src, srcs) {
+      BOOST_FOREACH(shared_ptr<dfgNode> tar, tars) {
+        //std::cout << "check handshake from "<< src->get_full_name() << " to " << tar->get_full_name() << std::endl;
+        std::set<shared_ptr<dfgNode> > src_ctls, all_ctls;
+        list<shared_ptr<dfgPath> > clist = src->get_in_paths_fast_cb();
+        BOOST_FOREACH(shared_ptr<dfgPath> p, clist) {
+          if(p->type & dfgEdge::SDFG_CTL_MASK && p->src != p->tar)
+            src_ctls.insert(p->src);
+        }
+        
+        clist = tar->get_in_paths_fast_cb();
+        BOOST_FOREACH(shared_ptr<dfgPath> p, clist) {
+          if(p->type & dfgEdge::SDFG_CTL_MASK && p->src != p->tar && src_ctls.count(p->src))
+            all_ctls.insert(p->src);
+        }  
+        
+        BOOST_FOREACH(shared_ptr<dfgNode> n, all_ctls) {
+          bool bs = src->belong_to(n->pg);
+          bool bt = tar->belong_to(n->pg);
+          if((bs && !bt) || (!bs && bt)) {
+            ctls.insert(n);
+          }
+        }
       }
     }
 
-    BOOST_FOREACH(shared_ptr<dfgNode> n, tars) {
-      list<shared_ptr<dfgPath> > clist = n->get_in_paths_fast_cb();
-      BOOST_FOREACH(shared_ptr<dfgPath> p, clist) {
-        if(p->type & dfgEdge::SDFG_CTL_MASK && p->src != p->tar && mctls.count(p->src))
-          ctls.insert(p->src);
-      }
-    }    
-
-    BOOST_FOREACH(shared_ptr<dfgNode> n, ctls) {
-      bool with_src = false;
-      bool with_tar = false;
-      BOOST_FOREACH(shared_ptr<dfgNode> m, srcs) {
-        if(m->belong_to(n->pg))
-          with_src = true;
-      }
-      BOOST_FOREACH(shared_ptr<dfgNode> m, tars) {
-        if(m->belong_to(n->pg))
-          with_tar = true;
-      }
-      if(!(with_src && with_tar)) {
-        rv["HAND"].push_back(n);
-      }
-    }
+    if(!ctls.empty())
+      rv["HAND"].insert(rv["HAND"].end(), ctls.begin(), ctls.end());
   }
+
   
 
   info_map interface_type(shared_ptr<dfgNode> port_arg) {
