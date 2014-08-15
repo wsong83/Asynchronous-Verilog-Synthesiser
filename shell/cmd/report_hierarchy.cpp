@@ -295,8 +295,9 @@ namespace {
       list<shared_ptr<dfgPath> > ipaths = node->get_in_paths_cb();
       BOOST_FOREACH(shared_ptr<dfgPath> p, ipaths) {
         if(p->src == node) return;
-        if(p->src->type & (dfgNode::SDFG_LATCH | dfgNode::SDFG_FF))
+        if(p->src->type & (dfgNode::SDFG_LATCH | dfgNode::SDFG_FF)) {
           levelOne.insert(p->src);
+        }
       }
     }
 
@@ -370,8 +371,9 @@ namespace {
     }
 
     BOOST_FOREACH(shared_ptr<dfgPath> p, oplist) {
-      if(p->tar->type & dfgNode::SDFG_FF && !srcs.count(get_SDFG_node(p->tar)))
+      if(p->tar->type & dfgNode::SDFG_FF && !srcs.count(get_SDFG_node(p->tar))) {
         tars.insert(get_SDFG_node(p->tar));
+      }
     }
 
 
@@ -381,20 +383,30 @@ namespace {
         std::set<shared_ptr<dfgNode> > src_ctls, all_ctls;
         list<shared_ptr<dfgPath> > clist = src->get_in_paths_fast_cb();
         BOOST_FOREACH(shared_ptr<dfgPath> p, clist) {
-          if(p->type & dfgEdge::SDFG_CTL_MASK && p->src != p->tar)
+          if(p->type & (dfgEdge::SDFG_EQU | dfgEdge::SDFG_CMP | dfgEdge::SDFG_LOG) &&
+             !(p->type & dfgEdge::SDFG_ADR) && 
+             !(p->type & dfgEdge::SDFG_DAT_MASK) &&
+             p->src != p->tar)
             src_ctls.insert(p->src);
         }
         
         clist = tar->get_in_paths_fast_cb();
         BOOST_FOREACH(shared_ptr<dfgPath> p, clist) {
-          if(p->type & dfgEdge::SDFG_CTL_MASK && p->src != p->tar && src_ctls.count(p->src))
+          if(p->type & (dfgEdge::SDFG_EQU | dfgEdge::SDFG_CMP | dfgEdge::SDFG_LOG) &&
+             !(p->type & dfgEdge::SDFG_ADR) && 
+             !(p->type & dfgEdge::SDFG_DAT_MASK) && 
+             p->src != p->tar && 
+             src_ctls.count(p->src)) {
             all_ctls.insert(p->src);
+          }
         }  
         
         BOOST_FOREACH(shared_ptr<dfgNode> n, all_ctls) {
           bool bs = src->belong_to(n->pg);
           bool bt = tar->belong_to(n->pg);
           if((bs && !bt) || (!bs && bt)) {
+            //if(!ctls.count(n))
+            //  std::cout << "find a controller " << n->get_full_name() << " for path from " << src->get_full_name() << " to " << tar->get_full_name() << std::endl;
             ctls.insert(n);
           }
         }
