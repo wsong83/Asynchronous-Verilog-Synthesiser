@@ -89,6 +89,9 @@ namespace SDFG {
     std::list<boost::shared_ptr<dfgPath> > opath, ipath; // record all output/input paths to avoid recalculation
     std::map<boost::shared_ptr<dfgNode>, int> opath_f, ipath_f, self_f; // record all output/input paths get from fast algorithm to avoid recalculation
 
+    // partition estimator
+    double partition_rate;
+
     // toggle rate
     bool   is_annotated;
     double toggle_min;          // minimal toggle rate, in unit of MHz

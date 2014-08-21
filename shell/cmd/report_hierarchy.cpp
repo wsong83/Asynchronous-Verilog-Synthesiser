@@ -70,7 +70,8 @@ namespace {
     IO_HS               = 0x00002  // handshake
   };
 
-  void report_hierarchy(shared_ptr<SDFG::dfgGraph>, unsigned int, bool);
+  double report_hierarchy(shared_ptr<SDFG::dfgGraph>, unsigned int, bool);
+  void report_partition(shared_ptr<SDFG::dfgGraph>, unsigned int, bool, double);
 }
 
 BOOST_FUSION_ADAPT_STRUCT
@@ -171,6 +172,9 @@ bool shell::CMD::CMDReportHierarchy::exec ( const std::string& str, Env * pEnv){
   }
 
   report_hierarchy(tarDesign->DataDFG, 0, arg.bVerbose);
+  
+  std::cout << "Summary:" << std::endl;
+  report_partition(tarDesign->DataDFG, 0, true, 0.7);
 
   return true;
 }
@@ -186,6 +190,18 @@ namespace {
       else
         std::cout << "@ ";
     }
+  }
+
+  double get_port_score(info_map& imap) {
+    if(imap.count("MEM") || imap.count("BUS") || imap.count("WIRE"))
+      return 1.0;
+    else if(imap.count("HAND")) {
+      if(imap["HAND"].size() < 2)
+        return 1.0;
+      else
+        return 0.5;
+    } else
+      return 0.0;
   }
 
   void print_ptype(info_map& imap, unsigned int indent) {
@@ -268,18 +284,35 @@ namespace {
       return;
 
     list<shared_ptr<dfgPath> > iplist = node->get_in_paths_cb();
-    unsigned int ntype = 0;
-    list<shared_ptr<dfgNode> > nlist;
+    unsigned int nitype = dfgNode::SDFG_IPORT;
+    list<shared_ptr<dfgNode> > nilist;
     BOOST_FOREACH(shared_ptr<dfgPath> p, iplist) {
-      ntype |= p->src->type;
-      nlist.push_back(p->src);
+      nitype |= p->src->type;
+      if(nitype == dfgNode::SDFG_IPORT)
+        nilist.push_back(p->src);
+      else
+        break;
     }
 
-    if(ntype & (~dfgNode::SDFG_IPORT))
+    list<shared_ptr<dfgPath> > oplist = node->get_out_paths_cb();
+    unsigned int notype = dfgNode::SDFG_OPORT;
+    list<shared_ptr<dfgNode> > nolist;
+    BOOST_FOREACH(shared_ptr<dfgPath> p, oplist) {
+      notype |= p->tar->type;
+      if(notype == dfgNode::SDFG_OPORT)
+        nolist.push_back(p->tar);
+      else
+        break;
+    }
+
+    if(nitype != dfgNode::SDFG_IPORT && notype != dfgNode::SDFG_OPORT)
       return;
     else {
-      if(nlist.empty())  rv["WIRE"].push_back(node);
-      else               rv["WIRE"] = nlist;
+      if(nilist.empty())  rv["WIRE"].push_back(node);
+      if(nitype == dfgNode::SDFG_IPORT)
+        rv["WIRE"].insert(rv["WIRE"].end(), nilist.begin(), nilist.end());
+      if(notype == dfgNode::SDFG_OPORT)
+        rv["WIRE"].insert(rv["WIRE"].end(), nolist.begin(), nolist.end());
     }
   }
 
@@ -376,6 +409,12 @@ namespace {
       }
     }
 
+    // current only linear handshake pipeline is considered
+    //if(srcs.size() != 1 && tars.size() != 1) {
+      //std::cout << "Checking Handshake for " << node->get_full_name() << " finds out it is not a linear pipeline." << std::endl;
+      //return;
+    //}
+
 
     BOOST_FOREACH(shared_ptr<dfgNode> src, srcs) {
       BOOST_FOREACH(shared_ptr<dfgNode> tar, tars) {
@@ -435,7 +474,8 @@ namespace {
     return rv;
   }
 
-  void report_hierarchy(shared_ptr<SDFG::dfgGraph> dg, unsigned int indent, bool verbose) {
+  double report_hierarchy(shared_ptr<SDFG::dfgGraph> dg, unsigned int indent, bool verbose) {
+    double iprate = 0.0, oprate = 0.0, prate = 0.0;
     if(dg) {
       list<shared_ptr<dfgNode> > plist = dg->get_list_of_nodes(dfgNode::SDFG_PORT);
       list<shared_ptr<dfgNode> > iports;
@@ -454,6 +494,7 @@ namespace {
           info_map ptype  = interface_type(p);
           std::cout << string(indent, ' ') << p->get_hier_name() << endl;
           print_ptype(ptype, indent+2);
+          iprate += get_port_score(ptype);
         }
       }
       
@@ -463,6 +504,7 @@ namespace {
           info_map ptype  = interface_type(p);
           std::cout << string(indent, ' ') << p->get_hier_name() << endl;
           print_ptype(ptype, indent+2);
+          oprate += get_port_score(ptype);
         }
       }
 
@@ -470,10 +512,57 @@ namespace {
         std::cout << string(indent, ' ') << "[M]" << endl;
         BOOST_FOREACH(shared_ptr<dfgNode> m, mlist) {
           std::cout << string(indent, ' ') << "**" << m->get_hier_name() << "(" << m->child_name << ")" << endl;
-          report_hierarchy(m->child, indent + 4, verbose);
+          m->partition_rate = report_hierarchy(m->child, indent + 4, verbose);
         }
+      }
+
+      if(iprate != 0.0 && oprate != 0.0)
+        prate = (iprate + oprate) / (iports.size() + oports.size());
+    }
+    return prate;
+  }
+
+  bool has_partition(shared_ptr<SDFG::dfgNode> dm, double threshold) {
+    if(dm) {
+      if(dm->partition_rate >= threshold) return true;
+      
+      shared_ptr<dfgGraph> dg = dm->child;
+      if(!dg) return false;
+      
+      list<shared_ptr<dfgNode> > mlist = dg->get_list_of_nodes(dfgNode::SDFG_MODULE);
+      BOOST_FOREACH(shared_ptr<dfgNode> m, mlist) {
+        if(has_partition(m, threshold)) return true;
+      }
+    } 
+    return false;
+  }
+
+  void report_partition(shared_ptr<SDFG::dfgGraph> dg, unsigned int indent, bool first_line, double threshold) {
+    std::set<shared_ptr<dfgNode> > pset, npset;
+    list<shared_ptr<dfgNode> > mlist = dg->get_list_of_nodes(dfgNode::SDFG_MODULE);
+    BOOST_FOREACH(shared_ptr<dfgNode> m, mlist) {
+      if(has_partition(m, threshold)) pset.insert(m);
+      else npset.insert(m);
+    }
+    if(pset.size()) {
+      BOOST_FOREACH(shared_ptr<dfgNode> m, pset) {
+        if(m->partition_rate >= threshold) {
+          std::cout << (first_line ? string(indent, ' ') : string()) << m->get_hier_name();
+          std::cout << "(" << m->partition_rate << ")" << std::endl;
+          report_partition(m->child, indent+m->get_hier_name().length(), true, threshold);
+        } else {
+          std::cout << (first_line ? string(indent, ' ') : string()) << m->get_hier_name() << "/";
+          report_partition(m->child, indent+m->get_hier_name().length()+1, false, threshold);
+        }
+        first_line = true;
+      }
+      if(npset.size()) {
+        std::cout << string(indent, ' ') << "[Other]";
+        BOOST_FOREACH(shared_ptr<dfgNode> m, npset) {
+          std::cout << m->get_hier_name() << ";";
+        }
+        std::cout << std::endl;
       }
     }
   }
-
 }

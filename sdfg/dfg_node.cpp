@@ -45,7 +45,7 @@ using std::list;
 
 
 SDFG::dfgNode::dfgNode(const std::string& n, node_type_t t) 
-  : pg(NULL), name(n), node_index(0), type(t), dp_type(SDFG_DP_NONE), 
+  : pg(NULL), name(n), node_index(0), type(t), dp_type(SDFG_DP_NONE), partition_rate(0.0),
     is_annotated(false), position(0,0), bbox(0,0) 
 {
   select = divide_signal_name(n).second;
