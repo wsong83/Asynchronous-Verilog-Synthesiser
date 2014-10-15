@@ -107,7 +107,8 @@ int SDFG::dfgNode::is_fsm() const {
 
   if((self_loop_type != 0) && 
      (out_path_type & dfgEdge::SDFG_LOG) &&
-     !(in_path_type & dfgEdge::SDFG_DAT_MASK)
+     !(in_path_type & dfgEdge::SDFG_DAT_MASK) &&
+     select.size() <= 1
      ) { // flags
     fsm_type |= SDFG_FSM_FLAG;
   }
